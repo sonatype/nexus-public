@@ -36,7 +36,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
-import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
@@ -133,7 +132,7 @@ public class FluentAssetImpl
     facet.stores().assetStore.updateAssetAttributes(asset, new AttributeChangeSet(change, key, value));
     asset.blob().ifPresent(blob ->
         facet.blobMetadataStorage()
-            .attach(facet.stores().blobStore, blob.blobRef().getBlobId(), null, asset.attributes(),
+            .attach(facet.stores().blobStoreProvider.get(), blob.blobRef().getBlobId(), null, asset.attributes(),
                 asset.blob().get().checksums()));
     return this;
   }
@@ -143,7 +142,7 @@ public class FluentAssetImpl
     facet.stores().assetStore.updateAssetAttributes(asset, changes);
     asset.blob().ifPresent(blob ->
         facet.blobMetadataStorage()
-            .attach(facet.stores().blobStore, blob.blobRef().getBlobId(), null, asset.attributes(),
+            .attach(facet.stores().blobStoreProvider.get(), blob.blobRef().getBlobId(), null, asset.attributes(),
                 blob.checksums()));
     return this;
   }
@@ -171,7 +170,7 @@ public class FluentAssetImpl
         .orElseThrow(() -> new IllegalStateException("No blob attached to " + asset.path()));
 
     BlobRef blobRef = assetBlob.blobRef();
-    Blob blob = Optional.ofNullable(facet.stores().blobStore.get(blobRef.getBlobId()))
+    Blob blob = Optional.ofNullable(facet.stores().blobStoreProvider.get().get(blobRef.getBlobId()))
         .orElseGet(() -> facet.dependencies().getMoveService()
             .map(service -> service.getIfBeingMoved(blobRef, repository().getName()))
             .orElseThrow(() -> new MissingBlobException(blobRef)));

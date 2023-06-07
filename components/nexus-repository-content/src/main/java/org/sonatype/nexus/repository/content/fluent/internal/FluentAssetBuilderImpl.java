@@ -196,7 +196,7 @@ public class FluentAssetBuilderImpl
       asset.blob()
           .ifPresent(blob -> facet
               .blobMetadataStorage()
-              .attach(facet.stores().blobStore, blob.blobRef().getBlobId(), null, asset.attributes(), blob.checksums())
+              .attach(facet.stores().blobStoreProvider.get(), blob.blobRef().getBlobId(), null, asset.attributes(), blob.checksums())
           );
     }
   }
@@ -217,10 +217,10 @@ public class FluentAssetBuilderImpl
     headerBuilder.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
     headerBuilder.put(CONTENT_TYPE_HEADER, facet.checkContentType(assetData, blob));
 
-    Blob permanentBlob = facet.stores().blobStore.makeBlobPermanent(blob.getId(), headerBuilder.build());
+    Blob permanentBlob = facet.stores().blobStoreProvider.get().makeBlobPermanent(blob.getId(), headerBuilder.build());
     NestedAttributesMap componentAttributes = assetData.component().map(Component::attributes).orElse(null);
     Map<String, String> checksums = assetData.blob().map(AssetBlob::checksums).orElse(null);
-    facet.blobMetadataStorage().attach(facet.stores().blobStore, permanentBlob.getId(), componentAttributes, assetData.attributes(),
+    facet.blobMetadataStorage().attach(facet.stores().blobStoreProvider.get(), permanentBlob.getId(), componentAttributes, assetData.attributes(),
         checksums);
     return permanentBlob;
   }
