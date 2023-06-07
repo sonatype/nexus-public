@@ -57,9 +57,9 @@ export default {
     OFFLINE: 'Offline',
     NODE_UNAVAILABLE_CANNOT_CREATE: 'Node Unavailable - Support zip cannot be created',
     NO_ZIP_CREATED: 'No Zip created',
-    DOWNLOAD_ZIP: 'Download Zip',
+    DOWNLOAD_ZIP: 'Download Latest',
     CREATING_ZIP: 'Creating Zip...',
-    CREATE_SUPPORT_ZIP: 'Create Support zip',
+    CREATE_SUPPORT_ZIP: 'Create New Zip',
 
     CREATE_SUPPORT_ZIP_MODAL_HEADER: 'Options for Export'
   }
