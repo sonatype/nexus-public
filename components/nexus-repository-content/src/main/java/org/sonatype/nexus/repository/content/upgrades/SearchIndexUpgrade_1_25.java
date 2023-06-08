@@ -12,13 +12,11 @@
  */
 package org.sonatype.nexus.repository.content.upgrades;
 
-import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 
 /**
@@ -29,11 +27,6 @@ import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 public class SearchIndexUpgrade_1_25
     extends SearchIndexUpgrade
 {
-  @Inject
-  public SearchIndexUpgrade_1_25(final Map<String, Recipe> recipes) {
-    super(recipes);
-  }
-
   @Override
   public Optional<String> version() {
     return Optional.of("1.25");

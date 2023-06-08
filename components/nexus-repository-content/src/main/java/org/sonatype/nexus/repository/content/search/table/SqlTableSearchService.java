@@ -352,7 +352,7 @@ public class SqlTableSearchService
     componentSearchResult.setName(searchResult.componentName());
     componentSearchResult.setGroup(searchResult.namespace());
     componentSearchResult.setVersion(searchResult.version());
-    componentSearchResult.setLastModified(searchResult.created());
+    componentSearchResult.setLastModified(searchResult.lastModified());
 
     decorators.forEach(decorator -> decorator.updateComponent(componentSearchResult, searchResult));
     return componentSearchResult;

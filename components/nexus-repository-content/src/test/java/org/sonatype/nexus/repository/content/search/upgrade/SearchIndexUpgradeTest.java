@@ -91,15 +91,16 @@ public class SearchIndexUpgradeTest
     when(testGroupRecipe.getFormat()).thenReturn(testFormat);
     when(testGroupRecipe.getType()).thenReturn(new GroupType());
 
-    underTest = new TestSearchIndexUpgrade(ImmutableMap.of(
+    underTest = new TestSearchIndexUpgrade();
+    underTest.inject(ImmutableMap.of(
         "test-hosted", testHostedRecipe,
         "test-proxy", testProxyRecipe,
         "test-group", testGroupRecipe));
 
     store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).get();
-    try (DataSession session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      configurationDAO = (ConfigurationDAO) session.access(ConfigurationDAO.class);
-      contentRepositoryDAO = (TestContentRepositoryDAO) session.access(TestContentRepositoryDAO.class);
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      configurationDAO = session.access(ConfigurationDAO.class);
+      contentRepositoryDAO = session.access(TestContentRepositoryDAO.class);
 
       hosted1Config = createConfig("hosted1", "test-hosted");
       createConfig("hosted2", "test-hosted");
@@ -163,10 +164,6 @@ public class SearchIndexUpgradeTest
   private static class TestSearchIndexUpgrade
       extends SearchIndexUpgrade
   {
-    public TestSearchIndexUpgrade(final Map<String, Recipe> recipes) {
-      super(recipes);
-    }
-
     @Override
     public Optional<String> version() {
       return Optional.of("1.0");

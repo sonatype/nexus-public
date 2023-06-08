@@ -280,7 +280,7 @@ public class CselToTsQuerySqlDbTest
       tableData.setVersion(component.version() + "_" + i);
       tableData.setNormalisedVersion(VersionNumberExpander.expand(component.version()));
       tableData.setRepositoryName(configuration.getRepositoryName() + "_" + i);
-      tableData.setComponentCreated(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
+      tableData.setLastModified(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
       //tableData blob
       tableData.addKeyword(blob.contentType());
       paths.get(i).forEach(tableData::addPath);

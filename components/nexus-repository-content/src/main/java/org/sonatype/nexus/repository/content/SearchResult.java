@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.repository.content;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 /**
  * Provides search results.
@@ -20,8 +23,12 @@ import java.util.List;
  * @since 3.41
  */
 public interface SearchResult
-    extends RepositoryContent
 {
+  /**
+   * When the metadata was first created.
+   */
+  OffsetDateTime lastModified();
+
   Integer componentId();
 
   Integer repositoryId();
@@ -39,4 +46,9 @@ public interface SearchResult
   String normalisedVersion();
 
   List<String> tags();
+
+  /**
+   * Schemaless content attributes.
+   */
+  NestedAttributesMap attributes();
 }
