@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <aws-java-sdk.version>1.12.265</aws-java-sdk.version>
+    <aws-java-sdk.version>1.12.299</aws-java-sdk.version>
   </properties>
 
   <dependencyManagement>
