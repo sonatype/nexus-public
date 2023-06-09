@@ -592,6 +592,8 @@ Ext.define('NX.controller.Menu', {
                 grouped: feature.group
               });
 
+              child.phantom = true;
+
               me.addExpandCollapseHandlers(child, feature.path);
             }
           }

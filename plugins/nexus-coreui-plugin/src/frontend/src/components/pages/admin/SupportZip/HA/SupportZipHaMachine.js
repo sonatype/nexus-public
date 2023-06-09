@@ -16,84 +16,82 @@
  */
 import Axios from 'axios';
 import {assign} from 'xstate';
+import {mergeDeepRight} from 'ramda';
 
-import {APIConstants, ExtJS, FormUtils, UIStrings} from "@sonatype/nexus-ui-plugin";
+import {APIConstants, ExtJS, FormUtils, UIStrings} from '@sonatype/nexus-ui-plugin';
+
+const {REST} = APIConstants;
 
 export default FormUtils.buildFormMachine({
   id: 'SupportZipHaMachine',
 
-  config: (config) => ({
-    ...config,
-
-    context: {
-      ...config.context,
-      nxrmNodes: [],
-      selectedNode: null,
-      showCreateZipModal: false,
-      targetNode: null
-    },
-
-    states: {
-      ...config.states,
-
-      loaded: {
-        ...config.states.loaded,
-        on: {
-          ...config.states.loaded.on,
-
-          SHOW_SUPPORT_ZIP_FORM_MODAL: {
-            actions: 'showCreateZipModalForm'
-          },
-          HIDE_SUPPORT_ZIP_FORM_MODAL: {
-            actions: 'hideCreateZipModalForm'
-          },
-          CREATE_SUPPORT_ZIP_FOR_NODE: {
-            target: 'creatingNodeSupportZip'
-          },
-          DOWNLOAD_ZIP: {
-            target: 'initSupportZipDownload',
-            actions: 'setTargetNode'
-          }
-        }
+  config: (config) =>
+    mergeDeepRight(config, {
+      context: {
+        nxrmNodes: [],
+        selectedNode: null,
+        showCreateZipModal: false,
+        targetNode: null
       },
 
-      downloadingZip: {
-        entry: 'downloadZip',
-        always: {
-          target: 'loaded'
-        }
-      },
-
-      creatingNodeSupportZip: {
-        invoke: {
-          src: 'createHaZip',
-          onDone: {
-            target: 'loaded',
-            actions: ['hideCreateZipModalForm']
-          },
-          onError: {
-            target: 'loaded'
+      states: {
+        loaded: {
+          on: {
+            SHOW_SUPPORT_ZIP_FORM_MODAL: {
+              actions: 'showCreateZipModalForm'
+            },
+            HIDE_SUPPORT_ZIP_FORM_MODAL: {
+              actions: 'hideCreateZipModalForm'
+            },
+            CREATE_SUPPORT_ZIP_FOR_NODE: {
+              target: 'creatingNodeSupportZip'
+            },
+            DOWNLOAD_ZIP: {
+              target: 'initSupportZipDownload',
+              actions: 'setTargetNode'
+            }
           }
         },
-        after: {
-          target: 'loaded'
-        }
-      },
 
-      initSupportZipDownload: {
-        invoke: {
-          src: 'verifyIsZipCanBeDownloaded',
-          onDone: {
-            target: 'downloadingZip'
-          },
-          onError: {
-            target: 'loaded',
-            actions: ['setCreateError']
+        downloadingZip: {
+          invoke: {
+            src: 'downloadZip',
+            onDone: {
+              target: 'loaded'
+            },
+            onError: {
+              target: 'loaded'
+            }
+          }
+        },
+
+        creatingNodeSupportZip: {
+          invoke: {
+            src: 'createHaZip',
+            onDone: {
+              target: 'loaded',
+              actions: 'hideCreateZipModalForm'
+            },
+            onError: {
+              target: 'loaded'
+            }
+          }
+        },
+
+        initSupportZipDownload: {
+          invoke: {
+            src: 'verifyCanZipBeDownloaded',
+            onDone: {
+              target: 'downloadingZip'
+            },
+            onError: {
+              target: 'loaded',
+              actions: 'setCreateError'
+            }
           }
         }
       }
-    }
-  })
+    })
 }).withConfig({
   actions: {
     setData: assign({
@@ -110,17 +108,8 @@ export default FormUtils.buildFormMachine({
       selectedNode: null
     }),
 
-    downloadZip: (ctx) => {
-      const { targetNode } = ctx;
-
-      if (targetNode) {
-        const url = ExtJS.urlOf(`service/rest/wonderland/download/${targetNode.blobRef}`);
-        ExtJS.downloadUrl(url);
-      }
-    },
-
     setCreateError: () => {
-      ExtJS.showErrorMessage(UIStrings.ERROR.NOT_FOUND_ERROR("Support zip"))
+      ExtJS.showErrorMessage(UIStrings.ERROR.NOT_FOUND_ERROR('Support zip'));
     },
 
     setTargetNode: assign({
@@ -129,7 +118,7 @@ export default FormUtils.buildFormMachine({
   },
 
   services: {
-    fetchData: () => Axios.get(APIConstants.REST.INTERNAL.GET_SUPPORT_ZIP_ACTIVE_NODES),
+    fetchData: () => Axios.get(REST.INTERNAL.GET_SUPPORT_ZIP_ACTIVE_NODES),
 
     createHaZip: (_, event) => {
       const node = event?.data?.node || null;
@@ -141,19 +130,27 @@ export default FormUtils.buildFormMachine({
           ...zipParams,
           hostname: node.hostname
         };
-        return Axios.post(APIConstants.REST.INTERNAL.SUPPORT_ZIP + selectedNodeId, params);
+        return Axios.post(REST.INTERNAL.SUPPORT_ZIP + selectedNodeId, params);
       }
       return Promise.reject();
     },
 
-    verifyIsZipCanBeDownloaded: async (ctx) => {
-      const { targetNode } = ctx;
+    verifyCanZipBeDownloaded: async ({targetNode}) => {
+      const {data} = await Axios.get(REST.PUBLIC.NODE_ID);
+      return targetNode && data.nodeId === targetNode.nodeId ? Promise.resolve() : Promise.reject();
+    },
 
-      const { data } = await axios.get(APIConstants.REST.PUBLIC.NODE_ID)
-      if (targetNode && data.nodeId === targetNode.nodeId) {
-        return Promise.resolve();
+    downloadZip: ({targetNode}) => {
+      if (targetNode) {
+        const url = ExtJS.urlOf(`service/rest/wonderland/download/${targetNode.blobRef}`);
+        try {
+          ExtJS.downloadUrl(url);
+        } catch(e) {
+          console.error('NX.util.DownloadHelper is not available in debug mode.\n', e);
+          window.open(url, '_self');
+        }
+        return Axios.delete(REST.INTERNAL.CLEAR_SUPPORT_ZIP_HISTORY + targetNode.nodeId);
       }
-      return Promise.reject();
     }
   }
 });

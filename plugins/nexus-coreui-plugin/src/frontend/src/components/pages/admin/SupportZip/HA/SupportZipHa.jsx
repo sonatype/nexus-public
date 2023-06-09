@@ -11,30 +11,20 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-
-import UIStrings from "../../../../../constants/UIStrings";
-
-const {SUPPORT_ZIP: LABELS} = UIStrings;
-
-import {
-  NxCard, NxPageTitle, NxH2
-} from "@sonatype/react-shared-components";
-
-import {
-  Page, PageHeader, PageTitle, ContentBody, ExtJS
-} from "@sonatype/nexus-ui-plugin";
-
-import {faArchive} from "@fortawesome/free-solid-svg-icons";
-
 import {useMachine} from '@xstate/react';
-import SupportZipHaMachine from "./SupportZipHaMachine";
+import {faArchive} from '@fortawesome/free-solid-svg-icons';
 
-import SupportZipMachine from "../SupportZipMachine";
+import {NxCard, NxPageTitle, NxH2} from '@sonatype/react-shared-components';
+import {Page, PageHeader, PageTitle, ContentBody} from '@sonatype/nexus-ui-plugin';
 
-import NodeCard from "./NodeCard";
-import SupportZipHaModalForm from "./SupportZipHaModalForm";
-
+import NodeCard from './NodeCard';
+import SupportZipHaModalForm from './SupportZipHaModalForm';
+import SupportZipHaMachine from './SupportZipHaMachine';
+import SupportZipMachine from '../SupportZipMachine';
+import UIStrings from '../../../../../constants/UIStrings';
 import './SupportZipHa.scss';
+
+const {MENU_HA, AVAILABLE_NODES} = UIStrings.SUPPORT_ZIP;
 
 export default function SupportZipHa() {
   const [nxrmNodesState, sendToNxrmNodes] = useMachine(SupportZipHaMachine, {devTools: true});
@@ -55,7 +45,7 @@ export default function SupportZipHa() {
   function closeSupportZipFormModal() {
     sendToNxrmNodes({
       type: 'HIDE_SUPPORT_ZIP_FORM_MODAL'
-    })
+    });
   }
 
   function setSupportFormParams({target}) {
@@ -89,35 +79,37 @@ export default function SupportZipHa() {
     });
   }
 
-  return <Page className="nxrm-support-zip-ha">
-    <PageHeader>
-      <PageTitle icon={faArchive} {...LABELS.MENU_HA}/>
-    </PageHeader>
+  return (
+    <Page className="nxrm-support-zip-ha">
+      <PageHeader>
+        <PageTitle icon={faArchive} {...MENU_HA} />
+      </PageHeader>
 
-    <ContentBody>
-      <NxPageTitle>
-        <NxH2>
-          {LABELS.AVAILABLE_NODES}
-        </NxH2>
-      </NxPageTitle>
+      <ContentBody>
+        <NxPageTitle>
+          <NxH2>{AVAILABLE_NODES}</NxH2>
+        </NxPageTitle>
 
-      <NxCard.Container className="nxrm-nodes-container">
-        {nxrmNodes.map(({...node}) =>
+        <NxCard.Container className="nxrm-nodes-container">
+          {nxrmNodes.map((node) => (
             <NodeCard
-                key={node.nodeId}
-                initial={node}
-                createZip={() => showCreateZipModalForm(node)}
-                downloadZip={downloadZip}/>
-        )}
-      </NxCard.Container>
-    </ContentBody>
+              key={node.nodeId}
+              initial={node}
+              createZip={() => showCreateZipModalForm(node)}
+              downloadZip={downloadZip}
+            />
+          ))}
+        </NxCard.Container>
+      </ContentBody>
 
-    {showCreateZipModal
-        && <SupportZipHaModalForm
-            formParams={params}
-            setFormParams={setSupportFormParams}
-            submitHandler={submitCreateNodeSupportZip}
-            cancelHandler={closeSupportZipFormModal}/>
-    }
-  </Page>
+      {showCreateZipModal && (
+        <SupportZipHaModalForm
+          formParams={params}
+          setFormParams={setSupportFormParams}
+          submitHandler={submitCreateNodeSupportZip}
+          cancelHandler={closeSupportZipFormModal}
+        />
+      )}
+    </Page>
+  );
 }

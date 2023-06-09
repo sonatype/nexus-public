@@ -160,7 +160,7 @@ public abstract class ContentFacetSupport
         dependencies.getBlobStoreManager(), config.blobStoreName,
         formatStoreManager, config.dataStoreName);
 
-    fluentBlobs = new FluentBlobsImpl(this, stores.blobStore);
+    fluentBlobs = new FluentBlobsImpl(this, stores.blobStoreProvider);
     fluentComponents = new FluentComponentsImpl(this, stores.componentStore);
     fluentAssets = new FluentAssetsImpl(this, stores.assetStore);
   }

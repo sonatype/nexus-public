@@ -25,7 +25,7 @@
       search_component_name  VARCHAR                  NOT NULL,
       component_kind         VARCHAR                  NOT NULL,
       version                VARCHAR                  NOT NULL,
-      component_created      TIMESTAMP WITH TIME ZONE NOT NULL,
+      last_modified          TIMESTAMP WITH TIME ZONE,
       search_repository_name VARCHAR(200)             NOT NULL,
       normalised_version     VARCHAR                  NOT NULL,
       prerelease             BOOLEAN                  NOT NULL DEFAULT false,
@@ -94,6 +94,9 @@
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_6 ON search_components USING GIN (format_field_values_6);
     CREATE INDEX IF NOT EXISTS idx_search_components_format_field_values_7 ON search_components USING GIN (format_field_values_7);
 
+    -- This is handled through an upgrade step as IF EXISTS cannot be used
+    -- ALTER TABLE search_components RENAME COLUMN component_created TO last_modified;
+
     DROP INDEX IF EXISTS idx_search_components_paths;
 
     CREATE OR REPLACE FUNCTION enable_pg_trgm() RETURNS VOID AS $$
@@ -125,7 +128,7 @@
     search_component_name  VARCHAR                  NOT NULL,
     component_kind         VARCHAR                  NOT NULL,
     version                VARCHAR                  NOT NULL,
-    component_created      TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_modified      TIMESTAMP WITH TIME ZONE NOT NULL,
     search_repository_name VARCHAR(200)             NOT NULL,
     normalised_version     VARCHAR                  NOT NULL,
     prerelease             BOOLEAN                  NOT NULL DEFAULT false,
@@ -168,7 +171,7 @@
     <result property="componentKind" column="component_kind"/>
     <result property="version" column="version"/>
     <result property="normalisedVersion" column="normalised_version"/>
-    <result property="componentCreated" column="component_created"/>
+    <result property="lastModified" column="last_modified"/>
     <result property="repositoryName" column="search_repository_name"/>
     <result property="prerelease" column="prerelease"/>
   </resultMap>
@@ -182,7 +185,7 @@
           search_repository_name, tsvector_format, tsvector_namespace, tsvector_version, tsvector_search_repository_name, component_kind,
           normalised_version, prerelease, attributes, entity_version, paths, tsvector_search_component_name, uploaders, uploader_ips, tsvector_paths,
           keywords, md5, sha1, sha256, sha512, format_field_values_1, format_field_values_2,
-          format_field_values_3, format_field_values_4, format_field_values_5, format_field_values_6, format_field_values_7, tsvector_tags, tags, component_created)
+          format_field_values_3, format_field_values_4, format_field_values_5, format_field_values_6, format_field_values_7, tsvector_tags, tags, last_modified)
         SELECT
            #{repositoryId}, #{componentId}, #{format}, #{namespace}, #{componentName}, #{version}, #{repositoryName},
             to_tsvector('simple', coalesce(#{format}, '')), to_tsvector('simple', coalesce(#{namespace}, '')),
@@ -208,7 +211,7 @@
             <include refid="toTsVector"><property name="tokens" value="formatFieldValues7"/></include>,
             <include refid="toTsVector"><property name="tokens" value="tags"/></include>,
             #{tags, typeHandler=ListTypeHandler},
-            comp.created
+            #{lastModified}
         FROM ${format}_component comp WHERE component_id = #{componentId} AND #{entityVersion} = comp.entity_version
         -- The WHERE clause above ensures the component still exists
         -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
@@ -219,6 +222,7 @@
           entity_version = #{entityVersion},
           component_kind = #{componentKind},
           prerelease = #{prerelease},
+          last_modified = #{lastModified},
           uploaders = <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
           uploader_ips = <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
           paths = <include refid="join"><property name="thePaths" value="paths"/></include>,
@@ -280,7 +284,7 @@
     <result property="normalisedVersion" column="normalised_version"/>
     <result property="repositoryName" column="search_repository_name"/>
     <result property="format" column="format"/>
-    <result property="created" column="component_created" />
+    <result property="lastModified" column="last_modified" />
     <result property="attributes" column="attributes" />
     <result property="tags" column="tags" typeHandler="ListTypeHandler" />
   </resultMap>
@@ -294,7 +298,7 @@
         cs.normalised_version,
         cs.search_repository_name,
         cs.format,
-        cs.component_created,
+        cs.last_modified,
         attributes,
         tags
     FROM search_components cs
@@ -325,7 +329,7 @@
   <insert id="saveBatch" parameterType="java.util.List" databaseId="PostgreSQL">
     INSERT INTO search_components(repository_id, component_id, format, namespace, search_component_name, version,
       search_repository_name, tsvector_format, tsvector_namespace, tsvector_version, tsvector_search_repository_name,
-      component_kind, normalised_version, component_created, prerelease, attributes, entity_version, paths, uploaders,
+      component_kind, normalised_version, last_modified, prerelease, attributes, entity_version, paths, uploaders,
       uploader_ips, tsvector_search_component_name, tsvector_paths, keywords, md5, sha1, sha256, sha512,
       format_field_values_1, format_field_values_2, format_field_values_3, format_field_values_4, format_field_values_5, format_field_values_6, format_field_values_7, tsvector_tags, tags)
     VALUES
@@ -335,7 +339,7 @@
        to_tsvector('simple', COALESCE(#{item.format}, '')), to_tsvector('simple', COALESCE(#{item.namespace}, '')),
        to_tsvector('simple', COALESCE(#{item.version}, '')),
        to_tsvector('simple', CONCAT('/', coalesce(#{item.repositoryName}, ''))), #{item.componentKind}, #{item.normalisedVersion},
-       #{item.componentCreated}, #{item.prerelease}, #{item.attributes}, COALESCE(#{item.entityVersion}, 1),
+       #{item.lastModified}, #{item.prerelease}, #{item.attributes}, COALESCE(#{item.entityVersion}, 1),
       <include refid="join"><property name="thePaths" value="item.paths"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.uploaders"/></include>,
       <include refid="toTsVector"><property name="tokens" value="item.uploaderIps"/></include>,

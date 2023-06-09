@@ -318,7 +318,7 @@ public class DatastoreBlobstoreRestoreTestHelper
   }
 
   private static BlobStore getBlobStore(final Repository repository) {
-    return ((ContentFacetSupport) repository.facet(ContentFacet.class)).stores().blobStore;
+    return ((ContentFacetSupport) repository.facet(ContentFacet.class)).stores().blobStoreProvider.get();
   }
 
   private static void assetMatch(final FluentAsset asset, final BlobStore blobStore) {

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
+import javax.inject.Provider;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -70,16 +71,16 @@ public class FluentBlobsImpl
 
   private final ContentFacetSupport facet;
 
-  private final BlobStore blobStore;
+  private final Provider<BlobStore> blobStore;
 
-  public FluentBlobsImpl(final ContentFacetSupport facet, final BlobStore blobStore) {
+  public FluentBlobsImpl(final ContentFacetSupport facet, final Provider<BlobStore> blobStore) {
     this.facet = checkNotNull(facet);
     this.blobStore = checkNotNull(blobStore);
   }
 
   @Override
   public BlobStoreMetrics getMetrics() {
-    return blobStore.getMetrics();
+    return blobStore.get().getMetrics();
   }
 
   @Override
@@ -96,9 +97,9 @@ public class FluentBlobsImpl
                          final Iterable<HashAlgorithm> hashing)
   {
     MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in);
-    Blob blob = blobStore.create(hashingStream, tempHeaders(headers, contentType));
+    Blob blob = blobStore.get().create(hashingStream, tempHeaders(headers, contentType));
 
-    return new TempBlob(blob, hashingStream.hashes(), true, blobStore);
+    return new TempBlob(blob, hashingStream.hashes(), true, blobStore.get());
   }
 
   @Override
@@ -113,7 +114,7 @@ public class FluentBlobsImpl
       Map<String, String> tempHeaders = tempHeaders(Collections.emptyMap(), contentType);
       Blob blob;
       try {
-        blob = blobStore.create(path, tempHeaders, Files.size(path), hashes.get(HashAlgorithm.SHA1));
+        blob = blobStore.get().create(path, tempHeaders, Files.size(path), hashes.get(HashAlgorithm.SHA1));
       }
       catch (Exception e) {
         if (requireHardLink) {
@@ -121,10 +122,10 @@ public class FluentBlobsImpl
         }
         log.debug("Failed to hard-link {}", path);
         try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
-          blob = blobStore.create(in, tempHeaders);
+          blob = blobStore.get().create(in, tempHeaders);
         }
       }
-      return new TempBlob(blob, hashes, true, blobStore);
+      return new TempBlob(blob, hashes, true, blobStore.get());
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -169,7 +170,7 @@ public class FluentBlobsImpl
     else if (payload instanceof DetachedBlobPayload) {
       DetachedBlobPayload detachedBlobPayload = (DetachedBlobPayload) payload;
       Map<HashAlgorithm, HashCode> hashes = hashes(payload, hashing);
-      return new AttachableBlob(detachedBlobPayload.getBlob(), hashes, true, blobStore);
+      return new AttachableBlob(detachedBlobPayload.getBlob(), hashes, true, blobStore.get());
     }
     try (InputStream in = payload.openInputStream()) {
       return ingest(in, cleanupContentType(payload.getContentType()), hashing);
@@ -215,12 +216,12 @@ public class FluentBlobsImpl
     maybePut(newHeaders, headers, CREATED_BY_HEADER, clientInfo.map(ClientInfo::getUserid).orElse(SYSTEM));
     maybePut(newHeaders, headers, CREATED_BY_IP_HEADER, clientInfo.map(ClientInfo::getRemoteIP).orElse(SYSTEM));
 
-    return blobStore.create(sourceFile, newHeaders.build(), size, sha1);
+    return blobStore.get().create(sourceFile, newHeaders.build(), size, sha1);
   }
 
   @Override
   public Optional<Blob> blob(final BlobRef blobRef) {
-    return ofNullable(blobStore.get(blobRef.getBlobId()));
+    return ofNullable(blobStore.get().get(blobRef.getBlobId()));
   }
 
   private void maybePut(

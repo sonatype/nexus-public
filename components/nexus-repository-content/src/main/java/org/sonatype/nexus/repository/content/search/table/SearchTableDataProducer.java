@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,7 +26,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
-import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -36,12 +34,9 @@ import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.content.utils.PreReleaseEvaluator;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 
-import com.google.common.collect.Iterables;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static java.util.Comparator.comparing;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -94,7 +89,6 @@ public class SearchTableDataProducer
     data.setVersion(component.version());
     data.setNormalisedVersion(
         versionNormalizerService.getNormalizedVersionByFormat(component.version(), repository.getFormat()));
-    data.setComponentCreated(component.created());
     data.setRepositoryName(repositoryName);
     data.addKeywords(asList(component.namespace(), component.name(), component.version()));
     data.setEntityVersion(component.entityVersion());
@@ -106,23 +100,17 @@ public class SearchTableDataProducer
       return Optional.empty();
     }
 
+    assets.stream()
+        .map(Asset::blob)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(AssetBlob::blobCreated)
+        .max(OffsetDateTime::compareTo)
+        .ifPresent(data::setLastModified);
+
     assets.forEach(asset -> addAssetData(data, component, asset, repository));
-    data.setLastEventTime(getLatestUpdatedTime(component, assets));
     addSearchExtensions(data, component);
     return Optional.of(data);
-  }
-
-  public static OffsetDateTime getLatestUpdatedTime(
-      final FluentComponent component,
-      final Collection<FluentAsset> assets)
-  {
-    Set<OffsetDateTime> updatedTimes = new TreeSet<>();
-    updatedTimes.add(component.lastUpdated());
-
-    Optional<FluentAsset> latestAssetUpdated = assets.stream().max(comparing(RepositoryContent::lastUpdated));
-    latestAssetUpdated.map(RepositoryContent::lastUpdated).ifPresent(updatedTimes::add);
-
-    return Iterables.getLast(updatedTimes);
   }
 
   private void addAssetData(

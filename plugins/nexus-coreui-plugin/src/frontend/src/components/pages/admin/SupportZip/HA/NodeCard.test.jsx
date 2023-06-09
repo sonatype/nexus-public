@@ -14,19 +14,17 @@ import React from 'react';
 import {render, screen} from '@testing-library/react';
 
 import NodeCard from './NodeCard';
-import NodeCardTestData from './NodeCard.testdata';
+import testNodes from './NodeCard.testdata';
+import UIStrings from '../../../../../constants/UIStrings';
+
+const {
+    CREATING_ZIP,
+    NO_ZIP_CREATED,
+    DOWNLOAD_ZIP,
+    CREATE_SUPPORT_ZIP
+  } = UIStrings.SUPPORT_ZIP;
 
 describe('NodeCard', function () {
-    const testNodes = NodeCardTestData;
-
-    const NODE_ACTIVE_INDICATOR = 'Node Active';
-
-    const DOWNLOAD_ZIP_STATUS = 'Download Zip';
-    const CREATE_ZIP_STATUS = 'Create Support zip';
-    const CREATING_ZIP_STATUS = 'Creating Zip...';
-
-    const NO_ZIP_CREATED = 'No Zip created';
-
     const ACTIVE_NODE_INDEX = 0;
     const ZIP_CREATED_NODE_INDEX = 0;
     const ZIP_NOT_CREATED_NODE_INDEX = 2;
@@ -34,10 +32,10 @@ describe('NodeCard', function () {
 
     const selectors = {
         nodeHostName: (hostname) => screen.getByText(hostname),
-        downloadZipStatus: () => screen.getByText(DOWNLOAD_ZIP_STATUS),
         noZipCreated: () => screen.getByText(NO_ZIP_CREATED),
-        zipCreate: () => screen.getByText(CREATE_ZIP_STATUS),
-        zipCreating: () => screen.getByText(CREATING_ZIP_STATUS)
+        createBtn: () => screen.getByRole('button', {name: CREATE_SUPPORT_ZIP}),
+        zipCreating: () => screen.getByText(CREATING_ZIP),
+        downloadBtn: () => screen.getByRole('button', {name: DOWNLOAD_ZIP}) 
     }
 
     const renderView = (nxrmNode) => {
@@ -59,7 +57,7 @@ describe('NodeCard', function () {
         renderView(node);
 
         expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(selectors.downloadZipStatus()).toBeInTheDocument();
+        expect(selectors.downloadBtn()).toBeInTheDocument();
     });
 
     it('renders zip is not created', async () => {
@@ -68,7 +66,7 @@ describe('NodeCard', function () {
 
         expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
         expect(selectors.noZipCreated()).toBeInTheDocument();
-        expect(selectors.zipCreate()).toBeInTheDocument();
+        expect(selectors.createBtn()).toBeInTheDocument();
     });
 
     it('renders zip creation in progress', async () => {

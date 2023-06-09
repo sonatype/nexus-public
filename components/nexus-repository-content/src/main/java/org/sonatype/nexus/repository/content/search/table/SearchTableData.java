@@ -60,11 +60,8 @@ public class SearchTableData
 
   private String normalisedVersion;
 
-  //created column from *_component table
-  private OffsetDateTime componentCreated;
-
-  //The last time this record was updated
-  private OffsetDateTime lastEventTime;
+  // Largest AssetBlob.created() from the component's assets
+  private OffsetDateTime lastModified;
 
   //name column from repository table
   private String repositoryName;
@@ -197,20 +194,12 @@ public class SearchTableData
     this.version = version;
   }
 
-  public OffsetDateTime getComponentCreated() {
-    return componentCreated;
+  public OffsetDateTime getLastModified() {
+    return lastModified;
   }
 
-  public void setComponentCreated(final OffsetDateTime componentCreated) {
-    this.componentCreated = componentCreated;
-  }
-
-  public OffsetDateTime getLastEventTime() {
-    return lastEventTime;
-  }
-
-  public void setLastEventTime(final OffsetDateTime lastEventTime) {
-    this.lastEventTime = lastEventTime;
+  public void setLastModified(final OffsetDateTime lastModified) {
+    this.lastModified = lastModified;
   }
 
   public String getRepositoryName() {
@@ -429,8 +418,7 @@ public class SearchTableData
         Objects.equals(componentKind, tableData.componentKind) &&
         Objects.equals(version, tableData.version) &&
         Objects.equals(normalisedVersion, tableData.normalisedVersion) &&
-        Objects.equals(componentCreated, tableData.componentCreated) &&
-        Objects.equals(lastEventTime, tableData.lastEventTime) &&
+        Objects.equals(lastModified, tableData.lastModified) &&
         Objects.equals(repositoryName, tableData.repositoryName) &&
         Objects.equals(prerelease, tableData.prerelease) &&
         Objects.equals(uploaders, tableData.uploaders) &&
@@ -456,7 +444,7 @@ public class SearchTableData
   @Override
   public int hashCode() {
     return Objects.hash(repositoryId, componentId, format, namespace, componentName, aliasComponentNames, componentKind,
-        version, normalisedVersion, componentCreated, lastEventTime, repositoryName,
+        version, normalisedVersion, lastModified, repositoryName,
         prerelease, uploaders, uploaderIps, paths, keywords, md5, sha1, sha256, sha512, entityVersion,
         formatFieldValues1, formatFieldValues2, formatFieldValues3, formatFieldValues4, formatFieldValues5,
         formatFieldValues6, formatFieldValues7, attributes, tags);
@@ -474,8 +462,7 @@ public class SearchTableData
         .add("componentKind='" + componentKind + "'")
         .add("version='" + version + "'")
         .add("normalisedVersion='" + normalisedVersion + "'")
-        .add("componentCreated=" + componentCreated)
-        .add("lastEventTime=" + lastEventTime)
+        .add("lastModified=" + lastModified)
         .add("repositoryName='" + repositoryName + "'")
         .add("prerelease=" + prerelease)
         .add("uploader='" + uploaders + "'")

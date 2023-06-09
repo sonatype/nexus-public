@@ -12,10 +12,14 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.content.SearchResult;
-import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * {@link SearchResult} data backed by the content data store.
@@ -23,12 +27,15 @@ import org.sonatype.nexus.repository.content.store.AbstractRepositoryContent;
  * @since 3.38
  */
 public class SearchResultData
-    extends AbstractRepositoryContent
     implements SearchResult
 {
   private Integer componentId; // NOSONAR: internal id
 
   private Integer repositoryId; // NOSONAR: internal id
+
+  private NestedAttributesMap attributes = new NestedAttributesMap("attributes", new HashMap<>());
+
+  private OffsetDateTime lastModified;
 
   private String namespace;
 
@@ -55,6 +62,11 @@ public class SearchResultData
   }
 
   @Override
+  public NestedAttributesMap attributes() {
+    return attributes;
+  }
+
+  @Override
   public String namespace() {
     return namespace;
   }
@@ -62,6 +74,11 @@ public class SearchResultData
   @Override
   public String componentName() {
     return componentName;
+  }
+
+  @Override
+  public OffsetDateTime lastModified() {
+    return lastModified;
   }
 
   @Override
@@ -87,6 +104,14 @@ public class SearchResultData
   @Override
   public String format() {
     return format;
+  }
+
+  public void setAttributes(final NestedAttributesMap attributes) {
+    this.attributes = checkNotNull(attributes);
+  }
+
+  public void setLastModified(final OffsetDateTime lastModified) {
+    this.lastModified = checkNotNull(lastModified);
   }
 
   public void setComponentId(final Integer componentId) {
@@ -136,6 +161,7 @@ public class SearchResultData
         ", version='" + version + '\'' +
         ", normalisedVersion='" + normalisedVersion + '\'' +
         ", repositoryName='" + repositoryName + '\'' +
+        ", lastModified='" + lastModified + '\'' +
         ", tags='" + tags + '\'' +
         '}';
   }

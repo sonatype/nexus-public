@@ -1357,7 +1357,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Clm_Description: 'Manage IQ Server configuration',
     Clm_Connection_Success: 'Connection to IQ Server verified: {0}',
     Clm_Dashboard_Link_Text: '<span class="x-fa fa-dashboard"></span>IQ Server Dashboard<span class="x-fa fa-external-link"></span>',
-    Clm_Dashboard_Description: 'Open IQ Server Dashboard',
+    Clm_Dashboard_Description: 'Open Dashboard for Sonatype Repository Firewall and Sonatype Lifecycle',
     Clm_Dashboard_Disabled_Tooltip: 'IQ Server must be enabled first',
     ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank" rel="noopener">IQ Server</a> ' +
         'can evaluate application and organization policies.</p>' +

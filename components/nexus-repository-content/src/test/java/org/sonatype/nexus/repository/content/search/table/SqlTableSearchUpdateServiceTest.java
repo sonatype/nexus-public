@@ -12,8 +12,12 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
+import java.util.HashMap;
+
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 
@@ -24,6 +28,7 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
 
 /**
  * Tests for {@link SqlTableSearchUpdateService}
@@ -35,13 +40,21 @@ public class SqlTableSearchUpdateServiceTest
   private Repository repository;
 
   @Mock
+  private ContentFacet contentFacet;
+
+  @Mock
   private SearchTableStore searchTableStore;
+
+  private NestedAttributesMap attributes = new NestedAttributesMap("root", new HashMap<>());
 
   private SqlTableSearchUpdateService underTest;
 
   @Before
   public void setup() {
     when(repository.getType()).thenReturn(new HostedType());
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(contentFacet.attributes()).thenReturn(attributes);
+
     underTest = new SqlTableSearchUpdateService(searchTableStore);
   }
 
@@ -65,5 +78,12 @@ public class SqlTableSearchUpdateServiceTest
     when(searchTableStore.repositoryNeedsReindex(repository.getName())).thenReturn(false);
 
     assertFalse(underTest.needsReindex(repository));
+  }
+
+  @Test
+  public void needsReindex_byFlag() {
+    attributes.set(SEARCH_INDEX_OUTDATED, true);
+
+    assertTrue(underTest.needsReindex(repository));
   }
 }

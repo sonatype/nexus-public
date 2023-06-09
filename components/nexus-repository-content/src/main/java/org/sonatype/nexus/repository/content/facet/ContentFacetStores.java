@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
+import javax.inject.Provider;
+
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
@@ -31,7 +33,7 @@ public class ContentFacetStores
 {
   public final String blobStoreName;
 
-  public final BlobStore blobStore;
+  public final Provider<BlobStore> blobStoreProvider;
 
   public final String contentStoreName;
 
@@ -49,7 +51,8 @@ public class ContentFacetStores
                             final String contentStoreName)
   {
     this.blobStoreName = checkNotNull(blobStoreName);
-    this.blobStore = blobStoreManager.get(blobStoreName);
+    // We have to use Provider here because the blobstore may be not initialized after conversion to group.
+    this.blobStoreProvider = () -> blobStoreManager.get(blobStoreName);
 
     this.contentStoreName = checkNotNull(contentStoreName);
     this.contentRepositoryStore = formatStoreManager.contentRepositoryStore(contentStoreName);

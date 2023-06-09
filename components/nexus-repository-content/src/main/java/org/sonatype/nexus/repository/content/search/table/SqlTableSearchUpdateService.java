@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.repository.types.GroupType;
 
@@ -42,11 +43,17 @@ public class SqlTableSearchUpdateService
     if (GroupType.NAME.equals(repository.getType().getValue())) {
       return false;
     }
+    ContentFacet contentFacet = repository.facet(ContentFacet.class);
+    Object indexOutdated = contentFacet.attributes().get(SEARCH_INDEX_OUTDATED);
+    if (indexOutdated instanceof Boolean) {
+      return (boolean) indexOutdated;
+    }
     return searchTableStore.repositoryNeedsReindex(repository.getName());
   }
 
   @Override
   public void doneReindexing(final Repository repository) {
-    // . . .
+    ContentFacet contentFacet = repository.facet(ContentFacet.class);
+    contentFacet.withoutAttribute(SEARCH_INDEX_OUTDATED);
   }
 }

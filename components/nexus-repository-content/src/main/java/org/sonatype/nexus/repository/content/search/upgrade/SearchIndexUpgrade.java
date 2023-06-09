@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Recipe;
@@ -32,6 +33,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
 
@@ -58,10 +60,11 @@ public abstract class SearchIndexUpgrade
 
   public static final String RECIPE_NAME = "recipe_name";
 
-  private final Map<String, Recipe> recipes;
+  private Map<String, Recipe> recipes;
 
-  protected SearchIndexUpgrade(final Map<String, Recipe> recipes) {
-    this.recipes = recipes;
+  @Inject
+  public final void inject(final Map<String, Recipe> recipes) {
+    this.recipes = checkNotNull(recipes);
   }
 
   public boolean test(final String format) {

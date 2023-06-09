@@ -16,7 +16,7 @@ export default {
   IQ_SERVER: {
     MENU: {
       text: 'IQ Server',
-      description: 'Manage IQ Server Connection Configuration'
+      description: 'Manage Sonatype Repository Firewall and Sonatype Lifecycle Configuration'
     },
 
     OPEN_DASHBOARD: 'Open IQ Server Dashboard',
