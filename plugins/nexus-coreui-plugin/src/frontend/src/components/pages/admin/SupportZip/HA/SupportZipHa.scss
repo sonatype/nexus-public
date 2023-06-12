@@ -15,8 +15,6 @@
     justify-content: start;
 
     .nx-card {
-      min-width: 310px;
-
       .nx-card__header:hover{
         cursor: pointer;
       }
@@ -25,14 +23,13 @@
         color: green;
       }
 
-      .nx-dropdown-menu {
-        text-align: right;
-        width: fit-content;
-      }
-
-      .nx-loading-spinner {
-        margin: 0;
+      .nx-text-link {
+        text-decoration: underline;
       }
     }
+  }
+
+  .nxrm-p-zip-updated {
+    margin: 0;
   }
 }
