@@ -95,6 +95,12 @@ public class TaskConfiguration
 
   static final String LOG_STATE_KEY = ".logState";
 
+  /**
+   * Set a task config key to this value to indicate that the config key should be removed from the task config upon
+   * task completion.
+   */
+  public static final String REMOVE_ATTRIBUTE_MARKER = "-1";
+
   @JsonProperty("configuration")
   private final Map<String, String> configuration;
 
