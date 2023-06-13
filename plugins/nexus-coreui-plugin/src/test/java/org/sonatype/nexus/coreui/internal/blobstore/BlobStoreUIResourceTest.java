@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui.internal.blobstore;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
@@ -67,6 +69,7 @@ public class BlobStoreUIResourceTest
   public void setup() {
     addDescriptor(FILE_TYPE, FILE_TYPE_ID);
     addDescriptor(S3_TYPE, S3_TYPE_ID);
+    addDescriptor(BlobStoreGroup.TYPE, BlobStoreGroup.CONFIG_KEY);
 
     when(blobStoreConfigurationStore.list()).thenReturn(configurations);
 
@@ -134,11 +137,12 @@ public class BlobStoreUIResourceTest
 
   @Test
   public void listNonStartedBlobStore() {
-    addBlobStore("fileStore", FILE_TYPE);
-    addBlobStore("s3BlobStore", S3_TYPE, false);
+    BlobStore fileBS = addBlobStore("fileStore", FILE_TYPE);
+    BlobStore s3BS = addBlobStore("s3BlobStore", S3_TYPE, false);
+    addGroupBlobStore("groupBS", BlobStoreGroup.TYPE, true, Arrays.asList(fileBS, s3BS));
 
     List<BlobStoreUIResponse> responses = underTest.listBlobStores();
-    assertThat(responses.size(), is(2));
+    assertThat(responses.size(), is(3));
     BlobStoreUIResponse response1 = responses.get(0);
     assertThat(response1.getName(), is("fileStore"));
     assertThat(response1.getBlobCount(), is(1L));
@@ -156,6 +160,15 @@ public class BlobStoreUIResourceTest
     assertThat(response2.getTotalSizeInBytes(), is(0L));
     assertThat(response2.getAvailableSpaceInBytes(), is(0L));
     assertThat(response2.isUnavailable(), is(true));
+
+    BlobStoreUIResponse response3 = responses.get(2);
+    assertThat(response3.getName(), is("groupBS"));
+    assertThat(response3.getBlobCount(), is(0L));
+    assertThat(response3.getTypeId(), is(BlobStoreGroup.CONFIG_KEY));
+    assertThat(response3.getTypeName(), is(BlobStoreGroup.TYPE));
+    assertThat(response3.getTotalSizeInBytes(), is(0L));
+    assertThat(response3.getAvailableSpaceInBytes(), is(0L));
+    assertThat(response3.isUnavailable(), is(true));
   }
 
   private void addDescriptor(String type, String typeId) {
@@ -164,22 +177,44 @@ public class BlobStoreUIResourceTest
     blobStoreDescriptors.put(type, result);
   }
 
-  private void addBlobStore(final String name, final String type) {
-    addBlobStore(name, type, true);
+  private BlobStore addBlobStore(final String name, final String type) {
+    return addBlobStore(name, type, true);
   }
 
-  private void addBlobStore(final String name, final String type, final boolean started) {
+  private BlobStore addBlobStore(final String name, final String type, final boolean started) {
     // create blobstore and metrics
     BlobStore bs = mock(BlobStore.class);
-    BlobStoreMetrics metrics = mock(BlobStoreMetrics.class);
-    when(metrics.getBlobCount()).thenReturn(1L);
-    when(metrics.getTotalSize()).thenReturn(100L);
-    when(metrics.getAvailableSpace()).thenReturn(1000L);
+    BlobStoreMetrics metrics = getBlobStoreMetrics();
+    when(bs.isGroupable()).thenReturn(true);
     when(bs.isStarted()).thenReturn(started);
     when(bs.getMetrics()).thenReturn(metrics);
     // add configuration
     configurations.add(new MockBlobStoreConfiguration(name, type));
     // return blobstore from blobStoreManager
     when(blobStoreManager.get(name)).thenReturn(bs);
+    return bs;
+  }
+
+  private BlobStoreMetrics getBlobStoreMetrics() {
+    BlobStoreMetrics metrics = mock(BlobStoreMetrics.class);
+    when(metrics.getBlobCount()).thenReturn(1L);
+    when(metrics.getTotalSize()).thenReturn(100L);
+    when(metrics.getAvailableSpace()).thenReturn(1000L);
+    return metrics;
+  }
+
+  private void addGroupBlobStore(final String name, final String type, final boolean started, List<BlobStore> members) {
+    // create blobstore and metrics
+    BlobStoreGroup groupBlobStore = mock(BlobStoreGroup.class);
+    BlobStoreMetrics metrics = getBlobStoreMetrics();
+    when(groupBlobStore.isGroupable()).thenReturn(false);
+    when(groupBlobStore.isStarted()).thenReturn(started);
+    when(groupBlobStore.getMetrics()).thenReturn(metrics);
+
+    when(groupBlobStore.getMembers()).thenReturn(members);
+    // add configuration
+    configurations.add(new MockBlobStoreConfiguration(name, type));
+    // return blobstore from blobStoreManager
+    when(blobStoreManager.get(name)).thenReturn(groupBlobStore);
   }
 }

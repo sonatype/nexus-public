@@ -280,9 +280,10 @@ public class BlobStoreGroup
   @Override
   @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
-    Iterable<BlobStoreMetrics> membersMetrics = (Iterable<BlobStoreMetrics>) members.get().stream()
-      .map((BlobStore member) -> member.getMetrics())
-      ::iterator;
+    Iterable<BlobStoreMetrics> membersMetrics = members.get().stream()
+        .filter(BlobStore::isStarted)
+        .map(BlobStore::getMetrics)
+        ::iterator;
     return new BlobStoreGroupMetrics(membersMetrics);
   }
 
