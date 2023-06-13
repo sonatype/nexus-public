@@ -115,11 +115,6 @@ public class CapabilitiesRule
     capabilityRegistryProvider.get().disable(find(capabilityType).get().context().id());
   }
 
-  protected void enable(final String capabilityType) {
-    // We don't handle missing capabilities here intentionally
-    capabilityRegistryProvider.get().enable(find(capabilityType).get().context().id());
-  }
-
   /**
    * Removes a capability, please note that state will not be restored.
    */
