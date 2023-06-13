@@ -493,13 +493,14 @@ public class SearchResourceTest
   public void testBuildQuery() {
     String uri = "?format=maven2" +
         "&arbitrary.param=random" +
-        "&sha256=" + //this one should be ignored because it is empty
+        "&sha256=" +
         "&q=someKindOfStringQuery";
 
     List<SearchFilter> actual = searchUtils.getSearchFilters(uriInfo(uri));
 
     assertThat(actual, containsInAnyOrder(new SearchFilter("arbitrary.param", "random"),
-        new SearchFilter("format", "maven2"), new SearchFilter("keyword", "someKindOfStringQuery")));
+        new SearchFilter("format", "maven2"), new SearchFilter("keyword", "someKindOfStringQuery"),
+        new SearchFilter("assets.attributes.checksum.sha256", "")));
   }
 
   @Test

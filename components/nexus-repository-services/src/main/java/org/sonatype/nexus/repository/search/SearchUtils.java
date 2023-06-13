@@ -106,7 +106,6 @@ public class SearchUtils
                 String key = searchParams.getOrDefault(entry.getKey(), entry.getKey());
                 return new SearchFilter(key, value);
             }))
-        .filter(filter -> !Strings2.isBlank(filter.getValue()))
         .collect(toList());
   }
 

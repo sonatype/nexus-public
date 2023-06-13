@@ -79,6 +79,7 @@ public class ElasticSearchUtilsTest
 
     Map<String, ElasticSearchContribution> searchContributions = new HashMap<>();
     searchContributions.put(DefaultElasticSearchContribution.NAME, new DefaultElasticSearchContribution());
+    searchContributions.put(BlankValueElasticSearchContribution.NAME, new BlankValueElasticSearchContribution());
     searchContributions.put(KeywordElasticSearchContribution.NAME, new KeywordElasticSearchContribution());
     underTest = new ElasticSearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
   }

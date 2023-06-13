@@ -82,6 +82,8 @@ public class ElasticSearchUtils
 
   private final ElasticSearchContribution defaultElasticSearchContribution;
 
+  private final ElasticSearchContribution blankValueElasticSearchContribution;
+
   @Inject
   public ElasticSearchUtils(final RepositoryManagerRESTAdapter repoAdapter,
                             final Map<String, SearchMappings> searchMappings,
@@ -97,6 +99,8 @@ public class ElasticSearchUtils
     this.searchContributions = checkNotNull(searchContributions);
     this.defaultElasticSearchContribution = checkNotNull(searchContributions.get(
         DefaultElasticSearchContribution.NAME));
+    this.blankValueElasticSearchContribution = checkNotNull(searchContributions.get(
+        BlankValueElasticSearchContribution.NAME));
   }
 
   private Map<String, String> getAssetSearchParameters() {
@@ -136,9 +140,21 @@ public class ElasticSearchUtils
           elasticSearchContribution.contribute(contribute, searchFilter.getProperty(), searchFilter.getValue());
     });
 
+    handleBlankValueFilters(contribute, searchFilters);
+
     log.debug("Query: {}", query);
 
     return query;
+  }
+
+  private void handleBlankValueFilters(
+      final Consumer<QueryBuilder> contribute,
+      final Collection<SearchFilter> searchFilters)
+  {
+    searchFilters.stream()
+        .filter(filter -> isBlank(filter.getValue()))
+        .forEach(filter ->
+            blankValueElasticSearchContribution.contribute(contribute, filter.getProperty(), filter.getValue()));
   }
 
   /**

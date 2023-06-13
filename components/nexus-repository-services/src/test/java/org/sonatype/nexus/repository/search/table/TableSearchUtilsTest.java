@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.search.BlankValueSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
@@ -42,12 +43,16 @@ public class TableSearchUtilsTest
   @Mock
   private SqlSearchQueryContribution defaultSearchContribution;
 
+  @Mock
+  private SqlSearchQueryContribution blankValueSearchContribution;
+
   private TableSearchUtils underTest;
 
   @Before
   public void setup() {
     Map<String, SqlSearchQueryContribution> searchContributions = new HashMap<>();
     searchContributions.put(DefaultSqlSearchQueryContribution.NAME, defaultSearchContribution);
+    searchContributions.put(BlankValueSqlSearchQueryContribution.NAME, blankValueSearchContribution);
     underTest = new TableSearchUtils(searchContributions);
   }
 
@@ -73,5 +78,18 @@ public class TableSearchUtilsTest
 
     assertThat(repositoryFilter.isPresent(), is(true));
     assertThat(repositoryFilter.get(), is(repositoryNameFilter));
+  }
+
+  @Test
+  public void shouldBuildQueryConditionForBlankValueFilter() {
+    List<SearchFilter> searchFilters =
+        asList(new SearchFilter("group.raw", ""), new SearchFilter("version", "4.13 3.2.0"));
+    SearchRequest request = SearchRequest.builder().searchFilters(searchFilters).build();
+
+    final SqlSearchQueryBuilder queryBuilder = underTest.buildQuery(request);
+
+    assertThat(queryBuilder, is(notNullValue()));
+    verify(defaultSearchContribution).contribute(any(SqlSearchQueryBuilder.class), eq(searchFilters.get(1)));
+    verify(blankValueSearchContribution).contribute(any(SqlSearchQueryBuilder.class), eq(searchFilters.get(0)));
   }
 }
