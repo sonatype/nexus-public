@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
  * Tests for {@link ContentAuthPluginScript}.
@@ -95,9 +96,9 @@ public class ContentAuthPluginScriptTest
         .put("repository_name", REPOSITORY_NAME)
         .put("assets", Collections.singletonList(Collections.singletonMap("name", PATH)))
         .build());
-    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource)).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, READ, variableSource)).thenReturn(true);
     assertThat(underTest.run(), is(true));
-    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource);
+    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, READ, variableSource);
   }
 
   @Test
@@ -107,9 +108,9 @@ public class ContentAuthPluginScriptTest
         .put("repository_name", REPOSITORY_NAME)
         .put("assets", Collections.singletonList(Collections.singletonMap("name", PATH)))
         .build());
-    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource)).thenReturn(false);
+    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, READ, variableSource)).thenReturn(false);
     assertThat(underTest.run(), is(false));
-    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource);
+    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, READ, variableSource);
   }
 
   @Test

@@ -279,7 +279,7 @@ public class SqlSearchPermissionBuilder
   private Set<Repository> computeRepositoriesWithAccess(final Set<Repository> repositories) {
     return repositories.stream()
         .filter(repository -> securityHelper.anyPermitted(
-            new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), BreadActions.BROWSE)))
+            new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(), BreadActions.READ)))
         .collect(toSet());
   }
 
