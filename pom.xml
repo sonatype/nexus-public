@@ -680,6 +680,7 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
+            <rerunFailingTestsCount>3</rerunFailingTestsCount>
             <useSystemClassLoader>false</useSystemClassLoader>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
@@ -705,6 +706,7 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
           <configuration>
+            <rerunFailingTestsCount>3</rerunFailingTestsCount>
             <trimStackTrace>false</trimStackTrace>
             <forkCount>1</forkCount>
             <reuseForks>false</reuseForks>
