@@ -133,6 +133,9 @@ Ext.define('NX.coreui.controller.Search', {
       controller: {
         '#Refresh': {
           refresh: me.loadStores
+        },
+        '#State': {
+          userchanged: me.onUserChanged
         }
       },
       component: {
@@ -169,6 +172,22 @@ Ext.define('NX.coreui.controller.Search', {
         }
       }
     });
+  },
+
+  /**
+   * Update search results after user changed.
+   *
+   * @private
+   */
+  onUserChanged: function (user, oldUser) {
+    var me = this,
+        searchResultStore = me.getSearchResultStore();
+    if (!user) {
+      if (searchResultStore !== null) {
+        searchResultStore.clearFilter(true);
+        searchResultStore.load(function() {});
+      }
+    }
   },
 
   /**
@@ -591,12 +610,12 @@ Ext.define('NX.coreui.controller.Search', {
     searchResultStore.clearFilter(true);
     me.loadBookmark();
 
-    // If no search filter has been specified, don't load any stores
-    if (!searchResultStore.getFilters().length) {
-      return;
-    }
-
     searchResultStore.load(function() {
+      // If no search filter has been specified, don't load any stores
+      if (!searchResultStore.getFilters().length) {
+        return;
+      }
+
       // Load the asset detail view
       if (list_ids[1]) {
         componentModel = searchResultStore.getById(decodeURIComponent(list_ids[0]));
@@ -643,7 +662,6 @@ Ext.define('NX.coreui.controller.Search', {
   applyFilters: function (filters, performSearchAfter) {
     const SUPPRESS_EVENTS = true;
     const searchResultStore = this.getStore('SearchResult');
-
     this.getSearchResult().getSelectionModel().deselectAll();
 
     searchResultStore.clearFilter(SUPPRESS_EVENTS);
