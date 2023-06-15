@@ -178,6 +178,12 @@ export default {
         READ_TAGS: 'readTags'
       }
     },
+    CAPABILITY: {
+      ACTION: 'capability_Capability',
+      METHODS: {
+        READ: 'read',
+      },
+    },
   },
   REST: {
     INTERNAL: {

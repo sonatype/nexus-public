@@ -39,6 +39,22 @@ export default {
           {' '}for more information.
         </>,
       },
+      ALERT: {
+        DEFAULT_ROLE: (roleId, roleName) => <>
+          This instance is using{' '}
+          <NxTextLink href={`#admin/security/roles:${roleId}`}>
+            {roleName}
+          </NxTextLink>
+          {' '}as the default role granted to all authenticated users.
+        </>,
+        CAPABILITY: (capabilityId) => <>
+          To manage this configuration, see the{' '}
+          <NxTextLink href={`#admin/system/capabilities:${capabilityId}`}>
+            Default Role capability
+          </NxTextLink>
+          {' '}page.
+        </>
+      },
     },
     FORM: {
       CREATE_TITLE: 'Create Role',

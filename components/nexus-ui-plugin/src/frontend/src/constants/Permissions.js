@@ -51,7 +51,7 @@ export default {
   PRIVILEGES: generatePermissions('privileges', [READ]),
   SETTINGS: generatePermissions('settings', [READ, UPDATE]),
   USERS: generatePermissions('users', [READ]),
-  ROLES: generatePermissions('roles', [READ]),
+  ROLES: generatePermissions('roles'),
   TASKS: generatePermissions('tasks', [...crudOptions, START, STOP]),
   LOGGING: generatePermissions('logging', [READ]),
   ATLAS: generatePermissions('atlas', [READ, CREATE]),
@@ -64,4 +64,5 @@ export default {
   TAGS: generatePermissions('tags', [READ]),
   COMPONENT: generatePermissions('component', [CREATE]),
   SEARCH: generatePermissions('search', [READ]),
+  CAPABILITIES: generatePermissions('capabilities'),
 };
