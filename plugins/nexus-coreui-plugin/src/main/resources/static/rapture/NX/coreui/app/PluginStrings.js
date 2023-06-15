@@ -810,6 +810,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     User_UserSettingsForm_Status_EmptyText: 'Select status',
     User_UserSettingsForm_Status_ActiveItem: 'Active',
     User_UserSettingsForm_Status_DisabledItem: 'Disabled',
+    User_UserSettingsForm_DefaultRole_FieldLabel: 'Applied Default-Role',
+    User_UserSettingsForm_DefaultRole_HelpText: 'The following role is configured as the default role for this system and is automatically granted to all authenticated users',
     User_UserSettingsExternalForm_Roles_FieldLabel: 'Roles',
     User_UserSettingsExternalForm_Roles_FromTitle: 'Available',
     User_UserSettingsExternalForm_Roles_ToTitle: 'Granted',

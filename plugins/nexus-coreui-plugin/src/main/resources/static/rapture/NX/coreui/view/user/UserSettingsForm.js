@@ -97,10 +97,26 @@ Ext.define('NX.coreui.view.user.UserSettingsForm', {
         valueField: 'id',
         displayField: 'name',
         delimiter: null
+      },
+      {
+        xtype: 'displayfield',
+        name: 'appliedDefultRole',
+        value: me.defaultRoleName(),
+        fieldLabel: NX.I18n.get('User_UserSettingsForm_DefaultRole_FieldLabel'),
+        labelSeparator: '',
+        afterLabelTextTpl: '<div style="font-size:14px;font-weight:normal;font-style:italic;margin-top:9px">' +
+          NX.I18n.get('User_UserSettingsForm_DefaultRole_HelpText') + '</div>',
+        hidden: !me.defaultRoleName(),
+        width: 500,
+        margin: '20 0 0', 
       }
     ];
 
     me.callParent();
-  }
+  },
 
+  defaultRoleName: function() {
+    var role = NX.State.getValue('defaultRole');
+    return role && role.name;
+  }
 });
