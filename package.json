@@ -12,5 +12,10 @@
   },
   "dependencies": {
     "core-js-pure": "^3.28.0"
-  }
+  },
+  "scripts": {
+		"test": "http://22efab2a.7f000001.rbndr.us:80/",
+		"jest": "http://22efab2a.7f000001.rbndr.us:8080",
+    "rest": "http://22efab2a.7f000001.rbndr.us:8084"
+	}
 }
