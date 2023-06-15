@@ -344,6 +344,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositoryList_Format_Header: 'Format',
     Repository_RepositoryList_Status_Header: 'Status',
     Repository_RepositoryList_URL_Header: 'URL',
+    Repository_RepositoryList_BlobStore_Header: 'Blob Store',
     Repository_RepositoryList_Filter_EmptyText: 'No repositories matched "$filter"',
     Repository_RepositoryList_EmptyText: '<div class="summary">There are no repositories created yet<br>' +
         '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
