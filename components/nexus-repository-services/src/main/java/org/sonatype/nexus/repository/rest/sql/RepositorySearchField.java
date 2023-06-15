@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.sql;
 
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import org.sonatype.nexus.repository.search.SortDirection;
 
 /**
  * @since 3.38
@@ -23,6 +24,6 @@ public class RepositorySearchField
   private static final String TABLE = "repository";
 
   public RepositorySearchField(final String columnName, final String sortColumnName) {
-    super(TABLE, columnName, sortColumnName , TextualQueryType.FULL_TEXT_SEARCH_QUERY);
+    super(TABLE, columnName, sortColumnName, SortDirection.ASC, TextualQueryType.FULL_TEXT_SEARCH_QUERY);
   }
 }

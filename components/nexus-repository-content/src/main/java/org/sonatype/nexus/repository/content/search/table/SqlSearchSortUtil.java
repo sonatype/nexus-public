@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.rest.SearchFieldSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.ComponentSearchField;
+import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.index.SearchConstants;
 
 import org.apache.commons.lang3.StringUtils;
@@ -75,6 +76,14 @@ public class SqlSearchSortUtil
     return sortColumn.filter(ComponentSearchField.ATTRIBUTES::equals)
         .map(sortExpressionForAttributesColumn(sortAlias))
         .orElse(sortColumn);
+  }
+
+  public Optional<SortDirection> getSortDirection(@Nullable final String sortAttribute) {
+    Optional<String> sortAlias = Optional.ofNullable(sortAttribute)
+        .flatMap(this::isAttributesField);
+
+    return sortAlias.map(aliasToColumn::get)
+        .map(SearchFieldSupport::getSortDirection);
   }
 
   private Function<String, Optional<String>> sortExpressionForAttributesColumn(final Optional<String> sortAlias) {

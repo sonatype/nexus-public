@@ -43,6 +43,7 @@ import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
 import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchPermissionException;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
@@ -170,12 +171,13 @@ public class SqlTableSearchService
       throw new BadRequestException("Continuation token must be positive");
     }
 
+    OrderBy orderBy = getOrderBy(searchRequest);
     Collection<SearchResult> searchResults = searchStore.searchComponents(
         searchRequest.getLimit(),
         offset,
         queryCondition,
-        sqlSearchSortUtil.getSortExpression(searchRequest.getSortField()).orElse(null),
-        searchRequest.getSortDirection());
+        orderBy.columnName,
+        orderBy.direction);
 
     if (searchResults.isEmpty()) {
       return SqlTableSearchService.ComponentSearchResultPage.empty();
@@ -211,6 +213,14 @@ public class SqlTableSearchService
     }
 
     return new SqlTableSearchService.ComponentSearchResultPage(nextOffset, componentSearchResults);
+  }
+
+  private OrderBy getOrderBy(final SearchRequest searchRequest) {
+    String sortColumnName = sqlSearchSortUtil.getSortExpression(searchRequest.getSortField()).orElse(null);
+    SortDirection sortDirection = searchRequest.getSortDirection() != null
+        ? searchRequest.getSortDirection()
+        : sqlSearchSortUtil.getSortDirection(searchRequest.getSortField()).orElse(null);
+    return new OrderBy(sortColumnName, sortDirection);
   }
 
   /**
@@ -281,12 +291,13 @@ public class SqlTableSearchService
   {
     int nextOffset = offset;
     while (filteredSearchResults.size() < searchRequest.getLimit()) {
+      OrderBy orderBy = getOrderBy(searchRequest);
       Collection<SearchResult> results = searchStore.searchComponents(
           searchRequest.getLimit(),
           nextOffset,
           queryCondition,
-          sqlSearchSortUtil.getSortExpression(searchRequest.getSortField()).orElse(null),
-          searchRequest.getSortDirection());
+          orderBy.columnName,
+          orderBy.direction);
       if (results.isEmpty()) {
         break;
       }
@@ -396,6 +407,18 @@ public class SqlTableSearchService
 
     private static SqlTableSearchService.ComponentSearchResultPage empty() {
       return new SqlTableSearchService.ComponentSearchResultPage(Optional.empty(), Collections.emptyList());
+    }
+  }
+
+  private static class OrderBy
+  {
+    public final String columnName;
+
+    public final SortDirection direction;
+
+    public OrderBy(@Nullable final String columnName, @Nullable final SortDirection direction) {
+      this.columnName = columnName;
+      this.direction = direction;
     }
   }
 }

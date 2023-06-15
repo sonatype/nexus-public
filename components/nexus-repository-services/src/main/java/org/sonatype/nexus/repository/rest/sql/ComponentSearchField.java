@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.sql;
 
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import org.sonatype.nexus.repository.search.SortDirection;
 
 import static org.sonatype.nexus.repository.rest.sql.TextualQueryType.DEFAULT_TEXT_QUERY;
 import static org.sonatype.nexus.repository.rest.sql.TextualQueryType.FULL_TEXT_SEARCH_QUERY;
@@ -37,7 +38,7 @@ public class ComponentSearchField
       "tsvector_search_component_name", "search_component_name", FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport VERSION =
-      new ComponentSearchField("tsvector_version", "normalised_version", FULL_TEXT_SEARCH_QUERY);
+      new ComponentSearchField("tsvector_version", "normalised_version", SortDirection.DESC, FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport KEYWORD = new ComponentSearchField("keywords", FULL_TEXT_SEARCH_QUERY);
 
@@ -88,6 +89,15 @@ public class ComponentSearchField
       final String sortColumnName,
       final TextualQueryType columnType)
   {
-    super(TABLE, searchedColumnName, sortColumnName, columnType);
+    super(TABLE, searchedColumnName, sortColumnName, SortDirection.ASC, columnType);
+  }
+
+  public ComponentSearchField(
+      final String searchedColumnName,
+      final String sortColumnName,
+      final SortDirection sortDirection,
+      final TextualQueryType columnType)
+  {
+    super(TABLE, searchedColumnName, sortColumnName, sortDirection, columnType);
   }
 }
