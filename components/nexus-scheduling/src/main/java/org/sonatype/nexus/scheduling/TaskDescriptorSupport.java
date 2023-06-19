@@ -55,6 +55,8 @@ public abstract class TaskDescriptorSupport
 
   protected static final boolean NOT_EXPOSED = false;
 
+  protected static final boolean REQUEST_RECOVERY = true;
+
   private final String id;
 
   private final String name;
