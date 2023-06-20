@@ -17,10 +17,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -30,12 +34,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 @Singleton
 public class TaskUtils
+    extends ComponentSupport
 {
   private final Provider<TaskScheduler> taskSchedulerProvider;
 
+  private final TaskResultStateStore taskResultStateStore;
+
   @Inject
-  public TaskUtils(final Provider<TaskScheduler> taskSchedulerProvider) {
+  public TaskUtils(
+      final Provider<TaskScheduler> taskSchedulerProvider,
+      @Nullable final TaskResultStateStore taskResultStateStoreProvider)
+  {
     this.taskSchedulerProvider = checkNotNull(taskSchedulerProvider);
+    this.taskResultStateStore = taskResultStateStoreProvider;
   }
 
   public void checkForConflictingTasks(
@@ -74,12 +85,22 @@ public class TaskUtils
     }
 
     //ignore tasks that aren't running
-    if (!taskInfo.getCurrentState().getState().isRunning()) {
+    if (!isTaskRunning(taskInfo)) {
       return false;
     }
 
     //ignore tasks that aren't dealing with same config (i.e. don't conflict if 2 tasks dealing with diff blobstores)
     return conflictingConfiguration.entrySet().stream()
         .anyMatch(entry -> entry.getValue().contains(taskInfo.getConfiguration().getString(entry.getKey())));
+  }
+
+  private boolean isTaskRunning(final TaskInfo taskInfo) {
+    if (taskResultStateStore != null) {
+      log.debug("Checking state store for status of {}", taskInfo.getId());
+      return taskResultStateStore.getState(taskInfo)
+          .map(state -> state.getState().isRunning())
+          .orElse(false);
+    }
+    return taskInfo.getCurrentState().getState().isRunning();
   }
 }
