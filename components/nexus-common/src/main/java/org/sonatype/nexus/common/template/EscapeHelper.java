@@ -72,12 +72,23 @@ public class EscapeHelper
     }
   }
 
+  private String transform(final String value) {
+    if (value == null || value.isEmpty()) {
+      return value;
+    }
+    else {
+      return value
+          .replaceAll("%", "%25")
+          .replaceAll(" ", "%20");
+    }
+  }
+
   public String uri(final Object value) {
     return uri(String.valueOf(value));
   }
 
   public String uriSegments(final String value) {
-    return Stream.of(value.split("/")).map(this::uri).collect(joining("/"));
+    return Stream.of(value.split("/")).map(this::transform).collect(joining("/"));
   }
 
   /**

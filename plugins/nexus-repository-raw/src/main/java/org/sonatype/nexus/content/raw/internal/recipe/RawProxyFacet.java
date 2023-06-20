@@ -13,7 +13,8 @@
 package org.sonatype.nexus.content.raw.internal.recipe;
 
 import java.io.IOException;
-
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.template.EscapeHelper;
@@ -22,6 +23,8 @@ import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Raw proxy facet.
@@ -32,6 +35,8 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 public class RawProxyFacet
     extends ContentProxyFacetSupport
 {
+  private static final ImmutableSet<String> CHARS_TO_ENCODE = ImmutableSet.of("^", "#", "?");
+
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
     return content().get(assetPath(context)).orElse(null);
@@ -45,6 +50,15 @@ public class RawProxyFacet
   @Override
   protected String getUrl(final Context context) {
     return new EscapeHelper().uriSegments(removeSlashPrefix(assetPath(context)));
+  }
+
+  @Override
+  protected String encodeUrl(final String url) throws UnsupportedEncodingException {
+    String encodedUrl = url;
+    for (String ch : CHARS_TO_ENCODE) {
+      encodedUrl = encodedUrl.replace(ch, URLEncoder.encode(ch, "UTF-8"));
+    }
+    return encodedUrl;
   }
 
   private RawContentFacet content() {

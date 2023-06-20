@@ -50,6 +50,6 @@ public class EscapeHelperTest
 
   @Test
   public void testUriSegmentsEncoding() {
-    assertThat(underTest.uriSegments("foo/bar+baz"), is("foo/bar%2Bbaz"));
+    assertThat(underTest.uriSegments("foo/bar+baz"), is("foo/bar+baz"));
   }
 }
