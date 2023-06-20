@@ -23,7 +23,6 @@ import javax.inject.Singleton;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
@@ -34,7 +33,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
 
 /**
  * @since 3.38
@@ -58,19 +56,15 @@ public class SearchUtils
 
   private final Map<String, String> assetSearchParams;
 
-  private final boolean datastoreClustered;
-
   @Inject
   public SearchUtils(
       final RepositoryManagerRESTAdapter repoAdapter,
-      final Map<String, SearchMappings> searchMappings,
-      @Named(DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean datastoreClustered)
+      final Map<String, SearchMappings> searchMappings)
   {
     this.repoAdapter = checkNotNull(repoAdapter);
     this.searchParams = checkNotNull(searchMappings).entrySet().stream()
         .flatMap(e -> stream(e.getValue().get().spliterator(), true))
         .collect(toMap(SearchMapping::getAlias, SearchMapping::getAttribute));
-    this.datastoreClustered = datastoreClustered;
     this.assetSearchParams = searchParams.entrySet().stream()
         .filter(e -> e.getValue().startsWith(ASSET_PREFIX))
         .collect(toMap(Entry::getKey, Entry::getValue));
@@ -85,7 +79,7 @@ public class SearchUtils
   }
 
   public Repository getRepository(final String repository) {
-    return datastoreClustered ? repoAdapter.toRepository(repository) : repoAdapter.getRepository(repository);
+    return repoAdapter.getReadableRepository(repository);
   }
 
   /**
