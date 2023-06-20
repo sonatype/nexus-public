@@ -89,6 +89,9 @@ class BlobStoreManagerImplTest
   ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager
 
   @Mock
+  Provider<ChangeRepositoryBlobstoreDataService> changeRepositoryBlobstoreDataServiceProvider;
+
+  @Mock
   Provider<BlobStoreOverride> blobStoreOverrideProvider
 
   BlobStoreManagerImpl underTest
@@ -96,13 +99,14 @@ class BlobStoreManagerImplTest
   @Before
   void setup() {
     when(store.newConfiguration()).thenReturn(new MockBlobStoreConfiguration())
+    when(changeRepositoryBlobstoreDataServiceProvider.get()).thenReturn(changeRepositoryBlobstoreDataService)
     underTest = newBlobStoreManager()
   }
 
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider,
-         nodeAccess, provisionDefaults, new DefaultFileBlobStoreProvider(), changeRepositoryBlobstoreDataService,
+         nodeAccess, provisionDefaults, new DefaultFileBlobStoreProvider(), changeRepositoryBlobstoreDataServiceProvider,
          blobStoreOverrideProvider, replicationBlobStoreStatusManager))
   }
 
@@ -241,6 +245,8 @@ class BlobStoreManagerImplTest
 
   @Test(expected = IllegalStateException.class)
   void 'Can not delete an existing BlobStore used in a move task'() {
+    underTest.doStart()
+
     BlobStoreConfiguration configuration = createConfig('test')
     BlobStore blobStore = mock(BlobStore)
     doReturn(blobStore).when(underTest).blobStore('test')
@@ -287,7 +293,7 @@ class BlobStoreManagerImplTest
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true,
          new DefaultFileBlobStoreProvider(),
-         changeRepositoryBlobstoreDataService, blobStoreOverrideProvider, replicationBlobStoreStatusManager)
+         changeRepositoryBlobstoreDataServiceProvider, blobStoreOverrideProvider, replicationBlobStoreStatusManager)
 
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)
@@ -357,6 +363,8 @@ class BlobStoreManagerImplTest
 
   @Test
   void 'It is not convertable when the store is in use by a task'() {
+    underTest.doStart()
+
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
     underTest.track(blobStoreName, blobStore)

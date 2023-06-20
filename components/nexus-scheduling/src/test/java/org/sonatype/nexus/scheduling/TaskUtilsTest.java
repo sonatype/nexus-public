@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.scheduling;
 
+import java.util.Optional;
+
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.scheduling.spi.TaskResultState;
+import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.util.Providers;
@@ -21,7 +25,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 
 public class TaskUtilsTest
     extends TestSupport
@@ -36,6 +44,9 @@ public class TaskUtilsTest
   private TaskConfiguration taskConfiguration;
 
   @Mock
+  private TaskResultStateStore taskResultStateStore;
+
+  @Mock
   private CurrentState currentState;
 
   private TaskUtils underTest;
@@ -48,9 +59,10 @@ public class TaskUtilsTest
     when(taskInfo.getTypeId()).thenReturn("taskTypeId");
     when(taskInfo.getConfiguration()).thenReturn(taskConfiguration);
     when(taskInfo.getCurrentState()).thenReturn(currentState);
-    when(currentState.getState()).thenReturn(TaskState.RUNNING);
+    when(currentState.getState()).thenReturn(RUNNING);
     when(taskConfiguration.getString("key")).thenReturn("value");
-    underTest = new TaskUtils(Providers.of(taskScheduler));
+
+    underTest = new TaskUtils(Providers.of(taskScheduler), null);
   }
 
   @Test
@@ -100,5 +112,20 @@ public class TaskUtilsTest
   public void testCheckForConflictingTasks_conflictingTaskMultipleConfigValues() {
     underTest.checkForConflictingTasks("taskId2", "taskName2", asList("taskTypeId"),
         ImmutableMap.of("key", asList("prevalue", "value")));
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testCheckForConflictingTasks_shouldCheckDatabaseForTaskState() {
+    TaskResultState taskResultState =  mock(TaskResultState.class);
+    when(taskResultStateStore.getState(taskInfo)).thenReturn(Optional.of(taskResultState));
+    when(taskResultState.getState()).thenReturn(RUNNING);
+
+    underTest = new TaskUtils(Providers.of(taskScheduler), taskResultStateStore);
+
+    underTest.checkForConflictingTasks("taskId2", "taskName2", asList("taskTypeId"),
+        ImmutableMap.of("key", asList("value")));
+
+    verify(currentState, never()).getState();
+    verify(taskResultStateStore).getState(taskInfo);
   }
 }

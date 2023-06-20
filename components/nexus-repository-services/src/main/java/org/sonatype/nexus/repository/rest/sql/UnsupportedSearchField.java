@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.sql;
 
 import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import org.sonatype.nexus.repository.search.SortDirection;
 
 /**
  * Represents a field that is unsupported.
@@ -27,6 +28,6 @@ public final class UnsupportedSearchField
   public static final SearchFieldSupport INSTANCE = new UnsupportedSearchField();
 
   private UnsupportedSearchField() {
-    super(UNSUPPORTED, UNSUPPORTED, UNSUPPORTED, TextualQueryType.DEFAULT_TEXT_QUERY);
+    super(UNSUPPORTED, UNSUPPORTED, UNSUPPORTED, SortDirection.ASC, TextualQueryType.DEFAULT_TEXT_QUERY);
   }
 }

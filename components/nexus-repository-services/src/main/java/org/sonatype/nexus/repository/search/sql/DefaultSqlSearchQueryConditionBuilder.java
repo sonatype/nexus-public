@@ -71,6 +71,10 @@ public class DefaultSqlSearchQueryConditionBuilder
     return String.format("%s = %s", field, placeholder);
   }
 
+  protected String emptyOrNull(final String field, final String placeholder) {
+    return String.format("%s = %s OR %s IS NULL", field, placeholder, field);
+  }
+
   protected String in(final String field, final List<String> placeholders) {
     return field + IN + createInClausePlaceholders(placeholders);
   }

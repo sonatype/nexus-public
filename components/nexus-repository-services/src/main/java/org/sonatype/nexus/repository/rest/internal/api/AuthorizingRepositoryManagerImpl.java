@@ -88,12 +88,7 @@ public class AuthorizingRepositoryManagerImpl
       updatedConfig.setRoutingRuleId(configuration.getRoutingRuleId());
       updatedConfig.setOnline(configuration.isOnline());
       updatedConfig.setAttributes(configuration.getAttributes());
-      try {
-        repositoryManager.update(updatedConfig);
-      }
-      catch (ValidationException e) {
-        return false;
-      }
+      repositoryManager.update(updatedConfig);
       return true;
     }
     return false;

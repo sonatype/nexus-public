@@ -122,6 +122,28 @@ public abstract class SqlSearchQueryConditionBuilder
     return createCondition(fieldName, values, parameterPrefix);
   }
 
+  /**
+   * Builds an exact conditions with empty value for the specified field.
+   */
+  public SqlSearchQueryCondition conditionWithEmptyValue(final String field) {
+    return conditionWithEmptyValue(field, EMPTY);
+  }
+
+  /**
+   * Builds an exact conditions with empty value for the specified field.
+   *
+   * The keys of the parameters Map contained in the returned <code>SqlQueryCondition</code> are prefixed with the
+   * specified <code>parameterPrefix</code>.
+   */
+  public SqlSearchQueryCondition conditionWithEmptyValue(
+      final String field,
+      final String parameterPrefix)
+  {
+    checkArgument(isNotBlank(field), FIELD_NAME_MUST_NOT_BE_EMPTY);
+    return new SqlSearchQueryCondition(emptyOrNull(field, placeholder(parameterPrefix + field)),
+        ImmutableMap.of(parameterPrefix + field, EMPTY));
+  }
+
   private SqlSearchQueryCondition createCondition(
       final String fieldName,
       final Set<String> values,
@@ -224,6 +246,8 @@ public abstract class SqlSearchQueryConditionBuilder
   }
 
   protected abstract String equalTo(final String field, final String placeholder);
+
+  protected abstract String emptyOrNull(final String field, final String placeholder);
 
   protected abstract String in(final String field, final List<String> placeholders);
 

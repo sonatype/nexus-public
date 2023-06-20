@@ -32,6 +32,15 @@ Ext.define('NX.coreui.model.Repository', {
     {name: 'online', type: 'boolean'},
     {name: 'status', type: 'auto' /*object*/},
     {name: 'attributes', type: 'auto' /*object*/},
-    {name: 'url', type: 'string', sortType: 'asUCText'}
-  ]
+    {
+      name: 'blobStoreName',
+      type: 'string',
+      sortType: 'asUCText',
+      calculate: function (data) {
+        // Note that attributes object must be defined before to be able to access its properties here.
+        return data.attributes.storage.blobStoreName;
+      },
+    },
+    {name: 'url', type: 'string', sortType: 'asUCText'},
+  ],
 });

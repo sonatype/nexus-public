@@ -12,32 +12,27 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import {faCheckCircle, faTimesCircle} from '@fortawesome/free-solid-svg-icons';
 
 import {
   NxCard,
   NxFontAwesomeIcon,
   NxH3,
+  NxP,
+  NxTextLink,
   NxTooltip,
-  NxLoadingSpinner,
-  NxStatefulSegmentedButton
+  NxLoadingSpinner
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
-import NodeCardMachine from './NodeCardMachine';
+import {faCheckCircle, faTimesCircle} from '@fortawesome/free-solid-svg-icons';
+
 import './SupportZipHa.scss';
 
-const {
-  CREATING_ZIP,
-  NODE_UNAVAILABLE_CANNOT_CREATE,
-  NO_ZIP_CREATED,
-  ZIP_UPDATED,
-  NODE_IS_ACTIVE,
-  NODE_IS_INACTIVE,
-  OFFLINE,
-  DOWNLOAD_ZIP,
-  CREATE_SUPPORT_ZIP
-} = UIStrings.SUPPORT_ZIP;
+import NodeCardMachine from './NodeCardMachine';
+
+const {SUPPORT_ZIP: LABELS} = UIStrings;
+
+const NODE_UNAVAILABLE = 'NODE_UNAVAILABLE';
 
 export default function NodeCard({initial, createZip, downloadZip}) {
   const [current] = useMachine(NodeCardMachine, {
@@ -52,32 +47,42 @@ export default function NodeCard({initial, createZip, downloadZip}) {
   const zipNotCreated = node.status === 'NOT_CREATED';
   const zipCreated = node.status === 'COMPLETED';
   const zipCreating = node.status === 'CREATING';
-  const isNodeActive = node.status !== 'NODE_UNAVAILABLE';
 
-  const nodeCardText = () => {
-    if (zipCreating) {
-      return <NxLoadingSpinner>{CREATING_ZIP}</NxLoadingSpinner>;
-    }
-    if (node.blobRef == null && !isNodeActive) {
-      return NODE_UNAVAILABLE_CANNOT_CREATE;
+  const zipStatusLabels = {
+    NOT_CREATED: LABELS.CREATE_SUPPORT_ZIP,
+    COMPLETED: LABELS.DOWNLOAD_ZIP,
+    CREATING: LABELS.CREATING_ZIP
+  };
+
+  const statusActionLabel = zipStatusLabels[node.status];
+
+  const zipLastUpdatedHtml = () => {
+    if (node.blobRef == null && !isNodeActive()) {
+      return <NxP className="nxrm-p-zip-updated">{LABELS.NODE_UNAVAILABLE_CANNOT_CREATE}</NxP>;
     }
     if (zipNotCreated || node.blobRef === null) {
-      return NO_ZIP_CREATED;
+      return <NxP className="nxrm-p-zip-updated">{LABELS.NO_ZIP_CREATED}</NxP>;
     }
+
     const updatedDate = new Date(node.lastUpdated).toLocaleDateString();
     return (
-      <>
-        {ZIP_UPDATED} <b>{updatedDate}</b>
-      </>
+      <NxP className="nxrm-p-zip-updated">
+        {LABELS.ZIP_UPDATED}&nbsp;<b>{updatedDate}</b>
+      </NxP>
     );
   };
 
+  const isNodeActive = () => node.status !== NODE_UNAVAILABLE;
+
   return (
     <NxCard>
-      <NxTooltip title={isNodeActive ? NODE_IS_ACTIVE : NODE_IS_INACTIVE} placement="top-middle">
+      <NxTooltip
+        title={isNodeActive() ? LABELS.NODE_IS_ACTIVE : LABELS.NODE_IS_INACTIVE}
+        placement="top-middle"
+      >
         <NxCard.Header>
           <NxH3>
-            {isNodeActive ? (
+            {isNodeActive() ? (
               <NxFontAwesomeIcon icon={faCheckCircle} className="nxrm-node-green-checkmark" />
             ) : (
               <NxFontAwesomeIcon icon={faTimesCircle} />
@@ -86,31 +91,21 @@ export default function NodeCard({initial, createZip, downloadZip}) {
           </NxH3>
         </NxCard.Header>
       </NxTooltip>
-
-      <NxCard.Content>
-        <NxCard.Text>{nodeCardText()}</NxCard.Text>
-      </NxCard.Content>
-
+      <NxCard.Content>{zipLastUpdatedHtml()}</NxCard.Content>
       <NxCard.Footer>
-        {!isNodeActive && !zipCreated && <NxCard.Text>{OFFLINE}</NxCard.Text>}
+        {!isNodeActive() && !zipCreated && <NxCard.Text>{LABELS.OFFLINE}</NxCard.Text>}
 
-        {/* workaround RSC Segmented Button bug */}
-        <div onClick={(e) => e.stopPropagation()}>
-          <NxStatefulSegmentedButton
-            variant="primary"
-            onClick={zipCreated ? () => downloadZip(node) : createZip}
-            buttonContent={zipCreated ? DOWNLOAD_ZIP : CREATE_SUPPORT_ZIP}
-            disabled={zipCreating}
-          >
-            {zipCreated ? (
-              <button className="nx-dropdown-button" onClick={createZip}>
-                {CREATE_SUPPORT_ZIP}
-              </button>
-            ) : (
-              <button className="disabled nx-dropdown-button">{DOWNLOAD_ZIP}</button>
-            )}
-          </NxStatefulSegmentedButton>
-        </div>
+        {zipNotCreated && <NxTextLink onClick={createZip}>{statusActionLabel}</NxTextLink>}
+
+        {zipCreated && (
+          <NxTextLink onClick={() => downloadZip(node)}>{statusActionLabel}</NxTextLink>
+        )}
+
+        {zipCreating && (
+          <NxCard.Text>
+            <NxLoadingSpinner>{statusActionLabel}</NxLoadingSpinner>
+          </NxCard.Text>
+        )}
       </NxCard.Footer>
     </NxCard>
   );

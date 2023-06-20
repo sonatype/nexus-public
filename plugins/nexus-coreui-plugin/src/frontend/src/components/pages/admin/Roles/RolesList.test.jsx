@@ -16,23 +16,29 @@ import {when} from 'jest-when';
 import {render, screen, within, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {sort, prop, descend, ascend} from 'ramda';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, APIConstants, Permissions} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
 import RolesList from './RolesList';
 
 const {ROLES: {LIST: LABELS}} = UIStrings;
+const {EXT: {CAPABILITY: {ACTION, METHODS}, URL: EXT_URL}} = APIConstants;
 
 jest.mock('axios', () => ({
-  get: jest.fn()
+  ...jest.requireActual('axios'),
+  get: jest.fn(),
+  post: jest.fn(),
 }));
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
-      checkPermission: jest.fn().mockReturnValue(true),
+      checkPermission: jest.fn(),
+      state: jest.fn().mockReturnValue({
+        getValue: jest.fn(),
+      }),
     }
   }
 });
@@ -46,6 +52,8 @@ const selectors = {
   rows: () => within(this.tableBody()).getAllByRole('row'),
   filter: () => screen.queryByPlaceholderText(UIStrings.FILTER),
   createButton: () => screen.getByText(LABELS.CREATE_BUTTON),
+  defaultRoleNameLink: (name) => screen.queryByRole('link', {name}),
+  defaultRoleCapabilityLink: () => screen.queryByRole('link', {name: 'Default Role capability'}),
 };
 
 const URL = '/security/roles';
@@ -92,6 +100,13 @@ describe('RolesList', function() {
     when(Axios.get).calledWith(expect.stringContaining(URL)).mockResolvedValue({
       data: ROWS
     });
+    when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: ACTION, method: METHODS.READ}))
+        .mockResolvedValue({data: TestUtils.makeExtResult([])});
+
+    when(ExtJS.state().getValue).calledWith('capabilityActiveTypes').mockReturnValue([]);
+    when(ExtJS.state().getValue).calledWith('defaultRole').mockReturnValue(null);
+    when(ExtJS.checkPermission).calledWith(Permissions.ROLES.CREATE).mockReturnValue(true);
+    when(ExtJS.checkPermission).calledWith(Permissions.CAPABILITIES.READ).mockReturnValue(false);
   });
 
   it('renders the resolved empty data', async function() {
@@ -157,10 +172,70 @@ describe('RolesList', function() {
 
   it('disables the create button when not enough permissions', async function() {
     Axios.get.mockResolvedValue({data: []});
-    ExtJS.checkPermission.mockReturnValue(false);
+    when(ExtJS.checkPermission).calledWith(Permissions.ROLES.CREATE).mockReturnValue(false);
 
     await renderAndWaitForLoad();
 
     expect(selectors.createButton()).toHaveClass('disabled');
+  });
+
+  describe('Default Role Alert', function() {
+    const {defaultRoleNameLink, defaultRoleCapabilityLink} = selectors;
+
+    const defaultRoleCapabilityTypeId = 'defaultrole';
+    const roleId = 'nx-anonymous';
+    const roleName = 'nx-anonymous-name';
+    const capabilityId = 'test_id';
+
+    it('shows the default role alert when the user has capabilities read permission', async function() {
+      when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: ACTION, method: METHODS.READ}))
+          .mockResolvedValue({
+            data: TestUtils.makeExtResult([{
+              enabled: true,
+              id: capabilityId,
+              properties: {role: roleId},
+              typeId: defaultRoleCapabilityTypeId,
+            }])
+          });
+      when(ExtJS.checkPermission).calledWith(Permissions.CAPABILITIES.READ).mockReturnValue(true);
+      when(ExtJS.state().getValue).calledWith('capabilityActiveTypes').mockReturnValue([defaultRoleCapabilityTypeId]);
+      when(ExtJS.state().getValue).calledWith('defaultRole').mockReturnValue({
+        id: roleId,
+        name: roleName,
+      });
+
+      await renderAndWaitForLoad();
+
+      expect(defaultRoleNameLink(roleName)).toBeInTheDocument();
+      expect(defaultRoleNameLink(roleName)).toHaveAttribute('href', `#admin/security/roles:${roleId}`);
+
+      expect(defaultRoleCapabilityLink()).toBeInTheDocument();
+      expect(defaultRoleCapabilityLink()).toHaveAttribute('href', `#admin/system/capabilities:${capabilityId}`);
+    });
+
+    it('shows the default role alert when the user doesn\'t have capabilities read permission', async function() {
+      when(ExtJS.checkPermission).calledWith(Permissions.CAPABILITIES.READ).mockReturnValue(false);
+      when(ExtJS.state().getValue).calledWith('defaultRole').mockReturnValue({
+        id: roleId,
+        name: roleName,
+      });
+
+      await renderAndWaitForLoad();
+
+      expect(defaultRoleNameLink(roleName)).toBeInTheDocument();
+      expect(defaultRoleNameLink(roleName)).toHaveAttribute('href', `#admin/security/roles:${roleId}`);
+
+      expect(defaultRoleCapabilityLink()).not.toBeInTheDocument();
+    });
+
+    it('doesn\'t show the default role alert when the capability is not enabled', async function() {
+      when(ExtJS.state().getValue).calledWith('capabilityActiveTypes').mockReturnValue([]);
+      when(ExtJS.checkPermission).calledWith(Permissions.CAPABILITIES.READ).mockReturnValue(true);
+
+      await renderAndWaitForLoad();
+
+      expect(defaultRoleNameLink(roleName)).not.toBeInTheDocument();
+      expect(defaultRoleCapabilityLink()).not.toBeInTheDocument();
+    });
   });
 });

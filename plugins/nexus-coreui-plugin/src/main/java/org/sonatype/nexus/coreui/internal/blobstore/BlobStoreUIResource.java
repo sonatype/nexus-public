@@ -28,6 +28,7 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -95,8 +96,16 @@ public class BlobStoreUIResource
 
   // If a blobstore hasn't started due to an error we still want to return it from the api.
   // To achieve this, we use a null metrics object which will show the BlobStore as unavailable.
-  private static BlobStoreMetrics getBlobStoreMetrics(BlobStore bs) {
-    return bs.isStarted() ? bs.getMetrics() : null;
+  private static BlobStoreMetrics getBlobStoreMetrics(final BlobStore bs) {
+    if (bs.isGroupable()) {
+      return bs.isStarted() ? bs.getMetrics() : null;
+    }
+    else {
+      return ((BlobStoreGroup) bs).getMembers().stream()
+          .map(BlobStore::isStarted)
+          .reduce(Boolean::logicalAnd)
+          .orElse(false) ? bs.getMetrics() : null;
+    }
   }
 
   @RequiresAuthentication

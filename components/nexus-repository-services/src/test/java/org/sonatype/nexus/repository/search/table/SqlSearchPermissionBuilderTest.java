@@ -258,7 +258,7 @@ public class SqlSearchPermissionBuilderTest
 
   private void mockBrowsableRepositories(final Set<String> browsableRepos) {
     browsableRepos.forEach(repository -> {
-      when(securityHelper.anyPermitted(new RepositoryViewPermission(RAW, repository, BreadActions.BROWSE)))
+      when(securityHelper.anyPermitted(new RepositoryViewPermission(RAW, repository, BreadActions.READ)))
           .thenReturn(true);
     });
 

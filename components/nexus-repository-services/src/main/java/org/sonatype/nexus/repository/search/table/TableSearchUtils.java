@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.BlankValueSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
@@ -48,11 +49,15 @@ public class TableSearchUtils
 
   private final SqlSearchQueryContribution defaultSqlSearchQueryContribution;
 
+  private final SqlSearchQueryContribution blankValueSqlSearchQueryContribution;
+
   @Inject
   public TableSearchUtils(final Map<String, SqlSearchQueryContribution> searchContributions) {
     this.searchContributions = checkNotNull(searchContributions);
     this.defaultSqlSearchQueryContribution =
         checkNotNull(searchContributions.get(DefaultSqlSearchQueryContribution.NAME));
+    this.blankValueSqlSearchQueryContribution =
+        checkNotNull(searchContributions.get(BlankValueSqlSearchQueryContribution.NAME));
   }
 
   public SqlSearchQueryBuilder buildQuery(final SearchRequest request) {
@@ -71,7 +76,19 @@ public class TableSearchUtils
           searchContribution.contribute(queryBuilder, searchFilter);
         });
 
+    handleBlankValueFilters(queryBuilder, request.getSearchFilters());
+
     return queryBuilder;
+  }
+
+  private void handleBlankValueFilters(
+      final SqlSearchQueryBuilder queryBuilder,
+      final List<SearchFilter> searchFilters)
+  {
+    searchFilters.stream()
+        .filter(filter -> isBlank(filter.getValue()))
+        .filter(filter -> !REPOSITORY_NAME.equalsIgnoreCase(filter.getProperty()))
+        .forEach(filter -> blankValueSqlSearchQueryContribution.contribute(queryBuilder, filter));
   }
 
   private void generalizeDuplicateProperties(final List<SearchFilter> searchFilters) {

@@ -37,7 +37,7 @@ public class H2BackupTaskDescriptor
 
   public H2BackupTaskDescriptor()
   {
-    super(TYPE_ID, H2BackupTask.class, "Admin - Backup H2 Database", VISIBLE, EXPOSED, false,
+    super(TYPE_ID, H2BackupTask.class, "Admin - Backup H2 Database", VISIBLE, EXPOSED,
         new StringTextFormField(LOCATION, "Location",
             "Specify a directory for the database backup",
             MANDATORY));

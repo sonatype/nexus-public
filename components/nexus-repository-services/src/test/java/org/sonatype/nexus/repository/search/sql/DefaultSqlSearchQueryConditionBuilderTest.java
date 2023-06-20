@@ -235,6 +235,12 @@ public class DefaultSqlSearchQueryConditionBuilderTest
         is("bar%"));
   }
 
+  @Test
+  public void shouldBuildConditionWithEmptyValue() {
+    assertThat(underTest.conditionWithEmptyValue("field"),
+        is(aSqlSearchCondition("field = #{filterParams.field} OR field IS NULL", ImmutableMap.of("field", ""))));
+  }
+
   private SqlSearchQueryCondition aSqlSearchCondition(final String conditionFormat, final Map<String, String> values) {
     return new SqlSearchQueryCondition(conditionFormat, values);
   }

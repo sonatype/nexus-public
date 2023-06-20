@@ -113,7 +113,10 @@ public class QuartzTaskUtils {
   public static void updateJobData(final JobDetail jobDetail, final TaskConfiguration taskConfiguration) {
     JobDataMap jobDataMap = jobDetail.getJobDataMap();
     taskConfiguration.asMap().forEach((key, value) -> {
-      if (!value.equals(jobDataMap.get(key))) {
+      if (TaskConfiguration.REMOVE_ATTRIBUTE_MARKER.equals(value)) {
+        jobDataMap.remove(key);
+      }
+      else if (!value.equals(jobDataMap.get(key))) {
         jobDataMap.put(key, value); // only touch jobDataMap if value actually changed
       }
     });

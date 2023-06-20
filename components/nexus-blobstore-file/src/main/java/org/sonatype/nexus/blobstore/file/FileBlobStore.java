@@ -14,7 +14,6 @@ package org.sonatype.nexus.blobstore.file;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -38,7 +37,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -181,17 +179,17 @@ public class FileBlobStore
   private final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
   @Inject
-  public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
-                       final FileOperations fileOperations,
-                       final ApplicationDirectories applicationDirectories,
-                       final FileBlobStoreMetricsService metricsStore,
-                       final NodeAccess nodeAccess,
-                       final DryRunPrefix dryRunPrefix,
-                       final BlobStoreReconciliationLogger reconciliationLogger,
-                       @Named("${nexus.blobstore.prune.empty.directory.age.ms:-86400000}")
-                       final long pruneEmptyDirectoryAge,
-                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
-                       final FileBlobDeletionIndex blobDeletionIndex)
+  public FileBlobStore(
+      final BlobIdLocationResolver blobIdLocationResolver,
+      final FileOperations fileOperations,
+      final ApplicationDirectories applicationDirectories,
+      final FileBlobStoreMetricsService metricsStore,
+      final NodeAccess nodeAccess,
+      final DryRunPrefix dryRunPrefix,
+      final BlobStoreReconciliationLogger reconciliationLogger,
+      @Named("${nexus.blobstore.prune.empty.directory.age.ms:-86400000}") final long pruneEmptyDirectoryAge,
+      final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
+      final FileBlobDeletionIndex blobDeletionIndex)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
@@ -207,18 +205,19 @@ public class FileBlobStore
   }
 
   @VisibleForTesting
-  public FileBlobStore(final Path contentDir, //NOSONAR
-                       final BlobIdLocationResolver blobIdLocationResolver,
-                       final FileOperations fileOperations,
-                       final FileBlobStoreMetricsService metricsStore,
-                       final BlobStoreConfiguration configuration,
-                       final ApplicationDirectories directories,
-                       final NodeAccess nodeAccess,
-                       final DryRunPrefix dryRunPrefix,
-                       final BlobStoreReconciliationLogger reconciliationLogger,
-                       final long pruneEmptyDirectoryAge,
-                       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
-                       final FileBlobDeletionIndex blobDeletionIndex)
+  public FileBlobStore(
+      final Path contentDir, //NOSONAR
+      final BlobIdLocationResolver blobIdLocationResolver,
+      final FileOperations fileOperations,
+      final FileBlobStoreMetricsService metricsStore,
+      final BlobStoreConfiguration configuration,
+      final ApplicationDirectories directories,
+      final NodeAccess nodeAccess,
+      final DryRunPrefix dryRunPrefix,
+      final BlobStoreReconciliationLogger reconciliationLogger,
+      final long pruneEmptyDirectoryAge,
+      final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
+      final FileBlobDeletionIndex blobDeletionIndex)
 
   {
     this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix,
@@ -330,7 +329,8 @@ public class FileBlobStore
    * Returns a path for a temporary blob-id content file relative to root directory.
    */
   private Path temporaryContentPath(final BlobId id, final UUID suffix) {
-    return contentDir.resolve(blobIdLocationResolver.getTemporaryLocation(id) + "." + suffix + BLOB_FILE_CONTENT_SUFFIX);
+    return contentDir.resolve(
+        blobIdLocationResolver.getTemporaryLocation(id) + "." + suffix + BLOB_FILE_CONTENT_SUFFIX);
   }
 
   /**
@@ -377,7 +377,11 @@ public class FileBlobStore
     throw new BlobStoreException("Cannot find free BlobId", null);
   }
 
-  private Blob tryCreate(final Map<String, String> headers, final BlobIngester ingester, final BlobId reusedBlobId) { // NOSONAR
+  private Blob tryCreate(
+      final Map<String, String> headers,
+      final BlobIngester ingester,
+      final BlobId reusedBlobId)
+  { // NOSONAR
     final BlobId blobId = getBlobId(headers, reusedBlobId);
     final boolean isDirectPath = Boolean.parseBoolean(headers.getOrDefault(DIRECT_PATH_BLOB_HEADER, "false"));
     final Long existingSize = isDirectPath && exists(blobId) ? getContentSizeForDeletion(blobId) : null;
@@ -588,11 +592,10 @@ public class FileBlobStore
   @Nullable
   private Long getContentSizeForDeletion(final BlobId blobId) {
     return Optional.ofNullable(getFileBlobAttributes(blobId))
-          .map(BlobAttributes::getMetrics)
-          .map(BlobMetrics::getContentSize)
-          .orElse(null);
+        .map(BlobAttributes::getMetrics)
+        .map(BlobMetrics::getContentSize)
+        .orElse(null);
   }
-
 
   @Override
   @Guarded(by = STARTED)
@@ -728,8 +731,8 @@ public class FileBlobStore
   }
 
   /**
-   * This is a simple existence check resulting from NEXUS-16729.  This allows clients
-   * to perform a simple check and is primarily intended for use in directpath scenarios.
+   * This is a simple existence check resulting from NEXUS-16729.  This allows clients to perform a simple check and is
+   * primarily intended for use in directpath scenarios.
    */
   @Override
   public boolean exists(final BlobId blobId) {
@@ -747,7 +750,7 @@ public class FileBlobStore
       log.debug("Deleted {}", path);
     }
     else {
-      log.error("No file to delete found at {}", path, new FileNotFoundException(path.toString()));
+      log.debug("No file to delete found at {}", path);
     }
     return deleted;
   }
@@ -780,7 +783,8 @@ public class FileBlobStore
             blobStoreConfiguration.getName(), source, target, e.getReason());
       }
     }
-    log.trace("Using normal overwrite for blob store {}, overwriting {} with {}", blobStoreConfiguration.getName(), source, target);
+    log.trace("Using normal overwrite for blob store {}, overwriting {} with {}", blobStoreConfiguration.getName(),
+        source, target);
     fileOperations.copyIfLocked(source, target, fileOperations::overwrite);
   }
 
@@ -862,18 +866,23 @@ public class FileBlobStore
     // only process each blob once (in-use blobs may be re-added to the index)
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
     for (int counter = 0, numBlobs = blobDeletionIndex.size(); counter < numBlobs; counter++) {
+      log.debug("Processing record {} of {}", counter + 1, numBlobs);
       String oldestDeletedRecord = blobDeletionIndex.readOldestRecord();
+      log.debug("Oldest Deleted Record from deletion index: {}", oldestDeletedRecord);
       if (Objects.isNull(oldestDeletedRecord)) {
         log.info("Deleted blobs not found");
         return;
       }
       BlobId oldestDeletedBlobId = new BlobId(oldestDeletedRecord);
       FileBlob blob = liveBlobs.getIfPresent(oldestDeletedBlobId);
+      log.debug("Oldest Deleted BlobId: {}", oldestDeletedBlobId);
       if (Objects.isNull(blob) || blob.isStale()) {
+        log.debug("Compacting...");
         maybeCompactBlob(inUseChecker, oldestDeletedBlobId);
         blobDeletionIndex.deleteRecord(oldestDeletedBlobId);
       }
       else {
+        log.debug("Still in use to deferring");
         // still in use, so move it to end of the queue
         blobDeletionIndex.deleteRecord(oldestDeletedBlobId);
         blobDeletionIndex.createRecord(oldestDeletedBlobId);
@@ -919,7 +928,8 @@ public class FileBlobStore
     //we are deleting items on the way through, and apparently on *nix systems, deleting files that you are about to
     //walk over causes a FileNotFoundException to be thrown and the walking stops.  Overridding the visitFileFailed
     //method allows us to get past that
-    Files.walkFileTree(contentDir, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>(){
+    Files.walkFileTree(contentDir, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>()
+    {
       @Override
       public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
         try {
@@ -1111,8 +1121,8 @@ public class FileBlobStore
       }
     }
     catch (Exception e) {
-        log.error("Unable to load BlobAttributes for blob id: {}, path: {}, exception: {}",
-            blobId, blobPath, e.getMessage(), log.isDebugEnabled() ? e : null);
+      log.error("Unable to load BlobAttributes for blob id: {}, path: {}, exception: {}",
+          blobId, blobPath, e.getMessage(), log.isDebugEnabled() ? e : null);
       return null;
     }
   }
@@ -1130,8 +1140,8 @@ public class FileBlobStore
   }
 
   /**
-   * Used by {@link #getDirectPathBlobIdStream(String)} to convert a blob "name" ({@link #toBlobName(Path)}) to
-   * a {@link BlobId}.
+   * Used by {@link #getDirectPathBlobIdStream(String)} to convert a blob "name" ({@link #toBlobName(Path)}) to a
+   * {@link BlobId}.
    *
    * @see BlobIdLocationResolver
    */

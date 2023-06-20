@@ -36,6 +36,7 @@ import org.sonatype.nexus.repository.storage.ComponentDatabase;
 import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.StorageFacetManager;
 import org.sonatype.nexus.transaction.RetryController;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
@@ -99,6 +100,7 @@ public class StorageFacetManagerImpl
   public long performDeletions() {
     List<Bucket> buckets = findBucketsForDeletion();
     return buckets.stream().filter((bucket) -> {
+      UnitOfWork paused = UnitOfWork.pause();
       try {
         log.info("Deleting bucket for repository {}", bucket.getRepositoryName());
         deleteBucket(bucket);
@@ -108,6 +110,9 @@ public class StorageFacetManagerImpl
         log.warn("Unable to delete bucket with repository name {}, will require manual cleanup",
             bucket.getRepositoryName(), e);
         return false;
+      }
+      finally {
+        UnitOfWork.resume(paused);
       }
     }).count();
   }

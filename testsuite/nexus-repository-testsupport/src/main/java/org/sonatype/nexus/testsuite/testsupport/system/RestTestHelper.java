@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -284,7 +285,7 @@ public class RestTestHelper
       final Object entity,
       final Map<String, String> queryParams,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     return execute(new HttpPost(), path, entity, queryParams, username, password);
   }
@@ -293,7 +294,7 @@ public class RestTestHelper
       final String path,
       final Object entity,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     return execute(new HttpPost(), path, entity, Collections.emptyMap(), username, password);
   }
@@ -301,12 +302,12 @@ public class RestTestHelper
   public Response post(
       final String path,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     return execute(new HttpPost(), path, Collections.emptyMap(), username, password);
   }
 
-  public Response put(final String path, final Object entity) throws IOException
+  public Response put(final String path, final Object entity)
   {
     return execute(new HttpPut(), path, entity, Collections.emptyMap(), null, null);
   }
@@ -315,7 +316,7 @@ public class RestTestHelper
       final String path,
       final Object entity,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     return execute(new HttpPut(), path, entity, Collections.emptyMap(), username, password);
   }
@@ -323,16 +324,16 @@ public class RestTestHelper
   public Response delete(
       final String path,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     return execute(new HttpDelete(), path, Collections.emptyMap(), username, password);
   }
 
-  public Response delete(final String path) throws IOException {
+  public Response delete(final String path) {
     return delete(path, Collections.emptyMap());
   }
 
-  public Response delete(final String path, final Map<String, String> queryParams) throws IOException {
+  public Response delete(final String path, final Map<String, String> queryParams) {
     return execute(new HttpDelete(), path, queryParams, null, null);
   }
 
@@ -340,7 +341,7 @@ public class RestTestHelper
       final String path,
       final Map<String, String> queryParams,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     return execute(new HttpDelete(), path, queryParams, username, password);
   }
@@ -348,16 +349,16 @@ public class RestTestHelper
   public Response get(
       final String path,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     return execute(new HttpGet(), path, Collections.emptyMap(), username, password);
   }
 
-  public Response get(final String path) throws IOException {
+  public Response get(final String path) {
     return get(path, null, null);
   }
 
-  public Response get(final String path, final Map<String, String> queryParams) throws IOException {
+  public Response get(final String path, final Map<String, String> queryParams) {
     return get(path, queryParams, null, null);
   }
 
@@ -365,7 +366,7 @@ public class RestTestHelper
       final String path,
       final Map<String, String> queryParams,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     return execute(new HttpGet(), path, queryParams, username, password);
   }
@@ -376,25 +377,30 @@ public class RestTestHelper
       final Object body,
       final Map<String, String> queryParams,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
-    if (body instanceof String) {
-      request.setEntity(new StringEntity((String) body, ContentType.TEXT_PLAIN));
+    try {
+      if (body instanceof String) {
+        request.setEntity(new StringEntity((String) body, ContentType.TEXT_PLAIN));
+      }
+      else if (body instanceof byte[]) {
+        request.setEntity(new ByteArrayEntity((byte[]) body, ContentType.APPLICATION_OCTET_STREAM));
+      }
+      else if (body instanceof File) {
+        request.setEntity(new FileEntity((File) body, ContentType.APPLICATION_OCTET_STREAM));
+      }
+      else if (body instanceof MultipartEntityBuilder) {
+        request.setEntity(((MultipartEntityBuilder)body).build());
+      }
+      else if (body != null){
+        request.setEntity(
+            new StringEntity(mapper.writerFor(body.getClass()).writeValueAsString(body), ContentType.APPLICATION_JSON));
+      }
+      return execute(request, path, queryParams, username, password);
     }
-    else if (body instanceof byte[]) {
-      request.setEntity(new ByteArrayEntity((byte[]) body, ContentType.APPLICATION_OCTET_STREAM));
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
-    else if (body instanceof File) {
-      request.setEntity(new FileEntity((File) body, ContentType.APPLICATION_OCTET_STREAM));
-    }
-    else if (body instanceof MultipartEntityBuilder) {
-      request.setEntity(((MultipartEntityBuilder)body).build());
-    }
-    else if (body != null){
-      request.setEntity(
-          new StringEntity(mapper.writerFor(body.getClass()).writeValueAsString(body), ContentType.APPLICATION_JSON));
-    }
-    return execute(request, path, queryParams, username, password);
   }
 
   private Response execute(
@@ -402,7 +408,7 @@ public class RestTestHelper
       final String path,
       final Map<String, String> queryParams,
       @Nullable final String username,
-      @Nullable final String password) throws IOException
+      @Nullable final String password)
   {
     UriBuilder uriBuilder = UriBuilder.fromUri(nexusUrl()).path(path);
     queryParams.forEach(uriBuilder::queryParam);
@@ -425,6 +431,9 @@ public class RestTestHelper
         }
         return responseBuilder.build();
       }
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 

@@ -46,6 +46,8 @@ public class PostgresFullTextSearchQueryBuilder
 
   private static final String TS_QUERY_FORMAT = "PLAINTO_TSQUERY('simple', %s)";
 
+  private static final String EMPTY_OR_NULL_CONDITION_FORMAT = "%s = %s OR %s IS NULL";
+
   private static final String WILDCARD_TS_QUERY_FORMAT =
       "TO_TSQUERY('simple', PLAINTO_TSQUERY('simple', %s)::text || ':*')";
 
@@ -87,6 +89,11 @@ public class PostgresFullTextSearchQueryBuilder
   }
 
   @Override
+  protected String emptyOrNull(final String field, final String placeholder) {
+    return getEmptyOrNullCondition(field, placeholder);
+  }
+
+  @Override
   protected String in(final String field, final List<String> placeholders) {
     return getCondition(field, tsQuery(placeholders, TS_QUERY_FORMAT));
   }
@@ -123,6 +130,10 @@ public class PostgresFullTextSearchQueryBuilder
 
   private String getCondition(final String fieldName, final String placeholder) {
     return String.format(CONDITION_FORMAT, fieldName, placeholder);
+  }
+
+  private String getEmptyOrNullCondition(final String fieldName, final String placeholder) {
+    return String.format(EMPTY_OR_NULL_CONDITION_FORMAT, fieldName, placeholder, fieldName);
   }
 
   /**

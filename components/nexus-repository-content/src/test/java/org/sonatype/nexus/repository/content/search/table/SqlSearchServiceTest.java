@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.search.BlankValueSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.search.table.TableSearchUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,7 +64,8 @@ public class SqlSearchServiceTest
   private SqlSearchPermissionBuilder sqlSearchPermissionManager;
 
   private TableSearchUtils searchUtils = new TableSearchUtils(
-      Collections.singletonMap(DefaultSqlSearchQueryContribution.NAME, mock(SqlSearchQueryContribution.class)));
+      ImmutableMap.of(DefaultSqlSearchQueryContribution.NAME, mock(SqlSearchQueryContribution.class),
+          BlankValueSqlSearchQueryContribution.NAME, mock(SqlSearchQueryContribution.class)));
 
   private SqlTableSearchService underTest;
 

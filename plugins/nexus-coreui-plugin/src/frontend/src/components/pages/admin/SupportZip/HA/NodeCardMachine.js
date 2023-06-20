@@ -16,32 +16,59 @@
  */
 import Axios from 'axios';
 import {assign} from 'xstate';
-import {mergeDeepRight} from 'ramda';
 
-import {APIConstants, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, FormUtils} from "@sonatype/nexus-ui-plugin";
 
 export default FormUtils.buildFormMachine({
   id: 'NodeCardMachine',
-  initial: 'loading',
+  initial: 'clearHistory',
 
-  config: (config) =>
-    mergeDeepRight(config, {
-      states: {
-        loaded: {
-          after: {
-            2000: 'loading'
-          }
+  config: (config) => ({
+    ...config,
+
+    context: {
+      ...config.context,
+      node: null
+    },
+
+    states: {
+      ...config.states,
+
+      clearHistory: {
+        invoke: {
+          src: 'clearHistory',
+          onDone: 'loading',
+          onError: 'failure'
+        }
+      },
+
+      loaded: {
+        ...config.states.loaded,
+        after: {
+          TIMEOUT: 'loading'
+        }
+      },
+
+      failure: {
+        after: {
+          INTERVAL: 'loading'
         }
       }
-    })
+    }
+  })
 }).withConfig({
   actions: {
     setData: assign({
-      node: ({node}, {data}) => data?.data || node
+      node: (context, event) => event?.data?.data || context.node
     })
   },
 
   services: {
-    fetchData: ({node}) => Axios.get(APIConstants.REST.INTERNAL.GET_ZIP_STATUS + node.nodeId)
+    clearHistory: (context) => Axios.delete(APIConstants.REST.INTERNAL.CLEAR_SUPPORT_ZIP_HISTORY + context.node.nodeId),
+    fetchData: (context) => Axios.get(APIConstants.REST.INTERNAL.GET_ZIP_STATUS + context.node.nodeId)
+  },
+
+  delays: {
+    INTERVAL: 2000, TIMEOUT: 2000
   }
 });

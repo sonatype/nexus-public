@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.rest;
 import java.util.Objects;
 
 import org.sonatype.nexus.repository.rest.sql.TextualQueryType;
+import org.sonatype.nexus.repository.search.SortDirection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,17 +32,21 @@ public abstract class SearchFieldSupport
 
   private final String sortColumnName;
 
+  private final SortDirection sortDirection;
+
   private final TextualQueryType textualQueryType;
 
   protected SearchFieldSupport(
       final String table,
       final String columnName,
       final String sortColumnName,
+      final SortDirection sortDirection,
       final TextualQueryType textualQueryType)
   {
     this.table = checkNotNull(table);
     this.columnName = checkNotNull(columnName);
     this.sortColumnName = checkNotNull(sortColumnName);
+    this.sortDirection = checkNotNull(sortDirection);
     this.textualQueryType = checkNotNull(textualQueryType);
   }
 
@@ -61,6 +66,10 @@ public abstract class SearchFieldSupport
 
   public String getSortColumnName() {
     return sortColumnName;
+  }
+
+  public SortDirection getSortDirection() {
+    return sortDirection;
   }
 
   /**

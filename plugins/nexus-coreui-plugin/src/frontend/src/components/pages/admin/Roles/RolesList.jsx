@@ -23,7 +23,8 @@ import {
   PageTitle,
   PageActions,
   Section,
-  SectionToolbar
+  SectionToolbar,
+  Permissions,
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -34,6 +35,7 @@ import {
   NxTableHead,
   NxTableRow,
   NxTooltip,
+  NxInfoAlert,
 } from '@sonatype/react-shared-components';
 
 import {faUserTag} from '@fortawesome/free-solid-svg-icons';
@@ -45,20 +47,20 @@ const {ROLES: {LIST: LABELS}} = UIStrings;
 const {COLUMNS} = LABELS;
 
 export default function RolesList({onCreate, onEdit}) {
-  const [current, send] = useMachine(RolesListMachine, {devTools: true});
-  const isLoading = current.matches('loading');
-  const {data, error, filter: filterText} = current.context;
+  const [state, send] = useMachine(RolesListMachine, {devTools: true});
+  const isLoading = state.matches('loading');
+  const {data, error, filter: filterText, defaultRole: {roleId, roleName, capabilityId} = {}} = state.context;
 
-  const idSortDir = ListMachineUtils.getSortDirection('id', current.context);
-  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
-  const descriptionSortDir = ListMachineUtils.getSortDirection('description', current.context);
+  const idSortDir = ListMachineUtils.getSortDirection('id', state.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
+  const descriptionSortDir = ListMachineUtils.getSortDirection('description', state.context);
 
   const sortById = () => send('SORT_BY_ID');
   const sortByName = () => send('SORT_BY_NAME');
   const sortByDescription = () => send('SORT_BY_DESCRIPTION');
 
   const filter = (value) => send({type: 'FILTER', filter: value});
-  const canCreate = ExtJS.checkPermission('nexus:roles:create');
+  const canCreate = ExtJS.checkPermission(Permissions.ROLES.CREATE);
 
   function create() {
     if (canCreate) {
@@ -86,6 +88,13 @@ export default function RolesList({onCreate, onEdit}) {
       </PageActions>
     </PageHeader>
     <ContentBody className="nxrm-roles-list">
+      {roleId && roleName &&
+          <NxInfoAlert>
+            {LABELS.ALERT.DEFAULT_ROLE(roleId, roleName)}
+            <br/>
+            {capabilityId && LABELS.ALERT.CAPABILITY(capabilityId)}
+          </NxInfoAlert>
+      }
       <Section>
         <SectionToolbar>
           <div className="nxrm-spacer"/>

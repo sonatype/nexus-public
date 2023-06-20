@@ -164,6 +164,25 @@ class BlobStoreGroupDescriptorTest
       1 * quotaService.validateSoftQuotaConfig(*_)
   }
 
+  def 'getFormFields filter options if blobstore is not convertable'() {
+    given: 'a list of blob stores with some non-convertable blob stores'
+      blobStores.a = mockBlobStore('a', FILE)
+      blobStores.b = mockBlobStore('b', FILE)
+      blobStores.c = mockBlobStore('c', FILE)
+      blobStores.d = mockBlobStore('d', FILE)
+
+      blobStoreManager.isConvertable('a') >> false
+      blobStoreManager.isConvertable('b') >> true
+      blobStoreManager.isConvertable('c') >> true
+      blobStoreManager.isConvertable('d') >> false
+
+    when: 'getting form fields from descriptor'
+      def formFields = blobStoreGroupDescriptor.getFormFields();
+
+    then: 'non convertable options are filtered'
+      formFields.get(0).attributes.get('options') == ['b', 'c']
+  }
+
   private BlobStoreGroup mockBlobStoreGroup(final String name, final List<BlobStore> members) {
     def config = new MockBlobStoreConfiguration(name: name, type: BlobStoreGroup.TYPE,
         attributes: [group: [members: members.collect { it.blobStoreConfiguration.name }], fillPolicy: WriteToFirstMemberFillPolicy.TYPE])

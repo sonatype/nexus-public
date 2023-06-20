@@ -344,6 +344,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositoryList_Format_Header: 'Format',
     Repository_RepositoryList_Status_Header: 'Status',
     Repository_RepositoryList_URL_Header: 'URL',
+    Repository_RepositoryList_BlobStore_Header: 'Blob Store',
     Repository_RepositoryList_Filter_EmptyText: 'No repositories matched "$filter"',
     Repository_RepositoryList_EmptyText: '<div class="summary">There are no repositories created yet<br>' +
         '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
@@ -810,6 +811,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     User_UserSettingsForm_Status_EmptyText: 'Select status',
     User_UserSettingsForm_Status_ActiveItem: 'Active',
     User_UserSettingsForm_Status_DisabledItem: 'Disabled',
+    User_UserSettingsForm_DefaultRole_FieldLabel: 'Applied Default-Role',
+    User_UserSettingsForm_DefaultRole_HelpText: 'The following role is configured as the default role for this system and is automatically granted to all authenticated users',
     User_UserSettingsExternalForm_Roles_FieldLabel: 'Roles',
     User_UserSettingsExternalForm_Roles_FromTitle: 'Available',
     User_UserSettingsExternalForm_Roles_ToTitle: 'Granted',

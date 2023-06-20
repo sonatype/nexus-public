@@ -102,6 +102,14 @@ Ext.define('NX.coreui.controller.Repositories', {
     {
       ref: 'proxyFacetContentMaxAge',
       selector: 'nx-coreui-repository-add numberfield[name=attributes.proxy.contentMaxAge]'
+    },
+    {
+      ref: 'removeNonCataloged',
+      selector: 'nx-coreui-repository-npm-proxy-facet checkbox[name=attributes.npm.removeNonCataloged]'
+    },
+    {
+      ref: 'removeQuarantinedVersions',
+      selector: 'nx-coreui-repository-npm-proxy-facet checkbox[name=attributes.npm.removeQuarantinedVersions]'
     }
   ],
   icons: {
@@ -250,6 +258,17 @@ Ext.define('NX.coreui.controller.Repositories', {
 
         // Hide unsupported replication fields
         me.hideUnsupportedReplicationFields(settingsPanel, model.get('format'));
+
+        me.checkFirewallCapabilitiesStatus(model.get('name'), function(isNpmProxyFacetEnabled) {
+          var removeNonCataloged = me.getRemoveNonCataloged();
+          if(removeNonCataloged) {
+            removeNonCataloged.setDisabled(!isNpmProxyFacetEnabled);
+          }
+          var removeQuarantinedVersions = me.getRemoveQuarantinedVersions();
+          if(removeQuarantinedVersions) {
+            removeQuarantinedVersions.setDisabled(!isNpmProxyFacetEnabled);
+          }
+        });
 
         Ext.resumeLayouts();
       });
@@ -678,6 +697,16 @@ Ext.define('NX.coreui.controller.Repositories', {
             value: format
           }
         ]
+      }
+    });
+  },
+
+  checkFirewallCapabilitiesStatus: function(repositoryName, callback) {
+    NX.direct.firewall_RepositoryStatus.readCapabilitiesStatus(repositoryName, function (response) {
+      if (Ext.isObject(response) && response.success && response.data != null) {
+        callback(response.data === true);
+      } else {
+        callback(false);
       }
     });
   },
