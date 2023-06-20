@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>public-parent</artifactId>
-    <version>19</version>
+    <version>37</version>
     <relativePath/>
   </parent>
 
@@ -705,6 +705,8 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
+          <!-- 2.22.2 causes tests to eventually hang -->
+          <version>2.18.1</version>
           <configuration>
             <rerunFailingTestsCount>3</rerunFailingTestsCount>
             <trimStackTrace>false</trimStackTrace>
