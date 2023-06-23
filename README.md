@@ -12,7 +12,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-# hestiart full opensource repository manager
+# hestiart - The fully opensource repository manager
  
 ## Build Requirements
 
