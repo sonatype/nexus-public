@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.search.table.TableSearchUtils;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -263,7 +264,8 @@ public abstract class SqlSearchQueryConditionBuilder
       final String parameterPrefix);
 
   public String sanitise(final String value) {
-    return replaceEscapedWildcardSymbol(replaceWildcards(value));
+    String result = trimStringAfterSecondDot(value);
+    return replaceEscapedWildcardSymbol(replaceWildcards(result));
   }
 
   protected String placeholder(final String field) {
@@ -273,6 +275,31 @@ public abstract class SqlSearchQueryConditionBuilder
   private static String replaceEscapedWildcardSymbol(final String value) {
     return value.replace(ESCAPE + ZERO_OR_MORE_CHARACTERS, String.valueOf(ZERO_OR_MORE_CHARACTERS))
         .replace(ESCAPE + ANY_CHARACTER, String.valueOf(ANY_CHARACTER));
+  }
+
+  /**
+   * PostgreSQL insert & (AND) tsquery operator in case of a text contains 2 or more dots
+   * and last word contains a digit(s) or one character.
+   * For example:
+   * <ul>
+   *  <li> PLAINTO_TSQUERY('simple', 'foo.bar.word1')     -> 'foo.bar' & 'word1':* </li> Not OK
+   *  <li> PLAINTO_TSQUERY('simple', 'foo.bar.a')         -> 'foo.bar' & 'a':* </li> Not OK
+   *  <li> PLAINTO_TSQUERY('simple', 'foo.bar.1.0')       -> 'foo.bar' & '1.0':* </> Not OK
+   *  <li> PLAINTO_TSQUERY('simple', 'foo.bar.word')      -> 'foo.bar.word':* </li> OK
+   *  <li> PLAINTO_TSQUERY('simple', 'foo.bar.word1.txt') -> 'foo.bar.word1.txt':* </li> OK
+   *  <li> PLAINTO_TSQUERY('simple', 'foo.bar1')          -> 'foo.bar1':* </li> OK
+   *  <li> PLAINTO_TSQUERY('simple', 'foo.bar.1.0.word')  -> 'foo.bar.1.0.word':* </> OK
+   * </ul>
+   * @param value search value
+   * @return a sanitized value.
+   */
+  private static String trimStringAfterSecondDot(final String value) {
+    if (TableSearchUtils.isRemoveLastWords(value)) {
+      String[] split = value.split("\\.");
+      return split[0] + '.' + split[1];
+    }
+
+    return value;
   }
 
   private static Map<SqlSearchConditionType, Set<String>> groupIntoExactOrWildcard(final Set<String> values) {

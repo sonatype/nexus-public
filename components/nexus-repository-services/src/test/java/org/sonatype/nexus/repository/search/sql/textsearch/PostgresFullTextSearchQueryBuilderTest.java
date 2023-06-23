@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.sql.textsearch;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
-import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
@@ -50,16 +49,32 @@ public class PostgresFullTextSearchQueryBuilderTest
 
   @Test
   public void shouldReplaceWildcard() {
-    assertThat(underTest.replaceWildcards("foo*"),
-        is("foo:*"));
+    assertThat(underTest.replaceWildcards("foo*"), is("foo:*"));
 
-    assertThat(underTest.replaceWildcards("bar*"),
-        is("bar:*"));
+    assertThat(underTest.replaceWildcards("bar*"), is("bar:*"));
   }
 
   @Test
   public void shouldEscapeSymbolBeforeReplacingWildcards() {
-    assertThat(underTest.sanitise("foo:*"),
-        Is.is("foo::*"));
+    assertThat(underTest.sanitise("foo:*"), is("foo::*"));
+  }
+
+  @Test
+  public void shouldRemoveLastToken() {
+    assertThat(underTest.sanitise("foo.bar.test_1"), is("foo.bar"));
+    assertThat(underTest.sanitise("foo.bar.1test"), is("foo.bar"));
+    assertThat(underTest.sanitise("foo.bar.a"), is("foo.bar"));
+    assertThat(underTest.sanitise("foo.bar."), is("foo.bar"));
+    assertThat(underTest.sanitise("foo.bar.num.version"), is("foo.bar"));
+    assertThat(underTest.sanitise("foo.bar.1.1.1"), is("foo.bar"));
+    assertThat(underTest.sanitise("foo.bar.fu1.fu2"), is("foo.bar"));
+  }
+
+  @Test
+  public void shouldNotRemoveLastToken() {
+    assertThat(underTest.sanitise("foo.test"), is("foo.test"));
+    assertThat(underTest.sanitise("foo"), is("foo"));
+    assertThat(underTest.sanitise("foo$bar$"), is("foo$bar$"));
+    assertThat(underTest.sanitise("foo%bar%a%txt"), is("foo%bar%a%txt"));
   }
 }

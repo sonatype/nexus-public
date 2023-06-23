@@ -60,6 +60,33 @@ public class TableSearchUtils
         checkNotNull(searchContributions.get(BlankValueSqlSearchQueryContribution.NAME));
   }
 
+  /**
+   * Should we remove the last words in case of a value contains 2 and more dots.
+   * Don't remove in case of search request wrapped by quotes.
+   * See {@code SqlSearchQueryConditionBuilder#maybeRemoveLastWord} for more details.
+   *
+   * @param value search value
+   * @return {@code true} if we should remove last word, otherwise {@code false}
+   */
+  public static boolean isRemoveLastWords(final String value) {
+    if (value.startsWith("\"") && value.endsWith("\"")) {
+      return false;
+    }
+
+    int dotCount = 0;
+
+    for (int i = 0; i < value.length(); i++) {
+      if (value.charAt(i) == '.') {
+        dotCount++;
+        if (dotCount == 2) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   public SqlSearchQueryBuilder buildQuery(final SearchRequest request) {
     final SqlSearchQueryBuilder queryBuilder = request.isConjunction() ? SqlSearchQueryBuilder.conjunctionBuilder()
         : SqlSearchQueryBuilder.disjunctionBuilder();
@@ -79,6 +106,15 @@ public class TableSearchUtils
     handleBlankValueFilters(queryBuilder, request.getSearchFilters());
 
     return queryBuilder;
+  }
+
+  private static boolean isContainsDigit(final String token) {
+    for (char c : token.toCharArray()) {
+      if (Character.isDigit(c)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void handleBlankValueFilters(
