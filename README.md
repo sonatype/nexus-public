@@ -12,17 +12,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-# Sonatype Nexus Repository Open Source Codebase 
-
-## Downloadable Bundles
-
- See: https://www.sonatype.com/download-oss-sonatype
-
-## Support
-
-Using Sonatype Nexus Repository OSS and need to report an issue? [Open an issue here](https://github.com/sonatype/nexus-public/issues)
-
-Sonatype Nexus Repository Pro customers can use https://support.sonatype.com/.
+# hestiart full opensource repository manager
  
 ## Build Requirements
 
@@ -30,13 +20,11 @@ Builds use Apache Maven and require Java 8. Apache Maven wrapper scripts are inc
 
 All release versioned dependencies should be available from the [Central](https://repo1.maven.org/maven2/) repository.
 
-For SNAPSHOT sources, SNAPSHOT versioned dependencies may only be available from https://repository.sonatype.org/content/groups/sonatype-public-grid repository.
-
 ### Configuring Maven for SNAPSHOT Dependencies
 
 Following best practices, the nexus-public POM does not include any root `<repositories>` elements.
     
-Instead you are advised to [configure Apache Maven to point at single repository mirror URL](https://maven.apache.org/guides/mini/guide-mirror-settings.html#using-a-single-repository) that is a group repository containing both Central proxy repository with Release version policy and sonatype-public-grid with a SNAPSHOT version policy. You can use a [repository manager](https://www.sonatype.org/nexus/go/) to set up a group repository that contains both of these remotes.
+Instead you are advised to [configure Apache Maven to point at single repository mirror URL](https://maven.apache.org/guides/mini/guide-mirror-settings.html#using-a-single-repository) that is a group repository containing both Central proxy repository with Release version policy and sonatype-public-grid with a SNAPSHOT version policy.
 
 Alternately, [add a custom profile to a settings.xml](https://maven.apache.org/guides/mini/guide-multiple-repositories.html) for repository manager development that includes both repositories.
 
@@ -61,26 +49,10 @@ Then build using the included Maven wrapper script. For example:
 ```shell
 ./mvnw clean install
 ```
-
-For building SNAPSHOT versions, follow the same process, except your build may require access to [Sonatype Public Grid](https://repository.sonatype.org/content/groups/sonatype-public-grid) to successfully resolve dependencies.
-
-## Running
-
-To run Nexus Repository, after building, unzip the assembly and start the server:
-
-    unzip -d target assemblies/nexus-base-template/target/nexus-base-template-*.zip
-    ./target/nexus-base-template-*/bin/nexus console
-
-The `nexus-base-template` assembly is used as the basis for the official Sonatype Nexus Repository distributions.
-
 ## License
 
 This project is licensed under the Eclipse Public License - v 1.0, you can read the full text [here](LICENSE.txt)
 
 ## Getting help
 
-Looking to contribute to our code but need some help? There's a few ways to get information or our attention:
-
-* Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
-* Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
-* Connect with [@sonatypeDev](https://twitter.com/sonatypeDev) on Twitter
+Please look for support and provisioning setup from https://linux.schule
