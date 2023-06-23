@@ -34,6 +34,7 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
@@ -42,6 +43,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 
 import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
@@ -55,14 +57,18 @@ import static java.util.Collections.addAll;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -115,7 +121,7 @@ public class DefaultIntegrityCheckStrategyTest
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
 
-    defaultIntegrityCheckStrategy = new TestDefaultIntegrityCheckStrategy(10);
+    defaultIntegrityCheckStrategy = spy(new TestDefaultIntegrityCheckStrategy(10));
   }
 
   @Test
@@ -187,6 +193,7 @@ public class DefaultIntegrityCheckStrategyTest
     NullPointerException ex = new NullPointerException(format("Missing property: %s", P_BLOB_REF));
     when(mockAsset.blob()).thenThrow(ex);
 
+    doReturn(false).when(defaultIntegrityCheckStrategy).isBlobMissed(any(), any());
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, SINCE_NO_DAYS, checkFailedHandler);
 
     verify(logger).error(ERROR_PROCESSING_ASSET, mockAsset.toString(), ex);
@@ -254,6 +261,32 @@ public class DefaultIntegrityCheckStrategyTest
     verify(logger, never()).error(eq(SHA1_MISMATCH), nullable(String.class), nullable(String.class),
         nullable(String.class));
     verify(checkFailedHandler).accept(any());
+  }
+
+  /**
+   * Method under test: {@link DefaultIntegrityCheckStrategy#isBlobMissed(BlobStore, FluentAsset)}
+   */
+  @Test
+  public void testIsBlobMissed() {
+    DefaultIntegrityCheckStrategy integrityCheckStrategy = new DefaultIntegrityCheckStrategy(3);
+    BlobStoreGroup blobStore = mock(BlobStoreGroup.class);
+    FluentAssetImpl asset = mock(FluentAssetImpl.class);
+
+    when(asset.blob()).thenReturn(Optional.empty());
+    assertFalse(integrityCheckStrategy.isBlobMissed(blobStore, asset));
+
+    AssetBlob assetBlob = mock(AssetBlob.class);
+    when(asset.blob()).thenReturn(Optional.of(assetBlob));
+
+    BlobRef blobRef = mock(BlobRef.class);
+    when(assetBlob.blobRef()).thenReturn(blobRef);
+
+    when(blobRef.getBlobId()).thenReturn(null);
+    assertTrue(integrityCheckStrategy.isBlobMissed(blobStore, asset));
+
+    Blob blob = mock(Blob.class);
+    when(blobStore.get(any())).thenReturn(blob);
+    assertFalse(integrityCheckStrategy.isBlobMissed(blobStore, asset));
   }
 
   /* This will happen in the case of Orient data migrated to NewDB */

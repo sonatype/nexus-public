@@ -41,6 +41,8 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.time.LocalDate.now;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -135,6 +137,10 @@ public class DefaultIntegrityCheckStrategy
             }
           }
 
+          if (isBlobMissed(blobStore, asset)) {
+            return;
+          }
+
           log.debug("Checking asset {}", asset.path());
           boolean failed = checkAsset(asset, blobStore);
 
@@ -153,6 +159,25 @@ public class DefaultIntegrityCheckStrategy
         assets = fluentAssets.browse(browseBatchSize, assets.nextContinuationToken());
       }
     }
+  }
+
+  @VisibleForTesting
+  boolean isBlobMissed(final BlobStore blobStore, final FluentAsset asset) {
+    AssetBlob assetBlob = asset.blob().orElse(null);
+
+    if (assetBlob == null) {
+      return false;
+    }
+
+    BlobRef blobRef = assetBlob.blobRef();
+    Blob blob = blobStore.get(blobRef.getBlobId());
+
+    if (blob != null) {
+      return false;
+    }
+
+    log.warn(String.format("Blob %s is missing in the blobstore", blobRef));
+    return true;
   }
 
   private boolean checkAsset(final Asset asset, final BlobStore blobStore) {

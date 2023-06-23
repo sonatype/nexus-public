@@ -14,7 +14,6 @@ package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
 import java.net.URL;
-
 import javax.cache.CacheManager;
 import javax.inject.Inject;
 
@@ -53,6 +52,8 @@ public class RawProxyOfHostedIT
 
   private static final String TEST_PATH = "alphabet.txt";
 
+  private static final String TEST_PATH_PLUS = "alpha+bet.txt";
+
   private static final String TEST_CONTENT = "alphabet.txt";
 
   private RawClient hostedClient;
@@ -73,6 +74,7 @@ public class RawProxyOfHostedIT
 
     URL hostedRepoUrl = repositoryBaseUrl(hostedRepo);
     proxyRepo = repos.createRawProxy("raw-test-proxy", hostedRepoUrl.toExternalForm());
+
     proxyClient = rawClient(proxyRepo);
   }
 
@@ -90,10 +92,16 @@ public class RawProxyOfHostedIT
 
   @Test
   public void fetchFromRemote() throws Exception {
-    final File testFile = resolveTestFile(TEST_CONTENT);
+    File testFile = resolveTestFile(TEST_CONTENT);
     hostedClient.put(TEST_PATH, ContentType.TEXT_PLAIN, testFile);
 
     assertThat(bytes(proxyClient.get(TEST_PATH)), is(readFileToByteArray(testFile)));
+
+    // test with + sysmbol in file name
+    testFile = resolveTestFile(TEST_PATH_PLUS);
+    hostedClient.put(TEST_PATH_PLUS, ContentType.TEXT_PLAIN, testFile);
+
+    assertThat(bytes(proxyClient.get(TEST_PATH_PLUS)), is(readFileToByteArray(testFile)));
   }
 
   @Test

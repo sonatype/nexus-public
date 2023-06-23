@@ -13,7 +13,8 @@
 package org.sonatype.nexus.orient.raw.internal;
 
 import java.io.IOException;
-
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import javax.annotation.Nonnull;
 import javax.inject.Named;
 
@@ -25,6 +26,8 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * @since 3.0
  */
@@ -32,6 +35,8 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 public class RawProxyFacet
     extends ProxyFacetSupport
 {
+  private static final ImmutableSet<String> CHARS_TO_ENCODE = ImmutableSet.of("^", "#", "?");
+
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
     final String path = componentPath(context);
@@ -52,6 +57,15 @@ public class RawProxyFacet
   @Override
   protected String getUrl(@Nonnull final Context context) {
     return new EscapeHelper().uriSegments(componentPath(context));
+  }
+
+  @Override
+  protected String encodeUrl(final String url) throws UnsupportedEncodingException {
+    String encodedUrl = url;
+    for (String ch : CHARS_TO_ENCODE) {
+      encodedUrl = encodedUrl.replace(ch, URLEncoder.encode(ch, "UTF-8"));
+    }
+    return encodedUrl;
   }
 
   /**

@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.internal.search;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -31,7 +30,8 @@ import static org.sonatype.nexus.content.maven.internal.search.Maven2ComponentFi
  * ordering.
  *
  * <p>
- * Source of truth for Maven sorting rules.<br/> https://github.com/apache/maven/blob/master/maven-artifact/src/main/java/org/apache/maven/artifact/versioning/ComparableVersion.java
+ * Source of truth for Maven sorting rules.<br/>
+ * https://github.com/apache/maven/blob/master/maven-artifact/src/main/java/org/apache/maven/artifact/versioning/ComparableVersion.java
  * </p>
  *
  * <p>
@@ -39,8 +39,8 @@ import static org.sonatype.nexus.content.maven.internal.search.Maven2ComponentFi
  * https://books.sonatype.com/mvnref-book/reference/pom-relationships-sect-pom-syntax.html
  * </p>
  * <p>
- * There are version strings in the wild that don't conform to the standard. In some cases this algorithm
- * may sort in the same order but in other cases it may not.
+ * There are version strings in the wild that don't conform to the standard. In some cases this algorithm may sort in
+ * the same order but in other cases it may not.
  * </p>
  *
  * <p>
@@ -63,7 +63,7 @@ public class MavenVersionNormalizer
   // major + minor + patch
   private static final int VERSION_LENGTH = 3;
 
-  private static final Pattern ALPHA_PLUS_NUMERIC_PATTERN = Pattern.compile("([^\\d-.]+)-?(\\d+)-?(\\w*)");
+  private static final Pattern ALPHA_PLUS_NUMERIC_PATTERN = Pattern.compile("^([A-Za-z]+)([0-9]+)?(.*)$");
 
   public static final String ALPHA = "alpha";
 
@@ -110,14 +110,15 @@ public class MavenVersionNormalizer
       return "";
     }
 
-    String[] result = splitQualifier(originalVersion);
+    String trimmedVersion = originalVersion.trim();
+    String[] result = splitQualifier(trimmedVersion);
     String version = result[0];
     String qualifier = result[1];
 
     String[] versionList = version.split("\\.");
     if (!isRecognizedFormat(versionList)) {
       // just expand versions with no other processing
-      return VersionNumberExpander.expand(originalVersion);
+      return VersionNumberExpander.expand(trimmedVersion);
     }
     else {
       versionList = fillMissingParts(versionList);
@@ -125,7 +126,7 @@ public class MavenVersionNormalizer
 
     qualifier = standardizeQualifier(qualifier);
 
-    return getNormalizedValue(versionList, qualifier, originalVersion);
+    return getNormalizedValue(versionList, qualifier, trimmedVersion);
   }
 
   // 1 -> 1.0.0
@@ -188,7 +189,7 @@ public class MavenVersionNormalizer
       String numberPart = matcher.group(2);
       String suffix = matcher.group(3);
 
-      if (!numberPart.equals("")) {
+      if (numberPart != null && !numberPart.equals("")) {
         if (alphaPart.equals("a")) {
           alphaPart = ALPHA;
         }

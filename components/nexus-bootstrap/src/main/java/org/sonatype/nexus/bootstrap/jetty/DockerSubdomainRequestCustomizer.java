@@ -25,14 +25,23 @@ public class DockerSubdomainRequestCustomizer
 {
   private final String nexusContextPath;
 
-  public DockerSubdomainRequestCustomizer(final String contextPath)
+  private final int jettyPort;
+
+  private final int jettySslPort;
+
+  public DockerSubdomainRequestCustomizer(final String contextPath, final int jettyPort, final int jettySslPort)
   {
     this.nexusContextPath = checkNotNull(contextPath) + (contextPath.endsWith("/") ? "" : "/");
+    this.jettyPort = jettyPort;
+    this.jettySslPort = jettySslPort;
   }
 
   @Override
   public void customize(final Connector connector, final HttpConfiguration channelConfig, final Request request) {
     HttpURI uri = request.getHttpURI();
+    if (uri.getPort() != jettyPort && uri.getPort() != jettySslPort) {
+      return;
+    }
     String version = null;
     if (uri.getPath().startsWith("/v1")) {
       version = "/v1";

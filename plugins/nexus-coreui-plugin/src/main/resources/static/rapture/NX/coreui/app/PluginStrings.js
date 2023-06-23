@@ -213,7 +213,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Component_AssetInfo_Info_Title: 'Summary',
     Component_Vulnerability_Info_Title: 'OSS Index Vulnerabilities',
     Component_AssetInfo_Attributes_Title: 'Attributes',
-    Component_AssetInfo_HealthCheck_Title: 'Component IQ',
+    Component_AssetInfo_HealthCheck_Title: 'Sonatype Lifecycle Component',
 
     // Browse -> Search -> Bower
     SearchBower_Text: 'Bower',
