@@ -137,7 +137,6 @@ public class BlobStoreGroupDescriptor
     List<String> blobStores = stream(blobStoreManager.browse())
         .map(BlobStore::getBlobStoreConfiguration)
         .map(BlobStoreConfiguration::getName)
-        .filter(blobStoreManager::isConvertable)
         .collect(toList());
     this.members.getAttributes().put("options", blobStores);
 

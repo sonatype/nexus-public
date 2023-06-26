@@ -100,15 +100,13 @@ public class BlobStoreManagerImpl
 
   private final Provider<RepositoryManager> repositoryManagerProvider;
 
-  private final Provider<ChangeRepositoryBlobstoreDataService> changeRepositoryBlobstoreDataServiceProvider;
+  private final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService;
 
   private final Provider<BlobStoreOverride> blobStoreOverrideProvider;
 
   private final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager;
 
   private final DefaultBlobStoreProvider defaultBlobstoreProvider;
-
-  private ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService;
 
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
@@ -120,7 +118,7 @@ public class BlobStoreManagerImpl
                               final NodeAccess nodeAccess,
                               @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
                               final DefaultBlobStoreProvider defaultBlobstoreProvider,
-                              final Provider<ChangeRepositoryBlobstoreDataService> changeRepositoryBlobstoreDataServiceProvider,
+                              @Nullable final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService,
                               final Provider<BlobStoreOverride> blobStoreOverrideProvider,
                               final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager)
   {
@@ -130,7 +128,7 @@ public class BlobStoreManagerImpl
     this.blobStorePrototypes = checkNotNull(blobStorePrototypes);
     this.freezeService = checkNotNull(freezeService);
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
-    this.changeRepositoryBlobstoreDataServiceProvider = checkNotNull(changeRepositoryBlobstoreDataServiceProvider);
+    this.changeRepositoryBlobstoreDataService = changeRepositoryBlobstoreDataService;
     this.blobStoreOverrideProvider = blobStoreOverrideProvider;
     this.replicationBlobStoreStatusManager = checkNotNull(replicationBlobStoreStatusManager);
     this.defaultBlobstoreProvider = checkNotNull(defaultBlobstoreProvider);
@@ -147,8 +145,6 @@ public class BlobStoreManagerImpl
 
   @Override
   protected void doStart() throws Exception {
-    changeRepositoryBlobstoreDataService = changeRepositoryBlobstoreDataServiceProvider.get();
-
     Optional.ofNullable(blobStoreOverrideProvider.get()).ifPresent(BlobStoreOverride::apply);
     List<BlobStoreConfiguration> configurations = store.list();
 
