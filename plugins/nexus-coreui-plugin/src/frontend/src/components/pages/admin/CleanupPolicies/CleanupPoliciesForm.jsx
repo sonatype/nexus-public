@@ -16,6 +16,7 @@ import {useMachine} from '@xstate/react';
 import {
   CheckboxControlledWrapper,
   ContentBody,
+  ExtJS,
   FieldWrapper,
   FormUtils,
   Page,
@@ -70,6 +71,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   const isEdit = Boolean(itemId);
   const isLoading = current.matches('loading');
   const hasData = data && data !== {};
+  const isPreviewEnabled = ExtJS.state().getValue('nexus.cleanup.preview.enabled');
 
   function update(event) {
     send({type: 'UPDATE', data: {[event.target.name]: event.target.value}});
@@ -254,7 +256,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
         </NxStatefulForm>
       </Section>
 
-      {!isLoading && !loadError && hasData && <CleanupPoliciesPreview policyData={data}/>}
+      {!isPreviewEnabled && !isLoading && !loadError && hasData && <CleanupPoliciesPreview policyData={data}/>}
     </ContentBody>
   </Page>;
 }

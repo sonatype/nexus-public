@@ -104,6 +104,11 @@ describe('CleanupPoliciesForm', function() {
   }
 
   beforeEach(() => {
+    ExtJS.state = jest.fn().mockReturnValue({
+      getValue: jest.fn()
+    });
+    when(ExtJS.state().getValue).calledWith('nexus.cleanup.preview.enabled').mockReturnValue(false);
+
     when(axios.get)
       .calledWith(REPOSITORIES_URL, {params: {format: EDITABLE_ITEM.format}})
       .mockResolvedValue({
