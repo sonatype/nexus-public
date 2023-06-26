@@ -35,7 +35,7 @@ public class ComponentSearchField
       new ComponentSearchField("tsvector_namespace", "namespace", FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport NAME = new ComponentSearchField(
-      "tsvector_search_component_name", "search_component_name", FULL_TEXT_SEARCH_QUERY);
+      "tsvector_search_component_name", "tsvector_search_component_name", FULL_TEXT_SEARCH_QUERY);
 
   public static final SearchFieldSupport VERSION =
       new ComponentSearchField("tsvector_version", "normalised_version", SortDirection.DESC, FULL_TEXT_SEARCH_QUERY);
