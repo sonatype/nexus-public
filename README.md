@@ -15,7 +15,7 @@
 # hestiart - The fully opensource repository manager
 
 # Why forked! The original developers doesnt follow nda security guidelines, so thats why I forked and start developing on hestiart!
-# IT will be awesome to see your pulls and issue work! Thanks, hesti.art Community! Love Hugh!
+# IT will be awesome to see your pulls and issue work! Thanks, hesti.art Community! Love Hugh! and follow Github Guidelines!
  
 ## Build Requirements
 
