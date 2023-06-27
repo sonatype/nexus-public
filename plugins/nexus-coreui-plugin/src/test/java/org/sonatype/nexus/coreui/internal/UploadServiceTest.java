@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
@@ -47,6 +48,9 @@ public class UploadServiceTest
   private RepositoryManager repositoryManager;
 
   @Mock
+  private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
+
+  @Mock
   private Repository repo;
 
   @Mock
@@ -59,7 +63,8 @@ public class UploadServiceTest
     UploadResponse uploadResponse = new UploadResponse(Collections.singletonList("foo"));
     when(uploadManager.handle(repo, request)).thenReturn(uploadResponse);
 
-    component = new UploadService(repositoryManager, uploadManager);
+    component = new UploadService(
+        repositoryManager, uploadManager, repositoryCacheInvalidationService);
   }
 
   @Test
