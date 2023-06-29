@@ -238,10 +238,9 @@ public class BootstrapListener
 
   private void readEnvironmentVariables(final Properties properties) {
 
-    if (properties.getProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED) == null &&
-        System.getenv("CHANGE_REPO_BLOBSTORE_TASK_ENABLED") != null) {
+    if (properties.getProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED) == null) {
       properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED,
-          Boolean.toString(parseBoolean(System.getenv("CHANGE_REPO_BLOBSTORE_TASK_ENABLED"))));
+         Boolean.toString(parseBoolean(System.getenv("CHANGE_REPO_BLOBSTORE_TASK_ENABLED"))));
     }
   }
 
