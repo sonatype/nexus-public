@@ -86,9 +86,14 @@ public interface FeatureFlags
   String DATASTORE_DEPLOYMENT_VALIDATOR = "nexus.datastore.deployment.validator.enabled";
 
   String CHANGE_REPO_BLOBSTORE_TASK_ENABLED = "nexus.change.repo.blobstore.task.enabled";
-  String CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED = "${nexus.change.repo.blobstore.task.enabled:-true}";
+
+  String CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED = "${nexus.change.repo.blobstore.task.enabled:-false}";
 
   String FIREWALL_ONBOARDING_ENABLED = "nexus.firewall.onboarding.enabled";
 
   String FIREWALL_ONBOARDING_ENABLED_NAMED = "${nexus.firewall.onboarding.enabled:-false}";
+
+  String CLEANUP_PREVIEW_ENABLED = "nexus.cleanup.preview.enabled";
+
+  String CLEANUP_PREVIEW_ENABLED_NAMED = "${nexus.cleanup.preview.enabled:-false}";
 }

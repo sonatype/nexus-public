@@ -22,6 +22,8 @@ import org.sonatype.nexus.cleanup.storage.config.CleanupPolicyAssetNamePattern;
  */
 public class PreviewRequestXO
 {
+  private String name; // cleanup policy name
+
   @NotEmpty
   private String repository;
 
@@ -35,6 +37,14 @@ public class PreviewRequestXO
   private String criteriaAssetRegex;
 
   private String filter;
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(final String name) {
+    this.name = name;
+  }
 
   public String getRepository() {
     return repository;

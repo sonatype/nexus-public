@@ -60,6 +60,7 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM;
+import static org.sonatype.nexus.repository.search.table.TableSearchUtils.isRemoveLastWords;
 
 /**
  * {@link SearchService} implementation that uses a single search table.
@@ -238,6 +239,21 @@ public class SqlTableSearchService
     if (keywordRegexFilter.isPresent()) {
       // replace a user's search request to use regex
       String regex = keywordRegexFilter.get().getValue().replace(SEARCH_ANY_SYMBOLS, ".*");
+      Pattern searchPattern = Pattern.compile(regex, CASE_INSENSITIVE);
+      Collection<SearchResult> filteredResults = filterSearchResults(searchResults, searchPattern);
+
+      int nextOffset = offset + searchResults.size();
+      fetchMoreResults(nextOffset, searchRequest, queryCondition, searchPattern, filteredResults);
+
+      return filteredResults;
+    }
+
+    keywordRegexFilter = searchRequest.getSearchFilters().stream()
+        .filter(filter -> "keyword".equals(filter.getProperty()) && isRemoveLastWords(filter.getValue()))
+        .findFirst();
+    if (keywordRegexFilter.isPresent()) {
+      // use the original user's search request to filter out results
+      String regex = keywordRegexFilter.get().getValue();
       Pattern searchPattern = Pattern.compile(regex, CASE_INSENSITIVE);
       Collection<SearchResult> filteredResults = filterSearchResults(searchResults, searchPattern);
 

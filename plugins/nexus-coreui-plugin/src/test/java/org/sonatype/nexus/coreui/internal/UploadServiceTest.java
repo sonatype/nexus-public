@@ -19,7 +19,9 @@ import java.util.Collections;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
@@ -31,6 +33,8 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class UploadServiceTest
@@ -47,6 +51,9 @@ public class UploadServiceTest
   private RepositoryManager repositoryManager;
 
   @Mock
+  private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
+
+  @Mock
   private Repository repo;
 
   @Mock
@@ -59,7 +66,8 @@ public class UploadServiceTest
     UploadResponse uploadResponse = new UploadResponse(Collections.singletonList("foo"));
     when(uploadManager.handle(repo, request)).thenReturn(uploadResponse);
 
-    component = new UploadService(repositoryManager, uploadManager);
+    component = new UploadService(
+        repositoryManager, uploadManager, repositoryCacheInvalidationService);
   }
 
   @Test
@@ -75,7 +83,19 @@ public class UploadServiceTest
 
   @Test
   public void testUpload() throws IOException {
+    Format format = mock(Format.class);
+    when(repo.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn(null);
     assertThat(component.upload(REPO_NAME, request), is("foo"));
+  }
+
+  @Test
+  public void testUploadNpm() throws IOException {
+    Format format = mock(Format.class);
+    when(repo.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("npm");
+    assertThat(component.upload(REPO_NAME, request), is("foo"));
+    verify(repositoryManager).findContainingGroups(REPO_NAME);
   }
 
   @Test

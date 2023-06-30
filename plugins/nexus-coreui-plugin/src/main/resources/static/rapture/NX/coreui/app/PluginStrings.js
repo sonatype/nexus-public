@@ -1407,7 +1407,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
   bundles: {
     'NX.coreui.migration.Controller': {
       Feature_Text: 'Upgrade',
-      Feature_Description: 'Upgrade configuration and content from Nexus Repository Manager 2',
+      Feature_Description: 'Upgrade configuration and content from Sonatype Nexus Repository 2 to Sonatype Nexus Repository 3',
 
       Activate_Mask: 'Loading',
 
@@ -1458,30 +1458,17 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     'NX.coreui.migration.OverviewScreen': {
       Title: 'Overview',
-      Description: '<p>This wizard will help you upgrade from Nexus Repository Manager 2.</p>' +
-          '<p>Many aspects of a server can be upgraded using this capability:' +
+      Description: '<p>This wizard will help you upgrade from Sonatype Nexus Repository 2.</p>' +
+          '<p>Before proceeding with this wizard, thoroughly review our <a href="https://links.sonatype.com/products/nxrm3/docs/upgrade2to3">comprehensive upgrade help documentation</a>.</p>' +
+          '<p>You should also ensure that you have met the following <strong>minimum prerequisites for using this wizard</strong>:</p>' +
           '<ul>' +
-          '<li>Configuration: security (users, roles and privileges) and other applicable system settings </li>' +
-          '<li>Repositories in supported formats: maven2, nuget, npm, rubygems, site</li>' +
+          '<li>Nexus Repository 2 instance is on the latest version</li>' +
+          '<li>Nexus Repository 2 and 3 have the same license type (OSS or Pro)</li>' +
+          '<li>Nexus Repository 3 instance is a fresh/clean instance</li>' +
+          '<li>All files in the Nexus Repository work directory are owned by the OS user, and there are no zero length files</li>' +
+          '<li>Nexus Repository 2 repository and repository group Repository IDs differ by more than just case</li>' +
           '</ul>' +
-          '</p>' +
-          '<p>Some aspects are <strong>incompatible</strong> and are not included in the upgrade:' +
-          '<ul>' +
-          '<li>Unsupported repository formats: yum, p2, obr</li>' +
-          '<li>Scheduled tasks</li>' +
-          '<li>Capabilities</li>' +
-          '<li>Staging repositories (Pro)</li>' +
-          '</ul>' +
-          '</p>' +
-          '<p>Take note of the following:' +
-          '<ul>' +
-          '<li>Server configuration can be transferred multiple times, each time it will completely replace existing configurations.</li>' +
-          '<li>Unlike server configuration, this tool is intended to be used on repositories only once.  Upgrading repositories in batches or multiple times has known issues and is not recommended or supported.</li>' +
-          '<li>Repository upgrade could take <strong>considerable time</strong>.</li>' +
-          '<li>Until upgrade has successfully completed, it is not recommended to make any configuration changes in Nexus Repository Manager 3, as the configuration is volatile during this time.</li>' +
-          '<li>Also during the upgrade, all of the repositories in Nexus Repository Manager 3 will be offline.</li>' +
-          '</ul>' +
-          '</p>'
+          '<p><strong>We always recommend testing your upgrade in a test environment before upgrading a production instance</strong>.</p>'
     },
 
     'NX.coreui.migration.PhaseFinishScreen': {

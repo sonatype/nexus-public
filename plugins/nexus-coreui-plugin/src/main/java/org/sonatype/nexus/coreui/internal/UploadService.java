@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
@@ -44,12 +45,18 @@ public class UploadService
 
   private RepositoryManager repositoryManager;
 
+  private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
+
+  private static final String NPM_FORMAT = "npm";
+
   @Inject
   public UploadService(final RepositoryManager repositoryManager,
-                       final UploadManager uploadManager)
+                       final UploadManager uploadManager,
+                       final RepositoryCacheInvalidationService repositoryCacheInvalidationService)
   {
     this.uploadManager = checkNotNull(uploadManager);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
   }
 
   /**
@@ -76,6 +83,12 @@ public class UploadService
     Repository repository = checkNotNull(repositoryManager.get(repositoryName), "Specified repository is missing");
 
     UploadResponse uploadResponse = uploadManager.handle(repository, request);
+
+    if (NPM_FORMAT.equals(repository.getFormat().getValue())) {
+      repositoryManager.findContainingGroups(repositoryName)
+          .forEach(groupRepoName -> repositoryCacheInvalidationService.processCachesInvalidation(
+              repositoryManager.get(groupRepoName)));
+    }
 
     return createSearchTerm(uploadResponse.getAssetPaths());
   }
