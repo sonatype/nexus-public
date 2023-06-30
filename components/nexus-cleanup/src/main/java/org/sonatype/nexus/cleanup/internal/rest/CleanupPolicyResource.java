@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.cleanup.internal.rest;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -20,7 +22,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -28,7 +29,20 @@ import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
-import javax.ws.rs.*;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.StreamingOutput;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
@@ -58,6 +72,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PRERELEASE_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
@@ -66,6 +81,7 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY
 import static org.sonatype.nexus.cleanup.internal.rest.CleanupPolicyResource.RESOURCE_URI;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
+import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_PREVIEW_ENABLED_NAMED;
 import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 
 /**
@@ -100,13 +116,16 @@ public class CleanupPolicyResource
 
   private final RepositoryManager repositoryManager;
 
+  private final boolean isPreviewEnabled;
+
   @Inject
   public CleanupPolicyResource(
       final CleanupPolicyStorage cleanupPolicyStorage,
       final List<Format> formats,
       final Map<String, CleanupPolicyConfiguration> cleanupFormatConfigurationMap,
       final Provider<CleanupPreviewHelper> cleanupPreviewHelper,
-      final RepositoryManager repositoryManager)
+      final RepositoryManager repositoryManager,
+      @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.formats = checkNotNull(formats);
@@ -116,6 +135,7 @@ public class CleanupPolicyResource
     this.defaultCleanupFormatConfiguration = checkNotNull(cleanupFormatConfigurationMap.get("default"));
     this.cleanupPreviewHelper = checkNotNull(cleanupPreviewHelper);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.isPreviewEnabled = isPreviewEnabled;
   }
 
   @GET
@@ -254,9 +274,41 @@ public class CleanupPolicyResource
       PagedResponse<ComponentXO> response = cleanupPreviewHelper.get().getSearchResults(xo, repository, options);
 
       return new PageResult<>(response.getTotal(), new ArrayList<>(response.getData()));
-    } catch (IllegalArgumentException e) {
+    }
+    catch (IllegalArgumentException e) {
       throw new ValidationErrorsException("filter", e.getMessage());
     }
+  }
+
+  @POST
+  @Path("preview/components/csv")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
+  @Produces(APPLICATION_OCTET_STREAM)
+  public Response previewContentCsv(final PreviewRequestXO request)
+  {
+    if (!isPreviewEnabled) {
+      return Response.status(Status.NOT_FOUND).build();
+    }
+    Repository repository = repositoryManager.get(request.getRepository());
+    if (repository == null) {
+      throw new NotFoundException("Repository " + request.getRepository() + " not found.");
+    }
+    StreamingOutput streamingOutput = output -> {
+      // example of output since CSV generator is not implemented yet
+      output.write("namespace, name, version, path\n".getBytes());
+      output.write("com.sonatype.nexus, nexus, 2.14.0, /com/sonatype/nexus/2.14.0/nexus-2.14.0.jar\n".getBytes());
+      output.write("com.sonatype.nexus, nexus, 2.15.0, /com/sonatype/nexus/2.15.0/nexus-2.15.0.jar\n".getBytes());
+      output.write("com.sonatype.nexus, nexus, 3.36.0, /com/sonatype/nexus/3.36.0/nexus-3.36.0.jar\n".getBytes());
+    };
+    String policyName = request.getName() == null ? "CleanupPreview" : request.getName();
+    String filename = policyName + "-" +
+        repository.getName() + "-" +
+        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")) +
+        ".csv";
+    return Response.ok(streamingOutput)
+        .header("Content-Disposition", "attachment; filename=" + filename)
+        .build();
   }
 
   private CleanupPolicy toCleanupPolicy(final CleanupPolicyXO cleanupPolicyXO) {
