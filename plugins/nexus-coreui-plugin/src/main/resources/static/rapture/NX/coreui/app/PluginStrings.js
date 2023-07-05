@@ -532,6 +532,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_Npm_RemoveQuarantined_Label: 'Download policy compliant versions only',
     Repository_Facet_Npm_RemoveQuarantined_HelpText: 'Versions that are going to be quarantined will not be downloaded. <span style="font-weight: bold">Firewall Audit and Quarantine</span> capability must be enabled for this feature to take effect. <a target="_blank" href="http://links.sonatype.com/products/nxrm3/docs/npm-with-firewall">Learn more.</a>',
     Repository_Facet_Npm_RemoveQuarantined_Warning: 'This feature requires IQ Server Release 134 or higher.',
+    Repository_Facet_Npm_RemoveQuarantined_Warning_Default: 'To use this feature, enable the Firewall Audit and Quarantine capability with the Enable Quarantine checkbox selected.',
     Repository_Facet_HttpClientFacet_AuthenticationType_FieldLabel: 'Authentication type',
     Repository_Facet_HttpClientFacet_AuthenticationType_Username: 'Username',
     Repository_Facet_HttpClientFacet_AuthenticationType_NTLM: 'Windows NTLM',

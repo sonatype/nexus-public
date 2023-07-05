@@ -110,6 +110,10 @@ Ext.define('NX.coreui.controller.Repositories', {
     {
       ref: 'removeQuarantinedVersions',
       selector: 'nx-coreui-repository-npm-proxy-facet checkbox[name=attributes.npm.removeQuarantinedVersions]'
+    },
+    {
+      ref: 'npmProxyFirewallWarning',
+      selector: 'nx-coreui-repository-npm-proxy-facet panel[name=npmProxyFirewallWarning]'
     }
   ],
   icons: {
@@ -261,12 +265,16 @@ Ext.define('NX.coreui.controller.Repositories', {
 
         me.checkFirewallCapabilitiesStatus(model.get('name'), function(isNpmProxyFacetEnabled) {
           var removeNonCataloged = me.getRemoveNonCataloged();
-          if(removeNonCataloged) {
+          if (removeNonCataloged) {
             removeNonCataloged.setDisabled(!isNpmProxyFacetEnabled);
           }
           var removeQuarantinedVersions = me.getRemoveQuarantinedVersions();
-          if(removeQuarantinedVersions) {
+          if (removeQuarantinedVersions) {
             removeQuarantinedVersions.setDisabled(!isNpmProxyFacetEnabled);
+          }
+          var npmProxyFirewallWarning = me.getNpmProxyFirewallWarning();
+          if (isNpmProxyFacetEnabled) {
+            npmProxyFirewallWarning.setTitle(NX.I18n.format('Repository_Facet_Npm_RemoveQuarantined_Warning'))
           }
         });
 
