@@ -18,6 +18,7 @@ import java.util.Optional;
 import javax.validation.ConstraintViolationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiCreateRequest;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiResponse;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiUpdateRequest;
@@ -68,9 +69,12 @@ public class ContentSelectorsApiResourceTest
   @Mock
   private SelectorConfigurationStore store;
 
+  @Mock
+  private EventManager eventManager;
+
   @Before
   public void setup() {
-    underTest = new ContentSelectorsApiResource(selectorFactory, selectorManager, store);
+    underTest = new ContentSelectorsApiResource(selectorFactory, selectorManager, store, eventManager);
   }
 
   @Test
@@ -108,12 +112,13 @@ public class ContentSelectorsApiResourceTest
     request.setName("name");
     request.setExpression("format == \"maven2\"");
 
-    underTest.createContentSelector(request);
-
     SelectorConfiguration expected = new OrientSelectorConfiguration();
     expected.setName(request.getName());
     expected.setType(CselSelector.TYPE);
     expected.setAttributes(singletonMap(EXPRESSION, request.getExpression()));
+    when(selectorManager.findByName(expected.getName())).thenReturn(Optional.of(expected));
+
+    underTest.createContentSelector(request);
     verify(selectorManager).create("name", CselSelector.TYPE, null, singletonMap(EXPRESSION, "format == \"maven2\""));
   }
 
