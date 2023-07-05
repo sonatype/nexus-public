@@ -71,7 +71,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   const isEdit = Boolean(itemId);
   const isLoading = current.matches('loading');
   const hasData = data && data !== {};
-  const isPreviewEnabled = ExtJS.state().getValue('nexus.cleanup.preview.enabled');
+  const isPreviewEnabled = ExtJS.state().getValue('nexus.datastore.enabled') &&
+      ExtJS.state().getValue('nexus.cleanup.preview.enabled');
 
   function update(event) {
     send({type: 'UPDATE', data: {[event.target.name]: event.target.value}});
