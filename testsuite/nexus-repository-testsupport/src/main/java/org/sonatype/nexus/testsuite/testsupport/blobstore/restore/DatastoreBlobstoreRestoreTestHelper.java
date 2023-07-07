@@ -46,17 +46,12 @@ import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
-import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Matcher;
 
 import static java.util.Arrays.stream;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
-import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -70,17 +65,14 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
-import static org.sonatype.nexus.scheduling.TaskState.OK;
 
 @FeatureFlag(name = DATASTORE_ENABLED)
 @Singleton
 @Named
 public class DatastoreBlobstoreRestoreTestHelper
+    extends BlobstoreRestoreTestHelperSupport
     implements BlobstoreRestoreTestHelper
 {
-  @Inject
-  private TaskScheduler taskScheduler;
-
   @Inject
   private Map<String, FormatStoreManager> storeManagers;
 
@@ -145,31 +137,6 @@ public class DatastoreBlobstoreRestoreTestHelper
 
   private int getContentRepositoryId(final Repository repo) {
     return repo.facet(ContentFacet.class).contentRepositoryId();
-  }
-
-  @Override
-  public void runRestoreMetadataTaskWithTimeout(final long timeout, final boolean dryRun) {
-    TaskConfiguration config = taskScheduler.createTaskConfigurationInstance(TYPE_ID);
-    config.setEnabled(true);
-    config.setName("restore");
-    config.setString(BLOB_STORE_NAME_FIELD_ID, "default");
-    config.setBoolean(DRY_RUN, dryRun);
-    config.setBoolean(RESTORE_BLOBS, true);
-    config.setBoolean(UNDELETE_BLOBS, false);
-    config.setBoolean(INTEGRITY_CHECK, false);
-    TaskInfo taskInfo = taskScheduler.submit(config);
-    await().atMost(timeout, SECONDS).until(() ->
-        taskInfo.getLastRunState() != null && taskInfo.getLastRunState().getEndState().equals(OK));
-  }
-
-  @Override
-  public void runRestoreMetadataTask() {
-    runRestoreMetadataTask(false);
-  }
-
-  @Override
-  public void runRestoreMetadataTask(final boolean isDryRun) {
-    runRestoreMetadataTaskWithTimeout(60, isDryRun);
   }
 
   @Override

@@ -46,16 +46,11 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.either;
@@ -68,7 +63,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
-import static org.sonatype.nexus.scheduling.TaskState.OK;
 
 /**
  * Helper class containing common functionality needed in ITs testing the restoration of component metadata from blobs.
@@ -79,6 +73,7 @@ import static org.sonatype.nexus.scheduling.TaskState.OK;
 @Singleton
 @Named
 public class OrientBlobstoreRestoreTestHelper
+    extends BlobstoreRestoreTestHelperSupport
     implements BlobstoreRestoreTestHelper
 {
   private static final String DELETE_ASSETS_SQL = "DELETE FROM asset";
@@ -88,9 +83,6 @@ public class OrientBlobstoreRestoreTestHelper
   @Inject
   @Named(DatabaseInstanceNames.COMPONENT)
   private Provider<DatabaseInstance> componentDb;
-
-  @Inject
-  private TaskScheduler taskScheduler;
 
   @Inject
   private RepositoryManager manager;
@@ -111,31 +103,6 @@ public class OrientBlobstoreRestoreTestHelper
   @Override
   public void simulateComponentMetadataLoss() {
     executeSqlStatements(DELETE_COMPONENTS_SQL);
-  }
-
-  @Override
-  public void runRestoreMetadataTaskWithTimeout(final long timeout, final boolean dryRun) {
-    TaskConfiguration config = taskScheduler.createTaskConfigurationInstance(TYPE_ID);
-    config.setEnabled(true);
-    config.setName("restore");
-    config.setString(BLOB_STORE_NAME_FIELD_ID, "default");
-    config.setBoolean(DRY_RUN, dryRun);
-    config.setBoolean(RESTORE_BLOBS, true);
-    config.setBoolean(UNDELETE_BLOBS, false);
-    config.setBoolean(INTEGRITY_CHECK, false);
-    TaskInfo taskInfo = taskScheduler.submit(config);
-    await().atMost(timeout, SECONDS).until(() ->
-        taskInfo.getLastRunState() != null && taskInfo.getLastRunState().getEndState().equals(OK));
-  }
-
-  @Override
-  public void runRestoreMetadataTask() {
-    runRestoreMetadataTask(false);
-  }
-
-  @Override
-  public void runRestoreMetadataTask(final boolean isDryRun) {
-    runRestoreMetadataTaskWithTimeout(10, isDryRun);
   }
 
   @Override

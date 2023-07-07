@@ -12,6 +12,11 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system.repository.config;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.function.Function;
 
 import org.sonatype.nexus.repository.Repository;
@@ -47,6 +52,17 @@ public class AptHostedRepositoryConfig
     this.keypair = keypair;
     return this;
   }
+
+  public AptHostedRepositoryConfig withKeypair(final Path gpgFilePath) {
+    try {
+      this.keypair = new String(Files.readAllBytes(gpgFilePath), StandardCharsets.UTF_8);
+      return this;
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
 
   public String getKeypair() {
     return keypair;

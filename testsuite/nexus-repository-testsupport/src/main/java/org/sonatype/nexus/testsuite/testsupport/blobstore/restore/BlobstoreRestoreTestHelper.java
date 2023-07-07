@@ -44,11 +44,33 @@ public interface BlobstoreRestoreTestHelper
 
   void simulateComponentMetadataLoss();
 
-  void runRestoreMetadataTaskWithTimeout(long timeout, boolean dryRun);
+  /**
+   * Run the restore (reconcile) task with the specified wait for task timeout and the specified dry run flag
+   *
+   * @param blobstoreName the name of the blobstore
+   */
+  default void runRestoreMetadataTask(final String blobstoreName) {
+    runRestoreMetadataTaskWithTimeout(blobstoreName, 60, false);
+  }
 
-  void runRestoreMetadataTask();
+  /**
+   * Run the restore (reconcile) task with the default wait for task timeout and the specified dry run flag
+   *
+   * @param blobstoreName the name of the blobstore
+   * @param isDryRun when true set dryrun on the task which does not restore assets
+   */
+  default void runRestoreMetadataTask(final String blobStoreName, final boolean isDryRun) {
+    runRestoreMetadataTaskWithTimeout(blobStoreName, 60, isDryRun);
+  }
 
-  void runRestoreMetadataTask(boolean isDryRun);
+  /**
+   * Run the restore (reconcile) task with the specified wait for task timeout and the specified dry run flag
+   *
+   * @param blobstoreName the name of the blobstore
+   * @param timeout the timeout to wait for the task to complete
+   * @param isDryRun when true set dryrun on the task which does not restore assets
+   */
+  void runRestoreMetadataTaskWithTimeout(final String blobstoreName, final long timeout, final boolean dryRun);
 
   void assertAssetMatchesBlob(Repository repository, String... names);
 

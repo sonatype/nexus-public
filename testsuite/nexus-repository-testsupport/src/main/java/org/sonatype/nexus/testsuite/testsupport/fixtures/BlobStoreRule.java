@@ -18,6 +18,7 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -63,48 +64,65 @@ public class BlobStoreRule
 
   private static final String S3_SERVICE_ENDPOINT = System.getProperty("mock.s3.service.endpoint");
 
+  private final Function<String, BlobStore> defaultBlobstoreCreator;
+
   public BlobStoreRule(final Provider<BlobStoreManager> blobStoreManagerProvider) {
     this.blobStoreManagerProvider = blobStoreManagerProvider;
+
+    defaultBlobstoreCreator = __ -> {
+      throw new UnsupportedOperationException("Must use injeccted version");
+    };
   }
 
   @Inject
-  public BlobStoreRule(final BlobStoreManager blobStoreManager) {
+  public BlobStoreRule(
+      final BlobStoreManager blobStoreManager,
+      @Named("${nexus.test.default.s3:-false}") final boolean defaultS3Blobstore)
+  {
     this.blobStoreManagerProvider = () -> blobStoreManager;
+
+    if (defaultS3Blobstore) {
+      defaultBlobstoreCreator = __ -> {
+        throw new UnsupportedOperationException("Not yet implemented");
+      };
+    }
+    else {
+      this.defaultBlobstoreCreator = this::createFile;
+    }
   }
 
-  public BlobStore createFile(final String name) throws Exception {
+  public BlobStore createFile(final String name) {
     BlobStoreConfiguration config = blobStoreManagerProvider.get().newConfiguration();
     config.setName(name);
     config.setType(FileBlobStore.TYPE);
     config.attributes(FileBlobStore.CONFIG_KEY).set(PATH_KEY, name);
-    BlobStore blobStore = blobStoreManagerProvider.get().create(config);
+    BlobStore blobStore = createBlobstore(config);
     blobStoreNames.add(name);
     return blobStore;
   }
 
-  public BlobStore createFile(final String name, String path) throws Exception {
+  public BlobStore createFile(final String name, final String path) {
     BlobStoreConfiguration config = blobStoreManagerProvider.get().newConfiguration();
     config.setName(name);
     config.setType(FileBlobStore.TYPE);
     config.attributes(FileBlobStore.CONFIG_KEY).set(PATH_KEY, path);
-    BlobStore blobStore = blobStoreManagerProvider.get().create(config);
+    BlobStore blobStore = createBlobstore(config);
     blobStoreNames.add(name);
     return blobStore;
   }
 
-  public BlobStore createGroup(final String name, final String... members) throws Exception {
+  public BlobStore createGroup(final String name, final String... members) {
     BlobStoreConfiguration config = blobStoreManagerProvider.get().newConfiguration();
     config.setName(name);
     config.setType(BlobStoreGroup.TYPE);
     config.attributes(BlobStoreGroup.CONFIG_KEY).set(BlobStoreGroup.MEMBERS_KEY, asList(members));
     config.attributes(BlobStoreGroup.CONFIG_KEY).set(BlobStoreGroup.FILL_POLICY_KEY, WriteToFirstMemberFillPolicy.TYPE);
-    BlobStore blobStore = blobStoreManagerProvider.get().create(config);
+    BlobStore blobStore = createBlobstore(config);
     blobStoreGroupNames.add(name);
     return blobStore;
   }
 
   public BlobStore createS3(final String blobStoreName, final String bucketName, final String prefix)
-      throws Exception
   {
     BlobStoreConfiguration configuration = blobStoreManagerProvider.get().newConfiguration();
     configuration.setType(S3_TYPE);
@@ -116,7 +134,14 @@ public class BlobStoreRule
     bucketAttributes.set("expiration", 5);
     bucketAttributes.set("endpoint", S3_SERVICE_ENDPOINT);
     bucketAttributes.set("forcePathStyle".toLowerCase(), TRUE.toString());
-    return blobStoreManagerProvider.get().create(configuration);
+    return createBlobstore(configuration);
+  }
+
+  /**
+   * Creates a blobstore using the default type configured for the IT Suite.
+   */
+  public BlobStore create(final String blobstoreName) {
+    return defaultBlobstoreCreator.apply(blobstoreName);
   }
 
   public BlobStore get(final String name) {
@@ -138,7 +163,6 @@ public class BlobStoreRule
         }
       }
     });
-
   }
 
   @Override
@@ -215,6 +239,15 @@ public class BlobStoreRule
     }
     catch (Exception e) {
       log.error("Failed to remove content from blobstore {}.", blobstore.getBlobStoreConfiguration().getName(), e);
+    }
+  }
+
+  private BlobStore createBlobstore(final BlobStoreConfiguration config) {
+    try {
+      return blobStoreManagerProvider.get().create(config);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 }
