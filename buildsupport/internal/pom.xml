@@ -30,7 +30,7 @@
   <properties>
     <sonatype-licensing.version>1.6.0</sonatype-licensing.version>
     <clm.dto.model.version>1.53.0-01</clm.dto.model.version>
-    <insight-brain.version>1.133.0-02</insight-brain.version>
+    <insight-brain.version>1.146.0-01</insight-brain.version>
     <insight-scanner.version>2.33.6-01</insight-scanner.version>
   </properties>
 
@@ -128,24 +128,6 @@
       </dependency>
 
       <dependency>
-        <groupId>com.sonatype.insight.scan</groupId>
-        <artifactId>insight-test-reverse-proxy</artifactId>
-        <version>${insight-scanner.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.brain</groupId>
-        <artifactId>hds-mock-server</artifactId>
-        <version>${insight-brain.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
         <groupId>com.sonatype.insight.brain</groupId>
         <artifactId>insight-rm-common</artifactId>
         <version>${insight-brain.version}</version>
@@ -156,68 +138,6 @@
           </exclusion>
         </exclusions>
       </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.brain</groupId>
-        <artifactId>insight-brain-data</artifactId>
-        <version>${insight-brain.version}</version>
-        <classifier>tests</classifier>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.brain</groupId>
-        <artifactId>insight-brain-service</artifactId>
-        <version>${insight-brain.version}</version>
-        <exclusions>
-          <!--
-          Banned dependencies are excluded at the nexus-insight-testsupport module!
-          -->
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sonatype.licensing</groupId>
-            <artifactId>license-bundle</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.inject.extensions</groupId>
-            <artifactId>guice-multibindings</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.brain</groupId>
-        <artifactId>insight-brain-service</artifactId>
-        <version>${insight-brain.version}</version>
-        <classifier>tests</classifier>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
     </dependencies>
   </dependencyManagement>
 

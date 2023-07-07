@@ -30,6 +30,7 @@
   <properties>
     <pax-exam.version>4.13.5</pax-exam.version>
     <testcontainers.version>1.18.3</testcontainers.version>
+    <iq.version>1.146.0</iq.version>
   </properties>
 
   <dependencyManagement>
@@ -179,6 +180,26 @@
         <groupId>io.netty</groupId>
         <artifactId>netty-all</artifactId>
         <version>4.1.75.Final</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.nexus.testsupport.iq</groupId>
+        <artifactId>iq-server-test-client-jupiter</artifactId>
+        <version>${iq.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.nexus.testsupport.iq</groupId>
+        <artifactId>iq-server-test-client</artifactId>
+        <version>${iq.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.nexus.testsupport.iq</groupId>
+        <artifactId>iq-server-test-client</artifactId>
+        <classifier>features</classifier>
+        <type>xml</type>
+        <version>${iq.version}</version>
       </dependency>
 
       <!--
