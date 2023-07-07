@@ -2255,7 +2255,6 @@
           <plugin>
             <groupId>com.sonatype.clm</groupId>
             <artifactId>clm-maven-plugin</artifactId>
-            <version>2.30.5-01</version>
             <configuration>
               <skip>${clm.skip}</skip>
             </configuration>
