@@ -13,6 +13,7 @@
 package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -27,26 +28,26 @@ import org.sonatype.nexus.content.testsuite.groups.OrientTestGroup;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
+import org.sonatype.nexus.testsuite.testsupport.NexusBaseITSupport;
 import org.sonatype.nexus.testsuite.testsupport.blobstore.restore.BlobstoreRestoreTestHelper;
-import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
-import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
-import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
+import static org.sonatype.nexus.testsuite.testsupport.system.RestTestHelper.hasStatus;
 
 @Category(OrientAndSQLTestGroup.class)
 public class RawRestoreBlobIT
-    extends RawITSupport
+    extends NexusBaseITSupport
 {
   private static final String TEST_CONTENT = "alphabet.txt";
 
@@ -55,10 +56,6 @@ public class RawRestoreBlobIT
   private Repository hostedRepository;
 
   private Repository proxyRepository;
-
-  private RawClient hostedClient;
-
-  private RawClient proxyClient;
 
   private Map<String, BlobId> hostedPathsToBlobs;
 
@@ -70,20 +67,30 @@ public class RawRestoreBlobIT
   @Inject
   private ComponentAssetTestHelper componentAssetTestHelper;
 
+  private String blobStoreName;
+
   @Before
   public void setup() throws Exception {
-    hostedRepository = repos.createRawHosted(repoName("hosted"));
-    hostedClient = rawClient(hostedRepository);
+    testData.addDirectory(resolveBaseFile("target/it-resources/raw"));
+    blobStoreName = testName.getMethodName();
+    nexus.blobStores().create(blobStoreName);
+    hostedRepository = nexus.repositories().raw().hosted(repoName("hosted"))
+        .withBlobstore(blobStoreName)
+        .create();
 
     proxyServer = Server.withPort(PortAllocator.nextFreePort()).start();
     proxyServer.serve("/" + TEST_CONTENT).withBehaviours(resolveFile(TEST_CONTENT));
 
-    proxyRepository = repos.createRawProxy(repoName("proxy"), "http://localhost:" + proxyServer.getPort() + "/");
-    proxyClient = rawClient(proxyRepository);
+    proxyRepository = nexus.repositories().raw().proxy(repoName("proxy"))
+        .withRemoteUrl("http://localhost:" + proxyServer.getPort() + "/")
+        .withBlobstore(blobStoreName)
+        .create();
 
     File testFile = resolveTestFile(TEST_CONTENT);
-    assertThat(hostedClient.put(TEST_CONTENT, TEXT_PLAIN, testFile), is(HttpStatus.CREATED));
-    assertThat(proxyClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
+    assertThat(nexus.rest().put(path(hostedRepository, TEST_CONTENT),
+        FileUtils.readFileToString(testFile, StandardCharsets.UTF_8), "admin", "admin123"), hasStatus(HttpStatus.CREATED));
+
+    assertThat(nexus.rest().get(path(proxyRepository, TEST_CONTENT)), hasStatus(OK));
 
     hostedPathsToBlobs = restoreTestHelper.getAssetToBlobIds(hostedRepository);
     proxyPathsToBlobs = restoreTestHelper.getAssetToBlobIds(proxyRepository);
@@ -126,7 +133,7 @@ public class RawRestoreBlobIT
     assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
     restoreTestHelper.simulateComponentAndAssetMetadataLoss();
     assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
-    restoreTestHelper.runRestoreMetadataTaskWithTimeout(10, true);
+    restoreTestHelper.runRestoreMetadataTaskWithTimeout(blobStoreName, 10, true);
     assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
   }
 
@@ -137,7 +144,7 @@ public class RawRestoreBlobIT
     assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
     restoreTestHelper.simulateComponentAndAssetMetadataLoss();
     assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
-    restoreTestHelper.runRestoreMetadataTaskWithTimeout(10, false);
+    restoreTestHelper.runRestoreMetadataTaskWithTimeout(blobStoreName, 10, false);
     assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
     verityBlobsUnchanged();
   }
@@ -145,7 +152,7 @@ public class RawRestoreBlobIT
   private void verifyMetadataRestored(final Runnable metadataLossSimulation) throws Exception {
     metadataLossSimulation.run();
 
-    restoreTestHelper.runRestoreMetadataTask();
+    restoreTestHelper.runRestoreMetadataTask(blobStoreName);
 
     assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
     assertTrue(componentAssetTestHelper.assetExists(hostedRepository, TEST_CONTENT));
@@ -160,8 +167,8 @@ public class RawRestoreBlobIT
     assertTrue(assetWithComponentExists(proxyRepository, TEST_CONTENT, "/", TEST_CONTENT));
 
     verityBlobsUnchanged();
-    assertThat(hostedClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
-    assertThat(proxyClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
+    assertThat(nexus.rest().get(path(hostedRepository, TEST_CONTENT)).getStatus(), is(OK));
+    assertThat(nexus.rest().get(path(proxyRepository, TEST_CONTENT)).getStatus(), is(OK));
   }
 
   /*
@@ -188,5 +195,9 @@ public class RawRestoreBlobIT
 
   private String repoName(final String prefix) {
     return String.format("%s-%s", prefix, testName.getMethodName());
+  }
+
+  private String path(final Repository repository, final String path) {
+    return "repository/" + repository.getName() + '/' + path;
   }
 }

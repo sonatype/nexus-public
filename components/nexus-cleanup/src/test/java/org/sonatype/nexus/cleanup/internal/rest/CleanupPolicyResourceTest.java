@@ -67,9 +67,6 @@ public class CleanupPolicyResourceTest
   @Before
   public void setUp() throws Exception {
     when(cleanupFormatConfigurationMap.get("default")).thenReturn(mock(CleanupPolicyConfiguration.class));
-    underTest =
-        new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, true);
     request = new PreviewRequestXO();
     request.setRepository(repositoryName);
     Repository repository = mock(Repository.class);
@@ -79,6 +76,10 @@ public class CleanupPolicyResourceTest
 
   @Test
   public void testPreviewContentCsv() {
+    underTest =
+        new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
+            repositoryManager, true, true);
+
     Response response = underTest.previewContentCsv(request);
 
     assertThat(response.getStatus(), is(200));
@@ -97,5 +98,16 @@ public class CleanupPolicyResourceTest
     expectedPrefix = "attachment; filename=policy-name-" + repositoryName;
     assertThat(contentDisposition, startsWith(expectedPrefix));
     assertThat(contentDisposition, endsWith(".csv"));
+  }
+
+  @Test
+  public void testNotFoundResponseForOrient() {
+    underTest =
+        new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
+            repositoryManager, false, true);
+
+    Response response = underTest.previewContentCsv(request);
+
+    assertThat(response.getStatus(), is(404));
   }
 }

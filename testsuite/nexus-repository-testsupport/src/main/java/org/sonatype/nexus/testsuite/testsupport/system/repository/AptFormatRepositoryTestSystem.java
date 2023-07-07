@@ -55,13 +55,19 @@ public class AptFormatRepositoryTestSystem
         .withDistribution("ubuntu");
   }
 
+  public AptProxyRepositoryConfig proxy(final String name) {
+    return new AptProxyRepositoryConfig(this::createProxy)
+        .withName(name)
+        .withDistribution("ubuntu");
+  }
+
   public Repository createHosted(final AptHostedRepositoryConfig config) {
     return doCreate(
         applyAptHostedAttributes(applyAptCommonAttributes(createHostedConfiguration(config), config.getDistribution()),
             config.getKeypair()));
   }
 
-  public Repository createProxy(final AptProxyRepositoryConfig config) throws Exception {
+  public Repository createProxy(final AptProxyRepositoryConfig config) {
     return doCreate(
         applyAptProxyAttributes(applyAptCommonAttributes(createProxyConfiguration(config), config.getDistribution()),
             config.isFlat()));

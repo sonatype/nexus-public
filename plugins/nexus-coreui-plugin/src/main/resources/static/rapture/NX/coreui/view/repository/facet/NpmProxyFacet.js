@@ -62,11 +62,12 @@ Ext.define('NX.coreui.view.repository.facet.NpmProxyFacet', {
           },
           {
             xtype: 'panel',
+            name: 'npmProxyFirewallWarning',
             itemId: 'warning',
             ui: 'nx-drilldown-message',
             cls: 'nx-drilldown-warning',
             iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-            title: NX.I18n.format('Repository_Facet_Npm_RemoveQuarantined_Warning'),
+            title: NX.I18n.format('Repository_Facet_Npm_RemoveQuarantined_Warning_Default'),
             hidden: false
           }
         ]

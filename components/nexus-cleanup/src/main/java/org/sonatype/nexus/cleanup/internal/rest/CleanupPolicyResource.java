@@ -82,6 +82,7 @@ import static org.sonatype.nexus.cleanup.internal.rest.CleanupPolicyResource.RES
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
 import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_PREVIEW_ENABLED_NAMED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
 import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 
 /**
@@ -116,6 +117,8 @@ public class CleanupPolicyResource
 
   private final RepositoryManager repositoryManager;
 
+  private final boolean isDatastoreEnabled;
+
   private final boolean isPreviewEnabled;
 
   @Inject
@@ -125,6 +128,7 @@ public class CleanupPolicyResource
       final Map<String, CleanupPolicyConfiguration> cleanupFormatConfigurationMap,
       final Provider<CleanupPreviewHelper> cleanupPreviewHelper,
       final RepositoryManager repositoryManager,
+      @Named(DATASTORE_ENABLED_NAMED) final boolean isDatastoreEnabled,
       @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
@@ -135,6 +139,7 @@ public class CleanupPolicyResource
     this.defaultCleanupFormatConfiguration = checkNotNull(cleanupFormatConfigurationMap.get("default"));
     this.cleanupPreviewHelper = checkNotNull(cleanupPreviewHelper);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.isDatastoreEnabled = isDatastoreEnabled;
     this.isPreviewEnabled = isPreviewEnabled;
   }
 
@@ -287,7 +292,7 @@ public class CleanupPolicyResource
   @Produces(APPLICATION_OCTET_STREAM)
   public Response previewContentCsv(final PreviewRequestXO request)
   {
-    if (!isPreviewEnabled) {
+    if (!isDatastoreEnabled || !isPreviewEnabled) {
       return Response.status(Status.NOT_FOUND).build();
     }
     Repository repository = repositoryManager.get(request.getRepository());

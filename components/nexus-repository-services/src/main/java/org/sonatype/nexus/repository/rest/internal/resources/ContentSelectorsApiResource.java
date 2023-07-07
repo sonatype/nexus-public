@@ -24,6 +24,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.selector.ContentSelectorCreatedEvent;
+import org.sonatype.nexus.selector.ContentSelectorDeletedEvent;
+import org.sonatype.nexus.selector.ContentSelectorUpdatedEvent;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiCreateRequest;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiResponse;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiUpdateRequest;
@@ -62,15 +66,19 @@ public class ContentSelectorsApiResource
 
   private final SelectorConfigurationStore store;
 
+  private final EventManager eventManager;
+
   @Inject
   public ContentSelectorsApiResource(
       final SelectorFactory selectorFactory,
       final SelectorManager selectorManager,
-      final SelectorConfigurationStore store)
+      final SelectorConfigurationStore store,
+      final EventManager eventManager)
   {
     this.selectorFactory = checkNotNull(selectorFactory);
     this.selectorManager = checkNotNull(selectorManager);
     this.store = checkNotNull(store);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @GET
@@ -91,6 +99,9 @@ public class ContentSelectorsApiResource
     selectorFactory.validateSelector(CselSelector.TYPE, request.getExpression());
     selectorManager.create(request.getName(), CselSelector.TYPE, request.getDescription(),
         singletonMap(EXPRESSION, request.getExpression()));
+    SelectorConfiguration configuration = findConfigurationByNameOrThrowNotFound(request.getName());
+    eventManager.post(new ContentSelectorCreatedEvent(configuration));
+
   }
 
   @GET
@@ -118,6 +129,7 @@ public class ContentSelectorsApiResource
     configuration.setDescription(request.getDescription());
     configuration.setAttributes(singletonMap(EXPRESSION, request.getExpression()));
     selectorManager.update(configuration);
+    eventManager.post(new ContentSelectorUpdatedEvent(configuration));
   }
 
   @DELETE
@@ -128,6 +140,8 @@ public class ContentSelectorsApiResource
     SelectorConfiguration configuration = findConfigurationByNameOrThrowNotFound(name);
 
     selectorManager.delete(configuration);
+    eventManager.post(new ContentSelectorDeletedEvent(configuration));
+
   }
 
   private SelectorConfiguration findConfigurationByNameOrThrowNotFound(final String name) {
@@ -144,4 +158,5 @@ public class ContentSelectorsApiResource
     response.setExpression(selectorConfiguration.getAttributes().get(EXPRESSION));
     return response;
   }
+
 }
