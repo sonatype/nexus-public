@@ -134,6 +134,10 @@ public class RepositoryTestSystem
     return stream(repositoryManager.browse()).collect(toList());
   }
 
+  public Repository getRepository(final String repositoryName) {
+    return repositoryManager.get(repositoryName);
+  }
+
   public List<Repository> getRepositories(final Type... types) {
     return stream(repositoryManager.browse()).filter(repository -> isType(repository, types)).collect(toList());
   }

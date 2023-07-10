@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.search;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -30,6 +29,8 @@ import org.sonatype.nexus.repository.query.QueryOptions;
 public interface CleanupComponentBrowse
 {
   Stream<FluentComponent> browse(CleanupPolicy policy, Repository repository);
+
+  Stream<FluentComponent> browseEager(CleanupPolicy policy, Repository repository);
 
   /**
    * Returns a paged response of components

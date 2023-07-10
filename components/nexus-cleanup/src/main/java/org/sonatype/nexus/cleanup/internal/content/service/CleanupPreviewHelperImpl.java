@@ -13,12 +13,14 @@
 package org.sonatype.nexus.cleanup.internal.content.service;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -35,7 +37,10 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.DefaultComponentXO;
 import org.sonatype.nexus.scheduling.CancelableHelper;
@@ -81,6 +86,18 @@ public class CleanupPreviewHelperImpl
     CleanupPolicy cleanupPolicy = toCleanupPolicy(previewXO);
 
     return searchForComponents(repository, cleanupPolicy, queryOptions);
+  }
+
+  @Override
+  public Stream<ComponentXO> getSearchResultsStream(
+      final CleanupPolicyPreviewXO previewXO, final Repository repository, final QueryOptions queryOptions)
+  {
+    CleanupPolicy cleanupPolicy = toCleanupPolicy(previewXO);
+
+    Stream<FluentComponent> componentSteam =
+        cleanupComponentBrowse.browseEager(cleanupPolicy, repository);
+
+    return componentSteam.map(component -> convert(component, repository));
   }
 
   private PagedResponse<ComponentXO> searchForComponents(final Repository repository,
@@ -144,4 +161,27 @@ public class CleanupPreviewHelperImpl
     defaultComponentXO.setFormat(repository.getFormat().getValue());
     return defaultComponentXO;
   };
+
+  private static ComponentXO convert(final FluentComponent component, final Repository repository) {
+    ComponentXO componentXO = convert((Component) component, repository);
+
+    List<AssetXO> assetXOS = convert(component.assets());
+
+    componentXO.setAssets(assetXOS);
+
+    return componentXO;
+  }
+
+  private static List<AssetXO> convert(final Collection<FluentAsset> assets) {
+    return assets
+        .stream()
+        .map(it -> {
+          AssetXO assetXO = new AssetXO();
+
+          assetXO.setPath(it.path());
+
+          return assetXO;
+        })
+        .collect(Collectors.toList());
+  }
 }

@@ -112,6 +112,18 @@ public class ComponentStore<T extends ComponentDAO>
     return dao().browseComponents(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
 
+  @Transactional
+  public Continuation<ComponentData> browseComponentsEager(
+      final Set<Integer> repositoryIds,
+      final int limit,
+      @Nullable final String continuationToken,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
+  {
+    return dao().browseComponentsEager(repositoryIds, limit, continuationToken, kind, filter, filterParams);
+  }
+
   /**
    * Browse all components in the given repository ids in a paged fashion.
    *

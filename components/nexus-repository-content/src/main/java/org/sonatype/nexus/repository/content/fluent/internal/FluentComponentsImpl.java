@@ -13,19 +13,25 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
+import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -66,6 +72,24 @@ public class FluentComponentsImpl
   }
 
   @Override
+  public FluentComponent with(final Component component, @Nullable final Collection<Asset> assets) {
+    if (component instanceof FluentComponent) {
+      return (FluentComponent) component;
+    }
+
+    if (assets == null) {
+      return new FluentComponentImpl(facet, component, null);
+    }
+
+    List<FluentAsset> fluentAssets = assets
+        .stream()
+        .map(it -> facet.assets().with(it))
+        .collect(Collectors.toList());
+
+    return new FluentComponentImpl(facet, component, fluentAssets);
+  }
+
+  @Override
   public int count() {
     return doCount(null, null, null);
   }
@@ -80,6 +104,35 @@ public class FluentComponentsImpl
   @Override
   public Continuation<FluentComponent> browse(final int limit, final String continuationToken) {
     return doBrowse(limit, continuationToken, null, null, null);
+  }
+
+  @Override
+  public Continuation<FluentComponent> browseEager(final int limit, @Nullable final String continuationToken) {
+    return doBrowseEager(limit, continuationToken, null, null, null);
+  }
+
+  Continuation<FluentComponent> doBrowseEager(final int limit,
+                                              @Nullable final String continuationToken,
+                                              @Nullable final String kind,
+                                              @Nullable final String filter,
+                                              @Nullable final Map<String, Object> filterParams) {
+    Set<Integer> repositoryIds = Collections.singleton(facet.contentRepositoryId());
+    if (isGroupRepository(facet.repository())) {
+      repositoryIds = getLeafRepositoryIds(facet.repository());
+    }
+
+    Continuation<ComponentData> componentAssetsData = componentStore
+        .browseComponentsEager(repositoryIds, limit, continuationToken, kind, filter, filterParams);
+
+    return new FluentContinuation<>(
+        componentAssetsData,
+        componentData -> {
+          assert componentData != null;
+
+          List<Asset> assets = componentData.getAssets();
+
+          return facet.components().with(componentData, assets);
+        });
   }
 
   Continuation<FluentComponent> doBrowse(final int limit,

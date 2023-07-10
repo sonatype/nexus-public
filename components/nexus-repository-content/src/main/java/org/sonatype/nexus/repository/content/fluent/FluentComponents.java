@@ -15,8 +15,10 @@ package org.sonatype.nexus.repository.content.fluent;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
 /**
@@ -36,6 +38,11 @@ public interface FluentComponents
    * Interact with an existing component.
    */
   FluentComponent with(Component component);
+
+  /**
+   * Interact with an existing component and assets
+   */
+  FluentComponent with(Component component, @Nullable Collection<Asset> assets);
 
   /**
    * Query components that have the given kind.

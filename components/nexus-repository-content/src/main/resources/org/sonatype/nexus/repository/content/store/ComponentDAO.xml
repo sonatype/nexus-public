@@ -78,6 +78,57 @@
     ORDER BY component_id LIMIT #{limit};
   </select>
 
+  <resultMap id="ComponentAssetsDataMap"
+             type="org.sonatype.nexus.repository.content.store.ComponentData">
+    <id property="componentId" column="component_id"/>
+    <result property="namespace" column="namespace" />
+    <result property="name" column="name" />
+    <result property="kind" column="kind" />
+    <result property="version" column="version" />
+    <result property="attributes" column="attributes"/>
+    <result property="created" column="created"/>
+    <result property="lastUpdated" column="last_updated"/>
+    <!--    collections of assets     -->
+    <collection property="assets"
+                javaType="List"
+                ofType="org.sonatype.nexus.repository.content.store.AssetData"
+                notNullColumn="asset_id">
+      <id property="assetId" column="asset_id"/>
+      <result property="path" column="path"/>
+      <result property="kind" column="kind" />
+      <result property="componentId" column="component_id" />
+      <result property="assetBlobId" column="asset_blob_id"/>
+      <result property="lastDownloaded" column="last_downloaded"/>
+      <result property="attributes" column="attributes"/>
+      <result property="created" column="created"/>
+      <result property="lastUpdated" column="last_updated"/>
+    </collection>
+  </resultMap>
+
+  <select id="browseComponentsEager"
+          resultType="org.sonatype.nexus.repository.content.store.ComponentData"
+          resultMap="ComponentAssetsDataMap">
+    WITH componentIds AS (
+        SELECT component_id FROM ${format}_component
+        WHERE repository_id IN
+        <foreach item="repositoryId" index="index" collection="repositoryIds"
+                 open="(" separator="," close=")">
+          #{repositoryId}
+        </foreach>
+        <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
+        <if test="kind != null"> AND kind = #{kind}</if>
+        <if test="filter != null"> AND (${filter})</if>
+        ORDER BY component_id
+        LIMIT #{limit}
+    )
+    SELECT
+        component.*, asset.*
+    FROM ${format}_component AS component
+    LEFT JOIN ${format}_asset AS asset ON component.component_id = asset.component_id
+    WHERE component.component_id IN (select component_id from componentIds)
+    ORDER BY component.component_id
+  </select>
+
   <select id="browseComponentsInRepositories" resultType="ComponentData">
     SELECT * FROM ${format}_component
     WHERE repository_id IN

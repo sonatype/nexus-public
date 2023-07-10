@@ -14,7 +14,9 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
@@ -42,9 +44,16 @@ public class FluentComponentImpl
 
   private final Component component;
 
+  private final Collection<FluentAsset> assets;
+
   public FluentComponentImpl(final ContentFacetSupport facet, final Component component) {
+    this(facet, component, null);
+  }
+
+  public FluentComponentImpl(final ContentFacetSupport facet, final Component component, @Nullable final Collection<FluentAsset> assets) {
     this.facet = checkNotNull(facet);
     this.component = checkNotNull(component);
+    this.assets = assets == null ? null : Collections.unmodifiableCollection(assets);
   }
 
   @Override
@@ -105,6 +114,10 @@ public class FluentComponentImpl
 
   @Override
   public Collection<FluentAsset> assets() {
+    if (assets != null) {
+      return assets;
+    }
+
     return transform(facet.stores().assetStore.browseComponentAssets(component),
         asset -> new FluentAssetImpl(facet, asset));
   }

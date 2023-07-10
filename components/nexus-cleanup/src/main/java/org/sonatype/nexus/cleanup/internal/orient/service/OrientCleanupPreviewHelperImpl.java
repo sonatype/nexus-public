@@ -14,7 +14,7 @@ package org.sonatype.nexus.cleanup.internal.orient.service;
 
 import java.util.List;
 import java.util.function.BiFunction;
-
+import java.util.stream.Stream;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -88,6 +88,13 @@ public class OrientCleanupPreviewHelperImpl
     } finally {
       UnitOfWork.end();
     }
+  }
+
+  @Override
+  public Stream<ComponentXO> getSearchResultsStream(
+      final CleanupPolicyPreviewXO previewXO, final Repository repository, final QueryOptions queryOptions)
+  {
+    throw new UnsupportedOperationException();
   }
 
   @Transactional

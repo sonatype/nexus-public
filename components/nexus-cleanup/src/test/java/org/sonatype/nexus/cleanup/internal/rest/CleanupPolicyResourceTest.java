@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
+import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.repository.Format;
@@ -56,13 +57,14 @@ public class CleanupPolicyResourceTest
   @Mock
   private RepositoryManager repositoryManager;
 
+  @Mock
+  private CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
+
   private CleanupPolicyResource underTest;
 
   private PreviewRequestXO request;
 
   private final String repositoryName = "test-repo";
-
-  ;
 
   @Before
   public void setUp() throws Exception {
@@ -78,7 +80,7 @@ public class CleanupPolicyResourceTest
   public void testPreviewContentCsv() {
     underTest =
         new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, true, true);
+            repositoryManager, true, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(request);
 
@@ -104,7 +106,7 @@ public class CleanupPolicyResourceTest
   public void testNotFoundResponseForOrient() {
     underTest =
         new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, false, true);
+            repositoryManager, false, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(request);
 

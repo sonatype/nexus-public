@@ -32,4 +32,6 @@ public interface FluentQuery<T>
    * Browse through elements in the repository that match the current query.
    */
   Continuation<T> browse(int limit, @Nullable String continuationToken);
+
+  Continuation<T> browseEager(int limit, @Nullable String continuationToken);
 }
