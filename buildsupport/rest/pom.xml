@@ -28,13 +28,13 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.14.1</jackson2.version>
-    <jackson2.databind.version>2.14.1</jackson2.databind.version>
-    <jackson2.yaml.version>2.14.1</jackson2.yaml.version>
+    <jackson2.version>2.15.0</jackson2.version>
+    <jackson2.databind.version>2.15.0</jackson2.databind.version>
+    <jackson2.yaml.version>2.15.0</jackson2.yaml.version>
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.15.3.Final</resteasy.version>
     <swagger.version>1.6.2</swagger.version>
-    <snakeyaml.version>1.33</snakeyaml.version>
+    <snakeyaml.version>2.0</snakeyaml.version>
   </properties>
 
   <dependencyManagement>
