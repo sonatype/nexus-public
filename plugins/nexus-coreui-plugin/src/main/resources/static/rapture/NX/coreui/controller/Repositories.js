@@ -273,7 +273,7 @@ Ext.define('NX.coreui.controller.Repositories', {
             removeQuarantinedVersions.setDisabled(!isNpmProxyFacetEnabled);
           }
           var npmProxyFirewallWarning = me.getNpmProxyFirewallWarning();
-          if (npmProxyFirewallWarning && isNpmProxyFacetEnabled) {
+          if (isNpmProxyFacetEnabled) {
             npmProxyFirewallWarning.setTitle(NX.I18n.format('Repository_Facet_Npm_RemoveQuarantined_Warning'))
           }
         });

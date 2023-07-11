@@ -96,8 +96,4 @@ public interface FeatureFlags
   String CLEANUP_PREVIEW_ENABLED = "nexus.cleanup.preview.enabled";
 
   String CLEANUP_PREVIEW_ENABLED_NAMED = "${nexus.cleanup.preview.enabled:-false}";
-
-  String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";
-
-  String FIREWALL_QUARANTINE_FIX_ENABLED_NAMED = "${nexus.firewall.quarantineFix.enabled:-false}";
 }
