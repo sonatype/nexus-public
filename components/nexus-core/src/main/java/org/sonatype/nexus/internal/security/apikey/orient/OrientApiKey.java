@@ -12,10 +12,11 @@
  */
 package org.sonatype.nexus.internal.security.apikey.orient;
 
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 
 import org.sonatype.nexus.common.entity.AbstractEntity;
-import org.sonatype.nexus.internal.security.apikey.ApiKey;
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
@@ -34,6 +35,8 @@ public class OrientApiKey
 
   private char[] apiKey;
 
+  private OffsetDateTime created;
+
   OrientApiKey() {
     // package-private constructor
   }
@@ -50,15 +53,27 @@ public class OrientApiKey
     this.apiKey = Arrays.copyOf(apiKey, apiKey.length);
   }
 
+  @Override
   public String getDomain() {
     return domain;
   }
 
+  @Override
   public PrincipalCollection getPrincipals() {
     return principals;
   }
 
+  @Override
   public char[] getApiKey() {
     return Arrays.copyOf(apiKey, apiKey.length);
+  }
+
+  @Override
+  public OffsetDateTime getCreated() {
+    return created;
+  }
+
+  public void setCreated(final OffsetDateTime created) {
+    this.created = created;
   }
 }

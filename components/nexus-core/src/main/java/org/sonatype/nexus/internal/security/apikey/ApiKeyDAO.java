@@ -12,9 +12,12 @@
  */
 package org.sonatype.nexus.internal.security.apikey;
 
+import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.Optional;
 
 import org.sonatype.nexus.datastore.api.DataAccess;
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 
 import org.apache.ibatis.annotations.Param;
 import org.apache.shiro.subject.PrincipalCollection;
@@ -29,15 +32,70 @@ public interface ApiKeyDAO
 {
   Iterable<PrincipalCollection> browsePrincipals();
 
-  Optional<ApiKeyToken> findApiKey(@Param("domain") String domain, @Param("primaryPrincipal") String primaryPrincipal);
+  /**
+   * Find {@link ApiKey} records in the domain with the specified primary principal.
+   *
+   * NOTE that callers must verify that this matches the PrincipalCollection of the keys.
+   *
+   * @param domain the domain for the token (e.g. NuGetApiKey)
+   * @param primaryPrincipal the primary principal to locatte
+   */
+  Collection<ApiKey> findApiKeys(@Param("domain") String domain, @Param("primaryPrincipal") String primaryPrincipal);
 
-  Optional<PrincipalCollection> findPrincipals(@Param("domain") String domain, @Param("token") ApiKeyToken token);
+  /**
+   * Find {@link ApiKey} records across all domains with the specified primary principal.
+   *
+   * NOTE that callers must verify that this matches the PrincipalCollection of the keys.
+   *
+   * @param primaryPrincipal the primary principal to locatte
+   */
+  Collection<ApiKey> findApiKeysForPrimary(@Param("primaryPrincipal") String primaryPrincipal);
+
+  /**
+   *
+   * @param domain the domain
+   * @param token token
+   */
+  Optional<ApiKey> findPrincipals(@Param("domain") String domain, @Param("token") ApiKeyToken token);
 
   void save(ApiKeyData apiKeyData);
 
-  boolean deleteDomainKey(@Param("domain") String domain, @Param("primaryPrincipal") String primaryPrincipal);
-
-  boolean deleteKeys(@Param("primaryPrincipal") String primaryPrincipal);
+  /**
+   * Delete an {@link ApiKey} in the specified domain.
+   *
+   * @param domain the domain for the token (e.g. NuGetApiKey)
+   * @param token the token
+   */
+  boolean deleteKey(@Param("domain") String domain, @Param("token") ApiKeyToken token);
 
   boolean deleteAllKeys();
+
+  /**
+   * Browse all API Keys in the specified domain
+   *
+   * @param domain the domain, e.g. npm keys, nuget keys
+   */
+  Collection<ApiKey> browse(@Param("domain") String domain);
+
+  /**
+   * Browse all API Keys in the specified domain
+   *
+   * @param domain the domain, e.g. npm keys, nuget keys
+   * @param created the date created
+   */
+  Collection<ApiKey> browseByCreatedDate(@Param("domain") String domain, @Param("created") OffsetDateTime created);
+
+  /**
+   * Count the number of API Keys in the specified domain
+   *
+   * @param domain the domain, e.g. npm keys, nuget keys
+   */
+  int count(@Param("domain") String domain);
+
+  /**
+   * Remove all API Keys in the specified domain
+   *
+   * @param domain the domain, e.g. npm keys, nuget keys
+   */
+  void deleteApiKeysByDomain(@Param("domain") String domain);
 }

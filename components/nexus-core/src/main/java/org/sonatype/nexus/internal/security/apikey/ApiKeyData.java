@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.internal.security.apikey;
 
+import java.time.OffsetDateTime;
+
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
+
 import org.apache.shiro.subject.PrincipalCollection;
 
 /**
@@ -28,12 +32,12 @@ public class ApiKeyData
 
   private ApiKeyToken token;
 
-  @Override
+  private OffsetDateTime created;
+
   public void setDomain(final String domain) {
     this.domain = domain;
   }
 
-  @Override
   public void setPrincipals(final PrincipalCollection principals) {
     this.principals = principals;
   }
@@ -42,7 +46,6 @@ public class ApiKeyData
     this.token = token;
   }
 
-  @Override
   public void setApiKey(final char[] chars) {
     this.token = new ApiKeyToken(chars);
   }
@@ -68,5 +71,14 @@ public class ApiKeyData
   @Override
   public char[] getApiKey() {
     return token.getChars();
+  }
+
+  @Override
+  public OffsetDateTime getCreated() {
+    return created;
+  }
+
+  public void setCreated(final OffsetDateTime created) {
+    this.created = created;
   }
 }

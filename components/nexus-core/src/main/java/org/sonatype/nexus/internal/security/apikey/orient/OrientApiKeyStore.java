@@ -12,11 +12,16 @@
  */
 package org.sonatype.nexus.internal.security.apikey.orient;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import javax.annotation.Nullable;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,6 +37,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -39,7 +45,9 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
@@ -110,13 +118,18 @@ public class OrientApiKeyStore
       // There is a chance here that if multiple threads enter this method for the same principal that create can be
       // called multiple times resulting in a ORecordDuplicatedException. In that case we know the record must already
       // exist and can call getApiKey again. This avoids locking and gives us eventual-consistency.
-      return getApiKey(domain, principals);
+      return getApiKey(domain, principals).map(ApiKey::getApiKey).orElse(null);
     }
   }
 
   @Override
   @Guarded(by = STARTED)
-  public void persistApiKey(final String domain, final PrincipalCollection principals, final char[] apiKey) {
+  public void persistApiKey(
+      final String domain,
+      final PrincipalCollection principals,
+      final char[] apiKey,
+      final OffsetDateTime date)
+  {
     checkNotNull(domain);
     checkNotNull(principals);
     checkNotNull(apiKey);
@@ -124,31 +137,28 @@ public class OrientApiKeyStore
     entity.setDomain(domain);
     entity.setApiKey(apiKey);
     entity.setPrincipals(principals);
+    entity.setCreated(date);
     inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, entity));
   }
 
-  @Nullable
   @Override
   @Guarded(by = STARTED)
-  public char[] getApiKey(final String domain, final PrincipalCollection principals) {
+  public Optional<ApiKey> getApiKey(final String domain, final PrincipalCollection principals) {
     return inTx(databaseInstance).call(db -> {
       for (OrientApiKey entity : findByPrimaryPrincipal(db, principals)) {
-        if (entity.getDomain().equals(domain)) {
-          return entity.getApiKey();
+        if (entity.getDomain().equals(domain) && principalsEqual(entity.getPrincipals(), principals)) {
+          return Optional.of(entity);
         }
       }
-      return null;
+      return Optional.empty();
     });
   }
 
-  @Nullable
   @Override
   @Guarded(by = STARTED)
-  public PrincipalCollection getPrincipals(final String domain, final char[] apiKey) {
-    return inTx(databaseInstance).call(db -> {
-      final OrientApiKey entity = entityAdapter.findByApiKey(db, domain, checkNotNull(apiKey));
-      return entity == null ? null : entity.getPrincipals();
-    });
+  public Optional<ApiKey> getApiKeyByToken(final String domain, final char[] apiKey) {
+    return inTx(databaseInstance)
+        .call(db -> Optional.ofNullable(entityAdapter.findByApiKey(db, domain, checkNotNull(apiKey))));
   }
 
   @Override
@@ -156,7 +166,7 @@ public class OrientApiKeyStore
   public void deleteApiKey(final String domain, final PrincipalCollection principals) {
     inTxRetry(databaseInstance).run(db -> {
       for (OrientApiKey entity : findByPrimaryPrincipal(db, principals)) {
-        if (entity.getDomain().equals(domain)) {
+        if (entity.getDomain().equals(domain) && principalsEqual(entity.getPrincipals(), principals)) {
           entityAdapter.deleteEntity(db, entity);
         }
       }
@@ -168,7 +178,9 @@ public class OrientApiKeyStore
   public void deleteApiKeys(final PrincipalCollection principals) {
     inTxRetry(databaseInstance).run(db -> {
       for (OrientApiKey entity : findByPrimaryPrincipal(db, principals)) {
-        entityAdapter.deleteEntity(db, entity);
+        if (principalsEqual(entity.getPrincipals(), principals)) {
+          entityAdapter.deleteEntity(db, entity);
+        }
       }
     });
   }
@@ -232,5 +244,52 @@ public class OrientApiKeyStore
       return checkNotNull(factory.makeApiKey(principals));
     }
     return defaultApiKeyFactory.makeApiKey(principals);
+  }
+
+  @Override
+  public Collection<ApiKey> browse(final String domain) {
+    Iterable<OrientApiKey> keys = inTx(databaseInstance)
+        .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
+        .call(db -> entityAdapter.browseByDomain(db, domain));
+
+    return convert(keys);
+  }
+
+  @Override
+  public Collection<ApiKey> browseByCreatedDate(final String domain, final OffsetDateTime created) {
+    Iterable<OrientApiKey> keys = inTx(databaseInstance)
+        .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
+        .call(db -> entityAdapter.browseByDomainAndCreated(db, domain, created));
+
+    return convert(keys);
+  }
+
+
+  @Override
+  public int count(final String domain) {
+    return inTx(databaseInstance)
+        .retryOn(ONeedRetryException.class)
+        .call(db -> entityAdapter.countByDomainI(db, domain));
+  }
+
+  @Override
+  public void deleteApiKeys(final String domain) {
+    inTxRetry(databaseInstance).run(db -> {
+      for (OrientApiKey entity : entityAdapter.browseByDomain(db, domain)) {
+        checkCancellation();
+        entityAdapter.deleteEntity(db, entity);
+      }
+    });
+  }
+
+  private static Collection<ApiKey> convert(final Iterable<OrientApiKey> keys) {
+    return StreamSupport.stream(keys.spliterator(), false)
+        .map(ApiKey.class::cast)
+        .collect(Collectors.toList());
+  }
+
+  private boolean principalsEqual(final PrincipalCollection a, final PrincipalCollection b) {
+   return Objects.equals(a.getPrimaryPrincipal(), b.getPrimaryPrincipal()) &&
+       Objects.equals(a.getRealmNames(), b.getRealmNames());
   }
 }

@@ -141,6 +141,8 @@ public abstract class NexusPaxExamSupport
 
   private static final String SQL_SEARCH_KEY = "it.sql_search";
 
+  private static final String NX_PROPERTIES = "it.props";
+
   private static final String HA_KEY = "it.ha";
 
   /*
@@ -523,6 +525,8 @@ public abstract class NexusPaxExamSupport
                 "goodies.build.name", System.getProperty(PROP_TEST_PREFIX))
         ),
 
+        when(System.getProperty(NX_PROPERTIES) != null).useOptions(parseItProperties()),
+
         // configure default blobstore
         configureBlobstore(),
 
@@ -536,6 +540,14 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
             "rmiServerPort", Integer.toString(PortAllocator.nextFreePort()))
     );
+  }
+
+  private static Option[] parseItProperties() {
+    return Arrays.asList(System.getProperty(NX_PROPERTIES).split(",")).stream()
+        .peek(prop -> Loggers.getLogger(NexusPaxExamSupport.class).info("Found property {}", prop))
+        .map(prop -> prop.split("="))
+        .map(props -> editConfigurationFilePut(NEXUS_PROPERTIES_FILE, props[0], props[1]))
+        .toArray(Option[]::new);
   }
 
   protected static Option[] configureDatabase() {

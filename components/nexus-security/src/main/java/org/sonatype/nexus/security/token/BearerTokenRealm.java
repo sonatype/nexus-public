@@ -19,9 +19,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.user.UserNotFoundException;
-import org.sonatype.nexus.security.user.UserStatus;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -83,7 +83,9 @@ public abstract class BearerTokenRealm
   protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token)
   {
     checkNotNull(token);
-    final PrincipalCollection principals = keyStore.getPrincipals(format, (char[]) token.getCredentials());
+    final PrincipalCollection principals = keyStore.getApiKeyByToken(format, (char[]) token.getCredentials())
+        .map(ApiKey::getPrincipals)
+        .orElse(null);
     if (null != principals) {
       try {
         if (anonymousAndSupported(principals) || principalsHelper.getUserStatus(principals).isActive()) {
@@ -106,10 +108,10 @@ public abstract class BearerTokenRealm
   @Nullable
   protected Object getAuthenticationCacheKey(@Nullable final AuthenticationToken token) {
     if (token != null) {
-      PrincipalCollection principals = keyStore.getPrincipals(format, (char[]) token.getCredentials());
-      if (principals != null) {
-        return principals.getPrimaryPrincipal();
-      }
+      return keyStore.getApiKeyByToken(format, (char[]) token.getCredentials())
+          .map(ApiKey::getPrincipals)
+          .map(PrincipalCollection::getPrimaryPrincipal)
+          .orElse(null);
     }
     return null;
   }

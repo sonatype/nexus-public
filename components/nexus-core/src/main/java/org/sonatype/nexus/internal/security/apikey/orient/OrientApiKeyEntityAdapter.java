@@ -17,6 +17,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -31,14 +39,18 @@ import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 
+import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.shiro.subject.PrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 /**
  * {@link OrientApiKey} entity adapter.
@@ -62,6 +74,8 @@ public class OrientApiKeyEntityAdapter
 
   private static final String P_PRINCIPALS = "principals";
 
+  private static final String P_CREATED = "created";
+
   private static final String I_APIKEY = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_DOMAIN)
@@ -73,6 +87,15 @@ public class OrientApiKeyEntityAdapter
       .property(P_DOMAIN)
       .property(P_PRIMARY_PRINCIPAL)
       .build();
+
+  private static final String DOMAIN_QUERY_STRING = format(
+      "SELECT FROM %s WHERE %s = :domain ORDER BY %s", DB_CLASS, P_DOMAIN, P_CREATED);
+
+  private static final String DOMAIN_AND_CREATED_QUERY_STRING = format(
+      "SELECT FROM %s WHERE %s = :domain AND %s > :created ORDER BY %s", DB_CLASS, P_DOMAIN, P_CREATED, P_CREATED);
+
+  private static final String COUNT_DOMAIN_QUERY_STRING =
+      format("SELECT count(*) as count FROM %s WHERE %s = :domain", DB_CLASS, P_DOMAIN);
 
   private final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
 
@@ -110,6 +133,9 @@ public class OrientApiKeyEntityAdapter
     type.createProperty(P_PRINCIPALS, OType.BINARY)
         .setMandatory(true)
         .setNotNull(true);
+    type.createProperty(P_CREATED, OType.LONG)
+        .setMandatory(true)
+        .setNotNull(true);
     type.createIndex(I_APIKEY, INDEX_TYPE.UNIQUE, P_DOMAIN, P_APIKEY);
     type.createIndex(I_PRIMARY_PRINCIPAL, INDEX_TYPE.UNIQUE, P_DOMAIN, P_PRIMARY_PRINCIPAL);
   }
@@ -123,11 +149,15 @@ public class OrientApiKeyEntityAdapter
   protected void readFields(final ODocument document, final OrientApiKey entity) {
     String domain = document.field(P_DOMAIN, OType.STRING);
     String apiKey = document.field(P_APIKEY, OType.STRING);
+    Long createdTimestamp = document.field(P_CREATED, OType.LONG);
     final PrincipalCollection principals = (PrincipalCollection) deserialize(document, P_PRINCIPALS);
 
     entity.setDomain(domain);
     entity.setApiKey(apiKey.toCharArray());
     entity.setPrincipals(principals);
+
+    OffsetDateTime created = OffsetDateTime.ofInstant(Instant.ofEpochMilli(createdTimestamp), ZoneOffset.UTC);
+    entity.setCreated(created);
   }
 
   private Object deserialize(final ODocument document, final String fieldName) {
@@ -147,6 +177,10 @@ public class OrientApiKeyEntityAdapter
     document.field(P_APIKEY, String.valueOf(entity.getApiKey()));
     document.field(P_PRIMARY_PRINCIPAL, entity.getPrincipals().getPrimaryPrincipal().toString());
     document.field(P_PRINCIPALS, serialize(entity.getPrincipals()));
+    document.field(P_CREATED, Optional.ofNullable(entity.getCreated())
+        .orElseGet(OffsetDateTime::now)
+        .toInstant()
+        .toEpochMilli());
   }
 
   private byte[] serialize(final Object object) {
@@ -179,6 +213,48 @@ public class OrientApiKeyEntityAdapter
    */
   public Iterable<OrientApiKey> browseByPrimaryPrincipal(final ODatabaseDocumentTx db, final Object value) {
     return browseByPrimaryPrincipal.execute(db, value);
+  }
+
+  /**
+   * Browse all keys in the specified domain
+   */
+  public Iterable<OrientApiKey> browseByDomain(final ODatabaseDocumentTx db, final String domain) {
+    Map<String, Object> params = ImmutableMap.of(P_DOMAIN, domain);
+
+    return query(db, DOMAIN_QUERY_STRING, params);
+  }
+
+  public int countByDomainI(final ODatabaseDocumentTx db, final String domain) {
+    Map<String, Object> params = ImmutableMap.of(P_DOMAIN, domain);
+
+    List<ODocument> results = db.command(new OCommandSQL(COUNT_DOMAIN_QUERY_STRING)).execute(params);
+    return results.get(0).field("count", Integer.class);
+  }
+
+  /**
+   * Browse all keys in the specified domain after the created date
+   */
+  public Iterable<OrientApiKey> browseByDomainAndCreated(
+      final ODatabaseDocumentTx db,
+      final String domain,
+      final OffsetDateTime created)
+  {
+    Map<String, Object> params = ImmutableMap.of(P_DOMAIN, domain, P_CREATED, created.toInstant().toEpochMilli());
+
+    return query(db, DOMAIN_AND_CREATED_QUERY_STRING, params);
+  }
+
+  private Iterable<OrientApiKey> query(
+      final ODatabaseDocumentTx db,
+      final String query,
+      final Map<String, Object> params)
+  {
+    List<ODocument> result = db.command(new OSQLSynchQuery<>(query)).execute(params);
+
+    if (result != null) {
+      return result.stream().map(this::readEntity).collect(Collectors.toList());
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
