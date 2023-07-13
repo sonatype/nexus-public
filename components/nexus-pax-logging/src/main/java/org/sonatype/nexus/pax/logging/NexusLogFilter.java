@@ -28,6 +28,7 @@ import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_WITH_PROGRESS_
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.AUDIT_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.CLUSTER_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 
@@ -43,7 +44,8 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 public class NexusLogFilter
     extends Filter<ILoggingEvent>
 {
-  private static final List<Marker> DENY_MARKERS = Arrays.asList(PROGRESS, TASK_LOG_ONLY, CLUSTER_LOG_ONLY, AUDIT_LOG_ONLY);
+  private static final List<Marker> DENY_MARKERS = Arrays.asList(PROGRESS, TASK_LOG_ONLY, CLUSTER_LOG_ONLY,
+      AUDIT_LOG_ONLY, OUTBOUND_REQUESTS_LOG_ONLY);
 
   @Override
   public FilterReply decide(final ILoggingEvent event) {
