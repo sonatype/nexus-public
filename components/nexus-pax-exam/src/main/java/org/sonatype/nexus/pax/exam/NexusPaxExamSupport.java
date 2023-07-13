@@ -543,7 +543,11 @@ public abstract class NexusPaxExamSupport
   }
 
   private static Option[] parseItProperties() {
-    return Arrays.asList(System.getProperty(NX_PROPERTIES).split(",")).stream()
+    String nxProperties = System.getProperty(NX_PROPERTIES);
+    if (nxProperties == null) {
+      return new Option[0];
+    }
+    return Arrays.stream(nxProperties.split(","))
         .peek(prop -> Loggers.getLogger(NexusPaxExamSupport.class).info("Found property {}", prop))
         .map(prop -> prop.split("="))
         .map(props -> editConfigurationFilePut(NEXUS_PROPERTIES_FILE, props[0], props[1]))
