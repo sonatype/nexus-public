@@ -32,3 +32,11 @@
     @include container-vertical;
   }
 }
+
+.nxrm-cleanup-policies-dry-run {
+  padding-bottom: 72px;
+
+  .nx-form-select {
+    width: 624px;
+  }
+}

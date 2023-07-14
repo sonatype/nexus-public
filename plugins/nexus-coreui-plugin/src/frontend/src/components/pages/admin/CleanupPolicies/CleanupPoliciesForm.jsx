@@ -36,6 +36,7 @@ import {
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
 import CleanupPoliciesPreview from './CleanupPoliciesPreview';
+import CleanupPoliciesDryRun from './CleanupPoliciesDryRun';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
@@ -257,7 +258,9 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
         </NxStatefulForm>
       </Section>
 
-      {!isPreviewEnabled && !isLoading && !loadError && hasData && <CleanupPoliciesPreview policyData={data}/>}
+      {!isLoading && !loadError && hasData && 
+        (!isPreviewEnabled ? <CleanupPoliciesPreview policyData={data}/> : <CleanupPoliciesDryRun policyData={data}/>)
+      }
     </ContentBody>
   </Page>;
 }

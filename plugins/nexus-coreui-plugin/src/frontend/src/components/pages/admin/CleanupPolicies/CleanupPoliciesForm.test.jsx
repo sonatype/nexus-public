@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import axios from 'axios';
-import {screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {act, screen, waitFor, waitForElementToBeRemoved, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 
@@ -84,7 +84,7 @@ describe('CleanupPoliciesForm', function() {
   }
 
   function renderView(view) {
-    return TestUtils.render(view, ({queryByLabelText, queryByText, queryByPlaceholderText}) => ({
+    return TestUtils.render(view, ({queryByLabelText, queryByText, queryByRole, queryByPlaceholderText}) => ({
       name: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.NAME_LABEL),
       format: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.FORMAT_LABEL),
       notes: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.NOTES_LABEL),
@@ -99,7 +99,9 @@ describe('CleanupPoliciesForm', function() {
       previewRepositories: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.PREVIEW.REPOSITORY_LABEL),
       previewFilterText: () => queryByPlaceholderText(UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER),
       previewSampleWarning: () => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.SAMPLE_WARNING, {exact: false}),
-      previewCmpCount: (a, t) => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(a, t), {exact: false})
+      previewCmpCount: (a, t) => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(a, t), {exact: false}),
+      dryRunRepositories: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.DRY_RUN.REPOSITORY_LABEL),
+      dryRunCreateCSVButton: () => queryByRole('button', {name: UIStrings.CLEANUP_POLICIES.DRY_RUN.BUTTON})
     }));
   }
 
@@ -474,6 +476,72 @@ describe('CleanupPoliciesForm', function() {
       expect(selectors.getCriteriaAssetRegexCheckbox()).toHaveClass('tm-unchecked');
       expect(queryByText('No assets in repository matched the criteria')).toBeInTheDocument();
       expect(previewSampleWarning()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('dry run', function() {
+    beforeEach(() => {
+      when(ExtJS.state().getValue).calledWith('nexus.datastore.enabled').mockReturnValue(true);
+      when(ExtJS.state().getValue).calledWith('nexus.cleanup.preview.enabled').mockReturnValue(true);
+    });
+
+    it('renders the resolved data', async function() {
+      const {dryRunRepositories, dryRunCreateCSVButton} = renderEditView(EDITABLE_ITEM.name);
+  
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  
+      const selectDropdown = dryRunRepositories(),
+          options = within(selectDropdown).queryAllByRole('option'),
+          createButton = dryRunCreateCSVButton();
+
+      expect(selectDropdown).toBeInTheDocument();
+      expect(options).toHaveLength(2);
+      expect(options[0]).toHaveTextContent('Select a repository');
+      expect(options[1]).toHaveTextContent('maven-central');
+      expect(createButton).toBeInTheDocument();
+    });
+
+    it('sets disabled on the select dropdown when no format is selected', async function() {
+      const {format, dryRunRepositories} = renderEditView(EDITABLE_ITEM.name);
+  
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  
+      const selectDropdown = dryRunRepositories(),
+          formatSelectDropdown = format();
+
+      expect(selectDropdown).not.toBeDisabled();
+
+      await act(async () => userEvent.selectOptions(formatSelectDropdown, ''));
+
+      expect(formatSelectDropdown).toHaveValue('');
+      expect(selectDropdown).toBeDisabled();
+
+      await act(async () => userEvent.selectOptions(formatSelectDropdown, 'testformat'));
+
+      expect(formatSelectDropdown).toHaveValue('testformat');
+      expect(selectDropdown).not.toBeDisabled();
+    });
+
+    it('sets disabled on the button when no repository is selected', async function() {
+      const {dryRunRepositories, dryRunCreateCSVButton} = renderEditView(EDITABLE_ITEM.name);
+  
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  
+      const selectDropdown = dryRunRepositories(),
+          createButton = dryRunCreateCSVButton();
+
+      expect(selectDropdown).toHaveValue('');
+      expect(createButton).toBeDisabled();
+
+      userEvent.selectOptions(selectDropdown, 'maven-central');
+
+      expect(selectDropdown).toHaveValue('maven-central');
+      expect(createButton).not.toBeDisabled();
+
+      userEvent.selectOptions(selectDropdown, '');
+
+      expect(selectDropdown).toHaveValue('');
+      expect(createButton).toBeDisabled();
     });
   });
 });
