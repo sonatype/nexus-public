@@ -82,6 +82,11 @@ public class FluentAssetsImpl
     return doBrowse(limit, continuationToken, null, null, null);
   }
 
+  @Override
+  public Continuation<FluentAsset> browseEager(final int limit, @Nullable final String continuationToken) {
+    throw new UnsupportedOperationException();
+  }
+
   Continuation<FluentAsset> doBrowse(final int limit,
                                      @Nullable final String continuationToken,
                                      @Nullable final String kind,

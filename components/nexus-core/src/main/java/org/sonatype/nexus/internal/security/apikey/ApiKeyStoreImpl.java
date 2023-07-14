@@ -12,9 +12,14 @@
  */
 package org.sonatype.nexus.internal.security.apikey;
 
+import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,6 +31,7 @@ import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -89,38 +95,47 @@ public class ApiKeyStoreImpl
 
   @Transactional
   @Override
-  public void persistApiKey(final String domain, final PrincipalCollection principals, final char[] apiKey) {
+  public void persistApiKey(
+      final String domain,
+      final PrincipalCollection principals,
+      final char[] apiKey,
+      final OffsetDateTime created)
+  {
     ApiKeyData apiKeyData = new ApiKeyData();
     apiKeyData.setDomain(domain);
     apiKeyData.setPrincipals(principals);
     apiKeyData.setApiKey(apiKey);
+    apiKeyData.setCreated(created);
     dao().save(apiKeyData);
   }
 
   @Transactional
   @Override
-  public char[] getApiKey(final String domain, final PrincipalCollection principals) {
-    return dao().findApiKey(domain, principals.getPrimaryPrincipal().toString())
-        .map(ApiKeyToken::getChars)
-        .orElse(null);
+  public Optional<ApiKey> getApiKey(final String domain, final PrincipalCollection principals) {
+    return findApiKey(domain, principals);
   }
 
   @Transactional
   @Override
-  public PrincipalCollection getPrincipals(final String domain, final char[] apiKey) {
-    return dao().findPrincipals(domain, new ApiKeyToken(apiKey)).orElse(null);
+  public Optional<ApiKey> getApiKeyByToken(final String domain, final char[] apiKey) {
+    return dao().findPrincipals(domain, new ApiKeyToken(apiKey));
   }
 
   @Transactional
   @Override
   public void deleteApiKey(final String domain, final PrincipalCollection principals) {
-    dao().deleteDomainKey(domain, principals.getPrimaryPrincipal().toString());
+    findApiKey(domain, principals)
+        .map(ApiKey::getApiKey)
+        .map(ApiKeyToken::new)
+        .ifPresent(token -> dao().deleteKey(domain, token));
   }
 
   @Transactional
   @Override
   public void deleteApiKeys(final PrincipalCollection principals) {
-    dao().deleteKeys(principals.getPrimaryPrincipal().toString());
+    dao().findApiKeysForPrimary(principals.getPrimaryPrincipal().toString()).stream()
+        .filter(principalMatches(principals))
+        .forEach(key -> dao().deleteKey(key.getDomain(), new ApiKeyToken(key.getApiKey())));
   }
 
   @Transactional
@@ -171,5 +186,48 @@ public class ApiKeyStoreImpl
     else {
       purgeApiKeys();
     }
+  }
+
+  @Transactional
+  @Override
+  public Collection<ApiKey> browse(final String domain) {
+    return dao().browse(domain);
+  }
+
+  @Transactional
+  @Override
+  public Collection<ApiKey> browseByCreatedDate(final String domain, final OffsetDateTime date) {
+    return dao().browseByCreatedDate(domain, date);
+  }
+
+  @Transactional
+  @Override
+  public int count(final String domain) {
+    return dao().count(domain);
+  }
+
+  @Transactional
+  @Override
+  public void deleteApiKeys(final String domain) {
+    dao().deleteApiKeysByDomain(domain);
+  }
+
+  /*
+   * Finds ApiKey records for the provided username, and ensures the realm is the same
+   */
+  private Optional<ApiKey> findApiKey(final String domain, final PrincipalCollection principals) {
+    return dao().findApiKeys(domain, principals.getPrimaryPrincipal().toString()).stream()
+        .filter(principalMatches(principals))
+        .findAny();
+  }
+
+  /*
+   * Creates a Predicate which ensures the principal of the tested ApiKey is equal to the provided PrincipalCollection
+   */
+  private Predicate<ApiKey> principalMatches(final PrincipalCollection principals) {
+    String primaryPrincipal = principals.getPrimaryPrincipal().toString();
+    Set<String> realms = principals.getRealmNames();
+    return key -> key.getPrincipals().getRealmNames().equals(realms)
+        && key.getPrincipals().getPrimaryPrincipal().equals(primaryPrincipal);
   }
 }

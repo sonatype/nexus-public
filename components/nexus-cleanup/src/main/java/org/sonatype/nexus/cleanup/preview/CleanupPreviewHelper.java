@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.cleanup.preview;
 
+import java.util.stream.Stream;
+
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyPreviewXO;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
@@ -28,4 +30,9 @@ public interface CleanupPreviewHelper
   PagedResponse<ComponentXO> getSearchResults(CleanupPolicyPreviewXO previewXO,
                                               Repository repository,
                                               QueryOptions queryOptions);
+
+  Stream<ComponentXO> getSearchResultsStream(
+      CleanupPolicyPreviewXO previewXO,
+      Repository repository,
+      QueryOptions queryOptions);
 }

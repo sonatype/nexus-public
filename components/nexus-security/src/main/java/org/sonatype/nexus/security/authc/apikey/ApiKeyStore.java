@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.security.authc.apikey;
 
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -36,23 +40,43 @@ public interface ApiKeyStore
    *
    * @since 3.1
    */
-  void persistApiKey(String domain, PrincipalCollection principals, char[] apiKey);
+  default void persistApiKey(final String domain, final PrincipalCollection principals, final char[] apiKey) {
+    persistApiKey(domain, principals, apiKey, null);
+  };
+
+  /**
+   * Persists an API-Key with a predetermined value.
+   */
+  void persistApiKey(String domain, PrincipalCollection principals, char[] apiKey, @Nullable OffsetDateTime created);
 
   /**
    * Gets the current API-Key assigned to the given principals in given domain.
    *
    * @return {@code null} if no key has been assigned
    */
-  @Nullable
-  char[] getApiKey(String domain, PrincipalCollection principals);
+  Optional<ApiKey> getApiKey(String domain, PrincipalCollection principals);
 
   /**
    * Retrieves the principals associated with the given API-Key in given domain.
    *
    * @return {@code null} if the key is invalid or stale
    */
-  @Nullable
-  PrincipalCollection getPrincipals(String domain, char[] apiKey);
+  Optional<ApiKey> getApiKeyByToken(String domain, char[] apiKey);
+
+  /**
+   * Browse tokens in the domain
+   */
+  Collection<ApiKey> browse(String domain);
+
+  /**
+   * Browse tokens in the domain created after the provided date
+   */
+  Collection<ApiKey> browseByCreatedDate(String domain, OffsetDateTime date);
+
+  /**
+   * Count all the keys for the provided domain
+   */
+  int count(String domain);
 
   /**
    * Deletes the API-Key associated with the given principals in given domain.
@@ -66,13 +90,19 @@ public interface ApiKeyStore
 
   /**
    * Deletes all API-Keys.
-   * 
+   *
    * @since 3.1
    */
   void deleteApiKeys();
 
   /**
+   * Deletes all API-Keys for the specified domain
+   */
+  void deleteApiKeys(String domain);
+
+  /**
    * Purges any API-Keys associated with missing/deleted users.
    */
   void purgeApiKeys();
+
 }

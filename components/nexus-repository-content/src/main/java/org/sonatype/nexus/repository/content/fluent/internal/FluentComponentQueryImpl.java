@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -61,5 +62,10 @@ public class FluentComponentQueryImpl
   @Override
   public Continuation<FluentComponent> browse(final int limit, final String continuationToken) {
     return components.doBrowse(limit, continuationToken, kind, filter, filterParams);
+  }
+
+  @Override
+  public Continuation<FluentComponent> browseEager(final int limit, @Nullable final String continuationToken) {
+    return components.doBrowseEager(limit, continuationToken, kind, filter, filterParams);
   }
 }

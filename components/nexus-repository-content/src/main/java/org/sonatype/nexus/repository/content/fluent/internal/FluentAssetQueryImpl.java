@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -61,5 +62,10 @@ public class FluentAssetQueryImpl
   @Override
   public Continuation<FluentAsset> browse(final int limit, final String continuationToken) {
     return assets.doBrowse(limit, continuationToken, kind, filter, filterParams);
+  }
+
+  @Override
+  public Continuation<FluentAsset> browseEager(final int limit, @Nullable final String continuationToken) {
+    throw new UnsupportedOperationException();
   }
 }

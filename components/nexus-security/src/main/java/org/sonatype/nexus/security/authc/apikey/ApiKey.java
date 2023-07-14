@@ -10,26 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.apikey;
+package org.sonatype.nexus.security.authc.apikey;
+
+import java.time.OffsetDateTime;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
 /**
  * A database-stored object representing the association between a {@link PrincipalCollection} and a Api Key (char[]).
- *
- * @since 3.20
  */
 public interface ApiKey
 {
-  String getDomain();
+  char[] getApiKey();
 
-  void setDomain(final String domain);
+  String getDomain();
 
   PrincipalCollection getPrincipals();
 
-  void setPrincipals(final PrincipalCollection principals);
-
-  char[] getApiKey();
-
-  void setApiKey(final char[] apiKey);
+  OffsetDateTime getCreated();
 }

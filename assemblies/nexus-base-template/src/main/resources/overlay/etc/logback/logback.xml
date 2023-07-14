@@ -79,6 +79,22 @@
     </sift>
   </appender>
 
+  <appender name="outboundRequestslogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>${karaf.data}/log/outbound-request.log</File>
+    <Append>true</Append>
+    <encoder>
+      <pattern>%msg%n</pattern>
+    </encoder>
+    <filter class="org.sonatype.nexus.pax.logging.OutboundRequestsLogFilter" />
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${karaf.data}/log/outbound-request-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <maxHistory>90</maxHistory>
+    </rollingPolicy>
+  </appender>
+  <logger name="outboundRequests">
+    <appender-ref ref="outboundRequestslogfile"/>
+  </logger>
+
   <appender name="auditlogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <File>${karaf.data}/log/audit/audit.log</File>
     <Append>true</Append>

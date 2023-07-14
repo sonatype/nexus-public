@@ -294,14 +294,15 @@ public class BootstrapListener
   }
 
   private static void selectDbFeature(final Properties properties) {
-    if (parseBoolean(properties.getProperty(ORIENT_ENABLED, "true"))) {
-      properties.setProperty(NEXUS_DB_FEATURE, "nexus-orient");
-      properties.setProperty(ORIENT_ENABLED, "true");
+    if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, "false"))) {
+      properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
+      //enable change blobstore task for only for newdb
+      properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED, "true");
+      properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
     }
     else {
-      properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
-      properties.setProperty(DATASTORE_ENABLED, "true");
-      properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
+      properties.setProperty(NEXUS_DB_FEATURE, "nexus-orient");
+      properties.setProperty(ORIENT_ENABLED, "true");
     }
   }
 

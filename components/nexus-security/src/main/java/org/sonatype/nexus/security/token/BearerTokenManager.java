@@ -16,6 +16,7 @@ import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 
 import org.apache.shiro.subject.PrincipalCollection;
@@ -52,7 +53,7 @@ public abstract class BearerTokenManager
    */
   protected String createToken(final PrincipalCollection principals) {
     checkNotNull(principals);
-    char[] apiKey = apiKeyStore.getApiKey(format, principals);
+    char[] apiKey = apiKeyStore.getApiKey(format, principals).map(ApiKey::getApiKey).orElse(null);
     if (apiKey != null) {
       return format + "." + new String(apiKey);
     }
@@ -64,7 +65,7 @@ public abstract class BearerTokenManager
    */
   public boolean deleteToken() {
     final PrincipalCollection principals = securityHelper.subject().getPrincipals();
-    if (apiKeyStore.getApiKey(format, principals) != null) {
+    if (apiKeyStore.getApiKey(format, principals).isPresent()) {
       apiKeyStore.deleteApiKey(format, securityHelper.subject().getPrincipals());
       return true;
     }

@@ -69,6 +69,17 @@ public class DateHelper
   }
 
   /**
+   * Converts input {@link OffsetDateTime} to {@link Date}, or {@code null} if input is {@code null}.
+   */
+  @Nullable
+  public static Date toDate(@Nullable final OffsetDateTime dateTime) {
+    if (dateTime == null) {
+      return null;
+    }
+    return new Date(dateTime.toInstant().toEpochMilli());
+  }
+
+  /**
    * @since 3.25
    */
   public static DateTime toDateTime(final OffsetDateTime offsetDateTime) {

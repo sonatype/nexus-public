@@ -13,10 +13,12 @@
 package org.sonatype.nexus.security.token;
 
 import java.security.Principal;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
@@ -36,6 +38,7 @@ import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.token.BearerTokenRealm.ANONYMOUS_USER;
@@ -70,7 +73,9 @@ public class BearerTokenRealmTest
     when(token.getPrincipal()).thenReturn(FORMAT);
     when(unsupportedToken.getPrincipal()).thenReturn(FORMAT);
     when(principalCollection.getPrimaryPrincipal()).thenReturn(principal);
-    when(keyStore.getPrincipals(any(), any())).thenReturn(principalCollection);
+    ApiKey key = mock(ApiKey.class);
+    when(key.getPrincipals()).thenReturn(principalCollection);
+    when(keyStore.getApiKeyByToken(any(), any())).thenReturn(Optional.of(key));
     when(principalsHelper.getUserStatus(principalCollection)).thenReturn(UserStatus.active);
     underTest = new BearerTokenRealm(keyStore, principalsHelper, FORMAT) {};
   }
@@ -130,7 +135,7 @@ public class BearerTokenRealmTest
 
   @Test
   public void nullAuthInfoWhenPrincipalsNull() throws Exception {
-    when(keyStore.getPrincipals(any(), any())).thenReturn(null);
+    when(keyStore.getApiKeyByToken(any(), any())).thenReturn(Optional.empty());
     assertThat(underTest.doGetAuthenticationInfo(token), is(nullValue()));
   }
 
@@ -152,7 +157,7 @@ public class BearerTokenRealmTest
 
   @Test
   public void nullWhenPrincipalsNull() throws Exception {
-    when(keyStore.getPrincipals(any(), any())).thenReturn(null);
+    when(keyStore.getApiKeyByToken(any(), any())).thenReturn(Optional.empty());
     assertThat(underTest.getAuthenticationCacheKey(token), is(nullValue()));
   }
 

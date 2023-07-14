@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.util.List;
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.common.entity.ContinuationAware;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -37,6 +41,8 @@ public class ComponentData
   private String version;
 
   private Integer entityVersion;
+
+  private List<Asset> assets;
 
   // Component API
 
@@ -109,6 +115,15 @@ public class ComponentData
    */
   public void setEntityVersion(final Integer entityVersion) {
     this.entityVersion = entityVersion;
+  }
+
+  @Nullable
+  public List<Asset> getAssets() {
+    return assets;
+  }
+
+  public void setAssets(final List<Asset> assets) {
+    this.assets = assets;
   }
 
   // ContinuationAware

@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.security.token;
 
+import java.util.Optional;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -30,6 +33,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -93,7 +97,7 @@ public class BearerTokenManagerTest
 
   @Test
   public void createNewKeyWhenOneDoesNotAlreadyExist() throws Exception {
-    when(apiKeyStore.getApiKey(any(), any())).thenReturn(null);
+    when(apiKeyStore.getApiKey(any(), any())).thenReturn(Optional.empty());
     when(apiKeyStore.createApiKey(FORMAT, principalCollection)).thenReturn(TOKEN.toCharArray());
     assertThat(underTest.createToken(principalCollection), is(equalTo(FORMAT + "." + TOKEN)));
     verify(apiKeyStore).createApiKey(FORMAT, principalCollection);
@@ -101,22 +105,30 @@ public class BearerTokenManagerTest
 
   @Test
   public void reuseTokenWhenExists() throws Exception {
-    when(apiKeyStore.getApiKey(any(), any())).thenReturn(TOKEN.toCharArray());
+    Optional<ApiKey> apiKey = Optional.of(mockApiKey(TOKEN.toCharArray()));
+    when(apiKeyStore.getApiKey(any(), any())).thenReturn(apiKey);
     assertThat(underTest.createToken(principalCollection), is(equalTo(FORMAT + "." + TOKEN)));
     verify(apiKeyStore, never()).createApiKey(any(), any());
   }
 
   @Test
   public void deleteKey() throws Exception {
-    when(apiKeyStore.getApiKey(any(), any())).thenReturn(TOKEN.toCharArray());
+    Optional<ApiKey> apiKey = Optional.of(mockApiKey(TOKEN.toCharArray()));
+    when(apiKeyStore.getApiKey(any(), any())).thenReturn(apiKey);
     assertTrue(underTest.deleteToken());
     verify(apiKeyStore).deleteApiKey(FORMAT, principalCollection);
   }
 
   @Test
   public void doNotDeleteKeyWhenNoKeyExists() throws Exception {
-    when(apiKeyStore.getApiKey(any(), any())).thenReturn(null);
+    when(apiKeyStore.getApiKey(any(), any())).thenReturn(Optional.empty());
     assertFalse(underTest.deleteToken());
     verify(apiKeyStore, never()).deleteApiKey(FORMAT, principalCollection);
+  }
+
+  private ApiKey mockApiKey(final char[] token) {
+    ApiKey key = mock(ApiKey.class);
+    when(key.getApiKey()).thenReturn(token);
+    return key;
   }
 }

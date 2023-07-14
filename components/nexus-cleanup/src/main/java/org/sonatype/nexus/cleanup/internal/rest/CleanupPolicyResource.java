@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -46,6 +47,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
+import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyCriteria;
@@ -121,6 +123,8 @@ public class CleanupPolicyResource
 
   private final boolean isPreviewEnabled;
 
+  private final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
+
   @Inject
   public CleanupPolicyResource(
       final CleanupPolicyStorage cleanupPolicyStorage,
@@ -129,7 +133,8 @@ public class CleanupPolicyResource
       final Provider<CleanupPreviewHelper> cleanupPreviewHelper,
       final RepositoryManager repositoryManager,
       @Named(DATASTORE_ENABLED_NAMED) final boolean isDatastoreEnabled,
-      @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled)
+      @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled,
+      final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.formats = checkNotNull(formats);
@@ -141,6 +146,7 @@ public class CleanupPolicyResource
     this.repositoryManager = checkNotNull(repositoryManager);
     this.isDatastoreEnabled = isDatastoreEnabled;
     this.isPreviewEnabled = isPreviewEnabled;
+    this.csvCleanupPreviewContentWriter = checkNotNull(csvCleanupPreviewContentWriter);
   }
 
   @GET
@@ -300,11 +306,20 @@ public class CleanupPolicyResource
       throw new NotFoundException("Repository " + request.getRepository() + " not found.");
     }
     StreamingOutput streamingOutput = output -> {
-      // example of output since CSV generator is not implemented yet
-      output.write("namespace, name, version, path\n".getBytes());
-      output.write("com.sonatype.nexus, nexus, 2.14.0, /com/sonatype/nexus/2.14.0/nexus-2.14.0.jar\n".getBytes());
-      output.write("com.sonatype.nexus, nexus, 2.15.0, /com/sonatype/nexus/2.15.0/nexus-2.15.0.jar\n".getBytes());
-      output.write("com.sonatype.nexus, nexus, 3.36.0, /com/sonatype/nexus/3.36.0/nexus-3.36.0.jar\n".getBytes());
+      CleanupPolicyPreviewXO xo = new CleanupPolicyPreviewXO();
+      xo.setRepositoryName(request.getRepository());
+      xo.setCriteria(new CleanupPolicyCriteria());
+      xo.getCriteria().setLastBlobUpdated(request.getCriteriaLastBlobUpdated());
+      xo.getCriteria().setLastDownloaded(request.getCriteriaLastDownloaded());
+      xo.getCriteria().setReleaseType(request.getCriteriaReleaseType());
+      xo.getCriteria().setRegex(request.getCriteriaAssetRegex());
+
+      QueryOptions options = new QueryOptions(request.getFilter(), "name", "asc", 0, null);
+
+      Stream<ComponentXO> searchResultsStream =
+          cleanupPreviewHelper.get().getSearchResultsStream(xo, repository, options);
+
+      csvCleanupPreviewContentWriter.write(repository, searchResultsStream, output);
     };
     String policyName = request.getName() == null ? "CleanupPreview" : request.getName();
     String filename = policyName + "-" +

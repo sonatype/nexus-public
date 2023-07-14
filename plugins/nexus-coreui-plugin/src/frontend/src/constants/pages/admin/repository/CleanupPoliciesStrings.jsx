@@ -90,6 +90,14 @@ export default {
       BUTTON_TOOLTIP: 'Please select a repository and at least one cleanup criteria',
     },
 
+    DRY_RUN: {
+      BUTTON: 'Create CSV Export',
+      REPOSITORY_DESCRIPTION: 'Select a repository to preview what would be cleaned up if this policy was applied',
+      REPOSITORY_LABEL: 'Preview Repository',
+      REPOSITORY_SELECT: 'Select a repository',
+      TITLE: 'Preview Cleanup Policy Results',
+    },
+
     MESSAGES: {
       SAVE_ERROR: 'An error occurred while saving the cleanup policy',
       DELETE_ERROR: (name) => `Cleanup policy ${name} is in use and cannot be deleted`,

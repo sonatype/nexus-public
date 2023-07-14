@@ -19,7 +19,7 @@
   <parent>
     <artifactId>nexus-components</artifactId>
     <groupId>org.sonatype.nexus</groupId>
-    <version>3.58.0-SNAPSHOT</version>
+    <version>3.59.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -69,6 +69,11 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-rapture</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-csv</artifactId>
     </dependency>
 
     <dependency>

@@ -74,6 +74,14 @@ public interface ComponentDAO
                                            @Nullable @Param("filter") String filter,
                                            @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
+  Continuation<ComponentData> browseComponentsEager(
+      @Param("repositoryIds") Set<Integer> repositoryIds,
+      @Param("limit") int limit,
+      @Nullable @Param("continuationToken") String continuationToken,
+      @Nullable @Param("kind") String kind,
+      @Nullable @Param("filter") String filter,
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+
   /**
    * Browse all components in the given repository ids in a paged fashion.
    *

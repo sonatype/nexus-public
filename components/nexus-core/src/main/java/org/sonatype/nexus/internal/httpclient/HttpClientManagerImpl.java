@@ -13,8 +13,10 @@
 package org.sonatype.nexus.internal.httpclient;
 
 import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map.Entry;
-
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
@@ -42,6 +44,8 @@ import com.google.common.eventbus.Subscribe;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIUtils;
@@ -54,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
 
 /**
  * Default {@link HttpClientManager}.
@@ -70,11 +75,15 @@ public class HttpClientManagerImpl
 {
   static final String HTTPCLIENT_OUTBOUND_LOGGER_NAME = "org.sonatype.nexus.httpclient.outbound";
 
+  static final String HTTPCLIENT_OUTBOUND_REQ_LOGGER_NAME = "outboundRequests";
+
   private static final String CTX_REQ_STOPWATCH = "request.stopwatch";
 
   private static final String CTX_REQ_URI = "request.uri";
 
   private final Logger outboundLog = LoggerFactory.getLogger(HTTPCLIENT_OUTBOUND_LOGGER_NAME);
+
+  private final Logger outboundReqLog = LoggerFactory.getLogger(HTTPCLIENT_OUTBOUND_REQ_LOGGER_NAME);
 
   private final EventManager eventManager;
 
@@ -267,8 +276,8 @@ public class HttpClientManagerImpl
     builder.addInterceptorLast(
         (HttpRequest httpRequest, HttpContext httpContext) ->
         {
+          httpContext.setAttribute(CTX_REQ_STOPWATCH, Stopwatch.createStarted());
           if (outboundLog.isDebugEnabled()) {
-            httpContext.setAttribute(CTX_REQ_STOPWATCH, Stopwatch.createStarted());
             httpContext.setAttribute(CTX_REQ_URI, getRequestURI(httpContext));
             outboundLog.debug("{} > {}", httpContext.getAttribute(CTX_REQ_URI), httpRequest.getRequestLine());
           }
@@ -277,14 +286,48 @@ public class HttpClientManagerImpl
     builder.addInterceptorLast(
         (HttpResponse httpResponse, HttpContext httpContext) ->
         {
-          Stopwatch stopwatch = (Stopwatch) httpContext.getAttribute(CTX_REQ_STOPWATCH);
-          if (stopwatch != null) {
-            outboundLog.debug("{} < {} @ {}", httpContext.getAttribute(CTX_REQ_URI), httpResponse.getStatusLine(), stopwatch);
+          URI requestURI = (URI) httpContext.getAttribute(CTX_REQ_URI);
+          if (requestURI != null) {
+            Stopwatch stopwatch = (Stopwatch) httpContext.getAttribute(CTX_REQ_STOPWATCH);
+            outboundLog.debug("{} < {} @ {}", requestURI, httpResponse.getStatusLine(), stopwatch);
           }
+          printOutboundLog(httpResponse, httpContext);
         }
     );
 
     return builder;
+  }
+
+  private void printOutboundLog(final HttpResponse httpResponse, final HttpContext httpContext) {
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
+
+    HttpRequest request = ((HttpClientContext) httpContext).getRequest();
+    String userAgent = getRequestHeader(request, "User-Agent");
+    int statusCode = httpResponse.getStatusLine().getStatusCode();
+    long responseLength = 0;
+    if (null != httpResponse.getEntity())
+      responseLength = httpResponse.getEntity().getContentLength();
+    Stopwatch stopwatch = (Stopwatch) httpContext.getAttribute(CTX_REQ_STOPWATCH);
+
+    String logMessage = String.format("[%s] %s \"%s %s %s\" %d %d %d \"%s\" [%s]",
+        dateFormat.format(new Date()),
+        getAuthUser(httpContext),
+        request.getRequestLine().getMethod(),
+        getRequestURI(httpContext),
+        request.getRequestLine().getProtocolVersion(),
+        statusCode,
+        responseLength,
+        stopwatch.elapsed(TimeUnit.MILLISECONDS),
+        userAgent,
+        Thread.currentThread().getName());
+    outboundReqLog.info(OUTBOUND_REQUESTS_LOG_ONLY, "{}", logMessage);
+  }
+
+  private String getRequestHeader(final HttpRequest request, final String name) {
+    if (request.containsHeader(name))
+      return request.getFirstHeader(name).getValue();
+    else
+      return null;
   }
 
   @Override
@@ -306,6 +349,15 @@ public class HttpClientManagerImpl
     return new HttpClientPlan();
   }
 
+  private String getAuthUser(final HttpContext context) {
+    final HttpClientContext clientContext = HttpClientContext.adapt(context);
+    final Credentials credentials = clientContext.getCredentialsProvider().getCredentials(AuthScope.ANY);
+    if (null != credentials && null != credentials.getUserPrincipal())
+      return credentials.getUserPrincipal().getName();
+    else
+      return "-";
+  }
+
   /**
    * Creates absolute request URI with full path from passed in context.
    */
@@ -314,6 +366,7 @@ public class HttpClientManagerImpl
     final HttpClientContext clientContext = HttpClientContext.adapt(context);
     final HttpRequest httpRequest = clientContext.getRequest();
     final HttpHost target = clientContext.getTargetHost();
+
     try {
       URI uri;
       if (httpRequest instanceof HttpUriRequest) {
