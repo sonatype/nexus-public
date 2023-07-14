@@ -63,6 +63,8 @@ public class AssetXOBuilder
         .map(Date::from)
         .orElseGet(() -> Date.from(asset.created().toInstant()));
 
+    Date blobCreated = Date.from(asset.created().toInstant());
+
     return AssetXO.builder()
         .path(asset.path())
         .downloadUrl(repository.getUrl() + asset.path())
@@ -77,6 +79,7 @@ public class AssetXOBuilder
         .uploader(uploader)
         .uploaderIp(uploaderIp)
         .fileSize(fileSize)
+        .blobCreated(blobCreated)
         .build();
   }
 
