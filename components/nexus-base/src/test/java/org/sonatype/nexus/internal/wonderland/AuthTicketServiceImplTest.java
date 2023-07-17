@@ -40,20 +40,20 @@ public class AuthTicketServiceImplTest
   @Before
   public void setup() {
     when(authTicketGenerator.generate()).thenReturn("ticket");
-    when(authTicketCache.remove("user", "ticket")).thenReturn(true);
+    when(authTicketCache.remove("user", "ticket", "NexusAuthorizingRealm")).thenReturn(true);
 
     underTest = new AuthTicketServiceImpl(authTicketGenerator, authTicketCache);
   }
 
   @Test
   public void testRedeemTicket_sameUser() {
-    String ticket = underTest.createTicket("user");
-    assertThat(underTest.redeemTicket("user", ticket), is(true));
+    String ticket = underTest.createTicket("user", "NexusAuthorizingRealm");
+    assertThat(underTest.redeemTicket("user", ticket, "NexusAuthorizingRealm"), is(true));
   }
 
   @Test
   public void testRedeemTicket_differentUser() {
-    String ticket = underTest.createTicket("user");
-    assertThat(underTest.redeemTicket("bad", ticket), is(false));
+    String ticket = underTest.createTicket("user", "NexusAuthorizingRealm");
+    assertThat(underTest.redeemTicket("bad", ticket, "NexusAuthorizingRealm"), is(false));
   }
 }

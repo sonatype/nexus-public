@@ -22,7 +22,6 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
-import org.sonatype.nexus.internal.wonderland.UserAuthToken;
 import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -97,10 +96,10 @@ public class LocalAuthTicketCache
    * Add token to the cache.
    */
   @Override
-  public void add(final String user, final String token) {
+  public void add(final String user, final String token, final String realmName) {
     synchronized (lock) {
       expireTokens();
-      UserAuthToken key = new UserAuthToken(user, token);
+      UserAuthToken key = new UserAuthToken(user, token, realmName);
       // Sanity check we don't clobber tokens
       checkState(!tokens.containsKey(key), "Duplicate token"); //NON-NLS
       tokens.put(key, now());
@@ -110,13 +109,13 @@ public class LocalAuthTicketCache
   /**
    * Remove token from cache.
    *
-   * @return True if the token existed (was added and not yet expired)
+   * @return {@code true} if the token existed (was added and not yet expired)
    */
   @Override
-  public boolean remove(final String user, final String token) {
+  public boolean remove(final String user, final String token, final String realmName) {
     synchronized (lock) {
       expireTokens();
-      Long tmp = tokens.remove(new UserAuthToken(user, token));
+      Long tmp = tokens.remove(new UserAuthToken(user, token, realmName));
       return tmp != null;
     }
   }

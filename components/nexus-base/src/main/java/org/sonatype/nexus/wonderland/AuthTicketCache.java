@@ -19,17 +19,17 @@ package org.sonatype.nexus.wonderland;
  */
 public interface AuthTicketCache
 {
-  public static final String EXPIRE = "${wonderland.authTicketCache.expireAfter:-20s}";
+  String EXPIRE = "${wonderland.authTicketCache.expireAfter:-20s}";
 
   /**
    * Add token to the cache.
    */
-  void add(String user, String token);
+  void add(String user, String token, String realmName);
 
   /**
    * Remove token from cache.
    *
    * @return True if the token existed (was added and not yet expired)
    */
-  boolean remove(String user, String token);
+  boolean remove(String user, String token, String realmName);
 }

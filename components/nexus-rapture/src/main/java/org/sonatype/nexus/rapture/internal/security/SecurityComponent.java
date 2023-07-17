@@ -16,10 +16,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
@@ -41,7 +43,6 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.Subject;
-import javax.validation.constraints.NotEmpty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -133,7 +134,8 @@ public class SecurityComponent
     }
 
     // At this point we should be authenticated, return a new ticket
-    return authTickets.createTicket(username);
+    Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+    return authTickets.createTicket(username, realmName.orElse(null));
   }
 
   @DirectMethod
