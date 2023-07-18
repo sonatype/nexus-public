@@ -22,6 +22,7 @@ import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -58,6 +59,9 @@ public class CleanupPolicyResourceTest
   private RepositoryManager repositoryManager;
 
   @Mock
+  private EventManager eventManager;
+
+  @Mock
   private CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
 
   private CleanupPolicyResource underTest;
@@ -80,7 +84,7 @@ public class CleanupPolicyResourceTest
   public void testPreviewContentCsv() {
     underTest =
         new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, true, true, csvCleanupPreviewContentWriter);
+            repositoryManager, eventManager, true, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(request);
 
@@ -106,7 +110,7 @@ public class CleanupPolicyResourceTest
   public void testNotFoundResponseForOrient() {
     underTest =
         new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, false, true, csvCleanupPreviewContentWriter);
+            repositoryManager, eventManager, false, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(request);
 
