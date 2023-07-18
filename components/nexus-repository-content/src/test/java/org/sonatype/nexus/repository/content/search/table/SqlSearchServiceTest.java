@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.search.table;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -64,8 +65,10 @@ public class SqlSearchServiceTest
   private SqlSearchPermissionBuilder sqlSearchPermissionManager;
 
   private TableSearchUtils searchUtils = new TableSearchUtils(
-      ImmutableMap.of(DefaultSqlSearchQueryContribution.NAME, mock(SqlSearchQueryContribution.class),
-          BlankValueSqlSearchQueryContribution.NAME, mock(SqlSearchQueryContribution.class)));
+      ImmutableMap.of(
+          DefaultSqlSearchQueryContribution.NAME, mock(SqlSearchQueryContribution.class),
+          BlankValueSqlSearchQueryContribution.NAME, mock(SqlSearchQueryContribution.class)),
+      Collections.emptyMap());
 
   private SqlTableSearchService underTest;
 

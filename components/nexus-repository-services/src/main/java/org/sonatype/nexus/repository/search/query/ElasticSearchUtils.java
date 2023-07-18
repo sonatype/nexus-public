@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.search.BlankValueSearchQueryFilter;
 import org.sonatype.nexus.repository.search.SearchRequest;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -46,8 +47,8 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.StreamSupport.stream;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.elasticsearch.search.sort.SortBuilders.fieldSort;
+import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.NORMALIZED_VERSION;
@@ -80,6 +81,8 @@ public class ElasticSearchUtils
 
   private final Map<String, ElasticSearchContribution> searchContributions;
 
+  private final Map<String, BlankValueSearchQueryFilter> filterAttributes;
+
   private final ElasticSearchContribution defaultElasticSearchContribution;
 
   private final ElasticSearchContribution blankValueElasticSearchContribution;
@@ -87,7 +90,8 @@ public class ElasticSearchUtils
   @Inject
   public ElasticSearchUtils(final RepositoryManagerRESTAdapter repoAdapter,
                             final Map<String, SearchMappings> searchMappings,
-                            final Map<String, ElasticSearchContribution> searchContributions)
+                            final Map<String, ElasticSearchContribution> searchContributions,
+                            final Map<String, BlankValueSearchQueryFilter> filterAttributes)
   {
     this.repoAdapter = checkNotNull(repoAdapter);
     this.searchParams = checkNotNull(searchMappings).entrySet().stream()
@@ -97,6 +101,7 @@ public class ElasticSearchUtils
         .filter(e -> e.getValue().startsWith(ASSET_PREFIX))
         .collect(toMap(Entry::getKey, Entry::getValue));
     this.searchContributions = checkNotNull(searchContributions);
+    this.filterAttributes = checkNotNull(filterAttributes);
     this.defaultElasticSearchContribution = checkNotNull(searchContributions.get(
         DefaultElasticSearchContribution.NAME));
     this.blankValueElasticSearchContribution = checkNotNull(searchContributions.get(
@@ -152,9 +157,14 @@ public class ElasticSearchUtils
       final Collection<SearchFilter> searchFilters)
   {
     searchFilters.stream()
-        .filter(filter -> isBlank(filter.getValue()))
+        .filter(this::filter)
         .forEach(filter ->
             blankValueElasticSearchContribution.contribute(contribute, filter.getProperty(), filter.getValue()));
+  }
+
+  private boolean filter(final SearchFilter filter) {
+    BlankValueSearchQueryFilter queryFilter = filterAttributes.get(filter.getProperty());
+    return queryFilter != null ? queryFilter.shouldHandleBlankValue() : isBlank(filter.getValue());
   }
 
   /**

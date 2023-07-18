@@ -24,10 +24,11 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.BlankValueSqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.DefaultSqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.BlankValueSearchQueryFilter;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
@@ -47,13 +48,18 @@ public class TableSearchUtils
 {
   private final Map<String, SqlSearchQueryContribution> searchContributions;
 
+  private final Map<String, BlankValueSearchQueryFilter> filterAttributes;
+
   private final SqlSearchQueryContribution defaultSqlSearchQueryContribution;
 
   private final SqlSearchQueryContribution blankValueSqlSearchQueryContribution;
 
   @Inject
-  public TableSearchUtils(final Map<String, SqlSearchQueryContribution> searchContributions) {
+  public TableSearchUtils(
+      final Map<String, SqlSearchQueryContribution> searchContributions,
+      final Map<String, BlankValueSearchQueryFilter> filterAttributes) {
     this.searchContributions = checkNotNull(searchContributions);
+    this.filterAttributes = checkNotNull(filterAttributes);
     this.defaultSqlSearchQueryContribution =
         checkNotNull(searchContributions.get(DefaultSqlSearchQueryContribution.NAME));
     this.blankValueSqlSearchQueryContribution =
@@ -108,23 +114,19 @@ public class TableSearchUtils
     return queryBuilder;
   }
 
-  private static boolean isContainsDigit(final String token) {
-    for (char c : token.toCharArray()) {
-      if (Character.isDigit(c)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private void handleBlankValueFilters(
       final SqlSearchQueryBuilder queryBuilder,
       final List<SearchFilter> searchFilters)
   {
     searchFilters.stream()
-        .filter(filter -> isBlank(filter.getValue()))
+        .filter(this::filter)
         .filter(filter -> !REPOSITORY_NAME.equalsIgnoreCase(filter.getProperty()))
         .forEach(filter -> blankValueSqlSearchQueryContribution.contribute(queryBuilder, filter));
+  }
+
+  private boolean filter(final SearchFilter filter) {
+    BlankValueSearchQueryFilter queryFilter = filterAttributes.get(filter.getProperty());
+    return queryFilter != null ? queryFilter.shouldHandleBlankValue() : isBlank(filter.getValue());
   }
 
   private void generalizeDuplicateProperties(final List<SearchFilter> searchFilters) {
