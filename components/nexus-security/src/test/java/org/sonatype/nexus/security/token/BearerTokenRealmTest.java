@@ -165,4 +165,9 @@ public class BearerTokenRealmTest
   public void anonymousAccessNotSupportedByDefault() throws Exception {
     assertThat(underTest.isAnonymousSupported(), is(equalTo(false)));
   }
+
+  @Test
+  public void cachingEnabled() {
+    assertThat(underTest.isCachingEnabled(), is(true));
+  }
 }
