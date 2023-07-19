@@ -133,7 +133,8 @@ const cleanupPoliciesDryRunMachine = createMachine({
       criteriaLastBlobUpdated: policyData.criteriaLastBlobUpdated,
       criteriaLastDownloaded: policyData.criteriaLastDownloaded,
       criteriaReleaseType: policyData.criteriaReleaseType,
-      criteriaAssetRegex: policyData.criteriaAssetRegex
+      criteriaAssetRegex: policyData.criteriaAssetRegex,
+      name: policyData.name
     })
   }
 });
