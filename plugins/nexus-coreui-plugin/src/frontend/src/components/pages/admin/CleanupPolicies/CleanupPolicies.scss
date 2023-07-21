@@ -34,9 +34,16 @@
 }
 
 .nxrm-cleanup-policies-dry-run {
-  padding-bottom: 72px;
+  .nx-h2 {
+    margin-bottom: var(--nx-spacing-6x);
+  }
+
+  .nx-form-row {
+    margin-bottom: 0;
+  }
 
   .nx-form-select {
-    width: 624px;
+    margin-bottom: 0;
+    margin-right: var(--nx-spacing-6x);
   }
 }

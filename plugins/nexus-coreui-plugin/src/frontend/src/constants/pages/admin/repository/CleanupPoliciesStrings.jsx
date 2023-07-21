@@ -91,9 +91,8 @@ export default {
     },
 
     DRY_RUN: {
-      BUTTON: 'Create CSV Export',
-      REPOSITORY_DESCRIPTION: 'Select a repository to preview what would be cleaned up if this policy was applied',
-      REPOSITORY_LABEL: 'Preview Repository',
+      BUTTON: 'Generate CSV Report',
+      REPOSITORY_DESCRIPTION: 'Export a spreadsheet listing which components would be deleted today based on selected cleanup policy settings. Your export will list component namespaces, names, versions and paths.',
       REPOSITORY_SELECT: 'Select a repository',
       TITLE: 'Preview Cleanup Policy Results',
     },

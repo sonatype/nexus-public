@@ -16,19 +16,18 @@ import {useMachine} from '@xstate/react';
 import {
   NxButton,
   NxButtonBar,
-  NxFormGroup,
   NxFormRow,
   NxFormSelect,
   NxH2,
   NxLoadWrapper,
-  NxTile
+  NxP
 } from '@sonatype/react-shared-components';
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import cleanupPoliciesDryRunMachine from './CleanupPoliciesDryRunMachine';
 
-const {BUTTON, REPOSITORY_DESCRIPTION, REPOSITORY_LABEL, REPOSITORY_SELECT, TITLE} = UIStrings.CLEANUP_POLICIES.DRY_RUN;
+const {BUTTON, REPOSITORY_DESCRIPTION, REPOSITORY_SELECT, TITLE} = UIStrings.CLEANUP_POLICIES.DRY_RUN;
 
 export default function CleanupPoliciesDryRun({policyData}) {
   const [state, send] = useMachine(cleanupPoliciesDryRunMachine, {devTools: true});
@@ -51,35 +50,29 @@ export default function CleanupPoliciesDryRun({policyData}) {
     send({type: 'CREATE_CSV_REPORT', policyData});
   }
 
-  return <NxTile className='nxrm-cleanup-policies-dry-run'>
+  return <div className="nxrm-cleanup-policies-dry-run">
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       {() =>
         <>
-          <NxTile.Header>
-            <NxTile.HeaderTitle>
-              <NxH2>{TITLE}</NxH2>
-            </NxTile.HeaderTitle>
-          </NxTile.Header>
-          <NxTile.Content>
-            <NxFormRow>
-              <NxFormGroup label={REPOSITORY_LABEL} sublabel={REPOSITORY_DESCRIPTION}>
-                <NxFormSelect disabled={!policyData.format}
-                              {...FormUtils.fieldProps('repository', state)}
-                              onChange={repositoryChangeHandler}
-                              value={repository}>
-                  <option value="">{REPOSITORY_SELECT}</option>
-                  {repositories?.map(({id, name}) =>
-                    <option key={id} value={id}>{name}</option>
-                  )}
-                </NxFormSelect>
-              </NxFormGroup>
-              <NxButtonBar>
-                <NxButton disabled={!repository} onClick={createCSVReport}>{BUTTON}</NxButton>
-              </NxButtonBar>
-            </NxFormRow>
-          </NxTile.Content>
+          <NxH2>{TITLE}</NxH2>
+          <NxP id="dryRunDesc">{REPOSITORY_DESCRIPTION}</NxP>
+          <NxFormRow>
+            <NxFormSelect aria-describedby="dryRunDesc"
+                          disabled={!policyData.format}
+                          {...FormUtils.fieldProps('repository', state)}
+                          onChange={repositoryChangeHandler}
+                          value={repository}>
+              <option value="">{REPOSITORY_SELECT}</option>
+              {repositories?.map(({id, name}) =>
+                <option key={id} value={id}>{name}</option>
+              )}
+            </NxFormSelect>
+            <NxButtonBar>
+              <NxButton disabled={!repository} onClick={createCSVReport} type="button">{BUTTON}</NxButton>
+            </NxButtonBar>
+          </NxFormRow>
         </>
       }
     </NxLoadWrapper>
-  </NxTile>
+  </div>
 }
