@@ -242,6 +242,11 @@ public class BootstrapListener
       properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED,
          Boolean.toString(parseBoolean(System.getenv("CHANGE_REPO_BLOBSTORE_TASK_ENABLED"))));
     }
+
+    if (properties.getProperty(FIREWALL_QUARANTINE_FIX_ENABLED) == null) {
+      properties.setProperty(FIREWALL_QUARANTINE_FIX_ENABLED,
+          Boolean.toString(parseBoolean(System.getenv("FIREWALL_QUARANTINE_FIX_ENABLED"))));
+    }
   }
 
   private void selectDatastoreFeature(final Properties properties) {
