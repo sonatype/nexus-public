@@ -12,9 +12,8 @@
  */
 package org.sonatype.nexus.internal.security.apikey;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -39,6 +38,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
@@ -254,13 +254,18 @@ public class ApiKeyDAOTest
   public void testBrowseByCreatedDate() {
     ApiKeyData entity1 = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
     ApiKeyData entity2 = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
-    entity1.setCreated(OffsetDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.systemDefault()));
+
+    OffsetDateTime entity1Date = OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+    OffsetDateTime entity2Date = OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+    entity1.setCreated(entity1Date);
+    entity2.setCreated(entity2Date);
+
     apiKeyDAO.save(entity1);
-    OffsetDateTime date = OffsetDateTime.now();
     apiKeyDAO.save(entity2);
     apiKeyDAO.save(anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL));
 
-    assertThat(apiKeyDAO.browseByCreatedDate(DOMAIN, date), containsInAnyOrder(token(entity2)));
+    assertThat(apiKeyDAO.browseByCreatedDate(DOMAIN, entity2Date.minusSeconds(1L)), contains(token(entity2)));
   }
 
   @Test
