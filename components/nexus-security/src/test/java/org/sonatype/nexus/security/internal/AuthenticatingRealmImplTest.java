@@ -43,8 +43,6 @@ public class AuthenticatingRealmImplTest
 
   private CUser testUser = new MemoryCUser();
 
-  private AuthenticatingRealmImpl underTest;
-
   @Before
   public void setUp() throws Exception {
 
@@ -61,15 +59,23 @@ public class AuthenticatingRealmImplTest
       testUser.setPassword(((CUser) inv.getArguments()[0]).getPassword());
       return null;
     }).when(configuration).updateUser(any());
-
-    underTest = new AuthenticatingRealmImpl(configuration,
-        new DefaultSecurityPasswordService(new LegacyNexusPasswordService()));
   }
 
   @Test
-  public void testLegacyPasswordIsReHashed() throws Exception {
+  public void testLegacyPasswordIsReHashedOnOrient() {
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    underTest.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
+    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration,
+        new DefaultSecurityPasswordService(new LegacyNexusPasswordService()), true);
+    underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
+    assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512$1024$"));
+  }
+
+  @Test
+  public void testLegacyPasswordIsReHashedOnNewDB() {
+    assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
+    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration,
+        new DefaultSecurityPasswordService(new LegacyNexusPasswordService()), false);
+    underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
     assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512$1024$"));
   }
 }

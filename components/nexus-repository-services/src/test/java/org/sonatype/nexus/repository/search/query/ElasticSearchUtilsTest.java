@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.search.query;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -81,7 +83,7 @@ public class ElasticSearchUtilsTest
     searchContributions.put(DefaultElasticSearchContribution.NAME, new DefaultElasticSearchContribution());
     searchContributions.put(BlankValueElasticSearchContribution.NAME, new BlankValueElasticSearchContribution());
     searchContributions.put(KeywordElasticSearchContribution.NAME, new KeywordElasticSearchContribution());
-    underTest = new ElasticSearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
+    underTest = new ElasticSearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions, emptyMap());
   }
 
   @Test

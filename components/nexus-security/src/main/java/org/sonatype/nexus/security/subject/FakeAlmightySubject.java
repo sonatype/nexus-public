@@ -50,7 +50,11 @@ public class FakeAlmightySubject
    * don't need to tackle anything with this class, as Nexus uses this class only for scheduled tasks.
    */
   public static Subject forUserId(final String fakeUserId) {
-    return new FakeAlmightySubject(fakeUserId);
+    return new FakeAlmightySubject(fakeUserId, FakeAlmightySubject.class.getName());
+  }
+
+  public static Subject forUserId(final String fakeUserId, final String realmName) {
+    return new FakeAlmightySubject(fakeUserId, realmName);
   }
 
   // ==
@@ -59,9 +63,9 @@ public class FakeAlmightySubject
 
   private final PrincipalCollection principalCollection;
 
-  private FakeAlmightySubject(final String fakeUserId) {
+  private FakeAlmightySubject(final String fakeUserId, final String realmName) {
     this.fakeUserId = checkNotNull(fakeUserId);
-    this.principalCollection = new SimplePrincipalCollection(fakeUserId, getClass().getName());
+    this.principalCollection = new SimplePrincipalCollection(fakeUserId, realmName);
   }
 
   @Override

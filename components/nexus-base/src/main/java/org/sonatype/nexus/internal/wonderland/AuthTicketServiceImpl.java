@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.wonderland;
 
+import java.util.Optional;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -50,9 +52,9 @@ public class AuthTicketServiceImpl
   }
 
   @Override
-  public String createTicket(final String user) {
+  public String createTicket(final String user, final String realmName) {
     String ticket = authTicketGenerator.generate();
-    authTicketCache.add(user, ticket);
+    authTicketCache.add(user, ticket, realmName);
     return ticket;
   }
 
@@ -60,19 +62,28 @@ public class AuthTicketServiceImpl
   @Nullable
   public String createTicket() {
     Subject subject = SecurityUtils.getSubject();
-    return subject != null ? createTicket(subject.getPrincipal().toString()) : null;
+    if (subject != null) {
+      Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+      return createTicket(subject.getPrincipal().toString(), realmName.orElse(null));
+    }
+
+    return null;
   }
 
   @Override
-  public boolean redeemTicket(final String user, final String ticket) {
+  public boolean redeemTicket(final String user, final String ticket, final String realmName) {
     checkNotNull(ticket);
-    return authTicketCache.remove(user, ticket);
+    return authTicketCache.remove(user, ticket, realmName);
   }
 
   @Override
   public boolean redeemTicket(final String ticket) {
     Subject subject = SecurityUtils.getSubject();
+    if (subject != null) {
+      Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+      return redeemTicket(subject.getPrincipal().toString(), ticket, realmName.orElse(null));
+    }
 
-    return subject != null && redeemTicket(subject.getPrincipal().toString(), ticket);
+    return false;
   }
 }

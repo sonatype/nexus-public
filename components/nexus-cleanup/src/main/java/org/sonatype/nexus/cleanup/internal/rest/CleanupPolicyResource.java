@@ -53,7 +53,9 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyCriteria;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyPreviewXO;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
+import org.sonatype.nexus.repository.CleanupDryRunEvent;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -66,6 +68,7 @@ import org.sonatype.nexus.validation.Validate;
 import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Update;
 
+import com.codahale.metrics.annotation.Timed;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
@@ -85,6 +88,8 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
 import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_PREVIEW_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
+import static org.sonatype.nexus.repository.CleanupDryRunEvent.FINISHED_AT_IN_MILLISECONDS;
+import static org.sonatype.nexus.repository.CleanupDryRunEvent.STARTED_AT_IN_MILLISECONDS;
 import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 
 /**
@@ -121,6 +126,8 @@ public class CleanupPolicyResource
 
   private final boolean isDatastoreEnabled;
 
+  private final EventManager eventManager;
+
   private final boolean isPreviewEnabled;
 
   private final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
@@ -132,6 +139,7 @@ public class CleanupPolicyResource
       final Map<String, CleanupPolicyConfiguration> cleanupFormatConfigurationMap,
       final Provider<CleanupPreviewHelper> cleanupPreviewHelper,
       final RepositoryManager repositoryManager,
+      final EventManager eventManager,
       @Named(DATASTORE_ENABLED_NAMED) final boolean isDatastoreEnabled,
       @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled,
       final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter)
@@ -139,6 +147,7 @@ public class CleanupPolicyResource
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.formats = checkNotNull(formats);
     this.formatNames = formats.stream().map(Format::getValue).collect(Collectors.toList());
+    this.eventManager = checkNotNull(eventManager);
     this.formatNames.add(ALL_FORMATS);
     this.cleanupFormatConfigurationMap = checkNotNull(cleanupFormatConfigurationMap);
     this.defaultCleanupFormatConfiguration = checkNotNull(cleanupFormatConfigurationMap.get("default"));
@@ -296,11 +305,14 @@ public class CleanupPolicyResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
   @Produces(APPLICATION_OCTET_STREAM)
+  @Timed
   public Response previewContentCsv(final PreviewRequestXO request)
   {
     if (!isDatastoreEnabled || !isPreviewEnabled) {
       return Response.status(Status.NOT_FOUND).build();
     }
+    Map<String, Object> cleanupDryRunXO = new HashMap<>();
+    cleanupDryRunXO.put(STARTED_AT_IN_MILLISECONDS, System.currentTimeMillis());
     Repository repository = repositoryManager.get(request.getRepository());
     if (repository == null) {
       throw new NotFoundException("Repository " + request.getRepository() + " not found.");
@@ -320,6 +332,9 @@ public class CleanupPolicyResource
           cleanupPreviewHelper.get().getSearchResultsStream(xo, repository, options);
 
       csvCleanupPreviewContentWriter.write(repository, searchResultsStream, output);
+
+      cleanupDryRunXO.put(FINISHED_AT_IN_MILLISECONDS, System.currentTimeMillis());
+      eventManager.post(new CleanupDryRunEvent(cleanupDryRunXO));
     };
     String policyName = request.getName() == null ? "CleanupPreview" : request.getName();
     String filename = policyName + "-" +

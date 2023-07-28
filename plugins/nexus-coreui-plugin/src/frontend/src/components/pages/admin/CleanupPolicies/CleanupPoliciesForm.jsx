@@ -254,13 +254,12 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
               }
             </NxFieldset>
             }
+            {isPreviewEnabled && <CleanupPoliciesDryRun policyData={data}/>}
           </>}
         </NxStatefulForm>
       </Section>
 
-      {!isLoading && !loadError && hasData && 
-        (!isPreviewEnabled ? <CleanupPoliciesPreview policyData={data}/> : <CleanupPoliciesDryRun policyData={data}/>)
-      }
+      {!isLoading && !loadError && hasData && !isPreviewEnabled && <CleanupPoliciesPreview policyData={data}/>}
     </ContentBody>
   </Page>;
 }

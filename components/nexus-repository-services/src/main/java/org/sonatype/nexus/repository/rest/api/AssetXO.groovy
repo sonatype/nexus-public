@@ -66,6 +66,8 @@ class AssetXO
 
   Long fileSize
 
+  Date blobCreated
+
   @JsonIgnore
   Map attributes
 
@@ -86,6 +88,7 @@ class AssetXO
         .lastModified(asset.getLastModified())
         .lastDownloaded(asset.getLastDownloaded())
         .fileSize(asset.getFileSize())
+        .blobCreated(asset.blobCreated)
         .uploader(asset.getUploader())
         .uploaderIp(asset.getUploaderIp())
         .build()

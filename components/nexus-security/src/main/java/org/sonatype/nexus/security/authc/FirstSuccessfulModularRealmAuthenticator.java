@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
 
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -26,13 +27,14 @@ import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.realm.Realm;
+import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * This Authenticator will only try to authenticate with each realm.
- *
- * The first successful AuthenticationInfo found will be returned and other realms will not be queried.
+ * The first successful {@link AuthenticationInfo} found will be returned
+ * (only if an authenticated user have the same realm) and other realms will not be queried.
  *
  * @see ModularRealmAuthenticator
  */
@@ -49,6 +51,7 @@ public class FirstSuccessfulModularRealmAuthenticator
     log.trace("Iterating through [{}] realms for PAM authentication", realms.size());
 
     Set<AuthenticationFailureReason> authenticationFailureReasons = EnumSet.noneOf(AuthenticationFailureReason.class);
+    Subject subject = SecurityUtils.getSubject();
 
     for (Realm realm : realms) {
       // check if the realm supports this token
@@ -58,6 +61,11 @@ public class FirstSuccessfulModularRealmAuthenticator
         try {
           AuthenticationInfo info = realm.getAuthenticationInfo(token);
           if (info != null) {
+            Set<String> realmNames = info.getPrincipals().getRealmNames();
+            if (subject.isAuthenticated() && !subject.getPrincipals().getRealmNames().containsAll(realmNames)) {
+              // authenticated user with the different realm - continue with the others
+              continue;
+            }
             return info;
           }
 

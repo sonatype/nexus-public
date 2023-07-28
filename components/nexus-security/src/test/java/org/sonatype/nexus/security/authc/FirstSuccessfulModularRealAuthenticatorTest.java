@@ -12,18 +12,32 @@
  */
 package org.sonatype.nexus.security.authc;
 
+import java.util.Collections;
+import java.util.Set;
+
+import org.sonatype.nexus.security.realm.MockRealmA;
+import org.sonatype.nexus.security.realm.MockRealmB;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.SimpleAccount;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.realm.Realm;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.Subject;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 public class FirstSuccessfulModularRealAuthenticatorTest
@@ -32,8 +46,7 @@ public class FirstSuccessfulModularRealAuthenticatorTest
 
   @Before
   public void init() {
-    firstSuccessfulModularRealmAuthenticator =
-        new FirstSuccessfulModularRealmAuthenticator();
+    firstSuccessfulModularRealmAuthenticator = new FirstSuccessfulModularRealmAuthenticator();
   }
 
   @Test
@@ -49,12 +62,20 @@ public class FirstSuccessfulModularRealAuthenticatorTest
     when(realmOne.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new IncorrectCredentialsException());
     when(realmTwo.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new IncorrectCredentialsException());
 
-    try {
+    PrincipalCollection principals = mock(PrincipalCollection.class);
+    when(principals.getRealmNames()).thenReturn(Collections.emptySet());
+    Subject subject = mock(Subject.class);
+    when(subject.getPrincipals()).thenReturn(principals);
+
+    try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+      securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
+
       firstSuccessfulModularRealmAuthenticator
           .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernamePasswordToken);
     }
     catch (NexusAuthenticationException e) {
-      assertThat(e.getAuthenticationFailureReasons(), containsInAnyOrder(AuthenticationFailureReason.INCORRECT_CREDENTIALS));
+      assertThat(e.getAuthenticationFailureReasons(), containsInAnyOrder(
+          AuthenticationFailureReason.INCORRECT_CREDENTIALS));
     }
   }
 
@@ -65,18 +86,27 @@ public class FirstSuccessfulModularRealAuthenticatorTest
     Realm realmOne = mock(Realm.class);
     Realm realmTwo = mock(Realm.class);
 
-    when(realmOne.supports(usernamePasswordToken)).thenReturn(true);
-    when(realmTwo.supports(usernamePasswordToken)).thenReturn(true);
+    PrincipalCollection principals = mock(PrincipalCollection.class);
+    when(principals.getRealmNames()).thenReturn(Collections.emptySet());
+    Subject subject = mock(Subject.class);
+    when(subject.getPrincipals()).thenReturn(principals);
 
-    when(realmOne.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new IncorrectCredentialsException());
-    when(realmTwo.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new UnknownAccountException());
+    try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+      securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
 
-    try {
+      when(realmOne.supports(usernamePasswordToken)).thenReturn(true);
+      when(realmTwo.supports(usernamePasswordToken)).thenReturn(true);
+
+      when(realmOne.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new IncorrectCredentialsException());
+      when(realmTwo.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new UnknownAccountException());
+
       firstSuccessfulModularRealmAuthenticator
           .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernamePasswordToken);
     }
     catch (NexusAuthenticationException e) {
-      assertThat(e.getAuthenticationFailureReasons(), containsInAnyOrder(AuthenticationFailureReason.INCORRECT_CREDENTIALS, AuthenticationFailureReason.USER_NOT_FOUND));
+      assertThat(e.getAuthenticationFailureReasons(), containsInAnyOrder(
+          AuthenticationFailureReason.INCORRECT_CREDENTIALS,
+          AuthenticationFailureReason.USER_NOT_FOUND));
     }
   }
 
@@ -90,10 +120,62 @@ public class FirstSuccessfulModularRealAuthenticatorTest
     when(realmOne.supports(usernamePasswordToken)).thenReturn(true);
     when(realmTwo.supports(usernamePasswordToken)).thenReturn(true);
 
+    SimpleAccount simpleAccount = new SimpleAccount(ImmutableList.of("simple"), usernamePasswordToken, "realmName");
     when(realmOne.getAuthenticationInfo(usernamePasswordToken)).thenThrow(new IncorrectCredentialsException());
-    when(realmTwo.getAuthenticationInfo(usernamePasswordToken)).thenReturn(new SimpleAccount());
+    when(realmTwo.getAuthenticationInfo(usernamePasswordToken)).thenReturn(simpleAccount);
 
-    firstSuccessfulModularRealmAuthenticator
-        .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernamePasswordToken);
+    PrincipalCollection principals = mock(PrincipalCollection.class);
+    when(principals.getRealmNames()).thenReturn(Collections.singleton("realmName"));
+    Subject subject = mock(Subject.class);
+    when(subject.getPrincipals()).thenReturn(principals);
+    when(subject.isAuthenticated()).thenReturn(true);
+
+    try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+      securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
+      firstSuccessfulModularRealmAuthenticator
+          .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernamePasswordToken);
+    }
+  }
+
+  @Test
+  public void testSameUserIdInDifferentRealmsShouldReturnsCorrectAuthenticationInfo() {
+    // two same user ids but with different passwords and realms
+    UsernamePasswordToken usernameRealmA = new UsernamePasswordToken("username", "passwordA");
+    UsernamePasswordToken usernameRealmB = new UsernamePasswordToken("username", "passwordB");
+
+    Realm realmOne = mock(MockRealmA.class);
+    Realm realmTwo = mock(MockRealmB.class);
+
+    when(realmOne.supports(usernameRealmA)).thenReturn(true);
+    when(realmOne.supports(usernameRealmB)).thenReturn(true);
+
+    when(realmTwo.supports(usernameRealmA)).thenReturn(true);
+    when(realmTwo.supports(usernameRealmB)).thenReturn(true);
+
+    SimpleAccount simpleAccountA = new SimpleAccount(ImmutableList.of("simple"), usernameRealmA, "MockRealmA");
+    SimpleAccount simpleAccountB = new SimpleAccount(ImmutableList.of("simple"), usernameRealmB, "MockRealmB");
+
+    when(realmOne.getAuthenticationInfo(usernameRealmA)).thenReturn(simpleAccountA);
+    when(realmOne.getAuthenticationInfo(usernameRealmB)).thenReturn(simpleAccountB);
+
+    when(realmTwo.getAuthenticationInfo(usernameRealmA)).thenReturn(simpleAccountA);
+    when(realmTwo.getAuthenticationInfo(usernameRealmB)).thenReturn(simpleAccountB);
+
+    // the first principal which is returned 'MockRealmA' is incorrect for the user 'usernameRealmB'
+    PrincipalCollection principals = mock(PrincipalCollection.class);
+    when(principals.getRealmNames())
+        .thenReturn(Collections.singleton("MockRealmA"))
+        .thenReturn(Collections.singleton("MockRealmB"));
+    Subject subject = mock(Subject.class);
+    when(subject.getPrincipals()).thenReturn(principals);
+    when(subject.isAuthenticated()).thenReturn(true);
+
+    try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+      securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
+      AuthenticationInfo authenticationInfo = firstSuccessfulModularRealmAuthenticator
+          .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernameRealmB);
+      Set<String> realmNames = authenticationInfo.getPrincipals().getRealmNames();
+      assertThat(realmNames, contains("MockRealmB"));
+    }
   }
 }

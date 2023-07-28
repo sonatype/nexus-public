@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.coreui.internal.wonderland;
 
+import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -101,6 +103,7 @@ public class AuthenticateResource
     }
 
     // At this point we should be authenticated, return a new ticket
-    return new AuthTicketXO().withT(authTickets.createTicket(username));
+    Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+    return new AuthTicketXO().withT(authTickets.createTicket(username, realmName.orElse(null)));
   }
 }

@@ -10,37 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.wonderland;
+package org.sonatype.nexus.security;
 
 import java.util.Objects;
 
-/**
- * @since 3.15
- */
-public class UserAuthToken
+import org.apache.shiro.subject.SimplePrincipalCollection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class NexusSimplePrincipalCollection
+    extends SimplePrincipalCollection
 {
-  private final String user;
+  private final RealmCaseMapping realmCaseMapping;
 
-  private final String token;
-
-  private final String realmName;
-
-  public UserAuthToken(final String user, final String token, final String realmName) {
-    this.user = user;
-    this.token = token;
-    this.realmName = realmName;
-  }
-
-  public String getUser() {
-    return user;
-  }
-
-  public String getToken() {
-    return token;
+  public NexusSimplePrincipalCollection(final String principal, final RealmCaseMapping realmCaseMapping) {
+    super(principal, realmCaseMapping.getRealmName());
+    this.realmCaseMapping = checkNotNull(realmCaseMapping);
   }
 
   public String getRealmName() {
-    return realmName;
+    return realmCaseMapping.getRealmName();
+  }
+
+  public boolean isRealmCaseSensitive() {
+    return realmCaseMapping.isCaseSensitive();
   }
 
   @Override
@@ -51,19 +44,15 @@ public class UserAuthToken
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    UserAuthToken that = (UserAuthToken) o;
-    return Objects.equals(user, that.user)
-        && Objects.equals(token, that.token)
-        && Objects.equals(realmName, that.realmName);
+    if (!super.equals(o)) {
+      return false;
+    }
+    NexusSimplePrincipalCollection that = (NexusSimplePrincipalCollection) o;
+    return Objects.equals(realmCaseMapping, that.realmCaseMapping);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(user, token, realmName);
-  }
-
-  @Override
-  public String toString() {
-    return getRealmName() + ":" + getUser() + ":" + getToken();
+    return Objects.hash(super.hashCode(), realmCaseMapping);
   }
 }

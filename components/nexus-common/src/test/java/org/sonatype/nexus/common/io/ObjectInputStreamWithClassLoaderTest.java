@@ -20,6 +20,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.io.ObjectInputStreamWithClassLoader.LoadingFunction;
@@ -40,8 +42,7 @@ public class ObjectInputStreamWithClassLoaderTest
 {
   private static final String OBJECT_TO_SERIALIZE = "test";
 
-  @Mock
-  private ClassLoader classLoader;
+  private final TestClassLoader classLoader = new TestClassLoader();
 
   @Mock
   private LoadingFunction loadingFunction;
@@ -61,21 +62,19 @@ public class ObjectInputStreamWithClassLoaderTest
   public void useCustomClassLoaderToResolveClass() throws Exception {
     String name = "testClassName";
     when(classDescription.getName()).thenReturn(name);
-    doReturn(getClass()).when(classLoader).loadClass(anyString());
     try (ObjectInputStreamWithClassLoader underTest = new ObjectInputStreamWithClassLoader(
         serialize(OBJECT_TO_SERIALIZE), classLoader)) {
       underTest.resolveClass(classDescription);
     } catch (Exception e){
       // no-op
     }
-    verify(classLoader).loadClass(name);
+    assertThat(classLoader.isLoaded(name), is(true));
   }
 
   @Test
   public void deserializeUsingCustomClassLoader() throws Exception {
     String contents = "contents";
     TestFixture deserialized;
-    doReturn(TestFixture.class).when(classLoader).loadClass(anyString());
     try (ObjectInputStream objects = new ObjectInputStreamWithClassLoader(
         serialize(new TestFixture(contents)), classLoader)) {
       deserialized = (TestFixture) objects.readObject();
@@ -132,6 +131,27 @@ public class ObjectInputStreamWithClassLoaderTest
 
     public TestFixture(final String contents) {
       this.contents = contents;
+    }
+  }
+
+  private static class TestClassLoader extends ClassLoader {
+
+    private final Map<String, Class<?>> classes = new HashMap<>();
+
+    @Override
+    public Class<?> loadClass(final String name) throws ClassNotFoundException {
+      if (name.contains("TestFixture")) {
+        classes.put(name, TestFixture.class);
+        return TestFixture.class;
+      }
+      else {
+        classes.put(name, ObjectInputStreamWithClassLoaderTest.class);
+        return ObjectInputStreamWithClassLoaderTest.class;
+      }
+    }
+
+    public boolean isLoaded(final String name) {
+      return classes.containsKey(name);
     }
   }
 }

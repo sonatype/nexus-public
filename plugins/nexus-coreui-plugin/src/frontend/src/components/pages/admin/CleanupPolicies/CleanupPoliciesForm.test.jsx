@@ -100,7 +100,7 @@ describe('CleanupPoliciesForm', function() {
       previewFilterText: () => queryByPlaceholderText(UIStrings.CLEANUP_POLICIES.FILTER_PLACEHOLDER),
       previewSampleWarning: () => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.SAMPLE_WARNING, {exact: false}),
       previewCmpCount: (a, t) => queryByText(UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(a, t), {exact: false}),
-      dryRunRepositories: () => queryByLabelText(UIStrings.CLEANUP_POLICIES.DRY_RUN.REPOSITORY_LABEL),
+      dryRunRepositories: () => queryByRole('combobox', {description: UIStrings.CLEANUP_POLICIES.DRY_RUN.REPOSITORY_DESCRIPTION}),
       dryRunCreateCSVButton: () => queryByRole('button', {name: UIStrings.CLEANUP_POLICIES.DRY_RUN.BUTTON})
     }));
   }
@@ -487,9 +487,9 @@ describe('CleanupPoliciesForm', function() {
 
     it('renders the resolved data', async function() {
       const {dryRunRepositories, dryRunCreateCSVButton} = renderEditView(EDITABLE_ITEM.name);
-  
+
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
-  
+
       const selectDropdown = dryRunRepositories(),
           options = within(selectDropdown).queryAllByRole('option'),
           createButton = dryRunCreateCSVButton();
@@ -503,9 +503,9 @@ describe('CleanupPoliciesForm', function() {
 
     it('sets disabled on the select dropdown when no format is selected', async function() {
       const {format, dryRunRepositories} = renderEditView(EDITABLE_ITEM.name);
-  
+
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
-  
+
       const selectDropdown = dryRunRepositories(),
           formatSelectDropdown = format();
 
@@ -524,9 +524,9 @@ describe('CleanupPoliciesForm', function() {
 
     it('sets disabled on the button when no repository is selected', async function() {
       const {dryRunRepositories, dryRunCreateCSVButton} = renderEditView(EDITABLE_ITEM.name);
-  
+
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
-  
+
       const selectDropdown = dryRunRepositories(),
           createButton = dryRunCreateCSVButton();
 

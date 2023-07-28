@@ -38,6 +38,8 @@ public class AssetSearchResult
 
   private Date lastDownloaded;
 
+  private Date blobCreated;
+
   private Long fileSize;
 
   private String uploader;
@@ -116,6 +118,14 @@ public class AssetSearchResult
 
   public void setLastModified(final Date lastModified) {
     this.lastModified = lastModified;
+  }
+
+  public Date getBlobCreated() {
+    return blobCreated;
+  }
+
+  public void setBlobCreated(final Date blobCreated) {
+    this.blobCreated = blobCreated;
   }
 
   public String getUploader() {

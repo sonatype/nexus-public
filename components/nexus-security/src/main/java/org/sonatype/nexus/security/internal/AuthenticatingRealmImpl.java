@@ -18,6 +18,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.security.NexusSimpleAuthenticationInfo;
+import org.sonatype.nexus.security.RealmCaseMapping;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -65,10 +67,13 @@ public class AuthenticatingRealmImpl
 
   private final PasswordService passwordService;
 
+  private final boolean orient;
+
   @Inject
   public AuthenticatingRealmImpl(
       final SecurityConfigurationManager configuration,
-      final PasswordService passwordService)
+      final PasswordService passwordService,
+      @Named("${nexus.orient.enabled:-false}") final boolean orient)
   {
     this.configuration = configuration;
     this.passwordService = passwordService;
@@ -78,6 +83,7 @@ public class AuthenticatingRealmImpl
     setCredentialsMatcher(passwordMatcher);
     setName(DEFAULT_REALM_NAME);
     setAuthenticationCachingEnabled(true);
+    this.orient = orient;
   }
 
   @Override
@@ -174,7 +180,9 @@ public class AuthenticatingRealmImpl
   }
 
   private AuthenticationInfo createAuthenticationInfo(final CUser user) {
-    return new SimpleAuthenticationInfo(user.getId(), user.getPassword().toCharArray(), getName());
+    return orient ? new NexusSimpleAuthenticationInfo(user.getId(), user.getPassword().toCharArray(),
+        new RealmCaseMapping(getName(), true)) :
+        new SimpleAuthenticationInfo(user.getId(), user.getPassword().toCharArray(), getName());
   }
 
   /**

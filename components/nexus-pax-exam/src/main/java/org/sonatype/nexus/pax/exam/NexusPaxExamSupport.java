@@ -538,7 +538,9 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
             "rmiRegistryPort", Integer.toString(PortAllocator.nextFreePort())),
         editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
-            "rmiServerPort", Integer.toString(PortAllocator.nextFreePort()))
+            "rmiServerPort", Integer.toString(PortAllocator.nextFreePort())),
+
+        propagateSystemProperty("it.nexus.recordTaskLogs")
     );
   }
 
@@ -747,6 +749,16 @@ public abstract class NexusPaxExamSupport
     testIndex.recordAndCopyLink("nexus.log", new File(logDir, "nexus.log"));
     testIndex.recordAndCopyLink("request.log", new File(logDir, "request.log"));
     testIndex.recordAndCopyLink("jvm.log", new File(logDir, "jvm.log"));
+    
+    if ("true".equals(System.getProperty("it.nexus.recordTaskLogs"))) {
+      File tasksDir = new File(logDir, "tasks");
+      File[] taskLogs = tasksDir.listFiles(f -> f.getName().endsWith(".log"));
+      if (taskLogs != null) {
+        for (File taskLog : taskLogs) {
+          testIndex.recordAndCopyLink("tasks/" + taskLog.getName(), taskLog);
+        }
+      }
+    }
 
     final String surefirePrefix = "target/surefire-reports/" + className;
     testIndex.recordLink("surefire result", resolveBaseFile(surefirePrefix + ".txt"));

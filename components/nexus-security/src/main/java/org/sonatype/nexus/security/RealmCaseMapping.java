@@ -10,26 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.wonderland;
+package org.sonatype.nexus.security;
 
-/**
- * Manages cache (and expiration) of authentication tickets.
- *
- * @since 2.7
- */
-public interface AuthTicketCache
+import java.io.Serializable;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class RealmCaseMapping
+    implements Serializable
 {
-  String EXPIRE = "${wonderland.authTicketCache.expireAfter:-20s}";
+  private final String realmName;
 
-  /**
-   * Add token to the cache.
-   */
-  void add(String user, String token, String realmName);
+  private final boolean isCaseSensitive;
 
-  /**
-   * Remove token from cache.
-   *
-   * @return True if the token existed (was added and not yet expired)
-   */
-  boolean remove(String user, String token, String realmName);
+  public RealmCaseMapping(final String realmName, final boolean isCaseSensitive) {
+    this.realmName = checkNotNull(realmName);
+    this.isCaseSensitive = isCaseSensitive;
+  }
+
+  public String getRealmName() {
+    return realmName;
+  }
+
+  public boolean isCaseSensitive() {
+    return isCaseSensitive;
+  }
 }

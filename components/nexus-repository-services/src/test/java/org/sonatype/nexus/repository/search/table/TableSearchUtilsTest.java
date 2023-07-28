@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.table;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class TableSearchUtilsTest
     Map<String, SqlSearchQueryContribution> searchContributions = new HashMap<>();
     searchContributions.put(DefaultSqlSearchQueryContribution.NAME, defaultSearchContribution);
     searchContributions.put(BlankValueSqlSearchQueryContribution.NAME, blankValueSearchContribution);
-    underTest = new TableSearchUtils(searchContributions);
+    underTest = new TableSearchUtils(searchContributions, Collections.emptyMap());
   }
 
   @Test

@@ -31,22 +31,22 @@ public class LocalAuthTicketCacheTest
   @Test
   public void addRemoveIsRemoved() {
     LocalAuthTicketCache tokens = new LocalAuthTicketCache();
-    tokens.add("user", "foo");
-    assertThat(tokens.remove("user", "foo"), is(true));
+    tokens.add("user", "foo", "NexusAuthorizingRealm");
+    assertThat(tokens.remove("user", "foo", "NexusAuthorizingRealm"), is(true));
   }
 
   @Test
   public void neverAddedRemove() {
     LocalAuthTicketCache tokens = new LocalAuthTicketCache();
-    assertThat(tokens.remove("user","foo"), is(false));
+    assertThat(tokens.remove("user","foo", "NexusAuthorizingRealm"), is(false));
   }
 
   @Test(expected = IllegalStateException.class)
   public void addDoesNotAllowDuplicates() {
     LocalAuthTicketCache tokens = new LocalAuthTicketCache();
-    tokens.add("user","foo");
+    tokens.add("user","foo", "NexusAuthorizingRealm");
     // this should fail
-    tokens.add("user","foo");
+    tokens.add("user","foo", "NexusAuthorizingRealm");
   }
 
   @Test
@@ -60,19 +60,19 @@ public class LocalAuthTicketCacheTest
       }
     };
 
-    tokens.add("user", "foo");
-    assertThat(tokens.remove("user", "foo"), is(true));
+    tokens.add("user", "foo", "NexusAuthorizingRealm");
+    assertThat(tokens.remove("user", "foo", "NexusAuthorizingRealm"), is(true));
 
-    tokens.add("user", "foo");
+    tokens.add("user", "foo", "NexusAuthorizingRealm");
     // simulate expire
     expired.set(true);
-    assertThat(tokens.remove("user", "foo"), is(false));
+    assertThat(tokens.remove("user", "foo", "NexusAuthorizingRealm"), is(false));
   }
 
   @Test
   public void testRemoveFailsIfDifferentUser() {
     LocalAuthTicketCache cache = new LocalAuthTicketCache();
-    cache.add("user", "foo");
-    assertThat(cache.remove("bad", "foo"), is(false));
+    cache.add("user", "foo", "NexusAuthorizingRealm");
+    assertThat(cache.remove("bad", "foo", "NexusAuthorizingRealm"), is(false));
   }
 }
