@@ -58,6 +58,21 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
         .orElseGet(() -> super.makeBlobPermanent(blobId, headers));
   }
 
+  @Override
+  public boolean deleteIfTemp(final BlobId blobId) {
+    Blob blob = getBlobFromCache(blobId);
+    if (blob != null) {
+      Map<String, String> headers = blob.getHeaders();
+      if (headers == null || headers.containsKey(TEMPORARY_BLOB_HEADER)) {
+        return deleteHard(blobId);
+      }
+      log.debug("Not deleting. Blob with id: {} is permanent.", blobId.asUniqueString());
+    }
+    return false;
+  }
+
+   public abstract Blob getBlobFromCache(final BlobId blobId);
+
   private Map<String, String> removeTemporaryBlobHeaderIfPresent(final Map<String, String> headers) {
     Map<String, String> headersCopy = headers;
     if (headersCopy.containsKey(TEMPORARY_BLOB_HEADER)) {

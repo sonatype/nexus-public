@@ -616,7 +616,8 @@ public abstract class NexusPaxExamSupport
       case "azure":
         return composite(
             // enable azure default
-            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.azure", Boolean.TRUE.toString())
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.azure", Boolean.TRUE.toString()),
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.blobstore.new.azure", Boolean.TRUE.toString())
         );
       default:
         return composite();
