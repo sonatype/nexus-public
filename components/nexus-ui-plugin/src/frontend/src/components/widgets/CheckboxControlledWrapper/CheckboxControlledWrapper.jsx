@@ -11,11 +11,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, {useState} from 'react';
+import React from 'react';
 
 import './CheckboxControlledWrapper.scss';
 import {NxCheckbox} from "@sonatype/react-shared-components";
-import PropTypes from "prop-types";
 
 /**
  * @since 3.29
@@ -35,10 +34,4 @@ export default function CheckboxControlledWrapper({id, children, onChange, ...at
       {children}
     </div>
   </div>;
-};
-
-CheckboxControlledWrapper.propTypes = {
-  isChecked: PropTypes.bool,
-  children: PropTypes.oneOfType([PropTypes.element, PropTypes.arrayOf(PropTypes.element)]),
-  onChange: PropTypes.func
 };

@@ -22,6 +22,14 @@ export default {
 
     CREATE_TITLE: 'Create Cleanup Policy',
     EDIT_TITLE: 'Edit Cleanup Policy',
+    SUB_TITLE: 'Define Cleanup Policy',
+    DESCRIPTION: <>
+      <b>Cleanup policies</b> allow you to automatically delete unused
+      components and free up storage space in your Nexus repository
+      instance. You can schedule cleanup policies to run at specific
+      intervals and define <b>cleanup criteria</b> for selecting
+      components to delete.
+    </>,
 
     HELP_TITLE: 'What is a cleanup policy?',
     HELP_TEXT: <>
@@ -39,8 +47,9 @@ export default {
 
     NAME_LABEL: 'Name',
     FORMAT_LABEL: 'Format',
-    NOTES_LABEL: 'Notes',
+    DESCRIPTION_LABEL: 'Description',
     CRITERIA_LABEL: 'Cleanup Criteria',
+    CRITERIA_DESCRIPTION: 'Remove all componets that match all selected criteria',
     LAST_UPDATED_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Component Age Criteria`,
     LAST_UPDATED_LABEL: 'Component Age',
     LAST_DOWNLOADED_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Component Usage Criteria`,
@@ -50,21 +59,33 @@ export default {
     ASSET_NAME_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Asset Name Matcher Criteria`,
     ASSET_NAME_LABEL: 'Asset Name Matcher',
     FORMAT_SELECT: 'Select a format...',
-    RELEASE_TYPE_SELECT: 'Select a release type...',
+    RELEASE_TYPE_SELECT: 'Select the release type:',
     REPOSITORY_SELECT: 'Select a repository...',
 
     NAME_DESCRIPTION: 'Use a unique name for the cleanup policy',
     FORMAT_DESCRIPTION: 'The format that this cleanup policy can be applied to',
-    LAST_UPDATED_DESCRIPTION: 'Remove components that were published over:',
-    LAST_DOWNLOADED_DESCRIPTION: "Remove components that haven't been downloaded in:",
     RELEASE_TYPE_DESCRIPTION: 'Remove components that are of the following release type:',
-    ASSET_NAME_DESCRIPTION: 'Remove components that have at least one asset name matching the following regular expression pattern:',
+    ASSET_NAME_DESCRIPTION: 'Contains at least one asset where the name matches this regular expression:',
 
+    LAST_UPDATED_PREFIX: 'Published over:',
     LAST_UPDATED_SUFFIX: 'days ago',
+    LAST_DOWNLOADED_PREFIX: 'Haven’t been downloaded in:',
     LAST_DOWNLOADED_SUFFIX: 'days',
 
-    RELEASE_TYPE_RELEASE: 'Release Versions',
-    RELEASE_TYPE_PRERELEASE: 'Pre-Release / Snapshot Versions',
+    RELEASE_TYPE: {
+      RELEASES_AND_SNAPSHOT: {
+        id: '',
+        label: 'Releases & Pre-Releases/Snapshots'
+      },
+      RELEASES: {
+        id: 'RELEASES',
+        label: 'Releases'
+      },
+      PRERELEASES: {
+        id: 'PRERELEASES',
+        label: 'Pre-Releases/Snapshots'
+      },
+    },
 
     PREVIEW: {
       TITLE: 'Cleanup policy preview',
