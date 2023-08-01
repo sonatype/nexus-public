@@ -15,14 +15,19 @@ package org.sonatype.nexus.content.maven.store;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.datastore.api.ContentDataAccess;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
 
 import org.apache.ibatis.annotations.Param;
 
 /**
- * @since 3.25
+ * Maven Component {@link ContentDataAccess}.
  */
 public interface Maven2ComponentDAO
     extends ComponentDAO
@@ -108,4 +113,29 @@ public interface Maven2ComponentDAO
   Collection<Integer> selectUnusedSnapshots(@Param("repositoryId") int repositoryId,
                                             @Param("olderThan") LocalDate olderThan,
                                             @Param("limit") long limit);
+
+
+  /**
+   * Browse all components in the given repository, namespace and name, after filtering by cleanup policy criteria, in a
+   * paged fashion.
+   * <P/>
+   * This method is technically an override of {@link ComponentDAO#browseComponentsForCleanup} but mybatis does not allow standard
+   * inheritance and as such this method has Ex (Extended) as a suffix.
+   *
+   * @param repositoryId      the repository to browse
+   * @param namespace         the component namespace to browse
+   * @param name              the component name to browse
+   * @param criteria          the criteria to filter by
+   * @param limit             maximum number of components to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of components and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  Continuation<Component> browseComponentsForCleanupEx(
+      @Param("repositoryId") int repositoryId,
+      @Param("namespace") String namespace,
+      @Param("name") String name,
+      @Nullable @Param("criteria") Map<String, String> criteria,
+      @Param("limit") int limit,
+      @Nullable @Param("continuationToken") String continuationToken);
 }

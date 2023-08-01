@@ -74,4 +74,18 @@
        AND repository_id = #{repositoryId};
   </select>
 
+  <!-- Override but myBatis doesn't support it properly, so an 'Ex' suffix -->
+  <!-- Once Retain-N is implemented, the ORDER BY will need to change to normalised_version -->
+  <select id="browseComponentsForCleanupEx" resultType="ComponentData">
+    SELECT * FROM maven2_component
+    WHERE <include refid="componentSetMatch"/>
+    <if test="criteria.isPrerelease == 'true'"> AND base_version LIKE '%-SNAPSHOT'</if>
+    <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
+    ORDER BY component_id
+    <!-- example retain addition
+    <if test="criteria.retainOffset > 0"> OFFSET #{retainOffset}</if>
+    -->
+    <if test="limit > 0"> LIMIT #{limit}</if>;
+  </select>
+
 </mapper>

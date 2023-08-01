@@ -15,15 +15,20 @@ package org.sonatype.nexus.content.maven.store;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.ComponentSet;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.transaction.Transactional;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.assistedinject.Assisted;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
@@ -60,11 +65,12 @@ public class Maven2ComponentStore
   }
 
   @Transactional
-  public List<Maven2ComponentData> findComponentsForGav(final int repositoryId,
-                                                        final String name,
-                                                        final String group,
-                                                        final String baseVersion,
-                                                        final String releaseVersion)
+  public List<Maven2ComponentData> findComponentsForGav(
+      final int repositoryId,
+      final String name,
+      final String group,
+      final String baseVersion,
+      final String releaseVersion)
   {
     return dao().findComponentsForGav(repositoryId, name, group, baseVersion, releaseVersion);
   }
@@ -88,10 +94,43 @@ public class Maven2ComponentStore
    * @return snapshot components last used before provided date
    */
   @Transactional
-  public Collection<Integer> selectUnusedSnapshots(final int repositoryId,
-                                                   final LocalDate olderThan,
-                                                   final long limit)
+  public Collection<Integer> selectUnusedSnapshots(
+      final int repositoryId,
+      final LocalDate olderThan,
+      final long limit)
   {
     return dao().selectUnusedSnapshots(repositoryId, olderThan, limit);
   }
+
+  /**
+   * Browse all components in the given repository and component set, after filtering by cleanup policy criteria, in a
+   * paged fashion.
+   *
+   * @param repositoryId          the repository to browse
+   * @param componentSet          the component set to browse
+   * @param cleanupPolicyCriteria the criteria to filter by
+   * @param limit                 maximum number of components to return
+   * @param continuationToken     optional token to continue from a previous request
+   * @return collection of components and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  @Override
+  @Transactional
+  public Continuation<Component> browseComponentsForCleanup(
+      final int repositoryId,
+      final ComponentSet componentSet,
+      final Map<String, String> cleanupPolicyCriteria,
+      final int limit,
+      @Nullable final String continuationToken)
+  {
+    log.info("Cleanup Maven Criteria: {}", cleanupPolicyCriteria);
+    return dao().browseComponentsForCleanupEx(repositoryId, componentSet.namespace(), componentSet.name(),
+        cleanupPolicyCriteria, limit, continuationToken);
+  }
+
+
+  public Set<String> getProcessedCleanupCriteria() {
+    return ImmutableSet.of("isPrerelease");
+  }
+
 }

@@ -49,6 +49,10 @@
     repository_id = #{repositoryId} AND namespace = #{namespace}
   </sql>
 
+  <sql id="componentSetMatch">
+    <include refid="componentNamespaceMatch"/> AND name = #{name}
+  </sql>
+
   <sql id="componentCoordinateMatch">
     <include refid="componentNamespaceMatch"/> AND name = #{name} AND version = #{version}
   </sql>
@@ -62,6 +66,13 @@
         <include refid="componentCoordinateMatch"/>
       </otherwise>
     </choose>
+  </sql>
+
+  <sql id="selectComponentsBySet">
+    SELECT * FROM ${format}_component WHERE <include refid="componentSetMatch"/>
+    <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
+    ORDER BY component_id
+    <if test="limit > 0"> LIMIT #{limit}</if>;
   </sql>
 
   <select id="countComponents" resultType="int">
@@ -140,6 +151,15 @@
     ORDER BY component_id LIMIT #{limit};
   </select>
 
+  <select id="browseComponentsBySet" resultType="ComponentData">
+    <include refid="selectComponentsBySet"/>
+  </select>
+
+  <!-- Default implementation that will return all components to be filtered within the code -->
+  <select id="browseComponentsForCleanup" resultType="ComponentData">
+    <include refid="selectComponentsBySet"/>
+  </select>
+
   <select id="browseNamespaces" resultType="String">
     SELECT DISTINCT(namespace) FROM ${format}_component WHERE repository_id = #{repositoryId};
   </select>
@@ -150,6 +170,13 @@
 
   <select id="browseVersions" resultType="String">
     SELECT version FROM ${format}_component WHERE <include refid="componentNamespaceMatch"/> AND name = #{name};
+  </select>
+
+  <select id="browseSets" resultType="org.sonatype.nexus.repository.content.store.ComponentSetData">
+    SELECT DISTINCT namespace, name FROM ${format}_component WHERE repository_id = #{repositoryId}
+    <if test="continuationToken != null"> AND CONCAT(namespace, '|', name) > #{continuationToken}</if>
+    ORDER BY namespace ASC, name ASC
+    <if test="limit > 0"> LIMIT #{limit}</if>;
   </select>
 
   <insert id="createComponent" useGeneratedKeys="true" keyProperty="component.componentId">

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
@@ -25,6 +26,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.cleanup.internal.CleanupFeatureCheck;
 import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.service.CleanupService;
@@ -56,9 +58,13 @@ public class CleanupServiceImpl
 
   public static final String CLEANUP_NAME_KEY = "policyName";
 
+  public static final String DEFAULT_CLEANUP_BROWSE_NAME = "DataStoreCleanupComponentBrowse";
+
+  public static final String COMPONENT_SET_CLEANUP_BROWSE_NAME = "ComponentSetCleanupComponentBrowse";
+
   private final RepositoryManager repositoryManager;
 
-  private final CleanupComponentBrowse browseService;
+  private final Map<String, CleanupComponentBrowse> browseServices;
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
@@ -68,20 +74,24 @@ public class CleanupServiceImpl
 
   private int cleanupRetryLimit;
 
+  private CleanupFeatureCheck featureCheck;
+
   @Inject
   public CleanupServiceImpl(final RepositoryManager repositoryManager,
-                            final CleanupComponentBrowse browseService,
+                            final Map<String, CleanupComponentBrowse> browseServices,
                             final CleanupPolicyStorage cleanupPolicyStorage,
                             final CleanupMethod cleanupMethod,
                             final GroupType groupType,
-                            @Named("${nexus.cleanup.retries:-3}") final int cleanupRetryLimit)
+                            @Named("${nexus.cleanup.retries:-3}") final int cleanupRetryLimit,
+                            final CleanupFeatureCheck featureChecks)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.browseService = checkNotNull(browseService);
-    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
+    this.browseServices = checkNotNull(browseServices);
     this.cleanupMethod = checkNotNull(cleanupMethod);
+    this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.groupType = checkNotNull(groupType);
     this.cleanupRetryLimit = cleanupRetryLimit;
+    this.featureCheck = checkNotNull(featureChecks);
   }
 
   @Override
@@ -97,16 +107,31 @@ public class CleanupServiceImpl
 
   private Long cleanup(final Repository repository, final BooleanSupplier cancelledCheck) {
     AtomicLong deleted = new AtomicLong(0L);
-    findPolicies(repository).forEach(p -> {
-      deleted.addAndGet(deleteByPolicy(repository, p, cancelledCheck));
+    findPolicies(repository).forEach(policy -> {
+      CleanupComponentBrowse browseService = selectBrowseService(repository, policy.getCriteria());
+      deleted.addAndGet(deleteByPolicy(repository, policy, cancelledCheck, browseService));
       log.info("{} components cleaned up for repository {} in total", deleted, repository.getName());
     });
     return deleted.get();
   }
 
+  private CleanupComponentBrowse selectBrowseService(final Repository repository, Map<String, String> criteria) {
+    String serviceName = DEFAULT_CLEANUP_BROWSE_NAME;
+    if (this.featureCheck.isRetainSupported(repository.getFormat().getValue(), criteria)) {
+      serviceName = COMPONENT_SET_CLEANUP_BROWSE_NAME;
+    }
+    CleanupComponentBrowse browseService = browseServices.get(serviceName);
+    if (browseService==null) {
+      log.error("Missing Cleanup Component Browse service: {}", serviceName);
+      throw new IllegalStateException("Missing Cleanup Component Browse service");
+    }
+    return browseService;
+  }
+
   protected Long deleteByPolicy(final Repository repository,
                                 final CleanupPolicy policy,
-                                final BooleanSupplier cancelledCheck)
+                                final BooleanSupplier cancelledCheck,
+                                CleanupComponentBrowse browseService)
   {
     log.info("Deleting components in repository {} using policy {}", repository.getName(), policy.getName());
 

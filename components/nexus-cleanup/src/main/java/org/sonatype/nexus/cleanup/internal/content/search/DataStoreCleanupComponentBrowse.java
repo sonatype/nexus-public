@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -30,7 +29,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.internal.datastore.search.criteria.AssetCleanupEvaluator;
 import org.sonatype.nexus.cleanup.internal.datastore.search.criteria.ComponentCleanupEvaluator;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
@@ -46,7 +44,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * @since 3.38
  */
-@Named
+@Named("DataStoreCleanupComponentBrowse")
 @Singleton
 public class DataStoreCleanupComponentBrowse
     extends ComponentSupport
@@ -70,7 +68,8 @@ public class DataStoreCleanupComponentBrowse
     checkNotNull(policy);
     checkNotNull(repository);
 
-    return Continuations.streamOf(browseComponentsFn(repository))
+
+    return Continuations.streamOf(getComponentBrowser(repository, policy)::browse)
         .filter(createComponentFilter(repository, policy));
   }
 
@@ -100,28 +99,41 @@ public class DataStoreCleanupComponentBrowse
     }
 
     List<Component> result =
-    Continuations.streamOf(browseComponentsFn(repository), Continuations.BROWSE_LIMIT, options.getLastId())
-        .peek(__ -> CancelableHelper.checkCancellation())
-        .filter(componentFilter)
-        .limit(options.getLimit())
-        .map(Component.class::cast)
-        .collect(Collectors.toList());
+        Continuations.streamOf(getComponentBrowser(repository, policy)::browse, Continuations.BROWSE_LIMIT,
+                options.getLastId())
+            .peek(__ -> CancelableHelper.checkCancellation())
+            .filter(componentFilter)
+            .limit(options.getLimit())
+            .map(Component.class::cast)
+            .collect(Collectors.toList());
 
     // We return -1 as we don't have an inexpensive way of computing the total number of matching results
     return new PagedResponse<>(-1, result);
   }
 
   /**
-   * Creates a Predicate that will return true if any of the Component's name/group/version
-   * matches the provided filter.
+   * Return the cleanup criteria that should be applied during filter. These may be altered depending on Repository,
+   * Format or Feature specific requirements.
+   *
+   * @param repository the Repository that the policy is being applied to
+   * @param policy     the cleanup policy that is being applied
+   * @return the cleanup criteria that should be used when filtering items
+   */
+  protected Map<String, String> getFilterableCriteria(Repository repository, CleanupPolicy policy) {
+    return policy.getCriteria();
+  }
+
+  /**
+   * Creates a Predicate that will return true if any of the Component's name/group/version matches the provided
+   * filter.
    */
   private Optional<Predicate<FluentComponent>> createOptionsFilter(final QueryOptions options) {
     String filter = options.getFilter();
     if (filter != null && filter.trim().length() > 0) {
       Predicate<FluentComponent> optionsFilter = (component) ->
           component.name().contains(filter) ||
-          component.namespace().contains(filter) ||
-          component.version().contains(filter);
+              component.namespace().contains(filter) ||
+              component.version().contains(filter);
       return Optional.of(optionsFilter);
     }
     else {
@@ -136,11 +148,12 @@ public class DataStoreCleanupComponentBrowse
   private Predicate<FluentComponent> createComponentFilter(final Repository repository, final CleanupPolicy policy) {
     validateCleanupPolicy(policy);
 
-    List<BiPredicate<Component, Iterable<Asset>>> componentFilters = policy.getCriteria().entrySet().stream()
-        .filter(entry -> componentCriteria.containsKey(entry.getKey()))
-        .map(entry -> componentCriteria.get(entry.getKey()).getPredicate(repository, entry.getValue()))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+    List<BiPredicate<Component, Iterable<Asset>>> componentFilters =
+        getFilterableCriteria(repository, policy).entrySet().stream()
+            .filter(entry -> componentCriteria.containsKey(entry.getKey()))
+            .map(entry -> componentCriteria.get(entry.getKey()).getPredicate(repository, entry.getValue()))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
 
     componentFilters.add(createAssetFilter(repository, policy));
 
@@ -165,7 +178,7 @@ public class DataStoreCleanupComponentBrowse
       final Repository repository,
       final CleanupPolicy policy)
   {
-    List<Predicate<Asset>> filters = policy.getCriteria().entrySet().stream()
+    List<Predicate<Asset>> filters = getFilterableCriteria(repository, policy).entrySet().stream()
         .map(entry -> {
           if (!assetCriteria.containsKey(entry.getKey())) {
             return null;
@@ -197,8 +210,14 @@ public class DataStoreCleanupComponentBrowse
     }
   }
 
-  private static BiFunction<Integer, String, Continuation<FluentComponent>> browseComponentsFn(
-      final Repository repository)
+  /**
+   * Returns a Continuation-based browser of components that are eligible for cleanup.
+   * @param repository the Repository to browse
+   * @param policy the Cleanup Policy to use for filtering
+   * @return a continuation of components eligible for cleanup
+   */
+  protected ContinuationBrowse<FluentComponent> getComponentBrowser(
+      final Repository repository, final CleanupPolicy policy)
   {
     return repository.facet(ContentFacet.class).components()::browse;
   }

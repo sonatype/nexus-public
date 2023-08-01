@@ -61,6 +61,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.toHexString;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.is;
@@ -113,6 +114,18 @@ public class ExampleContentTestSupport
 
   protected List<ContentRepositoryData> generatedRepositories() {
     return unmodifiableList(repositories);
+  }
+
+  protected List<String> generatedNamespaces() {
+    return unmodifiableList(namespaces);
+  }
+
+  protected List<String> generatedNames() {
+    return unmodifiableList(names);
+  }
+
+  protected List<String> generatedVersions() {
+    return unmodifiableList(versions);
   }
 
   protected List<Component> generatedComponents() {
@@ -288,6 +301,35 @@ public class ExampleContentTestSupport
     }
   }
 
+  protected void generateProvidedContent(final List<ComponentData> providedComponents, final boolean entityVersionEnabled) {
+    List<ComponentData> components = new ArrayList<>(providedComponents.size());
+    providedComponents.forEach(component -> {
+      if (doCommit(session -> session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled))) {
+            components.add(component);
+          }
+        });
+
+    assets = new ArrayList<>(components.size());
+    assetBlobs = new ArrayList<>(components.size());
+    for (ComponentData component : components) {
+      AssetData asset = generateAsset(component.repositoryId, "/" + UUID.randomUUID());
+      asset.setAssetId(component.componentId);
+      asset.setComponent(component);
+
+      if (doCommit(session -> session.access(TestAssetDAO.class).createAsset(asset, false))) {
+        assets.add(asset);
+        AssetBlobData assetBlob = randomAssetBlob();
+        if (doCommit(session -> {
+          session.access(TestAssetBlobDAO.class).createAssetBlob(assetBlob);
+          asset.setAssetBlob(assetBlob);
+          session.access(TestAssetDAO.class).updateAssetBlobLink(asset, false);
+        })) {
+          assetBlobs.add(assetBlob);
+        }
+      }
+    }
+  }
+
   protected ContentRepositoryData randomContentRepository() {
     ContentRepositoryData repository = new ContentRepositoryData();
     repository.setConfigRepositoryId(new EntityUUID(combUUID()));
@@ -316,6 +358,16 @@ public class ExampleContentTestSupport
     else {
       component.setVersion("");
     }
+    component.setAttributes(newAttributes("component"));
+    component.setKind("aKind");
+    return component;
+  }
+  protected ComponentData component(final int repositoryId, final String namespace, final String name, final String version) {
+    ComponentData component = new ComponentData();
+    component.setRepositoryId(repositoryId);
+    component.setNamespace(namespace);
+    component.setName(name);
+    component.setVersion(version);
     component.setAttributes(newAttributes("component"));
     component.setKind("aKind");
     return component;

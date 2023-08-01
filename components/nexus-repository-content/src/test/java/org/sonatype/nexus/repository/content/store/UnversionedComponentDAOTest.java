@@ -65,4 +65,10 @@ public class UnversionedComponentDAOTest
   public void testFilterClauseIsolation() {
     super.testFilterClauseIsolation();
   }
+
+  @Override
+  @Test
+  public void testContinuationSetBrowsing() {
+    super.testContinuationSetBrowsing();
+  }
 }

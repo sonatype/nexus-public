@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.ComponentSet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -32,6 +33,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.ComponentData;
+import org.sonatype.nexus.repository.content.store.ComponentSetData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -94,9 +96,10 @@ public class FluentComponentsImpl
     return doCount(null, null, null);
   }
 
-  int doCount(@Nullable final String kind,
-              @Nullable final String filter,
-              @Nullable final Map<String, Object> filterParams)
+  int doCount(
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
   {
     return componentStore.countComponents(facet.contentRepositoryId(), kind, filter, filterParams);
   }
@@ -163,6 +166,32 @@ public class FluentComponentsImpl
   }
 
   @Override
+  public Continuation<FluentComponent> bySet(
+      final ComponentSet componentSet,
+      final int limit,
+      final String continuationToken)
+  {
+    return new FluentContinuation<>(componentStore.browseComponentsBySet(facet.contentRepositoryId(),
+        componentSet, limit, continuationToken), this::with);
+  }
+
+  @Override
+  public Continuation<FluentComponent> byCleanupCriteria(
+      final ComponentSet componentSet,
+      final Map<String, String> criteria,
+      final int limit,
+      final String continuationToken)
+  {
+    return new FluentContinuation<>(componentStore.browseComponentsForCleanup(facet.contentRepositoryId(),
+        componentSet, criteria, limit, continuationToken), this::with);
+  }
+
+  @Override
+  public Set<String> getProcessedCleanupCriteria() {
+    return componentStore.getProcessedCleanupCriteria();
+  }
+
+  @Override
   public Collection<String> namespaces() {
     return componentStore.browseNamespaces(facet.contentRepositoryId());
   }
@@ -170,6 +199,11 @@ public class FluentComponentsImpl
   @Override
   public Collection<String> names(final String namespace) {
     return componentStore.browseNames(facet.contentRepositoryId(), namespace);
+  }
+
+  @Override
+  public Continuation<ComponentSetData> sets(final int limit, final String continuationToken) {
+    return componentStore.browseSets(facet.contentRepositoryId(), limit, continuationToken);
   }
 
   @Override

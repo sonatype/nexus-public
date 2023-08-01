@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,6 +27,7 @@ import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.ComponentSet;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
@@ -40,7 +40,9 @@ import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryD
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.transaction.Transactional;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.ibatis.annotations.Param;
 
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
@@ -74,16 +76,17 @@ public class ComponentStore<T extends ComponentDAO>
    * Count all components in the given repository.
    *
    * @param repositoryId the repository to count
-   * @param kind optional kind of components to count
-   * @param filter optional filter to apply
+   * @param kind         optional kind of components to count
+   * @param filter       optional filter to apply
    * @param filterParams parameter map for the optional filter
    * @return count of components in the repository
    */
   @Transactional
-  public int countComponents(final int repositoryId,
-                             @Nullable final String kind,
-                             @Nullable final String filter,
-                             @Nullable final Map<String, Object> filterParams)
+  public int countComponents(
+      final int repositoryId,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
   {
     return dao().countComponents(repositoryId, kind, filter, filterParams);
   }
@@ -91,23 +94,23 @@ public class ComponentStore<T extends ComponentDAO>
   /**
    * Browse all components in the given repository in a paged fashion.
    *
-   * @param repositoryId the repository to browse
-   * @param limit maximum number of components to return
+   * @param repositoryId      the repository to browse
+   * @param limit             maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
-   * @param kind optional kind of components to return
-   * @param filter optional filter to apply
-   * @param filterParams parameter map for the optional filter
+   * @param kind              optional kind of components to return
+   * @param filter            optional filter to apply
+   * @param filterParams      parameter map for the optional filter
    * @return collection of components and the next continuation token
-   *
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<Component> browseComponents(final int repositoryId,
-                                                  final int limit,
-                                                  @Nullable final String continuationToken,
-                                                  @Nullable final String kind,
-                                                  @Nullable final String filter,
-                                                  @Nullable final Map<String, Object> filterParams)
+  public Continuation<Component> browseComponents(
+      final int repositoryId,
+      final int limit,
+      @Nullable final String continuationToken,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
   {
     return dao().browseComponents(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
@@ -127,11 +130,10 @@ public class ComponentStore<T extends ComponentDAO>
   /**
    * Browse all components in the given repository ids in a paged fashion.
    *
-   * @param repositoryIds the ids repositories to browse
-   * @param limit maximum number of components to return
+   * @param repositoryIds     the ids repositories to browse
+   * @param limit             maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of components and the next continuation token
-   *
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
@@ -144,8 +146,63 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
-   * Browse all component namespaces in the given repository.
+   * Browse all components in the given repository and component set, in a paged fashion.
    *
+   * @param repositoryId      the repository to browse
+   * @param componentSet      the component set to browse
+   * @param limit             maximum number of components to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of components and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  @Transactional
+  public Continuation<Component> browseComponentsBySet(
+      final int repositoryId,
+      final ComponentSet componentSet,
+      final int limit,
+      @Nullable final String continuationToken)
+  {
+    return dao().browseComponentsBySet(repositoryId,
+        componentSet.namespace(), componentSet.name(), limit, continuationToken);
+  }
+
+  /**
+   * Browse all components in the given repository and component set, after filtering by cleanup policy criteria, in a
+   * paged fashion.
+   *
+   * @param repositoryId          the repository to browse
+   * @param componentSet          the component set to browse
+   * @param cleanupPolicyCriteria the criteria to filter by
+   * @param limit                 maximum number of components to return
+   * @param continuationToken     optional token to continue from a previous request
+   * @return collection of components and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  @Transactional
+  public Continuation<Component> browseComponentsForCleanup(
+      final int repositoryId,
+      final ComponentSet componentSet,
+      final Map<String, String> cleanupPolicyCriteria,
+      final int limit,
+      @Nullable final String continuationToken)
+  {
+    return dao().browseComponentsForCleanup(repositoryId, componentSet.namespace(), componentSet.name(),
+        cleanupPolicyCriteria, limit, continuationToken);
+  }
+
+  /**
+   * Provide a Set of all cleanup criteria that should be processed internally in the store when using
+   * browseComponentsForCleanup. These criteria shoud therefore be ignored downstream to prevent duplicate filtering
+   * @return a Set of cleanup criteria that are already being filtered by the store
+   * @see #browseComponentsForCleanup(int, ComponentSet, Map, int, int, String) 
+   */
+  public Set<String> getProcessedCleanupCriteria() {
+    return ImmutableSet.of();
+  }
+
+  /**
+   * Browse all component namespaces in the given repository.
+   * <p>
    * The result will include the empty string if there are any components that don't have a namespace.
    *
    * @param repositoryId the repository to browse
@@ -160,7 +217,7 @@ public class ComponentStore<T extends ComponentDAO>
    * Browse the names of all components under a namespace in the given repository.
    *
    * @param repositoryId the repository to browse
-   * @param namespace the namespace to browse (empty string to browse components that don't have a namespace)
+   * @param namespace    the namespace to browse (empty string to browse components that don't have a namespace)
    * @return collection of component names
    */
   @Transactional
@@ -168,14 +225,33 @@ public class ComponentStore<T extends ComponentDAO>
     return dao().browseNames(repositoryId, namespace);
   }
 
+  @Transactional
+  /**
+   * Browse all component sets (distinct namespace & name) in the given repository.
+   *
+   * @param repositoryId the repository to browse
+   * @param limit maximum number of components to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of componentSets and the next continuation token
+   *
+   * @see Continuation#nextContinuationToken()
+   */
+  public Continuation<ComponentSetData> browseSets(
+      @Param("repositoryId") int repositoryId,
+      @Param("limit") int limit,
+      @Nullable @Param("continuationToken") String continuationToken)
+  {
+    return dao().browseSets(repositoryId, limit, continuationToken);
+  }
+
   /**
    * Browse the versions of a component with the given namespace and name in the given repository.
-   *
+   * <p>
    * The result will include the empty string if there are any components that don't have a version.
    *
    * @param repositoryId the repository to browse
-   * @param namespace the namespace of the component
-   * @param name the name of the component
+   * @param namespace    the namespace of the component
+   * @param name         the name of the component
    * @return collection of component versions
    */
   @Transactional
@@ -210,16 +286,17 @@ public class ComponentStore<T extends ComponentDAO>
    * Retrieves a component located at the given coordinate in the content data store.
    *
    * @param repositoryId the repository containing the component
-   * @param namespace the namespace of the component
-   * @param name the name of the component
-   * @param version the version of the component
+   * @param namespace    the namespace of the component
+   * @param name         the name of the component
+   * @param version      the version of the component
    * @return component if it was found
    */
   @Transactional
-  public Optional<Component> readCoordinate(final int repositoryId,
-                                            final String namespace,
-                                            final String name,
-                                            final String version)
+  public Optional<Component> readCoordinate(
+      final int repositoryId,
+      final String namespace,
+      final String name,
+      final String version)
   {
     return dao().readCoordinate(repositoryId, namespace, name, version);
   }
@@ -242,10 +319,11 @@ public class ComponentStore<T extends ComponentDAO>
    * @param component the component to update
    */
   @Transactional
-  public void updateComponentAttributes(final Component component,
-                                        final AttributeOperation change,
-                                        final String key,
-                                        final @Nullable Object value)
+  public void updateComponentAttributes(
+      final Component component,
+      final AttributeOperation change,
+      final String key,
+      final @Nullable Object value)
   {
     // reload latest attributes, apply change, then update database if necessary
     dao().readComponentAttributes(component).ifPresent(attributes -> {
@@ -280,16 +358,17 @@ public class ComponentStore<T extends ComponentDAO>
    * Deletes the component located at the given coordinate in the content data store.
    *
    * @param repositoryId the repository containing the component
-   * @param namespace the namespace of the component
-   * @param name the name of the component
-   * @param version the version of the component
+   * @param namespace    the namespace of the component
+   * @param name         the name of the component
+   * @param version      the version of the component
    * @return {@code true} if the component was deleted
    */
   @Transactional
-  public boolean deleteCoordinate(final int repositoryId,
-                                  final String namespace,
-                                  final String name,
-                                  final String version)
+  public boolean deleteCoordinate(
+      final int repositoryId,
+      final String namespace,
+      final String name,
+      final String version)
   {
     return dao().readCoordinate(repositoryId, namespace, name, version)
         .map(this::deleteComponent)
@@ -298,7 +377,7 @@ public class ComponentStore<T extends ComponentDAO>
 
   /**
    * Deletes all components in the given repository from the content data store.
-   *
+   * <p>
    * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeletedEvent}.
    *
    * @param repositoryId the repository containing the components
@@ -320,9 +399,8 @@ public class ComponentStore<T extends ComponentDAO>
    * Purge components in the given repository whose assets were last downloaded more than given number of days ago
    *
    * @param repositoryId the repository to check
-   * @param daysAgo the number of days ago to check
+   * @param daysAgo      the number of days ago to check
    * @return number of purged components
-   *
    * @since 3.24
    */
   @Transactional
@@ -346,14 +424,13 @@ public class ComponentStore<T extends ComponentDAO>
    * @param repositoryId the repository to check
    * @param componentIds ids of the components to purge
    * @return number of purged components
-   *
    * @since 3.29
    */
   public int purge(final int repositoryId, final int[] componentIds) {
     final int iterations = componentIds.length / BATCH_SIZE + 1;
 
     int purged = 0;
-    for(int i=0; i<iterations; i++) {
+    for (int i = 0; i < iterations; i++) {
       int startIndex = i * BATCH_SIZE;
       int[] page = new int[Math.min(BATCH_SIZE, componentIds.length - startIndex)];
 
@@ -370,7 +447,7 @@ public class ComponentStore<T extends ComponentDAO>
     final int iterations = components.size() / BATCH_SIZE + 1;
 
     int purged = 0;
-    for(int i=0; i<iterations; i++) {
+    for (int i = 0; i < iterations; i++) {
       int start = i * BATCH_SIZE;
       int end = Math.min(start + BATCH_SIZE, components.size());
       List<FluentComponent> page = components.subList(start, end);
