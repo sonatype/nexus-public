@@ -19,7 +19,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
-import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
+import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.rapture.PasswordPlaceholder
@@ -45,12 +45,12 @@ class BlobStoreComponentTest
 
   BlobStoreGroupService blobStoreGroupService = Mock()
 
-  ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService = Mock()
+  BlobStoreTaskService blobStoreTaskService = Mock()
 
   @Subject
   BlobStoreComponent blobStoreComponent = new BlobStoreComponent(blobStoreManager: blobStoreManager,
       applicationDirectories: applicationDirectories, repositoryManager: repositoryManager,
-      blobStoreGroupService: { blobStoreGroupService }, changeRepositoryBlobstoreDataService: changeRepositoryBlobstoreDataService)
+      blobStoreGroupService: { blobStoreGroupService }, blobStoreTaskService: blobStoreTaskService)
 
   def 'Read types returns descriptor data'() {
     given: 'A blobstore descriptor'
@@ -243,7 +243,7 @@ class BlobStoreComponentTest
 
     then: 'It aint'
       thrown BlobStoreException
-      1 * changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount('used_in_move') >> 2
+      1 * blobStoreTaskService.countTasksInUseForBlobStore('used_in_move') >> 2
       0 * blobStoreManager.delete('used_in_move')
   }
 }

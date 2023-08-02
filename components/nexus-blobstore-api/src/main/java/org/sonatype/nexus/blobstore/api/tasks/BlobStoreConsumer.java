@@ -10,12 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api;
+package org.sonatype.nexus.blobstore.api.tasks;
 
-/**
- * @since 3.29
- */
-public interface ChangeRepositoryBlobstoreDataService
+public interface BlobStoreConsumer
 {
-  int changeRepoTaskUsingBlobstoreCount(final String blobStoreName);
+  boolean isBlobStoreInUse(final String blobStoreName);
+
+  int blobStoreUsageCount(final String blobStoreName);
 }

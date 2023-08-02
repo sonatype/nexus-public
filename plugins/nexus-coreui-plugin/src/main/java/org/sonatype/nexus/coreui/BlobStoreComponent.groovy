@@ -27,7 +27,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
-import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
+import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.blobstore.group.FillPolicy
@@ -97,7 +97,7 @@ class BlobStoreComponent
 
   @Nullable
   @Inject
-  ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService;
+  BlobStoreTaskService blobStoreTaskService;
 
   @DirectMethod
   @Timed
@@ -230,7 +230,7 @@ class BlobStoreComponent
     if (repositoryManager.isBlobstoreUsed(name)) {
       throw new BlobStoreException("Blob store (${name}) is in use by at least one repository", null)
     }
-    if (blobstoreInChangeRepoTaskCount(name) > 0) {
+    if (blobStoreTaskService.countTasksInUseForBlobStore(name) > 0) {
       throw new BlobStoreException("Blob store (${name}) is in use by a Change Repository Blob Store task", null)
     }
     blobStoreManager.delete(name)
@@ -277,7 +277,7 @@ class BlobStoreComponent
         type: blobStoreConfiguration.type,
         attributes: filterAttributes(blobStoreConfiguration.attributes),
         repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStoreConfiguration.name),
-        taskUseCount: blobstoreInChangeRepoTaskCount(blobStoreConfiguration.name),
+        taskUseCount: blobStoreTaskService.countTasksInUseForBlobStore(blobStoreConfiguration.name),
         blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStoreConfiguration.name),
         inUse: repositoryManager.isBlobstoreUsed(blobStoreConfiguration.name),
         convertable: blobStoreManager.isConvertable(blobStoreConfiguration.name),
@@ -301,13 +301,6 @@ class BlobStoreComponent
       blobStoreXO.unavailable = true
     }
     return blobStoreXO
-  }
-
-  int blobstoreInChangeRepoTaskCount(final String blobStoreName) {
-    if (changeRepositoryBlobstoreDataService != null) {
-      return changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount(blobStoreName);
-    }
-    return 0;
   }
 
   @DirectMethod

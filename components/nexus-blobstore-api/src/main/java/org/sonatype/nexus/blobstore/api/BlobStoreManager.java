@@ -96,6 +96,13 @@ public interface BlobStoreManager
   boolean isConvertable(String blobStoreName);
 
   /**
+   * Returns true if the specified blob store has conflicting tasks
+   * @param blobStoreName
+   * @return a boolean indicating if the blob store has conflicting tasks
+   */
+  boolean hasConflictingTasks(String blobStoreName);
+
+  /**
    * Returns the parent group of the blob store if it exists
    * @param blobStoreName
    * @return {@link java.util.Optional<String>} containing the parent group name if it exists

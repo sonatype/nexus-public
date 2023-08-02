@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -41,8 +40,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreNotFoundException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
-import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService;
 import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
+import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
@@ -100,7 +99,7 @@ public class BlobStoreManagerImpl
 
   private final Provider<RepositoryManager> repositoryManagerProvider;
 
-  private final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService;
+  private final BlobStoreTaskService blobStoreTaskService;
 
   private final Provider<BlobStoreOverride> blobStoreOverrideProvider;
 
@@ -118,7 +117,7 @@ public class BlobStoreManagerImpl
                               final NodeAccess nodeAccess,
                               @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
                               final DefaultBlobStoreProvider defaultBlobstoreProvider,
-                              @Nullable final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService,
+                              final BlobStoreTaskService blobStoreTaskService,
                               final Provider<BlobStoreOverride> blobStoreOverrideProvider,
                               final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager)
   {
@@ -128,7 +127,7 @@ public class BlobStoreManagerImpl
     this.blobStorePrototypes = checkNotNull(blobStorePrototypes);
     this.freezeService = checkNotNull(freezeService);
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
-    this.changeRepositoryBlobstoreDataService = changeRepositoryBlobstoreDataService;
+    this.blobStoreTaskService = checkNotNull(blobStoreTaskService);
     this.blobStoreOverrideProvider = blobStoreOverrideProvider;
     this.replicationBlobStoreStatusManager = checkNotNull(replicationBlobStoreStatusManager);
     this.defaultBlobstoreProvider = checkNotNull(defaultBlobstoreProvider);
@@ -357,7 +356,7 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
-    if (blobstoreInChangeRepoTaskCount(name) > 0) {
+    if (hasConflictingTasks(name)) {
       throw new IllegalStateException("BlobStore " + name + " is in use by a Change Repository Blob Store task");
     }
     else if (!repositoryManagerProvider.get().isBlobstoreUsed(name)) {
@@ -368,11 +367,9 @@ public class BlobStoreManagerImpl
     }
   }
 
-  private int blobstoreInChangeRepoTaskCount(final String blobStoreName) {
-    if (changeRepositoryBlobstoreDataService != null) {
-      return changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount(blobStoreName);
-    }
-    return 0;
+  @Override
+  public boolean hasConflictingTasks(final String blobStoreName) {
+    return blobStoreTaskService.isAnyTaskInUseForBlobStore(blobStoreName);
   }
 
   @Override
@@ -501,7 +498,7 @@ public class BlobStoreManagerImpl
     BlobStore blobStore = get(blobStoreName);
     return blobStore != null && blobStore.isGroupable() && blobStore.isWritable() &&
         !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent() &&
-        blobstoreInChangeRepoTaskCount(blobStoreName) == 0;
+        !hasConflictingTasks(blobStoreName);
   }
 
   @Override

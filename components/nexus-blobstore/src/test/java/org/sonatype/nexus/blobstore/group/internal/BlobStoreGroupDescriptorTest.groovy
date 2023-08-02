@@ -60,6 +60,7 @@ class BlobStoreGroupDescriptorTest
 
   def setup() {
     blobStoreManager.get(_) >> { String name -> blobStores.computeIfAbsent(name, { k -> mockBlobStore(k, 'mock') }) }
+    blobStoreManager.hasConflictingTasks(_) >> false
     blobStoreManager.browse() >> blobStores.values()
     blobStoreManager.getParent(_) >> Optional.empty()
     blobStoreUtil.usageCount(_) >> 0
@@ -105,6 +106,22 @@ class BlobStoreGroupDescriptorTest
       []         || '''Blob Store 'self' cannot be empty'''
       ['self']   || '''Blob Store 'self' cannot contain itself'''
       ['nested'] || '''Blob Store 'nested' is of type 'Group' and is not eligible to be a group member'''
+  }
+
+  def 'Validate blob store with conflicting tasks running'() {
+    given: 'Existing blob stores'
+      blobStores.'hosted-0' = mockBlobStore('hosted-0' , FILE)
+      blobStores.'hosted-1' = mockBlobStore('hosted-1' , FILE)
+
+
+    when: 'the config is validated'
+      blobStoreGroupDescriptor.validateConfig(new MockBlobStoreConfiguration(name: 'self', type: BlobStoreGroup.TYPE,
+          attributes: [group: [members: ['hosted-0', 'hosted-1'], fillPolicy: RoundRobinFillPolicy.TYPE]]))
+
+    then: 'a validation exception is thrown'
+      blobStoreManager.hasConflictingTasks('hosted-1') >> true
+      def exception = thrown(ValidationErrorsException)
+      exception.message == "Blob Store 'hosted-1' has conflicting tasks running and is not eligible to be a group member"
   }
 
   def 'blob stores can only be members of one group'() {
