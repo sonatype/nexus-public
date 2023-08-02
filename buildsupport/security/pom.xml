@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.59.0-01</version>
+    <version>3.60.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-security</artifactId>
@@ -29,7 +29,7 @@
 
   <properties>
     <bouncycastle.version>1.75</bouncycastle.version>
-    <apache-shiro.version>1.12.0</apache-shiro.version>
+    <apache-shiro.version>1.10.0</apache-shiro.version>
     <java-jwt.version>3.16.0</java-jwt.version>
   </properties>
 

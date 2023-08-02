@@ -12,14 +12,20 @@
  */
 package org.sonatype.nexus.repository.content.store.internal.migration;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -92,8 +98,10 @@ public class AssetBlobRefMigrationTask
 
   private int migrateAssetBlobs(final AssetBlobStore<?> assetBlobStore,
                                 final String format,
-                                final Continuation<AssetBlob> assetBlobs) {
+                                final Collection<AssetBlob> assetBlobs) {
     int migratedAssetsCount = 0;
+
+    updateDuplicatedBlobRef(assetBlobs);
 
     try {
       if (assetBlobStore.updateBlobRefs(assetBlobs)) {
@@ -116,9 +124,26 @@ public class AssetBlobRefMigrationTask
     return migratedAssetsCount;
   }
 
+  @VisibleForTesting
+  void updateDuplicatedBlobRef(Collection<AssetBlob> assetBlobs) {
+    assetBlobs.stream()
+        .collect(Collectors.groupingBy(AssetBlob::blobRef))
+        .values()
+        .stream()
+        .filter(blobs -> blobs.size() > 1)
+        .flatMap(Collection::stream)
+        .filter(a -> a instanceof AssetBlobData)
+        .map(assetBlob -> (AssetBlobData) assetBlob)
+        .forEach(assetBlobData -> {
+          BlobRef oldBlobRef = assetBlobData.blobRef();
+          BlobRef newBlobRef = new BlobRef(oldBlobRef.getStore(), UUID.randomUUID().toString());
+          assetBlobData.setBlobRef(newBlobRef);
+        });
+  }
+
   private int migrateRowByRow(final AssetBlobStore<?> assetBlobStore,
                               final String format,
-                              final Continuation<AssetBlob> assetBlobs) {
+                              final Collection<AssetBlob> assetBlobs) {
     AtomicInteger updated = new AtomicInteger();
 
     assetBlobs.forEach(assetBlob -> {
