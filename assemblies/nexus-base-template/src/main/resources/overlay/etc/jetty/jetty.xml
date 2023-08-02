@@ -70,6 +70,12 @@
           <Arg>
             <Property name="nexus-context-path"/>
           </Arg>
+          <Arg type="int">
+            <Property name="application-port" default="-1"/>
+          </Arg>
+          <Arg type="int">
+            <Property name="application-port-ssl" default="-1"/>
+          </Arg>
         </New>
       </Arg>
     </Call>
