@@ -35,7 +35,6 @@ import org.sonatype.nexus.common.io.ObjectInputStreamWithClassLoader;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
-import org.sonatype.nexus.orient.entity.action.BrowseEntitiesByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.DeleteEntitiesAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 
@@ -91,6 +90,9 @@ public class OrientApiKeyEntityAdapter
   private static final String DOMAIN_QUERY_STRING = format(
       "SELECT FROM %s WHERE %s = :domain ORDER BY %s", DB_CLASS, P_DOMAIN, P_CREATED);
 
+  private static final String PRINCIPAL_QUERY_STRING = format(
+      "SELECT FROM %s WHERE %s = :primary_principal ORDER BY %s", DB_CLASS, P_PRIMARY_PRINCIPAL, P_CREATED);
+
   private static final String DOMAIN_AND_CREATED_QUERY_STRING = format(
       "SELECT FROM %s WHERE %s = :domain AND %s > :created ORDER BY %s", DB_CLASS, P_DOMAIN, P_CREATED, P_CREATED);
 
@@ -98,9 +100,6 @@ public class OrientApiKeyEntityAdapter
       format("SELECT count(*) as count FROM %s WHERE %s = :domain", DB_CLASS, P_DOMAIN);
 
   private final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
-
-  private final BrowseEntitiesByPropertyAction<OrientApiKey> browseByPrimaryPrincipal =
-      new BrowseEntitiesByPropertyAction<>(this, P_PRIMARY_PRINCIPAL);
 
   private final ReadEntityByPropertyAction<OrientApiKey> findByApiKey =
       new ReadEntityByPropertyAction<>(this, P_DOMAIN, P_APIKEY);
@@ -156,7 +155,12 @@ public class OrientApiKeyEntityAdapter
     entity.setApiKey(apiKey.toCharArray());
     entity.setPrincipals(principals);
 
+    if (createdTimestamp == null) {
+      createdTimestamp = 0L;
+    }
+
     OffsetDateTime created = OffsetDateTime.ofInstant(Instant.ofEpochMilli(createdTimestamp), ZoneOffset.UTC);
+
     entity.setCreated(created);
   }
 
@@ -211,8 +215,10 @@ public class OrientApiKeyEntityAdapter
    *
    * @since 3.1
    */
-  public Iterable<OrientApiKey> browseByPrimaryPrincipal(final ODatabaseDocumentTx db, final Object value) {
-    return browseByPrimaryPrincipal.execute(db, value);
+  public Iterable<OrientApiKey> browseByPrimaryPrincipal(final ODatabaseDocumentTx db, final String username) {
+    Map<String, Object> params = ImmutableMap.of(P_PRIMARY_PRINCIPAL, username);
+
+    return query(db, PRINCIPAL_QUERY_STRING, params);
   }
 
   /**

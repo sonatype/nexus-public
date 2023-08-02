@@ -156,14 +156,15 @@ public class OrientApiKeyStoreTest
    */
   @Test
   public void testFindByPrincipalName() {
-    char[] alphakey = underTest.createApiKey("foo", makePrincipals("alpha"));
+    underTest.createApiKey("foo", makePrincipals("alpha"));
     underTest.createApiKey("foo", makePrincipals("beta"));
-    underTest.createApiKey("foo", makePrincipals("gamma"));
+    char[] gammakey = underTest.createApiKey("foo", makePrincipals("gamma"));
 
-    Optional<ApiKey> key = underTest.getApiKey("foo", makePrincipals("alpha"));
+    // we use gamma here as it ought to be last
+    Optional<ApiKey> key = underTest.getApiKey("foo", makePrincipals("gamma"));
 
     assertTrue(key.isPresent());
-    assertThat(key.get().getApiKey(), equalTo(alphakey));
+    assertThat(key.get().getApiKey(), equalTo(gammakey));
   }
 
   /*
