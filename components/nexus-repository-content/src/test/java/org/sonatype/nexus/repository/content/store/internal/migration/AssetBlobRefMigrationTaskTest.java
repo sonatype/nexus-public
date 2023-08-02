@@ -12,12 +12,17 @@
  */
 package org.sonatype.nexus.repository.content.store.internal.migration;
 
+import com.google.common.collect.ImmutableList;
+import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
@@ -28,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -78,6 +84,27 @@ public class AssetBlobRefMigrationTaskTest
     when(assetBlobStore.updateBlobRefs(any())).thenReturn(true);
 
     when(formatStoreManager.assetBlobStore("content")).thenReturn(assetBlobStore);
+  }
+
+  @Test
+  public void testUpdateDuplicatedBlobRef() {
+    Map<String, FormatStoreManager> map = ImmutableMap.of();
+    AssetBlobRefMigrationTask assetBlobRefMigrationTask = new AssetBlobRefMigrationTask(map, 3);
+
+    String uuid = UUID.randomUUID().toString();
+    AssetBlobData blobData1 = new AssetBlobData();
+    AssetBlobData blobData2 = new AssetBlobData();
+    AssetBlobData blobData3 = new AssetBlobData();
+    blobData1.setBlobRef(new BlobRef("default", uuid));
+    blobData2.setBlobRef(new BlobRef("default", uuid));
+    blobData3.setBlobRef(new BlobRef("default", uuid));
+
+    Collection<AssetBlob> blobs = ImmutableList.of(blobData1, blobData2, blobData3);
+
+    assetBlobRefMigrationTask.updateDuplicatedBlobRef(blobs);
+
+    assertTrue(blobs.stream().map(AssetBlob::blobRef).map(BlobRef::getBlob)
+        .noneMatch(blob -> blob.equals(uuid)));
   }
 
   @Test
