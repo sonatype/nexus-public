@@ -25,7 +25,9 @@ Ext.define('NX.app.Loader', {
   requires: [
     'NX.app.Application',
     'Ext.app.Controller',
-    'Ext.util.MixedCollection'
+    'Ext.util.MixedCollection',
+    // This file is only utilized by a react page it seems, so making sure it gets loaded in debug mode
+    'NX.util.DownloadHelper'
   ],
   mixins: {
     logAware: 'NX.LogAware'
