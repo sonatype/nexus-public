@@ -22,6 +22,9 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import static org.sonatype.nexus.repository.search.sql.DefaultSqlSearchQueryConditionBuilder.ANY_CHARACTER;
+import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.ZERO_OR_MORE_CHARACTERS;
+
 /**
  * Support class for SQL search validation
  */
@@ -44,7 +47,18 @@ public abstract class SqlSearchValidationSupport
     if (!invalidTokens.isEmpty()) {
       String errorMsg = "Leading wildcards are prohibited";
       validation.withError(errorMsg);
-      log.debug(errorMsg + " for tokens: {}", invalidTokens);
+      log.debug("{} for tokens: {}", errorMsg, invalidTokens);
+      validTokens.removeAll(invalidTokens);
+    }
+
+    invalidTokens = tokens.stream()
+        .filter(Objects::nonNull)
+        .filter(SqlSearchValidationSupport::hasLeadingSpecialCharacterAndWildcard)
+        .collect(Collectors.toSet());
+    if (!invalidTokens.isEmpty()) {
+      String errorMsg = "Searches cannot begin with a special character followed by a wildcard";
+      validation.withError(errorMsg);
+      log.debug("{} for tokens: {}", errorMsg, invalidTokens);
       validTokens.removeAll(invalidTokens);
     }
 
@@ -56,7 +70,7 @@ public abstract class SqlSearchValidationSupport
       String errorMsg = String.format("%d characters or more are required with a trailing wildcard (*)",
           MIN_ALLOWED_SYMBOLS_TO_SEARCH);
       validation.withError(errorMsg);
-      log.debug(errorMsg + " for tokens: {}", invalidTokens);
+      log.debug("{} for tokens: {}", errorMsg, invalidTokens);
       validTokens.removeAll(invalidTokens);
     }
 
@@ -71,7 +85,19 @@ public abstract class SqlSearchValidationSupport
 
   private static boolean hasLeadingWildcard(final String token) {
     String trimmedToken = token.trim();
-    return trimmedToken.startsWith("*") || trimmedToken.startsWith("?");
+    return isWildcard(trimmedToken.charAt(0));
+  }
+
+  private static boolean hasLeadingSpecialCharacterAndWildcard(final String token) {
+    String trimmedToken = token.trim();
+    if (trimmedToken.length() < 2) {
+      return false;
+    }
+    return !Character.isLetterOrDigit(trimmedToken.charAt(0)) && isWildcard(trimmedToken.charAt(1));
+  }
+
+  private static boolean isWildcard(final char character) {
+    return character == ZERO_OR_MORE_CHARACTERS || character == ANY_CHARACTER;
   }
 
   /**

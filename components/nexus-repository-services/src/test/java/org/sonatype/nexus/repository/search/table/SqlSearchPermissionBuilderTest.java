@@ -54,6 +54,7 @@ import static com.google.common.collect.Iterables.get;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -241,6 +242,25 @@ public class SqlSearchPermissionBuilderTest
     Assert.assertThrows("Leading wildcards are prohibited",
         ValidationErrorsException.class,
         () -> underTest.build(queryBuilder, searchRequest("*osted-repo1")));
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenSpecialCharacterAndLeadingWildcard() {
+    assertThrows("Leading wildcards are prohibited",
+        ValidationErrorsException.class,
+        () -> underTest.build(queryBuilder, searchRequest("/*/foo")));
+
+    assertThrows("Leading wildcards are prohibited",
+        ValidationErrorsException.class,
+        () -> underTest.build(queryBuilder, searchRequest("$*foo")));
+
+    assertThrows("Leading wildcards are prohibited",
+        ValidationErrorsException.class,
+        () -> underTest.build(queryBuilder, searchRequest("/?/foo")));
+
+    assertThrows("Leading wildcards are prohibited",
+        ValidationErrorsException.class,
+        () -> underTest.build(queryBuilder, searchRequest("$?foo")));
   }
 
   @Test
