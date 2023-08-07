@@ -22,8 +22,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Named;
 
@@ -85,6 +87,8 @@ public class OrientAptHostedFacet
   private static final String P_ARCHITECTURE = "architecture";
   private static final String P_PACKAGE_NAME = "package_name";
   private static final String P_PACKAGE_VERSION = "package_version";
+
+  private static final String ALL_ARCHITECTURE = "all";
 
   private static final String SELECT_HOSTED_ASSETS =
       "SELECT " +
@@ -217,7 +221,12 @@ public class OrientAptHostedFacet
       Set<String> excludeNames = changes.stream().map(change -> change.asset.name()).collect(Collectors.toSet());
 
       Iterable<ODocument> browse = tx.browse(SELECT_HOSTED_ASSETS, sqlParams);
+      TreeSet<String> archs = StreamSupport.stream(browse.spliterator(), false)
+              .map(document -> document.<String>field(P_ARCHITECTURE, String.class))
+              .filter(arch -> !ALL_ARCHITECTURE.equals(arch))
+              .collect(Collectors.toCollection(TreeSet::new));
 
+      browse = tx.browse(SELECT_HOSTED_ASSETS, sqlParams);
       for (ODocument document : browse) {
         String name = document.field(P_NAME, String.class);
         String arch = document.field(P_ARCHITECTURE, String.class);
@@ -226,6 +235,14 @@ public class OrientAptHostedFacet
           String indexSection = document.field(P_INDEX_SECTION, String.class);
           outWriter.write(indexSection);
           outWriter.write("\n\n");
+
+          if (ALL_ARCHITECTURE.equals(arch)) {
+            for (String foreignArch: archs) {
+              Writer foreignOutWriter = streams.computeIfAbsent(foreignArch, result::openOutput);
+              foreignOutWriter.write(indexSection);
+              foreignOutWriter.write("\n\n");
+            }
+          }
         }
       }
 
@@ -239,6 +256,14 @@ public class OrientAptHostedFacet
         Writer outWriter = streams.computeIfAbsent(arch, result::openOutput);
         outWriter.write(indexSection);
         outWriter.write("\n\n");
+
+        if (ALL_ARCHITECTURE.equals(arch)) {
+          for (String foreignArch: archs) {
+            Writer foreignOutWriter = streams.computeIfAbsent(foreignArch, result::openOutput);
+            foreignOutWriter.write(indexSection);
+            foreignOutWriter.write("\n\n");
+          }
+        }
       }
       ok = true;
     }
