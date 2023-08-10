@@ -46,11 +46,11 @@
   </insert>
 
   <sql id="componentNamespaceMatch">
-    repository_id = #{repositoryId} AND namespace = #{namespace}
+    ${format}_component.repository_id = #{repositoryId} AND ${format}_component.namespace = #{namespace}
   </sql>
 
   <sql id="componentSetMatch">
-    <include refid="componentNamespaceMatch"/> AND name = #{name}
+    <include refid="componentNamespaceMatch"/> AND ${format}_component.name = #{name}
   </sql>
 
   <sql id="componentCoordinateMatch">

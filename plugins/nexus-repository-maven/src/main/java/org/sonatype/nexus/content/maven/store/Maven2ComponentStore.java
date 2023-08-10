@@ -127,10 +127,4 @@ public class Maven2ComponentStore
     return dao().browseComponentsForCleanupEx(repositoryId, componentSet.namespace(), componentSet.name(),
         cleanupPolicyCriteria, limit, continuationToken);
   }
-
-
-  public Set<String> getProcessedCleanupCriteria() {
-    return ImmutableSet.of("isPrerelease");
-  }
-
 }

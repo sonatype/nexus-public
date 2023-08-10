@@ -77,12 +77,6 @@ public interface FluentComponents
       final String continuationToken);
 
   /**
-   * Query which cleanup criteria are supported for this type of component
-   * @return a set of criteria that will be processed
-   */
-  Set<String> getProcessedCleanupCriteria();
-
-  /**
    * List all namespaces of components in the repository.
    */
   Collection<String> namespaces();

@@ -12,20 +12,26 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.search;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.sonatype.nexus.cleanup.internal.datastore.search.criteria.AssetCleanupEvaluator;
 import org.sonatype.nexus.cleanup.internal.datastore.search.criteria.ComponentCleanupEvaluator;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
+import org.sonatype.nexus.common.entity.Continuations;
+import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.scheduling.CancelableHelper;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Named("ComponentSetCleanupComponentBrowse")
 @Singleton
@@ -41,30 +47,38 @@ public class ComponentSetCleanupComponentBrowse
     super(componentCriteria, assetCriteria);
   }
 
-  /*
-  Example Criteria map (1 day for times) :
-    {regex=.*, isPrerelease=true, lastDownloaded=86400, lastBlobUpdated=86400}
-   */
   @Override
-  protected Map<String, String> getFilterableCriteria(final Repository repository, final CleanupPolicy policy) {
-    Map<String, String> criteria = policy.getCriteria();
-    FluentComponents fluentComponents = repository.facet(ContentFacet.class).components();
-    Set<String> processedCriteria = fluentComponents.getProcessedCleanupCriteria();
-    HashMap<String, String> applicableCriteria = new HashMap<>();
-    criteria.forEach((k, v) -> {
-      if (!processedCriteria.contains(k)) {
-        applicableCriteria.put(k, v);
-      }
-    });
-    return applicableCriteria;
+  public Stream<FluentComponent> browse(final CleanupPolicy policy, final Repository repository) {
+    checkNotNull(policy);
+    checkNotNull(repository);
+
+    validateCleanupPolicy(policy);
+    return Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy)::browse);
   }
 
   @Override
-  protected ContinuationBrowse<FluentComponent> getComponentBrowser(
-      final Repository repository,
-      final CleanupPolicy policy)
+  public PagedResponse<Component> browseByPage(
+          final CleanupPolicy policy,
+          final Repository repository,
+          final QueryOptions options)
   {
-    log.debug("Using Retain-N code pathway");
-    return new ComponentSetCleanupBrowser(repository, policy);
+    checkNotNull(policy);
+    checkNotNull(repository);
+    checkNotNull(options);
+    checkNotNull(options.getStart());
+    checkNotNull(options.getLimit());
+
+    validateCleanupPolicy(policy);
+    List<Component> result =
+            Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy)::browse, Continuations.BROWSE_LIMIT,
+                            options.getLastId())
+                    .peek(__ -> CancelableHelper.checkCancellation())
+                    .limit(options.getLimit())
+                    .map(Component.class::cast)
+                    .collect(Collectors.toList());
+
+    // We return -1 as we don't have an inexpensive way of computing the total number of matching results
+    return new PagedResponse<>(-1, result);
   }
+
 }

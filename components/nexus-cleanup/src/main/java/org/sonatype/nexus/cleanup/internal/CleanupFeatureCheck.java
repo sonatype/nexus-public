@@ -46,8 +46,6 @@ public class CleanupFeatureCheck extends ComponentSupport
   public final boolean isRetainSupported(String formatName, Map<String, String> criteria) {
     boolean isPostgres = databaseCheck.isPostgresql();
     boolean retainEnabled = this.retainEnabledSet.contains(formatName);
-    boolean isPrerelease = criteria.getOrDefault(IS_PRERELEASE_KEY, "false").equalsIgnoreCase("true");
-    log.debug("format={}, isPostgres={}, retainEnabled={}, isPrerelease={}", formatName, isPostgres, retainEnabled, isPrerelease);
-    return isPostgres && retainEnabled && isPrerelease;
+    return isPostgres && retainEnabled;
   }
 }

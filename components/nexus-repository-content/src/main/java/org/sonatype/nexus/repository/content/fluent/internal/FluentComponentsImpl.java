@@ -187,11 +187,6 @@ public class FluentComponentsImpl
   }
 
   @Override
-  public Set<String> getProcessedCleanupCriteria() {
-    return componentStore.getProcessedCleanupCriteria();
-  }
-
-  @Override
   public Collection<String> namespaces() {
     return componentStore.browseNamespaces(facet.contentRepositoryId());
   }

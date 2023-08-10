@@ -196,7 +196,7 @@ public class DataStoreCleanupComponentBrowse
   /*
    * Checks the cleanup policy configuration to ensure that all criteria are known to the system.
    */
-  private void validateCleanupPolicy(final CleanupPolicy policy) {
+  protected void validateCleanupPolicy(final CleanupPolicy policy) {
     String missingCriteria = policy.getCriteria().keySet().stream()
         .filter(((Predicate<String>) componentCriteria::containsKey).negate())
         .filter(((Predicate<String>) assetCriteria::containsKey).negate())

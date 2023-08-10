@@ -191,16 +191,6 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
-   * Provide a Set of all cleanup criteria that should be processed internally in the store when using
-   * browseComponentsForCleanup. These criteria shoud therefore be ignored downstream to prevent duplicate filtering
-   * @return a Set of cleanup criteria that are already being filtered by the store
-   * @see #browseComponentsForCleanup(int, ComponentSet, Map, int, int, String) 
-   */
-  public Set<String> getProcessedCleanupCriteria() {
-    return ImmutableSet.of();
-  }
-
-  /**
    * Browse all component namespaces in the given repository.
    * <p>
    * The result will include the empty string if there are any components that don't have a namespace.

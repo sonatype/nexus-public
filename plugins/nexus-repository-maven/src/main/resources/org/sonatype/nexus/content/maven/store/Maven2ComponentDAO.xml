@@ -74,16 +74,32 @@
        AND repository_id = #{repositoryId};
   </select>
 
-  <!-- Override but myBatis doesn't support it properly, so an 'Ex' suffix -->
-  <!-- Once Retain-N is implemented, the ORDER BY will need to change to normalised_version -->
+
+  <!-- Override but myBatis doesn't support it properly, so an 'Ex' suffix is used -->
   <select id="browseComponentsForCleanupEx" resultType="ComponentData">
-    SELECT * FROM maven2_component
+    SELECT maven2_component.* FROM maven2_component
+    <if test="criteria.lastDownloaded != null">
+        LEFT OUTER JOIN maven2_asset on maven2_component.component_id = maven2_asset.component_id
+        LEFT JOIN maven2_asset_blob ON maven2_asset.asset_blob_id = maven2_asset_blob.asset_blob_id
+    </if>
     WHERE <include refid="componentSetMatch"/>
-    <if test="criteria.isPrerelease == 'true'"> AND base_version LIKE '%-SNAPSHOT'</if>
-    <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
+    <if test="criteria.isPrerelease == 'true'"> AND maven2_component.base_version LIKE '%-SNAPSHOT'</if>
+    <!-- Once Retain-N is implemented, the continuation token will need to be compared to normalised_version
+     or blob_created depending on sort type -->
+    <if test="continuationToken != null"> AND maven2_component.component_id > #{continuationToken}</if>
+    GROUP BY maven2_component.component_id
+    <if test="criteria.lastDownloaded != null">
+      <!-- CDATA is used here to enable syntax with <= (less than would otherwise have to be URL-encoded) -->
+      <![CDATA[
+          HAVING (max(coalesce(maven2_asset.last_downloaded, maven2_asset_blob.blob_created))
+            <= (now() - interval '${criteria.lastDownloaded} seconds'))
+      ]]>
+    </if>
+    <!-- Once Retain-N is implemented, the ORDER BY will need to change to normalised_version or blob_created
+     depending on sort type -->
     ORDER BY component_id
     <!-- example retain addition
-    <if test="criteria.retainOffset > 0"> OFFSET #{retainOffset}</if>
+    <if test="criteria.retainOffset > 0 and continuationToken == null"> OFFSET #{retainOffset}</if>
     -->
     <if test="limit > 0"> LIMIT #{limit}</if>;
   </select>
