@@ -70,6 +70,11 @@ Ext.define('NX.maven.controller.MavenDependencySnippetController', {
             'libraryDependencies += "' + group + '" % "' + name + '" % "' + version + '"' +
             (classifier ? ' classifier "' + classifier + '"' : '')
       }, {
+        displayName: 'Scala Mill',
+        snippetText:
+            'ivy"' + group + ':' + name + ':' + version +
+            (classifier ? ';classifier=' + classifier + '"' : '"')
+      }, {
         displayName: 'Apache Ivy',
         snippetText:
             '<dependency org="' + group + '" name="' + name + '" rev="' + version +'">' +
