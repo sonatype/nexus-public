@@ -564,7 +564,7 @@ public abstract class NexusPaxExamSupport
             .withEnv("POSTGRES_USER", DB_USER)
             .withEnv("POSTGRES_PASSWORD", DB_PASSWORD)
             .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(NexusPaxExamSupport.class)))
-            .withCommand("postgres", "-c", "max_connections=60")
+            .withCommand("postgres", "-c", "max_connections=110")
             .withClasspathResourceMapping("initialize-postgres.sql", "/docker-entrypoint-initdb.d/initialize-postgres.sql", READ_ONLY)
             .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
         return combine(null,
@@ -616,7 +616,8 @@ public abstract class NexusPaxExamSupport
       case "azure":
         return composite(
             // enable azure default
-            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.azure", Boolean.TRUE.toString())
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.azure", Boolean.TRUE.toString()),
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.blobstore.new.azure", Boolean.TRUE.toString())
         );
       default:
         return composite();

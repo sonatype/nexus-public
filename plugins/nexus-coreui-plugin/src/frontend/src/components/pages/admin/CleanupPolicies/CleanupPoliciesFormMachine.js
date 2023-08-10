@@ -16,8 +16,8 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
-import { mergeDeepRight } from 'ramda';
-
+import {isEmpty, mergeDeepRight} from 'ramda';
+import {URL} from './CleanupPoliciesHelper';
 import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -26,11 +26,8 @@ const EMPTY_DATA = {
   name: '',
   notes: '',
   format: '',
-  inUseCount: 0
+  inUseCount: 0,
 };
-
-const baseUrl = '/service/rest/internal/cleanup-policies';
-const url = (name) => `${baseUrl}/${name}`;
 
 function isEdit({name}) {
   return ValidationUtils.notBlank(name);
@@ -40,9 +37,13 @@ function validateCriteriaNumberField(enabled, field) {
   if (enabled) {
     if (ValidationUtils.isBlank(field)) {
       return UIStrings.ERROR.FIELD_REQUIRED;
-    }
-    else {
-      return ValidationUtils.isInRange({value: field, min:1, max:24855, allowDecimals:false});
+    } else {
+      return ValidationUtils.isInRange({
+        value: field,
+        min: 1,
+        max: 24855,
+        allowDecimals: false,
+      });
     }
   }
 
@@ -51,85 +52,88 @@ function validateCriteriaNumberField(enabled, field) {
 
 export default FormUtils.buildFormMachine({
   id: 'CleanupPoliciesFormMachine',
-  config: (config) => mergeDeepRight(config,{
-    states: {
-      loaded: {
-        on: {
-          SET_CRITERIA_LAST_DOWNLOADED_ENABLED: {
-            target: 'loaded',
-            actions: ['setCriteriaLastDownloadedEnabled']
+  config: (config) =>
+    mergeDeepRight(config, {
+      states: {
+        loaded: {
+          on: {
+            SET_CRITERIA_LAST_DOWNLOADED_ENABLED: {
+              target: 'loaded',
+              actions: ['setCriteriaLastDownloadedEnabled'],
+            },
+            SET_CRITERIA_LAST_BLOB_UPDATED_ENABLED: {
+              target: 'loaded',
+              actions: ['setCriteriaLastBlobUpdatedEnabled'],
+            },
+            SET_CRITERIA_ASSET_REGEX_ENABLED: {
+              target: 'loaded',
+              actions: ['setCriteriaAssetRegexEnabled'],
+            },
+            UPDATE: {
+              actions: [
+                ...config.states.loaded.on.UPDATE.actions,
+                'clearCriteria',
+              ],
+            },
           },
-          SET_CRITERIA_LAST_BLOB_UPDATED_ENABLED: {
-            target: 'loaded',
-            actions: ['setCriteriaLastBlobUpdatedEnabled']
-          },
-          SET_CRITERIA_RELEASE_TYPE_ENABLED: {
-            target: 'loaded',
-            actions: ['setCriteriaReleaseTypeEnabled']
-          },
-          SET_CRITERIA_ASSET_REGEX_ENABLED: {
-            target: 'loaded',
-            actions: ['setCriteriaAssetRegexEnabled']
-          },
-          UPDATE: {
-            actions: [...config.states.loaded.on.UPDATE.actions, 'clearCriteria']
-          }
-        }
-      }
-    },
-    on: {
-      'RETRY': {
-        target: 'loading'
-      }
-    }
-  })
+        },
+      },
+    }),
 }).withConfig({
   actions: {
     validate: assign({
-      validationErrors: ({data, criteriaLastDownloadedEnabled, criteriaLastBlobUpdatedEnabled, criteriaReleaseTypeEnabled, criteriaAssetRegexEnabled}) => ({
+      validationErrors: ({
+        data,
+        criteriaLastDownloadedEnabled,
+        criteriaLastBlobUpdatedEnabled,
+        criteriaAssetRegexEnabled,
+      }) => ({
         name: ValidationUtils.validateNameField(data.name),
-        format: ValidationUtils.isBlank(data.format) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        criteriaLastDownloaded: validateCriteriaNumberField(criteriaLastDownloadedEnabled, data.criteriaLastDownloaded),
-        criteriaLastBlobUpdated: validateCriteriaNumberField(criteriaLastBlobUpdatedEnabled, data.criteriaLastBlobUpdated),
-        criteriaReleaseType: criteriaReleaseTypeEnabled && ValidationUtils.isBlank(data.criteriaReleaseType) ? UIStrings.ERROR.FIELD_REQUIRED : null,
-        criteriaAssetRegex: criteriaAssetRegexEnabled && ValidationUtils.isBlank(data.criteriaAssetRegex) ? UIStrings.ERROR.FIELD_REQUIRED : null
-      })
+        format: ValidationUtils.validateNotBlank(data.format),
+        criteriaLastDownloaded: validateCriteriaNumberField(
+          criteriaLastDownloadedEnabled,
+          data.criteriaLastDownloaded
+        ),
+        criteriaLastBlobUpdated: validateCriteriaNumberField(
+          criteriaLastBlobUpdatedEnabled,
+          data.criteriaLastBlobUpdated
+        ),
+        criteriaAssetRegex:
+          criteriaAssetRegexEnabled &&
+          ValidationUtils.validateNotBlank(data.criteriaAssetRegex),
+      }),
     }),
     setCriteriaLastDownloadedEnabled: assign({
-      criteriaLastDownloadedEnabled: (_, {checked}) => checked
+      criteriaLastDownloadedEnabled: (_, {checked}) => checked,
     }),
     setCriteriaLastBlobUpdatedEnabled: assign({
-      criteriaLastBlobUpdatedEnabled: (_, {checked}) => checked
-    }),
-    setCriteriaReleaseTypeEnabled: assign({
-      criteriaReleaseTypeEnabled: (_, {checked}) => checked
+      criteriaLastBlobUpdatedEnabled: (_, {checked}) => checked,
     }),
     setCriteriaAssetRegexEnabled: assign({
-      criteriaAssetRegexEnabled: (_, {checked}) => checked
+      criteriaAssetRegexEnabled: (_, {checked}) => checked,
     }),
     postProcessData: assign((_, {data: [, details]}) => ({
-      criteriaLastDownloadedEnabled: details?.data?.criteriaLastDownloaded,
-      criteriaLastBlobUpdatedEnabled: details?.data?.criteriaLastBlobUpdated,
-      criteriaReleaseTypeEnabled: details?.data?.criteriaReleaseType,
-      criteriaAssetRegexEnabled: details?.data?.criteriaAssetRegex
+      criteriaLastDownloadedEnabled: Boolean(
+        details?.data?.criteriaLastDownloaded
+      ),
+      criteriaLastBlobUpdatedEnabled: Boolean(
+        details?.data?.criteriaLastBlobUpdated
+      ),
+      criteriaAssetRegexEnabled: Boolean(details?.data?.criteriaAssetRegex),
     })),
-
     clearCriteria: assign((ctx, event) => {
-      if (event.data.format !== ctx.format) {
-        return {
-          ...ctx,
+      if (event.name === 'format' && event.value !== ctx.format) {
+        return mergeDeepRight(ctx, {
           data: {
-            ...ctx.data,
             criteriaLastBlobUpdated: null,
             criteriaLastDownloaded: null,
             criteriaReleaseType: null,
-            criteriaAssetRegex: null
+            criteriaAssetRegex: null,
           },
           criteriaLastDownloadedEnabled: false,
           criteriaLastBlobUpdatedEnabled: false,
-          criteriaReleaseTypeEnabled: false,
-          criteriaAssetRegexEnabled: false
-        };
+          criteriaAssetRegexEnabled: false,
+        });
       }
       return ctx;
     }),
@@ -138,53 +142,58 @@ export default FormUtils.buildFormMachine({
       data: details?.data,
       pristineData: details?.data,
     })),
-    onDeleteError: ({data}) => ExtJS.showErrorMessage(UIStrings.CLEANUP_POLICIES.MESSAGES.DELETE_ERROR(data.name)),
+    onDeleteError: ({data}) =>
+      ExtJS.showErrorMessage(
+        UIStrings.CLEANUP_POLICIES.MESSAGES.DELETE_ERROR(data.name)
+      ),
   },
   guards: {
     isEdit: ({pristineData}) => isEdit(pristineData),
-    canDelete: () => true
+    canDelete: () => true,
   },
   services: {
     fetchData: ({pristineData}) => {
       return Axios.all([
-        Axios.get('/service/rest/internal/cleanup-policies/criteria/formats'),
+        Axios.get(`${URL.baseUrl}/criteria/formats`),
         isEdit(pristineData)
-            ? Axios.get(url(pristineData.name))
-            : Promise.resolve({data: EMPTY_DATA}),
+          ? Axios.get(URL.singleCleanupPolicyUrl(pristineData.name))
+          : Promise.resolve({data: EMPTY_DATA}),
       ]);
     },
     saveData: ({data, pristineData}) => {
-      if (isEdit(pristineData)) {
-        return Axios.put(url(data.name), {
-          name: data.name,
-          notes: data.notes,
-          format: data.format,
-          criteriaLastBlobUpdated: data.criteriaLastBlobUpdated,
-          criteriaLastDownloaded: data.criteriaLastDownloaded,
-          criteriaReleaseType: data.criteriaReleaseType,
-          criteriaAssetRegex: data.criteriaAssetRegex
-        });
-      }
-      else { // New
-        return Axios.post(baseUrl, {
-          name: data.name,
-          notes: data.notes,
-          format: data.format,
-          criteriaLastBlobUpdated: data.criteriaLastBlobUpdated,
-          criteriaLastDownloaded: data.criteriaLastDownloaded,
-          criteriaReleaseType: data.criteriaReleaseType,
-          criteriaAssetRegex: data.criteriaAssetRegex
-        });
-      }
+      const getCriteriaReleaseType = () => {
+        if (isEmpty(data.criteriaReleaseType)) {
+          return null;
+        }
+
+        return data.criteriaReleaseType;
+      };
+
+      const payload = {
+        name: data.name,
+        notes: data.notes,
+        format: data.format,
+        criteriaLastBlobUpdated: data.criteriaLastBlobUpdated,
+        criteriaLastDownloaded: data.criteriaLastDownloaded,
+        criteriaReleaseType: getCriteriaReleaseType(),
+        criteriaAssetRegex: data.criteriaAssetRegex,
+      };
+
+      return isEdit(pristineData)
+        ? Axios.put(URL.singleCleanupPolicyUrl(data.name), payload)
+        : Axios.post(URL.baseUrl, payload);
     },
 
-    confirmDelete: ({data}) => ExtJS.requestConfirmation({
-      title: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.TITLE,
-      message: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.MESSAGE(data.inUseCount),
-      yesButtonText: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.YES,
-      noButtonText: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.NO
-    }),
+    confirmDelete: ({data}) =>
+      ExtJS.requestConfirmation({
+        title: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.TITLE,
+        message: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.MESSAGE(
+          data.inUseCount
+        ),
+        yesButtonText: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.YES,
+        noButtonText: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.NO,
+      }),
 
-    delete: ({data}) => Axios.delete(url(data.name))
-  }
+    delete: ({data}) => Axios.delete(URL.singleCleanupPolicyUrl(data.name)),
+  },
 });

@@ -31,8 +31,8 @@ public class CondaClientITConfigFactory
   private CondaClientITConfigFactory() {
   }
 
-  public static DockerContainerConfig createCondaConfig() {
-    return condaConfigBuilder(IMAGE_CONDA).build();
+  public static DockerContainerConfig createCondaConfig(final String imageTag) {
+    return condaConfigBuilder(IMAGE_CONDA + ":" + imageTag).build();
   }
 
   private static Builder condaConfigBuilder(final String image) {

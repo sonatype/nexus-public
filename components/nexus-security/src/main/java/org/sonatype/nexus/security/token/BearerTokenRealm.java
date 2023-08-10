@@ -66,7 +66,7 @@ public abstract class BearerTokenRealm
     this.principalsHelper = checkNotNull(principalsHelper);
     this.format = checkNotNull(format);
     setName(format);
-    setAuthenticationCachingEnabled(true);
+    setAuthenticationCachingEnabled(false);
   }
 
   @Inject

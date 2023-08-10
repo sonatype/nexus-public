@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -31,6 +30,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.search.SearchTableDataExtension;
 import org.sonatype.nexus.repository.content.store.InternalIds;
+import org.sonatype.nexus.repository.content.utils.SearchComponentPathFilter;
 import org.sonatype.nexus.repository.content.utils.PreReleaseEvaluator;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 
@@ -58,6 +58,8 @@ public class SearchTableDataProducer
 
   private final Map<String, PreReleaseEvaluator> formatToReleaseEvaluators;
 
+  private final Map<String, SearchComponentPathFilter> formatToValidatePath;
+
   private final Set<SearchTableDataExtension> searchTableDataExtensions;
 
   @Inject
@@ -65,11 +67,13 @@ public class SearchTableDataProducer
       final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors,
       final VersionNormalizerService versionNormalizerService,
       final Map<String, PreReleaseEvaluator> formatToReleaseEvaluators,
+      final Map<String, SearchComponentPathFilter> formatToValidatePath,
       final Set<SearchTableDataExtension> searchTableDataExtensions)
   {
     this.searchCustomFieldContributors = checkNotNull(searchCustomFieldContributors);
     this.versionNormalizerService = checkNotNull(versionNormalizerService);
     this.formatToReleaseEvaluators = checkNotNull(formatToReleaseEvaluators);
+    this.formatToValidatePath = checkNotNull(formatToValidatePath);
     this.searchTableDataExtensions = checkNotNull(searchTableDataExtensions);
   }
 
@@ -132,12 +136,12 @@ public class SearchTableDataProducer
     SearchCustomFieldContributor contributor = searchCustomFieldContributors.get(repositoryFormat);
     if (contributor != null) {
       if (contributor.isEnableSearchByPath(asset.path())) {
-        splitAssetPathToKeywords(searchTableData, asset);
+        splitAssetPathToKeywords(searchTableData, asset, repositoryFormat);
       }
       contributor.populateSearchCustomFields(searchTableData, asset);
     }
     else {
-      splitAssetPathToKeywords(searchTableData, asset);
+      splitAssetPathToKeywords(searchTableData, asset, repositoryFormat);
     }
 
     //prerelease evaluation false by default for all components
@@ -158,11 +162,16 @@ public class SearchTableDataProducer
     blob.createdByIp().ifPresent(data::addUploaderIp);
   }
 
-  private static void splitAssetPathToKeywords(final SearchTableData searchTableData, final Asset asset) {
+  private void splitAssetPathToKeywords(final SearchTableData searchTableData, final Asset asset,
+                                        final String repositoryFormat) {
     String path = asset.path();
-    searchTableData.addPath(path);
-    searchTableData.addKeywords(asList(path.split(PATH_SPLIT_REGEX)));
-    searchTableData.addKeywords(singletonList(path));
+    SearchComponentPathFilter filter = formatToValidatePath.get(repositoryFormat);
+    boolean shouldFilterPath = filter != null && filter.shouldFilterPathExtension(path);
+    if (!shouldFilterPath) {
+      searchTableData.addPath(path);
+      searchTableData.addKeywords(asList(path.split(PATH_SPLIT_REGEX)));
+      searchTableData.addKeywords(singletonList(path));
+    }
   }
 
   private void addSearchExtensions(final SearchTableData searchTableData, final FluentComponent component) {

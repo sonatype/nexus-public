@@ -24,11 +24,8 @@ import java.util.StringJoiner;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
-import org.apache.commons.lang3.StringUtils;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.unmodifiableCollection;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class SearchTableData
@@ -212,12 +209,14 @@ public class SearchTableData
 
   public void addKeywords(final List<String> values) {
     if (values != null) {
-      this.keywords.addAll(values.stream().filter(StringUtils::isNotBlank).collect(toList()));
+      for (String value : values) {
+        addKeyword(value);
+      }
     }
   }
 
   public void addKeyword(final String value) {
-    if (isNotBlank(value)) {
+    if (isNotBlank(value) && !this.keywords.contains(value)) {
       this.keywords.add(value);
     }
   }

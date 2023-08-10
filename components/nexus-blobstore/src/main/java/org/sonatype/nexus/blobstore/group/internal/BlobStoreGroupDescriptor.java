@@ -196,6 +196,12 @@ public class BlobStoreGroupDescriptor
                 memberConfig.getType()));
       }
 
+
+      if(blobStoreManager.hasConflictingTasks(memberName)){
+        throw new ValidationErrorsException(
+            format("Blob Store '%s' has conflicting tasks running and is not eligible to be a group member", memberName));
+      }
+
       // target member may not be a member of a different group
       Predicate<String> sameGroup = name::equals;
       blobStoreManager.getParent(memberName).filter(sameGroup.negate()).ifPresent(groupName -> {

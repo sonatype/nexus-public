@@ -15,15 +15,20 @@ package org.sonatype.nexus.repository.content.store;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.ComponentSet;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
@@ -42,6 +47,7 @@ import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -589,6 +595,97 @@ public class ComponentDAOTestSupport
     }
   }
 
+  public void testContinuationSetBrowsing() {
+
+    final int namespaceCount = 4;
+    final int nameCount = 4;
+    final int versionCount = 145;
+    final int pageLimit = 13;
+
+    generateRandomNamespaces(namespaceCount);
+    generateRandomNames(nameCount);
+    generateRandomVersions(versionCount);
+    generateRandomPaths(500);
+    generateRandomRepositories(1);
+
+    repositoryId = generatedRepositories().get(0).repositoryId;
+
+    Set<ComponentSet> sets = new HashSet<>();
+    Map<ComponentSet, List<ComponentData>> generatedComponents = new HashMap<>();
+
+    List<ComponentData> components = new ArrayList<>();
+    generatedNamespaces().forEach(namespace -> {
+      generatedNames().forEach(name -> {
+
+        ComponentSet set = createHashableComponentSetData(namespace, name);
+        sets.add(set);
+        List<ComponentData> setComponents = new ArrayList<>();
+        generatedVersions().forEach(version -> {
+          setComponents.add(component(repositoryId, namespace, name, version));
+        });
+        components.addAll(setComponents);
+        generatedComponents.put(set, setComponents);
+      });
+      generateProvidedContent(components, entityVersionEnabled);
+    });
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      ComponentDAO dao = session.access(TestComponentDAO.class);
+
+      assertThat(countComponents(dao, repositoryId), is(namespaceCount * nameCount * versionCount));
+
+      Continuation<ComponentSetData> browseSets = browseSets(dao, repositoryId, 0, null);
+      assertEquals(sets.size(), browseSets.size());
+
+      browseSets.stream().map(set -> createHashableComponentSetData(set.namespace, set.name)).forEach(set -> {
+        List<Component> retrievedComponents = new ArrayList<>();
+        Continuation<Component> setComponents = browseComponentsBySet(dao, repositoryId, set.namespace(), set.name(), pageLimit, null);
+        retrievedComponents.addAll(setComponents);
+        assertTrue(setComponents.size() > 0);
+        while (!setComponents.isEmpty()) {
+          // verify we got the expected slice
+
+          setComponents = browseComponentsBySet(dao, repositoryId, set.namespace(), set.name(), pageLimit, setComponents.nextContinuationToken());
+          retrievedComponents.addAll(setComponents);
+          assertSameEntityVersion(setComponents, entityVersionEnabled ? 1 : null);
+        }
+        assertThat(retrievedComponents, new IsIterableContainingInAnyOrder<>(
+            generatedComponents.get(set)
+                .stream()
+                .map(ExampleContentTestSupport::sameCoordinates)
+                .collect(toList())));
+      });
+
+    }
+  }
+
+  // This overrides the necessary methods to allow effective hashing for sets. Ideally this would be included
+  // within the base class, but as none of the DAO objects currently implement hashcode and rely on object reference
+  // for equality, doing so would then require overrides in all subclasses and potentially cause other problems.
+  protected ComponentSetData createHashableComponentSetData(String namespace, String name) {
+    ComponentSetData set = new ComponentSetData() {
+      @Override
+      public boolean equals(final Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
+        ComponentSetData that = (ComponentSetData) o;
+        return Objects.equals(namespace, that.namespace) && Objects.equals(name, that.name);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(namespace, name);
+      }
+    };
+    set.setNamespace(namespace);
+    set.setName(name);
+    return set;
+  }
+
   protected void createContentRepository(final ContentRepositoryData contentRepository) {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
@@ -609,6 +706,26 @@ public class ComponentDAOTestSupport
       final String continuationToken)
   {
     return dao.browseComponents(repositoryId, limit, continuationToken, kind, null, null);
+  }
+
+  static Continuation<Component> browseComponentsBySet(
+      final ComponentDAO dao,
+      final int repositoryId,
+      final String namespace,
+      final String name,
+      final int limit,
+      final String continuationToken)
+  {
+    return dao.browseComponentsBySet(repositoryId, namespace, name, limit, continuationToken);
+  }
+
+  static Continuation<ComponentSetData> browseSets(
+      final ComponentDAO dao,
+      final int repositoryId,
+      final int limit,
+      final String continuationToken)
+  {
+    return dao.browseSets(repositoryId, limit, continuationToken);
   }
 
   private static void assertEntityVersion(

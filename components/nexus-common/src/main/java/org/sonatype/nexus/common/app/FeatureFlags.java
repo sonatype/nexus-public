@@ -60,6 +60,8 @@ public interface FeatureFlags
   */
   String BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION = "nexus.blobstore.skipOnSoftQuotaViolation";
 
+  String NEW_AZURE_BLOB_STORE = "nexus.blobstore.new.azure";
+
   /*  */
   String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";
 
@@ -97,7 +99,10 @@ public interface FeatureFlags
 
   String CLEANUP_PREVIEW_ENABLED_NAMED = "${nexus.cleanup.preview.enabled:-false}";
 
+  String CLEANUP_MAVEN_RETAIN = "nexus.cleanup.mavenRetain";
+
   String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";
 
   String FIREWALL_QUARANTINE_FIX_ENABLED_NAMED = "${nexus.firewall.quarantineFix.enabled:-false}";
+
 }

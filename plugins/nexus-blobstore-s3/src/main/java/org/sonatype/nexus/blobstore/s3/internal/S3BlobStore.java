@@ -865,17 +865,8 @@ public class S3BlobStore
   }
 
   @Override
-  @Timed
-  public boolean deleteIfTemp(final BlobId blobId) {
-    S3Blob blob = liveBlobs.getUnchecked(blobId);
-    if (blob != null) {
-      Map<String, String> headers = blob.getHeaders();
-      if (headers == null || headers.containsKey(TEMPORARY_BLOB_HEADER)) {
-        return deleteHard(blobId);
-      }
-      log.debug("Not deleting. Blob with id: {} is permanent.", blobId.asUniqueString());
-    }
-    return false;
+  public Blob getBlobFromCache(final BlobId blobId) {
+    return liveBlobs.getUnchecked(blobId);
   }
 
   /**

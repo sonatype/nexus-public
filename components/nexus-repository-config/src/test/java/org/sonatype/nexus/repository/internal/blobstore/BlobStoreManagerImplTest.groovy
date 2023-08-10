@@ -20,7 +20,7 @@ import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
-import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
+import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService
 import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
@@ -83,10 +83,10 @@ class BlobStoreManagerImplTest
   NodeAccess nodeAccess
 
   @Mock
-  ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService
+  ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager
 
   @Mock
-  ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager
+  BlobStoreTaskService blobStoreTaskService;
 
   @Mock
   Provider<BlobStoreOverride> blobStoreOverrideProvider
@@ -95,6 +95,7 @@ class BlobStoreManagerImplTest
 
   @Before
   void setup() {
+
     when(store.newConfiguration()).thenReturn(new MockBlobStoreConfiguration())
     underTest = newBlobStoreManager()
   }
@@ -102,7 +103,7 @@ class BlobStoreManagerImplTest
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider,
-         nodeAccess, provisionDefaults, new DefaultFileBlobStoreProvider(), changeRepositoryBlobstoreDataService,
+         nodeAccess, provisionDefaults, new DefaultFileBlobStoreProvider(), blobStoreTaskService,
          blobStoreOverrideProvider, replicationBlobStoreStatusManager))
   }
 
@@ -241,13 +242,15 @@ class BlobStoreManagerImplTest
 
   @Test(expected = IllegalStateException.class)
   void 'Can not delete an existing BlobStore used in a move task'() {
+    underTest.doStart()
+
     BlobStoreConfiguration configuration = createConfig('test')
     BlobStore blobStore = mock(BlobStore)
     doReturn(blobStore).when(underTest).blobStore('test')
     doThrow(InvalidStateException).when(blobStore).stop()
     when(store.list()).thenReturn([configuration])
     when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration)
-    when(changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount("test")).thenReturn(1);
+    when(blobStoreTaskService.isAnyTaskInUseForBlobStore("test")).thenReturn(true);
 
     underTest.delete(configuration.getName())
   }
@@ -287,7 +290,7 @@ class BlobStoreManagerImplTest
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true,
          new DefaultFileBlobStoreProvider(),
-         changeRepositoryBlobstoreDataService, blobStoreOverrideProvider, replicationBlobStoreStatusManager)
+        blobStoreTaskService, blobStoreOverrideProvider, replicationBlobStoreStatusManager)
 
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)
@@ -357,10 +360,12 @@ class BlobStoreManagerImplTest
 
   @Test
   void 'It is not convertable when the store is in use by a task'() {
+    underTest.doStart()
+
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
     underTest.track(blobStoreName, blobStore)
-    when(changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount('child')).thenReturn(1)
+    when(blobStoreTaskService.isAnyTaskInUseForBlobStore('child')).thenReturn(true)
     when(blobStore.isGroupable()).thenReturn(true)
     when(blobStore.isWritable()).thenReturn(true)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))

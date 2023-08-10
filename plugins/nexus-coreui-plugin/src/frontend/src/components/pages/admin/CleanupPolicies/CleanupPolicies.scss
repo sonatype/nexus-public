@@ -14,20 +14,21 @@
  * @since 3.29
  */
 
-@import "~@sonatype/react-shared-components/scss-shared/nx-container-helpers";
+@import '~@sonatype/react-shared-components/scss-shared/nx-container-helpers';
 
 .nxrm-cleanup-policies {
-  .suffix {
+  .suffix,
+  .prefix {
     display: inline-block;
     vertical-align: top;
-    margin-top: 18px;
+    margin-top: var(--nx-spacing-3x);
+    margin-right: var(--nx-spacing-base);
+  }
+
+  .suffix {
     margin-left: var(--nx-spacing-base);
   }
-}
-.nxrm-cleanup-policies {
-  .nx-legend__text {
-    font-size: 24px;
-  }
+
   .nx-alert__content {
     @include container-vertical;
   }

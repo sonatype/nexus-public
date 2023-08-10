@@ -115,7 +115,13 @@ export default function MetricHealthList({onEdit}) {
                   </NxTable.Cell>
                   <NxTable.Cell>{name}</NxTable.Cell>
                   <NxTable.Cell>{error}</NxTable.Cell>
-                  <NxTable.Cell>{message}</NxTable.Cell>
+                  <NxTable.Cell>
+                    <p
+                      dangerouslySetInnerHTML={{
+                        __html: message,
+                      }}
+                    />
+                  </NxTable.Cell>
                   <NxTable.Cell chevron />
                 </NxTable.Row>
               ))}

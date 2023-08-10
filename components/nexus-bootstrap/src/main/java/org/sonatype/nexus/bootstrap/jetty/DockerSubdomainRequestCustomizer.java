@@ -17,6 +17,7 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConfiguration.Customizer;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.ServerConnector;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -25,9 +26,15 @@ public class DockerSubdomainRequestCustomizer
 {
   private final String nexusContextPath;
 
-  public DockerSubdomainRequestCustomizer(final String contextPath)
+  private final int jettyPort;
+
+  private final int jettySslPort;
+
+  public DockerSubdomainRequestCustomizer(final String contextPath, final int jettyPort, final int jettySslPort)
   {
     this.nexusContextPath = checkNotNull(contextPath) + (contextPath.endsWith("/") ? "" : "/");
+    this.jettyPort = jettyPort;
+    this.jettySslPort = jettySslPort;
   }
 
   @Override
@@ -41,6 +48,12 @@ public class DockerSubdomainRequestCustomizer
       version = "/v2";
     }
     if (version != null) {
+      if (connector instanceof ServerConnector) {
+        int localPort = ((ServerConnector) connector).getLocalPort();
+        if (localPort != jettyPort && localPort != jettySslPort) {
+          return;
+        }
+      }
       String repositoryName = DockerSubdomainRepositoryMapping.get(request.getHeader("Host"));
       if (repositoryName != null) {
         request.setHttpURI(

@@ -12,15 +12,20 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.service;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cleanup.internal.CleanupFeatureCheck;
 import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -34,7 +39,11 @@ import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.search.SearchContextMissingException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mock;
+import org.mockito.Spy;
 
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Arrays.asList;
@@ -42,21 +51,32 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.empty;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
+import static org.sonatype.nexus.cleanup.internal.content.service.CleanupServiceImpl.COMPONENT_SET_CLEANUP_BROWSE_NAME;
+import static org.sonatype.nexus.cleanup.internal.content.service.CleanupServiceImpl.DEFAULT_CLEANUP_BROWSE_NAME;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.streamContains;
 
+@RunWith(Parameterized.class)
 public class CleanupServiceImplTest
     extends TestSupport
 {
+  @Parameters
+  public static Collection<Boolean> data() {
+    return ImmutableList.of(Boolean.TRUE, Boolean.FALSE);
+  }
+
   private static final String POLICY_1_NAME = "policy1";
 
   private static final String POLICY_2_NAME = "policy2";
@@ -82,6 +102,12 @@ public class CleanupServiceImplTest
   private CleanupMethod cleanupMethod;
 
   @Mock
+  private CleanupFeatureCheck cleanupFeatureCheck;
+
+  @Mock
+  private Format format;
+
+  @Mock
   private FluentComponent component1, component2, component3;
 
   @Mock
@@ -93,12 +119,24 @@ public class CleanupServiceImplTest
   @Mock
   private DeletionProgress deletionProgress;
 
+  @Spy
+  private Map<String, CleanupComponentBrowse> browseServices;
+
   private CleanupServiceImpl underTest;
+
+  private boolean useRetainCleanup;
+
+  public CleanupServiceImplTest(Boolean useRetainCleanup) {
+    this.useRetainCleanup = useRetainCleanup;
+  }
 
   @Before
   public void setup() throws Exception {
-    underTest = new CleanupServiceImpl(repositoryManager, browseService, cleanupPolicyStorage, cleanupMethod,
-        new GroupType(), RETRY_LIMIT);
+    browseServices = spy(ImmutableMap.of(
+        DEFAULT_CLEANUP_BROWSE_NAME, browseService,
+        COMPONENT_SET_CLEANUP_BROWSE_NAME, browseService));
+    underTest = new CleanupServiceImpl(repositoryManager, browseServices, cleanupPolicyStorage, cleanupMethod,
+        new GroupType(), RETRY_LIMIT, cleanupFeatureCheck);
 
     setupRepository(repository1, POLICY_1_NAME);
     setupRepository(repository2, POLICY_2_NAME);
@@ -119,6 +157,12 @@ public class CleanupServiceImplTest
 
     when(deletionProgress.isFailed()).thenReturn(false);
     when(cleanupMethod.run(any(), any(), any())).thenReturn(deletionProgress);
+
+    when(cleanupFeatureCheck.isRetainSupported(any(), any())).thenReturn(this.useRetainCleanup);
+    when(repository1.getFormat()).thenReturn(format);
+    when(repository2.getFormat()).thenReturn(format);
+    when(repository3.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("maven2");
   }
 
   @Test
@@ -275,6 +319,17 @@ public class CleanupServiceImplTest
 
     verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
     verify(cleanupMethod, times(3)).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
+  }
+
+  @Test
+  public void newCleanupOverride() {
+    underTest.cleanup(cancelledCheck);
+    if (this.useRetainCleanup) {
+      verify(browseServices, atLeastOnce()).get(COMPONENT_SET_CLEANUP_BROWSE_NAME);
+    }
+    else {
+      verify(browseServices, atLeastOnce()).get(DEFAULT_CLEANUP_BROWSE_NAME);
+    }
   }
 
   private void setupRepository(final Repository repository, final String... policyName) {
