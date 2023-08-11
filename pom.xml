@@ -607,6 +607,13 @@
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-base-overlay</artifactId>
+        <version>3.60.0-SNAPSHOT</version>
+        <type>zip</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-template</artifactId>
         <version>3.60.0-SNAPSHOT</version>
         <type>zip</type>
@@ -781,15 +788,7 @@
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>4.2.1</version>
-          <dependencies>
-            <!-- bndlib 4.3.1 has several performance improvements -->
-            <dependency>
-              <groupId>biz.aQute.bnd</groupId>
-              <artifactId>biz.aQute.bndlib</artifactId>
-              <version>4.3.1</version>
-            </dependency>
-          </dependencies>
+          <version>5.1.6</version>
           <extensions>true</extensions>
           <configuration>
             <instructions>

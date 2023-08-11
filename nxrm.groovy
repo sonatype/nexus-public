@@ -862,8 +862,8 @@ def runDeploy() {
 
 def deploy() {
   extract("./assemblies/nexus-base-template/target/", "nexus-base-template-*.zip")
-  extract("./private/assemblies/nexus-oss/target/", "nexus-*-bundle.zip")
-  extract("./private/assemblies/nexus-pro/target/", "nexus-professional-*-bundle.zip")
+  extract("./private/assemblies/distributions/nexus-oss/target/", "nexus-*-bundle.zip")
+  extract("./private/assemblies/distributions/nexus-pro/target/", "nexus-professional-*-bundle.zip")
 
   // Tell Karaf to load bundles from local .m2 folder
   def files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/org.ops4j.pax.url.mvn.cfg")

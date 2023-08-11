@@ -15,8 +15,8 @@
 set here=%cd%
 
 @REM Backup nexus.properties
-copy private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties .
-copy private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\fabric\nexus-store.properties .
+copy private\assemblies\distributions\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties .
+copy private\assemblies\distributions\nexus-pro\target\sonatype-work\nexus3\etc\fabric\nexus-store.properties .
 
 @REM Detect docker
 if not defined DOCKER_HOST (set docker="-Dno-docker=true")
@@ -46,13 +46,13 @@ set KARAF_DEBUG=true
 for /f "usebackq tokens=*" %%a in (`powershell "(Get-ChildItem -Recurse |  Where-Object { $_.FullName -match '((src\\main\\resources\\static)|(src\\test\\ft-resources))$' } | ForEach-Object { $_.parent.FullName }) -join ','"`) do set NEXUS_RESOURCE_DIRS=%%a
 
 @REM Restore nexus.properties
-mkdir private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\
-move nexus.properties private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties
+mkdir private\assemblies\distributions\nexus-pro\target\sonatype-work\nexus3\etc\
+move nexus.properties private\assemblies\distributions\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties
 
-mkdir private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\fabric
-move nexus-store.properties private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\fabric\nexus-store.properties
+mkdir private\assemblies\distributions\nexus-pro\target\sonatype-work\nexus3\etc\fabric
+move nexus-store.properties private\assemblies\distributions\nexus-pro\target\sonatype-work\nexus3\etc\fabric\nexus-store.properties
 
-cd private\assemblies\nexus-pro\target
+cd private\assemblies\distributions\nexus-pro\target
 
 @REM Prefer 7-zip if present for perf
 if exist "C:\Program Files\7-Zip\7z.exe" (
