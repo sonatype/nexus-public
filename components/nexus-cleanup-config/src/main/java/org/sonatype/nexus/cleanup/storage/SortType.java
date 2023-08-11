@@ -10,28 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.config;
+package org.sonatype.nexus.cleanup.storage;
 
-/**
- * Cleanup policy constants.
- *
- * @since 3.24
- */
-public interface CleanupPolicyConstants
+public enum SortType
 {
-  String CLEANUP_ATTRIBUTES_KEY = "cleanup";
-
-  String CLEANUP_NAME_KEY = "policyName";
-
-  String IS_PRERELEASE_KEY = "isPrerelease";
-
-  String LAST_BLOB_UPDATED_KEY = "lastBlobUpdated";
-
-  String LAST_DOWNLOADED_KEY = "lastDownloaded";
-
-  String RETAIN_KEY = "retain";
-
-  String RETAIN_SORT_BY_KEY = "sortBy";
-
-  String REGEX_KEY = "regex";
+  VERSION,
+  DATE
 }

@@ -83,6 +83,8 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PREREL
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SORT_BY_KEY;
 import static org.sonatype.nexus.cleanup.internal.rest.CleanupPolicyResource.RESOURCE_URI;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
@@ -178,6 +180,9 @@ public class CleanupPolicyResource
     if (!this.formatNames.contains(cleanupPolicyXO.getFormat())) {
       throw new ValidationErrorsException("format", "specified format " + cleanupPolicyXO.getFormat() + " is not valid.");
     }
+
+    validateRetainAttributes(cleanupPolicyXO);
+
     return CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.add(toCleanupPolicy(cleanupPolicyXO)), 0);
   }
 
@@ -221,6 +226,8 @@ public class CleanupPolicyResource
         inUseCount > 0) {
       throw new ValidationErrorsException("format", "You cannot change the format of a policy that is in use.");
     }
+
+    validateRetainAttributes(cleanupPolicyXO);
 
     cleanupPolicy.setNotes(cleanupPolicyXO.getNotes());
     cleanupPolicy.setFormat(cleanupPolicyXO.getFormat());
@@ -346,6 +353,16 @@ public class CleanupPolicyResource
         .build();
   }
 
+  private void validateRetainAttributes(final CleanupPolicyXO cleanupPolicyXO) {
+    if (cleanupPolicyXO.getRetain() != null && cleanupPolicyXO.getSortBy() == null) {
+      throw new ValidationErrorsException("sortBy", "sortBy should be defined if retain is set");
+    }
+
+    if (cleanupPolicyXO.getSortBy() != null && cleanupPolicyXO.getRetain() == null) {
+      throw new ValidationErrorsException("retain", "retain should be defined if sortBy is set");
+    }
+  }
+
   private CleanupPolicy toCleanupPolicy(final CleanupPolicyXO cleanupPolicyXO) {
     CleanupPolicy policy = cleanupPolicyStorage.newCleanupPolicy();
 
@@ -377,6 +394,14 @@ public class CleanupPolicyResource
     if (cleanupPolicyXO.getCriteriaReleaseType() != null) {
       handleCriteria(cleanupFormatConfiguration, criteriaMap, IS_PRERELEASE_KEY,
           PRERELEASES.equals(cleanupPolicyXO.getCriteriaReleaseType()), "Release type", cleanupPolicyXO.getFormat());
+    }
+    if (cleanupPolicyXO.getRetain() != null) {
+      handleCriteria(cleanupFormatConfiguration, criteriaMap, RETAIN_KEY,
+          cleanupPolicyXO.getRetain(), "Retain components", cleanupPolicyXO.getFormat());
+    }
+    if (cleanupPolicyXO.getSortBy() != null) {
+      handleCriteria(cleanupFormatConfiguration, criteriaMap, RETAIN_SORT_BY_KEY,
+          cleanupPolicyXO.getSortBy(), "Retain sort by", cleanupPolicyXO.getFormat());
     }
 
     return criteriaMap;
