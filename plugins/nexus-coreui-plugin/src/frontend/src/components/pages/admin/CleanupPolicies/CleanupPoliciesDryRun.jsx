@@ -14,7 +14,6 @@ import React, {useEffect} from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  NxButton,
   NxButtonBar,
   NxFormRow,
   NxFormSelect,
@@ -22,7 +21,7 @@ import {
   NxLoadWrapper,
   NxP
 } from '@sonatype/react-shared-components';
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import cleanupPoliciesDryRunMachine from './CleanupPoliciesDryRunMachine';
@@ -33,6 +32,13 @@ export default function CleanupPoliciesDryRun({policyData}) {
   const [state, send] = useMachine(cleanupPoliciesDryRunMachine, {devTools: true});
   const {loadError, repository, repositories} = state.context;
   const isLoading = state.matches('loading');
+  const generateCSVUrl = ExtJS.urlOf('/service/rest/internal/cleanup-policies/preview/components/csv' +
+    '?repository=' + repository +
+    (policyData.name ? `&name=${policyData.name}` : '') +
+    (policyData.criteriaLastBlobUpdated ? `&criteriaLastBlobUpdated=${policyData.criteriaLastBlobUpdated}` : '') +
+    (policyData.criteriaLastDownloaded ? `&criteriaLastDownloaded=${policyData.criteriaLastDownloaded}` : '') +
+    (policyData.criteriaReleaseType ? `&criteriaReleaseType=${policyData.criteriaReleaseType}` : '') +
+    (policyData.criteriaAssetRegex ? `&criteriaAssetRegex=${policyData.criteriaAssetRegex}` : ''))
 
   useEffect(() => {
     send({type: 'LOAD_REPOSITORIES', format: policyData.format});
@@ -44,10 +50,6 @@ export default function CleanupPoliciesDryRun({policyData}) {
 
   function retry() {
     send({type: 'RETRY', format: policyData.format});
-  }
-
-  function createCSVReport() {
-    send({type: 'CREATE_CSV_REPORT', policyData});
   }
 
   return <div className="nxrm-cleanup-policies-dry-run">
@@ -68,7 +70,13 @@ export default function CleanupPoliciesDryRun({policyData}) {
               )}
             </NxFormSelect>
             <NxButtonBar>
-              <NxButton disabled={!repository} onClick={createCSVReport} type="button">{BUTTON}</NxButton>
+              <a aria-disabled={!repository}
+                 className={`nx-btn ${!repository ? 'disabled' : ''}`}
+                 download
+                 href={!repository ? undefined : generateCSVUrl}
+                 role={!repository ? 'link' : undefined}>
+                {BUTTON}
+              </a>
             </NxButtonBar>
           </NxFormRow>
         </>

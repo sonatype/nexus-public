@@ -18,8 +18,6 @@ import {assign, createMachine} from 'xstate';
 import Axios from 'axios';
 
 const INITIAL_DATA = {
-  CSVContent: null,
-  filename: '',
   loadError: null,
   repositories: [],
   repository: ''
@@ -36,9 +34,6 @@ const cleanupPoliciesDryRunMachine = createMachine({
       on: {
         SET_REPOSITORY: {
           actions: 'setRepository'
-        },
-        CREATE_CSV_REPORT: {
-          target: 'creatingCSVReport'
         }
       }
     },
@@ -64,15 +59,6 @@ const cleanupPoliciesDryRunMachine = createMachine({
           actions: 'clearError'
         }
       }
-    },
-    creatingCSVReport: {
-      invoke: {
-        src: 'create',
-        onDone: {
-          target: 'loaded',
-          actions: ['setResData', 'downloadCSV']
-        }
-      }
     }
   },
 
@@ -85,8 +71,6 @@ const cleanupPoliciesDryRunMachine = createMachine({
 }, {
   actions: {
     resetData: assign({
-      CSVContent: INITIAL_DATA.CSVContent,
-      filename: INITIAL_DATA.filename,
       loadError: INITIAL_DATA.loadError,
       repositories: INITIAL_DATA.repositories,
       repository: INITIAL_DATA.repository
@@ -106,36 +90,13 @@ const cleanupPoliciesDryRunMachine = createMachine({
 
     clearError: assign({
       loadError: () => null
-    }),
-
-    setResData: assign({
-      filename: (_, event) => event.data?.headers['content-disposition'].split('filename=')[1],
-      CSVContent: (_, event) => event.data?.data
-    }),
-
-    downloadCSV: ({CSVContent, filename}) => {
-      const link = document.createElement('a');
-      const blob = new Blob([CSVContent]);
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(link.href);
-    }
+    })
   },
   guards: {
     canLoadRepositories: (_, {format}) => Boolean(format)
   },
   services: {
-    fetchRepositories: (_, {format}) => Axios.get('/service/rest/internal/ui/repositories', {params: {format}}),
-    create: ({repository}, {policyData}) => Axios.post(
-      '/service/rest/internal/cleanup-policies/preview/components/csv', {
-      repository,
-      criteriaLastBlobUpdated: policyData.criteriaLastBlobUpdated,
-      criteriaLastDownloaded: policyData.criteriaLastDownloaded,
-      criteriaReleaseType: policyData.criteriaReleaseType,
-      criteriaAssetRegex: policyData.criteriaAssetRegex,
-      name: policyData.name
-    })
+    fetchRepositories: (_, {format}) => Axios.get('/service/rest/internal/ui/repositories', {params: {format}})
   }
 });
 

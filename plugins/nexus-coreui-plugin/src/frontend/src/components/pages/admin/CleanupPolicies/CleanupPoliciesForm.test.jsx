@@ -42,6 +42,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     requestConfirmation: jest.fn(),
+    urlOf: jest.fn(),
   },
 }));
 
@@ -92,7 +93,7 @@ const selectors = {
       description: UIStrings.CLEANUP_POLICIES.DRY_RUN.REPOSITORY_DESCRIPTION,
     }),
   dryRunCreateCSVButton: () =>
-    screen.getByRole('button', {name: LABELS.DRY_RUN.BUTTON}),
+    screen.getByRole('link', {name: LABELS.DRY_RUN.BUTTON}),
 };
 
 describe('CleanupPoliciesForm', function () {
@@ -610,17 +611,17 @@ describe('CleanupPoliciesForm', function () {
         createButton = dryRunCreateCSVButton();
 
       expect(selectDropdown).toHaveValue('');
-      expect(createButton).toBeDisabled();
+      expect(createButton).toHaveAttribute('aria-disabled', 'true');
 
       userEvent.selectOptions(selectDropdown, 'maven-central');
 
       expect(selectDropdown).toHaveValue('maven-central');
-      expect(createButton).not.toBeDisabled();
+      expect(createButton).toHaveAttribute('aria-disabled', 'false');
 
       userEvent.selectOptions(selectDropdown, '');
 
       expect(selectDropdown).toHaveValue('');
-      expect(createButton).toBeDisabled();
+      expect(createButton).toHaveAttribute('aria-disabled', 'true');
     });
   });
 });

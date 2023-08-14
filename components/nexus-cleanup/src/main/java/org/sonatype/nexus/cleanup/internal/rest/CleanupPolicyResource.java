@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -52,6 +53,7 @@ import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyCriteria;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyPreviewXO;
+import org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
@@ -307,43 +309,49 @@ public class CleanupPolicyResource
     }
   }
 
-  @POST
+  @GET
   @Path("preview/components/csv")
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
   @Produces(APPLICATION_OCTET_STREAM)
   @Timed
-  public Response previewContentCsv(final PreviewRequestXO request)
+  public Response previewContentCsv(
+          @QueryParam("name") @Nullable String name,
+          @QueryParam("repository") String repositoryName,
+          @QueryParam("criteriaLastBlobUpdated") @Nullable Integer criteriaLastBlobUpdated,
+          @QueryParam("criteriaLastDownloaded") @Nullable Integer criteriaLastDownloaded,
+          @QueryParam("criteriaReleaseType") @Nullable CleanupPolicyReleaseType criteriaReleaseType,
+          @QueryParam("criteriaAssetRegex") @Nullable String criteriaAssetRegex
+  )
   {
+
     if (!isDatastoreEnabled || !isPreviewEnabled) {
       return Response.status(Status.NOT_FOUND).build();
     }
     Map<String, Object> cleanupDryRunXO = new HashMap<>();
     cleanupDryRunXO.put(STARTED_AT_IN_MILLISECONDS, System.currentTimeMillis());
-    Repository repository = repositoryManager.get(request.getRepository());
+    Repository repository = repositoryManager.get(repositoryName);
     if (repository == null) {
-      throw new NotFoundException("Repository " + request.getRepository() + " not found.");
+      throw new NotFoundException("Repository " + repositoryName + " not found.");
     }
     StreamingOutput streamingOutput = output -> {
       CleanupPolicyPreviewXO xo = new CleanupPolicyPreviewXO();
-      xo.setRepositoryName(request.getRepository());
+      xo.setRepositoryName(repositoryName);
       xo.setCriteria(new CleanupPolicyCriteria());
-      xo.getCriteria().setLastBlobUpdated(request.getCriteriaLastBlobUpdated());
-      xo.getCriteria().setLastDownloaded(request.getCriteriaLastDownloaded());
-      xo.getCriteria().setReleaseType(request.getCriteriaReleaseType());
-      xo.getCriteria().setRegex(request.getCriteriaAssetRegex());
-
-      QueryOptions options = new QueryOptions(request.getFilter(), "name", "asc", 0, null);
+      xo.getCriteria().setLastBlobUpdated(criteriaLastBlobUpdated);
+      xo.getCriteria().setLastDownloaded(criteriaLastDownloaded);
+      xo.getCriteria().setReleaseType(criteriaReleaseType);
+      xo.getCriteria().setRegex(criteriaAssetRegex);
 
       Stream<ComponentXO> searchResultsStream =
-          cleanupPreviewHelper.get().getSearchResultsStream(xo, repository, options);
+          cleanupPreviewHelper.get().getSearchResultsStream(xo, repository, null);
 
       csvCleanupPreviewContentWriter.write(repository, searchResultsStream, output);
 
       cleanupDryRunXO.put(FINISHED_AT_IN_MILLISECONDS, System.currentTimeMillis());
       eventManager.post(new CleanupDryRunEvent(cleanupDryRunXO));
     };
-    String policyName = request.getName() == null ? "CleanupPreview" : request.getName();
+    String policyName = name == null ? "CleanupPreview" : name;
     String filename = policyName + "-" +
         repository.getName() + "-" +
         LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss")) +
