@@ -19,8 +19,6 @@ import NodeCardTestData from './NodeCard.testdata';
 describe('NodeCard', function () {
     const testNodes = NodeCardTestData;
 
-    const NODE_ACTIVE_INDICATOR = 'Node Active';
-
     const DOWNLOAD_ZIP_STATUS = 'Download Zip';
     const CREATE_ZIP_STATUS = 'Create Support zip';
     const CREATING_ZIP_STATUS = 'Creating Zip...';
