@@ -13,8 +13,8 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Objects;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenProxyRequestHeaderSupport;
 import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
@@ -36,6 +37,8 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.net.HttpHeaders;
+import org.apache.http.client.methods.HttpRequestBase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
@@ -49,11 +52,19 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 public class MavenProxyFacet
     extends ContentProxyFacetSupport
 {
+  private static final String MAVEN_CENTRAL_HOST = "repo1.maven.org";
+
   final ConstraintViolationFactory constraintViolationFactory;
 
+  private final MavenProxyRequestHeaderSupport mavenProxyRequestHeaderSupport;
+
   @Inject
-  public MavenProxyFacet(final ConstraintViolationFactory constraintViolationFactory) {
+  public MavenProxyFacet(
+      final ConstraintViolationFactory constraintViolationFactory,
+      final MavenProxyRequestHeaderSupport mavenProxyRequestHeaderSupport)
+  {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+    this.mavenProxyRequestHeaderSupport = checkNotNull(mavenProxyRequestHeaderSupport);
   }
 
   @Override
@@ -124,6 +135,17 @@ public class MavenProxyFacet
   @Override
   protected String getUrl(@Nonnull final Context context) {
     return removePrefixingSlash(context.getRequest().getPath());
+  }
+
+  @Override
+  protected HttpRequestBase buildFetchHttpRequest(final URI uri, final Context context) {
+    HttpRequestBase request = super.buildFetchHttpRequest(uri, context);
+    String augmentedUserAgent;
+    if (MAVEN_CENTRAL_HOST.equals(uri.getHost())) {
+      augmentedUserAgent = mavenProxyRequestHeaderSupport.getUserAgentForAnalytics();
+      request.setHeader(HttpHeaders.USER_AGENT, augmentedUserAgent);
+    }
+    return request;
   }
 
   @Nonnull

@@ -17,6 +17,7 @@ import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -477,6 +478,7 @@ public abstract class ProxyFacetSupport
       }
     }
     log.debug("Fetching: {}", request);
+    log.debug("Fetching Request Headers: {}", Arrays.toString(request.getAllHeaders()));
 
     HttpResponse response = execute(context, client, request);
     log.debug("Response: {}", response);

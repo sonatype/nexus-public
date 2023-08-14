@@ -13,8 +13,8 @@
 package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Objects;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -23,13 +23,14 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.orient.maven.OrientMavenFacet;
-import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
+import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenProxyRequestHeaderSupport;
+import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -41,6 +42,8 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.net.HttpHeaders;
+import org.apache.http.client.methods.HttpRequestBase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.findAsset;
@@ -55,13 +58,19 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 public class MavenProxyFacet
     extends ProxyFacetSupport
 {
-  private final ConstraintViolationFactory constraintViolationFactory;
+  private static final String MAVEN_CENTRAL_HOST = "repo1.maven.org";
 
+  private final ConstraintViolationFactory constraintViolationFactory;
   private OrientMavenFacet mavenFacet;
+  private final MavenProxyRequestHeaderSupport mavenProxyRequestHeaderSupport;
 
   @Inject
-  public MavenProxyFacet(final ConstraintViolationFactory constraintViolationFactory) {
+  public MavenProxyFacet(
+      final ConstraintViolationFactory constraintViolationFactory,
+      final MavenProxyRequestHeaderSupport mavenProxyRequestHeaderSupport)
+  {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+    this.mavenProxyRequestHeaderSupport = mavenProxyRequestHeaderSupport;
   }
 
   @Override
@@ -160,6 +169,17 @@ public class MavenProxyFacet
   @Override
   protected String getUrl(@Nonnull final Context context) {
     return context.getRequest().getPath().substring(1); // omit leading slash
+  }
+
+  @Override
+  protected HttpRequestBase buildFetchHttpRequest(final URI uri, final Context context) {
+    HttpRequestBase request = super.buildFetchHttpRequest(uri, context);
+    String augmentedUserAgent;
+    if (MAVEN_CENTRAL_HOST.equals(uri.getHost())) {
+      augmentedUserAgent = mavenProxyRequestHeaderSupport.getUserAgentForAnalytics();
+      request.setHeader(HttpHeaders.USER_AGENT, augmentedUserAgent);
+    }
+    return request;
   }
 
   @Nonnull

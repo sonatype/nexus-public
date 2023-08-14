@@ -20,6 +20,7 @@ import org.sonatype.goodies.common.ByteSize;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
+import org.sonatype.nexus.utils.httpclient.UserAgentGenerator;
 
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
