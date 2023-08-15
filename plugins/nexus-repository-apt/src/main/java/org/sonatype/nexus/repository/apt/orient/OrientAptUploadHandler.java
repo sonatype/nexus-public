@@ -67,6 +67,7 @@ public class OrientAptUploadHandler
       UnitOfWork.begin(storageFacet.txSupplier());
       try {
         Asset asset = hostedFacet.ingestAsset(upload.getAssetUploads().get(0).getPayload());
+        hostedFacet.invalidateMetadata();
         return new UploadResponse(asset);
       }
       finally {

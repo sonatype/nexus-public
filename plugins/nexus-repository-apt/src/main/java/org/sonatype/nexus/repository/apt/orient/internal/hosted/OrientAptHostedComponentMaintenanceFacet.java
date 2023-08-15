@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.orient.internal.hosted;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,13 +56,7 @@ public class OrientAptHostedComponentMaintenanceFacet
     String assetKind = asset.formatAttributes().get(P_ASSET_KIND, String.class);
     Set<String> result = super.deleteAssetTx(assetId, deleteBlobs);
     if ("DEB".equals(assetKind)) {
-      try {
-        getRepository().facet(OrientAptHostedFacet.class)
-            .rebuildIndexes(Collections.singletonList(new OrientAptHostedFacet.AssetChange(AssetAction.REMOVED, asset)));
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
+      getRepository().facet(OrientAptHostedFacet.class).invalidateMetadata();
     }
 
     if (asset.componentId() != null) {
@@ -97,12 +89,7 @@ public class OrientAptHostedComponentMaintenanceFacet
 
     log.debug("Deleting component: {}", component.toStringExternal());
     DeletionResult result = new DeletionResult(component, tx.deleteComponent(component, deleteBlobs));
-    try {
-      getRepository().facet(OrientAptHostedFacet.class).rebuildIndexes(changes);
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    getRepository().facet(OrientAptHostedFacet.class).invalidateMetadata();
 
     return result;
   }

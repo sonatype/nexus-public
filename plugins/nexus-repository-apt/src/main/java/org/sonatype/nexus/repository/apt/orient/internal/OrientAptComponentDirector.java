@@ -74,15 +74,9 @@ public class OrientAptComponentDirector
 
   @Override
   public void afterMove(final List<Map<String, String>> components, final Repository destination) {
-    destination.facet(StorageFacet.class).txSupplier();
     UnitOfWork.begin(destination.facet(StorageFacet.class).txSupplier());
     try {
-      OrientAptHostedFacet hostedFacet = destination.facet(OrientAptHostedFacet.class);
-      hostedFacet.rebuildIndexes();
-    }
-    catch (IOException e) {
-      log.error("Failed to update metadata, repository: {}", destination.getName(), e);
-      throw new UncheckedIOException(e);
+      destination.facet(OrientAptHostedFacet.class).invalidateMetadata();
     }
     finally {
       UnitOfWork.end();
