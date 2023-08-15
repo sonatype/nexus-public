@@ -78,8 +78,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   const isLoading = state.matches('loading');
   const hasData = !isEmpty(data);
   const isPreviewEnabled =
-    ExtJS.state().getValue('nexus.datastore.enabled') &&
-    ExtJS.state().getValue('nexus.cleanup.preview.enabled');
+    ExtJS.state().getValue('nexus.datastore.enabled');
 
   function setCriteriaLastBlobUpdatedEnabled(checked) {
     send({type: 'SET_CRITERIA_LAST_BLOB_UPDATED_ENABLED', checked: checked});

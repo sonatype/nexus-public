@@ -95,10 +95,6 @@ public interface FeatureFlags
 
   String FIREWALL_ONBOARDING_ENABLED_NAMED = "${nexus.firewall.onboarding.enabled:-false}";
 
-  String CLEANUP_PREVIEW_ENABLED = "nexus.cleanup.preview.enabled";
-
-  String CLEANUP_PREVIEW_ENABLED_NAMED = "${nexus.cleanup.preview.enabled:-false}";
-
   String CLEANUP_MAVEN_RETAIN = "nexus.cleanup.mavenRetain";
 
   String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";

@@ -125,9 +125,6 @@ describe('CleanupPoliciesForm', function () {
     when(ExtJS.state().getValue)
       .calledWith('nexus.datastore.enabled')
       .mockReturnValue(false);
-    when(ExtJS.state().getValue)
-      .calledWith('nexus.cleanup.preview.enabled')
-      .mockReturnValue(false);
 
     when(axios.get)
       .calledWith(REPOSITORIES_URL, {params: {format: EDITABLE_ITEM.format}})
@@ -557,9 +554,6 @@ describe('CleanupPoliciesForm', function () {
     beforeEach(() => {
       when(ExtJS.state().getValue)
         .calledWith('nexus.datastore.enabled')
-        .mockReturnValue(true);
-      when(ExtJS.state().getValue)
-        .calledWith('nexus.cleanup.preview.enabled')
         .mockReturnValue(true);
     });
 

@@ -80,7 +80,7 @@ public class CleanupPolicyResourceTest
   public void testPreviewContentCsv() {
     underTest =
         new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, eventManager, true, true, csvCleanupPreviewContentWriter);
+            repositoryManager, eventManager, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null);
 
@@ -105,7 +105,7 @@ public class CleanupPolicyResourceTest
   public void testNotFoundResponseForOrient() {
     underTest =
         new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, eventManager, false, true, csvCleanupPreviewContentWriter);
+            repositoryManager, eventManager, false, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null);
 
