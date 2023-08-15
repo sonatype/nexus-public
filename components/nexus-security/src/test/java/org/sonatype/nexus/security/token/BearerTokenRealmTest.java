@@ -168,6 +168,6 @@ public class BearerTokenRealmTest
 
   @Test
   public void cachingEnabled() {
-    assertThat(underTest.isAuthenticationCachingEnabled(), is(false));
+    assertThat(underTest.isAuthenticationCachingEnabled(), is(true));
   }
 }
