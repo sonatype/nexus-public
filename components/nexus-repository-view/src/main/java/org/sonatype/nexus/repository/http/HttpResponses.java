@@ -199,12 +199,6 @@ public class HttpResponses
     return badGateway(null);
   }
 
-  public static Response gatewayTimeout(@Nullable final String message) {
-    return new Response.Builder()
-            .status(Status.failure(GATEWAY_TIMEOUT, message))
-            .build();
-  }
-
   public static Response notImplemented(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(NOT_IMPLEMENTED, message))
