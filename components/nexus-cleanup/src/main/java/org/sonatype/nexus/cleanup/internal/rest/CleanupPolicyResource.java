@@ -90,6 +90,7 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SO
 import static org.sonatype.nexus.cleanup.internal.rest.CleanupPolicyResource.RESOURCE_URI;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
+import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_PREVIEW_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
 import static org.sonatype.nexus.repository.CleanupDryRunEvent.FINISHED_AT_IN_MILLISECONDS;
 import static org.sonatype.nexus.repository.CleanupDryRunEvent.STARTED_AT_IN_MILLISECONDS;
@@ -131,6 +132,8 @@ public class CleanupPolicyResource
 
   private final EventManager eventManager;
 
+  private final boolean isPreviewEnabled;
+
   private final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
 
   @Inject
@@ -142,6 +145,7 @@ public class CleanupPolicyResource
       final RepositoryManager repositoryManager,
       final EventManager eventManager,
       @Named(DATASTORE_ENABLED_NAMED) final boolean isDatastoreEnabled,
+      @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled,
       final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
@@ -154,6 +158,7 @@ public class CleanupPolicyResource
     this.cleanupPreviewHelper = checkNotNull(cleanupPreviewHelper);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.isDatastoreEnabled = isDatastoreEnabled;
+    this.isPreviewEnabled = isPreviewEnabled;
     this.csvCleanupPreviewContentWriter = checkNotNull(csvCleanupPreviewContentWriter);
   }
 
@@ -320,7 +325,7 @@ public class CleanupPolicyResource
   )
   {
 
-    if (!isDatastoreEnabled) {
+    if (!isDatastoreEnabled || !isPreviewEnabled) {
       return Response.status(Status.NOT_FOUND).build();
     }
     Map<String, Object> cleanupDryRunXO = new HashMap<>();
