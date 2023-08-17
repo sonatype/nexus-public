@@ -26,6 +26,7 @@ import org.osgi.framework.BundleContext
 import spock.lang.Specification
 
 import static org.hamcrest.MatcherAssert.assertThat
+import static org.hamcrest.core.IsEqual.equalTo
 import static org.hamcrest.text.IsEmptyString.isEmptyString
 import static org.hamcrest.core.IsNot.not
 
@@ -142,5 +143,26 @@ class SystemInformationGeneratorImplTest
       assertThat(systemEnvs.get('AZURE_CLIENT_SECRET'), not('azureSecretValue'))
       assertThat(systemEnvs.get('AZURE_TOKEN'), not('azureTokenValue'))
       assertThat(systemEnvs.get('MY_PASSWORD_FOR_NXRM'), not('admin123'))
+  }
+
+  def "jvm variable sensitive data is hidden"() {
+    given:
+      def generator = new SystemInformationGeneratorImpl(
+          Mock(ApplicationDirectories.class),
+          Mock(ApplicationVersion.class),
+          Mock(ApplicationLicense.class),
+          Collections.singletonMap("sun.java.command", "test.variable=1 -Dnexus.password=nxrm -Dnexus.token=123456"),
+          Mock(BundleContext.class),
+          Mock(BundleService.class),
+          Mock(NodeAccess.class),
+          Mock(DeploymentAccess.class))
+
+    when:
+      def report = generator.report()
+
+    then:
+      def nexusProps = report.get("nexus-properties")
+      assertThat(nexusProps.get("sun.java.command"),
+          equalTo("test.variable=1 -Dnexus.password=**** -Dnexus.token=****"))
   }
 }

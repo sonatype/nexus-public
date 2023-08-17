@@ -34,6 +34,7 @@ import org.eclipse.sisu.Parameters
 import org.osgi.framework.BundleContext
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static org.sonatype.nexus.common.text.Strings2.MASK
 
 /**
  * Default {@link SystemInformationGenerator}.
@@ -60,12 +61,12 @@ class SystemInformationGeneratorImpl
 
   private final NodeAccess nodeAccess
 
-  private final DeploymentAccess deploymentAccess;
+  private final DeploymentAccess deploymentAccess
 
   static final Map UNAVAILABLE = ['unavailable': true].asImmutable()
 
-  static final List SENSITIVE_FIELD_NAMES = ['password', 'secret', 'token'].asImmutable()
-
+  static final List SENSITIVE_FIELD_NAMES =
+      ['password', 'secret', 'token', 'sign', 'auth', 'cred', 'key', 'pass'].asImmutable()
   @Inject
   SystemInformationGeneratorImpl(final ApplicationDirectories applicationDirectories,
                                  final ApplicationVersion applicationVersion,
@@ -213,6 +214,9 @@ class SystemInformationGeneratorImpl
         SENSITIVE_FIELD_NAMES.each { sensitiveName ->
           if (key.toLowerCase(Locale.US).contains(sensitiveName)) {
             value = Strings2.mask(value)
+          }
+          if (key == "sun.java.command" && value.contains(sensitiveName)) {
+            value = value.replaceAll(sensitiveName + "=\\S*", sensitiveName + "=" + MASK)
           }
         }
         return [key, value]

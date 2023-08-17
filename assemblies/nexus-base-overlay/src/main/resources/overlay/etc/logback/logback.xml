@@ -17,6 +17,11 @@
     </encoder>
   </appender>
 
+  <appender name="jvm" class="ch.qos.logback.core.FileAppender">
+    <File>${karaf.data}/log/jvm.log</File>
+    <append>true</append>
+  </appender>
+
   <appender name="logfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <File>${karaf.data}/log/nexus.log</File>
     <Append>true</Append>
@@ -147,6 +152,7 @@
   <root level="${root.level:-INFO}">
     <appender-ref ref="osgi"/>
     <appender-ref ref="console"/>
+    <appender-ref ref="jvm"/>
     <appender-ref ref="logfile"/>
     <appender-ref ref="clusterlogfile"/>
     <appender-ref ref="tasklogfile"/>

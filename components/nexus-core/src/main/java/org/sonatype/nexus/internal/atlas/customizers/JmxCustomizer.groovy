@@ -27,6 +27,7 @@ import org.sonatype.nexus.supportzip.SupportBundleCustomizer
 
 import groovy.json.JsonBuilder
 
+import static org.sonatype.nexus.common.text.Strings2.MASK
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.OPTIONAL
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 
@@ -44,6 +45,9 @@ class JmxCustomizer
   @Inject
   @Named('platform')
   MBeanServer server
+
+  private static final List SENSITIVE_FIELD_NAMES =
+      ['password', 'secret', 'token', 'sign', 'auth', 'cred', 'key', 'pass'].asImmutable()
 
   @Override
   void customize(final SupportBundle supportBundle) {
@@ -99,6 +103,14 @@ class JmxCustomizer
         }
 
         // TODO: Cope with password-like fields where we can detect .*password.* or something?
+
+        if (value instanceof String) {
+          SENSITIVE_FIELD_NAMES.each {sensitiveName ->
+            if (value.contains(sensitiveName)) {
+              value = value.replaceAll(sensitiveName + "=\\S*", sensitiveName + "=" + MASK)
+            }
+          }
+        }
 
         def type = value.getClass()
         log.trace "Rendering type: $type"
