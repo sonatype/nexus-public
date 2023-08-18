@@ -91,18 +91,6 @@ public class OrientAptComponentDirectorTest
 
     OrientAptComponentDirector director = new OrientAptComponentDirector(bucketStore, repositoryManager);
     director.afterMove(Collections.emptyList(), destination);
-    verify(sourceFacet).rebuildIndexes();
-  }
-
-  @Test(expected = UncheckedIOException.class)
-  public void afterMoveHookIoExceptionTest() throws IOException
-  {
-    when(destination.facet(StorageFacet.class)).thenReturn(storageFacet);
-    when(storageFacet.txSupplier()).thenReturn(() -> tx);
-    when(destination.facet(OrientAptHostedFacet.class)).thenReturn(sourceFacet);
-
-    OrientAptComponentDirector director = new OrientAptComponentDirector(bucketStore, repositoryManager);
-    doThrow(new IOException()).when(sourceFacet).rebuildIndexes();
-    director.afterMove(Collections.emptyList(), destination);
+    verify(sourceFacet).invalidateMetadata();
   }
 }

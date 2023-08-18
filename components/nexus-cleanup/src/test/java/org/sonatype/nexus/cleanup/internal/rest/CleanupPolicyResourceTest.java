@@ -66,15 +66,11 @@ public class CleanupPolicyResourceTest
 
   private CleanupPolicyResource underTest;
 
-  private PreviewRequestXO request;
-
   private final String repositoryName = "test-repo";
 
   @Before
   public void setUp() throws Exception {
     when(cleanupFormatConfigurationMap.get("default")).thenReturn(mock(CleanupPolicyConfiguration.class));
-    request = new PreviewRequestXO();
-    request.setRepository(repositoryName);
     Repository repository = mock(Repository.class);
     when(repositoryManager.get(repositoryName)).thenReturn(repository);
     when(repository.getName()).thenReturn(repositoryName);
@@ -86,7 +82,7 @@ public class CleanupPolicyResourceTest
         new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
             repositoryManager, eventManager, true, true, csvCleanupPreviewContentWriter);
 
-    Response response = underTest.previewContentCsv(request);
+    Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null);
 
     assertThat(response.getStatus(), is(200));
     String contentDisposition = response.getHeaderString("Content-Disposition");
@@ -95,8 +91,7 @@ public class CleanupPolicyResourceTest
     assertThat(contentDisposition, startsWith(expectedPrefix));
     assertThat(contentDisposition, endsWith(".csv"));
 
-    request.setName("policy-name");
-    response = underTest.previewContentCsv(request);
+    response = underTest.previewContentCsv("policy-name", repositoryName, null, null, null, null);
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
@@ -112,7 +107,7 @@ public class CleanupPolicyResourceTest
         new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
             repositoryManager, eventManager, false, true, csvCleanupPreviewContentWriter);
 
-    Response response = underTest.previewContentCsv(request);
+    Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null);
 
     assertThat(response.getStatus(), is(404));
   }

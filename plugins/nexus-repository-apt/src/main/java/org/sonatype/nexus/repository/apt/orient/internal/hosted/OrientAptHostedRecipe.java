@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningHandler;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.orient.internal.OrientAptFacetImpl;
+import org.sonatype.nexus.repository.apt.orient.internal.hosted.metadata.OrientAptHostedMetadataFacet;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.http.PartialFetchHandler;
 import org.sonatype.nexus.repository.search.ElasticSearchFacet;
@@ -98,6 +99,9 @@ public class OrientAptHostedRecipe
   Provider<ElasticSearchFacet> searchFacet;
 
   @Inject
+  Provider<OrientAptHostedMetadataFacet> aptHostedMetadataFacet;
+
+  @Inject
   ExceptionHandler exceptionHandler;
 
   @Inject
@@ -153,6 +157,7 @@ public class OrientAptHostedRecipe
     repository.attach(attributesFacet.get());
     repository.attach(componentMaintenance.get());
     repository.attach(searchFacet.get());
+    repository.attach(aptHostedMetadataFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

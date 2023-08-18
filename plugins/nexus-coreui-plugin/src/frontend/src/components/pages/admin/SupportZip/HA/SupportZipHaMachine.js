@@ -17,7 +17,7 @@
 import Axios from 'axios';
 import {assign} from 'xstate';
 
-import {APIConstants, ExtJS, FormUtils, UIStrings} from "@sonatype/nexus-ui-plugin";
+import {APIConstants, FormUtils} from "@sonatype/nexus-ui-plugin";
 
 export default FormUtils.buildFormMachine({
   id: 'SupportZipHaMachine',
@@ -50,17 +50,6 @@ export default FormUtils.buildFormMachine({
           CREATE_SUPPORT_ZIP_FOR_NODE: {
             target: 'creatingNodeSupportZip'
           },
-          DOWNLOAD_ZIP: {
-            target: 'initSupportZipDownload',
-            actions: 'setTargetNode'
-          }
-        }
-      },
-
-      downloadingZip: {
-        entry: 'downloadZip',
-        always: {
-          target: 'loaded'
         }
       },
 
@@ -79,19 +68,6 @@ export default FormUtils.buildFormMachine({
           target: 'loaded'
         }
       },
-
-      initSupportZipDownload: {
-        invoke: {
-          src: 'verifyIsZipCanBeDownloaded',
-          onDone: {
-            target: 'downloadingZip'
-          },
-          onError: {
-            target: 'loaded',
-            actions: ['setCreateError']
-          }
-        }
-      }
     }
   })
 }).withConfig({
@@ -109,23 +85,6 @@ export default FormUtils.buildFormMachine({
       showCreateZipModal: false,
       selectedNode: null
     }),
-
-    downloadZip: (ctx) => {
-      const { targetNode } = ctx;
-
-      if (targetNode) {
-        const url = ExtJS.urlOf(`service/rest/wonderland/download/${targetNode.blobRef}`);
-        ExtJS.downloadUrl(url);
-      }
-    },
-
-    setCreateError: () => {
-      ExtJS.showErrorMessage(UIStrings.ERROR.NOT_FOUND_ERROR("Support zip"))
-    },
-
-    setTargetNode: assign({
-      targetNode: (_, event) => event?.data?.node
-    })
   },
 
   services: {
@@ -145,15 +104,5 @@ export default FormUtils.buildFormMachine({
       }
       return Promise.reject();
     },
-
-    verifyIsZipCanBeDownloaded: async (ctx) => {
-      const { targetNode } = ctx;
-
-      const { data } = await axios.get(APIConstants.REST.PUBLIC.NODE_ID)
-      if (targetNode && data.nodeId === targetNode.nodeId) {
-        return Promise.resolve();
-      }
-      return Promise.reject();
-    }
   }
 });

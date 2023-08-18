@@ -68,15 +68,6 @@ export default function SupportZipHa() {
     });
   }
 
-  function downloadZip(node) {
-    sendToNxrmNodes({
-      type: 'DOWNLOAD_ZIP',
-      data: {
-        node: node
-      }
-    });
-  }
-
   function submitCreateNodeSupportZip() {
     closeSupportZipFormModal();
 
@@ -106,8 +97,7 @@ export default function SupportZipHa() {
             <NodeCard
                 key={node.nodeId}
                 initial={node}
-                createZip={() => showCreateZipModalForm(node)}
-                downloadZip={downloadZip}/>
+                createZip={() => showCreateZipModalForm(node)}/>
         )}
       </NxCard.Container>
     </ContentBody>

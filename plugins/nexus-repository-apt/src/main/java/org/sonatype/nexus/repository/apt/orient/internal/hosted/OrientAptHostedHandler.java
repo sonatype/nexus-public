@@ -27,6 +27,11 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
+import org.apache.commons.lang3.StringUtils;
+
+import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
+import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
+import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
@@ -45,31 +50,27 @@ public class OrientAptHostedHandler
     String path = assetPath(context);
     String method = context.getRequest().getAction();
 
-    OrientAptFacet aptFacet = context.getRepository().facet(OrientAptFacet.class);
-    OrientAptHostedFacet hostedFacet = context.getRepository().facet(OrientAptHostedFacet.class);
-
     switch (method) {
       case GET:
       case HEAD:
-        return doGet(path, aptFacet);
+        return doGet(context, path);
       case POST:
-        return doPost(context, path, method, hostedFacet);
+        return doPost(context, path, method);
       default:
         return HttpResponses.methodNotAllowed(method, GET, HEAD, POST);
     }
   }
 
-  private Response doPost(final Context context,
-                          final String path,
-                          final String method,
-                          final OrientAptHostedFacet hostedFacet) throws IOException
+  private Response doPost(final Context context, final String path, final String method) throws IOException
   {
+    OrientAptHostedFacet hostedFacet = context.getRepository().facet(OrientAptHostedFacet.class);
     if ("rebuild-indexes".equals(path)) {
-      hostedFacet.rebuildIndexes();
+      hostedFacet.rebuildMetadata();
       return HttpResponses.ok();
     }
     else if ("".equals(path)) {
       hostedFacet.ingestAsset(context.getRequest().getPayload());
+      hostedFacet.invalidateMetadata();
       return HttpResponses.created();
     }
     else {
@@ -77,9 +78,23 @@ public class OrientAptHostedHandler
     }
   }
 
-  private Response doGet(final String path, final OrientAptFacet aptFacet) throws IOException {
+  private Response doGet(final Context context, final String path) throws IOException {
+    OrientAptFacet aptFacet = context.getRepository().facet(OrientAptFacet.class);
+    if (isMetadataRebuildRequired(path, aptFacet)) {
+      context.getRepository().facet(OrientAptHostedFacet.class).rebuildMetadata();
+    }
     Optional<Content> content = aptFacet.get(path);
     return content.map(HttpResponses::ok).orElseGet(() -> HttpResponses.notFound(path));
+  }
+
+  private boolean isMetadataRebuildRequired(final String path, final OrientAptFacet aptFacet) throws IOException
+  {
+    if (StringUtils.startsWith(path, "dists")
+        && StringUtils.endsWithAny(path, INRELEASE, RELEASE, RELEASE_GPG, "/Packages")) {
+      String inReleasePath = "dists/" + aptFacet.getDistribution() + "/" + INRELEASE;
+      return !aptFacet.get(inReleasePath).isPresent();
+    }
+    return false;
   }
 
   private String assetPath(final Context context) {

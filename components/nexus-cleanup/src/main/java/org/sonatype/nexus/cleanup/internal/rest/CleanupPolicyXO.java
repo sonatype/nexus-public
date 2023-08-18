@@ -14,21 +14,25 @@ package org.sonatype.nexus.cleanup.internal.rest;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType;
+import org.sonatype.nexus.cleanup.storage.SortType;
 import org.sonatype.nexus.cleanup.storage.config.CleanupPolicyAssetNamePattern;
 import org.sonatype.nexus.cleanup.storage.config.UniqueCleanupPolicyName;
+import org.sonatype.nexus.validation.constraint.AnyOf;
 import org.sonatype.nexus.validation.group.Create;
 
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PRERELEASE_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SORT_BY_KEY;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLICY_FORMAT;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
@@ -55,6 +59,12 @@ public class CleanupPolicyXO
   private Long criteriaLastBlobUpdated; // days
 
   private Long criteriaLastDownloaded; // days
+
+  @Min(value = 1, message = "retain must be > 0")
+  private Integer retain;
+
+  @AnyOf(enumClass = SortType.class, parameterName = "sortBy")
+  private String sortBy;
 
   private CleanupPolicyReleaseType criteriaReleaseType;
 
@@ -85,6 +95,14 @@ public class CleanupPolicyXO
 
   public Long getCriteriaLastDownloaded() {
     return criteriaLastDownloaded;
+  }
+
+  public Integer getRetain() {
+    return retain;
+  }
+
+  public String getSortBy() {
+    return sortBy;
   }
 
   public String getCriteriaAssetRegex() {
@@ -119,6 +137,14 @@ public class CleanupPolicyXO
     this.criteriaLastDownloaded = criteriaLastDownloaded;
   }
 
+  public void setRetain(final Integer retain) {
+    this.retain = retain;
+  }
+
+  public void setSortBy(final String sortBy) {
+    this.sortBy = sortBy;
+  }
+
   public void setCriteriaReleaseType(final CleanupPolicyReleaseType criteriaReleaseType) {
     this.criteriaReleaseType = criteriaReleaseType;
   }
@@ -135,9 +161,21 @@ public class CleanupPolicyXO
     xo.setCriteriaAssetRegex(cleanupPolicy.getCriteria().get(REGEX_KEY));
     xo.setCriteriaLastBlobUpdated(toDays(getNullableLong(cleanupPolicy.getCriteria(), LAST_BLOB_UPDATED_KEY)));
     xo.setCriteriaLastDownloaded(toDays(getNullableLong(cleanupPolicy.getCriteria(), LAST_DOWNLOADED_KEY)));
+    xo.setRetain(getNullableInt(cleanupPolicy.getCriteria() , RETAIN_KEY));
+    xo.setSortBy(cleanupPolicy.getCriteria().getOrDefault(RETAIN_SORT_BY_KEY ,  null));
     xo.setCriteriaReleaseType(getNullableReleaseType(cleanupPolicy.getCriteria()));
     xo.setInUseCount(inUseCount);
     return xo;
+  }
+
+  private static Integer getNullableInt(final Map<String, String> map, final String key) {
+    String value = map.get(key);
+
+    if (value == null) {
+      return null;
+    }
+
+    return Integer.valueOf(value);
   }
 
   private static Long getNullableLong(final Map<String, String> map, final String key) {

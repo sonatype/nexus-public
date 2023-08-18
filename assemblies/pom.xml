@@ -33,6 +33,7 @@
     <module>nexus-boot-feature</module>
     <module>nexus-base-feature</module>
     <module>nexus-core-feature</module>
+    <module>nexus-base-overlay</module>
     <module>nexus-base-template</module>
   </modules>
 

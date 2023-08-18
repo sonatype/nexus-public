@@ -29,12 +29,13 @@ import {faCheckCircle, faTimesCircle} from '@fortawesome/free-solid-svg-icons';
 import './SupportZipHa.scss';
 
 import NodeCardMachine from './NodeCardMachine';
+import {URL} from './NodeCardHelper'
 
 const {SUPPORT_ZIP: LABELS} = UIStrings;
 
 const NODE_UNAVAILABLE = 'NODE_UNAVAILABLE';
 
-export default function NodeCard({initial, createZip, downloadZip}) {
+export default function NodeCard({initial, createZip}) {
   const [current] = useMachine(NodeCardMachine, {
     context: {
       node: initial
@@ -98,7 +99,9 @@ export default function NodeCard({initial, createZip, downloadZip}) {
         {zipNotCreated && <NxTextLink onClick={createZip}>{statusActionLabel}</NxTextLink>}
 
         {zipCreated && (
-          <NxTextLink onClick={() => downloadZip(node)}>{statusActionLabel}</NxTextLink>
+          <NxTextLink href={URL.downloadZipFile(node.blobRef)} download>
+            {statusActionLabel}
+          </NxTextLink>
         )}
 
         {zipCreating && (
