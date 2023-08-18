@@ -96,9 +96,7 @@ public class EmptyRoleTest
     SecuritySystem securitySystem = this.lookup(SecuritySystem.class);
 
     RealmManager realmManager = lookup(RealmManager.class);
-    RealmConfiguration realmConfiguration = new TestRealmConfiguration();
-    realmConfiguration.setRealmNames(ImmutableList.of(AuthenticatingRealmImpl.NAME, AuthorizingRealmImpl.NAME));
-    realmManager.setConfiguration(realmConfiguration);
+    realmManager.setConfiguredRealmIds(ImmutableList.of(AuthenticatingRealmImpl.NAME, AuthorizingRealmImpl.NAME));
 
     AuthorizationManager authManager = securitySystem.getAuthorizationManager("default");
 

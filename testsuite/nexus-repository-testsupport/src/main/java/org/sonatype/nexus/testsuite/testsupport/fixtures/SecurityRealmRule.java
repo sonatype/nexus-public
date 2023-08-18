@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.fixtures;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -20,7 +19,6 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmManager;
 
 import org.junit.rules.ExternalResource;
@@ -32,7 +30,7 @@ public class SecurityRealmRule
 {
   final Provider<RealmManager> realmManagerProvider;
 
-  private RealmConfiguration configuration;
+  private List<String> configuredRealms;
 
   public SecurityRealmRule(final Provider<RealmManager> realmManagerProvider) {
     this.realmManagerProvider = realmManagerProvider;
@@ -45,29 +43,19 @@ public class SecurityRealmRule
 
   @Override
   public void before() {
-    configuration = realmManagerProvider.get().getConfiguration().copy();
+    configuredRealms = realmManagerProvider.get().getConfiguredRealmIds();
   }
 
   @Override
   public void after() {
-    realmManagerProvider.get().setConfiguration(configuration);
+    realmManagerProvider.get().setConfiguredRealmIds(configuredRealms);
   }
 
   public void addSecurityRealm(final String realm) {
-    RealmConfiguration configuration = realmManagerProvider.get().getConfiguration().copy();
-    List<String> realms = new ArrayList<>(configuration.getRealmNames());
-    if (!realms.contains(realm)) {
-      realms.add(realm);
-      configuration.setRealmNames(realms);
-      realmManagerProvider.get().setConfiguration(configuration);
-    }
+    realmManagerProvider.get().enableRealm(realm);
   }
 
   public void removeSecurityRealm(final String realm) {
-    RealmConfiguration configuration = realmManagerProvider.get().getConfiguration().copy();
-    List<String> realms = new ArrayList<>(configuration.getRealmNames());
-    realms.remove(realm);
-    configuration.setRealmNames(realms);
-    realmManagerProvider.get().setConfiguration(configuration);
+    realmManagerProvider.get().disableRealm(realm);
   }
 }

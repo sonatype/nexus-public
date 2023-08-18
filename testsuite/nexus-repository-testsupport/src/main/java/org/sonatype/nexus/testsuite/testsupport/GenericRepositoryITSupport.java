@@ -31,7 +31,6 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
-import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.Role;
@@ -160,20 +159,9 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   }
 
   protected void enableRealm(final String realmName) {
-    log.info("Realm configuration: {}", realmManager.getConfiguration());
-
-    final RealmConfiguration config = realmManager.getConfiguration();
-
-    if (!config.getRealmNames().contains(realmName)) {
-
-      log.info("Adding {}.", realmName);
-
-      config.getRealmNames().add(realmName);
-      realmManager.setConfiguration(config);
-    }
-    else {
-      log.info("{} realm already configured.", realmName);
-    }
+    log.info("Current Realms: {}", realmManager.getConfiguredRealmIds());
+    log.info("Adding {} if not already configured.", realmName);
+    realmManager.enableRealm(realmName);
   }
 
   protected void maybeCreateUser(final String username, final String password, final String role)

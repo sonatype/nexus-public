@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -35,6 +36,13 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.security.anonymous.AnonymousHelper.getAuthenticationRealms;
 
 /**
+ * THIS CLASS IS NOT WHAT IT SEEMS! This REST resource is ONLY utilized by the anonymous settings page in UI for
+ * displaying the list of realms to select from for pulling the anonymous user from
+ * <p>
+ * Additionally, this assignment is supposed to be with UserManager impls, but was somehow merged into Realms...
+ * <p>
+ * The proper security realm endpoint that the UI security pages use is RealmApiResource (it uses the external API)
+ *
  * @since 3.19
  */
 @Named
@@ -65,7 +73,7 @@ public class RealmSettingsResource
   @Path("/types")
   @RequiresPermissions("nexus:settings:read")
   public List<SecurityRealm> readRealmTypes() {
-    return realmManager.getAvailableRealms().stream()
+    return realmManager.getAvailableRealms(true).stream()
         .filter(securityRealm -> authenticationRealms.contains(securityRealm.getId()))
         .collect(toList());
   }

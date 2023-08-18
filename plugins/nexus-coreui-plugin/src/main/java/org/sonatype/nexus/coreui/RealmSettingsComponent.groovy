@@ -61,7 +61,7 @@ class RealmSettingsComponent
   @RequiresPermissions('nexus:settings:read')
   RealmSettingsXO read() {
     return new RealmSettingsXO(
-        realms: realmManager.getConfiguration().realmNames
+        realms: realmManager.getConfiguredRealmIds()
     )
   }
 
@@ -93,9 +93,7 @@ class RealmSettingsComponent
   @RequiresPermissions('nexus:settings:update')
   @Validate
   RealmSettingsXO update(final @NotNull @Valid RealmSettingsXO realmSettingsXO) {
-    RealmConfiguration entity = realmManager.newEntity()
-    entity.realmNames = realmSettingsXO.realms
-    realmManager.configuration = entity
+    realmManager.setConfiguredRealmIds(realmSettingsXO.realms)
     return read()
   }
 }

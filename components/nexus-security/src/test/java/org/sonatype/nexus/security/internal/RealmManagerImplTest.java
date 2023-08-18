@@ -69,8 +69,8 @@ public class RealmManagerImplTest
     Map<String, Realm> realms = ImmutableMap.of("A", realmA, "B", realmB);
     RealmConfiguration defaultConfig = new TestRealmConfiguration();
     defaultConfig.setRealmNames(ImmutableList.of("A"));
-    manager =
-        new RealmManagerImpl(beanLocator, eventManager, configStore, () -> defaultConfig, securityManager, realms);
+    manager = new RealmManagerImpl(beanLocator, eventManager, configStore, () -> defaultConfig, securityManager, realms,
+        false);
   }
 
   @Test
