@@ -38,6 +38,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.maven.artifact.repository.metadata.Metadata;
+import org.apache.maven.it.VerificationException;
 import org.junit.experimental.categories.Category;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -121,12 +122,13 @@ public abstract class MavenITSupport
     new MavenRunner().run(mavenDeployment, "clean", "deploy");
   }
 
-  protected void mvnDeploy(final String project,
-                           final String group,
-                           final String artifactId,
-                           final String version,
-                           final URL proxyUrl,
-                           final URL deployUrl)
+  protected void mvnDeploy(
+      final String project,
+      final String group,
+      final String artifactId,
+      final String version,
+      final URL proxyUrl,
+      final URL deployUrl) throws VerificationException
   {
     final File mavenBaseDir = mvnBaseDir(project).getAbsoluteFile();
     final File projectDir = resolveTestFile(project);

@@ -86,6 +86,11 @@ class MavenDeployment
   boolean ensureCleanOnInit = true
 
   /**
+   * Set the version used for Java, this may vary depending on the executing JVM
+   */
+  String javaVersion = "1.8"
+
+  /**
    * Initialize a new maven project folder and configure pom.xml and settings.xml files as specified.
    */
   public MavenDeployment init() {
@@ -99,15 +104,15 @@ class MavenDeployment
     }
 
     log.info this.toString()
-    
+
     DirectoryHelper.copy(projectTemplateDir.toPath(), projectDir.toPath())
 
     String settingsContent = Files.toString(settingsTemplate, StandardCharsets.UTF_8)
         .replace('${proxyUrl}', proxyUrl.toString())
     File settings = settingsFile()
-    settings.createNewFile() 
+    settings.createNewFile()
     settings.text = settingsContent
-    
+
     File pom = pomFile()
     String pomContent = Files.toString(pom, StandardCharsets.UTF_8)
         .replace('${project.groupId}', groupId)

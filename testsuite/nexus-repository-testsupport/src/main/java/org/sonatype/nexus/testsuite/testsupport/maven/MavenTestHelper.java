@@ -36,6 +36,7 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader;
+import org.apache.maven.it.VerificationException;
 import org.joda.time.DateTime;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -150,7 +151,7 @@ public abstract class MavenTestHelper
       final String artifactId,
       final String version,
       final URL proxyUrl,
-      final URL deployUrl)
+      final URL deployUrl) throws VerificationException
   {
     final File mavenBaseDir = mvnBaseDir(project).getAbsoluteFile();
     final File projectDir = testData.resolveFile(project);
