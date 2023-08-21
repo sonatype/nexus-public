@@ -125,6 +125,12 @@
       <artifactId>nexus-rest-client</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>javax.activation</groupId>
+      <artifactId>activation</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
