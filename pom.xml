@@ -687,7 +687,6 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-            <rerunFailingTestsCount>3</rerunFailingTestsCount>
             <useSystemClassLoader>false</useSystemClassLoader>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
@@ -715,7 +714,6 @@
           <!-- 2.22.2 causes tests to eventually hang -->
           <version>2.18.1</version>
           <configuration>
-            <rerunFailingTestsCount>3</rerunFailingTestsCount>
             <trimStackTrace>false</trimStackTrace>
             <forkCount>1</forkCount>
             <reuseForks>false</reuseForks>
