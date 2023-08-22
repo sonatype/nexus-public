@@ -346,8 +346,8 @@ public class BlobStoreGroup
 
   @Override
   @Guarded(by = STARTED)
-  public synchronized void deleteTempFiles() {
-    members.get().forEach(BlobStore::deleteTempFiles);
+  public synchronized void deleteTempFiles(@Nullable final Integer daysOlderThan) {
+    members.get().forEach((BlobStore member) -> deleteTempFiles(daysOlderThan));
   }
 
   @Override

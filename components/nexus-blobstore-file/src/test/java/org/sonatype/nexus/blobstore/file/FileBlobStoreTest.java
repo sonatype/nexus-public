@@ -342,7 +342,7 @@ public class FileBlobStoreTest
 
     assertThat(tmpFilePath.toFile().exists(), is(true));
 
-    underTest.doDeleteTempFiles();
+    underTest.doDeleteTempFiles(0);
 
     assertThat(tmpFilePath.toFile().exists(), is(false));
   }
