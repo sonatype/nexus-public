@@ -15,10 +15,12 @@ package org.sonatype.nexus.repository.internal.blobstore;
 import java.util.function.Supplier;
 
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
+import org.sonatype.nexus.common.app.FeatureFlag;
 
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 
@@ -27,7 +29,9 @@ import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTOR
  *
  * @since 3.37
  */
-@Named
+@FeatureFlag(name = "nexus.default.file.blobstore", enabledByDefault = true)
+@Named("default")
+@Singleton
 public class DefaultFileBlobStoreProvider
     implements DefaultBlobStoreProvider
 {

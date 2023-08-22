@@ -602,6 +602,7 @@ public abstract class NexusPaxExamSupport
         String forcePathStyle = "nexus.test.s3.forcePathStyle";
 
         return composite(
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.default.file.blobstore", Boolean.FALSE.toString()),
             // enable s3 default
             editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.s3", Boolean.TRUE.toString()),
             // copy the maven property if it exists
@@ -615,6 +616,7 @@ public abstract class NexusPaxExamSupport
         );
       case "azure":
         return composite(
+            editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.default.file.blobstore", Boolean.FALSE.toString()),
             // enable azure default
             editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.default.azure", Boolean.TRUE.toString()),
             editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.blobstore.new.azure", Boolean.TRUE.toString())
