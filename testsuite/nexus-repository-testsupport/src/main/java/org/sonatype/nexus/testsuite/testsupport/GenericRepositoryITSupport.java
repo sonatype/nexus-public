@@ -54,6 +54,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.Credentials;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.util.EntityUtils;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
@@ -251,6 +252,9 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
     try (FileInputStream file = new FileInputStream(testData.resolveFile(expectedFile))) {
       byte[] expectedDeb = IOUtils.toByteArray(file);
       MatcherAssert.assertThat(Arrays.equals(fetchedDeb, expectedDeb), is(true));
+    }
+    finally {
+      HttpClientUtils.closeQuietly(response);
     }
   }
 }

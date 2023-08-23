@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
 
 import javax.annotation.Nullable;
 
@@ -43,6 +44,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class NexusClientFactory<T extends FormatClientSupport>
     extends ComponentSupport
 {
+  private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(20L);
+
+  private static final Duration CONNECTION_REQUEST_TIMEOUT = Duration.ofSeconds(30L);
+
   public abstract T createClient(final CloseableHttpClient httpClient,
                                  final HttpClientContext httpClientContext,
                                  final URI repositoryBaseUri);
@@ -70,12 +75,18 @@ public abstract class NexusClientFactory<T extends FormatClientSupport>
     httpClientContext.setAuthCache(authCache);
     httpClientContext.setRequestConfig(requestConfigBuilder.build());
 
+    int defaultTimeoutMillis = (int) DEFAULT_TIMEOUT.toMillis();
+    RequestConfig requestConfig = RequestConfig.custom()
+        .setConnectTimeout(defaultTimeoutMillis)
+        .setConnectionRequestTimeout((int) CONNECTION_REQUEST_TIMEOUT.toMillis())
+        .setSocketTimeout(defaultTimeoutMillis).build();
+
     try {
-      return createClient(
-          HttpClients.custom().setDefaultCredentialsProvider(credentialsProvider).build(),
-          httpClientContext,
-          repositoryUrl.toURI()
-      );
+      CloseableHttpClient httpClient = HttpClients.custom()
+          .setDefaultCredentialsProvider(credentialsProvider)
+          .setDefaultRequestConfig(requestConfig)
+          .build();
+      return createClient(httpClient, httpClientContext, repositoryUrl.toURI());
     }
     catch (URISyntaxException e) {
       log.warn("Uri exception creating Client", e);

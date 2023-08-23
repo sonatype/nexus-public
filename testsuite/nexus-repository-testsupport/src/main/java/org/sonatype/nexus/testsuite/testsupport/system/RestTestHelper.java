@@ -23,6 +23,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -105,11 +106,13 @@ import static org.hamcrest.Matchers.is;
 @Singleton
 public class RestTestHelper
 {
+  private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(20L);
+
+  private static final Duration CONNECTION_REQUEST_TIMEOUT = Duration.ofSeconds(30L);
+
   private static final Logger log = LoggerFactory.getLogger(RestTestHelper.class);
 
   private static final String REST_SERVICE_PATH = "service/rest";
-
-  protected static final String SLASH_REPO_SLASH = "/repository/";
 
   @Inject
   private ObjectMapper mapper;
@@ -465,10 +468,18 @@ public class RestTestHelper
    */
   private static HttpClientBuilder clientBuilder(final URI url, final String username, final String password)
   {
+    int defaultTimeoutMillis = (int) DEFAULT_TIMEOUT.toMillis();
+    RequestConfig requestConfig = RequestConfig.custom()
+        .setConnectTimeout(defaultTimeoutMillis)
+        .setConnectionRequestTimeout((int) CONNECTION_REQUEST_TIMEOUT.toMillis())
+        .setSocketTimeout(defaultTimeoutMillis).build();
+
     HttpClientBuilder builder = clientBuilder();
     if (username != null) {
       doUseCredentials(url, builder, username, password);
     }
+    builder.setDefaultRequestConfig(requestConfig);
+
     return builder;
   }
 
