@@ -350,10 +350,10 @@ public class CleanupPolicyResource
       xo.getCriteria().setReleaseType(criteriaReleaseType);
       xo.getCriteria().setRegex(criteriaAssetRegex);
 
-      Stream<ComponentXO> searchResultsStream =
+      Stream<ComponentXO> components =
           cleanupPreviewHelper.get().getSearchResultsStream(xo, repository, null);
 
-      csvCleanupPreviewContentWriter.write(repository, searchResultsStream, output);
+      csvCleanupPreviewContentWriter.write(repository, components, output);
 
       cleanupDryRunXO.put(FINISHED_AT_IN_MILLISECONDS, System.currentTimeMillis());
       eventManager.post(new CleanupDryRunEvent(cleanupDryRunXO));
