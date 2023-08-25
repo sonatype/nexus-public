@@ -31,7 +31,6 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
-import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.Role;
@@ -55,6 +54,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.Credentials;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.util.EntityUtils;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
@@ -160,20 +160,9 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   }
 
   protected void enableRealm(final String realmName) {
-    log.info("Realm configuration: {}", realmManager.getConfiguration());
-
-    final RealmConfiguration config = realmManager.getConfiguration();
-
-    if (!config.getRealmNames().contains(realmName)) {
-
-      log.info("Adding {}.", realmName);
-
-      config.getRealmNames().add(realmName);
-      realmManager.setConfiguration(config);
-    }
-    else {
-      log.info("{} realm already configured.", realmName);
-    }
+    log.info("Current Realms: {}", realmManager.getConfiguredRealmIds());
+    log.info("Adding {} if not already configured.", realmName);
+    realmManager.enableRealm(realmName);
   }
 
   protected void maybeCreateUser(final String username, final String password, final String role)
@@ -263,6 +252,9 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
     try (FileInputStream file = new FileInputStream(testData.resolveFile(expectedFile))) {
       byte[] expectedDeb = IOUtils.toByteArray(file);
       MatcherAssert.assertThat(Arrays.equals(fetchedDeb, expectedDeb), is(true));
+    }
+    finally {
+      HttpClientUtils.closeQuietly(response);
     }
   }
 }

@@ -32,7 +32,6 @@ import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.thread.TcclBlock;
@@ -41,7 +40,6 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
@@ -67,7 +65,7 @@ public class TestDefaultS3BlobStoreProvider
     extends StateGuardLifecycleSupport
     implements DefaultBlobStoreProvider
 {
-  private GenericContainer<?> s3MockContainer = null;
+  private GenericContainer<?> s3MockContainer;
 
   private final boolean useReal;
 
@@ -138,15 +136,16 @@ public class TestDefaultS3BlobStoreProvider
     // the existence property indicates maven is managing the s3mock server
     String mavenMockEndpoint = System.getProperty("mock.s3.service.endpoint");
     if (mavenMockEndpoint == null) {
-      int s3MockPort = PortAllocator.nextFreePort();
       try (TcclBlock ignored = TcclBlock.begin(classLoader)) {
-        s3MockContainer = new GenericContainer<>("docker-all.repo.sonatype.com/adobe/s3mock")
-            .withExposedPorts(s3MockPort, 9090)
-            .withEnv("initialBuckets", s3Bucket)
-            .waitingFor(Wait.forListeningPort());
+        if (s3MockContainer == null || !s3MockContainer.isRunning()) {
+          s3MockContainer = new GenericContainer<>("docker-all.repo.sonatype.com/adobe/s3mock:3.1.0")
+              .withExposedPorts(9090)
+              .withEnv("initialBuckets", s3Bucket)
+              .waitingFor(Wait.forListeningPort());
 
-        s3MockContainer.start();
-        endpoint = "http://localhost:" + s3MockPort + "/";
+          s3MockContainer.start();
+          endpoint = "http://localhost:" + s3MockContainer.getMappedPort(9090) + "/";
+        }
       }
     }
     else {

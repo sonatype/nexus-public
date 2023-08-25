@@ -83,7 +83,7 @@ public class BlobStoreRule
 
     if (defaultS3Blobstore) {
       defaultBlobstoreCreator = __ -> {
-        throw new UnsupportedOperationException("Not yet implemented");
+        throw new UnsupportedOperationException("Not yet implemented. NEXUS-40062");
       };
     }
     else {

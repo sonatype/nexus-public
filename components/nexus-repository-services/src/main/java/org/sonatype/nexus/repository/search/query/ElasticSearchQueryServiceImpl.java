@@ -97,6 +97,8 @@ public class ElasticSearchQueryServiceImpl
 
   private final boolean profile;
 
+  private static final int MAX_ELASTIC_RESPONSE_SIZE = 10000;
+
   /**
    * @param client source for a {@link Client}
    * @param repositoryManager the repositoryManager
@@ -138,7 +140,7 @@ public class ElasticSearchQueryServiceImpl
 
   @Override
   public SearchResponse search(final QueryBuilder query, final int from, final int size) {
-    if (!validateQuery(query)) {
+    if (!validateQuery(query) || from + size > MAX_ELASTIC_RESPONSE_SIZE) {
       return EMPTY_SEARCH_RESPONSE;
     }
 

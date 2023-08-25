@@ -29,6 +29,7 @@ import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.config.PreconfiguredSecurityConfigurationSource;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
+import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.TestRealmConfiguration;
 import org.sonatype.nexus.security.user.UserManager;
@@ -85,7 +86,8 @@ public abstract class AbstractSecurityTest
             new PreconfiguredSecurityConfigurationSource(initialSecurityConfiguration()));
 
         RealmConfiguration realmConfiguration = new TestRealmConfiguration();
-        realmConfiguration.setRealmNames(Arrays.asList("MockRealmA", "MockRealmB"));
+        realmConfiguration.setRealmNames(
+            new ArrayList<>(Arrays.asList("MockRealmA", "MockRealmB", AuthorizingRealmImpl.NAME)));
         bind(RealmConfiguration.class).annotatedWith(Names.named("initial")).toInstance(realmConfiguration);
 
         bind(ApplicationDirectories.class).toInstance(mock(ApplicationDirectories.class));

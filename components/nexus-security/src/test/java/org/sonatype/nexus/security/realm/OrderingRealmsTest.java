@@ -27,11 +27,7 @@ public class OrderingRealmsTest
   public void testOrderedGetUser() throws Exception {
     SecuritySystem securitySystem = this.lookup(SecuritySystem.class);
     RealmManager realmManager = lookup(RealmManager.class);
-    RealmConfiguration realmConfiguration;
-
-    realmConfiguration = new TestRealmConfiguration();
-    realmConfiguration.setRealmNames(ImmutableList.of("MockRealmA", "MockRealmB"));
-    realmManager.setConfiguration(realmConfiguration);
+    realmManager.setConfiguredRealmIds(ImmutableList.of("MockRealmA", "MockRealmB"));
 
     User jcoder = securitySystem.getUser("jcoder");
     Assert.assertNotNull(jcoder);
@@ -40,9 +36,7 @@ public class OrderingRealmsTest
     Assert.assertEquals("MockUserManagerA", jcoder.getSource());
 
     // now change the order
-    realmConfiguration = new TestRealmConfiguration();
-    realmConfiguration.setRealmNames(ImmutableList.of("MockRealmB", "MockRealmA")); // order changed
-    realmManager.setConfiguration(realmConfiguration);
+    realmManager.setConfiguredRealmIds(ImmutableList.of("MockRealmB", "MockRealmA"));
 
     jcoder = securitySystem.getUser("jcoder");
     Assert.assertNotNull(jcoder);

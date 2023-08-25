@@ -36,7 +36,7 @@ import org.apache.commons.csv.CSVPrinter;
 public class CSVCleanupPreviewContentWriter
     extends ComponentSupport
 {
-  public void write(final Repository repository, final Stream<ComponentXO> stream, final OutputStream outputStream)
+  public void write(final Repository repository, final Stream<ComponentXO> components, final OutputStream outputStream)
       throws IOException
   {
     log.debug("Creating CSV content for the repository {}.", repository.getName());
@@ -50,8 +50,8 @@ public class CSVCleanupPreviewContentWriter
     try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
          CSVPrinter printer = new CSVPrinter(outputStreamWriter, csvFormat)) {
 
-      stream
-          .peek(__ -> CancelableHelper.checkCancellation())
+      printer.flush();
+      components
           .forEach(componentXO -> {
             try {
               for (AssetXO asset : componentXO.getAssets()) {

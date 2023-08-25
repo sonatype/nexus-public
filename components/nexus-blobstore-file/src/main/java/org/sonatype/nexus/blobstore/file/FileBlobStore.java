@@ -16,11 +16,13 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
@@ -29,6 +31,7 @@ import java.time.LocalDate;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -79,6 +82,8 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.AgeFileFilter;
+import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 
@@ -90,6 +95,8 @@ import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.time.LocalDate.now;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.io.FileUtils.forceDelete;
+import static org.apache.commons.io.FileUtils.iterateFiles;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
@@ -652,11 +659,25 @@ public class FileBlobStore
   }
 
   @Override
-  protected void doDeleteTempFiles() {
+  protected void doDeleteTempFiles(final Integer daysOlderThan) {
     try {
-      FileUtils.cleanDirectory(getAbsoluteBlobDir().resolve(CONTENT).resolve(TMP).toFile());
+      Date thresholdDate = DateUtils.addDays(new Date(), -daysOlderThan);
+      AgeFileFilter ageFileFilter = new AgeFileFilter(thresholdDate);
+      Iterator<File> filesToDelete = iterateFiles(getAbsoluteBlobDir().resolve(CONTENT).resolve(TMP).toFile(), ageFileFilter, ageFileFilter);
+      filesToDelete.forEachRemaining(f -> {
+            try {
+              forceDelete(f);
+            }
+            catch (UncheckedIOException | IOException e) {
+              log.error("Unable to delete temp file {}. Message was {}.", f, e.getMessage());
+            }
+          }
+      );
     }
-    catch (BlobStoreException | TaskInterruptedException e) {
+    catch (UncheckedIOException | NoSuchFileException e ) {
+      log.debug("Tmp folder is empty: {}", e.getMessage());
+    }
+    catch (TaskInterruptedException e) {
       throw e;
     }
     catch (Exception e) {

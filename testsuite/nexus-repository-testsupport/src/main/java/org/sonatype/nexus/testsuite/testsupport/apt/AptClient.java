@@ -12,7 +12,14 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.apt;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+
+import org.sonatype.nexus.testsuite.testsupport.FormatClientSupport;
+
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -22,12 +29,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-
-import org.sonatype.nexus.testsuite.testsupport.FormatClientSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.IF_MODIFIED_SINCE;
@@ -70,12 +71,17 @@ public class AptClient
     return response;
   }
 
-  public HttpResponse post(final File file) throws Exception {
+  public int post(final File file) throws IOException {
     checkNotNull(file);
 
+    int statusCode;
     HttpPost post = new HttpPost(repositoryBaseUri.resolve(""));
     post.setEntity(new FileEntity(file, ContentType.create("application/x-debian-package")));
-    return execute(post);
+    try (CloseableHttpResponse response = execute(post)) {
+      statusCode = response.getStatusLine().getStatusCode();
+    }
+
+    return statusCode;
   }
 
   public HttpResponse snapshotAll(String snapshotId) throws Exception {

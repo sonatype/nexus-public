@@ -24,9 +24,11 @@ import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.realm.AuthenticatingRealm;
+import org.eclipse.sisu.Description;
 
 @Singleton
 @Named("MockRealmA")
+@Description("MockRealmA")
 public class MockRealmA
     extends AuthenticatingRealm
 {

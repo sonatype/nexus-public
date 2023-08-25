@@ -49,6 +49,9 @@ import javax.ws.rs.core.StreamingOutput;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
+import org.sonatype.nexus.cleanup.content.CleanupPolicyCreatedEvent;
+import org.sonatype.nexus.cleanup.content.CleanupPolicyDeletedEvent;
+import org.sonatype.nexus.cleanup.content.CleanupPolicyUpdatedEvent;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyCriteria;
@@ -185,7 +188,9 @@ public class CleanupPolicyResource
 
     validateRetainAttributes(cleanupPolicyXO);
 
-    return CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.add(toCleanupPolicy(cleanupPolicyXO)), 0);
+    CleanupPolicyXO cleanupXO = CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.add(toCleanupPolicy(cleanupPolicyXO)), 0);
+    eventManager.post(new CleanupPolicyCreatedEvent(toCleanupPolicy(cleanupXO)));
+    return cleanupXO;
   }
 
   @GET
@@ -235,7 +240,9 @@ public class CleanupPolicyResource
     cleanupPolicy.setFormat(cleanupPolicyXO.getFormat());
     cleanupPolicy.setCriteria(toCriteriaMap(cleanupPolicyXO));
 
-    return CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.update(cleanupPolicy), inUseCount);
+    CleanupPolicyXO cleanupXO = CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.update(cleanupPolicy), inUseCount);
+    eventManager.post(new CleanupPolicyUpdatedEvent(cleanupPolicy));
+    return cleanupXO;
   }
 
   @DELETE
@@ -250,6 +257,7 @@ public class CleanupPolicyResource
     }
 
     cleanupPolicyStorage.remove(cleanupPolicy);
+    eventManager.post(new CleanupPolicyDeletedEvent(cleanupPolicy));
   }
 
   @GET
@@ -303,8 +311,7 @@ public class CleanupPolicyResource
       PagedResponse<ComponentXO> response = cleanupPreviewHelper.get().getSearchResults(xo, repository, options);
 
       return new PageResult<>(response.getTotal(), new ArrayList<>(response.getData()));
-    }
-    catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException e) {
       throw new ValidationErrorsException("filter", e.getMessage());
     }
   }
@@ -343,10 +350,10 @@ public class CleanupPolicyResource
       xo.getCriteria().setReleaseType(criteriaReleaseType);
       xo.getCriteria().setRegex(criteriaAssetRegex);
 
-      Stream<ComponentXO> searchResultsStream =
+      Stream<ComponentXO> components =
           cleanupPreviewHelper.get().getSearchResultsStream(xo, repository, null);
 
-      csvCleanupPreviewContentWriter.write(repository, searchResultsStream, output);
+      csvCleanupPreviewContentWriter.write(repository, components, output);
 
       cleanupDryRunXO.put(FINISHED_AT_IN_MILLISECONDS, System.currentTimeMillis());
       eventManager.post(new CleanupDryRunEvent(cleanupDryRunXO));

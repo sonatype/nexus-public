@@ -227,7 +227,7 @@ public interface BlobStore
   /**
    * Delete blob temporary files
    */
-  void deleteTempFiles();
+  void deleteTempFiles(Integer daysOlderThan);
 
   /**
    * Returns the configuration entity for the BlobStore.

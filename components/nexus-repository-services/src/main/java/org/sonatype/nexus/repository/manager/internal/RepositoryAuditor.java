@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.RepositoryDestroyedEvent;
 import org.sonatype.nexus.repository.RepositoryEvent;
 import org.sonatype.nexus.repository.RepositoryStartedEvent;
 import org.sonatype.nexus.repository.RepositoryStoppedEvent;
+import org.sonatype.nexus.repository.manager.RepositoryCacheInvalidatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryLoadedEvent;
@@ -69,6 +70,7 @@ public class RepositoryAuditor
     this.convertersByFormat = convertersByFormat;
     this.defaultAdapter = defaultAdapter;
 
+    registerType(RepositoryCacheInvalidatedEvent.class, "cacheInvalidated");
     registerType(RepositoryCreatedEvent.class, CREATED_TYPE);
     registerType(RepositoryRestoredEvent.class, "restored");
     registerType(RepositoryUpdatedEvent.class, UPDATED_TYPE);

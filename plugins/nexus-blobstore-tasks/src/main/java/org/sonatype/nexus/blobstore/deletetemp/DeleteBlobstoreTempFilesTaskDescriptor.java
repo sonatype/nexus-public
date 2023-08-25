@@ -17,9 +17,11 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.formfields.ComboboxFormField;
+import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
+import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
 
 @Named
 @Singleton
@@ -29,6 +31,8 @@ public class DeleteBlobstoreTempFilesTaskDescriptor
   public static final String TYPE_ID = "blobstore.delete-temp-files";
 
   public static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
+
+  public static final String DAYS_OLDER_THAN = "olderThanDays";
 
   @Inject
   public DeleteBlobstoreTempFilesTaskDescriptor() {
@@ -42,7 +46,10 @@ public class DeleteBlobstoreTempFilesTaskDescriptor
             "Blob store",
             "Select the blob store to delete temporary files",
             MANDATORY
-        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name")
+        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
+        new NumberTextFormField(DAYS_OLDER_THAN,
+            "Delete Files Older Than X days",
+            "Delete files that are older than X days", OPTIONAL).withMinimumValue(0)
     );
   }
 }

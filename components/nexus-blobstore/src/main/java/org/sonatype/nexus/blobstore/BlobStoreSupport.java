@@ -232,17 +232,17 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   @Override
   @Guarded(by = STARTED)
-  public synchronized void deleteTempFiles() {
+  public synchronized void deleteTempFiles(final Integer daysOlderThan) {
     long start = System.nanoTime();
     try {
-      doDeleteTempFiles();
+      doDeleteTempFiles(daysOlderThan);
     }
     finally {
       updateTimer("delete temp files", System.nanoTime() - start);
     }
   }
 
-  protected void doDeleteTempFiles() {
+  protected void doDeleteTempFiles(final Integer daysOlderThan) {
     // no-op
   }
 

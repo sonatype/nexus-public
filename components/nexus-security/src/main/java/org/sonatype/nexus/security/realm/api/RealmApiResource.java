@@ -29,7 +29,6 @@ import javax.ws.rs.core.Response.Status;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
-import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.realm.SecurityRealm;
 
@@ -72,7 +71,7 @@ public class RealmApiResource
   @RequiresPermissions("nexus:settings:read")
   @Override
   public List<String> getActiveRealms() {
-    return realmManager.getConfiguration().getRealmNames();
+    return realmManager.getConfiguredRealmIds();
   }
 
   @Path("active")
@@ -91,8 +90,6 @@ public class RealmApiResource
       throw new WebApplicationMessageException(Status.BAD_REQUEST, "\"Unknown realmIds: " + unknownRealms + "\"");
     }
 
-    RealmConfiguration configuration = realmManager.getConfiguration();
-    configuration.setRealmNames(realmIds);
-    realmManager.setConfiguration(configuration);
+    realmManager.setConfiguredRealmIds(realmIds);
   }
 }

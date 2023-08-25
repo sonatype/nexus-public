@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -62,8 +63,8 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @Named
 @Singleton
 public class RealmManagerImpl
-  extends StateGuardLifecycleSupport
-  implements RealmManager
+    extends StateGuardLifecycleSupport
+    implements RealmManager
 {
   private final BeanLocator beanLocator;
 
@@ -81,6 +82,8 @@ public class RealmManagerImpl
 
   private RealmConfiguration configuration;
 
+  private final boolean enableAuthorizationRealmManagement;
+
   @Inject
   public RealmManagerImpl(
       final BeanLocator beanLocator,
@@ -88,7 +91,9 @@ public class RealmManagerImpl
       final RealmConfigurationStore store,
       @Named("initial") final Provider<RealmConfiguration> defaults,
       final RealmSecurityManager realmSecurityManager,
-      final Map<String, Realm> availableRealms)
+      final Map<String, Realm> availableRealms,
+      @Named("${nexus.security.enableAuthorizationRealmManagement:-false}")
+      final boolean enableAuthorizationRealmManagement)
   {
     this.beanLocator = checkNotNull(beanLocator);
     this.eventManager = checkNotNull(eventManager);
@@ -98,6 +103,7 @@ public class RealmManagerImpl
     log.debug("Defaults: {}", defaults);
     this.realmSecurityManager = checkNotNull(realmSecurityManager);
     this.availableRealms = checkNotNull(availableRealms);
+    this.enableAuthorizationRealmManagement = enableAuthorizationRealmManagement;
   }
 
   //
@@ -135,8 +141,7 @@ public class RealmManagerImpl
   // Configuration
   //
 
-  @Override
-  public RealmConfiguration newEntity() {
+  private RealmConfiguration newEntity() {
     return store.newEntity();
   }
 
@@ -164,7 +169,7 @@ public class RealmManagerImpl
 
   /**
    * Return configuration, loading if needed.
-   *
+   * <p>
    * The result model should be considered _immutable_ unless copied.
    */
   private RealmConfiguration getConfigurationInternal() {
@@ -179,16 +184,14 @@ public class RealmManagerImpl
   /**
    * Return _copy_ of configuration.
    */
-  @Override
-  @Guarded(by = STARTED)
-  public RealmConfiguration getConfiguration() {
+  private RealmConfiguration getConfiguration() {
     return getConfigurationInternal().copy();
   }
 
-  @Override
-  @Guarded(by = STARTED)
-  public void setConfiguration(final RealmConfiguration configuration) {
+  private void setConfiguration(final RealmConfiguration configuration) {
     checkNotNull(configuration);
+
+    maybeAddAuthorizingRealm(configuration.getRealmNames());
 
     changeConfiguration(configuration, true);
   }
@@ -228,17 +231,23 @@ public class RealmManagerImpl
     List<Realm> result = Lists.newArrayList();
     RealmConfiguration model = getConfigurationInternal();
 
+    List<String> configuredRealmIds = new ArrayList<>(model.getRealmNames());
+
+    // just in case the realm is NOT in config, make sure it is still installed
+    // without an alternate authorizing realm, nexus will have a hard time functioning when this realm isn't in place
+    maybeAddAuthorizingRealm(configuredRealmIds);
+
     log.debug("Available realms: {}", availableRealms);
 
-    for (String realmName : model.getRealmNames()) {
-      Realm realm = availableRealms.get(realmName);
+    for (String configuredRealmId : configuredRealmIds) {
+      Realm realm = availableRealms.get(configuredRealmId);
 
       // FIXME: Resolve what purpose this is for, looks like legacy?
       if (realm == null) {
-        log.debug("Failed to look up realm '{}' as a component, trying reflection", realmName);
+        log.debug("Failed to look up realm '{}' as a component, trying reflection", configuredRealmId);
         // If that fails, will simply use reflection to load
         try {
-          realm = (Realm) getClass().getClassLoader().loadClass(realmName).newInstance();
+          realm = (Realm) getClass().getClassLoader().loadClass(configuredRealmId).newInstance();
         }
         catch (Exception e) {
           log.error("Unable to lookup security realms", e);
@@ -289,13 +298,37 @@ public class RealmManagerImpl
   }
 
   @Override
+  public void enableRealm(final String realmName, final int index) {
+    List<String> configuredRealms = new ArrayList<>(getConfiguration().getRealmNames());
+    configuredRealms.remove(realmName);
+
+    // fallback to default functionality in case of bad index (simply add to end of list)
+    // or in case of 'moving' a realm in list and index now invalid after removing
+    if (index > configuredRealms.size()) {
+      log.debug("Enabling realm: {} as last member", realmName);
+      configuredRealms.add(realmName);
+    }
+    else {
+      log.debug("Enabling realm: {} at position: {}", realmName, index);
+      configuredRealms.add(index, realmName);
+    }
+
+    setConfiguredRealmIds(configuredRealms);
+  }
+
+  @Override
   public void disableRealm(final String realmName) {
     checkNotNull(realmName);
 
-    log.debug("Disabling realm: {}", realmName);
-    RealmConfiguration model = getConfiguration();
-    model.getRealmNames().remove(realmName);
-    setConfiguration(model);
+    if (!enableAuthorizationRealmManagement && AuthorizingRealmImpl.NAME.equals(realmName)) {
+      log.error("Cannot disable the {} realm", AuthorizingRealmImpl.NAME);
+    }
+    else {
+      log.debug("Disabling realm: {}", realmName);
+      RealmConfiguration model = getConfiguration();
+      model.getRealmNames().remove(realmName);
+      setConfiguration(model);
+    }
   }
 
   //
@@ -323,6 +356,7 @@ public class RealmManagerImpl
 
   /**
    * Handles a user password change event
+   *
    * @param event
    */
   @Subscribe
@@ -387,9 +421,59 @@ public class RealmManagerImpl
 
   @Override
   public List<SecurityRealm> getAvailableRealms() {
+    return getAvailableRealms(false);
+  }
+
+  @Override
+  public List<SecurityRealm> getAvailableRealms(final boolean includeHidden) {
     return StreamSupport.stream(beanLocator.locate(Key.get(Realm.class, Named.class)).spliterator(), false)
-        .map(entry -> {
-          return new SecurityRealm(((Named) entry.getKey()).value(), entry.getDescription());
-        }).sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName())).collect(toList());
+        .filter(entry -> {
+          log.info(entry.toString());
+          if (includeHidden || enableAuthorizationRealmManagement) {
+            return true;
+          }
+          // don't want users to be aware of this realm any longer
+          return !AuthorizingRealmImpl.NAME.equals(((Named) entry.getKey()).value());
+        })
+        .map(entry -> new SecurityRealm(((Named) entry.getKey()).value(), entry.getDescription()))
+        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName())).collect(toList());
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public List<String> getConfiguredRealmIds() {
+    return getConfiguredRealmIds(false);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public List<String> getConfiguredRealmIds(final boolean includeHidden) {
+    return getConfiguration().getRealmNames().stream().filter(realmName -> {
+      if (includeHidden || enableAuthorizationRealmManagement) {
+        return true;
+      }
+      // don't want users to be aware of this realm any longer
+      return !AuthorizingRealmImpl.NAME.equals(realmName);
+    }).collect(toList());
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void setConfiguredRealmIds(final List<String> realmIds) {
+    List<String> realmIdsToSave = new ArrayList<>(realmIds);
+
+    RealmConfiguration realmConfiguration = getConfiguration();
+    realmConfiguration.setRealmNames(realmIdsToSave);
+    setConfiguration(realmConfiguration);
+  }
+
+  private void maybeAddAuthorizingRealm(final List<String> realmIds) {
+    // as long as we aren't allowing user to manage the authz realm, make sure the config still stores it, just in case
+    // they flip the configuration property in this class to disable, we still want their system to function properly
+    if (!enableAuthorizationRealmManagement) {
+      // remove existing if necessary, to make sure realm is always last
+      realmIds.remove(AuthorizingRealmImpl.NAME);
+      realmIds.add(AuthorizingRealmImpl.NAME);
+    }
   }
 }

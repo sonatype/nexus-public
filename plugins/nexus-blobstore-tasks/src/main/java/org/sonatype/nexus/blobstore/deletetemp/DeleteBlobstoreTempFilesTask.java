@@ -22,6 +22,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.deletetemp.DeleteBlobstoreTempFilesTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.blobstore.deletetemp.DeleteBlobstoreTempFilesTaskDescriptor.DAYS_OLDER_THAN;
 
 @Named
 public class DeleteBlobstoreTempFilesTask
@@ -40,7 +41,8 @@ public class DeleteBlobstoreTempFilesTask
   protected Object execute() throws Exception {
     BlobStore blobStore = blobStoreManager.get(getBlobStoreField());
     if (blobStore != null) {
-      blobStore.deleteTempFiles();
+      int daysOlderThan = getDaysOlderThan() == null ? 0 : Integer.parseInt(getDaysOlderThan());
+      blobStore.deleteTempFiles(daysOlderThan);
     }
     else {
       log.warn("Unable to find blob store: {}", getBlobStoreField());
@@ -56,4 +58,6 @@ public class DeleteBlobstoreTempFilesTask
   private String getBlobStoreField() {
     return getConfiguration().getString(BLOB_STORE_NAME_FIELD_ID);
   }
+
+  private String getDaysOlderThan() { return getConfiguration().getString(DAYS_OLDER_THAN); }
 }
