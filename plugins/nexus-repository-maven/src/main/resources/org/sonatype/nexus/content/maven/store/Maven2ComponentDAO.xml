@@ -78,8 +78,10 @@
   <!-- Override but myBatis doesn't support it properly, so an 'Ex' suffix is used -->
   <select id="browseComponentsForCleanupEx" resultType="ComponentData">
     SELECT maven2_component.* FROM maven2_component
-    <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null">
+    <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
         LEFT OUTER JOIN maven2_asset on maven2_component.component_id = maven2_asset.component_id
+    </if>
+    <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null">
         LEFT JOIN maven2_asset_blob ON maven2_asset.asset_blob_id = maven2_asset_blob.asset_blob_id
     </if>
     WHERE <include refid="componentSetMatch"/>
@@ -104,10 +106,15 @@
               <= (now() - interval '${criteria.lastDownloaded} seconds'))
         ]]>
       </if>
-      <if test  ="criteria.lastBlobUpdated != null">
+      <if test="criteria.lastBlobUpdated != null">
         <![CDATA[
             AND (max(maven2_asset_blob.blob_created)
               <= (now() - interval '${criteria.lastBlobUpdated} seconds'))
+        ]]>
+      </if>
+      <if test="criteria.regex != null">
+        <![CDATA[
+            AND bool_or(maven2_asset.path ~ #{criteria.regex})
         ]]>
       </if>
     </trim>

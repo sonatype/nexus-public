@@ -72,9 +72,9 @@ public class CleanupServiceImpl
 
   private final GroupType groupType;
 
-  private int cleanupRetryLimit;
+  private final int cleanupRetryLimit;
 
-  private CleanupFeatureCheck featureCheck;
+  private final CleanupFeatureCheck featureCheck;
 
   @Inject
   public CleanupServiceImpl(final RepositoryManager repositoryManager,
