@@ -21,6 +21,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsNotAvailableException;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.content.testsuite.groups.OrientTestGroup;
 import org.sonatype.nexus.scheduling.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -29,6 +30,7 @@ import org.sonatype.nexus.common.property.PropertiesFile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 
 import static org.awaitility.Awaitility.await;
@@ -42,6 +44,7 @@ import static org.mockito.Mockito.when;
 /**
  * {@link FileBlobStore} integration tests.
  */
+@Category(OrientTestGroup.class)
 public class OrientFileBlobStoreMetricsStoreIT
     extends TestSupport
 {

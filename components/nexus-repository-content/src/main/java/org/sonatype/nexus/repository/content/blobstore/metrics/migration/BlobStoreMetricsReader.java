@@ -10,9 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-@FeatureFlag(name = DATASTORE_ENABLED)
-package org.sonatype.nexus.repository.content.blobstore.metrics;
+package org.sonatype.nexus.repository.content.blobstore.metrics.migration;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
+import java.util.Map;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.api.OperationMetrics;
+import org.sonatype.nexus.blobstore.api.OperationType;
+
+/**
+ * Read blob store metrics
+ */
+public interface BlobStoreMetricsReader
+{
+  /**
+   * Read common blob store metrics.
+   * @return
+   */
+  BlobStoreMetrics readMetrics(BlobStore blobStore) throws Exception;
+
+  /**
+   * Read blob store operation metrics.
+   * @return
+   */
+  Map<OperationType, OperationMetrics> readOperationMetrics(BlobStore blobStore) throws Exception;
+}
