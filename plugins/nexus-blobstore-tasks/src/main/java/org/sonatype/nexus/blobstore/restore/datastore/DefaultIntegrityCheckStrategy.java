@@ -277,7 +277,7 @@ public class DefaultIntegrityCheckStrategy
    * returns true if the name matches, false otherwise
    */
   private boolean checkName(final BlobAttributes blobAttributes, final Asset asset) {
-    String blobName = getBlobName(blobAttributes);
+    String blobName = getBlobName(blobAttributes, asset);
     String assetName = getAssetName(asset);
 
     checkArgument(blobName != null, BLOB_NAME_MISSING);
@@ -318,7 +318,7 @@ public class DefaultIntegrityCheckStrategy
   /**
    * Get the name from the {@link BlobAttributes}
    */
-  protected String getBlobName(final BlobAttributes blobAttributes) {
+  protected String getBlobName(final BlobAttributes blobAttributes, final Asset asset) {
     return blobAttributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
   }
 }
