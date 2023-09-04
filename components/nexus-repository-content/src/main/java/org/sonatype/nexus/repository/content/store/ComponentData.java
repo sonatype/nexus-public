@@ -38,6 +38,8 @@ public class ComponentData
 
   private String version;
 
+  private String normalizedVersion;
+
   private Integer entityVersion;
 
   private List<Asset> assets;
@@ -62,6 +64,11 @@ public class ComponentData
   @Override
   public String version() {
     return version;
+  }
+
+  @Override
+  public String normalizedVersion() {
+    return normalizedVersion;
   }
 
   @Override
@@ -109,6 +116,13 @@ public class ComponentData
   }
 
   /**
+   * Sets the component normalized version
+   */
+  public void setNormalizedVersion(final String normalizedVersion) {
+    this.normalizedVersion = checkNotNull(normalizedVersion);
+  }
+
+  /**
    * Sets the entity version.
    */
   public void setEntityVersion(final Integer entityVersion) {
@@ -139,6 +153,7 @@ public class ComponentData
         ", name='" + name + '\'' +
         ", kind='" + kind + '\'' +
         ", version='" + version + '\'' +
+        ", normalizedVersion='" + normalizedVersion + '\'' +
         ", entityVersion='" + entityVersion + '\'' +
         "} " + super.toString();
   }

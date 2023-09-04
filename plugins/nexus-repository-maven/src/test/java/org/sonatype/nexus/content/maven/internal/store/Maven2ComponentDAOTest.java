@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.BlobRefTypeHandler;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
+import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.ImmutableMap;
@@ -169,6 +170,7 @@ public class Maven2ComponentDAOTest
     component.setNamespace("group");
     component.setName("artifact");
     component.setVersion(version);
+    component.setNormalizedVersion(VersionNumberExpander.expand(version));
     component.setBaseVersion(baseVersion);
     component.setAttributes(newAttributes("component"));
     component.setKind("aKind");

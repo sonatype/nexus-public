@@ -266,6 +266,8 @@ public class MavenContentFacetImpl
         .name(coordinates.getArtifactId())
         .namespace(coordinates.getGroupId())
         .version(coordinates.getVersion())
+        .normalizedVersion(
+            versionNormalizerService().getNormalizedVersionByFormat(coordinates.getVersion(), repository().getFormat()))
         .kind(optionalKind)
         .getOrCreate();
 
@@ -600,6 +602,8 @@ public class MavenContentFacetImpl
     componentData.setNamespace(source.namespace());
     componentData.setName(source.name());
     componentData.setVersion(source.version());
+    componentData.setNormalizedVersion(
+        versionNormalizerService().getNormalizedVersionByFormat(source.version(), repository().getFormat()));
     componentData.setRepositoryId(contentRepositoryId());
     componentData.setBaseVersion(component.attributes().child("maven2").get("baseVersion").toString());
 
@@ -653,6 +657,7 @@ public class MavenContentFacetImpl
         .name(artifactId)
         .namespace(groupId)
         .version(version)
+        .normalizedVersion(versionNormalizerService().getNormalizedVersionByFormat(version, repository().getFormat()))
         .getOrCreate();
 
     ImmutableMap.Builder<String, String> componentAttributes = ImmutableMap.builder();

@@ -27,6 +27,7 @@
       name          VARCHAR NOT NULL,
       kind          VARCHAR NOT NULL,
       version       VARCHAR NOT NULL,
+      normalized_version VARCHAR,
       attributes    ${JSON_TYPE} NOT NULL,
       created       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       last_updated  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -39,6 +40,23 @@
     );
 
     CREATE INDEX IF NOT EXISTS idx_${format}_component_kind ON ${format}_component (kind);
+
+    --Note: adding create clause for clarity , the alter clause will be executed when
+    -- the table already exists whilst the definiton on the create table will be executed when creating the table
+    ALTER TABLE ${format}_component ADD COLUMN IF NOT EXISTS normalized_version VARCHAR;
+    CREATE INDEX IF NOT EXISTS idx_${format}_normalized_version ON  ${format}_component (normalized_version);
+    <if test="_databaseId == 'PostgreSQL'">
+      --Note: added conditional alter clause to add a not null constraint in case
+      --the table has its normalized_version populated
+      <![CDATA[
+      DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM ${format}_component WHERE normalized_version IS NULL) THEN
+            ALTER TABLE ${format}_component ALTER COLUMN normalized_version SET NOT NULL;
+          END IF;
+        END $$;
+      ]]>
+    </if>
 
     --Note: index intentionally not added because this column is intended to be used
     -- with the component_id which is indexed
@@ -81,11 +99,21 @@
         <if test="filter != null"> AND (${filter})</if>;
   </select>
 
+  <select id="countUnnormalized" resultType="int">
+    SELECT COUNT(component_id) FROM ${format}_component WHERE normalized_version IS NULL;
+  </select>
+
   <select id="browseComponents" resultType="ComponentData">
     SELECT * FROM ${format}_component WHERE repository_id = #{repositoryId}
         <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
         <if test="kind != null"> AND kind = #{kind}</if>
         <if test="filter != null"> AND (${filter})</if>
+    ORDER BY component_id LIMIT #{limit};
+  </select>
+
+  <select id="browseUnnormalized" resultType="ComponentData">
+    SELECT * FROM ${format}_component WHERE normalized_version IS NULL
+    <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
     ORDER BY component_id LIMIT #{limit};
   </select>
 
@@ -96,6 +124,7 @@
     <result property="name" column="name" />
     <result property="kind" column="kind" />
     <result property="version" column="version" />
+    <result property="normalizedVersion" column="normalized_version"/>
     <result property="attributes" column="attributes"/>
     <result property="created" column="created"/>
     <result property="lastUpdated" column="last_updated"/>
@@ -180,10 +209,11 @@
   </select>
 
   <insert id="createComponent" useGeneratedKeys="true" keyProperty="component.componentId">
-    INSERT INTO ${format}_component (repository_id, namespace, name, kind, version, attributes
-        <if test="entityVersionEnabled">, entity_version</if>
+    INSERT INTO ${format}_component (repository_id, namespace, name, kind, version, normalized_version, attributes
+    <if test="entityVersionEnabled">, entity_version</if>
     ) VALUES (#{component.repositoryId}, #{component.namespace}, #{component.name},
-        #{component.kind}, #{component.version}, #{component.attributes} <if test="entityVersionEnabled">, 1</if>
+    #{component.kind}, #{component.version}, #{component.normalizedVersion}, #{component.attributes}
+    <if test="entityVersionEnabled">, 1</if>
     );
   </insert>
 
@@ -208,6 +238,20 @@
         last_updated = CURRENT_TIMESTAMP
         <if test="entityVersionEnabled">, entity_version = COALESCE(entity_version, 1) + 1</if>
         WHERE <include refid="componentMatch"/> AND kind != #{kind};
+  </update>
+
+  <update id="updateComponentNormalizedVersion">
+    <bind name="componentId" value="component.componentId"/>
+    <bind name="namespace" value="component.namespace"/>
+    <bind name="name" value="component.name"/>
+    <bind name="version" value="component.version"/>
+    <bind name="normalized_version" value="component.normalizedVersion"/>
+
+    UPDATE ${format}_component SET
+    normalized_version = #{normalized_version},
+    last_updated = CURRENT_TIMESTAMP
+    <if test="entityVersionEnabled">, entity_version = COALESCE(entity_version, 1) + 1</if>
+    WHERE <include refid="componentMatch"/>;
   </update>
 
   <select id="readComponentAttributes" resultType="NestedAttributesMap">

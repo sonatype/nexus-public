@@ -22,6 +22,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;
+import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 import org.sonatype.nexus.repository.storage.BlobMetadataStorage;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
@@ -51,6 +52,8 @@ public class ContentFacetDependencies
 
   private final BlobMetadataStorage blobMetadataStorage;
 
+  private final VersionNormalizerService versionNormalizerService;
+
   private final Optional<RepositoryMoveService> maybeMoveService;
 
   @Inject
@@ -61,6 +64,7 @@ public class ContentFacetDependencies
                                   final NodeAccess nodeAccess,
                                   final AssetBlobValidators assetBlobValidators,
                                   final BlobMetadataStorage blobMetadataStorage,
+                                  final VersionNormalizerService versionNormalizerService,
                                   @Nullable final RepositoryMoveService moveService)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
@@ -70,6 +74,7 @@ public class ContentFacetDependencies
     this.nodeAccess = checkNotNull(nodeAccess);
     this.assetBlobValidators = checkNotNull(assetBlobValidators);
     this.blobMetadataStorage = checkNotNull(blobMetadataStorage);
+    this.versionNormalizerService = versionNormalizerService;
     this.maybeMoveService = Optional.ofNullable(moveService);
   }
 
@@ -99,6 +104,10 @@ public class ContentFacetDependencies
 
   public BlobMetadataStorage getBlobMetadataStorage() {
     return blobMetadataStorage;
+  }
+
+  public VersionNormalizerService getVersionNormalizerService() {
+    return versionNormalizerService;
   }
 
   public Optional<RepositoryMoveService> getMoveService() {
