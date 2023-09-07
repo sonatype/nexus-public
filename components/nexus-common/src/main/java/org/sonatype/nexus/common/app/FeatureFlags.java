@@ -60,7 +60,7 @@ public interface FeatureFlags
   */
   String BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION = "nexus.blobstore.skipOnSoftQuotaViolation";
 
-  String NEW_AZURE_BLOB_STORE = "nexus.blobstore.new.azure";
+  String LEGACY_AZURE_BLOB_STORE = "nexus.blobstore.azure.legacy";
 
   /*  */
   String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";
