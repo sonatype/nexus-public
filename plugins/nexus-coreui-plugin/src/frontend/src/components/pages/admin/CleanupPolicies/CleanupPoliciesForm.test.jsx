@@ -60,20 +60,25 @@ const selectors = {
   format: () => screen.getByLabelText(LABELS.FORMAT_LABEL),
   notes: () => screen.getByLabelText(LABELS.DESCRIPTION_LABEL),
   releaseType: () => screen.getByLabelText(LABELS.RELEASE_TYPE_LABEL),
-  getInput: (text) => {
-    const parent = screen.getByText(text).closest('.nx-form-group');
-    return parent.querySelector('input');
-  },
   getCriteriaLastBlobUpdatedCheckbox: () =>
     screen.getByTitle(/(Enable|Disable) Component Age Criteria/),
-  criteriaLastBlobUpdated: () => selectors.getInput(LABELS.LAST_UPDATED_LABEL),
+  criteriaLastBlobUpdated: () =>
+    screen.queryByLabelText(LABELS.LAST_UPDATED_LABEL),
   getCriteriaLastDownloadedCheckbox: () =>
     screen.getByTitle(/(Enable|Disable) Component Usage Criteria/),
   criteriaLastDownloaded: () =>
-    selectors.getInput(LABELS.LAST_DOWNLOADED_LABEL),
+    screen.queryByLabelText(LABELS.LAST_DOWNLOADED_LABEL),
   getCriteriaAssetRegexCheckbox: () =>
     screen.getByTitle(/(Enable|Disable) Asset Name Matcher Criteria/),
   criteriaAssetRegex: () => screen.getByLabelText(LABELS.ASSET_NAME_LABEL),
+  criteriaVersion: () =>
+    screen.queryByLabelText(LABELS.EXCLUSION_CRITERIA.VERSION_LABEL),
+  getCriteriaVersionCheckbox: () =>
+    within(screen.getByTitle(/(Enable|Disable) Version Criteria/)).getByRole(
+      'checkbox'
+    ),
+  versionAlertMessage: () =>
+    screen.queryByText(LABELS.EXCLUSION_CRITERIA.ALERT),
   cancelButton: () => screen.getByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
   deleteButton: () => screen.getByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL),
   saveButton: () => screen.getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
@@ -108,6 +113,8 @@ describe('CleanupPoliciesForm', function () {
     criteriaLastDownloaded: 8,
     criteriaReleaseType: 'RELEASES',
     criteriaAssetRegex: '.*',
+    retain: null,
+    sortBy: null,
   };
 
   async function renderView(itemId) {
@@ -150,6 +157,18 @@ describe('CleanupPoliciesForm', function () {
       .calledWith(FORMATS_URL)
       .mockResolvedValue({
         data: [
+          {
+            id: 'maven2',
+            name: 'maven2',
+            availableCriteria: [
+              'regex',
+              'isPrerelease',
+              'retain',
+              'sortBy',
+              'lastDownloaded',
+              'lastBlobUpdated',
+            ],
+          },
           {
             id: 'testformat',
             name: 'Test Format',
@@ -329,6 +348,8 @@ describe('CleanupPoliciesForm', function () {
           criteriaLastBlobUpdated: null,
           criteriaLastDownloaded: null,
           criteriaReleaseType: null,
+          retain: null,
+          sortBy: null,
         }
       )
     );
@@ -384,6 +405,8 @@ describe('CleanupPoliciesForm', function () {
           format: EDITABLE_ITEM.format,
           name: EDITABLE_ITEM.name,
           notes: EDITABLE_ITEM.notes,
+          retain: null,
+          sortBy: null,
         }
       )
     );
@@ -440,7 +463,7 @@ describe('CleanupPoliciesForm', function () {
       expect(previewCmpCount(1, 1)).toBeInTheDocument();
 
       when(axios.post)
-        .calledWith(PREVIEW_URL , {
+        .calledWith(PREVIEW_URL, {
           criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
           criteriaLastDownloaded: EDITABLE_ITEM.criteriaLastDownloaded,
           criteriaReleaseType: EDITABLE_ITEM.criteriaReleaseType,
@@ -481,8 +504,6 @@ describe('CleanupPoliciesForm', function () {
       } = selectors;
 
       await renderView(EDITABLE_ITEM.name);
-
-      console.log('select:',previewRepositories());
 
       userEvent.selectOptions(previewRepositories(), 'maven-central');
       expect(previewRepositories()).toHaveValue('maven-central');
@@ -622,6 +643,172 @@ describe('CleanupPoliciesForm', function () {
 
       expect(selectDropdown).toHaveValue('');
       expect(createButton).toHaveAttribute('aria-disabled', 'true');
+    });
+  });
+
+  describe('Exclusion Criteria - retain-n', function () {
+    const ITEM = {
+      ...EDITABLE_ITEM,
+      name: 'another-test',
+      format: 'maven2',
+      retain: 1,
+      sortBy: 'version',
+    };
+
+    beforeEach(() => {
+      when(axios.get)
+        .calledWith(URL.singleCleanupPolicyUrl(ITEM.name))
+        .mockResolvedValue({
+          data: ITEM,
+        });
+
+      when(ExtJS.state().getValue)
+        .calledWith('nexus.cleanup.mavenRetain')
+        .mockReturnValue(true);
+
+      when(ExtJS.state().getValue)
+        .calledWith('datastore.isPostgresql')
+        .mockReturnValue(true);
+    });
+
+    it('renders the resolved data including the retain-n configuration', async function () {
+      const {
+        name,
+        format,
+        notes,
+        releaseType,
+        getCriteriaLastBlobUpdatedCheckbox,
+        criteriaLastBlobUpdated,
+        getCriteriaLastDownloadedCheckbox,
+        criteriaLastDownloaded,
+        getCriteriaAssetRegexCheckbox,
+        criteriaAssetRegex,
+        criteriaVersion,
+      } = selectors;
+
+      await renderView(ITEM.name);
+
+      expect(name()).toHaveValue(ITEM.name);
+      expect(format()).toHaveValue(ITEM.format);
+      expect(notes()).toHaveValue(ITEM.notes);
+      expect(releaseType()).toHaveValue(ITEM.criteriaReleaseType);
+      expect(getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-checked');
+      expect(criteriaLastBlobUpdated()).toHaveValue(
+        ITEM.criteriaLastBlobUpdated.toString()
+      );
+      expect(getCriteriaLastDownloadedCheckbox()).toHaveClass('tm-checked');
+      expect(criteriaLastDownloaded()).toHaveValue(
+        ITEM.criteriaLastDownloaded.toString()
+      );
+      expect(getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
+      expect(criteriaAssetRegex()).toHaveValue(ITEM.criteriaAssetRegex);
+      expect(
+        selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(LABELS.EXCLUSION_CRITERIA.ALERT)
+      ).not.toBeInTheDocument();
+      expect(criteriaVersion()).toHaveValue(ITEM.retain.toString());
+
+      const message = `${LABELS.EXCLUSION_CRITERIA.SUFFIX} ${LABELS.EXCLUSION_CRITERIA.SORT_BY.VERSION.label}`;
+
+      expect(screen.getByText(message)).toBeInTheDocument();
+    });
+
+    it('Version criteria is visible for maven only', async function () {
+      const {name, format, notes, versionAlertMessage} = selectors;
+
+      await renderView();
+
+      expect(versionAlertMessage()).not.toBeInTheDocument();
+
+      await TestUtils.changeField(name, ITEM.name);
+      await TestUtils.changeField(format, ITEM.format);
+      await TestUtils.changeField(notes, ITEM.notes);
+
+      expect(versionAlertMessage()).toBeInTheDocument();
+    });
+
+    it('Version criteria is visible only for Nexus instances using Postgres', async function () {
+      when(ExtJS.state().getValue)
+        .calledWith('datastore.isPostgresql')
+        .mockReturnValue(false);
+
+      const {name, format, notes, versionAlertMessage} = selectors;
+
+      await renderView();
+
+      expect(versionAlertMessage()).not.toBeInTheDocument();
+
+      await TestUtils.changeField(name, ITEM.name);
+      await TestUtils.changeField(format, ITEM.format);
+      await TestUtils.changeField(notes, ITEM.notes);
+
+      expect(versionAlertMessage()).not.toBeInTheDocument();
+    });
+
+    it('Version criteria should be enable only when Release type is Releases', async function () {
+      const {
+        format,
+        criteriaVersion,
+        getCriteriaVersionCheckbox,
+        releaseType,
+        versionAlertMessage,
+      } = selectors;
+
+      await renderView();
+
+      expect(criteriaVersion()).not.toBeInTheDocument();
+
+      await TestUtils.changeField(format, ITEM.format);
+
+      expect(criteriaVersion()).toBeVisible();
+      expect(getCriteriaVersionCheckbox()).toBeVisible();
+      expect(getCriteriaVersionCheckbox()).toBeDisabled();
+      expect(versionAlertMessage()).toBeInTheDocument();
+
+      await TestUtils.changeField(releaseType, 'RELEASES');
+
+      expect(getCriteriaVersionCheckbox()).toBeEnabled();
+      expect(versionAlertMessage()).not.toBeInTheDocument();
+
+      await TestUtils.changeField(releaseType, 'PRERELEASES');
+
+      expect(getCriteriaVersionCheckbox()).toBeDisabled();
+      expect(versionAlertMessage()).toBeInTheDocument();
+
+      await TestUtils.changeField(releaseType, '');
+
+      expect(getCriteriaVersionCheckbox()).toBeDisabled();
+      expect(versionAlertMessage()).toBeInTheDocument();
+
+      await TestUtils.changeField(releaseType, 'RELEASES');
+
+      expect(getCriteriaVersionCheckbox()).toBeEnabled();
+      expect(versionAlertMessage()).not.toBeInTheDocument();
+    });
+
+    it('saves the retain-n values', async function () {
+      const {criteriaVersion, saveButton} = selectors;
+
+      await renderView(ITEM.name);
+
+      await TestUtils.changeField(criteriaVersion, '5');
+
+      expect(saveButton()).not.toBeDisabled();
+
+      await act(async () => userEvent.click(saveButton()));
+
+      await waitFor(() =>
+        expect(axios.put).toHaveBeenCalledWith(
+          URL.singleCleanupPolicyUrl(ITEM.name),
+          {
+            ...ITEM,
+            retain: '5',
+            sortBy: 'version',
+          }
+        )
+      );
     });
   });
 });

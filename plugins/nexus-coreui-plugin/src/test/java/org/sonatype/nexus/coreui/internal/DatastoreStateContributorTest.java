@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,45 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/**
- * @since 3.29
- */
+package org.sonatype.nexus.coreui.internal;
 
-@import '~@sonatype/react-shared-components/scss-shared/nx-container-helpers';
+import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 
-.nxrm-cleanup-policies {
-  .suffix,
-  .prefix {
-    display: inline-block;
-    vertical-align: top;
-    margin-top: var(--nx-spacing-3x);
-    margin-right: var(--nx-spacing-base);
-  }
+import org.junit.Test;
 
-  .suffix {
-    margin-left: var(--nx-spacing-base);
-  }
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-  .nx-alert__content {
-    @include container-vertical;
-  }
+public class DatastoreStateContributorTest
+    extends TestSupport
+{
+  @Test
+  public void datastoreStateContributorExposesIsPostgresqlState() {
+    DatabaseCheck dbCheck = mock(DatabaseCheck.class);
+    when(dbCheck.isPostgresql()).thenReturn(true);
 
-  .nx-h3 {
-    margin-top: 0;
-  }
-}
+    DatastoreStateContributor contributor = new DatastoreStateContributor(false, false, dbCheck);
 
-.nxrm-cleanup-policies-dry-run {
-  .nx-h2 {
-    margin-bottom: var(--nx-spacing-6x);
-  }
-
-  .nx-form-row {
-    margin-bottom: 0;
-  }
-
-  .nx-form-select {
-    margin-bottom: 0;
-    margin-right: var(--nx-spacing-6x);
+    assertThat(contributor.getState().get("datastore.isPostgresql"), is(true));
   }
 }

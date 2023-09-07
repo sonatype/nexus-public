@@ -57,6 +57,7 @@ export default {
     RELEASE_TYPE_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Release Type Criteria`,
     RELEASE_TYPE_LABEL: 'Release Type',
     ASSET_NAME_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Asset Name Matcher Criteria`,
+    VERSION_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Version Criteria`,
     ASSET_NAME_LABEL: 'Asset Name Matcher',
     FORMAT_SELECT: 'Select a format...',
     RELEASE_TYPE_SELECT: 'Select the release type:',
@@ -84,6 +85,26 @@ export default {
       PRERELEASES: {
         id: 'PRERELEASES',
         label: 'Pre-Releases/Snapshots'
+      },
+    },
+
+    EXCLUSION_CRITERIA: {
+      LABEL: 'Except for any component where:',
+      ALERT: 'This option is only applicable to releases',
+      VERSION_LABEL: 'Version',
+      PREFIX: 'is the most',
+      SUFFIX: 'recent versions by',
+      SORT_BY: {
+        VERSION: {
+          id: 'version',
+          label: 'version number',
+          format: 'maven2'
+        },
+        DATE: {
+          id: 'date',
+          label: 'component age',
+          format: 'docker'
+        },
       },
     },
 

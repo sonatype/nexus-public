@@ -6,26 +6,33 @@
  * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
  * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
  *
- * Sonatype Nexus (TM) Open Source Version is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon
- * between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a
- * closed source work.
- *
  * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.coreui.internal;
 
-import UIStrings from '../../../../constants/UIStrings';
+import com.google.common.collect.ImmutableMap;
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.rapture.StateContributor;
 
-const {CLEANUP_POLICIES: LABELS} = UIStrings;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.util.Map;
 
-const baseUrl = '/service/rest/internal/cleanup-policies';
-const singleCleanupPolicyUrl = (name) => `${baseUrl}/${name}`;
+@Named
+@Singleton
+public class MavenRetainStateContributor extends ComponentSupport implements StateContributor {
+    private final Map<String, Object> state;
 
-export const isReleaseType = (criteriaReleaseType) =>
-  LABELS.RELEASE_TYPE.RELEASES.id === criteriaReleaseType;
+    @Inject
+    public MavenRetainStateContributor(@Named("${nexus.cleanup.mavenRetain:-false}") final Boolean featureFlag) {
+        state = ImmutableMap.of("nexus.cleanup.mavenRetain", featureFlag);
+    }
 
-export const URL = {
-  baseUrl,
-  singleCleanupPolicyUrl,
-};
+    @Override
+    public Map<String, Object> getState() {
+        return state;
+    }
+}
