@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -128,6 +128,16 @@ public class RepositoryTestSystem
 
   public RFormatRepositoryTestSystem r() {
     return (RFormatRepositoryTestSystem) formatRepositoryTestSystemMap.get(FORMAT_R);
+  }
+
+  public void delete(final Repository ...repository) throws Exception {
+    delete(Arrays.asList(repository));
+  }
+
+  public void delete(final Iterable<Repository> repositories) throws Exception {
+    for (Repository repository : repositories) {
+      repositoryManager.delete(repository.getName());
+    }
   }
 
   public List<Repository> getRepositories() {

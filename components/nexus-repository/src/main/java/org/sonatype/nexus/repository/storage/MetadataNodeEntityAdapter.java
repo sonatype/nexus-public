@@ -294,7 +294,7 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     }
   }
 
-  long countByQuery(final ODatabaseDocumentTx db,
+  public long countByQuery(final ODatabaseDocumentTx db,
                     @Nullable final String whereClause,
                     @Nullable final Map<String, Object> parameters,
                     @Nullable final Iterable<Bucket> buckets,
