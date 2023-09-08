@@ -10,38 +10,46 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.upgrade.datastore.internal.steps;
+package org.sonatype.nexus.internal.security.apikey.upgrade;
 
 import java.sql.Connection;
 import java.util.Optional;
 
 import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 /**
- * Delete all tokens from the {@code distributed_auth_ticket_cache} table
+ * Updates api_key table to add principals to the primary key
  */
 @Named
-@Singleton
-public class DistributedAuthTicketMigrationStep_1_30
+public class ApiKeyUpgrade_1_31
     extends ComponentSupport
     implements DatabaseMigrationStep
 {
-  private static final String DELETE_ALL_RECORDS = "TRUNCATE TABLE distributed_auth_ticket_cache";
+  private static final String DROP_CONSTRAINT =
+      "ALTER TABLE api_key DROP CONSTRAINT pk_api_key_primaryprincipal_domain;";
+
+  private static final String ADD_CONSTRAINT =
+      "ALTER TABLE api_key ADD CONSTRAINT pk_api_key_primaryprincipal_domain_principals PRIMARY KEY "
+          + "(primary_principal, domain, principals);";
 
   @Override
   public Optional<String> version() {
-    return Optional.of("1.30");
+    return Optional.of("1.31");
   }
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    if (tableExists(connection, "distributed_auth_ticket_cache")) {
-      log.info("Deleting all tokens form the distributed_auth_ticket_cache table");
-      runStatement(connection, DELETE_ALL_RECORDS);
+    boolean tableExists = tableExists(connection, "api_key") ;
+    boolean indexExists = indexExists(connection, "pk_api_key_primaryprincipal_domain");
+
+    log.info("Updating primary key for api_key. table_exists:{} index:{} change_required:{}", tableExists, indexExists,
+        tableExists && indexExists);
+
+    if (tableExists && indexExists) {
+      runStatement(connection, DROP_CONSTRAINT + ADD_CONSTRAINT);
     }
   }
 }

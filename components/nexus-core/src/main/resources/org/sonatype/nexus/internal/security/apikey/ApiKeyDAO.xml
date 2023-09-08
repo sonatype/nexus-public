@@ -28,7 +28,7 @@
       Optimization: put the primary principal before the domain in the primary key,
       so the PK index can be re-used when querying for a principal over all domains
       -->
-      CONSTRAINT pk_api_key_primaryprincipal_domain PRIMARY KEY (primary_principal, domain),
+      CONSTRAINT pk_api_key_primaryprincipal_domain_principals PRIMARY KEY (primary_principal, domain, principals),
       CONSTRAINT uk_api_key_domain_token UNIQUE (domain, token)
     );
 
@@ -64,7 +64,7 @@
     INSERT INTO api_key (primary_principal, domain, token, principals<if test="created != null">, created</if>)
         VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler},
                 #{domain}, #{token}, #{principals}<if test="created != null">, #{created}</if>)
-    ON CONFLICT (primary_principal, domain) DO UPDATE SET
+    ON CONFLICT (primary_principal, domain, principals) DO UPDATE SET
         token = #{token}, principals = #{principals},
         <choose>
           <when test="created != null">created = #{created}</when>

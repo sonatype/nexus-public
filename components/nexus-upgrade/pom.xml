@@ -102,6 +102,12 @@
       <artifactId>objenesis</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-db</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>
