@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal;
+package org.sonatype.nexus.repository.cleanup;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.db.DatabaseCheck;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_MAVEN_RETAIN;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
 
 public class CleanupFeatureCheck extends ComponentSupport
 {
@@ -43,7 +42,7 @@ public class CleanupFeatureCheck extends ComponentSupport
     }
   }
 
-  public final boolean isRetainSupported(String formatName, Map<String, String> criteria) {
+  public final boolean isRetainSupported(String formatName) {
     boolean isPostgres = databaseCheck.isPostgresql();
     boolean retainEnabled = this.retainEnabledSet.contains(formatName);
     return isPostgres && retainEnabled;

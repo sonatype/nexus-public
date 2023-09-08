@@ -53,6 +53,13 @@ public interface ComponentDAO
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
+   * Count all components without normalized_version
+   *
+   * @return count of components in the table
+   */
+  int countUnnormalized();
+
+  /**
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId      the repository to browse
@@ -79,6 +86,18 @@ public interface ComponentDAO
       @Nullable @Param("kind") String kind,
       @Nullable @Param("filter") String filter,
       @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+
+  /**
+   * Browse all components without normalized_version
+   *
+   * @param limit maximum number of components to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of components and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  Continuation<ComponentData> browseUnnormalized(
+      @Param("limit") int limit,
+      @Nullable @Param("continuationToken") String continuationToken);
 
   /**
    * Browse all components in the given repository ids in a paged fashion.
@@ -224,6 +243,17 @@ public interface ComponentDAO
    * @since 3.25
    */
   void updateComponentKind(
+      @Param("component") Component component,
+      @Param("entityVersionEnabled") boolean entityVersionEnabled);
+
+  /**
+   * Updates the normalized_version of the given component in the content data store.
+   *
+   * @param component            the component to update
+   * @param entityVersionEnabled whether to version this component
+   * @since 3.next
+   */
+  void updateComponentNormalizedVersion(
       @Param("component") Component component,
       @Param("entityVersionEnabled") boolean entityVersionEnabled);
 

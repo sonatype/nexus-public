@@ -14,7 +14,6 @@ package org.sonatype.nexus.content.raw.internal.recipe;
 
 import java.io.IOException;
 import java.util.Optional;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -42,7 +41,9 @@ public class RawContentFacetImpl
     implements RawContentFacet
 {
   @Inject
-  public RawContentFacetImpl(@Named(RawFormat.NAME) final FormatStoreManager formatStoreManager) {
+  public RawContentFacetImpl(
+      @Named(RawFormat.NAME) final FormatStoreManager formatStoreManager)
+  {
     super(formatStoreManager);
   }
 

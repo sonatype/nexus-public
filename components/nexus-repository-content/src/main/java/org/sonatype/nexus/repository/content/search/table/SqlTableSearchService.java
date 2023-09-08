@@ -394,7 +394,7 @@ public class SqlTableSearchService
     searchResult.setPath(asset.path());
     searchResult.setRepository(repositoryName);
     searchResult.setFormat(componentInfo.format());
-    searchResult.setLastModified(Date.from(asset.lastUpdated().toInstant()));
+    searchResult.setLastModified(Date.from(asset.blobCreated().toInstant()));
     searchResult.setAttributes(asset.attributes().backing());
     searchResult.getAttributes().put(CHECKSUM, asset.checksums());
     searchResult.setContentType(asset.contentType());

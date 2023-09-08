@@ -46,6 +46,8 @@ public class FluentComponentBuilderImpl
 
   private String version = "";
 
+  private String normalizedVersion = "";
+
   private Map<String, Object> attributes;
 
   public FluentComponentBuilderImpl(
@@ -83,6 +85,12 @@ public class FluentComponentBuilderImpl
   }
 
   @Override
+  public FluentComponentBuilder normalizedVersion(final String normalizedVersion) {
+    this.normalizedVersion = checkNotNull(normalizedVersion);
+    return this;
+  }
+
+  @Override
   public FluentComponentBuilder attributes(final String key, final Object value) {
     checkNotNull(key);
     checkNotNull(value);
@@ -114,6 +122,7 @@ public class FluentComponentBuilderImpl
     component.setName(name);
     component.setKind(kind);
     component.setVersion(version);
+    component.setNormalizedVersion(normalizedVersion);
 
     if (attributes != null && !attributes.isEmpty()) {
       component.attributes().backing().putAll(attributes);

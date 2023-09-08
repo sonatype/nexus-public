@@ -358,6 +358,7 @@ public class ExampleContentTestSupport
     else {
       component.setVersion("");
     }
+    component.setNormalizedVersion(component.version());
     component.setAttributes(newAttributes("component"));
     component.setKind("aKind");
     return component;
@@ -368,6 +369,7 @@ public class ExampleContentTestSupport
     component.setNamespace(namespace);
     component.setName(name);
     component.setVersion(version);
+    component.setNormalizedVersion(version);
     component.setAttributes(newAttributes("component"));
     component.setKind("aKind");
     return component;

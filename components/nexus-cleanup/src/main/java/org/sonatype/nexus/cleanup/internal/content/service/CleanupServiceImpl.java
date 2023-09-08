@@ -26,7 +26,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.cleanup.internal.CleanupFeatureCheck;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.service.CleanupService;
@@ -72,9 +72,9 @@ public class CleanupServiceImpl
 
   private final GroupType groupType;
 
-  private int cleanupRetryLimit;
+  private final int cleanupRetryLimit;
 
-  private CleanupFeatureCheck featureCheck;
+  private final CleanupFeatureCheck featureCheck;
 
   @Inject
   public CleanupServiceImpl(final RepositoryManager repositoryManager,
@@ -117,7 +117,7 @@ public class CleanupServiceImpl
 
   private CleanupComponentBrowse selectBrowseService(final Repository repository, Map<String, String> criteria) {
     String serviceName = DEFAULT_CLEANUP_BROWSE_NAME;
-    if (this.featureCheck.isRetainSupported(repository.getFormat().getValue(), criteria)) {
+    if (this.featureCheck.isRetainSupported(repository.getFormat().getValue())) {
       serviceName = COMPONENT_SET_CLEANUP_BROWSE_NAME;
     }
     CleanupComponentBrowse browseService = browseServices.get(serviceName);

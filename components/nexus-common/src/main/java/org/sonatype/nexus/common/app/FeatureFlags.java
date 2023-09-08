@@ -35,6 +35,9 @@ public interface FeatureFlags
   String DATASTORE_CLUSTERED_ENABLED = "nexus.datastore.clustered.enabled";
   String DATASTORE_CLUSTERED_ENABLED_NAMED = "${nexus.datastore.clustered.enabled:-false}";
 
+  /* Feature flag to indicate if current db is postgresql */
+  String DATASTORE_IS_POSTGRESQL = "datastore.isPostgresql";
+
   //Enable elastic search
   String ELASTIC_SEARCH_ENABLED = "nexus.elasticsearch.enabled";
 
@@ -60,7 +63,7 @@ public interface FeatureFlags
   */
   String BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION = "nexus.blobstore.skipOnSoftQuotaViolation";
 
-  String NEW_AZURE_BLOB_STORE = "nexus.blobstore.new.azure";
+  String LEGACY_AZURE_BLOB_STORE = "nexus.blobstore.azure.legacy";
 
   /*  */
   String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";

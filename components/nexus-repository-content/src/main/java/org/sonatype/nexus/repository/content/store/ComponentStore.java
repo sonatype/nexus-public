@@ -92,6 +92,16 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
+   * Count all components without normalized_version
+   *
+   * @return count of components in the table
+   */
+  @Transactional
+  public int countUnnormalized(){
+    return dao().countUnnormalized();
+  }
+
+  /**
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId      the repository to browse
@@ -112,7 +122,8 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    return dao().browseComponents(repositoryId, limit, continuationToken, kind, filter, filterParams);
+    return dao().browseComponents(repositoryId, limit, continuationToken, kind, filter,
+        filterParams);
   }
 
   @Transactional
@@ -125,6 +136,22 @@ public class ComponentStore<T extends ComponentDAO>
       @Nullable final Map<String, Object> filterParams)
   {
     return dao().browseComponentsEager(repositoryIds, limit, continuationToken, kind, filter, filterParams);
+  }
+
+  /**
+   * Browse all components without normalized_version
+   *
+   * @param limit maximum number of components to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of components and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  @Transactional
+  public Continuation<ComponentData> browseUnnormalized(
+      final int limit,
+      @Nullable final String continuationToken)
+  {
+    return dao().browseUnnormalized(limit, continuationToken);
   }
 
   /**
@@ -301,6 +328,16 @@ public class ComponentStore<T extends ComponentDAO>
     dao().updateComponentKind(component, clustered);
 
     postCommitEvent(() -> new ComponentKindEvent(component));
+  }
+
+  /**
+   * Updates the normalized_version of the given component in the content data store.
+   *
+   * @param component the component to update
+   */
+  @Transactional
+  public void updateComponentNormalizedVersion(final Component component) {
+    dao().updateComponentNormalizedVersion(component, clustered);
   }
 
   /**

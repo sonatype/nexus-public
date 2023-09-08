@@ -16,6 +16,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
+import com.google.inject.name.Names;
 
 /**
  * Provides access to the shared metrics and healthcheck registries.
@@ -30,6 +31,9 @@ public class MetricsRegistryModule
   @Override
   protected void configure() {
     bind(MetricRegistry.class).toInstance(SharedMetricRegistries.getOrCreate("nexus"));
+    bind(MetricRegistry.class)
+        .annotatedWith(Names.named("usage"))
+        .toInstance(SharedMetricRegistries.getOrCreate("usage"));
     bind(HealthCheckRegistry.class).toInstance(HEALTH_CHECK_REGISTRY);
   }
 }

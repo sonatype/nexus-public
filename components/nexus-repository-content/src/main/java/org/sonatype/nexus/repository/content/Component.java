@@ -43,6 +43,11 @@ public interface Component
   String version();
 
   /**
+   * The component normalized version; if null then normalizeVersion task is in progress
+   */
+  String normalizedVersion();
+
+  /**
    * The entity version
    */
   Integer entityVersion();

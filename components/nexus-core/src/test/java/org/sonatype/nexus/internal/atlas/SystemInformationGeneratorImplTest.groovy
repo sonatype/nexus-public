@@ -165,4 +165,25 @@ class SystemInformationGeneratorImplTest
       assertThat(nexusProps.get("sun.java.command"),
           equalTo("test.variable=1 -Dnexus.password=**** -Dnexus.token=****"))
   }
+
+  def "INSTALL4J_ADD_VM_PARAMS sensitive data is hidden"() {
+    given:
+      def generator = new SystemInformationGeneratorImpl(
+          Mock(ApplicationDirectories.class),
+          Mock(ApplicationVersion.class),
+          Mock(ApplicationLicense.class),
+          Collections.singletonMap("INSTALL4J_ADD_VM_PARAMS", "test.variable=1 -Dnexus.password=nxrm -Dnexus.token=123456"),
+          Mock(BundleContext.class),
+          Mock(BundleService.class),
+          Mock(NodeAccess.class),
+          Mock(DeploymentAccess.class))
+
+    when:
+      def report = generator.report()
+
+    then:
+      def nexusProps = report.get("nexus-properties")
+      assertThat(nexusProps.get("INSTALL4J_ADD_VM_PARAMS"),
+          equalTo("test.variable=1 -Dnexus.password=**** -Dnexus.token=****"))
+  }
 }

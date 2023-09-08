@@ -17,10 +17,12 @@
 import {assign} from 'xstate';
 import Axios from 'axios';
 import {isEmpty, mergeDeepRight} from 'ramda';
-import {URL} from './CleanupPoliciesHelper';
+import {URL, isReleaseType} from './CleanupPoliciesHelper';
 import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
+
+const {CLEANUP_POLICIES: LABELS} = UIStrings;
 
 const EMPTY_DATA = {
   name: '',
@@ -59,15 +61,23 @@ export default FormUtils.buildFormMachine({
           on: {
             SET_CRITERIA_LAST_DOWNLOADED_ENABLED: {
               target: 'loaded',
-              actions: ['setCriteriaLastDownloadedEnabled'],
+              actions: 'setCriteriaLastDownloadedEnabled',
             },
             SET_CRITERIA_LAST_BLOB_UPDATED_ENABLED: {
               target: 'loaded',
-              actions: ['setCriteriaLastBlobUpdatedEnabled'],
+              actions: 'setCriteriaLastBlobUpdatedEnabled',
             },
             SET_CRITERIA_ASSET_REGEX_ENABLED: {
               target: 'loaded',
-              actions: ['setCriteriaAssetRegexEnabled'],
+              actions: 'setCriteriaAssetRegexEnabled',
+            },
+            SET_EXCLUSION_CRITERIA_ENABLED: {
+              target: 'loaded',
+              actions: 'setExclusionCriteriaEnabled',
+            },
+            UPDATE_RELEASE_TYPE: {
+              target: 'loaded',
+              actions: 'setReleaseType',
             },
             UPDATE: {
               actions: [
@@ -87,6 +97,7 @@ export default FormUtils.buildFormMachine({
         criteriaLastDownloadedEnabled,
         criteriaLastBlobUpdatedEnabled,
         criteriaAssetRegexEnabled,
+        exclusionCriteriaEnabled,
       }) => ({
         name: ValidationUtils.validateNameField(data.name),
         format: ValidationUtils.validateNotBlank(data.format),
@@ -101,16 +112,58 @@ export default FormUtils.buildFormMachine({
         criteriaAssetRegex:
           criteriaAssetRegexEnabled &&
           ValidationUtils.validateNotBlank(data.criteriaAssetRegex),
+        retain: validateCriteriaNumberField(
+          exclusionCriteriaEnabled,
+          data.retain
+        ),
       }),
     }),
     setCriteriaLastDownloadedEnabled: assign({
       criteriaLastDownloadedEnabled: (_, {checked}) => checked,
+      data: ({data}, {checked}) =>
+        mergeDeepRight(data, {
+          criteriaLastDownloaded: checked ? data.criteriaLastDownloaded : null,
+        }),
     }),
     setCriteriaLastBlobUpdatedEnabled: assign({
       criteriaLastBlobUpdatedEnabled: (_, {checked}) => checked,
+      data: ({data}, {checked}) =>
+        mergeDeepRight(data, {
+          criteriaLastBlobUpdated: checked
+            ? data.criteriaLastBlobUpdated
+            : null,
+        }),
     }),
     setCriteriaAssetRegexEnabled: assign({
       criteriaAssetRegexEnabled: (_, {checked}) => checked,
+      data: ({data}, {checked}) =>
+        mergeDeepRight(data, {
+          criteriaAssetRegex: checked ? data.criteriaAssetRegex : null,
+        }),
+    }),
+    setExclusionCriteriaEnabled: assign({
+      exclusionCriteriaEnabled: (_, {checked}) => checked,
+      data: ({data}, {checked}) =>
+        mergeDeepRight(data, {
+          retain: checked ? data.retain : null,
+          sortBy: checked ? LABELS.EXCLUSION_CRITERIA.SORT_BY.VERSION.id : null,
+        }),
+    }),
+    setReleaseType: assign((ctx, {value}) => {
+      const exclusionCriteriaEnabled =
+        isReleaseType(value) && ctx.exclusionCriteriaEnabled;
+
+      let data = {criteriaReleaseType: value};
+
+      if (!exclusionCriteriaEnabled) {
+        data.retain = null;
+        data.sortBy = null;
+      }
+
+      return mergeDeepRight(ctx, {
+        exclusionCriteriaEnabled,
+        data,
+      });
     }),
     postProcessData: assign((_, {data: [, details]}) => ({
       criteriaLastDownloadedEnabled: Boolean(
@@ -120,6 +173,8 @@ export default FormUtils.buildFormMachine({
         details?.data?.criteriaLastBlobUpdated
       ),
       criteriaAssetRegexEnabled: Boolean(details?.data?.criteriaAssetRegex),
+      exclusionCriteriaEnabled:
+        Boolean(details?.data?.retain) || Boolean(details?.data?.sortBy),
     })),
     clearCriteria: assign((ctx, event) => {
       if (event.name === 'format' && event.value !== ctx.format) {
@@ -129,10 +184,13 @@ export default FormUtils.buildFormMachine({
             criteriaLastDownloaded: null,
             criteriaReleaseType: null,
             criteriaAssetRegex: null,
+            retain: null,
+            sortBy: null,
           },
           criteriaLastDownloadedEnabled: false,
           criteriaLastBlobUpdatedEnabled: false,
           criteriaAssetRegexEnabled: false,
+          exclusionCriteriaEnabled: false,
         });
       }
       return ctx;
@@ -143,9 +201,7 @@ export default FormUtils.buildFormMachine({
       pristineData: details?.data,
     })),
     onDeleteError: ({data}) =>
-      ExtJS.showErrorMessage(
-        UIStrings.CLEANUP_POLICIES.MESSAGES.DELETE_ERROR(data.name)
-      ),
+      ExtJS.showErrorMessage(LABELS.MESSAGES.DELETE_ERROR(data.name)),
   },
   guards: {
     isEdit: ({pristineData}) => isEdit(pristineData),
@@ -177,6 +233,8 @@ export default FormUtils.buildFormMachine({
         criteriaLastDownloaded: data.criteriaLastDownloaded,
         criteriaReleaseType: getCriteriaReleaseType(),
         criteriaAssetRegex: data.criteriaAssetRegex,
+        retain: data.retain,
+        sortBy: data.sortBy,
       };
 
       return isEdit(pristineData)
@@ -186,12 +244,10 @@ export default FormUtils.buildFormMachine({
 
     confirmDelete: ({data}) =>
       ExtJS.requestConfirmation({
-        title: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.TITLE,
-        message: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.MESSAGE(
-          data.inUseCount
-        ),
-        yesButtonText: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.YES,
-        noButtonText: UIStrings.CLEANUP_POLICIES.MESSAGES.CONFIRM_DELETE.NO,
+        title: LABELS.MESSAGES.CONFIRM_DELETE.TITLE,
+        message: LABELS.MESSAGES.CONFIRM_DELETE.MESSAGE(data.inUseCount),
+        yesButtonText: LABELS.MESSAGES.CONFIRM_DELETE.YES,
+        noButtonText: LABELS.MESSAGES.CONFIRM_DELETE.NO,
       }),
 
     delete: ({data}) => Axios.delete(URL.singleCleanupPolicyUrl(data.name)),

@@ -138,11 +138,12 @@ public class FluentComponentsImpl
         });
   }
 
-  Continuation<FluentComponent> doBrowse(final int limit,
-                                         @Nullable final String continuationToken,
-                                         @Nullable final String kind,
-                                         @Nullable final String filter,
-                                         @Nullable final Map<String, Object> filterParams)
+  Continuation<FluentComponent> doBrowse(
+      final int limit,
+      @Nullable final String continuationToken,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
   {
     if (isGroupRepository(facet.repository())) {
       Set<Integer> leafRepositoryIds = getLeafRepositoryIds(facet.repository());

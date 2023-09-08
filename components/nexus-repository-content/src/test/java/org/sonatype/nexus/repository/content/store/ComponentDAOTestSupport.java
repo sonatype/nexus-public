@@ -89,12 +89,15 @@ public class ComponentDAOTestSupport
     String anotherKind = "kind2";
     component1.setNamespace("");
     component1.setVersion("1.1");
+    component1.setNormalizedVersion("0000000001.0000000001");
     component1.setKind(akind);
     component2.setNamespace("demo");
     component2.setVersion("1.2");
+    component2.setNormalizedVersion("0000000001.0000000002");
     component2.setKind(anotherKind);
     component3.setNamespace("another demo");
     component3.setVersion("1.0");
+    component1.setNormalizedVersion("0000000001.0000000000");
     component3.setKind(anotherKind);
 
     String namespace1 = component1.namespace();
@@ -151,6 +154,7 @@ public class ComponentDAOTestSupport
       duplicate.setNamespace(component1.namespace());
       duplicate.setName(component1.name());
       duplicate.setVersion(component1.version());
+      duplicate.setNormalizedVersion(component1.normalizedVersion());
       duplicate.setKind(component1.kind());
       duplicate.setAttributes(newAttributes("duplicate"));
       dao.createComponent(duplicate, entityVersionEnabled);
@@ -657,6 +661,44 @@ public class ComponentDAOTestSupport
       });
 
     }
+  }
+
+  public void testNormalizationMethods(){
+    ContentRepositoryData randomContentRepository= randomContentRepository();
+    createContentRepository(randomContentRepository);
+    ComponentData component1 = randomComponent(randomContentRepository.repositoryId , "artifact-1");
+    ComponentData component2 = randomComponent(randomContentRepository.repositoryId , "artifact-2");
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      ComponentDAO dao = session.access(TestComponentDAO.class);
+
+      dao.createComponent(component1 , entityVersionEnabled);
+      dao.createComponent(component2 , entityVersionEnabled);
+
+      //unnormalized should be empty/0 , since there is no unnormalized records
+      Continuation<ComponentData> unnormalizedBrowse = dao.browseUnnormalized(10 , null);
+      assertThat(unnormalizedBrowse , hasSize(0));
+
+      int count = dao.countUnnormalized();
+      assertThat(count , is(0));
+
+      //updating normalized_version
+      component1.setNormalizedVersion("0000000001.0000000000.0000000000.a");
+      component2.setNormalizedVersion("0000000001.0000000000.0000000001.b");
+
+      dao.updateComponentNormalizedVersion(component1 , entityVersionEnabled);
+      dao.updateComponentNormalizedVersion(component2 , entityVersionEnabled);
+
+      assertNormalizedVersion(dao , component1 , "0000000001.0000000000.0000000000.a");
+      assertNormalizedVersion(dao , component2 , "0000000001.0000000000.0000000001.b");
+    }
+  }
+
+  private void assertNormalizedVersion(final ComponentDAO dao, final ComponentData component, final String expectedNormalizedVersion) {
+    Optional<Component> maybeComponent = dao.readCoordinate(component.repositoryId, component.namespace(), component.name(), component.version());
+
+    assertTrue(maybeComponent.isPresent());
+    assertThat(maybeComponent.get().normalizedVersion() , is(expectedNormalizedVersion));
   }
 
   // This overrides the necessary methods to allow effective hashing for sets. Ideally this would be included

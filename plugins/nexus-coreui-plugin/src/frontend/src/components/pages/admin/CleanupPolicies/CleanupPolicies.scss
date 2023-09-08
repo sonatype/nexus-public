@@ -32,6 +32,10 @@
   .nx-alert__content {
     @include container-vertical;
   }
+
+  .nx-h3 {
+    margin-top: 0;
+  }
 }
 
 .nxrm-cleanup-policies-dry-run {

@@ -44,6 +44,7 @@ import org.sonatype.nexus.repository.content.fluent.internal.FluentBlobsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentsImpl;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 import org.sonatype.nexus.repository.storage.BlobMetadataStorage;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.ClientInfo;
@@ -280,6 +281,10 @@ public abstract class ContentFacetSupport
 
   public final BlobMetadataStorage blobMetadataStorage() {
     return dependencies.getBlobMetadataStorage();
+  }
+
+  public final VersionNormalizerService versionNormalizerService() {
+    return dependencies.getVersionNormalizerService();
   }
 
   public final Repository repository() {

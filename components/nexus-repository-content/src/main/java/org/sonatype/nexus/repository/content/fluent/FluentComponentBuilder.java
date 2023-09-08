@@ -46,6 +46,11 @@ public interface FluentComponentBuilder
   FluentComponentBuilder version(String version);
 
   /**
+   * Continue building the component using the given normalized_version.
+   */
+  FluentComponentBuilder normalizedVersion(String normalizedVersion);
+
+  /**
    * Continue building the component using the given format attributes.
    *
    * @since 3.31

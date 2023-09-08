@@ -12,15 +12,13 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.service;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.cleanup.internal.CleanupFeatureCheck;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -51,7 +49,6 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.empty;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -158,7 +155,7 @@ public class CleanupServiceImplTest
     when(deletionProgress.isFailed()).thenReturn(false);
     when(cleanupMethod.run(any(), any(), any())).thenReturn(deletionProgress);
 
-    when(cleanupFeatureCheck.isRetainSupported(any(), any())).thenReturn(this.useRetainCleanup);
+    when(cleanupFeatureCheck.isRetainSupported(any())).thenReturn(this.useRetainCleanup);
     when(repository1.getFormat()).thenReturn(format);
     when(repository2.getFormat()).thenReturn(format);
     when(repository3.getFormat()).thenReturn(format);

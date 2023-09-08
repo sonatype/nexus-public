@@ -66,6 +66,8 @@ public class PurgeUnusedIT
 
   private static final String VERSION = "version";
 
+  private static final String NORMALIZED_VERSION = "normalized_version";
+
   private static final int BROWSE_LIMIT = 8;
 
   private Repository repository;
@@ -195,6 +197,7 @@ public class PurgeUnusedIT
     componentData.setName(name);
     componentData.setKind(COMPONENT_KIND);
     componentData.setVersion(VERSION);
+    componentData.setNormalizedVersion(NORMALIZED_VERSION);
     componentStore.createComponent(componentData);
 
     Optional<Component> maybeComponent =

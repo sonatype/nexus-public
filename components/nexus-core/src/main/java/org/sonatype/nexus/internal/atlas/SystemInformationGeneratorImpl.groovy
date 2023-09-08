@@ -67,6 +67,9 @@ class SystemInformationGeneratorImpl
 
   static final List SENSITIVE_FIELD_NAMES =
       ['password', 'secret', 'token', 'sign', 'auth', 'cred', 'key', 'pass'].asImmutable()
+
+  private static List SENSITIVE_CREDENTIALS_KEYS = ["sun.java.command", "INSTALL4J_ADD_VM_PARAMS"].asImmutable()
+
   @Inject
   SystemInformationGeneratorImpl(final ApplicationDirectories applicationDirectories,
                                  final ApplicationVersion applicationVersion,
@@ -215,7 +218,7 @@ class SystemInformationGeneratorImpl
           if (key.toLowerCase(Locale.US).contains(sensitiveName)) {
             value = Strings2.mask(value)
           }
-          if (key == "sun.java.command" && value.contains(sensitiveName)) {
+          if (SENSITIVE_CREDENTIALS_KEYS.contains(key) && value.contains(sensitiveName)) {
             value = value.replaceAll(sensitiveName + "=\\S*", sensitiveName + "=" + MASK)
           }
         }

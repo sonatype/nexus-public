@@ -71,4 +71,9 @@ public class VersionedComponentDAOTest
   public void testContinuationSetBrowsing() {
     super.testContinuationSetBrowsing();
   }
+
+  @Test
+  public void testNormalizationMethods(){
+    super.testNormalizationMethods();
+  }
 }

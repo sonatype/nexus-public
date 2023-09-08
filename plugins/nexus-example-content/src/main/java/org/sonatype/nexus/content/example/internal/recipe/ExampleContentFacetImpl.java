@@ -14,7 +14,6 @@ package org.sonatype.nexus.content.example.internal.recipe;
 
 import java.io.IOException;
 import java.util.Optional;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -44,7 +43,9 @@ public class ExampleContentFacetImpl
   private static final Iterable<HashAlgorithm> HASHING = ImmutableList.of(SHA256);
 
   @Inject
-  public ExampleContentFacetImpl(@Named(ExampleFormat.NAME) final FormatStoreManager formatStoreManager) {
+  public ExampleContentFacetImpl(
+      @Named(ExampleFormat.NAME) final FormatStoreManager formatStoreManager)
+  {
     super(formatStoreManager);
   }
 

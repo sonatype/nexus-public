@@ -82,6 +82,11 @@ public class FluentComponentImpl
   }
 
   @Override
+  public String normalizedVersion() {
+    return component.normalizedVersion();
+  }
+
+  @Override
   public Integer entityVersion() {
     return component.entityVersion();
   }

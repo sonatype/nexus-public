@@ -187,6 +187,7 @@ public class FormatStoreManagerTest
     component.setName("testComponent");
     component.setKind("aKind");
     component.setVersion("1.0");
+    component.setNormalizedVersion("0000000001.0000000000");
     component.setLastUpdated(OffsetDateTime.now());
     componentStore.createComponent(component);
 
@@ -298,6 +299,7 @@ public class FormatStoreManagerTest
     component.setName("testComponent");
     component.setKind("aKind");
     component.setVersion("1.0");
+    component.setNormalizedVersion("000000001.0000000000");
     component.setLastUpdated(OffsetDateTime.now());
     componentStore.createComponent(component);
 
@@ -383,6 +385,7 @@ public class FormatStoreManagerTest
     component.setName("testComponent");
     component.setKind("aKind");
     component.setVersion("1.0");
+    component.setNormalizedVersion("000000001.0000000000");
     component.setLastUpdated(OffsetDateTime.now());
     componentStore.createComponent(component);
 
@@ -468,6 +471,7 @@ public class FormatStoreManagerTest
     component.setName("testComponent");
     component.setKind("aKind");
     component.setVersion("1.0");
+    component.setNormalizedVersion("000000001.0000000000");
     component.setLastUpdated(OffsetDateTime.now());
     componentStore.createComponent(component);
 
