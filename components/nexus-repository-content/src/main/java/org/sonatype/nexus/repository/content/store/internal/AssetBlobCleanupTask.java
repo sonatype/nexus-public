@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store.internal;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -114,7 +115,13 @@ public class AssetBlobCleanupTask
       AssetBlobStore<?> assetBlobStore = formatStoreManager.assetBlobStore(contentStore);
       int deleteCount;
       if (batchDeleteEnabled) {
-        deleteCount = deleteUnusedAssetBlobsBatch(assetBlobStore, format, contentStore);
+        try {
+          deleteCount = deleteUnusedAssetBlobsBatch(assetBlobStore, format, contentStore);
+        } finally {
+          if (!batchDeleteExecutorService.isShutdown()) {
+            batchDeleteExecutorService.shutdown();
+          }
+        }
       }
       else {
         deleteCount = deleteUnusedAssetBlobs(assetBlobStore, format, contentStore);
@@ -175,7 +182,8 @@ public class AssetBlobCleanupTask
    *
    * @return count of deleted asset blobs
    */
-  private int deleteUnusedAssetBlobsBatch(
+  @VisibleForTesting
+  int deleteUnusedAssetBlobsBatch(
       final AssetBlobStore<?> assetBlobStore,
       final String format,
       final String contentStore)

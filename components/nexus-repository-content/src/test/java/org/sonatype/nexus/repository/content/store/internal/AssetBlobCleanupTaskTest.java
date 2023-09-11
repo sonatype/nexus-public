@@ -16,6 +16,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.UUID;
 
+import java.util.concurrent.ExecutorService;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -41,7 +42,12 @@ import org.mockito.Mockito;
 
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTask.BATCH_SIZE;
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTaskDescriptor.CONTENT_STORE_FIELD_ID;
@@ -159,6 +165,34 @@ public class AssetBlobCleanupTaskTest
     inOrder.verifyNoMoreInteractions();
 
     setBatchDeleteIgnoreFinalField(null);
+  }
+
+  @Test
+  public void testExecutorServiceShutdown() throws Exception {
+    AssetBlobCleanupTask task = spy(new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager));
+    setBatchDeleteIgnoreFinalField(null);
+
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
+    taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "content");
+    taskConfiguration.setId(UUID.randomUUID().toString());
+    taskConfiguration.setTypeId(TYPE_ID);
+    task.configure(taskConfiguration);
+
+    doNothing().when(task).initBatchDeleteIfEnabled(anyString());
+    doReturn(1).when(task).deleteUnusedAssetBlobsBatch(any(), anyString(), anyString());
+
+    ExecutorService batchDeleteExecutorService = mock(ExecutorService.class);
+    when(batchDeleteExecutorService.isShutdown()).thenReturn(false);
+
+    Field field = task.getClass().getDeclaredField("batchDeleteExecutorService");
+    field.setAccessible(true);
+    field.set(task, batchDeleteExecutorService);
+
+    task.execute();
+
+    verify(batchDeleteExecutorService).isShutdown();
+    verify(batchDeleteExecutorService).shutdown();
   }
 
   @Test
