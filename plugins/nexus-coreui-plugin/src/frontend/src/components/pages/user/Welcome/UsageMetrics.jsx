@@ -13,6 +13,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import {NxCard, NxDivider, NxH2, NxH3, NxLoadWrapper} from '@sonatype/react-shared-components';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import UsageMetricsMachine from './UsageMetricsMachine';
@@ -32,6 +33,8 @@ export default function UsageMetrics() {
     {data: {totalComponents, uniqueLogins, peakRequestsPerMin, peakRequestsPerDay}, loadError} = state.context,
     isLoading = state.matches('loading');
 
+  const isProEdition = ExtJS.isProEdition();
+
   function retry() {
     send('RETRY');
   }
@@ -50,15 +53,17 @@ export default function UsageMetrics() {
                 <NxCard.Text>{totalComponents}</NxCard.Text>
               </NxCard.Content>
             </NxCard>
-            <NxCard aria-label="unique logins">
-              <NxCard.Header>
-                <NxH3>{UNIQUE_LOGINS.title}</NxH3>
-              </NxCard.Header>
-              <NxCard.Content>
-                <NxCard.Text>{uniqueLogins}</NxCard.Text>
-                <NxCard.Text className="nxrm-usage-subtitle">{UNIQUE_LOGINS.subTitle}</NxCard.Text>
-              </NxCard.Content>
-            </NxCard>
+            {!isProEdition &&
+              <NxCard aria-label="unique logins">
+                <NxCard.Header>
+                  <NxH3>{UNIQUE_LOGINS.title}</NxH3>
+                </NxCard.Header>
+                <NxCard.Content>
+                  <NxCard.Text>{uniqueLogins}</NxCard.Text>
+                  <NxCard.Text className="nxrm-usage-subtitle">{UNIQUE_LOGINS.subTitle}</NxCard.Text>
+                </NxCard.Content>
+              </NxCard>
+            }
             <NxCard aria-label="peak requests per minute">
               <NxCard.Header>
                 <NxH3>{PEAK_REQUESTS_PER_MINUTE.title}</NxH3>

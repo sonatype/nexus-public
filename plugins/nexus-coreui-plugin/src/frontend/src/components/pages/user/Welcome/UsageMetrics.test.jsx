@@ -17,13 +17,20 @@ import {when} from "jest-when";
 
 import UsageMetrics from './UsageMetrics';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {APIConstants} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
 
 const {USAGE_METRICS} = APIConstants.REST.INTERNAL;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
   get: jest.fn()
+}));
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+  ExtJS: {
+    isProEdition: jest.fn().mockReturnValue(false),
+  },
 }));
 
 const data = {
@@ -94,5 +101,24 @@ describe('Usage Metrics', () => {
     expect(card4Header).toBeInTheDocument();
     expect(card4SubTitle).toBeInTheDocument();
     expect(peakReqPerDay).toBeInTheDocument();
+  });
+
+  it('does not render unique logins card when Pro edition', async () => {
+    when(axios.get).calledWith(USAGE_METRICS).mockResolvedValue({
+      data: data
+    });
+    ExtJS.isProEdition.mockReturnValue(true);
+
+    render(<UsageMetrics />);
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    expect(selectors.getHeading('Usage')).toBeInTheDocument();
+
+    expect(selectors.getCard('total components')).toBeInTheDocument();
+    expect(selectors.getCard('peak requests per minute')).toBeInTheDocument();
+    expect(selectors.getCard('peak requests per day')).toBeInTheDocument();
+
+    expect(() => selectors.getCard('unique logins')).toThrow();
   });
 })
