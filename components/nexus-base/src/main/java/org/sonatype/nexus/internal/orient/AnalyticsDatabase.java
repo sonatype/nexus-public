@@ -56,6 +56,4 @@ public class AnalyticsDatabase
       return databaseManager.instance(NAME);
     }
   }
-
-
 }
