@@ -529,6 +529,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_Npm_Title: 'npm',
     Repository_Facet_Npm_RemoveNonCataloged_Label: 'Download cataloged versions only',
     Repository_Facet_Npm_RemoveNonCataloged_HelpText: 'Non-cataloged versions will not be downloaded. <span style="font-weight: bold">Firewall Audit and Quarantine</span> capability must be enabled for this feature to take effect. <a target="_blank" href="http://links.sonatype.com/products/nxrm3/docs/npm-with-firewall">Learn more.</a>',
+    Repository_Facet_Npm_RemoveNonCataloged_Disable_Warning: 'The \"Download cataloged versions only\" feature will not be supported after January 2024. We recommend managing unknown components using <a target="_blank" href="http://links.sonatype.com/products/nxrm3/docs/pccs/npm">policy compliant component selection.</a>',
     Repository_Facet_Npm_RemoveQuarantined_Label: 'Download policy compliant versions only',
     Repository_Facet_Npm_RemoveQuarantined_HelpText: 'Versions that are going to be quarantined will not be downloaded. <span style="font-weight: bold">Firewall Audit and Quarantine</span> capability must be enabled for this feature to take effect. <a target="_blank" href="http://links.sonatype.com/products/nxrm3/docs/npm-with-firewall">Learn more.</a>',
     Repository_Facet_Npm_RemoveQuarantined_Warning: 'This feature requires IQ Server Release 134 or higher.',
