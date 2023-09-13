@@ -40,6 +40,7 @@ Ext.define('NX.coreui.view.repository.recipe.PyPiProxy', {
     var me = this;
 
     me.items = [
+      {xtype: 'nx-coreui-repository-pypi-proxy-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},

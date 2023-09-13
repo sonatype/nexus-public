@@ -30,7 +30,7 @@
   <properties>
     <pax-exam.version>4.13.5</pax-exam.version>
     <testcontainers.version>1.18.3</testcontainers.version>
-    <iq.version>1.146.0</iq.version>
+    <iq.version>1.167.0</iq.version>
   </properties>
 
   <dependencyManagement>

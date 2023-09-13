@@ -118,6 +118,14 @@ Ext.define('NX.coreui.controller.Repositories', {
     {
       ref: 'npmProxyFirewallWarning',
       selector: 'nx-coreui-repository-npm-proxy-facet panel[name=npmProxyFirewallWarning]'
+    },
+    {
+      ref: 'removePypiQuarantinedVersions',
+      selector: 'nx-coreui-repository-pypi-proxy-facet checkbox[name=attributes.pypi.removeQuarantinedVersions]'
+    },
+    {
+      ref: 'pypiProxyFirewallWarning',
+      selector: 'nx-coreui-repository-pypi-proxy-facet panel[name=pypiProxyFirewallWarning]'
     }
   ],
   icons: {
@@ -283,6 +291,17 @@ Ext.define('NX.coreui.controller.Repositories', {
           var npmProxyFirewallWarning = me.getNpmProxyFirewallWarning();
           if (npmProxyFirewallWarning && isNpmProxyFacetEnabled) {
             npmProxyFirewallWarning.setTitle(NX.I18n.format('Repository_Facet_Npm_RemoveQuarantined_Warning'))
+          }
+        });
+
+        me.checkFirewallCapabilitiesStatusForPypi(model.get('name'), function(isPypiProxyFacetEnabled) {
+          var removePypiQuarantinedVersions = me.getRemovePypiQuarantinedVersions();
+          if (removePypiQuarantinedVersions) {
+            removePypiQuarantinedVersions.setDisabled(!isPypiProxyFacetEnabled);
+          }
+          var pypiProxyFirewallWarning = me.getPypiProxyFirewallWarning();
+          if (pypiProxyFirewallWarning && isPypiProxyFacetEnabled) {
+            pypiProxyFirewallWarning.setTitle(NX.I18n.format('Repository_Facet_Pypi_RemoveQuarantined_Warning'))
           }
         });
 
@@ -722,6 +741,17 @@ Ext.define('NX.coreui.controller.Repositories', {
       if (Ext.isObject(response) && response.success && response.data != null) {
         callback(response.data === true);
       } else {
+        callback(false);
+      }
+    });
+  },
+
+  checkFirewallCapabilitiesStatusForPypi: function(repositoryName, callback) {
+    NX.direct.firewall_RepositoryStatus.readCapabilitiesStatus(repositoryName, function (response) {
+      if (Ext.isObject(response) && response.success && response.data != null) {
+        callback(response.data === true);
+      }
+      else {
         callback(false);
       }
     });
