@@ -18,7 +18,6 @@ import {when} from "jest-when";
 import UsageMetrics from './UsageMetrics';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
-import {act} from "react-dom/test-utils";
 
 const {USAGE_METRICS} = APIConstants.REST.INTERNAL;
 
@@ -31,9 +30,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     isProEdition: jest.fn().mockReturnValue(false),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn(),
-    }),
   },
 }));
 
@@ -57,12 +53,6 @@ const selectors = {
 };
 
 describe('Usage Metrics', () => {
-  beforeEach( () => {
-    when(ExtJS.state().getValue)
-        .calledWith('nexus.datastore.clustered.enabled')
-        .mockReturnValue(false);
-  });
-
   it('renders data correctly', async () => {
     when(axios.get).calledWith(USAGE_METRICS).mockResolvedValue({
       data: data
@@ -130,26 +120,5 @@ describe('Usage Metrics', () => {
     expect(selectors.getCard('peak requests per day')).toBeInTheDocument();
 
     expect(() => selectors.getCard('unique logins')).toThrow();
-  });
-
-  describe('HA mode', () => {
-    beforeEach( () => {
-      when(ExtJS.state().getValue)
-          .calledWith('nexus.datastore.clustered.enabled')
-          .mockReturnValue(true);
-    });
-
-    it("does not render any card when HA mode on", async() =>{
-
-      await act(async() => {
-        render(<UsageMetrics />);
-      });
-
-      expect(() => selectors.getCard('unique logins')).toThrow();
-      expect(() => selectors.getCard('total components')).toThrow();
-      expect(() => selectors.getCard('peak requests per minute')).toThrow();
-      expect(() => selectors.getCard('peak requests per day')).toThrow();
-    });
-
   });
 })

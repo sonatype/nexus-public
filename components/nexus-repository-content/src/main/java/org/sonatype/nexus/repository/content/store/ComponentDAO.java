@@ -251,7 +251,7 @@ public interface ComponentDAO
    *
    * @param component            the component to update
    * @param entityVersionEnabled whether to version this component
-   * @since 3.61
+   * @since 3.next
    */
   void updateComponentNormalizedVersion(
       @Param("component") Component component,

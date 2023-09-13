@@ -34,6 +34,7 @@ import static org.sonatype.nexus.common.jdbc.JdbcUrlRedactor.redactPassword;
  */
 public class DataStoreConfiguration
 {
+  @VisibleForTesting
   public static final String REDACTED = "**REDACTED**";
 
   private static final String JDBC_URL = "jdbcUrl";
