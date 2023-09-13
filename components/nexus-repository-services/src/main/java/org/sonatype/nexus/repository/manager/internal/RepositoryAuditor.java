@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.RepositoryDestroyedEvent;
 import org.sonatype.nexus.repository.RepositoryEvent;
 import org.sonatype.nexus.repository.RepositoryStartedEvent;
 import org.sonatype.nexus.repository.RepositoryStoppedEvent;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusEvent;
 import org.sonatype.nexus.repository.manager.RepositoryCacheInvalidatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
@@ -79,6 +80,7 @@ public class RepositoryAuditor
     registerType(RepositoryLoadedEvent.class, "loaded");
     registerType(RepositoryStartedEvent.class, "started");
     registerType(RepositoryStoppedEvent.class, "stopped");
+    registerType(RemoteConnectionStatusEvent.class, "autoBlockStatus");
   }
 
   @Subscribe
@@ -95,7 +97,11 @@ public class RepositoryAuditor
         data.setAttributes(createFullAttributes(repository));
       }
       else {
-        data.setAttributes(createSimple(repository));
+        Map<String, Object> attributes = createSimple(repository);
+        if (event instanceof RemoteConnectionStatusEvent) {
+          attributes.put("statusType", ((RemoteConnectionStatusEvent) event).getStatus().getType());
+        }
+        data.setAttributes(attributes);
       }
 
       record(data);
