@@ -155,7 +155,9 @@ public abstract class NexusPaxExamSupport
   // -------------------------------------------------------------------------
 
   @Rule
-  public final TestDataRule testData = new TestDataRule(resolveBaseFile("src/test/it-resources"));
+  public final TestDataRule testData = new TestDataRule(
+      resolveBaseFile("src/test/it-resources"),
+      resolveBaseFile("target/it-resources"));
 
   @Rule
   @Inject

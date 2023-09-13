@@ -53,6 +53,13 @@ public class ScheduledTaskRule
     return taskInfo;
   }
 
+  public void removeTask(final TaskInfo taskInfo) {
+    if (taskInfo != null) {
+      taskInfo.remove();
+      tasks.remove(taskInfo);
+    }
+  }
+
   public void removeAll() {
     taskSchedulerProvider.get().listsTasks().forEach(TaskInfo::remove);
     tasks.clear();
