@@ -38,6 +38,7 @@ import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.utility.DockerImageName;
 
 import static com.google.common.base.Throwables.throwIfUnchecked;
@@ -243,6 +244,8 @@ public class DataSessionRule
 
     postgres = new PostgreSQLContainer<>(DockerImageName.parse("docker-all.repo.sonatype.com/postgres:11.9")
         .asCompatibleSubstituteFor("postgres"));
+    postgres.withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("postgres")))
+        .withCommand("postgres", "-c", "max_connections=110");
     postgres.start();
 
     // use the same underlying PostgreSQL database as backing for each store

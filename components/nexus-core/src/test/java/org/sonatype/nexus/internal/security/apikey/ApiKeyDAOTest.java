@@ -17,17 +17,20 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.Iterables;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.assertj.db.type.Table;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -37,6 +40,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static org.assertj.db.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -102,6 +106,20 @@ public class ApiKeyDAOTest
 
     ApiKey savedApiKey = findApiKey(DOMAIN, A_PRINCIPAL).get();
     assertSavedApiKey(savedApiKey, API_KEY1);
+  }
+
+  /*
+   * Create the same user in different realms
+   */
+  @Test
+  public void testCreate_differentRealm() {
+    ApiKeyData apiKeyEntity = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL, A_REALM);
+    ApiKeyData apiKeyEntity2 = anApiKeyEntity(API_KEY2, DOMAIN, A_PRINCIPAL, ANOTHER_REALM);
+
+    withDao(dao -> dao.save(apiKeyEntity));
+    withDao(dao -> dao.save(apiKeyEntity2));
+
+    assertThat(table()).hasNumberOfRows(2);
   }
 
   /*
@@ -288,7 +306,16 @@ public class ApiKeyDAOTest
   }
 
   private static ApiKeyData anApiKeyEntity(final char[] apiKey, final String domain, final String primaryPrincipal) {
-    PrincipalCollection principalCollection = principalCollection(primaryPrincipal, A_REALM);
+    return anApiKeyEntity(apiKey, domain, primaryPrincipal, A_REALM);
+  }
+
+  private static ApiKeyData anApiKeyEntity(
+      final char[] apiKey,
+      final String domain,
+      final String primaryPrincipal,
+      final String realm)
+  {
+    PrincipalCollection principalCollection = principalCollection(primaryPrincipal, realm);
     return anApiKeyEntity(apiKey, domain, principalCollection);
   }
 
@@ -307,6 +334,18 @@ public class ApiKeyDAOTest
   private Optional<ApiKey> findApiKey(final String domain, final String primaryPrincipal) {
     return apiKeyDAO.findApiKeys(domain, primaryPrincipal).stream()
         .findFirst();
+  }
+
+  private Table table() {
+    DataStore<?> dataStore = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(RuntimeException::new);
+    return new Table(dataStore.getDataSource(), "api_key");
+  }
+
+  private void withDao(final Consumer<ApiKeyDAO> consumer) {
+    try (DataSession<?> session = sessionRule.openSerializableTransactionSession(DEFAULT_DATASTORE_NAME)) {
+      consumer.accept(session.access(ApiKeyDAO.class));
+      session.getTransaction().commit();
+    }
   }
 
   private static SimplePrincipalCollection principalCollection(final String principal, final String realm) {

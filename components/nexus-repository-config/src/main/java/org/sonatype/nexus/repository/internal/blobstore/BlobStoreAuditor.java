@@ -24,6 +24,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreCreatedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreEvent;
+import org.sonatype.nexus.blobstore.api.BlobStoreStartedEvent;
+import org.sonatype.nexus.blobstore.api.BlobStoreStoppedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.common.event.EventAware;
 
@@ -47,6 +49,8 @@ public class BlobStoreAuditor
     registerType(BlobStoreCreatedEvent.class, CREATED_TYPE);
     registerType(BlobStoreUpdatedEvent.class, UPDATED_TYPE);
     registerType(BlobStoreDeletedEvent.class, DELETED_TYPE);
+    registerType(BlobStoreStartedEvent.class, "started");
+    registerType(BlobStoreStoppedEvent.class, "stopped");
   }
 
   @Subscribe

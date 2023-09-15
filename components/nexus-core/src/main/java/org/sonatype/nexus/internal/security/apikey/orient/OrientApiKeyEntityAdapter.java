@@ -85,6 +85,7 @@ public class OrientApiKeyEntityAdapter
       .type(DB_CLASS)
       .property(P_DOMAIN)
       .property(P_PRIMARY_PRINCIPAL)
+      .property(P_PRINCIPALS)
       .build();
 
   private static final String DOMAIN_QUERY_STRING = format(
@@ -136,7 +137,7 @@ public class OrientApiKeyEntityAdapter
         .setMandatory(true)
         .setNotNull(true);
     type.createIndex(I_APIKEY, INDEX_TYPE.UNIQUE, P_DOMAIN, P_APIKEY);
-    type.createIndex(I_PRIMARY_PRINCIPAL, INDEX_TYPE.UNIQUE, P_DOMAIN, P_PRIMARY_PRINCIPAL);
+    type.createIndex(I_PRIMARY_PRINCIPAL, INDEX_TYPE.UNIQUE, P_DOMAIN, P_PRIMARY_PRINCIPAL, P_PRINCIPALS);
   }
 
   @Override

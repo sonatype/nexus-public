@@ -12,7 +12,7 @@
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {useMachine} from '@xstate/react';
-import {ExtJS, toURIParams, getVersionMajorMinor} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, toURIParams, getVersionMajorMinor, Permissions} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxButtonBar,
@@ -26,6 +26,7 @@ import {
 import UIStrings from '../../../../constants/UIStrings';
 import welcomeMachine from './WelcomeMachine';
 import OutreachActions from './OutreachActions';
+import UsageMetrics from './UsageMetrics';
 
 import './Welcome.scss';
 
@@ -62,7 +63,8 @@ export default function Welcome() {
         edition: status.edition,
         usertype: getUserType(user),
         daysToExpiry: ExtJS.useLicense().daysToExpiry
-      };
+      },
+      canViewMetrics = ExtJS.checkPermission(Permissions.METRICS.READ);
 
   function load() {
     send('LOAD');
@@ -111,6 +113,7 @@ export default function Welcome() {
                 </NxWarningAlert>
               </section>
           }
+          {canViewMetrics && <UsageMetrics />}
           <OutreachActions />
           { state.context.data?.showOutreachIframe &&
               <iframe

@@ -84,7 +84,7 @@ public class DatabaseServerImplTest
 
     candidates.forEach(this::createDatabase);
 
-    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "security"));
+    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "security", "analytics"));
   }
 
   @Test

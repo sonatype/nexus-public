@@ -64,5 +64,25 @@ export default {
         </>
     ),
     FIREWALL_ENABLE_BUTTON_CONTENT : 'Enable Capability',
+    USAGE: {
+      MENU: {
+        text: 'Usage'
+      },
+      TOTAL_COMPONENTS: {
+        title: 'Total components'
+      },
+      UNIQUE_LOGINS: {
+        title: 'Unique logins',
+        subTitle: 'Past 30 days'
+      },
+      PEAK_REQUESTS_PER_MINUTE: {
+        title: 'Peak requests per minute',
+        subTitle: 'Past 24 hours'
+      },
+      PEAK_REQUESTS_PER_DAY: {
+        title: 'Peak requests per day',
+        subTitle:'Past 30 days'
+      }
+    }
   }
 };

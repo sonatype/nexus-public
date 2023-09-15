@@ -38,8 +38,13 @@ public class DatabaseInstanceNames
    */
   public static final String SECURITY = "security";
 
+  /**
+   * Name of the database storing analytics (aggregated metrics, historical login data, metrics logs, etc.).
+   */
+  public static final String ANALYTICS = "analytics";
+
   public static final Set<String> DATABASE_NAMES = ImmutableSet.of(
-      CONFIG, COMPONENT, SECURITY);
+      CONFIG, COMPONENT, SECURITY, ANALYTICS);
 
   private DatabaseInstanceNames() {
     // no construction

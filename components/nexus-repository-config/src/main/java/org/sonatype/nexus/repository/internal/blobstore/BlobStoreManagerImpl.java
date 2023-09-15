@@ -39,6 +39,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreNotFoundException;
+import org.sonatype.nexus.blobstore.api.BlobStoreStartedEvent;
+import org.sonatype.nexus.blobstore.api.BlobStoreStoppedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
@@ -179,6 +181,8 @@ public class BlobStoreManagerImpl
       log.debug("Starting BlobStore: {}", name);
       try {
         blobStore.start();
+        eventManager.post(new BlobStoreStartedEvent(blobStore));
+
       }
       catch (Exception e) {
         log.error("Unable to start BlobStore {}", name, e);
@@ -201,6 +205,7 @@ public class BlobStoreManagerImpl
       BlobStore store = entry.getValue();
       log.debug("Stopping blob-store: {}", name);
       store.stop();
+      eventManager.post(new BlobStoreStoppedEvent(store));
 
       // TODO - event publishing
     }
@@ -263,8 +268,8 @@ public class BlobStoreManagerImpl
     if (!stores.containsKey(blobStoreName)) {
       track(blobStoreName, blobStore);
       blobStore.start();
-
       eventManager.post(new BlobStoreCreatedEvent(blobStore));
+      eventManager.post(new BlobStoreStartedEvent(blobStore));
     }
   }
 
@@ -301,12 +306,14 @@ public class BlobStoreManagerImpl
 
     if (blobStore.isStarted()) {
       blobStore.stop();
+      eventManager.post(new BlobStoreStoppedEvent(blobStore));
     }
 
     try {
       blobStore.init(configuration);
       blobStore.start();
       eventManager.post(new BlobStoreUpdatedEvent(blobStore));
+      eventManager.post(new BlobStoreStartedEvent(blobStore));
     }
     catch (BlobStoreException e) {
       startWithConfig(blobStore, currentBlobStoreConfiguration);
@@ -322,9 +329,11 @@ public class BlobStoreManagerImpl
   private void startWithConfig(final BlobStore blobStore, final BlobStoreConfiguration config) throws Exception {
     if (blobStore.isStarted()) {
       blobStore.stop();
+      eventManager.post(new BlobStoreStoppedEvent(blobStore));
     }
     blobStore.init(config);
     blobStore.start();
+    eventManager.post(new BlobStoreStartedEvent(blobStore));
   }
 
   @Override

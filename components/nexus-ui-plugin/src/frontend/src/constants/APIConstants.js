@@ -236,6 +236,9 @@ export default {
       get SAML() {
         return `${this.BASE_URL}saml`;
       },
+      get USAGE_METRICS() {
+        return `${this.BASE_URL}usage-metrics`;
+      },
     },
     PUBLIC: {
       BASE_URL: '/service/rest/v1/',

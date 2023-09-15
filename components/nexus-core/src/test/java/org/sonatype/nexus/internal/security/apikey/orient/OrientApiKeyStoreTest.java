@@ -113,6 +113,17 @@ public class OrientApiKeyStoreTest
   }
 
   /*
+   * Can create api key in same domain for a user from a different realm.
+   */
+  @Test
+  public void testCreateDifferentRealms() {
+    underTest.createApiKey("nuget", makePrincipals("name", "local"));
+    underTest.createApiKey("nuget", makePrincipals("name", "ldap"));
+
+    assertThat(underTest.count("nuget"), is(2));
+  }
+
+  /*
    * Can persist and read an API key with provided value
    */
   @Test
@@ -312,7 +323,11 @@ public class OrientApiKeyStoreTest
     assertThat(keys, hasSize(1));
   }
 
-  private PrincipalCollection makePrincipals(final String name) {
-    return new SimplePrincipalCollection(name, "foo");
+  private static PrincipalCollection makePrincipals(final String name) {
+    return makePrincipals(name, "foo");
+  }
+
+  private static PrincipalCollection makePrincipals(final String name, final String realm) {
+    return new SimplePrincipalCollection(name, realm);
   }
 }

@@ -19,15 +19,11 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
-
 /**
- * Delete all tokens from the {@code distributed_auth_ticket_cache} table. It should be done only for HA.
+ * Delete all tokens from the {@code distributed_auth_ticket_cache} table
  */
-@FeatureFlag(name = DATASTORE_CLUSTERED_ENABLED)
 @Named
 @Singleton
 public class DistributedAuthTicketMigrationStep_1_30
@@ -43,7 +39,7 @@ public class DistributedAuthTicketMigrationStep_1_30
 
   @Override
   public void migrate(final Connection connection) throws Exception {
-    if (isPostgresql(connection)) {
+    if (tableExists(connection, "distributed_auth_ticket_cache")) {
       log.info("Deleting all tokens form the distributed_auth_ticket_cache table");
       runStatement(connection, DELETE_ALL_RECORDS);
     }
