@@ -19,14 +19,16 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.testsupport.TestData;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.testsuite.testsupport.system.RestTestHelper;
 
@@ -36,14 +38,16 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader;
-import org.apache.maven.it.VerificationException;
 import org.joda.time.DateTime;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.resolveBaseFile;
 
 public abstract class MavenTestHelper
 {
+  private static final int MAX_RETRIES = 3;
+
   private final MetadataXpp3Reader reader = new MetadataXpp3Reader();
 
   @Inject
@@ -52,6 +56,9 @@ public abstract class MavenTestHelper
 
   @Inject
   private RestTestHelper restTestHelper;
+
+  @Inject
+  private RepositoryManager repositoryManager;
 
   public abstract Payload read(Repository repository, String path) throws IOException;
 
@@ -72,28 +79,20 @@ public abstract class MavenTestHelper
 
   public abstract boolean delete(Repository repository, String path) throws Exception;
 
-  public void mvnDeploy(
-      final TestData testData,
-      final String project,
-      final String version,
-      final String deployRepositoryName) throws Exception
+  public void mvnDeploy(final MavenDeployBuilder mavenDeployBuilder) throws Exception
   {
-    mvnDeploy(testData, project, version, new URL(nexusUrl,
-        "/repository/maven-public"),
-        new URL(nexusUrl, "/repository/" + deployRepositoryName));
-  }
+    if (mavenDeployBuilder.nexusUrl == null) {
+      mavenDeployBuilder.withNexusUrl(nexusUrl);
+    }
+    if (mavenDeployBuilder.getRetryCount() == null) {
+      mavenDeployBuilder.withRetryCount(MAX_RETRIES);
+    }
+    if (mavenDeployBuilder.projectDirectory == null) {
+      mavenDeployBuilder.withProjectDirectory(resolveBaseFile(
+          "target/" + getClass().getSimpleName() + "-" + Math.random() + "/" + mavenDeployBuilder.getProject()));
+    }
 
-  public void mvnDeploy(
-      final TestData testData,
-      final String project,
-      final String group,
-      final String artifactId,
-      final String version,
-      final String deployRepositoryName) throws Exception
-  {
-    mvnDeploy(testData, project, group, artifactId, version, new URL(nexusUrl,
-        "/repository/maven-public"),
-        new URL(nexusUrl, "/repository/" + deployRepositoryName));
+    runWithRetries(repositoryManager, mavenDeployBuilder.build(), mavenDeployBuilder.getRetryCount());
   }
 
   public Maven2Client createMaven2Client(final String repositoryName, final String username, final String password)
@@ -110,72 +109,6 @@ public abstract class MavenTestHelper
     return new Maven2Client(client, httpClientContext, repositoryUri);
   }
 
-  protected void mvnLegacyDeploy(
-      final TestData testData,
-      final String project,
-      final String version,
-      final String deployRepositoryName) throws Exception
-  {
-    mvnDeploy(testData, project, version, new URL(nexusUrl,
-        "/repository/maven-public"),
-        new URL(nexusUrl, "/content/repositories/" + deployRepositoryName));
-  }
-
-  protected void mvnDeploy(
-      final TestData testData,
-      final String project,
-      final String version,
-      final URL proxyUrl,
-      final URL deployUrl) throws Exception
-  {
-    final File mavenBaseDir = mvnBaseDir(project).getAbsoluteFile();
-    final File projectDir = testData.resolveFile(project);
-
-    MavenDeployment mavenDeployment = new MavenDeployment();
-    mavenDeployment.setSettingsTemplate(testData.resolveFile("settings.xml"));
-    mavenDeployment.setProjectDir(mavenBaseDir);
-    mavenDeployment.setProjectTemplateDir(projectDir);
-    mavenDeployment.setVersion(version);
-    mavenDeployment.setProxyUrl(proxyUrl);
-    mavenDeployment.setDeployUrl(deployUrl);
-    mavenDeployment.setEnsureCleanOnInit(false);
-    mavenDeployment.init();
-
-    new MavenRunner().run(mavenDeployment, "clean", "deploy");
-  }
-
-  protected void mvnDeploy(
-      final TestData testData,
-      final String project,
-      final String group,
-      final String artifactId,
-      final String version,
-      final URL proxyUrl,
-      final URL deployUrl) throws VerificationException
-  {
-    final File mavenBaseDir = mvnBaseDir(project).getAbsoluteFile();
-    final File projectDir = testData.resolveFile(project);
-
-    MavenDeployment mavenDeployment = new MavenDeployment();
-    mavenDeployment.setSettingsTemplate(testData.resolveFile("settings.xml"));
-    mavenDeployment.setProjectDir(mavenBaseDir);
-    mavenDeployment.setProjectTemplateDir(projectDir);
-    mavenDeployment.setGroupId(group);
-    mavenDeployment.setArtifactId(artifactId);
-    mavenDeployment.setVersion(version);
-    mavenDeployment.setProxyUrl(proxyUrl);
-    mavenDeployment.setDeployUrl(deployUrl);
-    mavenDeployment.setEnsureCleanOnInit(false);
-    mavenDeployment.init();
-
-    new MavenRunner().run(mavenDeployment, "clean", "deploy");
-  }
-
-  private File mvnBaseDir(final String project) {
-    return NexusPaxExamSupport
-        .resolveBaseFile("target/" + getClass().getSimpleName() + "-" + Math.random() + "/" + project);
-  }
-
   public Metadata parseMetadata(final InputStream is) throws Exception {
     try (InputStream in = is) {
       assertThat(is, notNullValue());
@@ -188,7 +121,8 @@ public abstract class MavenTestHelper
       final String groupId,
       final String artifactId,
       final String baseVersion,
-      final boolean rebuildChecksums) {
+      final boolean rebuildChecksums)
+  {
     final boolean update = !Strings.isNullOrEmpty(groupId)
         || !Strings.isNullOrEmpty(artifactId)
         || !Strings.isNullOrEmpty(baseVersion);
@@ -209,7 +143,6 @@ public abstract class MavenTestHelper
   public abstract void deleteComponents(final Repository repository, final String version, final int expectedNumber);
 
   public abstract void deleteAssets(final Repository repository, final String version, final int expectedNumber);
-
 
   /**
    * Create component with given GAV and attached JAR asset
@@ -233,4 +166,174 @@ public abstract class MavenTestHelper
   public abstract List<String> findAssetsExcludingFlaggedForRebuild(final Repository repository);
 
   public abstract void markMetadataForRebuild(final Repository repository, final String path);
+
+  private void runWithRetries(
+      final RepositoryManager repositoryManager,
+      final MavenDeployment mavenDeployment,
+      final int maxRetries) throws Exception
+  {
+    if (maxRetries > 0) {
+      final AtomicInteger retries = new AtomicInteger(0);
+
+      new MavenRunner().run(() -> {
+        //Invalidate central repository caches before retrying
+        Repository repository = repositoryManager.get("maven-central");
+
+        if (repository != null) {
+          repository.facet(ProxyFacet.class).invalidateProxyCaches();
+        }
+
+        return retries.getAndIncrement() < maxRetries;
+      }, mavenDeployment, "clean", "deploy");
+    }
+    else {
+      new MavenRunner().run(mavenDeployment, "clean", "deploy");
+    }
+  }
+
+  public static final class MavenDeployBuilder
+  {
+    private String project;
+
+    private String groupId;
+
+    private String artifactId;
+
+    private String version;
+
+    private String repositoryName;
+
+    private Integer retryCount;
+
+    private URL proxyUrl;
+
+    private URL deployUrl;
+
+    private boolean legacy;
+
+    private URL nexusUrl;
+
+    private TestData testData;
+
+    private File projectDirectory;
+
+    // the project name, used to build file paths that aren't provided
+    public MavenDeployBuilder withProject(final String project) {
+      this.project = project;
+      return this;
+    }
+
+    // groupId of the component you are deploying
+    public MavenDeployBuilder withGroupId(final String groupId) {
+      this.groupId = groupId;
+      return this;
+    }
+
+    // artifactId of the component you are deploying
+    public MavenDeployBuilder withArtifactId(final String artifactId) {
+      this.artifactId = artifactId;
+      return this;
+    }
+
+    // version of the component you are deploying
+    public MavenDeployBuilder withVersion(final String version) {
+      this.version = version;
+      return this;
+    }
+
+    // the repository that you are deploying to.  Only one of withRepository or withRepositoryName is necessary
+    public MavenDeployBuilder withRepository(final Repository repository) {
+      this.repositoryName = repository.getName();
+      return this;
+    }
+
+    // the repository you are deploying to.  Only one of withRepository or withRepositoryName is necessary
+    public MavenDeployBuilder withRepositoryName(final String repositoryName) {
+      this.repositoryName = repositoryName;
+      return this;
+    }
+
+    // retry deploy requests in case of failure, set to 0 for request you expect to fail
+    public MavenDeployBuilder withRetryCount(final Integer retryCount) {
+      this.retryCount = retryCount;
+      return this;
+    }
+
+    // the url of a proxy repository in nxrm that maven will use for downloading dependencies
+    public MavenDeployBuilder withProxyURL(final URL proxyUrl) {
+      this.proxyUrl = proxyUrl;
+      return this;
+    }
+
+    // the deploy url of a hosted nexus repository
+    public MavenDeployBuilder withDeployURL(final URL deployUrl) {
+      this.deployUrl = deployUrl;
+      return this;
+    }
+
+    // if legacy is enabled, deploy urls will use the nexus 2 style repository pathing
+    public MavenDeployBuilder withLegacy(final boolean legacy) {
+      this.legacy = legacy;
+      return this;
+    }
+
+    // where all file content is loaded from
+    public MavenDeployBuilder withTestData(final TestData testData) {
+      this.testData = testData;
+      return this;
+    }
+
+    // directory where mvn deploy command will be executed
+    public MavenDeployBuilder withProjectDirectory(final File projectDirectory) {
+      this.projectDirectory = projectDirectory;
+      return this;
+    }
+
+    // url of the nexus instance
+    public MavenDeployBuilder withNexusUrl(final URL nexusUrl) {
+      this.nexusUrl = nexusUrl;
+      return this;
+    }
+
+    public MavenDeployment build() throws Exception {
+      MavenDeployment mavenDeployment = new MavenDeployment();
+      mavenDeployment.setSettingsTemplate(testData.resolveFile("settings.xml"));
+      mavenDeployment.setProjectDir(projectDirectory.getAbsoluteFile());
+      mavenDeployment.setProjectTemplateDir(testData.resolveFile(project));
+      // don't want to overwrite the default values
+      if (groupId != null) {
+        mavenDeployment.setGroupId(groupId);
+      }
+      // don't want to overwrite the default values
+      if (artifactId != null) {
+        mavenDeployment.setArtifactId(artifactId);
+      }
+      mavenDeployment.setVersion(version);
+      mavenDeployment.setProxyUrl(proxyUrl != null ?
+          // provided URL
+          proxyUrl :
+          // generate default URL
+          new URL(nexusUrl, "/repository/maven-public"));
+      mavenDeployment.setDeployUrl(deployUrl != null ?
+          // provided URL
+          deployUrl :
+          legacy ?
+              // generate nexus 2 style URL
+              new URL(nexusUrl, "/content/repositories/" + repositoryName) :
+              // generate default URL
+              new URL(nexusUrl, "/repository/" + repositoryName));
+      mavenDeployment.setEnsureCleanOnInit(false);
+      mavenDeployment.init();
+
+      return mavenDeployment;
+    }
+
+    public Integer getRetryCount() {
+      return retryCount;
+    }
+
+    public String getProject() {
+      return project;
+    }
+  }
 }

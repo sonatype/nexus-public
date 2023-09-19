@@ -13,6 +13,7 @@
 package org.sonatype.nexus.testsuite.testsupport.maven;
 
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
@@ -26,6 +27,24 @@ public class MavenRunner
   extends ComponentSupport
 {
   public void run(final MavenDeployment deployment, final String... goals) throws VerificationException {
+    doRun(deployment, goals);
+  }
+
+  public void run(final Supplier<Boolean> shouldRetry, final MavenDeployment deployment, final String... goals) throws VerificationException {
+    do {
+      try {
+        doRun(deployment, goals);
+        //once successful no need to bother retrying
+        return;
+      }
+      catch (Throwable t) {
+        log.error("Maven execution failed", t);
+      }
+    }
+    while (shouldRetry.get());
+  }
+
+  private void doRun(final MavenDeployment deployment, final String... goals) throws VerificationException {
     log.debug("Deploying: {}", deployment);
     Verifier verifier = new Verifier(deployment.getProjectDir().getAbsolutePath());
     verifier.addCliOption("-s " + deployment.settingsFile().getAbsolutePath());

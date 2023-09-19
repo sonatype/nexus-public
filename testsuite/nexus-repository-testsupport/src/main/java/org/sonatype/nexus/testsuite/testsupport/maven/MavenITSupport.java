@@ -24,10 +24,12 @@ import javax.inject.Inject;
 
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.PathPayload;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
+import org.sonatype.nexus.testsuite.testsupport.maven.MavenTestHelper.MavenDeployBuilder;
 
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -38,7 +40,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.maven.artifact.repository.metadata.Metadata;
-import org.apache.maven.it.VerificationException;
+import org.junit.Before;
 import org.junit.experimental.categories.Category;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -66,86 +68,26 @@ public abstract class MavenITSupport
     testData.addDirectory(resolveBaseFile("target/it-resources/maven"));
   }
 
+  @Before
+  public void disableCentralAutoBlocking() throws Exception {
+    //turn off central auto blocking, in case random error encountered
+    Repository repository = repositoryManager.get("maven-central");
+    if (repository != null) {
+      Configuration updatedConfiguration = repository.getConfiguration().copy();
+      updatedConfiguration.attributes("httpclient").set("autoBlock", false);
+      repositoryManager.update(updatedConfiguration);
+    }
+  }
+
   protected File mvnBaseDir(final String project) {
     return resolveBaseFile("target/" + getClass().getSimpleName() + "-" + testName.getMethodName() + "/" + project);
   }
 
-  public void mvnDeploy(final String project, final String version, final Repository repo)
-      throws Exception
-  {
-    mvnDeploy(project, version, repo.getName());
-  }
-
-
-  public void mvnDeploy(final String project, final String version, final String deployRepositoryName)
-      throws Exception
-  {
-    mvnDeploy(project, version, new URL(nexusUrl, "/repository/maven-public"),
-        new URL(nexusUrl, "/repository/" + deployRepositoryName));
-  }
-
-  protected void mvnDeploy(final String project,
-                           final String group,
-                           final String artifactId,
-                           final String version,
-                           final String deployRepositoryName)
-      throws Exception
-  {
-    mvnDeploy(project, group, artifactId, version,
-        new URL(nexusUrl, "/repository/maven-public"),
-        new URL(nexusUrl, "/repository/" + deployRepositoryName));
-  }
-
-  protected void mvnLegacyDeploy(final String project, final String version, final String deployRepositoryName)
-      throws Exception
-  {
-    mvnDeploy(project, version, new URL(nexusUrl, "/repository/maven-public"),
-        new URL(nexusUrl, "/content/repositories/" + deployRepositoryName));
-  }
-
-  protected void mvnDeploy(final String project, final String version, final URL proxyUrl, final URL deployUrl)
-      throws Exception
-  {
-    final File mavenBaseDir = mvnBaseDir(project).getAbsoluteFile();
-    final File projectDir = resolveTestFile(project);
-
-    MavenDeployment mavenDeployment = new MavenDeployment();
-    mavenDeployment.setSettingsTemplate(resolveTestFile("settings.xml"));
-    mavenDeployment.setProjectDir(mavenBaseDir);
-    mavenDeployment.setProjectTemplateDir(projectDir);
-    mavenDeployment.setVersion(version);
-    mavenDeployment.setProxyUrl(proxyUrl);
-    mavenDeployment.setDeployUrl(deployUrl);
-    mavenDeployment.setEnsureCleanOnInit(false);
-    mavenDeployment.init();
-
-    new MavenRunner().run(mavenDeployment, "clean", "deploy");
-  }
-
-  protected void mvnDeploy(
-      final String project,
-      final String group,
-      final String artifactId,
-      final String version,
-      final URL proxyUrl,
-      final URL deployUrl) throws VerificationException
-  {
-    final File mavenBaseDir = mvnBaseDir(project).getAbsoluteFile();
-    final File projectDir = resolveTestFile(project);
-
-    MavenDeployment mavenDeployment = new MavenDeployment();
-    mavenDeployment.setSettingsTemplate(resolveTestFile("settings.xml"));
-    mavenDeployment.setProjectDir(mavenBaseDir);
-    mavenDeployment.setProjectTemplateDir(projectDir);
-    mavenDeployment.setGroupId(group);
-    mavenDeployment.setArtifactId(artifactId);
-    mavenDeployment.setVersion(version);
-    mavenDeployment.setProxyUrl(proxyUrl);
-    mavenDeployment.setDeployUrl(deployUrl);
-    mavenDeployment.setEnsureCleanOnInit(false);
-    mavenDeployment.init();
-
-    new MavenRunner().run(mavenDeployment, "clean", "deploy");
+  public void mvnDeploy(final MavenDeployBuilder mavenDeployBuilder) throws Exception {
+    mavenTestHelper.mvnDeploy(mavenDeployBuilder.
+        withTestData(testData).
+        withNexusUrl(nexusUrl).
+        withProjectDirectory(mvnBaseDir(mavenDeployBuilder.getProject())));
   }
 
   protected void write(final Repository repository, final String path, final Payload payload) throws IOException {
