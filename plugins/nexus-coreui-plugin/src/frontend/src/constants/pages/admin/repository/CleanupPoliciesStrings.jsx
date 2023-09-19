@@ -91,6 +91,7 @@ export default {
     EXCLUSION_CRITERIA: {
       LABEL: 'Except for any component where:',
       ALERT: 'This option is only applicable to releases',
+      NORMALIZED_VERSION_ALERT: 'Criteria will populate once post-upgrade tasks complete',
       VERSION_LABEL: 'Version',
       PREFIX: 'is the most',
       SUFFIX: 'recent versions by',

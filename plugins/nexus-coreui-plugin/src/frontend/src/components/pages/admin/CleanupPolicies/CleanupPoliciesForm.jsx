@@ -109,7 +109,9 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   }
 
   function setExclusionCriteriaEnabled(checked) {
-    send({type: 'SET_EXCLUSION_CRITERIA_ENABLED', checked});
+    if (isNormalizedVersionTaskDone) {
+      send({type: 'SET_EXCLUSION_CRITERIA_ENABLED', checked});
+    }
   }
 
   function confirmDelete() {
@@ -135,6 +137,18 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   function setReleaseType(event) {
     send({type: 'UPDATE_RELEASE_TYPE', value: event.target.value});
   }
+
+  const isNormalizedVersionTaskDone = ExtJS.state().getValue(
+    `${data.format}.normalized.version.available`
+  );
+
+  const renderAlertMessage = () => {
+    if (!isNormalizedVersionTaskDone) {
+      return LABELS.EXCLUSION_CRITERIA.NORMALIZED_VERSION_ALERT;
+    }
+
+    return LABELS.EXCLUSION_CRITERIA.ALERT;
+  };
 
   return (
     <Page className="nxrm-cleanup-policies">
@@ -323,10 +337,9 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                     {showRetainN && (
                       <>
                         <NxH3>{LABELS.EXCLUSION_CRITERIA.LABEL}</NxH3>
-                        {!isReleaseType(data.criteriaReleaseType) && (
-                          <NxInfoAlert>
-                            {LABELS.EXCLUSION_CRITERIA.ALERT}
-                          </NxInfoAlert>
+                        {(!isReleaseType(data.criteriaReleaseType) ||
+                          !isNormalizedVersionTaskDone) && (
+                          <NxInfoAlert>{renderAlertMessage()}</NxInfoAlert>
                         )}
                         <CheckboxControlledWrapper
                           isChecked={Boolean(exclusionCriteriaEnabled)}
@@ -335,7 +348,10 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                           )}
                           onChange={setExclusionCriteriaEnabled}
                           id="criteria-version"
-                          disabled={!isReleaseType(data.criteriaReleaseType)}
+                          disabled={
+                            !isNormalizedVersionTaskDone ||
+                            !isReleaseType(data.criteriaReleaseType)
+                          }
                         >
                           <CleanupPoliciesNxFormGroup
                             label={LABELS.EXCLUSION_CRITERIA.VERSION_LABEL}
