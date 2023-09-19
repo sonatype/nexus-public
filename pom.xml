@@ -68,7 +68,7 @@
     <karaf.version>4.3.9</karaf.version>
 
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
-    <node.version>v16.14.2</node.version>
+    <node.version>v18.17.0</node.version>
     <yarn.version>v1.22.19</yarn.version>
     <npm.install>install --immutable</npm.install>
     <npm.skipTests>false</npm.skipTests>

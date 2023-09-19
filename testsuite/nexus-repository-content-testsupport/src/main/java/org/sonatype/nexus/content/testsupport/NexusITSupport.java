@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.net.URI;
 import java.net.URL;
 import java.security.KeyStore;
+import java.time.Duration;
 import java.util.Arrays;
 
 import javax.annotation.Nonnull;
@@ -78,6 +79,9 @@ import org.junit.rules.TestName;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.is;
+
 /**
  * Support for Nexus integration tests.
  */
@@ -134,7 +138,12 @@ public abstract class NexusITSupport
     // been reached at which point the client/test can continue while NX still has to release the upstream connection
     // (cf. ResponseEntityProxy which releases a connection after the last byte has been handed out to the client).
     // So allow for some delay when checking the connection pool.
-    waitFor(() -> connectionManager.getTotalStats().getLeased() == 0, 3 * 1000);
+    try {
+      await().atMost(Duration.ofSeconds(10)).until(() -> connectionManager.getTotalStats().getLeased(), is(0));
+    } catch (Exception e) {
+      log.error("Some http connections were still active 10 seconds after the test completed {}", connectionManager.getTotalStats());
+      throw e;
+    }
   }
 
   /**
