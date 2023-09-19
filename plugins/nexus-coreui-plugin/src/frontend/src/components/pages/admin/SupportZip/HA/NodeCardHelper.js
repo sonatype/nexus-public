@@ -14,8 +14,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import Axios from 'axios';
+import {APIConstants} from '@sonatype/nexus-ui-plugin';
+
 const downloadZipFile = (blobRef) =>
   `/service/rest/wonderland/download/${blobRef}`;
 
-export const URL = {downloadZipFile};
+export const cleanNode = async (nodeId) => {
+  return await Axios.delete(
+    APIConstants.REST.INTERNAL.CLEAR_SUPPORT_ZIP_HISTORY + nodeId
+  );
+};
 
+export const URL = {
+  downloadZipFile,
+};

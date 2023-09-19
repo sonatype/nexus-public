@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine} from '@xstate/react';
-
+import {useActor} from '@xstate/react';
+import classNames from 'classnames';
 import {
   NxCard,
   NxFontAwesomeIcon,
@@ -20,95 +20,125 @@ import {
   NxP,
   NxTextLink,
   NxTooltip,
-  NxLoadingSpinner
+  NxLoadingSpinner,
+  NxButton,
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
-import {faCheckCircle, faTimesCircle} from '@fortawesome/free-solid-svg-icons';
+import {
+  faSync,
+  faCheckCircle,
+  faTimesCircle,
+} from '@fortawesome/free-solid-svg-icons';
 
 import './SupportZipHa.scss';
 
-import NodeCardMachine from './NodeCardMachine';
-import {URL} from './NodeCardHelper'
+import {URL} from './NodeCardHelper';
 
 const {SUPPORT_ZIP: LABELS} = UIStrings;
 
-const NODE_UNAVAILABLE = 'NODE_UNAVAILABLE';
+export default function NodeCard({actor, createZip, isBlobStoreConfigured}) {
+  const [state] = useActor(actor);
 
-export default function NodeCard({initial, createZip}) {
-  const [current] = useMachine(NodeCardMachine, {
-    context: {
-      node: initial
-    },
-    devTools: true
-  });
-
-  const {node} = current.context;
-
-  const zipNotCreated = node.status === 'NOT_CREATED';
-  const zipCreated = node.status === 'COMPLETED';
-  const zipCreating = node.status === 'CREATING';
-
-  const zipStatusLabels = {
-    NOT_CREATED: LABELS.CREATE_SUPPORT_ZIP,
-    COMPLETED: LABELS.DOWNLOAD_ZIP,
-    CREATING: LABELS.CREATING_ZIP
-  };
-
-  const statusActionLabel = zipStatusLabels[node.status];
+  const {data} = state.context;
+  const isNodeActive = data.status !== 'NODE_UNAVAILABLE';
+  const zipNotCreated = data.status === 'NOT_CREATED';
+  const zipCreating = data.status === 'CREATING';
+  const nodeError = data.status === 'FAILED';
 
   const zipLastUpdatedHtml = () => {
-    if (node.blobRef == null && !isNodeActive()) {
-      return <NxP className="nxrm-p-zip-updated">{LABELS.NODE_UNAVAILABLE_CANNOT_CREATE}</NxP>;
+    if (!isNodeActive) {
+      return (
+        <NxP className="nxrm-p-zip-updated">
+          {LABELS.NODE_UNAVAILABLE_CANNOT_CREATE}
+        </NxP>
+      );
     }
-    if (zipNotCreated || node.blobRef === null) {
+
+    if (!isBlobStoreConfigured) {
+      return (
+        <NxP className="nxrm-p-zip-updated">
+          {LABELS.NO_BLOB_STORE_CONFIGURED}
+        </NxP>
+      );
+    }
+
+    if (zipCreating) {
+      return <NxLoadingSpinner>{LABELS.CREATING_ZIP}</NxLoadingSpinner>;
+    }
+
+    if (zipNotCreated) {
       return <NxP className="nxrm-p-zip-updated">{LABELS.NO_ZIP_CREATED}</NxP>;
     }
 
-    const updatedDate = new Date(node.lastUpdated).toLocaleDateString();
     return (
       <NxP className="nxrm-p-zip-updated">
-        {LABELS.ZIP_UPDATED}&nbsp;<b>{updatedDate}</b>
+        <NxTextLink href={URL.downloadZipFile(data.blobRef)} download>
+          {LABELS.DOWNLOAD_ZIP}
+          <br />
+          {formatDate(new Date(data.lastUpdated))}
+        </NxTextLink>
       </NxP>
     );
   };
 
-  const isNodeActive = () => node.status !== NODE_UNAVAILABLE;
+  const generateButtonDisabled =
+    !isNodeActive || !isBlobStoreConfigured || zipCreating;
+
+  const formatDate = (date) => {
+    const tz = date.toTimeString().split(' ')[1];
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDay()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} (${tz})`;
+  };
+
+  const handleGenerate = () => {
+    if (!generateButtonDisabled) {
+      createZip();
+    }
+  };
 
   return (
     <NxCard>
       <NxTooltip
-        title={isNodeActive() ? LABELS.NODE_IS_ACTIVE : LABELS.NODE_IS_INACTIVE}
+        title={isNodeActive ? LABELS.NODE_IS_ACTIVE : LABELS.NODE_IS_INACTIVE}
         placement="top-middle"
       >
         <NxCard.Header>
           <NxH3>
-            {isNodeActive() ? (
-              <NxFontAwesomeIcon icon={faCheckCircle} className="nxrm-node-green-checkmark" />
+            {isNodeActive ? (
+              <NxFontAwesomeIcon
+                icon={faCheckCircle}
+                className="nxrm-node-green-checkmark"
+              />
             ) : (
               <NxFontAwesomeIcon icon={faTimesCircle} />
             )}{' '}
-            {node.hostname}
+            {data.hostname}
           </NxH3>
         </NxCard.Header>
       </NxTooltip>
-      <NxCard.Content>{zipLastUpdatedHtml()}</NxCard.Content>
+      <NxCard.Content>
+        <NxCard.Text>{zipLastUpdatedHtml()}</NxCard.Text>
+      </NxCard.Content>
       <NxCard.Footer>
-        {!isNodeActive() && !zipCreated && <NxCard.Text>{LABELS.OFFLINE}</NxCard.Text>}
-
-        {zipNotCreated && <NxTextLink onClick={createZip}>{statusActionLabel}</NxTextLink>}
-
-        {zipCreated && (
-          <NxTextLink href={URL.downloadZipFile(node.blobRef)} download>
-            {statusActionLabel}
-          </NxTextLink>
+        {nodeError && (
+          <NxP className="error-message">{LABELS.GENERATE_ERROR}</NxP>
         )}
-
-        {zipCreating && (
-          <NxCard.Text>
-            <NxLoadingSpinner>{statusActionLabel}</NxLoadingSpinner>
-          </NxCard.Text>
-        )}
+        <NxButton
+          variant={nodeError ? 'error' : 'secondary'}
+          onClick={handleGenerate}
+          className={classNames({
+            disabled: generateButtonDisabled,
+          })}
+        >
+          {nodeError ? (
+            <>
+              <NxFontAwesomeIcon icon={faSync} />
+              <span>{LABELS.RETRY}</span>
+            </>
+          ) : (
+            LABELS.GENERATE_NEW_ZIP_FILE
+          )}
+        </NxButton>
       </NxCard.Footer>
     </NxCard>
   );

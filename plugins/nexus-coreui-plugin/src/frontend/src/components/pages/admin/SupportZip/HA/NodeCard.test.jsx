@@ -11,69 +11,95 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import {spawn} from 'xstate';
 import {render, screen} from '@testing-library/react';
-
+import userEvent from '@testing-library/user-event';
 import NodeCard from './NodeCard';
 import NodeCardTestData from './NodeCard.testdata';
+import UIStrings from '../../../../../constants/UIStrings';
+import NodeCardMachine from './NodeCardMachine';
+const {SUPPORT_ZIP: LABELS} = UIStrings;
 
 describe('NodeCard', function () {
-    const testNodes = NodeCardTestData;
+  const testNodes = NodeCardTestData;
+  const ACTIVE_NODE_INDEX = 0;
+  const ZIP_CREATED_NODE_INDEX = 0;
+  const ZIP_NOT_CREATED_NODE_INDEX = 2;
+  const ZIP_CREATING_NODE_INDEX = 4;
+  const ZIP_FAILED_NODE_INDEX = 9;
 
-    const DOWNLOAD_ZIP_STATUS = 'Download Zip';
-    const CREATE_ZIP_STATUS = 'Create Support zip';
-    const CREATING_ZIP_STATUS = 'Creating Zip...';
+  const selectors = {
+    nodeHostName: (hostname) =>
+      screen.getByRole('heading', {level: 3, name: hostname}),
+    generateZipStatus: () =>
+      screen.getByRole('button', {name: LABELS.GENERATE_NEW_ZIP_FILE}),
+    noZipCreated: () => screen.getByText(LABELS.NO_ZIP_CREATED),
+    zipCreate: () => screen.getByText(LABELS.GENERATE_NEW_ZIP_FILE),
+    zipCreating: () => screen.getByText(LABELS.CREATING_ZIP),
+    errorMessage: () => screen.getByText(LABELS.GENERATE_ERROR),
+    retryButton: () => screen.getByRole('button', {name: LABELS.RETRY}),
+  };
 
-    const NO_ZIP_CREATED = 'No Zip created';
-
-    const ACTIVE_NODE_INDEX = 0;
-    const ZIP_CREATED_NODE_INDEX = 0;
-    const ZIP_NOT_CREATED_NODE_INDEX = 2;
-    const ZIP_CREATING_NODE_INDEX = 4;
-
-    const selectors = {
-        nodeHostName: (hostname) => screen.getByText(hostname),
-        downloadZipStatus: () => screen.getByText(DOWNLOAD_ZIP_STATUS),
-        noZipCreated: () => screen.getByText(NO_ZIP_CREATED),
-        zipCreate: () => screen.getByText(CREATE_ZIP_STATUS),
-        zipCreating: () => screen.getByText(CREATING_ZIP_STATUS)
-    }
-
-    const renderView = (nxrmNode) => {
-        return render(
-            <NodeCard initial={nxrmNode} />
-        );
+  const renderView = (nxrmNode, createZip = jest.fn()) => {
+    const id = 'test-machine';
+    const context = {
+      data: nxrmNode,
+      pristineData: nxrmNode,
     };
+    const machineRef = spawn(NodeCardMachine.withContext(context), id);
+    return render(
+      <NodeCard
+        actor={machineRef}
+        isBlobStoreConfigured
+        createZip={createZip}
+      />
+    );
+  };
 
-    it('renders node card', async () => {
-        const activeNode = testNodes[ACTIVE_NODE_INDEX];
-        renderView(activeNode);
+  it('renders node card', () => {
+    const activeNode = testNodes[ACTIVE_NODE_INDEX];
+    renderView(activeNode);
 
-        expect(selectors.nodeHostName(activeNode.hostname)).toBeInTheDocument();
-    });
+    expect(selectors.nodeHostName(activeNode.hostname)).toBeInTheDocument();
+  });
 
+  it('renders zip is created', () => {
+    const node = testNodes[ZIP_CREATED_NODE_INDEX];
+    renderView(node);
 
-    it('renders zip is created', async () => {
-        const node = testNodes[ZIP_CREATED_NODE_INDEX];
-        renderView(node);
+    expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
+    expect(selectors.generateZipStatus()).toBeInTheDocument();
+  });
 
-        expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(selectors.downloadZipStatus()).toBeInTheDocument();
-    });
+  it('renders zip is not created', () => {
+    const node = testNodes[ZIP_NOT_CREATED_NODE_INDEX];
+    renderView(node);
 
-    it('renders zip is not created', async () => {
-        const node = testNodes[ZIP_NOT_CREATED_NODE_INDEX];
-        renderView(node);
+    expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
+    expect(selectors.noZipCreated()).toBeInTheDocument();
+    expect(selectors.zipCreate()).toBeInTheDocument();
+  });
 
-        expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(selectors.noZipCreated()).toBeInTheDocument();
-        expect(selectors.zipCreate()).toBeInTheDocument();
-    });
+  it('renders zip creation in progress', () => {
+    const node = testNodes[ZIP_CREATING_NODE_INDEX];
+    renderView(node);
 
-    it('renders zip creation in progress', async () => {
-        const node = testNodes[ZIP_CREATING_NODE_INDEX];
-        renderView(node);
+    expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
+    expect(selectors.zipCreating()).toBeInTheDocument();
+    expect(selectors.zipCreate()).toHaveAttribute('aria-disabled', 'true');
+  });
 
-        expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
-        expect(selectors.zipCreating()).toBeInTheDocument();
-    });
+  it('renders an error message', () => {
+    const handlerMock = jest.fn();
+    const node = testNodes[ZIP_FAILED_NODE_INDEX];
+    renderView(node, handlerMock);
+
+    expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
+    expect(selectors.retryButton()).toBeInTheDocument();
+    expect(selectors.errorMessage()).toBeInTheDocument();
+
+    userEvent.click(selectors.retryButton());
+
+    expect(handlerMock).toHaveBeenCalled();
+  });
 });
