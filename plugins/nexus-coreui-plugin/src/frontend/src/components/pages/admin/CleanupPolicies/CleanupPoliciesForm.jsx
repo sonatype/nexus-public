@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import classnames from 'classnames';
+
 import {
   CheckboxControlledWrapper,
   ContentBody,
@@ -25,7 +25,6 @@ import {
 
 import {
   NxInfoAlert,
-  NxH3,
   NxButton,
   NxFontAwesomeIcon,
   NxFormSelect,
@@ -36,13 +35,13 @@ import {
   NxFormGroup,
   NxTile,
   NxTextInput,
+  NxCheckbox,
 } from '@sonatype/react-shared-components';
 import {isReleaseType} from './CleanupPoliciesHelper';
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
 import CleanupPoliciesPreview from './CleanupPoliciesPreview';
 import CleanupPoliciesDryRun from './CleanupPoliciesDryRun';
-import CleanupPoliciesNxFormGroup from './CleanupPoliciesNxFormGroup';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
@@ -90,11 +89,6 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   );
   const isMaven = data.format === 'maven2';
   const showRetainN = isMavenRetainNEnabled && isPostgresEnabled && isMaven;
-  const sortByOptions = Object.values(LABELS.EXCLUSION_CRITERIA.SORT_BY);
-  const sortByCurrentOption = sortByOptions.find(
-    (item) => item.format === data.format
-  );
-  const suffixRetainN = `${LABELS.EXCLUSION_CRITERIA.SUFFIX} ${sortByCurrentOption?.label}`;
 
   function setCriteriaLastBlobUpdatedEnabled(checked) {
     send({type: 'SET_CRITERIA_LAST_BLOB_UPDATED_ENABLED', checked});
@@ -108,9 +102,9 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
     send({type: 'SET_CRITERIA_ASSET_REGEX_ENABLED', checked});
   }
 
-  function setExclusionCriteriaEnabled(checked) {
+  function setExclusionCriteriaEnabled({target}) {
     if (isNormalizedVersionTaskDone) {
-      send({type: 'SET_EXCLUSION_CRITERIA_ENABLED', checked});
+      send({type: 'SET_EXCLUSION_CRITERIA_ENABLED', checked: target.checked});
     }
   }
 
@@ -254,11 +248,10 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                           criteriaLastBlobUpdatedEnabled
                         )}
                       >
-                        <CleanupPoliciesNxFormGroup
+                        <NxFormGroup
                           label={LABELS.LAST_UPDATED_LABEL}
+                          sublabel={LABELS.LAST_UPDATED_SUB_LABEL}
                           isRequired={criteriaLastBlobUpdatedEnabled}
-                          prefix={LABELS.LAST_UPDATED_PREFIX}
-                          suffix={LABELS.LAST_UPDATED_SUFFIX}
                         >
                           <NxTextInput
                             {...FormUtils.fieldProps(
@@ -269,10 +262,11 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                               'criteriaLastBlobUpdated',
                               send
                             )}
+                            placeholder={LABELS.PLACEHOLDER}
                             disabled={!criteriaLastBlobUpdatedEnabled}
                             className="nx-text-input--short"
                           />
-                        </CleanupPoliciesNxFormGroup>
+                        </NxFormGroup>
                       </CheckboxControlledWrapper>
                     )}
                     {isFieldApplicable('lastDownloaded') && (
@@ -284,11 +278,10 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                           criteriaLastDownloadedEnabled
                         )}
                       >
-                        <CleanupPoliciesNxFormGroup
+                        <NxFormGroup
                           label={LABELS.LAST_DOWNLOADED_LABEL}
                           isRequired={criteriaLastDownloadedEnabled}
-                          prefix={LABELS.LAST_DOWNLOADED_PREFIX}
-                          suffix={LABELS.LAST_DOWNLOADED_SUFFIX}
+                          sublabel={LABELS.LAST_DOWNLOADED_SUB_LABEL}
                         >
                           <NxTextInput
                             {...FormUtils.fieldProps(
@@ -299,10 +292,11 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                               'criteriaLastDownloaded',
                               send
                             )}
+                            placeholder={LABELS.PLACEHOLDER}
                             disabled={!criteriaLastDownloadedEnabled}
                             className="nx-text-input--short"
                           />
-                        </CleanupPoliciesNxFormGroup>
+                        </NxFormGroup>
                       </CheckboxControlledWrapper>
                     )}
                     {isFieldApplicable('regex') && (
@@ -336,37 +330,37 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                     )}
                     {showRetainN && (
                       <>
-                        <NxH3>{LABELS.EXCLUSION_CRITERIA.LABEL}</NxH3>
                         {(!isReleaseType(data.criteriaReleaseType) ||
                           !isNormalizedVersionTaskDone) && (
-                          <NxInfoAlert>{renderAlertMessage()}</NxInfoAlert>
+                          <NxInfoAlert className="retain-n__alert">
+                            {renderAlertMessage()}
+                          </NxInfoAlert>
                         )}
-                        <CheckboxControlledWrapper
+                        <NxCheckbox
                           isChecked={Boolean(exclusionCriteriaEnabled)}
-                          title={LABELS.VERSION_CHECKBOX_TITLE(
-                            exclusionCriteriaEnabled
-                          )}
                           onChange={setExclusionCriteriaEnabled}
-                          id="criteria-version"
                           disabled={
                             !isNormalizedVersionTaskDone ||
                             !isReleaseType(data.criteriaReleaseType)
                           }
+                          className="retain-n__checkbox"
                         >
-                          <CleanupPoliciesNxFormGroup
+                          <b>{LABELS.EXCLUSION_CRITERIA.LABEL}</b>
+                        </NxCheckbox>
+                        {exclusionCriteriaEnabled && (
+                          <NxFormGroup
                             label={LABELS.EXCLUSION_CRITERIA.VERSION_LABEL}
                             isRequired={criteriaLastBlobUpdatedEnabled}
-                            prefix={LABELS.EXCLUSION_CRITERIA.PREFIX}
-                            suffix={suffixRetainN}
+                            sublabel={LABELS.EXCLUSION_CRITERIA.SUB_LABEL}
+                            className="retain-n__group"
                           >
                             <NxTextInput
                               className="nx-text-input--short"
-                              disabled={!exclusionCriteriaEnabled}
                               {...FormUtils.fieldProps('retain', state)}
                               onChange={FormUtils.handleUpdate('retain', send)}
                             />
-                          </CleanupPoliciesNxFormGroup>
-                        </CheckboxControlledWrapper>
+                          </NxFormGroup>
+                        )}
                       </>
                     )}
                     {isPreviewEnabled && (

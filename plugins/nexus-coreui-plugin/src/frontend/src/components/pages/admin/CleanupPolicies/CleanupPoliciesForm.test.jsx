@@ -74,9 +74,7 @@ const selectors = {
   criteriaVersion: () =>
     screen.queryByLabelText(LABELS.EXCLUSION_CRITERIA.VERSION_LABEL),
   getCriteriaVersionCheckbox: () =>
-    within(screen.getByTitle(/(Enable|Disable) Version Criteria/)).getByRole(
-      'checkbox'
-    ),
+    screen.getByLabelText(LABELS.EXCLUSION_CRITERIA.LABEL),
   versionAlertMessage: () =>
     screen.queryByText(LABELS.EXCLUSION_CRITERIA.ALERT),
   normalizedVersionAlertMessage: () =>
@@ -715,10 +713,6 @@ describe('CleanupPoliciesForm', function () {
         screen.queryByText(LABELS.EXCLUSION_CRITERIA.ALERT)
       ).not.toBeInTheDocument();
       expect(criteriaVersion()).toHaveValue(ITEM.retain.toString());
-
-      const message = `${LABELS.EXCLUSION_CRITERIA.SUFFIX} ${LABELS.EXCLUSION_CRITERIA.SORT_BY.VERSION.label}`;
-
-      expect(screen.getByText(message)).toBeInTheDocument();
     });
 
     it('Version criteria is visible for maven only', async function () {
@@ -768,7 +762,7 @@ describe('CleanupPoliciesForm', function () {
 
       await TestUtils.changeField(format, ITEM.format);
 
-      expect(criteriaVersion()).toBeVisible();
+      expect(criteriaVersion()).not.toBeInTheDocument();
       expect(getCriteriaVersionCheckbox()).toBeVisible();
       expect(getCriteriaVersionCheckbox()).toBeDisabled();
       expect(versionAlertMessage()).toBeInTheDocument();
@@ -777,6 +771,9 @@ describe('CleanupPoliciesForm', function () {
 
       expect(getCriteriaVersionCheckbox()).toBeEnabled();
       expect(versionAlertMessage()).not.toBeInTheDocument();
+
+      userEvent.click(getCriteriaVersionCheckbox());
+      expect(criteriaVersion()).toBeVisible();
 
       await TestUtils.changeField(releaseType, 'PRERELEASES');
 
@@ -818,7 +815,7 @@ describe('CleanupPoliciesForm', function () {
       expect(versionAlertMessage()).not.toBeInTheDocument();
       expect(normalizedVersionAlertMessage()).toBeInTheDocument();
       expect(getCriteriaVersionCheckbox()).toBeDisabled();
-      expect(criteriaVersion()).toBeDisabled();
+      expect(criteriaVersion()).not.toBeInTheDocument();
     });
 
     it('saves the retain-n values', async function () {

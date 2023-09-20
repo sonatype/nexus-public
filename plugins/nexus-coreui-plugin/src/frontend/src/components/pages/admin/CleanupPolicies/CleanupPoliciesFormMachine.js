@@ -143,6 +143,8 @@ export default FormUtils.buildFormMachine({
     }),
     setExclusionCriteriaEnabled: assign({
       exclusionCriteriaEnabled: (_, {checked}) => checked,
+      isTouched: (context) =>
+        mergeDeepRight(context.isTouched, {retain: false}),
       data: ({data}, {checked}) =>
         mergeDeepRight(data, {
           retain: checked ? data.retain : null,

@@ -57,21 +57,20 @@ export default {
     RELEASE_TYPE_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Release Type Criteria`,
     RELEASE_TYPE_LABEL: 'Release Type',
     ASSET_NAME_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Asset Name Matcher Criteria`,
-    VERSION_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Version Criteria`,
     ASSET_NAME_LABEL: 'Asset Name Matcher',
     FORMAT_SELECT: 'Select a format...',
-    RELEASE_TYPE_SELECT: 'Select the release type:',
+    RELEASE_TYPE_SELECT: 'Remove components that are of the following release type:',
     REPOSITORY_SELECT: 'Select a repository...',
 
     NAME_DESCRIPTION: 'Use a unique name for the cleanup policy',
     FORMAT_DESCRIPTION: 'The format that this cleanup policy can be applied to',
     RELEASE_TYPE_DESCRIPTION: 'Remove components that are of the following release type:',
-    ASSET_NAME_DESCRIPTION: 'Contains at least one asset where the name matches this regular expression:',
+    ASSET_NAME_DESCRIPTION: 'Remove components that have at least one asset name matching the following regular expression pattern:',
 
-    LAST_UPDATED_PREFIX: 'Published over:',
-    LAST_UPDATED_SUFFIX: 'days ago',
-    LAST_DOWNLOADED_PREFIX: 'Haven’t been downloaded in:',
-    LAST_DOWNLOADED_SUFFIX: 'days',
+    LAST_UPDATED_SUB_LABEL: 'Components published over “x” days ago (e.g 0-999 )',
+    LAST_DOWNLOADED_SUB_LABEL: 'Components downloaded in “x” amount of days (e.g 0-999 )',
+
+    PLACEHOLDER: 'e.g 100 days',
 
     RELEASE_TYPE: {
       RELEASES_AND_SNAPSHOT: {
@@ -89,12 +88,11 @@ export default {
     },
 
     EXCLUSION_CRITERIA: {
-      LABEL: 'Except for any component where:',
+      LABEL: 'Except, do not remove any component that meets the following criteria:',
       ALERT: 'This option is only applicable to releases',
       NORMALIZED_VERSION_ALERT: 'Criteria will populate once post-upgrade tasks complete',
-      VERSION_LABEL: 'Version',
-      PREFIX: 'is the most',
-      SUFFIX: 'recent versions by',
+      VERSION_LABEL: 'Number of Versions',
+      SUB_LABEL: 'Keep the latest "x" number of versions by version number:',
       SORT_BY: {
         VERSION: {
           id: 'version',
