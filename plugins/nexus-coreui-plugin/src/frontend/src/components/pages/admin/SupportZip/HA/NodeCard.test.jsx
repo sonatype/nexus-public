@@ -64,11 +64,18 @@ describe('NodeCard', function () {
   });
 
   it('renders zip is created', () => {
+    jest
+      .spyOn(Date.prototype, 'toTimeString')
+      .mockReturnValue('00:00:00 GMT-0500 (Standard Time)');
+
     const node = testNodes[ZIP_CREATED_NODE_INDEX];
     renderView(node);
 
     expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
     expect(selectors.generateZipStatus()).toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveTextContent(
+      'Download Zip Generated2022-5-7 0:0:0 (GMT-0500)'
+    );
   });
 
   it('renders zip is not created', () => {

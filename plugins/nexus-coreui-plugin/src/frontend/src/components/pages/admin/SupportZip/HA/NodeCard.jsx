@@ -87,7 +87,8 @@ export default function NodeCard({actor, createZip, isBlobStoreConfigured}) {
 
   const formatDate = (date) => {
     const tz = date.toTimeString().split(' ')[1];
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDay()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} (${tz})`;
+    const month = date.getMonth() + 1;
+    return `${date.getFullYear()}-${month}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} (${tz})`;
   };
 
   const handleGenerate = () => {
