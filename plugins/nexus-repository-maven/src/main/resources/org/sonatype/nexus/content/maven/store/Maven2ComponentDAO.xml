@@ -74,17 +74,41 @@
        AND repository_id = #{repositoryId};
   </select>
 
-
   <!-- Override but myBatis doesn't support it properly, so an 'Ex' suffix is used -->
-  <select id="browseComponentsForCleanupEx" resultType="ComponentData">
-    SELECT maven2_component.* FROM maven2_component
+  <select id="browseComponentsForCleanupEx" resultType="org.sonatype.nexus.repository.content.store.OrderedComponentData">
+    <choose>
+      <!-- Only run select if supported criteria are present, otherwise all data may be selected -->
+      <when test="criteria.isPrerelease != null or criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.retain != null or criteria.regex != null">
+        <include refid="selectBrowseComponentsForCleanupEx"/>
+      </when>
+      <otherwise>SELECT * FROM maven2_component LIMIT 0</otherwise>
+    </choose>
+  </select>
+
+  <sql id="selectBrowseComponentsForCleanupEx">
+    SELECT maven2_component.*,
+    <choose>
+      <when test="criteria.sortBy == 'version'">maven2_component.normalized_version</when>
+      <otherwise>maven2_component.component_id</otherwise>
+    </choose>
+     AS orderedToken
+    FROM maven2_component
+
     <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
         LEFT OUTER JOIN maven2_asset on maven2_component.component_id = maven2_asset.component_id
     </if>
     <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null">
         LEFT JOIN maven2_asset_blob ON maven2_asset.asset_blob_id = maven2_asset_blob.asset_blob_id
     </if>
-    WHERE <include refid="componentSetMatch"/>
+
+    WHERE
+    <choose>
+      <when test="namespace == null and name == null and criteria.sortBy == null and criteria.retain == null">
+       maven2_component.repository_id = #{repositoryId}
+      </when>
+      <otherwise> <include refid="componentSetMatch"/></otherwise>
+    </choose>
+
     <!-- Distinguish between pre-release or release (or mixed if no criteria set) -->
     <choose>
       <when test="criteria.isPrerelease == 'true'"> AND maven2_component.base_version LIKE '%-SNAPSHOT'</when>
@@ -92,12 +116,21 @@
       <otherwise/>
     </choose>
 
-    <!-- Once Retain-N is implemented, the continuation token will need to be compared to normalised_version
+    <!-- For Retain-N, the continuation token needs to be compared to normalised_version
      or blob_created depending on sort type -->
-    <if test="continuationToken != null"> AND maven2_component.component_id > #{continuationToken}</if>
+    <if test="continuationToken != null">
+        <choose>
+            <when test="criteria.sortBy == 'version'">
+                <![CDATA[
+                    AND maven2_component.normalized_version < #{continuationToken}
+                ]]>
+            </when>
+            <otherwise> AND maven2_component.component_id > #{continuationToken}</otherwise>
+        </choose>
+    </if>
     GROUP BY maven2_component.component_id
     <!-- trim allows us to only include the HAVING keyword and clauses when needed, ensuring removal of AND if there
-         is no preceeding clause -->
+         is no preceding clause -->
     <trim prefix="HAVING" prefixOverrides="AND ">
       <if test="criteria.lastDownloaded != null">
         <!-- CDATA is used here to enable syntax with <= (less than would otherwise have to be URL-encoded) -->
@@ -108,8 +141,7 @@
       </if>
       <if test="criteria.lastBlobUpdated != null">
         <![CDATA[
-            AND (max(maven2_asset_blob.blob_created)
-              <= (now() - interval '${criteria.lastBlobUpdated} seconds'))
+            AND (max(maven2_asset_blob.blob_created) <= (now() - interval '${criteria.lastBlobUpdated} seconds'))
         ]]>
       </if>
       <if test="criteria.regex != null">
@@ -118,13 +150,15 @@
         ]]>
       </if>
     </trim>
-    <!-- Once Retain-N is implemented, the ORDER BY will need to change to normalised_version or blob_created
-         depending on sort type -->
-    ORDER BY component_id
-    <!-- example retain addition
-    <if test="criteria.retainOffset > 0 and continuationToken == null"> OFFSET #{retainOffset}</if>
-    -->
+    <!-- For Retain-N, the ORDER BY needs to be normalised_version DESC or blob_created DESC depending on sort type -->
+    <choose>
+        <when test="criteria.sortBy == 'version'"> ORDER BY maven2_component.normalized_version DESC</when>
+        <otherwise> ORDER BY maven2_component.component_id</otherwise>
+    </choose>
+
+    <if test="criteria.retain > 0 and continuationToken == null"> OFFSET #{criteria.retain}</if>
+
     <if test="limit > 0"> LIMIT #{limit}</if>;
-  </select>
+  </sql>
 
 </mapper>
