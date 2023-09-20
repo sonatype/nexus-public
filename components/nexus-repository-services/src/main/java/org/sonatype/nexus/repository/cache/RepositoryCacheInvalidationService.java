@@ -22,7 +22,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheInvalidationEvent;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
-import org.sonatype.nexus.repository.manager.RepositoryCacheInvalidatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -58,7 +57,6 @@ public class RepositoryCacheInvalidationService
 
   public void processCachesInvalidation(final Repository repository) {
     invalidateCaches(repository, true);
-    eventManager.post(new RepositoryCacheInvalidatedEvent(repository));
   }
 
   /**
