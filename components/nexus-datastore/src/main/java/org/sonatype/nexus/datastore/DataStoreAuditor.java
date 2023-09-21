@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.datastore;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Named;
@@ -21,6 +22,7 @@ import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
+import org.sonatype.nexus.distributed.event.service.api.common.DataStoreConfigurationEvent;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -34,30 +36,27 @@ public class DataStoreAuditor
   public static final String DOMAIN = "DataStore";
 
   public DataStoreAuditor() {
-    registerType(DataStoreUpdatedEvent.class, UPDATED_TYPE);
+    registerType(DataStoreConfigurationEvent.class, UPDATED_TYPE);
   }
 
   @Subscribe
   @AllowConcurrentEvents
-  public void on(final DataStoreUpdatedEvent event) {
+  public void on(final DataStoreConfigurationEvent event) {
     if (isRecording()) {
-      DataStoreConfiguration dataStore = event.getDataStoreConfiguration();
+      AuditData data = new AuditData();
+      data.setDomain(DOMAIN);
+      data.setType(type(event.getClass()));
+      data.setContext(event.getConfigurationName());
 
-      AuditData data = getDataStoreData(event, dataStore);
+      Map<String, Object> attributes = data.getAttributes();
+      attributes.put("type", event.getType());
+      attributes.put("source", event.getSource());
+
+      Map<String, String> eventAttributes = new HashMap<>(event.getAttributes());
+      eventAttributes.replace("password", DataStoreConfiguration.REDACTED);
+      attributes.put("attributes", eventAttributes);
+
       record(data);
     }
-  }
-
-  private AuditData getDataStoreData(final DataStoreUpdatedEvent event, final DataStoreConfiguration dataStore) {
-    AuditData data = new AuditData();
-    data.setDomain(DOMAIN);
-    data.setType(type(event.getClass()));
-    data.setContext(dataStore.getName());
-
-    Map<String, Object> attributes = data.getAttributes();
-    attributes.put("type", dataStore.getType());
-    attributes.put("source", dataStore.getSource());
-    attributes.put("attributes", dataStore.getAttributes());
-    return data;
   }
 }
