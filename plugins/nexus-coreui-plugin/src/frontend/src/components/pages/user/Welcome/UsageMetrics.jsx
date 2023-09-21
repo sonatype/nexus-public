@@ -34,12 +34,13 @@ export default function UsageMetrics() {
     isLoading = state.matches('loading');
 
   const isProEdition = ExtJS.isProEdition();
+  const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
 
   function retry() {
     send('RETRY');
   }
 
-  return <div className="nxrm-usage-metrics">
+  return !isHa && <div className="nxrm-usage-metrics">
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       {() =>
         <>
