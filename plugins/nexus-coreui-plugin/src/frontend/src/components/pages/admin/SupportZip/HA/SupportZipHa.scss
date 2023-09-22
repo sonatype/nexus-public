@@ -15,10 +15,10 @@
     justify-content: start;
 
     .nx-card {
-      .nx-card__header:hover{
+      .nx-card__header:hover {
         cursor: pointer;
       }
-  
+
       .nxrm-node-green-checkmark {
         color: green;
       }
@@ -31,5 +31,18 @@
 
   .nxrm-p-zip-updated {
     margin: 0;
+  }
+
+  .nxrm-page-header {
+    .nx-alert--error {
+      flex: 1;
+      margin-top: 0;
+      max-width: none;
+    }
+  }
+
+  .error-message {
+    margin-top: 0;
+    color: var(--nx-swatch-red-40);
   }
 }

@@ -40,7 +40,6 @@ import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryD
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.ibatis.annotations.Param;
 
@@ -213,7 +212,9 @@ public class ComponentStore<T extends ComponentDAO>
       final int limit,
       @Nullable final String continuationToken)
   {
-    return dao().browseComponentsForCleanup(repositoryId, componentSet.namespace(), componentSet.name(),
+    String namespace = componentSet == null ? null : componentSet.namespace();
+    String name = componentSet == null ? null : componentSet.name();
+    return dao().browseComponentsForCleanup(repositoryId, namespace, name,
         cleanupPolicyCriteria, limit, continuationToken);
   }
 
@@ -242,7 +243,7 @@ public class ComponentStore<T extends ComponentDAO>
     return dao().browseNames(repositoryId, namespace);
   }
 
-  @Transactional
+
   /**
    * Browse all component sets (distinct namespace & name) in the given repository.
    *
@@ -253,6 +254,7 @@ public class ComponentStore<T extends ComponentDAO>
    *
    * @see Continuation#nextContinuationToken()
    */
+  @Transactional
   public Continuation<ComponentSetData> browseSets(
       @Param("repositoryId") int repositoryId,
       @Param("limit") int limit,

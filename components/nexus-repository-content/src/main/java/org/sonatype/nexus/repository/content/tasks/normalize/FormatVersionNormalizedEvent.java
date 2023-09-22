@@ -10,21 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore;
+package org.sonatype.nexus.repository.content.tasks.normalize;
 
-import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
+import org.sonatype.nexus.common.event.EventWithSource;
+import org.sonatype.nexus.repository.Format;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class DataStoreUpdatedEvent
+/**
+ * Nexus Event to indicate if the NormalizeComponentVersionTask has finished for the specified format
+ */
+public class FormatVersionNormalizedEvent
+    extends EventWithSource
 {
-  private final DataStoreConfiguration dataStore;
+  private final Format format;
 
-  public DataStoreUpdatedEvent(final DataStoreConfiguration dataStore) {
-    this.dataStore = checkNotNull(dataStore);
+  public FormatVersionNormalizedEvent(Format format) {
+    this.format = format;
   }
 
-  public DataStoreConfiguration getDataStoreConfiguration(){
-    return dataStore;
+  public Format getFormat() {
+    return format;
   }
 }

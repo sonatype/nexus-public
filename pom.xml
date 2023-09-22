@@ -68,7 +68,7 @@
     <karaf.version>4.3.9</karaf.version>
 
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
-    <node.version>v16.14.2</node.version>
+    <node.version>v18.17.1</node.version>
     <yarn.version>v1.22.19</yarn.version>
     <npm.install>install --immutable</npm.install>
     <npm.skipTests>false</npm.skipTests>
@@ -899,7 +899,7 @@
         <plugin>
           <groupId>org.apache.servicemix.tooling</groupId>
           <artifactId>depends-maven-plugin</artifactId>
-          <version>1.3</version>
+          <version>1.5.0</version>
           <executions>
             <execution>
               <id>generate-depends-file</id>

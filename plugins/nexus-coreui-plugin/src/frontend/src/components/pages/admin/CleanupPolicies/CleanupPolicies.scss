@@ -17,24 +17,24 @@
 @import '~@sonatype/react-shared-components/scss-shared/nx-container-helpers';
 
 .nxrm-cleanup-policies {
-  .suffix,
-  .prefix {
-    display: inline-block;
-    vertical-align: top;
-    margin-top: var(--nx-spacing-3x);
-    margin-right: var(--nx-spacing-base);
-  }
-
-  .suffix {
-    margin-left: var(--nx-spacing-base);
-  }
-
   .nx-alert__content {
     @include container-vertical;
   }
 
-  .nx-h3 {
-    margin-top: 0;
+  .retain-n {
+    &__alert {
+      margin-top: 0;
+    }
+
+    &__checkbox {
+      .nx-checkbox__content {
+        overflow: initial;
+      }
+    }
+
+    &__group {
+      margin-left: var(--nx-spacing-6x);
+    }
   }
 }
 

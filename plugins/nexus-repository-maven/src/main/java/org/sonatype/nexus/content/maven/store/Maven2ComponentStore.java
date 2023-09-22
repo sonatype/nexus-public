@@ -123,8 +123,9 @@ public class Maven2ComponentStore
       final int limit,
       @Nullable final String continuationToken)
   {
-    log.info("Cleanup Maven Criteria: {}", cleanupPolicyCriteria);
-    return dao().browseComponentsForCleanupEx(repositoryId, componentSet.namespace(), componentSet.name(),
+    String namespace = componentSet == null ? null : componentSet.namespace();
+    String name = componentSet == null ? null : componentSet.name();
+    return dao().browseComponentsForCleanupEx(repositoryId, namespace, name,
         cleanupPolicyCriteria, limit, continuationToken);
   }
 }

@@ -25,6 +25,8 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
+import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.junit.Before;
@@ -47,6 +49,9 @@ public class CleanupPolicyResourceTest
   private CleanupPolicyStorage cleanupPolicyStorage;
 
   @Mock
+  private CleanupFeatureCheck cleanupFeatureCheck;
+
+  @Mock
   private List<Format> formats;
 
   @Mock
@@ -60,6 +65,9 @@ public class CleanupPolicyResourceTest
 
   @Mock
   private EventManager eventManager;
+
+  @Mock
+  private GlobalKeyValueStore globalKeyValueStore;
 
   @Mock
   private CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
@@ -79,8 +87,9 @@ public class CleanupPolicyResourceTest
   @Test
   public void testPreviewContentCsv() {
     underTest =
-        new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, eventManager, true, true, csvCleanupPreviewContentWriter);
+        new CleanupPolicyResource(cleanupPolicyStorage, cleanupFeatureCheck, formats, cleanupFormatConfigurationMap,
+            cleanupPreviewHelper,
+            repositoryManager, eventManager, globalKeyValueStore, true, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null);
 
@@ -104,8 +113,9 @@ public class CleanupPolicyResourceTest
   @Test
   public void testNotFoundResponseForOrient() {
     underTest =
-        new CleanupPolicyResource(cleanupPolicyStorage, formats, cleanupFormatConfigurationMap, cleanupPreviewHelper,
-            repositoryManager, eventManager, false, true, csvCleanupPreviewContentWriter);
+        new CleanupPolicyResource(cleanupPolicyStorage, cleanupFeatureCheck, formats, cleanupFormatConfigurationMap,
+            cleanupPreviewHelper,
+            repositoryManager, eventManager, globalKeyValueStore, false, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null);
 

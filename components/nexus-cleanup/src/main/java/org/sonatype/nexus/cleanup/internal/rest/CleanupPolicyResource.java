@@ -48,10 +48,10 @@ import javax.ws.rs.core.StreamingOutput;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
-import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyCreatedEvent;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyDeletedEvent;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyUpdatedEvent;
+import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyCriteria;
@@ -63,6 +63,10 @@ import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.CleanupDryRunEvent;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
+import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
+import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
+import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
@@ -119,6 +123,8 @@ public class CleanupPolicyResource
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
+  private final CleanupFeatureCheck cleanupFeatureCheck;
+
   private final List<String> formatNames;
 
   private final List<Format> formats;
@@ -135,6 +141,8 @@ public class CleanupPolicyResource
 
   private final EventManager eventManager;
 
+  private final GlobalKeyValueStore globalKeyValueStore;
+
   private final boolean isPreviewEnabled;
 
   private final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
@@ -142,16 +150,19 @@ public class CleanupPolicyResource
   @Inject
   public CleanupPolicyResource(
       final CleanupPolicyStorage cleanupPolicyStorage,
+      final CleanupFeatureCheck cleanupFeatureCheck,
       final List<Format> formats,
       final Map<String, CleanupPolicyConfiguration> cleanupFormatConfigurationMap,
       final Provider<CleanupPreviewHelper> cleanupPreviewHelper,
       final RepositoryManager repositoryManager,
       final EventManager eventManager,
+      final GlobalKeyValueStore globalKeyValueStore,
       @Named(DATASTORE_ENABLED_NAMED) final boolean isDatastoreEnabled,
       @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled,
       final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
+    this.cleanupFeatureCheck = checkNotNull(cleanupFeatureCheck);
     this.formats = checkNotNull(formats);
     this.formatNames = formats.stream().map(Format::getValue).collect(Collectors.toList());
     this.eventManager = checkNotNull(eventManager);
@@ -160,6 +171,7 @@ public class CleanupPolicyResource
     this.defaultCleanupFormatConfiguration = checkNotNull(cleanupFormatConfigurationMap.get("default"));
     this.cleanupPreviewHelper = checkNotNull(cleanupPreviewHelper);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
     this.isDatastoreEnabled = isDatastoreEnabled;
     this.isPreviewEnabled = isPreviewEnabled;
     this.csvCleanupPreviewContentWriter = checkNotNull(csvCleanupPreviewContentWriter);
@@ -369,12 +381,31 @@ public class CleanupPolicyResource
   }
 
   private void validateRetainAttributes(final CleanupPolicyXO cleanupPolicyXO) {
+    validateNormalizationState(cleanupPolicyXO.getFormat());
     if (cleanupPolicyXO.getRetain() != null && cleanupPolicyXO.getSortBy() == null) {
       throw new ValidationErrorsException("sortBy", "sortBy should be defined if retain is set");
     }
 
     if (cleanupPolicyXO.getSortBy() != null && cleanupPolicyXO.getRetain() == null) {
       throw new ValidationErrorsException("retain", "retain should be defined if sortBy is set");
+    }
+  }
+
+  /**
+   * Validates if the {@link NormalizeComponentVersionTask} already normalized the specified format
+   * @param format  the format to be validated
+   * @throws ValidationErrorsException if the format is not ready for exclusion (Retain-N)
+   */
+  private void validateNormalizationState(final String format) {
+    if (cleanupFeatureCheck.isRetainSupported(format)) {
+      boolean isFormatNormalized = globalKeyValueStore
+          .getKey(String.format(NormalizeComponentVersionTask.KEY_FORMAT, format))
+          .map(NexusKeyValue::getAsBoolean)
+          .orElse(false);
+
+      if (!isFormatNormalized) {
+        throw new ValidationErrorsException("format", "the specified format is not ready for the exclusion criteria.");
+      }
     }
   }
 

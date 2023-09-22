@@ -28,14 +28,17 @@ import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 
 import javax.inject.Inject;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.*;
@@ -56,6 +59,10 @@ public class CleanupITSupport
 
   protected static final String CLEANUP_KEY = "cleanup";
 
+  public static final String RETAIN_SORT_KEY = "sortBy";
+
+  public static final String RETAIN_COUNT_KEY = "retain";
+
   protected static final int ONE_HUNDRED_SECONDS = 100;
 
   protected static final int FIFTY_SECONDS = 50;
@@ -74,6 +81,13 @@ public class CleanupITSupport
   @Before
   public void setupSearchSecurity() {
     ThreadContext.bind(FakeAlmightySubject.forUserId("disabled-security"));
+  }
+
+  protected void setEmptyPolicy(
+          final Repository repository) throws Exception
+  {
+    createOrUpdatePolicyWithCriteria(testName.getMethodName(), repository.getFormat().getValue(), ImmutableMap.of());
+    addPolicyToRepository(testName.getMethodName(), repository);
   }
 
   protected void setPolicyToBeLastBlobUpdatedInSeconds(
@@ -138,6 +152,28 @@ public class CleanupITSupport
         IS_PRERELEASE_KEY, Boolean.toString(prerelease)));
 
     addPolicyToRepository(testName.getMethodName(), repository);
+  }
+
+  protected void setPolicyToBeRetainByVersion(
+          final String policyName,
+          final Repository repository,
+          final int versionCountToKeep) throws Exception
+  {
+    createOrUpdatePolicyWithCriteria(policyName, repository.getFormat().getValue(),
+            ImmutableMap.of(RETAIN_SORT_KEY, "version", RETAIN_COUNT_KEY, Integer.toString(versionCountToKeep)));
+    addPolicyToRepository(policyName, repository);
+  }
+
+  protected void setPolicyToBeRetainByVersionAndRegex(
+          final String policyName,
+          final Repository repository,
+          final int versionCountToKeep,
+          final String regex) throws Exception
+  {
+    createOrUpdatePolicyWithCriteria(policyName, repository.getFormat().getValue(),
+            ImmutableMap.of(RETAIN_SORT_KEY, "version", RETAIN_COUNT_KEY, Integer.toString(versionCountToKeep),
+                    REGEX_KEY, regex));
+    addPolicyToRepository(policyName, repository);
   }
 
   protected void createOrUpdatePolicyWithCriteria(final String format, final Map<String, String> criteria) {
@@ -239,6 +275,20 @@ public class CleanupITSupport
   protected int countAssets(final String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName);
     return componentAssetTestHelper.countAssets(repository);
+  }
+
+  protected void assertNothingRemovedWhenNoCriteria(
+          final Repository repository,
+          final int startingCount,
+          final int expectedCountAfterCleanup) throws Exception
+  {
+    setEmptyPolicy(repository);
+    assertThat(countComponents(testName.getMethodName()), is(startingCount));
+    cleanupTestHelper.waitForComponentsIndexed(startingCount);
+
+    runCleanupTask();
+
+    assertThat(countComponents(testName.getMethodName()), is(expectedCountAfterCleanup));
   }
 
   protected void assertLastBlobUpdatedComponentsCleanedUp(
@@ -463,6 +513,31 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(countAfterCleanup));
   }
+
+  protected void assertRetainByVersionComponentsCleanUp(
+          final Repository repository,
+          final IntSupplier artifactUploader,
+          final Map<String, String[]> endNameVersionsMap) throws Exception
+  {
+    int startingCount = artifactUploader.getAsInt();
+
+    assertThat(countComponents(repository.getName()), is(startingCount));
+
+    cleanupTestHelper.waitForComponentsIndexed(startingCount);
+
+    runCleanupTask();
+
+    int endCount = endNameVersionsMap.values().stream().mapToInt(v -> v.length).sum();
+
+    await().untilAsserted(() -> assertThat(countComponents(repository.getName()), is(endCount)));
+
+
+    endNameVersionsMap.forEach((name, versions) -> assertThat(
+            Arrays.stream(versions).map(version ->
+                    componentAssetTestHelper.componentExists(repository, name, version)).collect(Collectors.toList()),
+            everyItem(is(true))));
+  }
+
 
   public static String randomName() {
     return RandomStringUtils.random(5, "abcdefghijklmnopqrstuvwxyz".toCharArray());

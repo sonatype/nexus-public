@@ -10,15 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.manager;
+package org.sonatype.nexus.repository.content.store;
 
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.RepositoryEvent;
+import org.sonatype.nexus.repository.content.Component;
 
-public class RepositoryCacheInvalidatedEvent
-    extends RepositoryEvent
-{
-  public RepositoryCacheInvalidatedEvent(final Repository repository) {
-    super(repository);
+/**
+ * {@link Component} data backed by the content data store, that has a dynamic continuation token to allow being
+ * returned as part of database queries with differing ORDER BY clauses, and not tied to component ID
+ */
+public class OrderedComponentData extends ComponentData {
+
+  String orderedToken;
+
+  @Override
+  public String nextContinuationToken() {
+    return orderedToken;
   }
 }

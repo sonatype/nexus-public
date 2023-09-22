@@ -56,11 +56,16 @@ export default {
     NODE_IS_INACTIVE: 'Node Inactive',
     OFFLINE: 'Offline',
     NODE_UNAVAILABLE_CANNOT_CREATE: 'Node Unavailable - Support zip cannot be created',
+    NO_BLOB_STORE_CONFIGURED: 'No blob store configured. A configured blob store is required to generate a support zip.',
     NO_ZIP_CREATED: 'No Zip created',
-    DOWNLOAD_ZIP: 'Download Zip',
+    DOWNLOAD_ZIP: 'Download Zip Generated',
     CREATING_ZIP: 'Creating Zip...',
-    CREATE_SUPPORT_ZIP: 'Create Support zip',
 
-    CREATE_SUPPORT_ZIP_MODAL_HEADER: 'Options for Export'
+    CREATE_SUPPORT_ZIP_MODAL_HEADER: 'Options for Export',
+
+    GENERATE_ALL_ZIP_FILES: 'Generate Zip from all nodes',
+    GENERATE_NEW_ZIP_FILE: 'Generate new Zip',
+    GENERATE_ERROR: 'New Support zip Generation Failed',
+    RETRY: 'Retry',
   }
 };

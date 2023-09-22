@@ -92,7 +92,7 @@ export default [
         hostname: "hostname-10",
         isActive: false,
         lastUpdated: "05/07/2022",
-        status: "COMPLETED",
+        status: "FAILED",
         blobRef: "http://download.com?support-zip.zip"
     }
 ];

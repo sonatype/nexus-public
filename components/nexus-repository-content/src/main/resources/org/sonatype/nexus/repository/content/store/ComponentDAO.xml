@@ -184,10 +184,63 @@
     <include refid="selectComponentsBySet"/>
   </select>
 
-  <!-- Default implementation that will return all components to be filtered within the code -->
+  <!-- Generic cleanup implementation that does not handle retain-n, based on component sets (namespace/name)
+         NB: Some formats (may override this with a browseComponentsForCleanupEx method
+             any changes here should also be validated in those overrides to ensure integrity -->
   <select id="browseComponentsForCleanup" resultType="ComponentData">
-    <include refid="selectComponentsBySet"/>
+    <choose>
+      <!-- Only run select if supported criteria are present, otherwise all data may be selected -->
+      <when test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
+        <include refid="selectBrowseComponentsForCleanup"/>
+      </when>
+      <otherwise>SELECT * FROM ${format}_component LIMIT 0</otherwise>
+    </choose>
   </select>
+
+  <sql id="selectBrowseComponentsForCleanup">
+    SELECT ${format}_component.* FROM ${format}_component
+
+    <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
+      LEFT OUTER JOIN ${format}_asset on ${format}_component.component_id = ${format}_asset.component_id
+    </if>
+    <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null">
+      LEFT JOIN ${format}_asset_blob ON ${format}_asset.asset_blob_id = ${format}_asset_blob.asset_blob_id
+    </if>
+
+    WHERE
+    <choose>
+      <when test="namespace == null and name == null"> ${format}_component.repository_id = #{repositoryId}</when>
+      <otherwise> <include refid="componentSetMatch"/></otherwise>
+    </choose>
+
+    <if test="continuationToken != null"> AND ${format}_component.component_id > #{continuationToken}</if>
+
+    GROUP BY ${format}_component.component_id
+    <!-- trim allows us to only include the HAVING keyword and clauses when needed, ensuring removal of AND if there
+         is no preceding clause -->
+    <trim prefix="HAVING" prefixOverrides="AND ">
+      <if test="criteria.lastDownloaded != null">
+        <!-- CDATA is used here to enable syntax with <= (less than would otherwise have to be URL-encoded) -->
+        <![CDATA[
+            (max(coalesce(${format}_asset.last_downloaded, ${format}_asset_blob.blob_created))
+              <= (now() - interval '${criteria.lastDownloaded} seconds'))
+        ]]>
+      </if>
+      <if test="criteria.lastBlobUpdated != null">
+        <![CDATA[
+            AND (max(${format}_asset_blob.blob_created) <= (now() - interval '${criteria.lastBlobUpdated} seconds'))
+        ]]>
+      </if>
+      <if test="criteria.regex != null">
+        <![CDATA[
+            AND bool_or(${format}_asset.path ~ #{criteria.regex})
+        ]]>
+      </if>
+    </trim>
+     ORDER BY ${format}_component.component_id
+
+    <if test="limit > 0"> LIMIT #{limit}</if>;
+  </sql>
 
   <select id="browseNamespaces" resultType="String">
     SELECT DISTINCT(namespace) FROM ${format}_component WHERE repository_id = #{repositoryId};

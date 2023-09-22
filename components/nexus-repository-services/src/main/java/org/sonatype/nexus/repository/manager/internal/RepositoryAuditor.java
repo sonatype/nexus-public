@@ -23,13 +23,13 @@ import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheInvalidationEvent;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryDestroyedEvent;
 import org.sonatype.nexus.repository.RepositoryEvent;
 import org.sonatype.nexus.repository.RepositoryStartedEvent;
 import org.sonatype.nexus.repository.RepositoryStoppedEvent;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusEvent;
-import org.sonatype.nexus.repository.manager.RepositoryCacheInvalidatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryLoadedEvent;
@@ -71,7 +71,7 @@ public class RepositoryAuditor
     this.convertersByFormat = convertersByFormat;
     this.defaultAdapter = defaultAdapter;
 
-    registerType(RepositoryCacheInvalidatedEvent.class, "cacheInvalidated");
+    registerType(RepositoryCacheInvalidationEvent.class, "cacheInvalidated");
     registerType(RepositoryCreatedEvent.class, CREATED_TYPE);
     registerType(RepositoryRestoredEvent.class, "restored");
     registerType(RepositoryUpdatedEvent.class, UPDATED_TYPE);
@@ -88,10 +88,8 @@ public class RepositoryAuditor
   public void on(final RepositoryEvent event) {
     if (isRecording()) {
       Repository repository = event.getRepository();
-      AuditData data = new AuditData();
-      data.setDomain(DOMAIN);
+      AuditData data = getAuditData(repository.getName());
       data.setType(type(event.getClass()));
-      data.setContext(repository.getName());
 
       if (event instanceof RepositoryCreatedEvent || event instanceof RepositoryUpdatedEvent) {
         data.setAttributes(createFullAttributes(repository));
@@ -106,6 +104,23 @@ public class RepositoryAuditor
 
       record(data);
     }
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void on(final RepositoryCacheInvalidationEvent event) {
+    if (isRecording()) {
+      AuditData data = getAuditData(event.getRepositoryName());
+      data.setType(type(event.getClass()));
+      record(data);
+    }
+  }
+
+  private AuditData getAuditData(final String repositoryName) {
+    AuditData data = new AuditData();
+    data.setDomain(DOMAIN);
+    data.setContext(repositoryName);
+    return data;
   }
 
   private Map<String, Object> createFullAttributes(final Repository repository) {

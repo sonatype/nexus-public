@@ -19,6 +19,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.Continuations;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.logging.task.TaskLogType;
 import org.sonatype.nexus.logging.task.TaskLogging;
@@ -51,17 +52,21 @@ public class NormalizeComponentVersionTask
 
   private final GlobalKeyValueStore globalKeyValueStore;
 
+  private final EventManager eventManager;
+
   private ProgressLogIntervalHelper progressLogger;
 
   @Inject
   public NormalizeComponentVersionTask(
       final NormalizationPriorityService normalizationPriorityService,
       final VersionNormalizerService versionNormalizerService,
-      final GlobalKeyValueStore globalKeyValueStore)
+      final GlobalKeyValueStore globalKeyValueStore,
+      final EventManager eventManager)
   {
     this.normalizationPriorityService = normalizationPriorityService;
     this.versionNormalizerService = versionNormalizerService;
     this.globalKeyValueStore = globalKeyValueStore;
+    this.eventManager = eventManager;
   }
 
   @Override
@@ -101,11 +106,13 @@ public class NormalizeComponentVersionTask
       normalizeFormat(format, componentStore);
       //once normalization is done set state as true
       setNormalizationState(format, true);
+      //publish an event to let interested know the format has been normalized
+      eventManager.post(new FormatVersionNormalizedEvent(format));
 
       int currentCount = processedCount.incrementAndGet();
 
       progressLogger.info(" task progress : {}% ({} of {} formats - skipped : {}) - elapsed : {}",
-          Math.round((currentCount / totalCount) * 100),
+          Math.round(((float) currentCount / totalCount) * 100),
           currentCount, totalCount, skippedCount.get(), progressLogger.getElapsed());
     }
     else {
@@ -181,7 +188,7 @@ public class NormalizeComponentVersionTask
       page = componentStore.browseUnnormalized(Continuations.BROWSE_LIMIT, page.nextContinuationToken());
 
       log.info(" {} format progress : {}% ({} of {}) - elapsed : {}", format.getValue(),
-          Math.round((processedCount / totalCount) * 100),
+          Math.round(((float) processedCount / totalCount) * 100),
           processedCount, totalCount, progressLogger.getElapsed());
     }
   }

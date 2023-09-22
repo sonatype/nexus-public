@@ -15,94 +15,199 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import Axios from 'axios';
-import {assign} from 'xstate';
+import {mergeDeepRight} from 'ramda';
+import {assign, spawn, actions} from 'xstate';
+import {APIConstants, FormUtils} from '@sonatype/nexus-ui-plugin';
+import {cleanNode} from './NodeCardHelper';
+import NodeCardMachine from './NodeCardMachine';
 
-import {APIConstants, FormUtils} from "@sonatype/nexus-ui-plugin";
+const getNode = async (nodeId, params) => {
+  return await Axios.post(
+    APIConstants.REST.INTERNAL.SUPPORT_ZIP + nodeId,
+    params
+  );
+};
+
+const sharedEvents = {
+  CREATE_SUPPORT_ZIP_FOR_NODE: {
+    target: 'createSingleNodeSupportZip',
+    actions: 'setNode',
+  },
+  CREATE_SUPPORT_ZIP_FOR_ALL_NODES: {
+    target: 'createAllNodesSupportZip',
+    actions: 'clearLoadError',
+  },
+};
 
 export default FormUtils.buildFormMachine({
   id: 'SupportZipHaMachine',
-
-  config: (config) => ({
-    ...config,
-
-    context: {
-      ...config.context,
-      nxrmNodes: [],
-      selectedNode: null,
-      showCreateZipModal: false,
-      targetNode: null
-    },
-
-    states: {
-      ...config.states,
-
-      loaded: {
-        ...config.states.loaded,
-        on: {
-          ...config.states.loaded.on,
-
-          SHOW_SUPPORT_ZIP_FORM_MODAL: {
-            actions: 'showCreateZipModalForm'
-          },
-          HIDE_SUPPORT_ZIP_FORM_MODAL: {
-            actions: 'hideCreateZipModalForm'
-          },
-          CREATE_SUPPORT_ZIP_FOR_NODE: {
-            target: 'creatingNodeSupportZip'
-          },
-        }
+  config: (config) =>
+    mergeDeepRight(config, {
+      context: {
+        nxrmNodes: [],
+        selectedNode: null,
+        showCreateZipModal: false,
+        targetNode: null,
+        isBlobStoreConfigured: false,
       },
-
-      creatingNodeSupportZip: {
-        invoke: {
-          src: 'createHaZip',
-          onDone: {
-            target: 'loaded',
-            actions: ['hideCreateZipModalForm']
+      states: {
+        loaded: {
+          id: 'loaded',
+          initial: 'idle',
+          states: {
+            idle: {
+              on: {
+                ...sharedEvents,
+                REMOVE_ACTORS: {
+                  actions: 'removeActors',
+                },
+              },
+            },
+            createAllNodesSupportZip: {
+              on: {
+                GENERATE: {
+                  target: 'creatingAllNodesSupportZip',
+                  actions: 'updateAllNodeStatus',
+                },
+                CANCEL: {
+                  target: '#loaded',
+                },
+              },
+            },
+            createSingleNodeSupportZip: {
+              on: {
+                GENERATE: {
+                  target: 'creatingSingleNodeSupportZip',
+                  actions: 'updateNodeStatus',
+                },
+                CANCEL: {
+                  target: '#loaded',
+                  actions: 'setNode',
+                },
+              },
+            },
+            creatingAllNodesSupportZip: {
+              on: sharedEvents,
+              invoke: {
+                src: 'createAllNodeSupportZip',
+                onDone: '#loaded',
+                onError: {
+                  target: '#loaded',
+                  actions: 'setLoadError',
+                },
+              },
+            },
+            creatingSingleNodeSupportZip: {
+              on: sharedEvents,
+              invoke: {
+                src: 'createSupportZip',
+                onDone: '#loaded',
+                onError: '#loaded',
+              },
+            },
           },
-          onError: {
-            target: 'loaded'
-          }
         },
-        after: {
-          target: 'loaded'
-        }
       },
-    }
-  })
+    }),
 }).withConfig({
   actions: {
-    setData: assign({
-      nxrmNodes: (_, event) => event?.data?.data || []
-    }),
+    setData: assign((context, event) => {
+      const [nodes, blobStores] = event.data;
+      const isBlobStoreConfigured = blobStores.data.length > 0;
+      const nxrmNodes = nodes.data.map((node) => {
+        const id = `node-${node.nodeId}`;
+        // Removes any previous instance with the same id
+        actions.stop(id);
 
-    showCreateZipModalForm: assign({
-      showCreateZipModal: true,
-      selectedNode: (_, event) => event?.data?.selectedNode || null
-    }),
+        return mergeDeepRight(node, {
+          machineRef: spawn(
+            NodeCardMachine.withContext({data: node, pristineData: node}),
+            id
+          ),
+        });
+      });
 
-    hideCreateZipModalForm: assign({
-      showCreateZipModal: false,
-      selectedNode: null
+      return mergeDeepRight(context, {
+        nxrmNodes: nxrmNodes,
+        isBlobStoreConfigured,
+      });
+    }),
+    setNode: assign({
+      selectedNode: (_, event) => event.node ?? null,
+    }),
+    updateNodeStatus: assign({
+      selectedNode: (context) => {
+        context.selectedNode.machineRef.send({
+          type: 'UPDATE_STATUS',
+          status: 'CREATING',
+        });
+        return context.selectedNode;
+      },
+    }),
+    updateAllNodeStatus: assign({
+      nxrmNodes: (context) => {
+        context.nxrmNodes.forEach((node) => {
+          node.machineRef.send({
+            type: 'UPDATE_STATUS',
+            status: 'CREATING',
+          });
+        });
+        return context.nxrmNodes;
+      },
     }),
   },
-
   services: {
-    fetchData: () => Axios.get(APIConstants.REST.INTERNAL.GET_SUPPORT_ZIP_ACTIVE_NODES),
+    fetchData: () => {
+      return Axios.all([
+        Axios.get(APIConstants.REST.INTERNAL.GET_SUPPORT_ZIP_ACTIVE_NODES),
+        Axios.get(APIConstants.REST.PUBLIC.BLOB_STORES),
+      ]);
+    },
+    createAllNodeSupportZip: async (ctx, event) => {
+      const zipParams = event.params || null;
 
-    createHaZip: (_, event) => {
-      const node = event?.data?.node || null;
-      const zipParams = event?.data?.params || null;
+      const deletePromises = ctx.nxrmNodes.map((node) => {
+        if (ctx.isBlobStoreConfigured) {
+          return cleanNode(node.nodeId);
+        }
 
-      if (node && zipParams) {
+        return Promise.resolve();
+      });
+
+      await Axios.all(deletePromises);
+
+      const getPromises = ctx.nxrmNodes.map((node) => {
+        const params = {
+          ...zipParams,
+          hostname: node.hostname,
+        };
+
+        if (ctx.isBlobStoreConfigured) {
+          return getNode(node.nodeId, params);
+        }
+
+        return Promise.resolve();
+      });
+
+      return Axios.all(getPromises);
+    },
+    createSupportZip: async (ctx, event) => {
+      const node = ctx.selectedNode;
+      const zipParams = event.params;
+
+      if (node && zipParams && ctx.isBlobStoreConfigured) {
         const selectedNodeId = node.nodeId;
         const params = {
           ...zipParams,
-          hostname: node.hostname
+          hostname: node.hostname,
         };
-        return Axios.post(APIConstants.REST.INTERNAL.SUPPORT_ZIP + selectedNodeId, params);
+
+        await cleanNode(selectedNodeId);
+
+        return getNode(selectedNodeId, params);
       }
+
       return Promise.reject();
     },
-  }
+  },
 });

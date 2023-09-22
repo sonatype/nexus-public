@@ -52,7 +52,6 @@ public class ComponentSetCleanupComponentBrowse
     checkNotNull(policy);
     checkNotNull(repository);
 
-    validateCleanupPolicy(policy);
     return Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy)::browse);
   }
 
@@ -68,7 +67,6 @@ public class ComponentSetCleanupComponentBrowse
     checkNotNull(options.getStart());
     checkNotNull(options.getLimit());
 
-    validateCleanupPolicy(policy);
     List<Component> result =
             Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy)::browse, Continuations.BROWSE_LIMIT,
                             options.getLastId())

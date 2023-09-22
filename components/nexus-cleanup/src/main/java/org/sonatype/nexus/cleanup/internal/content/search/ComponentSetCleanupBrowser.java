@@ -21,10 +21,11 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.store.ComponentSetData;
 
+import java.util.Map;
+
 public class ComponentSetCleanupBrowser
-    extends ComponentSupport
-    implements ContinuationBrowse<FluentComponent>
-{
+        extends ComponentSupport
+        implements ContinuationBrowse<FluentComponent> {
   private final Repository repository;
 
   private final CleanupPolicy policy;
@@ -43,73 +44,162 @@ public class ComponentSetCleanupBrowser
 
   @Override
   public Continuation<FluentComponent> browse(final Integer limit, final String continuationToken) {
-    log.debug("Request for components to clean with a limit of {} and a token of {}", limit, continuationToken);
-    FluentComponents fluentComponents = repository.facet(ContentFacet.class).components();
-    CompositeComponentSetContinuation<FluentComponent> compositeContinuation =
-        new CompositeComponentSetContinuation<>(continuationToken);
 
-    // retrieve 'limit' sets, continuing if necessary from the previous point
-    Continuation<ComponentSetData> componentSets =
-        fluentComponents.sets(limit, compositeContinuation.getComponentSetContinuationToken());
-    log.debug("Retrieved {} component sets with a limit of {} and a continuation token of {}", componentSets.size(),
-        limit, compositeContinuation.getComponentSetContinuationToken());
-
-    int subLimit = limit;
-    String subToken = compositeContinuation.getComponentContinuationToken();
-
-    if (!componentSets.isEmpty()) {
-      // for each set, retrieve the components up until the 'limit'.
-      for (ComponentSetData componentSet : componentSets) {
-
-        // TODO: this should be set to the retain value from the criteria when applicable NEXUS-39582
-        int retainOffset = 0;
-        log.debug("Processing {} with retain offset of {}", componentSet.toStringExternal(), retainOffset);
-
-        while (subLimit > 0) {
-          log.info("passing cleanupCriteria of {}", this.policy.getCriteria());
-          Continuation<FluentComponent> components =
-              fluentComponents.byCleanupCriteria(componentSet, this.policy.getCriteria(), subLimit, subToken);
-
-          // TODO: Resetting the offset for the rest of this set should be fine. However, there could be a condition
-          // TODO:  where the retainOffset is greater than the subLimit, in which case... things will go wrong.
-          retainOffset = 0;
-
-          log.debug("  Retrieved {} components for the set with a limit of {} and a token of {}", components.size(),
-              subLimit, subToken);
-          if (components.isEmpty()) {
-            // This continuation of components is empty, so clear the token
-            subToken = null;
-            break;
-          }
-          subLimit -= components.size();
-          compositeContinuation.addAll(components);
-
-          // Move the continuation token to the next 'page' of components
-          subToken = components.nextContinuationToken();
-        }
-
-        // ensure the new continuation token represents the correct component
-        log.debug("  Updating component token to {}", subToken);
-        compositeContinuation.setComponentContinuationToken(subToken);
-
-        // If we've run out of components, also set the token to the next set
-        if (subToken == null) {
-          log.debug("  Updating set token to {}", componentSet.nextContinuationToken());
-          compositeContinuation.setComponentSetContinuationToken(componentSet.nextContinuationToken());
-        }
-        else {
-          log.debug("  Left set token unchanged at {}", compositeContinuation.getComponentSetContinuationToken());
-        }
-        if (subLimit <= 0) {
-          break;
-        }
-      }
-      log.debug("Final result: items={}, subLimit={}, setToken={}, componentToken={}", compositeContinuation.size(),
-          subLimit, compositeContinuation.getComponentSetContinuationToken(),
-          compositeContinuation.getComponentContinuationToken());
-      return compositeContinuation;
+    if (limit < 1) {
+      throw new IllegalArgumentException("Browse limit must be at least 1");
     }
-    log.debug("Returning empty");
-    return new CompositeComponentSetContinuation<>();
+
+    log.debug("Request for components to clean with a limit of {} and a token of {}", limit, continuationToken);
+    log.debug("CleanupCriteria = {}", this.policy.getCriteria());
+
+    FluentComponents fluentComponents = repository.facet(ContentFacet.class).components();
+
+    int remainingLimit = limit;
+    CompositeComponentSetContinuation<FluentComponent> compositeContinuation =
+            new CompositeComponentSetContinuation<>(continuationToken);
+    Map<String, String> criteria = this.policy.getCriteria();
+    boolean selectBySet = criteria.containsKey("sortBy") || criteria.containsKey("retain");
+
+    CleanupQueryResult processed;
+    do {
+      if (selectBySet) {
+        processed = processComponentSets(remainingLimit, fluentComponents, compositeContinuation);
+      }
+      else {
+        processed = processComponents(remainingLimit, null, fluentComponents,
+                compositeContinuation);
+      }
+      remainingLimit = processed.remainingLimit();
+      if (!processed.hasMore) {
+        log.debug("No more component sets to process");
+        compositeContinuation.setComponentSetContinuationToken(null);
+        compositeContinuation.setComponentContinuationToken(null);
+        break;
+      }
+
+    }
+    while (remainingLimit > 0);
+
+    if (log.isDebugEnabled()) {
+      log.debug("Final result: items={}, remaining={}, setToken={}, componentToken={}, nextToken={}",
+              compositeContinuation.size(),
+              remainingLimit,
+              compositeContinuation.getComponentSetContinuationToken(),
+              compositeContinuation.getComponentContinuationToken(),
+              compositeContinuation.nextContinuationToken());
+    }
+    return compositeContinuation;
+
+  }
+
+  CleanupQueryResult processComponentSets(final int limit,
+                                          final FluentComponents fluentComponents,
+                                          final CompositeComponentSetContinuation<FluentComponent> compositeContinuation) {
+
+    Continuation<ComponentSetData> componentSets =
+            fluentComponents.sets(limit, compositeContinuation.getComponentSetContinuationToken());
+    log.debug("Retrieved {} component sets with a limit of {} and a continuation token of {}", componentSets.size(),
+            limit, compositeContinuation.getComponentSetContinuationToken());
+
+    if (componentSets.isEmpty()) {
+      return new CleanupQueryResult(0, false);
+    }
+
+    int remainingLimit = limit;
+
+    for (ComponentSetData componentSet : componentSets) {
+      CleanupQueryResult result = processComponentSet(remainingLimit, componentSet, fluentComponents, compositeContinuation);
+      remainingLimit = result.remainingLimit();
+      if (remainingLimit <= 0) {
+        break;
+      }
+    }
+
+    return new CleanupQueryResult(remainingLimit, componentSets.size() >= limit || remainingLimit <= 0);
+  }
+
+  CleanupQueryResult processComponentSet(final int limit,
+                                         final ComponentSetData componentSet,
+                                         final FluentComponents fluentComponents,
+                                         final CompositeComponentSetContinuation<FluentComponent> compositeContinuation) {
+    int remainingLimit = limit;
+
+    if (remainingLimit <= 0) {
+      return new CleanupQueryResult(remainingLimit, true);
+    }
+
+    if (log.isDebugEnabled()) {
+      log.debug("Processing {}", componentSet.toStringExternal());
+    }
+
+    do {
+      CleanupQueryResult processed = processComponents(remainingLimit, componentSet, fluentComponents, compositeContinuation);
+      remainingLimit = processed.remainingLimit();
+
+      if (!processed.hasMore()) {
+        // No more components - next set
+        if (log.isDebugEnabled()) {
+          log.debug("Updating set token to {} and clearing component token", componentSet.nextContinuationToken());
+        }
+        compositeContinuation.setComponentSetContinuationToken(componentSet.nextContinuationToken());
+        compositeContinuation.setComponentContinuationToken(null);
+        break;
+      }
+
+    }
+    while (remainingLimit > 0);
+
+    return new CleanupQueryResult(remainingLimit, remainingLimit <= 0);
+  }
+
+  CleanupQueryResult processComponents(final int limit,
+                                       final ComponentSetData componentSet,
+                                       final FluentComponents fluentComponents,
+                                       final CompositeComponentSetContinuation<FluentComponent> compositeContinuation) {
+
+    String componentToken = compositeContinuation.getComponentContinuationToken();
+
+    Continuation<FluentComponent> components =
+            fluentComponents.byCleanupCriteria(componentSet, this.policy.getCriteria(), limit, componentToken);
+
+    if (log.isDebugEnabled()) {
+      log.debug("Retrieved {} components for the set {} with a limit of {} and a token of {}", components.size(),
+              componentSet == null ? null : componentSet.toStringExternal(),
+              limit, componentToken);
+    }
+
+    if (components.isEmpty()) {
+      log.debug("No components found.");
+      compositeContinuation.setComponentContinuationToken(null);
+      return new CleanupQueryResult(limit, false);
+    }
+
+    compositeContinuation.addAll(components);
+    String nextComponentToken = components.nextContinuationToken();
+    log.debug("Updating component token to {}", nextComponentToken);
+    compositeContinuation.setComponentContinuationToken(nextComponentToken);
+
+    int retrieved = components.size();
+    int safeRemainingLimit = Math.max(0, limit - retrieved);
+    return new CleanupQueryResult(safeRemainingLimit, retrieved >= limit && nextComponentToken != null);
+  }
+
+  private static final class CleanupQueryResult {
+
+    private final int remainingLimit;
+    private final boolean hasMore;
+
+    CleanupQueryResult(final int remainingLimit, final boolean hasMore) {
+      this.remainingLimit = remainingLimit;
+      this.hasMore = hasMore;
+    }
+
+    int remainingLimit() {
+      return this.remainingLimit;
+    }
+
+    boolean hasMore() {
+      return this.hasMore;
+    }
   }
 }
