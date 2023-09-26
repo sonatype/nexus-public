@@ -43,7 +43,7 @@ public class CleanupTask
   protected Object execute() {
     log.info("Starting cleanup");
     
-    cleanupService.cleanup(() -> isCanceled());
+    cleanupService.cleanup(this::isCanceled);
     
     if (isCanceled()) {
       log.info("Cleanup was cancelled before it could finish");
