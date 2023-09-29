@@ -18,10 +18,14 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
+import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.task.DeletionProgress;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
+
+import com.google.common.collect.Iterators;
 
 /**
  * Provides a delete mechanism for cleanup
@@ -42,10 +46,25 @@ public class DeleteCleanupMethod
     ContentMaintenanceFacet maintenance = repository.facet(ContentMaintenanceFacet.class);
     DeletionProgress progress = new DeletionProgress();
 
-
-    progress.addComponentCount(maintenance.deleteComponents(components));
-    
+    Iterators.partition(components.iterator(), Continuations.BROWSE_LIMIT)
+        .forEachRemaining((batch) -> deleteBatch(maintenance, batch.stream(), progress, cancelledCheck));
 
     return progress;
+  }
+
+  private void deleteBatch(
+      final ContentMaintenanceFacet maintenance,
+      final Stream<FluentComponent> batch,
+      final DeletionProgress progress,
+      final BooleanSupplier cancelledCheck)
+  {
+
+    if (cancelledCheck.getAsBoolean()) {
+      throw new TaskInterruptedException(
+          String.format("Thread '%s' is canceled", Thread.currentThread().getName()),
+          true);
+    }
+
+    progress.addComponentCount(maintenance.deleteComponents(batch));
   }
 }

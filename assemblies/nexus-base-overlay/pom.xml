@@ -196,6 +196,8 @@
                 <!-- install additional framework jars -->
                 <copy file="${javax.annotation:javax.annotation-api:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
+                <copy file="${com.google.errorprone:error_prone_annotations:jar}"
+                      todir="${project.build.directory}/assembly/lib"/>
                 <copy file="${com.google.code.findbugs:jsr305:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
                 <copy file="${org.bouncycastle:bcprov-jdk15to18:jar}"
