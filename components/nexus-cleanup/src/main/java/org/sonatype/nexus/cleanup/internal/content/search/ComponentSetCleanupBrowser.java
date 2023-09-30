@@ -30,7 +30,9 @@ public class ComponentSetCleanupBrowser
 
   private final CleanupPolicy policy;
 
-  ComponentSetCleanupBrowser(Repository repository, CleanupPolicy policy) {
+  private final boolean includeAssets;
+
+  ComponentSetCleanupBrowser(Repository repository, CleanupPolicy policy, boolean includeAssets) {
     if (repository == null) {
       throw new IllegalArgumentException("Repository must not be null");
     }
@@ -40,6 +42,8 @@ public class ComponentSetCleanupBrowser
       throw new IllegalArgumentException("Cleanup Policy must not be null");
     }
     this.policy = policy;
+
+    this.includeAssets = includeAssets;
   }
 
   @Override
@@ -160,7 +164,7 @@ public class ComponentSetCleanupBrowser
     String componentToken = compositeContinuation.getComponentContinuationToken();
 
     Continuation<FluentComponent> components =
-            fluentComponents.byCleanupCriteria(componentSet, this.policy.getCriteria(), limit, componentToken);
+            fluentComponents.byCleanupCriteria(componentSet, this.policy.getCriteria(), includeAssets, limit, componentToken);
 
     if (log.isDebugEnabled()) {
       log.debug("Retrieved {} components for the set {} with a limit of {} and a token of {}", components.size(),

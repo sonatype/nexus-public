@@ -46,6 +46,10 @@
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_kind ON ${format}_asset (kind);
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_component ON ${format}_asset (component_id);
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob ON ${format}_asset (asset_blob_id);
+
+    <!-- Performance optimisation for cleanup -->
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_last_downloaded ON ${format}_asset (last_downloaded);
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_path ON ${format}_asset (path);
     --
   </insert>
 

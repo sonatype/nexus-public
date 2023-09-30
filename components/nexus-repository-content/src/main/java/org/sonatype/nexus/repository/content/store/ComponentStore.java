@@ -199,6 +199,7 @@ public class ComponentStore<T extends ComponentDAO>
    * @param repositoryId          the repository to browse
    * @param componentSet          the component set to browse
    * @param cleanupPolicyCriteria the criteria to filter by
+   * @Param includeAssets        whether to include asset data
    * @param limit                 maximum number of components to return
    * @param continuationToken     optional token to continue from a previous request
    * @return collection of components and the next continuation token
@@ -209,13 +210,14 @@ public class ComponentStore<T extends ComponentDAO>
       final int repositoryId,
       final ComponentSet componentSet,
       final Map<String, String> cleanupPolicyCriteria,
+      final boolean includeAssets,
       final int limit,
       @Nullable final String continuationToken)
   {
     String namespace = componentSet == null ? null : componentSet.namespace();
     String name = componentSet == null ? null : componentSet.name();
     return dao().browseComponentsForCleanup(repositoryId, namespace, name,
-        cleanupPolicyCriteria, limit, continuationToken);
+        cleanupPolicyCriteria, includeAssets, limit, continuationToken);
   }
 
   /**

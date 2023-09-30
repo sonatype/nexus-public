@@ -77,14 +77,14 @@ public class ComponentSetCleanupBrowserTest extends TestSupport {
     criteria.put("retain", "1");
     criteria.put("sortBy", "version");
     doReturn(criteria).when(mockCleanupPolicy).getCriteria();
-    undertest = spy(new ComponentSetCleanupBrowser(mockRepository, mockCleanupPolicy));
+    undertest = spy(new ComponentSetCleanupBrowser(mockRepository, mockCleanupPolicy, false));
   }
 
   @Test
   public void testBrowseSingleSetSingleComponentBySet() {
     doAnswer(a -> generateMockComponentSets(1, a)).when(mockFluentComponents).sets(anyInt(), any());
     doAnswer(a -> generateMockComponents(1, a)).when(mockFluentComponents)
-            .byCleanupCriteria(any(), anyMap(), anyInt(), any());
+            .byCleanupCriteria(any(), anyMap(), eq(false), anyInt(), any());
     assertThat(simulateBrowseLoop(), is(1));
     verify(undertest, atLeast(1)).processComponentSets(eq(browseLimit), any(), any());
     verify(undertest, atMost(3)).processComponentSets(eq(browseLimit), any(), any());
@@ -97,7 +97,7 @@ public class ComponentSetCleanupBrowserTest extends TestSupport {
   public void testBrowseSingleSetMultipleComponents() {
     doAnswer(a -> generateMockComponentSets(1, a)).when(mockFluentComponents).sets(anyInt(), any());
     doAnswer(a -> generateMockComponents(13, a)).when(mockFluentComponents)
-            .byCleanupCriteria(any(), anyMap(), anyInt(), any());
+            .byCleanupCriteria(any(), anyMap(), eq(false), anyInt(), any());
     assertThat(simulateBrowseLoop(), is(13));
     verify(undertest, atLeast(13 / browseLimit))
             .processComponents(eq(browseLimit), any(), any(), any());
@@ -109,7 +109,7 @@ public class ComponentSetCleanupBrowserTest extends TestSupport {
   public void testBrowseMultipleSetsSingleComponent() {
     doAnswer(a -> generateMockComponentSets(13, a)).when(mockFluentComponents).sets(anyInt(), any());
     doAnswer(a -> generateMockComponents(1, a)).when(mockFluentComponents)
-            .byCleanupCriteria(any(), anyMap(), anyInt(), any());
+            .byCleanupCriteria(any(), anyMap(), eq(false), anyInt(), any());
     assertThat(simulateBrowseLoop(), is(13));
   }
 
@@ -117,14 +117,14 @@ public class ComponentSetCleanupBrowserTest extends TestSupport {
   public void testBrowseMultipleSetsMultipleComponents() {
     doAnswer(a -> generateMockComponentSets(13, a)).when(mockFluentComponents).sets(anyInt(), any());
     doAnswer(a -> generateMockComponents(13, a)).when(mockFluentComponents)
-            .byCleanupCriteria(any(), anyMap(), anyInt(), any());
+            .byCleanupCriteria(any(), anyMap(), eq(false), anyInt(), any());
     assertThat(simulateBrowseLoop(), is(169));
   }
 
   @Test
   public void testBrowseMultipleComponentsWithoutSet() {
     doReturn(new HashMap<>()).when(mockCleanupPolicy).getCriteria();
-    doAnswer(a -> generateMockComponents(10000, a)).when(mockFluentComponents).byCleanupCriteria(any(), anyMap(), anyInt(), any());
+    doAnswer(a -> generateMockComponents(10000, a)).when(mockFluentComponents).byCleanupCriteria(any(), anyMap(), eq(false), anyInt(), any());
     assertThat(simulateBrowseLoop(), is(10000));
     verify(undertest, never()).processComponentSets(anyInt(), any(), any());
     verify(undertest, atMost((10000 / browseLimit) + 1)) // 1 extra for 'no more results'
@@ -177,7 +177,7 @@ public class ComponentSetCleanupBrowserTest extends TestSupport {
   }
 
   Continuation<ComponentData> generateMockComponents(int count, InvocationOnMock a) {
-    return generateComponents(a.getArgument(0), count, a.getArgument(2), a.getArgument(3));
+    return generateComponents(a.getArgument(0), count, a.getArgument(3), a.getArgument(4));
   }
 
   private Continuation<ComponentData> generateComponents(final ComponentSet componentSet, final int count,

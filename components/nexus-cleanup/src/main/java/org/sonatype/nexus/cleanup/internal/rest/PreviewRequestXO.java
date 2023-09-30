@@ -36,6 +36,10 @@ public class PreviewRequestXO
   @CleanupPolicyAssetNamePattern
   private String criteriaAssetRegex;
 
+  private Integer criteriaRetain;
+
+  private String criteriaSortBy;
+
   private String filter;
 
   public String getName() {
@@ -70,6 +74,10 @@ public class PreviewRequestXO
     return criteriaAssetRegex;
   }
 
+  public Integer getCriteriaRetain() { return criteriaRetain; }
+
+  public String getCriteriaSortBy() { return criteriaSortBy; }
+
   public void setCriteriaAssetRegex(final String criteriaAssetRegex) {
     this.criteriaAssetRegex = criteriaAssetRegex;
   }
@@ -84,6 +92,14 @@ public class PreviewRequestXO
 
   public void setCriteriaReleaseType(final CleanupPolicyReleaseType criteriaReleaseType) {
     this.criteriaReleaseType = criteriaReleaseType;
+  }
+
+  public void setCriteriaRetain(Integer criteriaRetain) {
+    this.criteriaRetain = criteriaRetain;
+  }
+
+  public void setCriteriaSortBy(String criteriaSortBy) {
+    this.criteriaSortBy = criteriaSortBy;
   }
 
   public String getFilter() {

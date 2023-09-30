@@ -36,6 +36,9 @@
 
     ALTER TABLE ${format}_asset_blob ADD COLUMN IF NOT EXISTS added_to_repository  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob_added_to_repository ON ${format}_asset_blob (added_to_repository);
+
+    <!-- Performance optimisation for cleanup -->
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob_created ON ${format}_asset_blob (blob_created);
     --
   </insert>
 

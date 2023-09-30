@@ -91,7 +91,7 @@ public class CleanupPolicyResourceTest
             cleanupPreviewHelper,
             repositoryManager, eventManager, globalKeyValueStore, true, true, csvCleanupPreviewContentWriter);
 
-    Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null);
+    Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null, null, null);
 
     assertThat(response.getStatus(), is(200));
     String contentDisposition = response.getHeaderString("Content-Disposition");
@@ -100,7 +100,7 @@ public class CleanupPolicyResourceTest
     assertThat(contentDisposition, startsWith(expectedPrefix));
     assertThat(contentDisposition, endsWith(".csv"));
 
-    response = underTest.previewContentCsv("policy-name", repositoryName, null, null, null, null);
+    response = underTest.previewContentCsv("policy-name", repositoryName, null, null, null, null, null, null);
 
     assertThat(response.getStatus(), is(200));
     contentDisposition = response.getHeaderString("Content-Disposition");
@@ -117,7 +117,7 @@ public class CleanupPolicyResourceTest
             cleanupPreviewHelper,
             repositoryManager, eventManager, globalKeyValueStore, false, true, csvCleanupPreviewContentWriter);
 
-    Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null);
+    Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null, null, null);
 
     assertThat(response.getStatus(), is(404));
   }

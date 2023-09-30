@@ -30,7 +30,7 @@ public interface CleanupComponentBrowse
 {
   Stream<FluentComponent> browse(CleanupPolicy policy, Repository repository);
 
-  Stream<FluentComponent> browseEager(CleanupPolicy policy, Repository repository);
+  Stream<FluentComponent> browseIncludingAssets(CleanupPolicy policy, Repository repository);
 
   /**
    * Returns a paged response of components
