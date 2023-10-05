@@ -787,7 +787,8 @@ describe('CleanupPoliciesForm', function () {
 
       await TestUtils.changeField(format, ITEM.format);
 
-      expect(criteriaVersion()).not.toBeInTheDocument();
+      expect(criteriaVersion()).toBeVisible();
+      expect(criteriaVersion()).toBeDisabled();
       expect(getCriteriaVersionCheckbox()).toBeVisible();
       expect(getCriteriaVersionCheckbox()).toBeDisabled();
       expect(versionAlertMessage()).toBeInTheDocument();
@@ -799,6 +800,7 @@ describe('CleanupPoliciesForm', function () {
 
       userEvent.click(getCriteriaVersionCheckbox());
       expect(criteriaVersion()).toBeVisible();
+      expect(criteriaVersion()).toBeEnabled();
 
       await TestUtils.changeField(releaseType, 'PRERELEASES');
 
@@ -840,7 +842,7 @@ describe('CleanupPoliciesForm', function () {
       expect(versionAlertMessage()).not.toBeInTheDocument();
       expect(normalizedVersionAlertMessage()).toBeInTheDocument();
       expect(getCriteriaVersionCheckbox()).toBeDisabled();
-      expect(criteriaVersion()).not.toBeInTheDocument();
+      expect(criteriaVersion()).toBeDisabled();
     });
 
     it('saves the retain-n values', async function () {

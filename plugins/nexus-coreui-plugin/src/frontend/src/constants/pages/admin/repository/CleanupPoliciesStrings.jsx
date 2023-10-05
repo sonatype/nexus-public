@@ -90,7 +90,7 @@ export default {
     EXCLUSION_CRITERIA: {
       LABEL: 'Except, do not remove any component that meets the following criteria:',
       ALERT: 'This option is only applicable to releases',
-      NORMALIZED_VERSION_ALERT: 'Criteria will populate once post-upgrade tasks complete',
+      NORMALIZED_VERSION_ALERT: 'Exclusion criteria will populate once post-upgrade tasks complete',
       VERSION_LABEL: 'Number of Versions',
       SUB_LABEL: 'Keep the latest "x" number of versions by version number:',
       SORT_BY: {
