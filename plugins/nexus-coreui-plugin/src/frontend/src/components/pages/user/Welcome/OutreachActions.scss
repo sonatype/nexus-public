@@ -12,12 +12,14 @@
  */
 
 .nxrm-outreach-actions {
-  display: grid;
-  width: 1016px;
+  max-width: 1016px;
   grid-template-columns: repeat(3, 1fr);
   grid-column-gap: var(--nx-spacing-6x);
   padding: var(--nx-spacing-6x) 0 0 var(--nx-spacing-6x);
   box-sizing: content-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nx-spacing-4x);
 
   .nxrm-quick-action {
     cursor: pointer;
@@ -26,6 +28,9 @@
     border: 1px solid var(--nx-swatch-indigo-90);
     padding: 3px;
     background-color: var(--nx-swatch-white);
+    min-width: 265px;
+    max-width: 33%;
+    flex: 1;
 
     &:hover {
       background-color: var(--nx-swatch-indigo-90);
