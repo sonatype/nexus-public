@@ -39,10 +39,10 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 
 const data = {
   "usage": [{
-    "component_total_count": 791,
-    "unique_users_last_30d": 17,
+    "component_total_count": 7911247,
+    "unique_users_last_30d": 1723,
     "request_rates": {
-      "peak_requests_per_minute_1d": 42,
+      "peak_requests_per_minute_1d": 421,
       "peak_requests_per_day_30d": 84
     }
   }]
@@ -61,6 +61,10 @@ describe('Usage Metrics', () => {
     when(ExtJS.state().getValue)
         .calledWith('nexus.datastore.clustered.enabled')
         .mockReturnValue(false);
+
+    when(ExtJS.state().getValue)
+        .calledWith('nexus.ossToPro.enabled')
+        .mockReturnValue(true);
   });
 
   it('renders data correctly', async () => {
@@ -77,7 +81,7 @@ describe('Usage Metrics', () => {
     // card 1 of total components
     const card1 = selectors.getCard('total components'),
         card1Header = selectors.getCardHeader(card1, 'Total components'),
-        totalComponents = selectors.getCardContent(card1, '791');
+        totalComponents = selectors.getCardContent(card1, '7,911,247');
     expect(card1).toBeInTheDocument();
     expect(card1Header).toBeInTheDocument();
     expect(totalComponents).toBeInTheDocument();
@@ -86,7 +90,7 @@ describe('Usage Metrics', () => {
     const card2 = selectors.getCard('unique logins'),
         card2Header = selectors.getCardHeader(card2,'Unique logins'),
         card2SubTitle = selectors.getCardContent(card2,'Past 30 days'),
-        uniqueLogins = selectors.getCardContent(card2, '17');
+        uniqueLogins = selectors.getCardContent(card2, '1,723');
     expect(card2).toBeInTheDocument();
     expect(card2Header).toBeInTheDocument();
     expect(card2SubTitle).toBeInTheDocument();
@@ -96,7 +100,7 @@ describe('Usage Metrics', () => {
     const card3 = selectors.getCard('peak requests per minute'),
         card3Header = selectors.getCardHeader(card3, 'Peak requests per minute'),
         card3SubTitle = selectors.getCardContent(card3, 'Past 24 hours'),
-        peakReqPerMin = selectors.getCardContent(card3, '42');
+        peakReqPerMin = selectors.getCardContent(card3, '421');
     expect(card3).toBeInTheDocument();
     expect(card3Header).toBeInTheDocument();
     expect(card3SubTitle).toBeInTheDocument();

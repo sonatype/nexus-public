@@ -74,23 +74,50 @@
        AND repository_id = #{repositoryId};
   </select>
 
+  <resultMap id="OrderedComponentAssetsDataMap"
+             type="org.sonatype.nexus.repository.content.store.OrderedComponentData"
+             extends="ComponentAssetsDataMap">
+    <result property="orderedToken" column="orderedToken" />
+  </resultMap>
+
   <!-- Override but myBatis doesn't support it properly, so an 'Ex' suffix is used -->
-  <select id="browseComponentsForCleanupEx" resultType="org.sonatype.nexus.repository.content.store.OrderedComponentData">
+  <select id="browseComponentsForCleanupEx"
+          resultType="org.sonatype.nexus.repository.content.store.OrderedComponentData"
+          resultMap="OrderedComponentAssetsDataMap">
     <choose>
       <!-- Only run select if supported criteria are present, otherwise all data may be selected -->
       <when test="criteria.isPrerelease != null or criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.retain != null or criteria.regex != null">
-        <include refid="selectBrowseComponentsForCleanupEx"/>
+        <choose>
+          <when test="includeAssets">
+            WITH cleanup_components AS ( <include refid="selectBrowseComponentsForCleanupEx"/> )
+            SELECT cleanup_components.orderedToken, component.*, asset.*
+            FROM cleanup_components
+            LEFT JOIN maven2_component AS component ON component.component_id = cleanup_components.component_id
+            LEFT JOIN maven2_asset AS asset ON component.component_id = asset.component_id
+            <!-- we still need to maintain the correct order for pagination -->
+            <choose>
+              <when test="criteria.sortBy == 'version'"> ORDER BY component.normalized_version DESC</when>
+              <otherwise> ORDER BY component.component_id</otherwise>
+            </choose>
+          </when>
+          <otherwise><include refid="selectBrowseComponentsForCleanupEx"/></otherwise>
+        </choose>
       </when>
       <otherwise>SELECT * FROM maven2_component LIMIT 0</otherwise>
     </choose>
   </select>
 
   <sql id="selectBrowseComponentsForCleanupEx">
-    SELECT maven2_component.*,
+    <choose>
+      <when test="includeAssets">SELECT maven2_component.component_id,</when>
+      <!-- workaround for asset_id to solve resultmap issues -->
+      <otherwise>SELECT maven2_component.*, NULL AS asset_id, </otherwise>
+    </choose>
     <choose>
       <when test="criteria.sortBy == 'version'">maven2_component.normalized_version</when>
       <otherwise>maven2_component.component_id</otherwise>
     </choose>
+    <!-- We need to select a suitable ORDER BY field as the continuation token -->
      AS orderedToken
     FROM maven2_component
 
@@ -158,7 +185,7 @@
 
     <if test="criteria.retain > 0 and continuationToken == null"> OFFSET #{criteria.retain}</if>
 
-    <if test="limit > 0"> LIMIT #{limit}</if>;
+    <if test="limit > 0"> LIMIT #{limit}</if>
   </sql>
 
 </mapper>

@@ -73,6 +73,7 @@ public interface FluentComponents
   Continuation<FluentComponent> byCleanupCriteria(
       final ComponentSet componentSet,
       final Map<String, String> cleanupCriteria,
+      final boolean includeAssets,
       final int limit,
       final String continuationToken);
 

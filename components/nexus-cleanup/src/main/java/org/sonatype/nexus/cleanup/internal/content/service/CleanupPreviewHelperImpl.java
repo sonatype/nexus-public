@@ -15,6 +15,7 @@ package org.sonatype.nexus.cleanup.internal.content.service;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,7 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyPreviewXO;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -47,6 +49,8 @@ import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.cleanup.internal.content.service.CleanupServiceImpl.COMPONENT_SET_CLEANUP_BROWSE_NAME;
+import static org.sonatype.nexus.cleanup.internal.content.service.CleanupServiceImpl.DEFAULT_CLEANUP_BROWSE_NAME;
 
 /**
  * {@link CleanupPreviewHelper} implementation.
@@ -62,19 +66,23 @@ public class CleanupPreviewHelperImpl
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
-  private final CleanupComponentBrowse cleanupComponentBrowse;
+  private final Map<String, CleanupComponentBrowse> browseServices;
 
   private final Duration previewTimeout;
+
+  private final CleanupFeatureCheck featureCheck;
 
   @Inject
   public CleanupPreviewHelperImpl(
       final CleanupPolicyStorage cleanupPolicyStorage,
-      final CleanupComponentBrowse cleanupComponentBrowse,
-      @Named("${nexus.cleanup.preview.timeout:-60s}") final Duration previewTimeout)
+      final Map<String, CleanupComponentBrowse> browseServices,
+      @Named("${nexus.cleanup.preview.timeout:-60s}") final Duration previewTimeout,
+      final CleanupFeatureCheck featureChecks)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
-    this.cleanupComponentBrowse = checkNotNull(cleanupComponentBrowse);
+    this.browseServices = checkNotNull(browseServices);
     this.previewTimeout = checkNotNull(previewTimeout);
+    this.featureCheck = checkNotNull(featureChecks);
   }
 
   @Override
@@ -94,8 +102,9 @@ public class CleanupPreviewHelperImpl
   {
     CleanupPolicy cleanupPolicy = toCleanupPolicy(previewXO);
 
+    CleanupComponentBrowse browseService = selectBrowseService(repository);
     Stream<FluentComponent> componentSteam =
-        cleanupComponentBrowse.browseEager(cleanupPolicy, repository);
+            browseService.browseIncludingAssets(cleanupPolicy, repository);
 
     return componentSteam.map(component -> convert(component, repository));
   }
@@ -124,7 +133,8 @@ public class CleanupPreviewHelperImpl
       CancelableHelper.set(cancelled);
       try {
         // compute preview and return it
-        return cleanupComponentBrowse.browseByPage(policy, repository, queryOptions);
+        CleanupComponentBrowse browseService = selectBrowseService(repository);
+        return browseService.browseByPage(policy, repository, queryOptions);
       }
       finally {
         CancelableHelper.remove();
@@ -136,11 +146,24 @@ public class CleanupPreviewHelperImpl
     }
     catch (Exception e) {
       cancelled.set(true);
-      log.debug("Timeout computing preview for cleanup for policy {} in repository", policy, repository.getName(), e);
+      log.debug("Timeout computing preview for cleanup for policy {} in repository {}", policy, repository.getName(), e);
       // indicate failure to UI
       throw new WebApplicationException(
           Response.serverError().entity("A timeout occurred while computing the preview results.").build());
     }
+  }
+
+  private CleanupComponentBrowse selectBrowseService(final Repository repository) {
+    String serviceName = DEFAULT_CLEANUP_BROWSE_NAME;
+    if (this.featureCheck.isRetainSupported(repository.getFormat().getValue())) {
+      serviceName = COMPONENT_SET_CLEANUP_BROWSE_NAME;
+    }
+    CleanupComponentBrowse browseService = browseServices.get(serviceName);
+    if (browseService==null) {
+      log.error("Missing Cleanup Component Browse service: {}", serviceName);
+      throw new IllegalStateException("Missing Cleanup Component Browse service");
+    }
+    return browseService;
   }
 
   private CleanupPolicy toCleanupPolicy(final CleanupPolicyPreviewXO cleanupPolicyPreviewXO) {
@@ -160,7 +183,7 @@ public class CleanupPreviewHelperImpl
     defaultComponentXO.setVersion(component.version());
     defaultComponentXO.setFormat(repository.getFormat().getValue());
     return defaultComponentXO;
-  };
+  }
 
   private static ComponentXO convert(final FluentComponent component, final Repository repository) {
     ComponentXO componentXO = convert((Component) component, repository);

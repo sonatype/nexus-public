@@ -139,6 +139,7 @@ public interface ComponentDAO
    * @param namespace         the component namespace to browse
    * @param name              the component name to browse
    * @param criteria          the criteria to filter by
+   * @Param includeAssets     whether to include asset data
    * @param limit             maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of components and the next continuation token
@@ -149,6 +150,7 @@ public interface ComponentDAO
       @Param("namespace") String namespace,
       @Param("name") String name,
       @Nullable @Param("criteria") Map<String, String> criteria,
+      @Param("includeAssets") boolean includeAssets,
       @Param("limit") int limit,
       @Nullable @Param("continuationToken") String continuationToken);
 

@@ -61,6 +61,9 @@
     --Note: index intentionally not added because this column is intended to be used
     -- with the component_id which is indexed
     ALTER TABLE ${format}_component ADD COLUMN IF NOT EXISTS entity_version INT;
+
+    <!-- Performance optimisation for cleanup -->
+    CREATE INDEX IF NOT EXISTS idx_${format}_component_set ON ${format}_component (repository_id, namespace, name);
   </insert>
 
   <sql id="componentNamespaceMatch">
@@ -191,14 +194,27 @@
     <choose>
       <!-- Only run select if supported criteria are present, otherwise all data may be selected -->
       <when test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
-        <include refid="selectBrowseComponentsForCleanup"/>
+        <choose>
+          <when test="includeAssets">
+            WITH cleanup_components AS ( <include refid="selectBrowseComponentsForCleanup"/> )
+            SELECT component.*, asset.*
+            FROM cleanup_components
+            LEFT JOIN ${format}_component AS component ON component.component_id = cleanup_components.component_id
+            LEFT JOIN ${format}_asset AS asset ON component.component_id = asset.component_id
+            ORDER BY component.component_id
+          </when>
+          <otherwise><include refid="selectBrowseComponentsForCleanup"/></otherwise>
+        </choose>
       </when>
       <otherwise>SELECT * FROM ${format}_component LIMIT 0</otherwise>
     </choose>
   </select>
 
   <sql id="selectBrowseComponentsForCleanup">
-    SELECT ${format}_component.* FROM ${format}_component
+    <choose>
+      <when test="includeAssets">SELECT ${format}_component.component_id FROM ${format}_component </when>
+      <otherwise>SELECT ${format}_component.* FROM ${format}_component </otherwise>
+    </choose>
 
     <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
       LEFT OUTER JOIN ${format}_asset on ${format}_component.component_id = ${format}_asset.component_id
@@ -239,7 +255,7 @@
     </trim>
      ORDER BY ${format}_component.component_id
 
-    <if test="limit > 0"> LIMIT #{limit}</if>;
+    <if test="limit > 0"> LIMIT #{limit}</if>
   </sql>
 
   <select id="browseNamespaces" resultType="String">
@@ -258,7 +274,7 @@
     SELECT DISTINCT namespace, name FROM ${format}_component WHERE repository_id = #{repositoryId}
     <if test="continuationToken != null"> AND CONCAT(namespace, '|', name) > #{continuationToken}</if>
     ORDER BY namespace ASC, name ASC
-    <if test="limit > 0"> LIMIT #{limit}</if>;
+    <if test="limit > 0"> LIMIT #{limit}</if>
   </select>
 
   <insert id="createComponent" useGeneratedKeys="true" keyProperty="component.componentId">

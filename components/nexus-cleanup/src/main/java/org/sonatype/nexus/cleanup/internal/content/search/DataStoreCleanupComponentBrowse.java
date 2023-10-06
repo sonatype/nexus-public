@@ -74,7 +74,7 @@ public class DataStoreCleanupComponentBrowse
   }
 
   @Override
-  public Stream<FluentComponent> browseEager(final CleanupPolicy policy, final Repository repository) {
+  public Stream<FluentComponent> browseIncludingAssets(final CleanupPolicy policy, final Repository repository) {
     return Continuations.streamOf(repository.facet(ContentFacet.class).components()::browseEager)
         .filter(createComponentFilter(repository, policy));
   }

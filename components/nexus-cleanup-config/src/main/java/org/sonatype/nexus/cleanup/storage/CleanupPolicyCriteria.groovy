@@ -30,6 +30,8 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PREREL
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_KEY
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SORT_BY_KEY
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.RELEASES
 
@@ -53,12 +55,18 @@ class CleanupPolicyCriteria
   @CleanupPolicyAssetNamePattern
   String regex
 
+  String sortBy
+
+  Integer retain
+
   static CleanupPolicyCriteria fromMap(final Map<String, String> criteriaMap) {
     return builder()
         .lastBlobUpdated(getLastBlobUpdated(criteriaMap))
         .lastDownloaded(getLastDownloaded(criteriaMap))
         .releaseType(getReleaseType(criteriaMap))
         .regex(getRegex(criteriaMap))
+        .retain(getRetain(criteriaMap))
+        .sortBy(getSortBy(criteriaMap))
         .build()
   }
 
@@ -75,6 +83,16 @@ class CleanupPolicyCriteria
   @Nullable
   static String getRegex(final Map<String, String> criteriaMap) {
     return getStringFromCriteriaMap(criteriaMap, REGEX_KEY)
+  }
+
+  @Nullable
+  static Integer getRetain(final Map<String, String> criteriaMap) {
+    return getIntegerFromCriteriaMap(criteriaMap, RETAIN_KEY)
+  }
+
+  @Nullable
+  static String getSortBy(final Map<String, String> criteriaMap) {
+    return getStringFromCriteriaMap(criteriaMap, RETAIN_SORT_BY_KEY)
   }
 
   @Nullable
@@ -125,6 +143,16 @@ class CleanupPolicyCriteria
     if (nonNull(criteria.regex)) {
       def value = valueOf(criteria.regex)
       criteriaMap.put(REGEX_KEY, value)
+    }
+
+    if (nonNull(criteria.retain)) {
+      def value = valueOf(criteria.retain)
+      criteriaMap.put(RETAIN_KEY, value)
+    }
+
+    if (nonNull(criteria.sortBy)) {
+      def value = valueOf(criteria.sortBy)
+      criteriaMap.put(RETAIN_SORT_BY_KEY, value)
     }
 
     return criteriaMap

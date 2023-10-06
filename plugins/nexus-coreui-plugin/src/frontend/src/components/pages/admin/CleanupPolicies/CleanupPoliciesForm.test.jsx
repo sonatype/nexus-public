@@ -42,7 +42,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     requestConfirmation: jest.fn(),
-    urlOf: jest.fn(),
+    urlOf: jest.fn().mockImplementation((path) => 'https://testurl' + path),
   },
 }));
 
@@ -113,8 +113,8 @@ describe('CleanupPoliciesForm', function () {
     criteriaLastDownloaded: 8,
     criteriaReleaseType: 'RELEASES',
     criteriaAssetRegex: '.*',
-    retain: null,
-    sortBy: null,
+    retain: 2,
+    sortBy: 'version',
   };
 
   async function renderView(itemId) {
@@ -644,6 +644,31 @@ describe('CleanupPoliciesForm', function () {
       expect(selectDropdown).toHaveValue('');
       expect(createButton).toHaveAttribute('aria-disabled', 'true');
     });
+
+    it('generates the csv url with the right params', async function() {
+      const {dryRunRepositories, dryRunCreateCSVButton} = selectors;
+      const expectedUrl = `https://testurl/service/rest/internal/cleanup-policies/preview/components/csv?
+      repository=maven-central
+      &name=${EDITABLE_ITEM.name}
+      &criteriaLastBlobUpdated=${EDITABLE_ITEM.criteriaLastBlobUpdated}
+      &criteriaLastDownloaded=${EDITABLE_ITEM.criteriaLastDownloaded}
+      &criteriaReleaseType=${EDITABLE_ITEM.criteriaReleaseType}
+      &criteriaAssetRegex=${EDITABLE_ITEM.criteriaAssetRegex}
+      &criteriaRetain=${EDITABLE_ITEM.retain}
+      &criteriaSortBy=${EDITABLE_ITEM.sortBy}`;
+
+      await renderView(EDITABLE_ITEM.name);
+
+      const selectDropdown = dryRunRepositories(),
+          createButton = dryRunCreateCSVButton();
+
+      userEvent.selectOptions(selectDropdown, 'maven-central');
+
+      expect(selectDropdown).toHaveValue('maven-central');
+      expect(createButton).toHaveAttribute('aria-disabled', 'false');
+      //we add a replacement to put the expected url in a single line so attributes can match
+      expect(createButton).toHaveAttribute('href', expectedUrl.replace(/\s+/g, ''));
+    });
   });
 
   describe('Exclusion Criteria - retain-n', function () {
@@ -762,7 +787,8 @@ describe('CleanupPoliciesForm', function () {
 
       await TestUtils.changeField(format, ITEM.format);
 
-      expect(criteriaVersion()).not.toBeInTheDocument();
+      expect(criteriaVersion()).toBeVisible();
+      expect(criteriaVersion()).toBeDisabled();
       expect(getCriteriaVersionCheckbox()).toBeVisible();
       expect(getCriteriaVersionCheckbox()).toBeDisabled();
       expect(versionAlertMessage()).toBeInTheDocument();
@@ -774,6 +800,7 @@ describe('CleanupPoliciesForm', function () {
 
       userEvent.click(getCriteriaVersionCheckbox());
       expect(criteriaVersion()).toBeVisible();
+      expect(criteriaVersion()).toBeEnabled();
 
       await TestUtils.changeField(releaseType, 'PRERELEASES');
 
@@ -815,7 +842,7 @@ describe('CleanupPoliciesForm', function () {
       expect(versionAlertMessage()).not.toBeInTheDocument();
       expect(normalizedVersionAlertMessage()).toBeInTheDocument();
       expect(getCriteriaVersionCheckbox()).toBeDisabled();
-      expect(criteriaVersion()).not.toBeInTheDocument();
+      expect(criteriaVersion()).toBeDisabled();
     });
 
     it('saves the retain-n values', async function () {

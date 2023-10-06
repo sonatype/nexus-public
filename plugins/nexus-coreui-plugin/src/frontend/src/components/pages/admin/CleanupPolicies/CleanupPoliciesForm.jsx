@@ -347,20 +347,20 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                         >
                           <b>{LABELS.EXCLUSION_CRITERIA.LABEL}</b>
                         </NxCheckbox>
-                        {exclusionCriteriaEnabled && (
-                          <NxFormGroup
-                            label={LABELS.EXCLUSION_CRITERIA.VERSION_LABEL}
-                            isRequired={criteriaLastBlobUpdatedEnabled}
-                            sublabel={LABELS.EXCLUSION_CRITERIA.SUB_LABEL}
-                            className="retain-n__group"
-                          >
-                            <NxTextInput
-                              className="nx-text-input--short"
-                              {...FormUtils.fieldProps('retain', state)}
-                              onChange={FormUtils.handleUpdate('retain', send)}
-                            />
-                          </NxFormGroup>
-                        )}
+
+                        <NxFormGroup
+                          label={LABELS.EXCLUSION_CRITERIA.VERSION_LABEL}
+                          isRequired={criteriaLastBlobUpdatedEnabled}
+                          sublabel={LABELS.EXCLUSION_CRITERIA.SUB_LABEL}
+                          className="retain-n__group"
+                        >
+                          <NxTextInput
+                            className="nx-text-input--short"
+                            disabled={!exclusionCriteriaEnabled}
+                            {...FormUtils.fieldProps('retain', state)}
+                            onChange={FormUtils.handleUpdate('retain', send)}
+                          />
+                        </NxFormGroup>
                       </>
                     )}
                     {isPreviewEnabled && (

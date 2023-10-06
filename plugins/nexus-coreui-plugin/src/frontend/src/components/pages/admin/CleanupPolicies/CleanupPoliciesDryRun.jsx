@@ -38,7 +38,9 @@ export default function CleanupPoliciesDryRun({policyData}) {
     (policyData.criteriaLastBlobUpdated ? `&criteriaLastBlobUpdated=${policyData.criteriaLastBlobUpdated}` : '') +
     (policyData.criteriaLastDownloaded ? `&criteriaLastDownloaded=${policyData.criteriaLastDownloaded}` : '') +
     (policyData.criteriaReleaseType ? `&criteriaReleaseType=${policyData.criteriaReleaseType}` : '') +
-    (policyData.criteriaAssetRegex ? `&criteriaAssetRegex=${policyData.criteriaAssetRegex}` : ''))
+    (policyData.criteriaAssetRegex ? `&criteriaAssetRegex=${policyData.criteriaAssetRegex}` : '') +
+    (policyData.retain? `&criteriaRetain=${policyData.retain}` : '') +
+    (policyData.sortBy? `&criteriaSortBy=${policyData.sortBy}` : ''))
 
   useEffect(() => {
     send({type: 'LOAD_REPOSITORIES', format: policyData.format});

@@ -63,8 +63,6 @@ public interface FeatureFlags
   */
   String BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION = "nexus.blobstore.skipOnSoftQuotaViolation";
 
-  String LEGACY_AZURE_BLOB_STORE = "nexus.blobstore.azure.legacy";
-
   /*  */
   String DATASTORE_BLOBSTORE_METRICS = "nexus.datastore.blobstore.metrics.enabled";
 
@@ -106,4 +104,5 @@ public interface FeatureFlags
 
   String FIREWALL_QUARANTINE_FIX_ENABLED_NAMED = "${nexus.firewall.quarantineFix.enabled:-false}";
 
+  String OSS_TO_PRO_ENABLED = "nexus.ossToPro.enabled";
 }

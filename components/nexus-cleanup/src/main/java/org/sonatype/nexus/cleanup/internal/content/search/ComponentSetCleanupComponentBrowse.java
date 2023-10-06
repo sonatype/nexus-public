@@ -52,7 +52,15 @@ public class ComponentSetCleanupComponentBrowse
     checkNotNull(policy);
     checkNotNull(repository);
 
-    return Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy)::browse);
+    return Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy, false)::browse);
+  }
+
+  @Override
+  public Stream<FluentComponent> browseIncludingAssets(CleanupPolicy policy, Repository repository) {
+    checkNotNull(policy);
+    checkNotNull(repository);
+
+    return Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy, true)::browse);
   }
 
   @Override
@@ -68,7 +76,7 @@ public class ComponentSetCleanupComponentBrowse
     checkNotNull(options.getLimit());
 
     List<Component> result =
-            Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy)::browse, Continuations.BROWSE_LIMIT,
+            Continuations.streamOf(new ComponentSetCleanupBrowser(repository, policy, false)::browse, Continuations.BROWSE_LIMIT,
                             options.getLastId())
                     .peek(__ -> CancelableHelper.checkCancellation())
                     .limit(options.getLimit())

@@ -35,12 +35,13 @@ export default function UsageMetrics() {
 
   const isProEdition = ExtJS.isProEdition();
   const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
+  const isOssToProEnabled = ExtJS.state().getValue('nexus.ossToPro.enabled');
 
   function retry() {
     send('RETRY');
   }
 
-  return !isHa && <div className="nxrm-usage-metrics">
+  return !isHa && isOssToProEnabled && <div className="nxrm-usage-metrics">
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       {() =>
         <>
@@ -51,7 +52,7 @@ export default function UsageMetrics() {
                 <NxH3>{TOTAL_COMPONENTS.title}</NxH3>
               </NxCard.Header>
               <NxCard.Content>
-                <NxCard.Text>{totalComponents}</NxCard.Text>
+                <NxCard.Text>{totalComponents.toLocaleString()}</NxCard.Text>
               </NxCard.Content>
             </NxCard>
             {!isProEdition &&
@@ -60,7 +61,7 @@ export default function UsageMetrics() {
                   <NxH3>{UNIQUE_LOGINS.title}</NxH3>
                 </NxCard.Header>
                 <NxCard.Content>
-                  <NxCard.Text>{uniqueLogins}</NxCard.Text>
+                  <NxCard.Text>{uniqueLogins.toLocaleString()}</NxCard.Text>
                   <NxCard.Text className="nxrm-usage-subtitle">{UNIQUE_LOGINS.subTitle}</NxCard.Text>
                 </NxCard.Content>
               </NxCard>
@@ -70,7 +71,7 @@ export default function UsageMetrics() {
                 <NxH3>{PEAK_REQUESTS_PER_MINUTE.title}</NxH3>
               </NxCard.Header>
               <NxCard.Content>
-                <NxCard.Text>{peakRequestsPerMin}</NxCard.Text>
+                <NxCard.Text>{peakRequestsPerMin.toLocaleString()}</NxCard.Text>
                 <NxCard.Text className="nxrm-usage-subtitle">{PEAK_REQUESTS_PER_MINUTE.subTitle}</NxCard.Text>
               </NxCard.Content>
             </NxCard>
@@ -79,7 +80,7 @@ export default function UsageMetrics() {
                 <NxH3>{PEAK_REQUESTS_PER_DAY.title}</NxH3>
               </NxCard.Header>
               <NxCard.Content>
-                <NxCard.Text>{peakRequestsPerDay}</NxCard.Text>
+                <NxCard.Text>{peakRequestsPerDay.toLocaleString()}</NxCard.Text>
                 <NxCard.Text className="nxrm-usage-subtitle">{PEAK_REQUESTS_PER_DAY.subTitle}</NxCard.Text>
               </NxCard.Content>
             </NxCard>

@@ -71,6 +71,10 @@ describe('Welcome', function() {
     jest.spyOn(Object.getPrototypeOf(localStorage), 'setItem');
 
     when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue([]);
+
+    when(ExtJS.state().getValue)
+        .calledWith('nexus.ossToPro.enabled')
+        .mockReturnValue(true);
   });
 
   it('renders a main content area', function() {

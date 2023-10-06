@@ -316,6 +316,8 @@ public class CleanupPolicyResource
     xo.getCriteria().setLastDownloaded(request.getCriteriaLastDownloaded());
     xo.getCriteria().setReleaseType(request.getCriteriaReleaseType());
     xo.getCriteria().setRegex(request.getCriteriaAssetRegex());
+    xo.getCriteria().setRetain(request.getCriteriaRetain());
+    xo.getCriteria().setSortBy(request.getCriteriaSortBy());
 
     QueryOptions options = new QueryOptions(request.getFilter(), "name", "asc", 0, PREVIEW_ITEM_COUNT);
 
@@ -340,7 +342,9 @@ public class CleanupPolicyResource
           @QueryParam("criteriaLastBlobUpdated") @Nullable Integer criteriaLastBlobUpdated,
           @QueryParam("criteriaLastDownloaded") @Nullable Integer criteriaLastDownloaded,
           @QueryParam("criteriaReleaseType") @Nullable CleanupPolicyReleaseType criteriaReleaseType,
-          @QueryParam("criteriaAssetRegex") @Nullable String criteriaAssetRegex
+          @QueryParam("criteriaAssetRegex") @Nullable String criteriaAssetRegex,
+          @QueryParam("criteriaRetain") @Nullable Integer criteriaRetain,
+          @QueryParam("criteriaSortBy") @Nullable String criteriaSortBy
   )
   {
 
@@ -361,6 +365,8 @@ public class CleanupPolicyResource
       xo.getCriteria().setLastDownloaded(criteriaLastDownloaded);
       xo.getCriteria().setReleaseType(criteriaReleaseType);
       xo.getCriteria().setRegex(criteriaAssetRegex);
+      xo.getCriteria().setRetain(criteriaRetain);
+      xo.getCriteria().setSortBy(criteriaSortBy);
 
       Stream<ComponentXO> components =
           cleanupPreviewHelper.get().getSearchResultsStream(xo, repository, null);

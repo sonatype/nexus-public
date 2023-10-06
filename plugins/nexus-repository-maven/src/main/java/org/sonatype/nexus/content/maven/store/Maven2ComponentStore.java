@@ -120,12 +120,13 @@ public class Maven2ComponentStore
       final int repositoryId,
       final ComponentSet componentSet,
       final Map<String, String> cleanupPolicyCriteria,
+      final boolean includeAssets,
       final int limit,
       @Nullable final String continuationToken)
   {
     String namespace = componentSet == null ? null : componentSet.namespace();
     String name = componentSet == null ? null : componentSet.name();
     return dao().browseComponentsForCleanupEx(repositoryId, namespace, name,
-        cleanupPolicyCriteria, limit, continuationToken);
+        cleanupPolicyCriteria, includeAssets, limit, continuationToken);
   }
 }

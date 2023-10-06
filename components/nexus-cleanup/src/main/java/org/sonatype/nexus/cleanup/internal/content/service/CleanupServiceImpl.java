@@ -108,14 +108,14 @@ public class CleanupServiceImpl
   private Long cleanup(final Repository repository, final BooleanSupplier cancelledCheck) {
     AtomicLong deleted = new AtomicLong(0L);
     findPolicies(repository).forEach(policy -> {
-      CleanupComponentBrowse browseService = selectBrowseService(repository, policy.getCriteria());
+      CleanupComponentBrowse browseService = selectBrowseService(repository);
       deleted.addAndGet(deleteByPolicy(repository, policy, cancelledCheck, browseService));
       log.info("{} components cleaned up for repository {} in total", deleted, repository.getName());
     });
     return deleted.get();
   }
 
-  private CleanupComponentBrowse selectBrowseService(final Repository repository, Map<String, String> criteria) {
+  private CleanupComponentBrowse selectBrowseService(final Repository repository) {
     String serviceName = DEFAULT_CLEANUP_BROWSE_NAME;
     if (this.featureCheck.isRetainSupported(repository.getFormat().getValue())) {
       serviceName = COMPONENT_SET_CLEANUP_BROWSE_NAME;

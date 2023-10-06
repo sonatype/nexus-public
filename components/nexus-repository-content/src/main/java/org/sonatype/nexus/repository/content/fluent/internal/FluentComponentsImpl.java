@@ -180,11 +180,12 @@ public class FluentComponentsImpl
   public Continuation<FluentComponent> byCleanupCriteria(
       final ComponentSet componentSet,
       final Map<String, String> criteria,
+      final boolean includeAssets,
       final int limit,
       final String continuationToken)
   {
     return new FluentContinuation<>(componentStore.browseComponentsForCleanup(facet.contentRepositoryId(),
-        componentSet, criteria, limit, continuationToken), this::with);
+        componentSet, criteria, includeAssets, limit, continuationToken), this::with);
   }
 
   @Override
