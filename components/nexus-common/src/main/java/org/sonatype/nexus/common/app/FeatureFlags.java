@@ -104,4 +104,5 @@ public interface FeatureFlags
 
   String FIREWALL_QUARANTINE_FIX_ENABLED_NAMED = "${nexus.firewall.quarantineFix.enabled:-false}";
 
+  String OSS_TO_PRO_ENABLED = "nexus.ossToPro.enabled";
 }

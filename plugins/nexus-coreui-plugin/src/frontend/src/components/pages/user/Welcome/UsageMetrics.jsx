@@ -35,12 +35,13 @@ export default function UsageMetrics() {
 
   const isProEdition = ExtJS.isProEdition();
   const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
+  const isOssToProEnabled = ExtJS.state().getValue('nexus.ossToPro.enabled');
 
   function retry() {
     send('RETRY');
   }
 
-  return !isHa && <div className="nxrm-usage-metrics">
+  return !isHa && isOssToProEnabled && <div className="nxrm-usage-metrics">
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       {() =>
         <>
