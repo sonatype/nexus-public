@@ -92,7 +92,10 @@ export default {
       ALERT: 'This option is only applicable to releases',
       NORMALIZED_VERSION_ALERT: 'Exclusion criteria will populate once post-upgrade tasks complete',
       VERSION_LABEL: 'Number of Versions',
-      SUB_LABEL: 'Keep the latest "x" number of versions by version number:',
+      SUB_LABEL: (sortBy, labels) => {
+        const label = labels[sortBy.toUpperCase()] ? labels[sortBy.toUpperCase()].label : labels.VERSION.label;
+        return `Keep the latest "x" number of versions by ${label}.`
+      },
       SORT_BY: {
         VERSION: {
           id: 'version',
