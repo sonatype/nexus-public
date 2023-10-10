@@ -100,6 +100,8 @@ public interface FeatureFlags
 
   String CLEANUP_MAVEN_RETAIN = "nexus.cleanup.mavenRetain";
 
+  String CLEANUP_DOCKER_RETAIN = "nexus.cleanup.dockerRetain";
+
   String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";
 
   String FIREWALL_QUARANTINE_FIX_ENABLED_NAMED = "${nexus.firewall.quarantineFix.enabled:-false}";
