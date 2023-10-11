@@ -41,11 +41,6 @@ export default FormUtils.buildFormMachine({
                 target: 'verifyingConnection',
                 actions: ['clearVerifyConnectionError']
               },
-              UPDATE_URL: {
-                target: 'idle',
-                actions: ['updateUrl', 'validate', 'setDirtyFlag', 'setIsPristine'],
-                internal: false
-              }
             }
           },
           verifyingConnection: {
@@ -80,6 +75,12 @@ export default FormUtils.buildFormMachine({
             }
           }
         },
+        on: {
+          UPDATE_URL: {
+            actions: ['updateUrl', 'validate', 'setDirtyFlag', 'setIsPristine'],
+            internal: false
+          }
+        }
       }
     }
   })

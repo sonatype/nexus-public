@@ -379,6 +379,20 @@ describe('IqServer', () => {
     expect(Axios.put).toHaveBeenCalledWith('/service/rest/v1/iq', simpleData);
   });
 
+  it('allows for the url to be updated when there is an alert', async () => {
+    render(<IqServer/>);
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await TestUtils.changeField(selectors.getUrlInput, 'http://example.com');
+    userEvent.selectOptions(selectors.getAuthenticationMethodSelect(), 'PKI');
+    expect(selectors.getVerifyConnectionButton()).not.toHaveAttribute('disabled');
+
+    userEvent.click(selectors.getVerifyConnectionButton());
+    await TestUtils.changeField(selectors.getUrlInput, 'http://newexample.com');
+    expect(selectors.getUrlInput()).toHaveValue('http://newexample.com');
+  });
+
   describe('Read Only Mode', () => {
     const dataClass = 'nx-read-only__data';
     const labelClass = 'nx-read-only__label';
