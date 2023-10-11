@@ -116,6 +116,10 @@ public class OrientMavenGroupFacet
   {
     checkMergeHandled(mavenPath);
     Content content = mavenFacet.get(mavenPath);
+
+    if (content != null && content.getSize() == 0L) {
+      return null;
+    }
     if (mavenPath.isHash()) {
       return content; // hashes are recalculated whenever metadata is merged, so they're always fresh
     }
