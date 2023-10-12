@@ -23,6 +23,9 @@ public interface FeatureFlags
   /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
   String FEATURE_GOLANG_HOSTED = "nexus.golang.hosted";
 
+  /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
+  String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
+
   /* Database externalization. Available values: true, false. Default value: false */
   String DATASTORE_ENABLED = "nexus.datastore.enabled";
   String DATASTORE_ENABLED_NAMED = "${nexus.datastore.enabled:-false}";
