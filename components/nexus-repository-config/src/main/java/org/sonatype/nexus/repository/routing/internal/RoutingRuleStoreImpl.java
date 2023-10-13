@@ -28,8 +28,11 @@ import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.routing.RoutingRule;
+import org.sonatype.nexus.repository.routing.RoutingRuleCreatedEvent;
+import org.sonatype.nexus.repository.routing.RoutingRuleDeletedEvent;
 import org.sonatype.nexus.repository.routing.RoutingRuleInvalidatedEvent;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.routing.RoutingRuleUpdatedEvent;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
@@ -85,6 +88,7 @@ public class RoutingRuleStoreImpl
   public RoutingRule create(final RoutingRule rule) {
     try {
       dao().create((RoutingRuleData) validate(rule));
+      eventManager.post(new RoutingRuleCreatedEvent(rule));
       return rule;
     }
     catch (DuplicateKeyException e) {
@@ -107,6 +111,7 @@ public class RoutingRuleStoreImpl
   @Override
   public void update(final RoutingRule rule) {
     doUpdate((RoutingRuleData) validate(rule));
+    eventManager.post(new RoutingRuleUpdatedEvent(rule));
     postEvent(rule);
   }
 
@@ -123,6 +128,7 @@ public class RoutingRuleStoreImpl
   @Override
   public void delete(final RoutingRule rule) {
     doDelete(rule.name());
+    eventManager.post(new RoutingRuleDeletedEvent(rule));
     postEvent(rule);
   }
 
