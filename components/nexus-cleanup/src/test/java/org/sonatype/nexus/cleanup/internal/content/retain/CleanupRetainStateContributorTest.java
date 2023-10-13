@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
 import org.sonatype.nexus.repository.content.kv.global.ValueType;
@@ -36,12 +37,16 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.common.app.FeatureFlags.FORMAT_RETAIN_PATTERN;
 
 public class CleanupRetainStateContributorTest
     extends TestSupport
 {
   @Mock
   private GlobalKeyValueStore globalKeyValueStore;
+
+  @Mock
+  private CleanupFeatureCheck featureCheck;
 
   private List<Format> formats;
 
@@ -51,18 +56,27 @@ public class CleanupRetainStateContributorTest
   public void setUp() {
     Format format1 = mock(Format.class);
     Format format2 = mock(Format.class);
+    Format format3 = mock(Format.class);
 
     when(format1.getValue()).thenReturn("maven2");
     when(format2.getValue()).thenReturn("npm");
+    when(format3.getValue()).thenReturn("docker");
 
-    formats = Arrays.asList(format1, format2);
+    formats = Arrays.asList(format1, format2, format3);
 
     when(globalKeyValueStore.getKey(eq(format1.getValue())))
         .thenReturn(Optional.of(new NexusKeyValue("", ValueType.BOOLEAN, false)));
     when(globalKeyValueStore.getKey(eq(format2.getValue())))
         .thenReturn(Optional.of(new NexusKeyValue("", ValueType.BOOLEAN, false)));
+    when(globalKeyValueStore.getKey(eq(format3.getValue())))
+        .thenReturn(Optional.of(new NexusKeyValue("", ValueType.BOOLEAN, false)));
 
-    underTest = new CleanupRetainStateContributor(formats, globalKeyValueStore);
+    //return retain support enabled for maven2 & docker
+    when(featureCheck.isRetainSupported(eq(format1.getValue()))).thenReturn(true);
+    when(featureCheck.isRetainSupported(eq(format2.getValue()))).thenReturn(false);
+    when(featureCheck.isRetainSupported(eq(format3.getValue()))).thenReturn(true);
+
+    underTest = new CleanupRetainStateContributor(formats, globalKeyValueStore, featureCheck);
   }
 
   @Test
@@ -70,9 +84,13 @@ public class CleanupRetainStateContributorTest
     Map<String, Object> currentState = underTest.getState();
 
     assertNotNull(currentState);
-    assertEquals(2, currentState.size());
+    assertEquals(6, currentState.size());
     assertFalse((boolean) currentState.get(String.format(NormalizeComponentVersionTask.KEY_FORMAT, "maven2")));
     assertFalse((boolean) currentState.get(String.format(NormalizeComponentVersionTask.KEY_FORMAT, "npm")));
+    assertFalse((boolean) currentState.get(String.format(NormalizeComponentVersionTask.KEY_FORMAT, "docker")));
+    assertTrue((boolean) currentState.get(FORMAT_RETAIN_PATTERN.replace("{format}", "maven2")));
+    assertFalse((boolean) currentState.get(FORMAT_RETAIN_PATTERN.replace("{format}", "npm")));
+    assertTrue((boolean) currentState.get(FORMAT_RETAIN_PATTERN.replace("{format}", "docker")));
   }
 
   @Test
@@ -86,7 +104,6 @@ public class CleanupRetainStateContributorTest
     Map<String, Object> currentState = underTest.getState();
 
     assertNotNull(currentState);
-    assertEquals(2, currentState.size());
     assertTrue((boolean) currentState.get(String.format(NormalizeComponentVersionTask.KEY_FORMAT, "maven2")));
     assertTrue((boolean) currentState.get(String.format(NormalizeComponentVersionTask.KEY_FORMAT, "npm")));
   }

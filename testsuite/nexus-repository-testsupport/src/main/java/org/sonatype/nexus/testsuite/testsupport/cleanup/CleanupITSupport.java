@@ -12,11 +12,17 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.cleanup;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.shiro.util.ThreadContext;
-import org.junit.Before;
-import org.junit.experimental.categories.Category;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.IntSupplier;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.log.LogManager;
@@ -26,12 +32,11 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 
-import javax.inject.Inject;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.IntSupplier;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.shiro.util.ThreadContext;
+import org.junit.Before;
+import org.junit.experimental.categories.Category;
 
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Objects.isNull;
@@ -41,7 +46,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.*;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
 import static org.sonatype.nexus.scheduling.TaskState.WAITING;
 
 /**

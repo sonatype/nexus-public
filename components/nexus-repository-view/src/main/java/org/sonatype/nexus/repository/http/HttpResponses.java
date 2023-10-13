@@ -155,6 +155,18 @@ public class HttpResponses
         .build();
   }
 
+  // Payment required: 402
+
+  public static Response paymentRequired(@Nullable final String message) {
+    return new Response.Builder()
+        .status(Status.failure(PAYMENT_REQUIRED, message))
+        .build();
+  }
+
+  public static Response paymentRequired() {
+    return paymentRequired(null);
+  }
+
   // Forbidden: 403
 
   public static Response forbidden(@Nullable final String message) {

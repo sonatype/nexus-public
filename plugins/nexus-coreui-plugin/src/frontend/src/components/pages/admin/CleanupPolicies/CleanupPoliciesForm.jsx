@@ -24,7 +24,6 @@ import {
 } from '@sonatype/nexus-ui-plugin';
 
 import {
-  NxInfoAlert,
   NxButton,
   NxFontAwesomeIcon,
   NxFormSelect,
@@ -34,14 +33,13 @@ import {
   NxP,
   NxFormGroup,
   NxTile,
-  NxTextInput,
-  NxCheckbox,
+  NxTextInput
 } from '@sonatype/react-shared-components';
-import {isReleaseType} from './CleanupPoliciesHelper';
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
 import CleanupPoliciesPreview from './CleanupPoliciesPreview';
 import CleanupPoliciesDryRun from './CleanupPoliciesDryRun';
+import CleanupExclusionCriteria from './CleanupExclusionCriteria';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
@@ -52,7 +50,7 @@ import {isEmpty} from 'ramda';
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
 
 export default function CleanupPoliciesForm({itemId, onDone}) {
-  const [state, send] = useMachine(CleanupPoliciesFormMachine, {
+  const [state, send, actor] = useMachine(CleanupPoliciesFormMachine, {
     context: {
       pristineData: {
         name: itemId,
@@ -75,20 +73,27 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
     criteriaLastDownloadedEnabled,
     criteriaLastBlobUpdatedEnabled,
     criteriaAssetRegexEnabled,
-    exclusionCriteriaEnabled,
   } = state.context;
+
+  const retainSupportedFormats = ['maven2' , 'docker'];
+
   const isEdit = Boolean(itemId);
   const isLoading = state.matches('loading');
   const hasData = !isEmpty(data);
-  const isPostgresEnabled = ExtJS.state().getValue('datastore.isPostgresql');
   const isPreviewEnabled =
     ExtJS.state().getValue('nexus.datastore.enabled') &&
     ExtJS.state().getValue('nexus.cleanup.preview.enabled');
-  const isMavenRetainNEnabled = ExtJS.state().getValue(
-    'nexus.cleanup.mavenRetain'
-  );
-  const isMaven = data.format === 'maven2';
-  const showRetainN = isMavenRetainNEnabled && isPostgresEnabled && isMaven;
+
+  const showRetainN = isRetainSupportedFormat(data.format) && isRetainEnabled(data.format);
+
+  function isRetainEnabled(format) {
+    return ExtJS.state()
+        .getValue(`nexus.cleanup.${format}Retain`);
+  }
+
+  function isRetainSupportedFormat(format) {
+    return retainSupportedFormats.includes(format);
+  }
 
   function setCriteriaLastBlobUpdatedEnabled(checked) {
     send({type: 'SET_CRITERIA_LAST_BLOB_UPDATED_ENABLED', checked});
@@ -100,12 +105,6 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
 
   function setCriteriaAssetRegexEnabled(checked) {
     send({type: 'SET_CRITERIA_ASSET_REGEX_ENABLED', checked});
-  }
-
-  function setExclusionCriteriaEnabled({target}) {
-    if (isNormalizedVersionTaskDone) {
-      send({type: 'SET_EXCLUSION_CRITERIA_ENABLED', checked: target.checked});
-    }
   }
 
   function confirmDelete() {
@@ -131,18 +130,6 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   function setReleaseType(event) {
     send({type: 'UPDATE_RELEASE_TYPE', value: event.target.value});
   }
-
-  const isNormalizedVersionTaskDone = ExtJS.state().getValue(
-    `${data.format}.normalized.version.available`
-  );
-
-  const renderAlertMessage = () => {
-    if (!isNormalizedVersionTaskDone) {
-      return LABELS.EXCLUSION_CRITERIA.NORMALIZED_VERSION_ALERT;
-    }
-
-    return LABELS.EXCLUSION_CRITERIA.ALERT;
-  };
 
   return (
     <Page className="nxrm-cleanup-policies">
@@ -329,39 +316,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                       </CheckboxControlledWrapper>
                     )}
                     {showRetainN && (
-                      <>
-                        {(!isReleaseType(data.criteriaReleaseType) ||
-                          !isNormalizedVersionTaskDone) && (
-                          <NxInfoAlert className="retain-n__alert">
-                            {renderAlertMessage()}
-                          </NxInfoAlert>
-                        )}
-                        <NxCheckbox
-                          isChecked={Boolean(exclusionCriteriaEnabled)}
-                          onChange={setExclusionCriteriaEnabled}
-                          disabled={
-                            !isNormalizedVersionTaskDone ||
-                            !isReleaseType(data.criteriaReleaseType)
-                          }
-                          className="retain-n__checkbox"
-                        >
-                          <b>{LABELS.EXCLUSION_CRITERIA.LABEL}</b>
-                        </NxCheckbox>
-
-                        <NxFormGroup
-                          label={LABELS.EXCLUSION_CRITERIA.VERSION_LABEL}
-                          isRequired={criteriaLastBlobUpdatedEnabled}
-                          sublabel={LABELS.EXCLUSION_CRITERIA.SUB_LABEL}
-                          className="retain-n__group"
-                        >
-                          <NxTextInput
-                            className="nx-text-input--short"
-                            disabled={!exclusionCriteriaEnabled}
-                            {...FormUtils.fieldProps('retain', state)}
-                            onChange={FormUtils.handleUpdate('retain', send)}
-                          />
-                        </NxFormGroup>
-                      </>
+                        <CleanupExclusionCriteria actor={actor}/>
                     )}
                     {isPreviewEnabled && (
                       <CleanupPoliciesDryRun policyData={data} />

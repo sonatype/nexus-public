@@ -78,7 +78,7 @@ public interface StorageTx
 
   /**
    * A lower level but still safe access to SQL SELECT queries, that allows caller to "browse" potentially
-   * huge result sets without worry about paging or OOMs. This method will NOT see uncommited changes performed
+   * huge result sets without worry about paging or OOMs. This method will NOT see uncommitted changes performed
    * in this current TX, if any. The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
    * receive new elements is breached.
    *
@@ -118,7 +118,7 @@ public interface StorageTx
   Iterable<Bucket> browseBuckets();
 
   /**
-   * Gets all assets owned by the specified bucket. This method will NOT see unsommited changes performed in this
+   * Gets all assets owned by the specified bucket. This method will NOT see uncommitted changes performed in this
    * same TX, if any. The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
    * receive new elements is breached.
    *
@@ -193,7 +193,7 @@ public interface StorageTx
   Iterable<Component> browseComponents(Query query, Bucket bucket);
 
   /**
-   * Gets all components owned by the specified bucket. This method will NOT see unsommited changes performed in this
+   * Gets all components owned by the specified bucket. This method will NOT see uncommitted changes performed in this
    * same TX, if any. The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
    * receive new elements is breached.
    *    

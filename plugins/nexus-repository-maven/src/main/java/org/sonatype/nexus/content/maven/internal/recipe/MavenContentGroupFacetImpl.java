@@ -125,18 +125,26 @@ public class MavenContentGroupFacetImpl
     }
 
     // hashes are recalculated whenever metadata is merged, so they're always fresh
-    if (mavenPath.isHash()) {
-      log.trace("Cache hit for hash {}", path);
-      return new Content(fluentAsset.get().download());
+    FluentAsset asset = fluentAsset.get();
+    Content content = asset.download();
+    if (content.getSize() == 0L) {
+      log.debug("Corrupted repository metadata: {}, source: {}", path, getRepository().getName());
+      // rebuilt metadata process will be triggered for a group repository
+      return null;
     }
 
-    if (fluentAsset.get().isStale(cacheController)) {
+    if (mavenPath.isHash()) {
+      log.trace("Cache hit for hash {}", path);
+      return new Content(content);
+    }
+
+    if (asset.isStale(cacheController)) {
       log.trace("Cache stale hit for {}", path);
       return null;
     }
 
     log.trace("Cache fresh hit for {}", path);
-    return new Content(fluentAsset.get().download());
+    return new Content(content);
   }
 
   @Nullable

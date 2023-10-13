@@ -25,6 +25,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
 import org.sonatype.nexus.repository.content.tasks.normalize.FormatVersionNormalizedEvent;
@@ -32,6 +33,8 @@ import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentV
 
 import com.google.common.base.Functions;
 import com.google.common.eventbus.Subscribe;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.FORMAT_RETAIN_PATTERN;
 
 /**
  * UI State contributor for the retain-N feature
@@ -46,15 +49,19 @@ public class CleanupRetainStateContributor
 
   private final GlobalKeyValueStore globalKeyValueStore;
 
+  private final CleanupFeatureCheck featureCheck;
+
   private final Map<String, Object> state;
 
   @Inject
   public CleanupRetainStateContributor(
       final List<Format> formats,
-      final GlobalKeyValueStore globalKeyValueStore)
+      final GlobalKeyValueStore globalKeyValueStore,
+      final CleanupFeatureCheck featureCheck)
   {
     this.globalKeyValueStore = globalKeyValueStore;
     this.stateKeyByFormat = buildStateKeyByFormat(formats);
+    this.featureCheck = featureCheck;
     state = new HashMap<>();
     buildStateMap();
   }
@@ -67,7 +74,18 @@ public class CleanupRetainStateContributor
   }
 
   private void buildStateMap() {
+    setRetainEnabledFlags();
     setNormalizationStateFlags();
+  }
+
+  /**
+   * Adds all the required flags to validate if a format has retain-N enabled
+   */
+  private void setRetainEnabledFlags() {
+    stateKeyByFormat.keySet()
+        .stream().map(Format::getValue)
+        .forEach(format -> state.put(FORMAT_RETAIN_PATTERN.replace("{format}", format),
+            featureCheck.isRetainSupported(format)));
   }
 
   /**

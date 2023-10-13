@@ -31,6 +31,11 @@ const EMPTY_DATA = {
   inUseCount: 0,
 };
 
+const retainSortByFormat = new Map([
+  ['maven2', LABELS.EXCLUSION_CRITERIA.SORT_BY.VERSION.id],
+  ['docker', LABELS.EXCLUSION_CRITERIA.SORT_BY.DATE.id]
+]);
+
 function isEdit({name}) {
   return ValidationUtils.notBlank(name);
 }
@@ -148,7 +153,7 @@ export default FormUtils.buildFormMachine({
       data: ({data}, {checked}) =>
         mergeDeepRight(data, {
           retain: checked ? data.retain : null,
-          sortBy: checked ? LABELS.EXCLUSION_CRITERIA.SORT_BY.VERSION.id : null,
+          sortBy: checked ? retainSortByFormat.get(data.format) : null,
         }),
     }),
     setReleaseType: assign((ctx, {value}) => {
@@ -177,6 +182,7 @@ export default FormUtils.buildFormMachine({
       criteriaAssetRegexEnabled: Boolean(details?.data?.criteriaAssetRegex),
       exclusionCriteriaEnabled:
         Boolean(details?.data?.retain) || Boolean(details?.data?.sortBy),
+      exclusionSortBy: retainSortByFormat.get(details?.data?.format),
     })),
     clearCriteria: assign((ctx, event) => {
       if (event.name === 'format' && event.value !== ctx.format) {
@@ -193,6 +199,7 @@ export default FormUtils.buildFormMachine({
           criteriaLastBlobUpdatedEnabled: false,
           criteriaAssetRegexEnabled: false,
           exclusionCriteriaEnabled: false,
+          exclusionSortBy: retainSortByFormat.get(event.value),
         });
       }
       return ctx;

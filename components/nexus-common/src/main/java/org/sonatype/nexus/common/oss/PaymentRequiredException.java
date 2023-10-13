@@ -10,29 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal;
+package org.sonatype.nexus.common.oss;
 
-import com.google.common.collect.ImmutableMap;
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.rapture.StateContributor;
+/**
+ * One or more metric limits are reached and system requests payment
+ */
+public class PaymentRequiredException
+    extends RuntimeException
+{
+  public PaymentRequiredException(final String message) {
+    super(message);
+  }
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import java.util.Map;
+  public PaymentRequiredException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 
-@Named
-@Singleton
-public class MavenRetainStateContributor extends ComponentSupport implements StateContributor {
-    private final Map<String, Object> state;
-
-    @Inject
-    public MavenRetainStateContributor(@Named("${nexus.cleanup.mavenRetain:-false}") final Boolean featureFlag) {
-        state = ImmutableMap.of("nexus.cleanup.mavenRetain", featureFlag);
-    }
-
-    @Override
-    public Map<String, Object> getState() {
-        return state;
-    }
+  public PaymentRequiredException(final Throwable cause) {
+    super(cause);
+  }
 }

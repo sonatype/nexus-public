@@ -12,15 +12,16 @@
  */
 package org.sonatype.nexus.repository.cleanup;
 
+import java.util.HashSet;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.db.DatabaseCheck;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.HashSet;
-import java.util.Set;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_DOCKER_RETAIN;
 import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_MAVEN_RETAIN;
 
 public class CleanupFeatureCheck extends ComponentSupport {
@@ -30,13 +31,17 @@ public class CleanupFeatureCheck extends ComponentSupport {
 
   @Inject
   public CleanupFeatureCheck(
-          final DatabaseCheck databaseCheck,
-          @Named("${" + CLEANUP_MAVEN_RETAIN + ":-false}") final boolean mavenRetainEnabled)
+      final DatabaseCheck databaseCheck,
+      @Named("${" + CLEANUP_MAVEN_RETAIN + ":-false}") final boolean mavenRetainEnabled,
+      @Named("${" + CLEANUP_DOCKER_RETAIN + ":-false}") final boolean dockerRetainEnabled)
   {
     this.databaseCheck = checkNotNull(databaseCheck);
     this.retainEnabledSet = new HashSet<>();
     if (mavenRetainEnabled) {
       this.retainEnabledSet.add("maven2");
+    }
+    if (dockerRetainEnabled) {
+      this.retainEnabledSet.add("docker");
     }
   }
 

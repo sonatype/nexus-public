@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -359,6 +360,16 @@ public class DefaultSecuritySystem
       return null;
     }
 
+    String userId = subject.getPrincipal().toString();
+    Optional<String> realm = subject.getPrincipals().getRealmNames().stream().findFirst();
+    try {
+      if (realm.isPresent()) {
+        return findUser(userId, getUserManagerByRealm(realm.get()), null);
+      }
+    }
+    catch (NoSuchUserManagerException e) {
+      log.trace("User: '{}' of source: '{}' could not be found.", userId, realm.get());
+    }
     return getUser(subject.getPrincipal().toString());
   }
 
@@ -574,6 +585,12 @@ public class DefaultSecuritySystem
     return userManagers.values();
   }
 
+  private UserManager getUserManagerByRealm(final String realmName) throws NoSuchUserManagerException {
+    return userManagers.values().stream()
+        .filter(userManager -> realmName.equalsIgnoreCase(userManager.getAuthenticationRealmName())).findFirst()
+        .orElseThrow(() -> new NoSuchUserManagerException(realmName));
+  }
+
   @Override
   public UserManager getUserManager(final String source) throws NoSuchUserManagerException {
     if (!userManagers.containsKey(source)) {
@@ -581,6 +598,7 @@ public class DefaultSecuritySystem
     }
     return userManagers.get(source);
   }
+
 
   @Override
   public List<String> listSources() {

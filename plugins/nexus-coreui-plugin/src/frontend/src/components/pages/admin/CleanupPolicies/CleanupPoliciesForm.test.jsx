@@ -170,6 +170,17 @@ describe('CleanupPoliciesForm', function () {
             ],
           },
           {
+            id: 'docker',
+            name: 'docker',
+            availableCriteria: [
+              'regex',
+              'retain',
+              'sortBy',
+              'lastDownloaded',
+              'lastBlobUpdated',
+            ],
+          },
+          {
             id: 'testformat',
             name: 'Test Format',
             availableCriteria: [
@@ -671,108 +682,57 @@ describe('CleanupPoliciesForm', function () {
     });
   });
 
-  describe('Exclusion Criteria - retain-n', function () {
-    const ITEM = {
+  describe('Exclusion Criteria - retain-n', function() {
+    const preReleaseFormats = ['maven2'];
+
+    const MAVEN_ITEM = {
       ...EDITABLE_ITEM,
-      name: 'another-test',
+      name: 'maven-test',
       format: 'maven2',
       retain: 1,
       sortBy: 'version',
     };
 
+    const DOCKER_ITEM = {
+      ...EDITABLE_ITEM,
+      name: 'docker-test',
+      format: 'docker',
+      retain: 10,
+      criteriaReleaseType: null,
+      sortBy: 'date',
+    };
+
     beforeEach(() => {
       when(axios.get)
-        .calledWith(URL.singleCleanupPolicyUrl(ITEM.name))
-        .mockResolvedValue({
-          data: ITEM,
-        });
+          .calledWith(URL.singleCleanupPolicyUrl(MAVEN_ITEM.name))
+          .mockResolvedValue({
+            data: MAVEN_ITEM,
+          });
+
+      when(axios.get)
+          .calledWith(URL.singleCleanupPolicyUrl(DOCKER_ITEM.name))
+          .mockResolvedValue({
+            data: DOCKER_ITEM,
+          });
 
       when(ExtJS.state().getValue)
-        .calledWith('nexus.cleanup.mavenRetain')
-        .mockReturnValue(true);
+          .calledWith('nexus.cleanup.maven2Retain')
+          .mockReturnValue(true);
 
       when(ExtJS.state().getValue)
-        .calledWith('datastore.isPostgresql')
-        .mockReturnValue(true);
+          .calledWith('nexus.cleanup.dockerRetain')
+          .mockReturnValue(true);
 
       when(ExtJS.state().getValue)
-        .calledWith(`${ITEM.format}.normalized.version.available`)
-        .mockReturnValue(true);
-    });
+          .calledWith(`${MAVEN_ITEM.format}.normalized.version.available`)
+          .mockReturnValue(true);
 
-    it('renders the resolved data including the retain-n configuration', async function () {
-      const {
-        name,
-        format,
-        notes,
-        releaseType,
-        getCriteriaLastBlobUpdatedCheckbox,
-        criteriaLastBlobUpdated,
-        getCriteriaLastDownloadedCheckbox,
-        criteriaLastDownloaded,
-        getCriteriaAssetRegexCheckbox,
-        criteriaAssetRegex,
-        criteriaVersion,
-      } = selectors;
-
-      await renderView(ITEM.name);
-
-      expect(name()).toHaveValue(ITEM.name);
-      expect(format()).toHaveValue(ITEM.format);
-      expect(notes()).toHaveValue(ITEM.notes);
-      expect(releaseType()).toHaveValue(ITEM.criteriaReleaseType);
-      expect(getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-checked');
-      expect(criteriaLastBlobUpdated()).toHaveValue(
-        ITEM.criteriaLastBlobUpdated.toString()
-      );
-      expect(getCriteriaLastDownloadedCheckbox()).toHaveClass('tm-checked');
-      expect(criteriaLastDownloaded()).toHaveValue(
-        ITEM.criteriaLastDownloaded.toString()
-      );
-      expect(getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
-      expect(criteriaAssetRegex()).toHaveValue(ITEM.criteriaAssetRegex);
-      expect(
-        selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByText(LABELS.EXCLUSION_CRITERIA.ALERT)
-      ).not.toBeInTheDocument();
-      expect(criteriaVersion()).toHaveValue(ITEM.retain.toString());
-    });
-
-    it('Version criteria is visible for maven only', async function () {
-      const {name, format, notes, versionAlertMessage} = selectors;
-
-      await renderView();
-
-      expect(versionAlertMessage()).not.toBeInTheDocument();
-
-      await TestUtils.changeField(name, ITEM.name);
-      await TestUtils.changeField(format, ITEM.format);
-      await TestUtils.changeField(notes, ITEM.notes);
-
-      expect(versionAlertMessage()).toBeInTheDocument();
-    });
-
-    it('Version criteria is visible only for Nexus instances using Postgres', async function () {
       when(ExtJS.state().getValue)
-        .calledWith('datastore.isPostgresql')
-        .mockReturnValue(false);
-
-      const {name, format, notes, versionAlertMessage} = selectors;
-
-      await renderView();
-
-      expect(versionAlertMessage()).not.toBeInTheDocument();
-
-      await TestUtils.changeField(name, ITEM.name);
-      await TestUtils.changeField(format, ITEM.format);
-      await TestUtils.changeField(notes, ITEM.notes);
-
-      expect(versionAlertMessage()).not.toBeInTheDocument();
+          .calledWith(`${DOCKER_ITEM.format}.normalized.version.available`)
+          .mockReturnValue(true);
     });
 
-    it('Version criteria should be enabled only when Release type is Releases', async function () {
+    it('Version criteria should be enabled only when Release type is Releases', async function() {
       const {
         format,
         criteriaVersion,
@@ -785,7 +745,7 @@ describe('CleanupPoliciesForm', function () {
 
       expect(criteriaVersion()).not.toBeInTheDocument();
 
-      await TestUtils.changeField(format, ITEM.format);
+      await TestUtils.changeField(format, MAVEN_ITEM.format);
 
       expect(criteriaVersion()).toBeVisible();
       expect(criteriaVersion()).toBeDisabled();
@@ -818,10 +778,77 @@ describe('CleanupPoliciesForm', function () {
       expect(versionAlertMessage()).not.toBeInTheDocument();
     });
 
-    it('Version criteria should be disabled when the normalized version task is running', async () => {
+    it.each([DOCKER_ITEM, MAVEN_ITEM])
+    ('renders the resolved data including the retain-n configuration', async function(item) {
+      const {
+        name,
+        format,
+        notes,
+        releaseType,
+        getCriteriaLastBlobUpdatedCheckbox,
+        criteriaLastBlobUpdated,
+        getCriteriaLastDownloadedCheckbox,
+        criteriaLastDownloaded,
+        getCriteriaAssetRegexCheckbox,
+        criteriaAssetRegex,
+        criteriaVersion,
+      } = selectors;
+
+      await renderView(item.name);
+
+      expect(name()).toHaveValue(item.name);
+      expect(format()).toHaveValue(item.format);
+      expect(notes()).toHaveValue(item.notes);
+      expect(getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-checked');
+      expect(criteriaLastBlobUpdated()).toHaveValue(
+          item.criteriaLastBlobUpdated.toString()
+      );
+      expect(getCriteriaLastDownloadedCheckbox()).toHaveClass('tm-checked');
+      expect(criteriaLastDownloaded()).toHaveValue(
+          item.criteriaLastDownloaded.toString()
+      );
+      expect(getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
+      expect(criteriaAssetRegex()).toHaveValue(item.criteriaAssetRegex);
+      expect(
+          selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)
+      ).toBeInTheDocument();
+
+      if (preReleaseFormats.includes(item.format)) {
+        expect(releaseType()).toHaveValue(item.criteriaReleaseType);
+
+        if (item.criteriaReleaseType === "RELEASES") {
+          expect(
+              screen.queryByText(LABELS.EXCLUSION_CRITERIA.ALERT)
+          ).not.toBeInTheDocument();
+        }
+      }
+
+      expect(criteriaVersion()).toHaveValue(item.retain.toString());
+    })
+
+    it.each([MAVEN_ITEM, DOCKER_ITEM])
+    ('Version criteria is visible for the format', async function(item) {
+      const {name, format, notes, versionAlertMessage} = selectors;
+
+      await renderView();
+
+      expect(versionAlertMessage()).not.toBeInTheDocument();
+
+      await TestUtils.changeField(name, item.name);
+      await TestUtils.changeField(format, item.format);
+      await TestUtils.changeField(notes, item.notes);
+
+      if (preReleaseFormats.includes(item.format)) {
+        expect(versionAlertMessage()).toBeInTheDocument();
+      }
+
+    });
+
+    it.each([MAVEN_ITEM, DOCKER_ITEM])
+    ('Version criteria should be disabled when the normalized version task is running', async (item) => {
       when(ExtJS.state().getValue)
-        .calledWith(`${ITEM.format}.normalized.version.available`)
-        .mockReturnValue(false);
+          .calledWith(`${item.format}.normalized.version.available`)
+          .mockReturnValue(false);
 
       const {
         name,
@@ -836,8 +863,8 @@ describe('CleanupPoliciesForm', function () {
 
       expect(normalizedVersionAlertMessage()).not.toBeInTheDocument();
 
-      await TestUtils.changeField(name, ITEM.name);
-      await TestUtils.changeField(format, ITEM.format);
+      await TestUtils.changeField(name, item.name);
+      await TestUtils.changeField(format, item.format);
 
       expect(versionAlertMessage()).not.toBeInTheDocument();
       expect(normalizedVersionAlertMessage()).toBeInTheDocument();
@@ -845,10 +872,11 @@ describe('CleanupPoliciesForm', function () {
       expect(criteriaVersion()).toBeDisabled();
     });
 
-    it('saves the retain-n values', async function () {
+    it.each([MAVEN_ITEM, DOCKER_ITEM])
+    ('saves the retain-n values', async function(item) {
       const {criteriaVersion, saveButton} = selectors;
 
-      await renderView(ITEM.name);
+      await renderView(item.name);
 
       await TestUtils.changeField(criteriaVersion, '5');
 
@@ -857,14 +885,13 @@ describe('CleanupPoliciesForm', function () {
       await act(async () => userEvent.click(saveButton()));
 
       await waitFor(() =>
-        expect(axios.put).toHaveBeenCalledWith(
-          URL.singleCleanupPolicyUrl(ITEM.name),
-          {
-            ...ITEM,
-            retain: '5',
-            sortBy: 'version',
-          }
-        )
+          expect(axios.put).toHaveBeenCalledWith(
+              URL.singleCleanupPolicyUrl(item.name),
+              {
+                ...item,
+                retain: '5'
+              }
+          )
       );
     });
   });

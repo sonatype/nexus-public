@@ -75,10 +75,30 @@ export default function Welcome() {
   }
 
   const onLoad = () => {
-    setIframeHeight(ref.current.contentWindow.document.body.scrollHeight + iframePadding);
+    setIframeHeight(
+      ref.current.contentWindow.document.body.scrollHeight + iframePadding
+    );
   };
 
   useEffect(load, [user]);
+
+  useEffect(() => {
+    let timeout;
+
+    const debounce = () => {
+      timeout = setTimeout(onLoad, 500);
+    };
+
+    window.addEventListener('resize', debounce);
+
+    return () => {
+      if(timeout) {
+        clearTimeout(timeout)
+      }
+
+      window.removeEventListener('resize', debounce);
+    };
+  }, []);
 
   return (
     <NxPageMain className="nx-viewport-sized nxrm-welcome">

@@ -102,7 +102,7 @@ public class CleanupPreviewHelperImpl
   {
     CleanupPolicy cleanupPolicy = toCleanupPolicy(previewXO);
 
-    CleanupComponentBrowse browseService = selectBrowseService(repository);
+    CleanupComponentBrowse browseService = browseServices.get(COMPONENT_SET_CLEANUP_BROWSE_NAME);
     Stream<FluentComponent> componentSteam =
             browseService.browseIncludingAssets(cleanupPolicy, repository);
 
@@ -133,7 +133,7 @@ public class CleanupPreviewHelperImpl
       CancelableHelper.set(cancelled);
       try {
         // compute preview and return it
-        CleanupComponentBrowse browseService = selectBrowseService(repository);
+        CleanupComponentBrowse browseService = browseServices.get(DEFAULT_CLEANUP_BROWSE_NAME);
         return browseService.browseByPage(policy, repository, queryOptions);
       }
       finally {
