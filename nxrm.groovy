@@ -100,6 +100,7 @@ testProjects = [':nexus-insight-testsupport', ':nexus-docker-testsupport', ':nex
    //sources="custom Maven sources arguments here"
  */
 configDefaults = [
+    javaMinMem   : '2703m',
     javaMaxMem   : '2703m',
     directMaxMem : '2703m',
     vmOptions    : '',
@@ -1079,6 +1080,7 @@ def runNxrm() {
         .inheritIO()
 
     processBuilder.environment().put('NEXUS_SECURITY_RANDOMPASSWORD', Boolean.toString(rcConfig.randomPassword))
+    processBuilder.environment().put('JAVA_MIN_MEM', rcConfig.javaMinMem)
     processBuilder.environment().put('JAVA_MAX_MEM', rcConfig.javaMaxMem)
     processBuilder.environment().put('DIRECT_MAX_MEM', rcConfig.directMaxMem)
     processBuilder.environment().put('JAVA_DEBUG_PORT',

@@ -21,8 +21,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
@@ -32,11 +33,14 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.tools.BlobUnavilableException;
 import org.sonatype.nexus.repository.tools.DeadBlobFinder;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
@@ -72,6 +76,36 @@ public class DatastoreDeadBlobFinder
     this.blobStoreManager = blobStoreManager;
   }
 
+  public void findAndProcessBatch(
+      @NotNull final Repository repository,
+      final boolean ignoreMissingBlobRefs,
+      final int batchSize,
+      final Consumer<DeadBlobResult<Asset>> resultProcessor) {
+    checkNotNull(repository);
+    checkNotNull(resultProcessor);
+
+    FluentAssets fluentAssets = repository.facet(ContentFacet.class).assets();
+    Continuation<FluentAsset> assets = fluentAssets.browse(batchSize, null);
+    long deadBlobCandidateCount = 0;
+    long deadBlobCount = 0;
+    Stopwatch sw = Stopwatch.createStarted();
+
+    while (!assets.isEmpty()) {
+      List<DeadBlobResult<Asset>> deadBlobCandidates = identifySuspects(repository, ignoreMissingBlobRefs,
+          assets.stream(), true);
+      List<DeadBlobResult<Asset>> deadBlobResults = verifySuspects(deadBlobCandidates, repository, true);
+      deadBlobCandidateCount += deadBlobCandidates.size();
+      deadBlobCount += deadBlobResults.size();
+
+      for (DeadBlobResult<Asset> deadBlobResult : deadBlobResults) {
+        resultProcessor.accept(deadBlobResult);
+      }
+      assets = fluentAssets.browse(batchSize, assets.nextContinuationToken());
+    }
+    log.info("Inspection of repository {} took {}ms for " + "{} assets and identified {} incorrect Assets",
+        repository.getName(), sw.elapsed(TimeUnit.MILLISECONDS), deadBlobCandidateCount, deadBlobCount);
+  }
+
   /**
    * Based on the db metadata, confirm that all Blobs exist and sha1 values match. Can optionally ignore any records
    * that don't have a blobRef, which is expected for NuGet search results.
@@ -82,8 +116,11 @@ public class DatastoreDeadBlobFinder
   public List<DeadBlobResult<Asset>> find(@NotNull final Repository repository, final boolean ignoreMissingBlobRefs) {
     checkNotNull(repository);
 
-    List<DeadBlobResult<Asset>> deadBlobCandidates = identifySuspects(repository, ignoreMissingBlobRefs);
-    return verifySuspects(deadBlobCandidates, repository);
+    FluentAssets fluentAssets = repository.facet(ContentFacet.class).assets();
+
+    List<DeadBlobResult<Asset>> deadBlobCandidates = identifySuspects(repository, ignoreMissingBlobRefs,
+        streamOf(fluentAssets::browse), false);
+    return verifySuspects(deadBlobCandidates, repository, false);
   }
 
   /**
@@ -93,31 +130,32 @@ public class DatastoreDeadBlobFinder
    */
   private List<DeadBlobResult<Asset>> identifySuspects(
       final Repository repository,
-      final boolean ignoreMissingBlobRefs)
+      final boolean ignoreMissingBlobRefs,
+      final Stream<FluentAsset> fluentAssets,
+      final boolean batchMode)
   {
     Stopwatch sw = Stopwatch.createStarted();
     AtomicLong blobsExamined = new AtomicLong();
 
-    List<DeadBlobResult<Asset>> deadBlobCandidates = repository.optionalFacet(ContentFacet.class)
-        .map(ContentFacet::assets)
-        .map(assets -> streamOf(assets::browse)
-                            .peek(a -> blobsExamined.incrementAndGet())
-                            .map(asset -> {
-                                if (!asset.blob().isPresent() && ignoreMissingBlobRefs) {
-                                  log.trace("Set to ignore missing blobRef on {}", asset);
-                                  return null;
-                                }
-                                else {
-                                  return checkAsset(repository.getName(), asset);
-                                }
-                              })
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList()))
-        .orElse(Collections.emptyList());
+    List<DeadBlobResult<Asset>> deadBlobCandidates = fluentAssets
+        .peek(a -> blobsExamined.incrementAndGet())
+        .map(asset -> {
+            if (!asset.blob().isPresent() && ignoreMissingBlobRefs) {
+              log.trace("Set to ignore missing blobRef on {}", asset);
+              return null;
+            }
+            else {
+              return checkAsset(repository.getName(), asset);
+            }
+          })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
 
-    log.debug(
-        "Inspecting repository {} took {}ms for {}  assets and identified {} potentially incorrect Assets for followup assessment",
-        repository.getName(), sw.elapsed(TimeUnit.MILLISECONDS), blobsExamined, deadBlobCandidates.size());
+    if (!batchMode) {
+      log.debug(
+          "Inspecting repository {} took {}ms for {}  assets and identified {} potentially incorrect Assets for followup assessment",
+          repository.getName(), sw.elapsed(TimeUnit.MILLISECONDS), blobsExamined, deadBlobCandidates.size());
+    }
     return deadBlobCandidates;
   }
 
@@ -128,26 +166,33 @@ public class DatastoreDeadBlobFinder
    */
   private List<DeadBlobResult<Asset>> verifySuspects(
       final List<DeadBlobResult<Asset>> deadBlobCandidates,
-      final Repository repository)
+      final Repository repository,
+      final boolean batchMode)
   {
     if (!deadBlobCandidates.isEmpty()) {
       Stopwatch sw = Stopwatch.createStarted();
       ContentFacet content = repository.facet(ContentFacet.class);
-      List<DeadBlobResult<Asset>> deadBlobs = deadBlobCandidates.stream().map(candidateResult -> {
-        DeadBlobResult<Asset> deadBlobResult = checkAsset(repository.getName(),
-            content.assets().path(candidateResult.getAsset().path()).find().orElse(null));
-        if (deadBlobResult != null) {
-          logResults(candidateResult, deadBlobResult);
-          return deadBlobResult;
-        }
-        else {
-          log.debug(
-              "Asset {} corrected from error state during inspection", candidateResult.getAsset().path(), candidateResult.getResultState());
-          return null;
-        }
-      }).filter(Objects::nonNull).collect(Collectors.toList());
-      log.info("Followup inspection of repository {} took {}ms for " + "{} assets and identified {} incorrect Assets",
-          repository.getName(), sw.elapsed(TimeUnit.MILLISECONDS), deadBlobCandidates.size(), deadBlobs.size());
+      List<DeadBlobResult<Asset>> deadBlobs = deadBlobCandidates.stream()
+          .map(candidateResult -> {
+            DeadBlobResult<Asset> deadBlobResult = checkAsset(repository.getName(),
+                content.assets().path(candidateResult.getAsset().path()).find().orElse(null));
+            if (deadBlobResult != null) {
+              logResults(candidateResult, deadBlobResult);
+              return deadBlobResult;
+            }
+            else {
+              log.debug(
+                  "Asset {} corrected from error state {} during inspection", candidateResult.getAsset().path(), candidateResult.getResultState());
+              return null;
+            }
+          })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+      if (!batchMode) {
+        log.info("Followup inspection of repository {} took {}ms for " + "{} assets and identified {} incorrect Assets",
+            repository.getName(), sw.elapsed(TimeUnit.MILLISECONDS), deadBlobCandidates.size(), deadBlobs.size());
+      }
 
       return deadBlobs;
     }
