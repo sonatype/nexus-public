@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.common.oss.circuit;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -37,9 +38,24 @@ public class ContentUsageCircuitBreaker
 
   private final ApplicationVersion applicationVersion;
 
+  private final ContentUsageCircuitBreakerFeatureFlag circuitBreakerFeatureFlag;
+
   @Inject
-  public ContentUsageCircuitBreaker(ApplicationVersion applicationVersion) {
-    this.applicationVersion = applicationVersion;
+  public ContentUsageCircuitBreaker(
+      final ApplicationVersion applicationVersion,
+      final ContentUsageCircuitBreakerFeatureFlag circuitBreakerFeatureFlag)
+  {
+    this.applicationVersion = Objects.requireNonNull(applicationVersion);
+    this.circuitBreakerFeatureFlag = Objects.requireNonNull(circuitBreakerFeatureFlag);
+
+    setDefaultLevel();
+  }
+
+  private void setDefaultLevel() {
+    if (!circuitBreakerFeatureFlag.isEnabled()) {
+      return;
+    }
+
     if (PRO_EDITION.equals(applicationVersion.getEdition())) {
       setUsageLevel(UNLIMITED);
     }
@@ -53,6 +69,10 @@ public class ContentUsageCircuitBreaker
   }
 
   public void setUsageLevel(final ContentUsageLevel usageLevel) {
+    if (!circuitBreakerFeatureFlag.isEnabled()) {
+      return;
+    }
+
     if (PRO_EDITION.equals(applicationVersion.getEdition()) && usageLevel == UNLIMITED ||
         OSS_EDITION.equals(applicationVersion.getEdition()) && usageLevel != UNLIMITED) {
       log.debug("Setting content usage level as {}", usageLevel);
