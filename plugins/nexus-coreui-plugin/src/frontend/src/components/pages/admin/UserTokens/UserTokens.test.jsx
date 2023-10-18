@@ -42,7 +42,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
-      checkPermission: jest.fn()
+      checkPermission: jest.fn(),
+      showSuccessMessage: jest.fn(),
     }
   };
 });
@@ -248,6 +249,31 @@ describe('reset user tokens', () => {
     await waitFor(() => expect(Axios.delete).toBeCalledWith(API_URL));
 
     expect(modal()).not.toBeInTheDocument();
+  });
+
+  it('allows the user tokens to be reset multiple times', async () => {
+    const {
+      resetButton,
+      confirmation: {modal, submitButton, input}
+    } = selectors;
+
+    await renderView();
+
+    when(Axios.delete).calledWith(API_URL).mockResolvedValueOnce(true);
+
+    userEvent.click(resetButton());
+
+    await waitFor(() => expect(modal()).toBeInTheDocument());
+
+    await TestUtils.changeField(input, RESET_CONFIRMATION.CONFIRMATION_STRING);
+
+    userEvent.click(submitButton());
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.click(resetButton());
+
+    await waitFor(() => expect(modal()).toBeInTheDocument());
   });
 
   it('closes the modal on cancel', async () => {
