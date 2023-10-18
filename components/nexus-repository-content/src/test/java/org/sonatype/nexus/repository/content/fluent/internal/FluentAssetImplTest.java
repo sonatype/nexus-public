@@ -31,6 +31,8 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetStores;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;
+import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
 
 import org.joda.time.DateTime;
@@ -47,6 +49,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.view.Content.CONTENT;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 public class FluentAssetImplTest
@@ -79,6 +82,7 @@ public class FluentAssetImplTest
   public void setUp() {
     BlobStoreManager mockBlobstoreManager = mock(BlobStoreManager.class);
     FormatStoreManager mockFormatStoreManager = mock(FormatStoreManager.class);
+    Repository mockRepository = mock(Repository.class);
 
     when(mockBlobstoreManager.get(anyString())).thenReturn(blobStore);
 
@@ -86,6 +90,7 @@ public class FluentAssetImplTest
 
     when(contentFacet.stores()).thenReturn(contentFacetStores);
     when(contentFacet.dependencies()).thenReturn(dependencies);
+    when(contentFacet.repository()).thenReturn(mockRepository);
     when(dependencies.getMoveService()).thenReturn(Optional.of(moveService));
     when(asset.blob()).thenReturn(Optional.of(assetBlob));
     when(assetBlob.blobRef()).thenReturn(new BlobRef("default", "test"));
@@ -147,6 +152,71 @@ public class FluentAssetImplTest
 
       verify(blobStore, times(1)).get(any());
       verify(moveService , times(1)).getIfBeingMoved(any(BlobRef.class) , anyString());
+    }
+    catch (IOException ex) {
+      fail();
+    }
+  }
+
+  @Test
+  public void testDownloadSetCorrectAttributesForProxyRepository() {
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+    Repository mockRepository = mock(Repository.class);
+    DateTime creationDate = DateTime.now();
+
+    NestedAttributesMap attributes = new NestedAttributesMap();
+    attributes.child(Content.CONTENT).set(Content.CONTENT_LAST_MODIFIED, creationDate);
+    String etag = "sha1-test";
+    attributes.child(Content.CONTENT).set(Content.CONTENT_ETAG, etag);
+    when(asset.attributes()).thenReturn(attributes);
+    when(blobStore.get(any())).thenReturn(mockBlob);
+    when(contentFacet.repository()).thenReturn(mockRepository);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+
+    when(mockRepository.getType()).thenReturn(new ProxyType());
+    when(mockMetrics.getCreationTime()).thenReturn(creationDate);
+    when(mockMetrics.getSha1Hash()).thenReturn(etag);
+
+    try (Content result = underTest.download()) {
+
+      assertNotNull(result);
+      assertEquals("text", result.getContentType());
+      assertEquals(creationDate, result.getAttributes().get(CONTENT_LAST_MODIFIED));
+      assertEquals(etag, result.getAttributes().get(Content.CONTENT_ETAG));
+    }
+    catch (IOException ex) {
+      fail();
+    }
+  }
+
+  @Test
+  public void testDownloadSetCorrectAttributesForHostedRepository() {
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+    Repository mockRepository = mock(Repository.class);
+    DateTime creationDate = DateTime.now();
+    DateTime contentCreationDate = creationDate.minusDays(3);
+    String contentETag = "content-sha1-test";
+    String expectedETag = "sha1-test";
+    NestedAttributesMap attributes = new NestedAttributesMap();
+    attributes.child(Content.CONTENT).set(Content.CONTENT_LAST_MODIFIED, contentCreationDate);
+    attributes.child(Content.CONTENT).set(Content.CONTENT_ETAG, contentETag);
+    when(asset.attributes()).thenReturn(attributes);
+    when(blobStore.get(any())).thenReturn(mockBlob);
+    when(contentFacet.repository()).thenReturn(mockRepository);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+
+    when(mockRepository.getType()).thenReturn(new HostedType());
+    when(mockMetrics.getCreationTime()).thenReturn(creationDate);
+    when(mockMetrics.getSha1Hash()).thenReturn(expectedETag);
+
+    try (Content result = underTest.download()) {
+
+      assertNotNull(result);
+      assertEquals("text", result.getContentType());
+      assertEquals(creationDate, result.getAttributes().get(CONTENT_LAST_MODIFIED));
+      assertEquals(expectedETag, result.getAttributes().get(Content.CONTENT_ETAG));
     }
     catch (IOException ex) {
       fail();
