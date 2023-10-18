@@ -107,7 +107,7 @@ describe('CleanupPoliciesForm', function () {
 
   const EDITABLE_ITEM = {
     name: 'test',
-    format: 'testformat',
+    format: 'maven2',
     notes: 'test notes',
     criteriaLastBlobUpdated: 7,
     criteriaLastDownloaded: 8,
@@ -239,8 +239,8 @@ describe('CleanupPoliciesForm', function () {
     );
   });
 
-  it('requires the name and format fields when creating a new cleanup policy', async function () {
-    const {name, format} = selectors;
+  it('requires the name, format and some criteria when creating a new cleanup policy', async function () {
+    const {name, format, criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
     await renderView();
 
     expect(
@@ -253,7 +253,29 @@ describe('CleanupPoliciesForm', function () {
     ).toBeInTheDocument();
 
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
+
+    userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+    await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('does not allow to save if some cleanup criteria is not set' ,  async function (){
+    const {name, format, saveButton} = selectors;
+
+    await renderView();
+
+    await TestUtils.changeField(name, EDITABLE_ITEM.name);
+    await TestUtils.changeField(format, EDITABLE_ITEM.format);
+
+    expect(screen.queryByText(LABELS.MESSAGES.NO_CRITERIA_ERROR)).not.toBeInTheDocument();
+
+    userEvent.click(saveButton());
+
+    expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+    ).toBeInTheDocument();
+
+    expect(screen.queryByText(LABELS.MESSAGES.NO_CRITERIA_ERROR)).toBeInTheDocument();
   });
 
   it('does not allow decimal values in lastBlobUpdated fields', async function () {
@@ -333,8 +355,7 @@ describe('CleanupPoliciesForm', function () {
   it('saves', async function () {
     axios.post.mockReturnValue(Promise.resolve());
 
-    const {name, format, notes, saveButton} = selectors;
-
+    const {name, format, notes, saveButton , criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
     await renderView();
 
     expect(window.dirty).toEqual([]);
@@ -342,6 +363,9 @@ describe('CleanupPoliciesForm', function () {
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
     await TestUtils.changeField(format, EDITABLE_ITEM.format);
     await TestUtils.changeField(notes, EDITABLE_ITEM.notes);
+
+    userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+    await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
 
     expect(window.dirty).toEqual(['CleanupPoliciesFormMachine']);
     expect(saveButton()).not.toBeDisabled();
@@ -356,7 +380,7 @@ describe('CleanupPoliciesForm', function () {
           format: EDITABLE_ITEM.format,
           notes: EDITABLE_ITEM.notes,
           criteriaAssetRegex: null,
-          criteriaLastBlobUpdated: null,
+          criteriaLastBlobUpdated: `${EDITABLE_ITEM.criteriaLastBlobUpdated}`,
           criteriaLastDownloaded: null,
           criteriaReleaseType: null,
           retain: null,
@@ -403,24 +427,9 @@ describe('CleanupPoliciesForm', function () {
 
     expect(saveButton()).not.toHaveClass('disabled');
 
-    await act(async () => userEvent.click(saveButton()));
-
-    await waitFor(() =>
-      expect(axios.put).toHaveBeenCalledWith(
-        URL.singleCleanupPolicyUrl(EDITABLE_ITEM.name),
-        {
-          criteriaAssetRegex: null,
-          criteriaLastBlobUpdated: null,
-          criteriaLastDownloaded: null,
-          criteriaReleaseType: null,
-          format: EDITABLE_ITEM.format,
-          name: EDITABLE_ITEM.name,
-          notes: EDITABLE_ITEM.notes,
-          retain: null,
-          sortBy: null,
-        }
-      )
-    );
+    expect(criteriaLastBlobUpdated()).toHaveValue('');
+    expect(criteriaLastDownloaded()).toHaveValue('');
+    expect(criteriaAssetRegex()).toHaveValue('');
   });
 
   describe('preview', function () {
@@ -557,23 +566,7 @@ describe('CleanupPoliciesForm', function () {
       expect(previewSampleWarning()).toBeInTheDocument();
       expect(previewCmpCount(1, 1)).toBeInTheDocument();
 
-      when(axios.post)
-        .calledWith(PREVIEW_URL, {
-          criteriaLastBlobUpdated: EDITABLE_ITEM.criteriaLastBlobUpdated,
-          criteriaLastDownloaded: EDITABLE_ITEM.criteriaLastDownloaded,
-          criteriaReleaseType: EDITABLE_ITEM.criteriaReleaseType,
-          criteriaAssetRegex: EDITABLE_ITEM.criteriaAssetRegex,
-          filter: 'test',
-          repository: 'maven-central',
-        })
-        .mockResolvedValueOnce({
-          data: {
-            total: 0,
-            results: [],
-          },
-        });
-
-      await TestUtils.changeField(format, 'testformat');
+      await TestUtils.changeField(format, 'maven2');
 
       expect(getCriteriaLastBlobUpdatedCheckbox()).toHaveClass('tm-unchecked');
       expect(getCriteriaLastDownloadedCheckbox()).toHaveClass('tm-unchecked');

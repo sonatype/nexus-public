@@ -21,6 +21,14 @@
     @include container-vertical;
   }
 
+  fieldset.criteria-fieldset.invalid > :nth-last-child(2).retain-n__group {
+    margin-bottom: var(--nx-spacing-8x);
+  }
+
+  fieldset.criteria-fieldset > :last-child.retain-n__group {
+    margin-bottom: var(--nx-spacing-8x);
+  }
+
   .retain-n {
     &__alert {
       margin-top: 0;
