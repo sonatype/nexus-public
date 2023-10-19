@@ -88,7 +88,6 @@
     Sonar configuration.
     -->
     <sonar.branch>3.0</sonar.branch>
-    <sonar.nodejs.executable>/opt/zion/bundles/tools/nodejs/node-v11.1.0-linux-x64/bin/node</sonar.nodejs.executable>
 
     <!--
     Default optimization settings for optimized "prod" aggregate sources.
