@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.view.handlers;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.oss.PaymentRequiredException;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.http.HttpStatus;
@@ -77,11 +76,5 @@ public class ExceptionHandlerTest
   public void handleOModificationOperationProhibited() throws Exception {
     when(context.proceed()).thenThrow(frozenException);
     assertThat(underTest.handle(context).getStatus().getCode(), is(HttpStatus.SERVICE_UNAVAILABLE));
-  }
-
-  @Test
-  public void paymentRequiredException() throws Exception {
-    when(context.proceed()).thenThrow(new PaymentRequiredException("One or more metric limits are reached."));
-    assertThat(underTest.handle(context).getStatus().getCode(), is(HttpStatus.PAYMENT_REQUIRED));
   }
 }
