@@ -10,23 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.oss;
+package org.sonatype.nexus.repository.routing;
 
-/**
- * One or more metric limits are reached and system requests payment
- */
-public class PaymentRequiredException
-    extends RuntimeException
+public class RoutingRuleUpdatedEvent
+  extends RoutingRuleEvent
 {
-  public PaymentRequiredException(final String message) {
-    super(message);
-  }
-
-  public PaymentRequiredException(final String message, final Throwable cause) {
-    super(message, cause);
-  }
-
-  public PaymentRequiredException(final Throwable cause) {
-    super(cause);
+  public RoutingRuleUpdatedEvent(final RoutingRule routingRule) {
+    super(routingRule);
   }
 }

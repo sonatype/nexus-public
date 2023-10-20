@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.tools;
 
 import java.util.List;
-
+import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.Repository;
@@ -41,4 +41,19 @@ public interface DeadBlobFinder<A>
    * @param ignoreMissingBlobRefs
    */
   List<DeadBlobResult<A>> find(@NotNull final Repository repository, boolean ignoreMissingBlobRefs);
+
+  /**
+   * Based on the db metadata, confirm that all Blobs exist and sha1 values match. Can optionally ignore any records
+   * that don't have a blobRef, which is expected for NuGet search results. It finds and processes the assets in batches.
+   * @parem repository  The Repository to inspect
+   * @param ignoreMissingBlobRefs
+   * @param batchSize
+   * @param resultProcessor to process the results
+   */
+  public void findAndProcessBatch(
+      @NotNull final Repository repository,
+      final boolean ignoreMissingBlobRefs,
+      final int batchSize,
+      final Consumer<DeadBlobResult<A>> resultProcessor);
+
 }

@@ -61,10 +61,6 @@ describe('Usage Metrics', () => {
     when(ExtJS.state().getValue)
         .calledWith('nexus.datastore.clustered.enabled')
         .mockReturnValue(false);
-
-    when(ExtJS.state().getValue)
-        .calledWith('nexus.ossToPro.enabled')
-        .mockReturnValue(true);
   });
 
   it('renders data correctly', async () => {

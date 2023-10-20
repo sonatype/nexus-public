@@ -55,6 +55,17 @@ export default FormUtils.buildFormMachine({
               target: 'resetConfirmation'
             }
           }
+        },
+        delete: {
+          invoke: {
+            src: 'delete',
+            onDone: {
+              target: 'loaded',
+            },
+            onError: {
+              target: 'loaded',
+            }
+          }
         }
       }
     })

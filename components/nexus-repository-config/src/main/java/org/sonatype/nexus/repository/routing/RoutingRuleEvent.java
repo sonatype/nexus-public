@@ -10,26 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.oss.circuit;
+package org.sonatype.nexus.repository.routing;
 
-public enum ContentUsageLevel
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class RoutingRuleEvent
 {
-  FREE_TIER("FREE TIER"),
+  private final RoutingRule routingRule;
 
-  SOFT_LIMIT("SOFT LIMIT"),
-
-  HARD_LIMIT("HARD LIMIT"),
-
-  UNLIMITED("UNLIMITED");
-
-  private final String name;
-
-  ContentUsageLevel(final String name) {
-    this.name = name;
+  public RoutingRuleEvent(final RoutingRule routingRule) {
+    this.routingRule = checkNotNull(routingRule);
   }
 
-  @Override
-  public String toString() {
-    return this.name;
+  public RoutingRule getRoutingRule() {
+    return routingRule;
   }
 }

@@ -14,10 +14,12 @@ package org.sonatype.nexus.repository.tools.datastore;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -142,6 +144,17 @@ public class DatastoreDeadBlobFinderTest
   }
 
   @Test
+  public void batch_noErrorsIfBlobExistsAndMatchesChecksum() {
+    mockAssetBrowse();
+    commonBlobMock();
+
+    TestConsumer<DeadBlobResult<Asset>> testConsumer = new TestConsumer<>();
+    deadBlobFinder.findAndProcessBatch(repository, false, 100, testConsumer);
+
+    assertThat(testConsumer.getResult(), hasSize(0));
+  }
+
+  @Test
   public void noErrorsIfBlobExistsAndMatchesChecksum() {
     mockAssetBrowse();
     commonBlobMock();
@@ -149,6 +162,23 @@ public class DatastoreDeadBlobFinderTest
     List<DeadBlobResult<Asset>> result = deadBlobFinder.find(repository);
 
     assertThat(result, hasSize(0));
+  }
+
+  @Test
+  public void batch_errorsIfBlobSha1DisagreesWithDb() {
+    mockAssetBrowse();
+    mockAssetReload();
+    when(blob.getMetrics()).thenReturn(blobMetrics);
+    when(blob.getInputStream()).thenReturn(blobStream);
+    when(assetBlob.checksums()).thenReturn(Collections.singletonMap(HashAlgorithm.SHA1.toString(), "1235"));
+
+    TestConsumer<DeadBlobResult<Asset>> testConsumer = new TestConsumer<>();
+    deadBlobFinder.findAndProcessBatch(repository, false, 100, testConsumer);
+    List<DeadBlobResult<Asset>> result = testConsumer.getResult();
+
+    assertThat(result, hasSize(1));
+    assertThat(result.get(0).getAsset().path(), is("foo"));
+    assertThat(result.get(0).getResultState(), is(SHA1_DISAGREEMENT));
   }
 
   @Test
@@ -356,5 +386,19 @@ public class DatastoreDeadBlobFinderTest
     when(blob.getMetrics()).thenReturn(blobMetrics);
     when(blob.getInputStream()).thenReturn(stream);
 
+  }
+
+  private static class TestConsumer<T> implements Consumer<T> {
+
+    private final List<T> result = new ArrayList<>();
+
+    @Override
+    public void accept(final T t) {
+      result.add(t);
+    }
+
+    public List<T> getResult() {
+      return result;
+    }
   }
 }

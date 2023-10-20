@@ -57,6 +57,19 @@ function validateCriteriaNumberField(enabled, field) {
   return null;
 }
 
+function validateCriteriaSelected({
+  criteriaLastDownloaded,
+  criteriaLastBlobUpdated,
+  criteriaAssetRegex,
+  retain
+}) {
+  if (!criteriaLastDownloaded && !criteriaLastBlobUpdated && !criteriaAssetRegex && !retain) {
+    return LABELS.MESSAGES.NO_CRITERIA_ERROR;
+  }
+
+  return null;
+}
+
 export default FormUtils.buildFormMachine({
   id: 'CleanupPoliciesFormMachine',
   config: (config) =>
@@ -121,10 +134,13 @@ export default FormUtils.buildFormMachine({
           exclusionCriteriaEnabled,
           data.retain
         ),
+        criteriaSelected: validateCriteriaSelected(data),
       }),
     }),
     setCriteriaLastDownloadedEnabled: assign({
       criteriaLastDownloadedEnabled: (_, {checked}) => checked,
+      isTouched: ({isTouched}) =>
+          mergeDeepRight(isTouched, {criteriaLastDownloaded:  true}),
       data: ({data}, {checked}) =>
         mergeDeepRight(data, {
           criteriaLastDownloaded: checked ? data.criteriaLastDownloaded : null,
@@ -132,6 +148,8 @@ export default FormUtils.buildFormMachine({
     }),
     setCriteriaLastBlobUpdatedEnabled: assign({
       criteriaLastBlobUpdatedEnabled: (_, {checked}) => checked,
+      isTouched: ({isTouched}) =>
+          mergeDeepRight(isTouched, {criteriaLastBlobUpdated:  true}),
       data: ({data}, {checked}) =>
         mergeDeepRight(data, {
           criteriaLastBlobUpdated: checked
@@ -141,6 +159,8 @@ export default FormUtils.buildFormMachine({
     }),
     setCriteriaAssetRegexEnabled: assign({
       criteriaAssetRegexEnabled: (_, {checked}) => checked,
+      isTouched: ({isTouched}) =>
+          mergeDeepRight(isTouched, {criteriaAssetRegex: true}),
       data: ({data}, {checked}) =>
         mergeDeepRight(data, {
           criteriaAssetRegex: checked ? data.criteriaAssetRegex : null,
@@ -148,8 +168,8 @@ export default FormUtils.buildFormMachine({
     }),
     setExclusionCriteriaEnabled: assign({
       exclusionCriteriaEnabled: (_, {checked}) => checked,
-      isTouched: (context) =>
-        mergeDeepRight(context.isTouched, {retain: false}),
+      isTouched: ({isTouched}) =>
+          mergeDeepRight(isTouched, {retain: true}),
       data: ({data}, {checked}) =>
         mergeDeepRight(data, {
           retain: checked ? data.retain : null,
@@ -194,6 +214,12 @@ export default FormUtils.buildFormMachine({
             criteriaAssetRegex: null,
             retain: null,
             sortBy: null,
+          },
+          isTouched : {
+            criteriaLastBlobUpdated: false,
+            criteriaLastDownloaded: false,
+            criteriaAssetRegex: false,
+            retain: false
           },
           criteriaLastDownloadedEnabled: false,
           criteriaLastBlobUpdatedEnabled: false,

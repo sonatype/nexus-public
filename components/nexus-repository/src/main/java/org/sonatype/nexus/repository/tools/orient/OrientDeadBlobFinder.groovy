@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.tools.orient
 
 import java.util.concurrent.TimeUnit
-
+import java.util.function.Consumer
 import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
@@ -83,6 +83,15 @@ class OrientDeadBlobFinder
     finally {
       tx.close()
     }
+  }
+
+  @Override
+  public void findAndProcessBatch(
+      @NotNull final Repository repository,
+      final boolean ignoreMissingBlobRefs,
+      final int batchSize,
+      final Consumer<DeadBlobResult<Asset>> resultProcessor) {
+    throw new UnsupportedOperationException("findAndProcessBatch is not supported for Orient")
   }
 
   /**

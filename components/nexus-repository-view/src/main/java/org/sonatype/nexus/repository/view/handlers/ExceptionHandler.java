@@ -16,7 +16,6 @@ import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FrozenException;
-import org.sonatype.nexus.common.oss.PaymentRequiredException;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -41,13 +40,6 @@ public class ExceptionHandler
   public Response handle(@Nonnull final Context context) throws Exception {  //NOSONAR
     try {
       return context.proceed();
-    }
-    catch (PaymentRequiredException e) {
-      log.warn("Payment required: {} {}: {}",
-          context.getRequest().getAction(),
-          context.getRequest().getPath(),
-          e.toString());
-      return HttpResponses.paymentRequired(e.getMessage());
     }
     catch (IllegalOperationException e) {
       log.warn("Illegal operation: {} {}: {}",

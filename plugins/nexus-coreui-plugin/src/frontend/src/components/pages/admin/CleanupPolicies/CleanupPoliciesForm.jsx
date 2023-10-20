@@ -29,11 +29,11 @@ import {
   NxFormSelect,
   NxStatefulForm,
   NxH2,
-  NxDivider,
   NxP,
   NxFormGroup,
   NxTile,
-  NxTextInput
+  NxTextInput,
+  NxFieldset
 } from '@sonatype/react-shared-components';
 
 import CleanupPoliciesFormMachine from './CleanupPoliciesFormMachine';
@@ -68,11 +68,13 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   const {
     pristineData,
     data,
+    isTouched,
     loadError,
     criteriaByFormat,
     criteriaLastDownloadedEnabled,
     criteriaLastBlobUpdatedEnabled,
     criteriaAssetRegexEnabled,
+    validationErrors: {criteriaSelected}
   } = state.context;
 
   const retainSupportedFormats = ['maven2' , 'docker'];
@@ -80,6 +82,10 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
   const isEdit = Boolean(itemId);
   const isLoading = state.matches('loading');
   const hasData = !isEmpty(data);
+  const isCriteriaFieldSetPristine = !isTouched.criteriaLastBlobUpdated &&
+      !isTouched.criteriaLastDownloaded &&
+      !isTouched.criteriaAssetRegex &&
+      !isTouched.retain;
   const isPreviewEnabled =
     ExtJS.state().getValue('nexus.datastore.enabled') &&
     ExtJS.state().getValue('nexus.cleanup.preview.enabled');
@@ -115,7 +121,6 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
     return (
       isFieldApplicable('lastBlobUpdated') ||
       isFieldApplicable('lastDownloaded') ||
-      isFieldApplicable('isPrerelease') ||
       isFieldApplicable('regex')
     );
   }
@@ -195,129 +200,134 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
                     type="textarea"
                   />
                 </NxFormGroup>
-                {isAnyFieldApplicable() && (
-                  <>
-                    <NxH2>{LABELS.CRITERIA_LABEL}</NxH2>
-                    <NxP>{LABELS.CRITERIA_DESCRIPTION}</NxP>
-                    <NxDivider />
-                    {isFieldApplicable('isPrerelease') && (
-                      <NxFormGroup
+                {isFieldApplicable('isPrerelease') && (
+                    <NxFormGroup
                         label={LABELS.RELEASE_TYPE_LABEL}
                         sublabel={LABELS.RELEASE_TYPE_SELECT}
-                        isRequired
-                      >
-                        <NxFormSelect
+                    >
+                      <NxFormSelect
                           {...FormUtils.fieldProps(
-                            'criteriaReleaseType',
-                            state
+                              'criteriaReleaseType',
+                              state
                           )}
                           onChange={setReleaseType}
                           validatable
                           className="nx-form-select--long"
-                        >
-                          {Object.keys(LABELS.RELEASE_TYPE).map((type) => {
-                            const item = LABELS.RELEASE_TYPE[type];
-                            return (
+                      >
+                        {Object.keys(LABELS.RELEASE_TYPE).map((type) => {
+                          const item = LABELS.RELEASE_TYPE[type];
+                          return (
                               <option key={item.id} value={item.id}>
                                 {item.label}
                               </option>
-                            );
-                          })}
-                        </NxFormSelect>
-                      </NxFormGroup>
-                    )}
-                    {isFieldApplicable('lastBlobUpdated') && (
-                      <CheckboxControlledWrapper
-                        isChecked={Boolean(criteriaLastBlobUpdatedEnabled)}
-                        onChange={setCriteriaLastBlobUpdatedEnabled}
-                        id="criteria-last-blob-updated-group"
-                        title={LABELS.LAST_UPDATED_CHECKBOX_TITLE(
-                          criteriaLastBlobUpdatedEnabled
-                        )}
-                      >
-                        <NxFormGroup
-                          label={LABELS.LAST_UPDATED_LABEL}
-                          sublabel={LABELS.LAST_UPDATED_SUB_LABEL}
-                          isRequired={criteriaLastBlobUpdatedEnabled}
-                        >
-                          <NxTextInput
-                            {...FormUtils.fieldProps(
-                              'criteriaLastBlobUpdated',
-                              state
-                            )}
-                            onChange={FormUtils.handleUpdate(
-                              'criteriaLastBlobUpdated',
-                              send
-                            )}
-                            placeholder={LABELS.PLACEHOLDER}
-                            disabled={!criteriaLastBlobUpdatedEnabled}
-                            className="nx-text-input--short"
-                          />
-                        </NxFormGroup>
-                      </CheckboxControlledWrapper>
-                    )}
-                    {isFieldApplicable('lastDownloaded') && (
-                      <CheckboxControlledWrapper
-                        isChecked={Boolean(criteriaLastDownloadedEnabled)}
-                        onChange={setCriteriaLastDownloadedEnabled}
-                        id="criteria-last-downloaded-group"
-                        title={LABELS.LAST_DOWNLOADED_CHECKBOX_TITLE(
-                          criteriaLastDownloadedEnabled
-                        )}
-                      >
-                        <NxFormGroup
-                          label={LABELS.LAST_DOWNLOADED_LABEL}
-                          isRequired={criteriaLastDownloadedEnabled}
-                          sublabel={LABELS.LAST_DOWNLOADED_SUB_LABEL}
-                        >
-                          <NxTextInput
-                            {...FormUtils.fieldProps(
-                              'criteriaLastDownloaded',
-                              state
-                            )}
-                            onChange={FormUtils.handleUpdate(
-                              'criteriaLastDownloaded',
-                              send
-                            )}
-                            placeholder={LABELS.PLACEHOLDER}
-                            disabled={!criteriaLastDownloadedEnabled}
-                            className="nx-text-input--short"
-                          />
-                        </NxFormGroup>
-                      </CheckboxControlledWrapper>
-                    )}
-                    {isFieldApplicable('regex') && (
-                      <CheckboxControlledWrapper
-                        isChecked={Boolean(criteriaAssetRegexEnabled)}
-                        onChange={setCriteriaAssetRegexEnabled}
-                        id="criteria-asset-name-group"
-                        title={LABELS.ASSET_NAME_CHECKBOX_TITLE(
-                          criteriaAssetRegexEnabled
-                        )}
-                      >
-                        <NxFormGroup
-                          label={LABELS.ASSET_NAME_LABEL}
-                          sublabel={LABELS.ASSET_NAME_DESCRIPTION}
-                          isRequired={criteriaAssetRegexEnabled}
-                        >
-                          <NxTextInput
-                            {...FormUtils.fieldProps(
-                              'criteriaAssetRegex',
-                              state
-                            )}
-                            onChange={FormUtils.handleUpdate(
-                              'criteriaAssetRegex',
-                              send
-                            )}
-                            disabled={!criteriaAssetRegexEnabled}
-                            className="nx-text-input--long"
-                          />
-                        </NxFormGroup>
-                      </CheckboxControlledWrapper>
-                    )}
-                    {showRetainN && (
-                        <CleanupExclusionCriteria actor={actor}/>
-                    )}
+                          );
+                        })}
+                      </NxFormSelect>
+                    </NxFormGroup>
+                )}
+                {isAnyFieldApplicable() && (
+                  <>
+                    <NxFieldset
+                        className="criteria-fieldset"
+                        label={LABELS.CRITERIA_LABEL}
+                        sublabel={`${LABELS.CRITERIA_DESCRIPTION}. ${LABELS.MESSAGES.NO_CRITERIA_ERROR}`}
+                        isPristine={isCriteriaFieldSetPristine}
+                        validationErrors={criteriaSelected}
+                        isRequired
+                    >
+                      {isFieldApplicable('lastBlobUpdated') && (
+                          <CheckboxControlledWrapper
+                              isChecked={Boolean(criteriaLastBlobUpdatedEnabled)}
+                              onChange={setCriteriaLastBlobUpdatedEnabled}
+                              id="criteria-last-blob-updated-group"
+                              title={LABELS.LAST_UPDATED_CHECKBOX_TITLE(
+                                  criteriaLastBlobUpdatedEnabled
+                              )}
+                          >
+                            <NxFormGroup
+                                label={LABELS.LAST_UPDATED_LABEL}
+                                sublabel={LABELS.LAST_UPDATED_SUB_LABEL}
+                                isRequired={criteriaLastBlobUpdatedEnabled}
+                            >
+                              <NxTextInput
+                                  {...FormUtils.fieldProps(
+                                      'criteriaLastBlobUpdated',
+                                      state
+                                  )}
+                                  onChange={FormUtils.handleUpdate(
+                                      'criteriaLastBlobUpdated',
+                                      send
+                                  )}
+                                  placeholder={LABELS.PLACEHOLDER}
+                                  disabled={!criteriaLastBlobUpdatedEnabled}
+                                  className="nx-text-input--short"
+                              />
+                            </NxFormGroup>
+                          </CheckboxControlledWrapper>
+                      )}
+                      {isFieldApplicable('lastDownloaded') && (
+                          <CheckboxControlledWrapper
+                              isChecked={Boolean(criteriaLastDownloadedEnabled)}
+                              onChange={setCriteriaLastDownloadedEnabled}
+                              id="criteria-last-downloaded-group"
+                              title={LABELS.LAST_DOWNLOADED_CHECKBOX_TITLE(
+                                  criteriaLastDownloadedEnabled
+                              )}
+                          >
+                            <NxFormGroup
+                                label={LABELS.LAST_DOWNLOADED_LABEL}
+                                isRequired={criteriaLastDownloadedEnabled}
+                                sublabel={LABELS.LAST_DOWNLOADED_SUB_LABEL}
+                            >
+                              <NxTextInput
+                                  {...FormUtils.fieldProps(
+                                      'criteriaLastDownloaded',
+                                      state
+                                  )}
+                                  onChange={FormUtils.handleUpdate(
+                                      'criteriaLastDownloaded',
+                                      send
+                                  )}
+                                  placeholder={LABELS.PLACEHOLDER}
+                                  disabled={!criteriaLastDownloadedEnabled}
+                                  className="nx-text-input--short"
+                              />
+                            </NxFormGroup>
+                          </CheckboxControlledWrapper>
+                      )}
+                      {isFieldApplicable('regex') && (
+                          <CheckboxControlledWrapper
+                              isChecked={Boolean(criteriaAssetRegexEnabled)}
+                              onChange={setCriteriaAssetRegexEnabled}
+                              id="criteria-asset-name-group"
+                              title={LABELS.ASSET_NAME_CHECKBOX_TITLE(
+                                  criteriaAssetRegexEnabled
+                              )}
+                          >
+                            <NxFormGroup
+                                label={LABELS.ASSET_NAME_LABEL}
+                                sublabel={LABELS.ASSET_NAME_DESCRIPTION}
+                                isRequired={criteriaAssetRegexEnabled}
+                            >
+                              <NxTextInput
+                                  {...FormUtils.fieldProps(
+                                      'criteriaAssetRegex',
+                                      state
+                                  )}
+                                  onChange={FormUtils.handleUpdate(
+                                      'criteriaAssetRegex',
+                                      send
+                                  )}
+                                  disabled={!criteriaAssetRegexEnabled}
+                                  className="nx-text-input--long"
+                              />
+                            </NxFormGroup>
+                          </CheckboxControlledWrapper>
+                      )}
+                      {showRetainN && (
+                          <CleanupExclusionCriteria actor={actor}/>
+                      )}
+                    </NxFieldset>
                     {isPreviewEnabled && (
                       <CleanupPoliciesDryRun policyData={data} />
                     )}

@@ -142,6 +142,7 @@ export default {
     },
 
     MESSAGES: {
+      NO_CRITERIA_ERROR: 'At least one criteria must be selected',
       SAVE_ERROR: 'An error occurred while saving the cleanup policy',
       DELETE_ERROR: (name) => `Cleanup policy ${name} is in use and cannot be deleted`,
 
