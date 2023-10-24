@@ -121,14 +121,14 @@ public class OrientBlobstoreRestoreTestHelper
   @Override
   public void assertComponentInRepository(final Repository repository, final String name) {
     Component component = findComponent(repository, name);
-    assertThat(component, notNullValue());
+    assertThat("Missing component " + name, component, notNullValue());
   }
 
   @Override
   public void assertComponentInRepository(final Repository repository, final String name, final String version) {
     Query query = getQuery(name, version);
     Component component = findComponent(repository, query);
-    assertThat(component, notNullValue());
+    assertThat("Missing component " + name + ":" + version, component, notNullValue());
   }
 
   @Override
@@ -140,21 +140,21 @@ public class OrientBlobstoreRestoreTestHelper
   {
     Query query = getQuery(group, name, version);
     Component component = findComponent(repository, query);
-    assertThat(component, notNullValue());
+    assertThat("Missing component " + group +":" + name + ":" + version, component, notNullValue());
   }
 
   @Override
   public void assertAssetNotInRepository(final Repository repository, final String... names) {
     for (String name : names) {
       Asset asset = findAsset(repository, name);
-      assertThat(asset, nullValue());
+      assertThat("Expected no asset for path: " + name, asset, nullValue());
     }
   }
 
   @Override
   public void assertAssetInRepository(final Repository repository, final String name) {
     Asset asset = findAsset(repository, name);
-    assertThat(asset, notNullValue());
+    assertThat("Missing asset: " + name, asset, notNullValue());
   }
 
 
@@ -165,7 +165,7 @@ public class OrientBlobstoreRestoreTestHelper
   {
     Query query = getQuery(group, name, version);
     Component component = findComponent(repository, query);
-    assertThat(component, notNullValue());
+    assertThat("Missing component " + group +":" + name + ":" + version, component, notNullValue());
   }
 
   public void assertComponentWithGAVNotInRepository(final Repository repository,
@@ -187,7 +187,7 @@ public class OrientBlobstoreRestoreTestHelper
   {
     Query query = group != null ? getQuery(group, name, version) : getQuery(name, version);
     Component component = findComponent(repository, query);
-    assertThat(component, notNullValue());
+    assertThat("Missing component " + group +":" + name + ":" + version, component, notNullValue());
 
     for (String path : paths) {
       assertForComponentId(repository, component, path);
@@ -197,7 +197,7 @@ public class OrientBlobstoreRestoreTestHelper
   @Override
   public void assertAssetAssociatedWithComponent(final Repository repository, final String name, final String path) {
     Component component = findComponent(repository, name);
-    assertThat(component, notNullValue());
+    assertThat("Missing component " + name, component, notNullValue());
     assertForComponentId(repository, component, path);
   }
 
@@ -209,7 +209,7 @@ public class OrientBlobstoreRestoreTestHelper
       tx.begin();
 
       Asset asset = tx.findAssetWithProperty(AssetEntityAdapter.P_NAME, path, tx.findBucket(repository));
-      assertThat(asset, notNullValue());
+      assertThat("Missing asset: " + path, asset, notNullValue());
 
       final EntityId assertEntityId = asset.componentId();
       assertThat(assertEntityId, notNullValue());
