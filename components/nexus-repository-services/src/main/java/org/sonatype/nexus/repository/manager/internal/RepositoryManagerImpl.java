@@ -294,7 +294,7 @@ public class RepositoryManagerImpl
     log.debug("Stopping {} repositories", repositories.size());
     for (Repository repository : repositories.values()) {
       log.debug("Stopping repository: {}", repository);
-      repository.stop();
+      repository.stopSafe();
     }
 
     log.debug("Destroying {} repositories", repositories.size());
@@ -423,7 +423,7 @@ public class RepositoryManagerImpl
 
     Configuration oldConfiguration = repository.getConfiguration().copy();
 
-    repository.stop();
+    repository.stopSafe();
     repository.update(configuration);
     repository.start();
 
@@ -453,7 +453,7 @@ public class RepositoryManagerImpl
 
     removeRepositoryFromAllGroups(repository);
 
-    repository.stop();
+    repository.stopSafe();
     repository.delete();
     repository.destroy();
 

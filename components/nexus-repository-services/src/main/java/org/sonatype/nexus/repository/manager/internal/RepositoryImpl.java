@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
@@ -59,6 +62,8 @@ public class RepositoryImpl
     extends ComponentSupport
     implements Repository, StateGuardAware
 {
+  private static final long LOCK_TIMEOUT = 60L;
+
   private final EventManager eventManager;
 
   private final Type type;
@@ -242,8 +247,51 @@ public class RepositoryImpl
     eventManager.post(new RepositoryStartedEvent(this));
   }
 
+  public Lock getWriteLock() {
+    return states.getWriteLock();
+  }
+
+  /**
+   * Locks and Stop the repository and all attached facets.
+   *
+   * Repository must have been previously started. Repository is stopped before applying {@link #update}.
+   */
+  public void stopSafe() throws Exception {
+    MultipleFailures failures = new MultipleFailures();
+    Lock repositoryLock = getWriteLock();
+    List<Lock> facetLocks = new ArrayList<>();
+    if (repositoryLock.tryLock(LOCK_TIMEOUT, TimeUnit.SECONDS)) {
+      try {
+        for (Facet facet : facets.reverse()) {
+          Lock facetLock = facet.getWriteLock();
+          if (facetLock.tryLock(LOCK_TIMEOUT, TimeUnit.SECONDS)) { //NOSONAR
+            facetLocks.add(facetLock);
+          }
+          else {
+            log.error("Failed to lock facet: {}", facet);
+            failures.add(new RuntimeException(String.format("Failed to lock facet: %s", facet)));
+          }
+        }
+        failures.maybePropagate("Failed to lock facets");
+        stop();
+      }
+      finally {
+        for (Lock facetLock : facetLocks) {
+          facetLock.unlock();
+        }
+        repositoryLock.unlock();
+      }
+    }
+  }
+
+  /**
+   * Stop facet.
+   *
+   * Facet was previously started and locked because transition configuration disables write lock
+   * Facet is stopped before applying {@link #update}.
+   */
   @Override
-  @Transitions(from = STARTED, to = STOPPED)
+  @Transitions(from = STARTED, to = STOPPED, requiresWriteLock = false)
   public void stop() throws Exception {
     MultipleFailures failures = new MultipleFailures();
 
@@ -284,7 +332,7 @@ public class RepositoryImpl
   @Transitions(to = DESTROYED)
   public void destroy() throws Exception {
     if (states.is(STARTED)) {
-      stop();
+      stopSafe();
     }
 
     MultipleFailures failures = new MultipleFailures();

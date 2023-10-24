@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository;
 
 import java.util.Optional;
-
+import java.util.concurrent.locks.Lock;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
@@ -162,7 +162,18 @@ public abstract class FacetSupport
   }
 
   @Override
-  @Transitions(from = STARTED, to = STOPPED)
+  public Lock getWriteLock() {
+    return states.getWriteLock();
+  }
+
+  /**
+   * Stop the repository.
+   *
+   * Repository must have been previously started. Repository and all it's facets must have been locked
+   * because transition configuration disables write lock. Repository is stopped before applying {@link #update}.
+   */
+  @Override
+  @Transitions(from = STARTED, to = STOPPED, requiresWriteLock = false)
   public void stop() throws Exception {
     eventManager.unregister(this);
     doStop();
