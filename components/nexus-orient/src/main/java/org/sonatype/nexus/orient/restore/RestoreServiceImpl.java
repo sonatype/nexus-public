@@ -31,6 +31,7 @@ import org.sonatype.nexus.orient.DatabaseRestorer;
 
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.RESTORE;
 import static org.sonatype.nexus.orient.DatabaseInstanceNames.DATABASE_NAMES;
+import static org.sonatype.nexus.orient.DatabaseInstanceNames.RECOVERABLE_DATABASE_NAMES;
 
 /**
  * Service that manages the RESTORE {@link org.sonatype.nexus.common.app.ManagedLifecycle.Phase}.
@@ -93,9 +94,10 @@ public class RestoreServiceImpl
       }
     }
 
-    if (!pending.isEmpty() && !pending.keySet().equals(DATABASE_NAMES)) {
+    if (!pending.isEmpty() && !pending.keySet().equals(RECOVERABLE_DATABASE_NAMES) &&
+        !pending.keySet().equals(DATABASE_NAMES) ) {
       throw new IllegalStateException("Found pending database restore files for " + pending +
-          ", but some are missing; to restore you must have files for " + DATABASE_NAMES);
+          ", but some are missing; to restore you must have files for " + RECOVERABLE_DATABASE_NAMES);
     }
     return pending;
   }

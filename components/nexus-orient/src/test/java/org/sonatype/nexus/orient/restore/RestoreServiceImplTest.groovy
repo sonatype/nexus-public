@@ -19,7 +19,11 @@ import org.sonatype.nexus.orient.DatabaseRestorer
 import org.spockframework.lang.Wildcard
 import spock.lang.Specification
 
+import static org.sonatype.nexus.orient.DatabaseInstanceNames.ANALYTICS
+import static org.sonatype.nexus.orient.DatabaseInstanceNames.COMPONENT
+import static org.sonatype.nexus.orient.DatabaseInstanceNames.CONFIG
 import static org.sonatype.nexus.orient.DatabaseInstanceNames.DATABASE_NAMES
+import static org.sonatype.nexus.orient.DatabaseInstanceNames.SECURITY
 
 /**
  * Unit tests for {@link RestoreServiceImpl}.
@@ -121,17 +125,37 @@ class RestoreServiceImplTest
       thrown IllegalStateException
   }
 
-
-  def 'start fails if one backup file is missing'() {
-    given: '1 backup file is missing'
-      (DATABASE_NAMES.size() - 1) * restorer.getPendingRestore(_) >> mockRestoreFile(_, '2017-07-06-11-16-49', null)
-      restorer.getPendingRestore(_) >> null
+  def 'start fails if a core backup file is missing'() {
+    given: 'config backup file is missing'
+      restorer.getPendingRestore(core1) >> mockRestoreFile(_, '2017-07-06-11-16-49', null)
+      restorer.getPendingRestore(core2) >> mockRestoreFile(_, '2017-07-06-11-16-49', null)
+      restorer.getPendingRestore(ANALYTICS) >> mockRestoreFile(_, '2017-07-06-11-16-49', null)
 
     when: 'start is executed'
       restoreService.start()
 
     then: 'start throws IllegalStateException'
       thrown IllegalStateException
+
+    where:
+      core1    | core2
+      SECURITY | COMPONENT
+      SECURITY | CONFIG
+      CONFIG   | COMPONENT 
+  }
+
+  def 'start succeeds if analytics backup file is missing'() {
+    given: 'analytics backup file is missing'
+      restorer.getPendingRestore(SECURITY) >> mockRestoreFile(_, '2017-07-06-11-16-49', null)
+      restorer.getPendingRestore(COMPONENT) >> mockRestoreFile(_, '2017-07-06-11-16-49', null)
+      restorer.getPendingRestore(CONFIG) >> mockRestoreFile(_, '2017-07-06-11-16-49', null)
+      restorer.getPendingRestore(ANALYTICS) >> null
+
+    when: 'start is executed'
+      restoreService.start()
+
+    then: 'start triggers restore successfully'
+      DATABASE_NAMES.size() * manager.instance(_)
   }
 
   def 'start fails if IOException occurs checking for backup files'() {
