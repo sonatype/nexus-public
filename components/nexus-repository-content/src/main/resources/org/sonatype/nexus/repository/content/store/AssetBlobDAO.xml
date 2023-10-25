@@ -57,6 +57,14 @@
         <if test="continuationToken != null">
           AND B.asset_blob_id > #{continuationToken}
         </if>
+        <choose>
+          <when test="_databaseId == 'PostgreSQL'">
+            AND B.blob_created &lt;= NOW() - INTERVAL '1' HOUR
+          </when>
+          <otherwise>
+            AND B.blob_created &lt;= DATEADD(HOUR, -1, NOW())
+          </otherwise>
+        </choose>
         LIMIT #{limit};
   </select>
 
