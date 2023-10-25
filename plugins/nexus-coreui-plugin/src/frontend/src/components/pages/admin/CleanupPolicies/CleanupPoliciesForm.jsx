@@ -87,7 +87,7 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
       !isTouched.criteriaAssetRegex &&
       !isTouched.retain;
   const isPreviewEnabled =
-    ExtJS.state().getValue('nexus.datastore.enabled') &&
+    ExtJS.state().getValue('datastore.isPostgresql') &&
     ExtJS.state().getValue('nexus.cleanup.preview.enabled');
 
   const showRetainN = isRetainSupportedFormat(data.format) && isRetainEnabled(data.format);
