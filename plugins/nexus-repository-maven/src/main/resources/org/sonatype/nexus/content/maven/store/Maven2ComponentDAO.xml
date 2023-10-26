@@ -86,7 +86,7 @@
           resultMap="OrderedComponentAssetsDataMap">
     <choose>
       <!-- Only run select if supported criteria are present, otherwise all data may be selected -->
-      <when test="criteria.isPrerelease != null or criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.retain != null or criteria.regex != null">
+      <when test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
         <choose>
           <when test="includeAssets">
             WITH cleanup_components AS ( <include refid="selectBrowseComponentsForCleanupEx"/> )

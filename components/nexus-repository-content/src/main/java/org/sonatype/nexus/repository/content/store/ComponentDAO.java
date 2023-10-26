@@ -139,7 +139,7 @@ public interface ComponentDAO
    * @param namespace         the component namespace to browse
    * @param name              the component name to browse
    * @param criteria          the criteria to filter by
-   * @Param includeAssets     whether to include asset data
+   * @param includeAssets     whether to include asset data
    * @param limit             maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of components and the next continuation token
