@@ -771,6 +771,35 @@ describe('CleanupPoliciesForm', function () {
       expect(versionAlertMessage()).not.toBeInTheDocument();
     });
 
+    it('remembers the crteria version even if the release type is changed', async function () {
+      const {releaseType, criteriaVersion, getCriteriaVersionCheckbox} = selectors;
+
+      await renderView(EDITABLE_ITEM.name);
+
+      await act(async () => userEvent.selectOptions(releaseType(), 'RELEASES'));
+      expect(releaseType()).toHaveValue('RELEASES');
+
+      expect(criteriaVersion()).toBeVisible();
+      expect(getCriteriaVersionCheckbox()).toBeVisible();
+      userEvent.click(getCriteriaVersionCheckbox());
+
+      await TestUtils.changeField(criteriaVersion, '5');
+
+      await act(async () => userEvent.selectOptions(releaseType(), 'PRERELEASES'));
+      expect(releaseType()).toHaveValue('PRERELEASES');
+
+      expect(criteriaVersion()).not.toHaveValue('5');
+
+      expect(criteriaVersion()).toBeDisabled();
+
+      await act(async () => userEvent.selectOptions(releaseType(), 'RELEASES'));
+      expect(releaseType()).toHaveValue('RELEASES');
+
+      userEvent.click(getCriteriaVersionCheckbox());
+
+      expect(criteriaVersion()).toHaveValue('5');
+    });
+
     it.each([DOCKER_ITEM, MAVEN_ITEM])
     ('renders the resolved data including the retain-n configuration', async function(item) {
       const {

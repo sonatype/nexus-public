@@ -26,7 +26,6 @@ export default function CleanupExclusionCriteria({actor}) {
   const {
     criteriaByFormat,
     data: {format, criteriaReleaseType},
-    criteriaLastBlobUpdatedEnabled,
     exclusionCriteriaEnabled,
     exclusionSortBy
   } = state.context;
@@ -42,6 +41,10 @@ export default function CleanupExclusionCriteria({actor}) {
     if (isNormalizedVersionTaskDone) {
       send({type: 'SET_EXCLUSION_CRITERIA_ENABLED', checked: target.checked});
     }
+  }
+
+  const setRetainValue = (value) => {
+    send({type: 'UPDATE_RETAIN', name: 'retain', value });
   }
 
   return (
@@ -70,7 +73,7 @@ export default function CleanupExclusionCriteria({actor}) {
         </NxCheckbox>
         <NxFormGroup
             label={LABELS.EXCLUSION_CRITERIA.VERSION_LABEL}
-            isRequired={criteriaLastBlobUpdatedEnabled}
+            isRequired={exclusionCriteriaEnabled}
             sublabel={LABELS.EXCLUSION_CRITERIA.SUB_LABEL(exclusionSortBy, LABELS.EXCLUSION_CRITERIA.SORT_BY)}
             className="retain-n__group"
         >
@@ -78,7 +81,7 @@ export default function CleanupExclusionCriteria({actor}) {
               className="nx-text-input--short"
               disabled={!exclusionCriteriaEnabled}
               {...FormUtils.fieldProps('retain', state)}
-              onChange={FormUtils.handleUpdate('retain', send)}
+              onChange={setRetainValue}
           />
         </NxFormGroup>
       </>

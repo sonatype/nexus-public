@@ -93,6 +93,10 @@ export default FormUtils.buildFormMachine({
               target: 'loaded',
               actions: 'setExclusionCriteriaEnabled',
             },
+            UPDATE_RETAIN: {
+              target: 'loaded',
+              actions: ['update', 'setCachedRetain'],
+            },
             UPDATE_RELEASE_TYPE: {
               target: 'loaded',
               actions: 'setReleaseType',
@@ -170,9 +174,9 @@ export default FormUtils.buildFormMachine({
       exclusionCriteriaEnabled: (_, {checked}) => checked,
       isTouched: ({isTouched}) =>
           mergeDeepRight(isTouched, {retain: true}),
-      data: ({data}, {checked}) =>
+      data: ({data, cachedRetain}, {checked}) => 
         mergeDeepRight(data, {
-          retain: checked ? data.retain : null,
+          retain: checked ? cachedRetain : null,
           sortBy: checked ? retainSortByFormat.get(data.format) : null,
         }),
     }),
@@ -203,6 +207,7 @@ export default FormUtils.buildFormMachine({
       exclusionCriteriaEnabled:
         Boolean(details?.data?.retain) || Boolean(details?.data?.sortBy),
       exclusionSortBy: retainSortByFormat.get(details?.data?.format),
+      cachedRetain: details.data.retain,
     })),
     clearCriteria: assign((ctx, event) => {
       if (event.name === 'format' && event.value !== ctx.format) {
@@ -237,6 +242,11 @@ export default FormUtils.buildFormMachine({
     })),
     onDeleteError: ({data}) =>
       ExtJS.showErrorMessage(LABELS.MESSAGES.DELETE_ERROR(data.name)),
+    setCachedRetain: assign({
+      cachedRetain: (_, event) => {
+        return event.value
+      }, 
+    })
   },
   guards: {
     isEdit: ({pristineData}) => isEdit(pristineData),
