@@ -46,6 +46,9 @@ public class DatabaseInstanceNames
   public static final Set<String> DATABASE_NAMES = ImmutableSet.of(
       CONFIG, COMPONENT, SECURITY, ANALYTICS);
 
+  public static final Set<String> RECOVERABLE_DATABASE_NAMES = ImmutableSet.of(
+      CONFIG, COMPONENT, SECURITY);
+
   private DatabaseInstanceNames() {
     // no construction
   }

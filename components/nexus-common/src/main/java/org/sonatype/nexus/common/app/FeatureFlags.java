@@ -99,7 +99,7 @@ public interface FeatureFlags
 
   String CLEANUP_PREVIEW_ENABLED = "nexus.cleanup.preview.enabled";
 
-  String CLEANUP_PREVIEW_ENABLED_NAMED = "${nexus.cleanup.preview.enabled:-false}";
+  String CLEANUP_PREVIEW_ENABLED_NAMED = "${nexus.cleanup.preview.enabled:-true}";
 
   String CLEANUP_MAVEN_RETAIN = "nexus.cleanup.mavenRetain";
 

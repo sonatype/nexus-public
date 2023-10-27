@@ -401,7 +401,7 @@ public class ExampleContentTestSupport
     assetBlob.setBlobSize(random.nextInt(1024 * 1024));
     assetBlob.setContentType("text/plain");
     assetBlob.setChecksums(ImmutableMap.of());
-    assetBlob.setBlobCreated(UTC.now());
+    assetBlob.setBlobCreated(UTC.now().minusHours(2));
     return assetBlob;
   }
 

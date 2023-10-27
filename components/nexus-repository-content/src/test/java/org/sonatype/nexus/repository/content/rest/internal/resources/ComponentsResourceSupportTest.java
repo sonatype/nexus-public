@@ -25,23 +25,26 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentContinuation;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.content.store.ComponentData;
-import org.sonatype.nexus.repository.move.RepositoryMoveService;
+import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 
+import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Spy;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -100,6 +103,9 @@ public class ComponentsResourceSupportTest
   @Mock
   private Continuation<FluentComponent> componentContinuation;
 
+  @Spy
+  private ComponentsResourceExtension componentsResourceExtension = new TestComponentsResourceExtension();
+
   private ComponentsResource underTest;
 
   @Before
@@ -108,8 +114,8 @@ public class ComponentsResourceSupportTest
     mockContentFacet();
     mockFluentComponents();
 
-    underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService,
-        uploadManager, uploadConfiguration, componentXOFactory, contentAuthHelper, null);
+    underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService, uploadManager,
+        uploadConfiguration, componentXOFactory, contentAuthHelper, ImmutableSet.of(componentsResourceExtension), null);
   }
 
   @Test
@@ -196,5 +202,14 @@ public class ComponentsResourceSupportTest
     componentData.setComponentId(COMPONENT_ID);
     componentData.setName(COMPONENT_NAME);
     return componentData;
+  }
+
+  private class TestComponentsResourceExtension
+      implements ComponentsResourceExtension
+  {
+    @Override
+    public ComponentXO updateComponentXO(final ComponentXO componentXO, final FluentComponent component) {
+      return componentXO;
+    }
   }
 }

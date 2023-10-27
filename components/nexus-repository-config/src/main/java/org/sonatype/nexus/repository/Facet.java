@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.util.concurrent.locks.Lock;
 
 import org.sonatype.nexus.repository.config.Configuration;
 
@@ -65,6 +66,11 @@ public interface Facet
    * Facet was previously started.  Facet is stopped before applying {@link #update}.
    */
   void stop() throws Exception;
+
+  /**
+   * Get write lock from State Guard.
+   */
+  Lock getWriteLock() throws InterruptedException;
 
   /**
    * Delete facet.

@@ -70,6 +70,13 @@ public class StateGuard
   }
 
   /**
+   * Get write lock from State Guard.
+   */
+  public Lock getWriteLock() {
+    return  readWriteLock.writeLock();
+  }
+
+  /**
    * Check if the current state is given state.
    *
    * Code executed after may not have the same state, to execute and ensure state is allowed use {@link #guard} instead.
@@ -120,14 +127,14 @@ public class StateGuard
    */
   @SuppressWarnings("unchecked")
   public Transition transition(final String to) {
-    return new TransitionImpl(to, false, new Class[0]);
+    return transition(to, false, new Class[0], true);
   }
 
   /**
    * Create a transition to given state with custom exception-handling behaviour.
    */
-  public Transition transition(final String to, final boolean silent, final Class<? extends Exception>[] ignore) {
-    return new TransitionImpl(to, silent, ignore);
+  public Transition transition(final String to, final boolean silent, final Class<? extends Exception>[] ignore, boolean requiresWriteLock) {
+    return new TransitionImpl(to, silent, ignore, requiresWriteLock);
   }
 
   /**
@@ -153,13 +160,16 @@ public class StateGuard
 
     private final Class<? extends Exception>[] ignore;
 
+    private final boolean requiresWriteLock;
+
     @Nullable
     private String[] allowed;
 
-    private TransitionImpl(final String to, final boolean silent, final Class<? extends Exception>[] ignore)    {
+    private TransitionImpl(final String to, final boolean silent, final Class<? extends Exception>[] ignore, final boolean requiresWriteLock)    {
       this.to = checkNotNull(to);
       this.silent = silent;
       this.ignore = checkNotNull(ignore);
+      this.requiresWriteLock = requiresWriteLock;
     }
 
     @Override
@@ -181,7 +191,10 @@ public class StateGuard
     @Override
     @Nullable
     public <V> V run(final Action<V> action) throws Exception {
-      Lock lock = Locks.write(readWriteLock);
+      Lock lock = null;
+      if (requiresWriteLock) {
+       lock = Locks.write(readWriteLock);
+      }
       try {
         if (allowed != null) {
           _ensure(allowed);
@@ -222,7 +235,9 @@ public class StateGuard
         }
       }
       finally {
-        lock.unlock();
+        if (lock != null) {
+          lock.unlock();
+        }
       }
     }
 

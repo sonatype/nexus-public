@@ -67,6 +67,7 @@ import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
@@ -98,7 +99,6 @@ import static org.sonatype.nexus.cleanup.internal.rest.CleanupPolicyResource.RES
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_FORMATS;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PRERELEASES;
 import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_PREVIEW_ENABLED_NAMED;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
 import static org.sonatype.nexus.repository.CleanupDryRunEvent.FINISHED_AT_IN_MILLISECONDS;
 import static org.sonatype.nexus.repository.CleanupDryRunEvent.STARTED_AT_IN_MILLISECONDS;
 import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
@@ -137,7 +137,7 @@ public class CleanupPolicyResource
 
   private final RepositoryManager repositoryManager;
 
-  private final boolean isDatastoreEnabled;
+  private final DatabaseCheck databaseCheck;
 
   private final EventManager eventManager;
 
@@ -157,7 +157,7 @@ public class CleanupPolicyResource
       final RepositoryManager repositoryManager,
       final EventManager eventManager,
       final GlobalKeyValueStore globalKeyValueStore,
-      @Named(DATASTORE_ENABLED_NAMED) final boolean isDatastoreEnabled,
+      final DatabaseCheck databaseCheck,
       @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled,
       final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter)
   {
@@ -172,7 +172,7 @@ public class CleanupPolicyResource
     this.cleanupPreviewHelper = checkNotNull(cleanupPreviewHelper);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
-    this.isDatastoreEnabled = isDatastoreEnabled;
+    this.databaseCheck = databaseCheck;
     this.isPreviewEnabled = isPreviewEnabled;
     this.csvCleanupPreviewContentWriter = checkNotNull(csvCleanupPreviewContentWriter);
   }
@@ -348,7 +348,7 @@ public class CleanupPolicyResource
   )
   {
 
-    if (!isDatastoreEnabled || !isPreviewEnabled) {
+    if (!databaseCheck.isPostgresql() || !isPreviewEnabled) {
       return Response.status(Status.NOT_FOUND).build();
     }
     Map<String, Object> cleanupDryRunXO = new HashMap<>();

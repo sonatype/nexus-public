@@ -192,8 +192,9 @@
              any changes here should also be validated in those overrides to ensure integrity -->
   <select id="browseComponentsForCleanup" resultType="ComponentData">
     <choose>
-      <!-- Only run select if supported criteria are present, otherwise all data may be selected -->
-      <when test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
+      <!-- Only run select if supported criteria are present, otherwise all data may be selected
+           Do not select anything if Prerelease as that is not supported in a generic way -->
+      <when test="criteria.isPrerelease != 'true' and (criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null)">
         <choose>
           <when test="includeAssets">
             WITH cleanup_components AS ( <include refid="selectBrowseComponentsForCleanup"/> )

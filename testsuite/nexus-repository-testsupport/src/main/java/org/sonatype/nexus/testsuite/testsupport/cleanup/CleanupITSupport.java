@@ -23,11 +23,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
+import org.joda.time.DateTime;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
@@ -132,9 +135,10 @@ public class CleanupITSupport
     addPolicyToRepository(policyName, repository);
   }
 
-  protected void setPolicyToBePrerelease(final Repository repository, final boolean prerelease) throws Exception {
+  // This method needs to include an additional criteria (regex) as just prerelease should not delete anything
+  protected void setPolicyToBePrereleaseWithAllAssets(final Repository repository, final boolean prerelease) throws Exception {
     createOrUpdatePolicyWithCriteria(repository.getFormat().getValue(),
-        ImmutableMap.of(IS_PRERELEASE_KEY, Boolean.toString(prerelease)));
+        ImmutableMap.of(IS_PRERELEASE_KEY, Boolean.toString(prerelease), REGEX_KEY, ".*"));
     addPolicyToRepository(testName.getMethodName(), repository);
   }
 
@@ -168,7 +172,8 @@ public class CleanupITSupport
           final int versionCountToKeep) throws Exception
   {
     createOrUpdatePolicyWithCriteria(policyName, repository.getFormat().getValue(),
-            ImmutableMap.of(RETAIN_SORT_KEY, "version", RETAIN_COUNT_KEY, Integer.toString(versionCountToKeep)));
+            ImmutableMap.of(RETAIN_SORT_KEY, "version", RETAIN_COUNT_KEY, Integer.toString(versionCountToKeep),
+            REGEX_KEY, ".*"));
     addPolicyToRepository(policyName, repository);
   }
 
@@ -180,6 +185,29 @@ public class CleanupITSupport
   {
     createOrUpdatePolicyWithCriteria(policyName, repository.getFormat().getValue(),
             ImmutableMap.of(RETAIN_SORT_KEY, "version", RETAIN_COUNT_KEY, Integer.toString(versionCountToKeep),
+                    REGEX_KEY, regex));
+    addPolicyToRepository(policyName, repository);
+  }
+
+  protected void setPolicyToBeRetainByDate(
+          final String policyName,
+          final Repository repository,
+          final int countToKeep) throws Exception
+  {
+    createOrUpdatePolicyWithCriteria(policyName, repository.getFormat().getValue(),
+            ImmutableMap.of(RETAIN_SORT_KEY, "date", RETAIN_COUNT_KEY, Integer.toString(countToKeep),
+                    REGEX_KEY, ".*"));
+    addPolicyToRepository(policyName, repository);
+  }
+
+  protected void setPolicyToBeRetainByDateAndRegex(
+          final String policyName,
+          final Repository repository,
+          final int countToKeep,
+          final String regex) throws Exception
+  {
+    createOrUpdatePolicyWithCriteria(policyName, repository.getFormat().getValue(),
+            ImmutableMap.of(RETAIN_SORT_KEY, "date", RETAIN_COUNT_KEY, Integer.toString(countToKeep),
                     REGEX_KEY, regex));
     addPolicyToRepository(policyName, repository);
   }
@@ -305,19 +333,19 @@ public class CleanupITSupport
       final IntSupplier artifactUploader,
       final int expectedCountAfterCleanup) throws Exception
   {
-    setPolicyToBeLastBlobUpdatedInSeconds(repository, THREE_SECONDS);
+    setPolicyToBeLastBlobUpdatedInSeconds(repository, FIFTY_SECONDS);
     runCleanupTask();
 
-    assertThat(countComponents(testName.getMethodName()), is(startingCount));
+    assertThat(countComponents(repository.getName()), is(startingCount));
     cleanupTestHelper.waitForComponentsIndexed(startingCount);
 
     // Guarantee that the lastBlobUpdated time has passed
-    cleanupTestHelper.awaitLastBlobUpdatedTimePassed(THREE_SECONDS);
+    setAssetBlobUpdatedTime(repository, DateTime.now().minusSeconds(300).toDate(), ".*");
 
     int numberUploaded = artifactUploader.getAsInt();
     int totalComponents = startingCount + numberUploaded;
 
-    assertThat(countComponents(testName.getMethodName()), is(totalComponents));
+    assertThat(countComponents(repository.getName()), is(totalComponents));
     cleanupTestHelper.waitForComponentsIndexed(totalComponents);
 
     runCleanupTask();
@@ -453,12 +481,12 @@ public class CleanupITSupport
 
     cleanupTestHelper.waitForComponentsIndexed(count);
 
-    setPolicyToBePrerelease(repository, true);
+    setPolicyToBePrereleaseWithAllAssets(repository, true);
     runCleanupTask();
 
     await().untilAsserted(() -> assertThat(countComponents(testName.getMethodName()), is(countAfterPrereleaseCleanup)));
 
-    setPolicyToBePrerelease(repository, false);
+    setPolicyToBePrereleaseWithAllAssets(repository, false);
     runCleanupTask();
 
     await().untilAsserted(() -> assertThat(countComponents(testName.getMethodName()), is(countAfterReleaseCleanup)));
@@ -503,23 +531,24 @@ public class CleanupITSupport
 
     runCleanupTask();
 
-    assertThat(countComponents(testName.getMethodName()), is(startingCount));
+    assertThat(countComponents(repository.getName()), is(startingCount));
 
-    //Guarantee that the THREE_SECONDS lastBlobUpdated time has passed
-    cleanupTestHelper.awaitLastBlobUpdatedTimePassed(THREE_SECONDS);
+    // Guarantee that the THREE_SECONDS lastBlobUpdated time has passed
+    setAssetBlobUpdatedTime(repository, DateTime.now().minusSeconds(10).toDate(), ".*");
 
     runCleanupTask();
 
-    assertThat(countComponents(testName.getMethodName()), is(startingCount));
+    // We should still have all components, as both conditions need to be satisfied
+    assertThat(countComponents(repository.getName()), is(startingCount));
 
-    setLastDownloadedTimes(testName.getMethodName(), FIFTY_SECONDS);
+    setLastDownloadedTimes(repository.getName(), FIFTY_SECONDS * 2);
     cleanupTestHelper.waitForLastDownloadSet(startingCount);
 
     cleanupTestHelper.waitForMixedSearch();
 
     runCleanupTask();
 
-    assertThat(countComponents(testName.getMethodName()), is(countAfterCleanup));
+    assertThat(countComponents(repository.getName()), is(countAfterCleanup));
   }
 
   protected void assertRetainByVersionComponentsCleanUp(
@@ -546,6 +575,71 @@ public class CleanupITSupport
             everyItem(is(true))));
   }
 
+  protected void assertRetainByDateComponentsCleanUp(
+          final Repository repository,
+          final IntSupplier initialArtifactUploader,
+          final IntSupplier secondaryArtifactUploader,
+          final Map<String, String[]> endNameVersionsMap) throws Exception
+  {
+    int assetCount = initialArtifactUploader.getAsInt();
+
+    assertThat(countComponents(repository.getName()), is(assetCount));
+
+    cleanupTestHelper.waitForComponentsIndexed(assetCount);
+
+    assetCount += secondaryArtifactUploader.getAsInt();
+
+    assertThat(countComponents(repository.getName()), is(assetCount));
+
+    cleanupTestHelper.waitForComponentsIndexed(assetCount);
+
+    runCleanupTask();
+
+    int endCount = endNameVersionsMap.values().stream().mapToInt(v -> v.length).sum();
+
+    await().untilAsserted(() -> assertThat(countComponents(repository.getName()), is(endCount)));
+
+    String components = repository.facet(ContentFacet.class).components().browse(100, null).stream()
+            .map(Component::toStringExternal).collect(Collectors.joining("|"));
+
+    for (String name: endNameVersionsMap.keySet()) {
+      for (String version: endNameVersionsMap.get(name)) {
+        assertTrue(String.format("Component does not exist in (%s): %s:%s", components, name, version),
+                componentAssetTestHelper.componentExists(repository, name, version));
+      }
+    }
+  }
+
+  protected String[] generateVersions(int versionCount) {
+    if (versionCount < 1) {
+      throw new IllegalArgumentException("versionCount must be at least 1");
+    }
+    return generateVersions(1, versionCount);
+  }
+
+  /**
+   * Generates a String array holding sequential semantic versions between the first major and the last major *INCLUSIVE*
+   * Note: Minor and Revision fields are always zero
+   *
+   * @param firstMajorVersion the first major version to include
+   * @param lastMajorVersion the last major version to include
+   * @return a String array containing the generated versions.
+   */
+  protected String[] generateVersions(int firstMajorVersion, int lastMajorVersion) {
+    if (lastMajorVersion < firstMajorVersion) {
+      throw new IllegalArgumentException("lastMajorVersion must be greater or equal to firstMajorVersion");
+    }
+    if (firstMajorVersion < 0) {
+      throw new IllegalArgumentException("firstMajorVersion must be zero or greater");
+    }
+
+    int versionCount = lastMajorVersion - firstMajorVersion + 1;
+    String[] versions = new String[versionCount];
+    for (int i = 0; i < versionCount; i++) {
+      versions[i] = String.format("%d.0.0", firstMajorVersion + i);
+    }
+    return versions;
+  }
 
   public static String randomName() {
     return RandomStringUtils.random(5, "abcdefghijklmnopqrstuvwxyz".toCharArray());

@@ -1991,6 +1991,14 @@
               </configuration>
             </plugin>
             <plugin>
+              <!-- Fix for java.lang.IllegalArgumentException: Problem constructing class org.ops4j.pax.exam.junit.PaxExam runner for class -->
+              <groupId>org.apache.servicemix.tooling</groupId>
+              <artifactId>depends-maven-plugin</artifactId>
+              <configuration>
+                <outputFile>${project.build.directory}/test-classes/META-INF/maven/dependencies.properties</outputFile>
+              </configuration>
+            </plugin>
+            <plugin>
               <groupId>org.eclipse.m2e</groupId>
               <artifactId>lifecycle-mapping</artifactId>
               <version>1.0.0</version>

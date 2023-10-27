@@ -18,7 +18,10 @@ import javax.ws.rs.core.MediaType;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.rest.ComponentsResourceExtension;
+import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
@@ -26,11 +29,13 @@ import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 
+import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Spy;
 
 import static java.util.Collections.emptyList;
 import static org.mockito.Mockito.mock;
@@ -70,6 +75,9 @@ public class ComponentsResourceTest
   @Mock
   private ContentAuthHelper contentAuthHelper;
 
+  @Spy
+  private ComponentsResourceExtension componentsResourceExtension = new TestComponentsResourceExtension();
+
   @Before
   public void setUp() throws Exception {
     configureMockedRepository(testRepo, testRepoName, "http://localhost:8081/repository/test-repo");
@@ -77,7 +85,7 @@ public class ComponentsResourceTest
     when(uploadConfiguration.isEnabled()).thenReturn(true);
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService, uploadManager,
-        uploadConfiguration, componentXOFactory, contentAuthHelper, null);
+        uploadConfiguration, componentXOFactory, contentAuthHelper, ImmutableSet.of(componentsResourceExtension), null);
   }
 
   @SuppressWarnings("java:S2699")
@@ -97,5 +105,14 @@ public class ComponentsResourceTest
     when(repository.getUrl()).thenReturn(url);
     when(repository.getName()).thenReturn(name);
     when(repository.getFormat()).thenReturn(format);
+  }
+
+  private class TestComponentsResourceExtension
+      implements ComponentsResourceExtension
+  {
+    @Override
+    public ComponentXO updateComponentXO(final ComponentXO componentXO, final FluentComponent component) {
+      return componentXO;
+    }
   }
 }

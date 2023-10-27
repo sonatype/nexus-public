@@ -130,7 +130,7 @@ describe('CleanupPoliciesForm', function () {
       getValue: jest.fn(),
     });
     when(ExtJS.state().getValue)
-      .calledWith('nexus.datastore.enabled')
+      .calledWith('datastore.isPostgresql')
       .mockReturnValue(false);
     when(ExtJS.state().getValue)
       .calledWith('nexus.cleanup.preview.enabled')
@@ -581,7 +581,7 @@ describe('CleanupPoliciesForm', function () {
   describe('dry run', function () {
     beforeEach(() => {
       when(ExtJS.state().getValue)
-        .calledWith('nexus.datastore.enabled')
+        .calledWith('datastore.isPostgresql')
         .mockReturnValue(true);
       when(ExtJS.state().getValue)
         .calledWith('nexus.cleanup.preview.enabled')

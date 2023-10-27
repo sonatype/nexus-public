@@ -150,27 +150,27 @@ public class DatastoreBlobstoreRestoreTestHelper
   @Override
   public void assertAssetInRepository(final Repository repository, final String path) {
     Optional<FluentAsset> asset = findAsset(repository, path);
-    assertThat(asset.isPresent(), is(true));
+    assertThat("Missing asset: " + path, asset.isPresent(), is(true));
   }
 
   @Override
   public void assertAssetNotInRepository(final Repository repository, final String... paths) {
     for (String path : paths) {
       Optional<FluentAsset> asset = findAsset(repository, path);
-      assertThat(asset.isPresent(), is(false));
+      assertThat("Expected no asset for path: " + path, asset.isPresent(), is(false));
     }
   }
 
   @Override
   public void assertComponentInRepository(final Repository repository, final String name) {
     Optional<FluentComponent> component = findComponent(repository, name, "");
-    assertThat(component.isPresent(), is(true));
+    assertThat("Missing component: " + name, component.isPresent(), is(true));
   }
 
   @Override
   public void assertComponentInRepository(final Repository repository, final String name, final String version) {
     Optional<FluentComponent> component = findComponent(repository, name, version);
-    assertThat(component.isPresent(), is(true));
+    assertThat("Missing component " + name + ":" + version, component.isPresent(), is(true));
   }
 
   @Override
@@ -185,27 +185,27 @@ public class DatastoreBlobstoreRestoreTestHelper
         .version(version)
         .namespace(namespace)
         .find();
-    assertThat(component.isPresent(), is(true));
+    assertThat("Missing component " + namespace +":" + name + ":" + version, component.isPresent(), is(true));
   }
 
   @Override
   public void assertComponentNotInRepository(final Repository repository, final String name) {
     Optional<FluentComponent> component = findComponent(repository, name);
-    assertThat(component.isPresent(), is(false));
+    assertThat("Expected no component for name: " + name, component.isPresent(), is(false));
   }
 
   @Override
   public void assertComponentNotInRepository(final Repository repository, final String name, final String version) {
     Optional<FluentComponent> component = findComponent(repository, name, version);
-    assertThat(component.isPresent(), is(false));
+    assertThat("Expected no component for name, version: " + name + ":" + version, component.isPresent(), is(false));
   }
 
   @Override
   public void assertAssetAssociatedWithComponent(final Repository repository, final String name, final String path) {
     Optional<FluentComponent> component = findComponent(repository, name);
-    assertThat(component.isPresent(), is(true));
+    assertThat("Missing component: " + name, component.isPresent(), is(true));
     Optional<FluentAsset> asset = component.get().asset(path).find();
-    assertThat(asset.isPresent(), is(true));
+    assertThat("Missing asset: " + path, asset.isPresent(), is(true));
   }
 
   @Override
@@ -224,11 +224,11 @@ public class DatastoreBlobstoreRestoreTestHelper
       componentBuilder = componentBuilder.namespace(namespace);
     }
     Optional<FluentComponent> component = componentBuilder.find();
-    assertThat(component.isPresent(), is(true));
+    assertThat("Missing component " + namespace +":" + name + ":" + version, component.isPresent(), is(true));
 
     for (String path : paths) {
       Optional<FluentAsset> asset = component.get().asset(prependIfMissing(path, "/")).find();
-      assertThat(asset.isPresent(), is(true));
+      assertThat("Missing asset: " + path, asset.isPresent(), is(true));
     }
   }
 

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository;
 
 import java.util.Optional;
-
+import java.util.concurrent.locks.Lock;
 import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.repository.config.Configuration;
@@ -72,6 +72,16 @@ public interface Repository
    * Repository must have been previously started.  Repository is stopped before applying {@link #update}.
    */
   void stop() throws Exception;
+
+  /**
+   * Transition repository from Started to Stopped state. Do lock external of Guard level.
+   */
+  void stopSafe() throws Exception;
+
+  /**
+   * Get write lock from State Guard.
+   */
+  Lock getWriteLock() throws InterruptedException;
 
   /**
    * Delete the repository and remove all persistent knowledge about repository and its contents.

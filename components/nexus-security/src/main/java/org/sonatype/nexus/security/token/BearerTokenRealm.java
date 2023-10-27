@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.token;
 
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
@@ -59,7 +61,7 @@ public abstract class BearerTokenRealm
 
   private Provider<HttpServletRequest> requestProvider;
 
-  public BearerTokenRealm(final ApiKeyStore keyStore,
+  protected BearerTokenRealm(final ApiKeyStore keyStore,
                           final UserPrincipalsHelper principalsHelper,
                           final String format) {
     this.keyStore = checkNotNull(keyStore);
@@ -70,7 +72,7 @@ public abstract class BearerTokenRealm
   }
 
   @Inject
-  private void setRequestProvider(final Provider<HttpServletRequest> requestProvider) {
+  protected void setRequestProvider(final Provider<HttpServletRequest> requestProvider) {
     this.requestProvider = checkNotNull(requestProvider);
   }
 
@@ -83,16 +85,9 @@ public abstract class BearerTokenRealm
   protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token)
   {
     checkNotNull(token);
-    final PrincipalCollection principals = keyStore.getApiKeyByToken(format, (char[]) token.getCredentials())
-        .map(ApiKey::getPrincipals)
-        .orElse(null);
-    if (null != principals) {
+    return getPrincipals(token).map(principals -> {
       try {
         if (anonymousAndSupported(principals) || principalsHelper.getUserStatus(principals).isActive()) {
-          ((NexusApiKeyAuthenticationToken) token).setPrincipal(principals.getPrimaryPrincipal());
-          if (requestProvider != null) {
-            requestProvider.get().setAttribute(IS_TOKEN_AUTH_KEY, Boolean.TRUE);
-          }
           return new SimpleAuthenticationInfo(principals, token.getCredentials());
         }
       }
@@ -100,24 +95,40 @@ public abstract class BearerTokenRealm
         log.debug("Realm did not find user", e);
         keyStore.deleteApiKeys(principals);
       }
-    }
-    return null;
+      return null;
+    }).orElse(null);
   }
 
   @Override
   @Nullable
   protected Object getAuthenticationCacheKey(@Nullable final AuthenticationToken token) {
     if (token != null) {
-      return keyStore.getApiKeyByToken(format, (char[]) token.getCredentials())
-          .map(ApiKey::getPrincipals)
+      return getPrincipals(token)
           .map(PrincipalCollection::getPrimaryPrincipal)
           .orElse(null);
     }
     return null;
   }
 
+  @Override
+  protected void assertCredentialsMatch(final AuthenticationToken token, final AuthenticationInfo info)
+      throws AuthenticationException
+  {
+    super.assertCredentialsMatch(token, info);
+    //after successful assertion it means we authenticated successfully, so now we can set attributes
+    requestProvider.get().setAttribute(IS_TOKEN_AUTH_KEY, Boolean.TRUE);
+    getPrincipals(token)
+        .map(PrincipalCollection::getPrimaryPrincipal)
+        .ifPresent(principal -> ((NexusApiKeyAuthenticationToken) token).setPrincipal(principal));
+  }
+
   protected boolean isAnonymousSupported() {
     return false;
+  }
+
+  private Optional<PrincipalCollection> getPrincipals(final AuthenticationToken token) {
+    return keyStore.getApiKeyByToken(format, (char[]) token.getCredentials())
+        .map(ApiKey::getPrincipals);
   }
 
   private boolean anonymousAndSupported(final PrincipalCollection principals) {

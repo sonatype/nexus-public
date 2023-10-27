@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.content.ComponentSet;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.assistedinject.Assisted;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
@@ -109,6 +108,7 @@ public class Maven2ComponentStore
    * @param repositoryId          the repository to browse
    * @param componentSet          the component set to browse
    * @param cleanupPolicyCriteria the criteria to filter by
+   * @param includeAssets         whether to include asset data
    * @param limit                 maximum number of components to return
    * @param continuationToken     optional token to continue from a previous request
    * @return collection of components and the next continuation token

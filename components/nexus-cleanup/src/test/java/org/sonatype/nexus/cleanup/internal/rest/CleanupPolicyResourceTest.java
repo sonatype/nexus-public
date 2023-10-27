@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.junit.Before;
@@ -72,6 +73,9 @@ public class CleanupPolicyResourceTest
   @Mock
   private CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
 
+  @Mock
+  private DatabaseCheck databaseCheck;
+
   private CleanupPolicyResource underTest;
 
   private final String repositoryName = "test-repo";
@@ -82,6 +86,7 @@ public class CleanupPolicyResourceTest
     Repository repository = mock(Repository.class);
     when(repositoryManager.get(repositoryName)).thenReturn(repository);
     when(repository.getName()).thenReturn(repositoryName);
+    when(databaseCheck.isPostgresql()).thenReturn(true);
   }
 
   @Test
@@ -89,7 +94,7 @@ public class CleanupPolicyResourceTest
     underTest =
         new CleanupPolicyResource(cleanupPolicyStorage, cleanupFeatureCheck, formats, cleanupFormatConfigurationMap,
             cleanupPreviewHelper,
-            repositoryManager, eventManager, globalKeyValueStore, true, true, csvCleanupPreviewContentWriter);
+            repositoryManager, eventManager, globalKeyValueStore, databaseCheck, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null, null, null);
 
@@ -111,11 +116,12 @@ public class CleanupPolicyResourceTest
   }
 
   @Test
-  public void testNotFoundResponseForOrient() {
+  public void testNotFoundResponseForOrientOrH2() {
+    when(databaseCheck.isPostgresql()).thenReturn(false);
     underTest =
         new CleanupPolicyResource(cleanupPolicyStorage, cleanupFeatureCheck, formats, cleanupFormatConfigurationMap,
             cleanupPreviewHelper,
-            repositoryManager, eventManager, globalKeyValueStore, false, true, csvCleanupPreviewContentWriter);
+            repositoryManager, eventManager, globalKeyValueStore, databaseCheck, true, csvCleanupPreviewContentWriter);
 
     Response response = underTest.previewContentCsv(null, repositoryName, null, null, null, null, null, null);
 

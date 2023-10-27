@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.rest.internal.resources;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -43,6 +44,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.content.rest.internal.resources.doc.ComponentsResourceDoc;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
@@ -99,6 +101,8 @@ public class ComponentsResource
 
   private final Map<String, AssetXODescriptor> assetDescriptors;
 
+  private final Set<ComponentsResourceExtension> componentsResourceExtensions;
+
   @Inject
   public ComponentsResource(
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
@@ -107,6 +111,7 @@ public class ComponentsResource
       final UploadConfiguration uploadConfiguration,
       final ComponentXOFactory componentXOFactory,
       final ContentAuthHelper contentAuthHelper,
+      final Set<ComponentsResourceExtension> componentsResourceExtensions,
       @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
     super(contentAuthHelper, repositoryManagerRESTAdapter);
@@ -115,6 +120,7 @@ public class ComponentsResource
     this.uploadManager = checkNotNull(uploadManager);
     this.uploadConfiguration = checkNotNull(uploadConfiguration);
     this.componentXOFactory = checkNotNull(componentXOFactory);
+    this.componentsResourceExtensions = checkNotNull(componentsResourceExtensions);
     this.assetDescriptors = assetDescriptors;
   }
 
@@ -218,6 +224,10 @@ public class ComponentsResource
     componentXO.setId(new RepositoryItemIDXO(repository.getName(), externalId).getValue());
     componentXO.setRepository(repository.getName());
     componentXO.setFormat(repository.getFormat().getValue());
+
+    for (ComponentsResourceExtension componentsResourceExtension : componentsResourceExtensions) {
+      componentXO = componentsResourceExtension.updateComponentXO(componentXO, component);
+    }
 
     return componentXO;
   }
