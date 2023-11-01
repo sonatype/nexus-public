@@ -139,6 +139,7 @@ export default {
       REPOSITORY_DESCRIPTION: 'Export a spreadsheet listing which components would be deleted today based on selected cleanup policy settings. Your export will list component namespaces, names, versions and paths.',
       REPOSITORY_SELECT: 'Select a repository',
       TITLE: 'Preview Cleanup Policy Results',
+      BUTTON_TOOLTIP: 'Please select a repository and at least one cleanup criterion',
     },
 
     MESSAGES: {

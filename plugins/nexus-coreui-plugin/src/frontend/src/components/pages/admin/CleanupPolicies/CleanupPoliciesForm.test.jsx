@@ -627,10 +627,14 @@ describe('CleanupPoliciesForm', function () {
       expect(selectDropdown).not.toBeDisabled();
     });
 
-    it('sets disabled on the button when no repository is selected', async function () {
-      const {dryRunRepositories, dryRunCreateCSVButton} = selectors;
+    it('sets disabled on the button when no repository or criteria is selected', async function () {
+      const {dryRunRepositories, dryRunCreateCSVButton, name, format,
+        criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
 
-      await renderView(EDITABLE_ITEM.name);
+      await renderView();
+
+      await TestUtils.changeField(name, EDITABLE_ITEM.name);
+      await TestUtils.changeField(format, EDITABLE_ITEM.format);
 
       const selectDropdown = dryRunRepositories(),
         createButton = dryRunCreateCSVButton();
@@ -641,6 +645,15 @@ describe('CleanupPoliciesForm', function () {
       userEvent.selectOptions(selectDropdown, 'maven-central');
 
       expect(selectDropdown).toHaveValue('maven-central');
+      expect(createButton).toHaveAttribute('aria-disabled', 'true');
+
+      expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+      ).toBeInTheDocument();
+
+      userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+      await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
+
       expect(createButton).toHaveAttribute('aria-disabled', 'false');
 
       userEvent.selectOptions(selectDropdown, '');
