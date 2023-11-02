@@ -14,6 +14,7 @@ package org.sonatype.nexus.orient.raw.internal;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -48,6 +49,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableList;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
@@ -109,8 +111,16 @@ public class RawContentFacetImpl
   public Asset put(final String path, final AssetBlob assetBlob, @Nullable final AttributesMap contentAttributes) {
     StorageTx tx = UnitOfWork.currentTx();
     Asset asset = getOrCreateAsset(getRepository(), path, RawCoordinatesHelper.getGroup(path), path);
+    Optional<DateTime> blobCreated = assetBlob.getCreatedTime();
+    boolean newAsset = asset.blobCreated() == null;
+
     tx.attachBlob(asset, assetBlob);
     Content.applyToAsset(asset, Content.maintainLastModified(asset, contentAttributes));
+    if (newAsset) {
+      blobCreated.ifPresent(asset::blobCreated);
+    }
+    blobCreated.ifPresent(asset::blobUpdated);
+
     tx.saveAsset(asset);
     return asset;
   }
@@ -230,5 +240,4 @@ public class RawContentFacetImpl
     Content.extractFromAsset(asset, HASH_ALGORITHMS, content.getAttributes());
     return content;
   }
-
 }

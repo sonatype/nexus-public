@@ -21,9 +21,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -49,12 +48,12 @@ public class OrientAptRestoreBlobStrategy
     extends OrientBaseRestoreBlobStrategy<AptRestoreBlobData>
 {
   @Inject
-  public OrientAptRestoreBlobStrategy(final NodeAccess nodeAccess,
-                                      final RepositoryManager repositoryManager,
-                                      final BlobStoreManager blobStoreManager,
-                                      final DryRunPrefix dryRunPrefix)
+  public OrientAptRestoreBlobStrategy(
+      final NodeAccess nodeAccess,
+      final RepositoryManager repositoryManager,
+      final DryRunPrefix dryRunPrefix)
   {
-    super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
+    super(nodeAccess, repositoryManager, dryRunPrefix);
   }
 
   @Override

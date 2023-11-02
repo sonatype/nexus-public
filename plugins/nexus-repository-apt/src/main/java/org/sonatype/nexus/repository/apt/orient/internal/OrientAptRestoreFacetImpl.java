@@ -14,18 +14,19 @@ package org.sonatype.nexus.repository.apt.orient.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.apt.debian.Utils;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
-import org.sonatype.nexus.repository.apt.debian.Utils;
-import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.apt.orient.AptRestoreFacet;
+import org.sonatype.nexus.repository.apt.orient.OrientAptFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Query;
@@ -34,6 +35,8 @@ import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.transaction.UnitOfWork;
+
+import org.joda.time.DateTime;
 
 import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContentType;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
@@ -64,8 +67,14 @@ public class OrientAptRestoreFacetImpl
       asset = aptFacet.findOrCreateMetadataAsset(tx, path);
     }
 
+    Optional<DateTime> blobCreated = assetBlob.getCreatedTime();
+    boolean newAsset = asset.blobCreated() == null;
     tx.attachBlob(asset, assetBlob);
     Content.applyToAsset(asset, Content.maintainLastModified(asset, new AttributesMap()));
+    if (newAsset) {
+      blobCreated.ifPresent(asset::blobCreated);
+    }
+    blobCreated.ifPresent(asset::blobUpdated);
     tx.saveAsset(asset);
     return OrientFacetHelper.toContent(asset, assetBlob.getBlob());
   }

@@ -109,6 +109,24 @@ public class RawRestoreBlobIT
   }
 
   /**
+   * NEXUS-40244 - if the blobstore has not been compacted it may contain multiple revisions of the same asset. As such
+   * we need to ensure that the most recent revision wins.
+   */
+  @Category(OrientAndSQLTestGroup.class)
+  @Test
+  public void testRestoresMostRecentAsset() throws Exception {
+    // We can't guarantee the order blobs will be processed, so for the test we want to create enough assets that
+    // there is a low chance that the last blob is processed last which would mean our test verifies nothing.
+    for (int i=0; i<20; i++) {
+      assertThat(nexus.rest().put(path(hostedRepository, TEST_CONTENT), "test" + i, "admin", "admin123"),
+          hasStatus(HttpStatus.CREATED));
+    }
+    hostedPathsToBlobs = restoreTestHelper.getAssetToBlobIds(hostedRepository);
+
+    verifyMetadataRestored(restoreTestHelper::simulateAssetMetadataLoss);
+  }
+
+  /**
    * For Orient this tests restoring newdb assets, for newdb this tests restoring Orient assets
    */
   @Category(OrientAndSQLTestGroup.class)
