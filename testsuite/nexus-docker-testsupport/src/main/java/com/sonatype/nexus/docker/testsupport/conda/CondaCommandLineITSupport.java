@@ -39,9 +39,6 @@ public class CondaCommandLineITSupport
    */
   public CondaCommandLineITSupport(final DockerContainerConfig dockerContainerConfig) {
     super(dockerContainerConfig);
-    exec("export PATH=\"/opt/conda/bin:$PATH\"");
-    exec("conda init bash");
-    exec("source $HOME/.bashrc");
   }
 
   /**
