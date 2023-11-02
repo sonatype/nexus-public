@@ -26,13 +26,13 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.task.DeletionProgress;
@@ -44,6 +44,8 @@ import org.elasticsearch.search.SearchContextMissingException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SORT_BY_KEY;
 
 /**
  * @since 3.29
@@ -137,6 +139,13 @@ public class CleanupServiceImpl
 
     DeletionProgress deletionProgress = new DeletionProgress(cleanupRetryLimit);
 
+    if (hasExclusionCriteria(policy.getCriteria()) && !featureCheck.isRetainSupported(policy.getFormat())) {
+      log.warn("Skipping policy {} in repository {} since exclusion criteria is not currently supported.",
+          repository.getName(), policy.getName());
+
+      return 0L;
+    }
+
     if (!policy.getCriteria().isEmpty()) {
       do {
         try {
@@ -166,6 +175,10 @@ public class CleanupServiceImpl
           policy.getName());
       return 0L;
     }
+  }
+
+  private boolean hasExclusionCriteria(final Map<String, String> criteria) {
+    return criteria.containsKey(RETAIN_KEY) || criteria.containsKey(RETAIN_SORT_BY_KEY);
   }
 
   @SuppressWarnings("unchecked")

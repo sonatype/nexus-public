@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.repository.db.DatabaseCheck;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -25,17 +26,24 @@ import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_DOCKER_RETAIN;
 import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_MAVEN_RETAIN;
 
 public class CleanupFeatureCheck extends ComponentSupport {
+
+  static final String PRO_EDITION = "PRO";
+
   private final DatabaseCheck databaseCheck;
+
+  private final ApplicationVersion applicationVersion;
 
   private final Set<String> retainEnabledSet;
 
   @Inject
   public CleanupFeatureCheck(
       final DatabaseCheck databaseCheck,
+      final ApplicationVersion applicationVersion,
       @Named("${" + CLEANUP_MAVEN_RETAIN + ":-false}") final boolean mavenRetainEnabled,
       @Named("${" + CLEANUP_DOCKER_RETAIN + ":-false}") final boolean dockerRetainEnabled)
   {
     this.databaseCheck = checkNotNull(databaseCheck);
+    this.applicationVersion = checkNotNull(applicationVersion);
     this.retainEnabledSet = new HashSet<>();
     if (mavenRetainEnabled) {
       this.retainEnabledSet.add("maven2");
@@ -45,9 +53,16 @@ public class CleanupFeatureCheck extends ComponentSupport {
     }
   }
 
+  public final boolean isProVersion() {
+    return PRO_EDITION.equals(applicationVersion.getEdition());
+  }
+
+  public final boolean isPostgres() {
+    return databaseCheck.isPostgresql();
+  }
+
   public final boolean isRetainSupported(String formatName) {
-    boolean isPostgres = databaseCheck.isPostgresql();
     boolean retainEnabled = this.retainEnabledSet.contains(formatName);
-    return isPostgres && retainEnabled;
+    return isPostgres() && isProVersion() && retainEnabled;
   }
 }
