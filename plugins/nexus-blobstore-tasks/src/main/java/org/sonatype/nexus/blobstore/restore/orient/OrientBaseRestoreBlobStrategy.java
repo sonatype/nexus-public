@@ -21,8 +21,8 @@ import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
@@ -70,18 +70,15 @@ public abstract class OrientBaseRestoreBlobStrategy<T extends RestoreBlobDataSup
 
   private RepositoryManager repositoryManager;
 
-  private BlobStoreManager blobStoreManager;
-
   private DryRunPrefix dryRunPrefix;
 
-  public OrientBaseRestoreBlobStrategy(final NodeAccess nodeAccess,
-                                       final RepositoryManager repositoryManager,
-                                       final BlobStoreManager blobStoreManager,
-                                       final DryRunPrefix dryRunPrefix)
+  protected OrientBaseRestoreBlobStrategy(
+      final NodeAccess nodeAccess,
+      final RepositoryManager repositoryManager,
+      final DryRunPrefix dryRunPrefix)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
     this.dryRunPrefix = checkNotNull(dryRunPrefix);
   }
 
@@ -104,7 +101,7 @@ public abstract class OrientBaseRestoreBlobStrategy<T extends RestoreBlobDataSup
     }
   }
 
-  private void doRestore(StorageFacet storageFacet, RestoreBlobData blobData, T restoreData, boolean isDryRun) {
+  private void doRestore(final StorageFacet storageFacet, final RestoreBlobData blobData, final T restoreData, final boolean isDryRun) {
     String logPrefix = isDryRun ? dryRunPrefix.get() : "";
     String path = getAssetPath(restoreData);
     String blobStoreName = blobData.getBlobStore().getBlobStoreConfiguration().getName();
@@ -279,7 +276,14 @@ public abstract class OrientBaseRestoreBlobStrategy<T extends RestoreBlobDataSup
   {
     Asset asset = findAsset(restoreData.getBlobData().getRepository(), path);
     if (asset != null) {
-      DateTime existingBlob = asset.blobCreated();
+      // Previously restored assets may have the wrong created date
+      StorageTx tx = UnitOfWork.currentTx();
+      DateTime existingBlob = Optional.ofNullable(asset.blobRef())
+          .map(tx::getBlob)
+          .map(Blob::getMetrics)
+          .map(BlobMetrics::getCreationTime)
+          .orElseGet(asset::blobCreated);
+
       if (existingBlob != null) {
         DateTime restoredBlob = restoreData.getBlobData().getBlob().getMetrics().getCreationTime();
         return existingBlob.isBefore(restoredBlob);

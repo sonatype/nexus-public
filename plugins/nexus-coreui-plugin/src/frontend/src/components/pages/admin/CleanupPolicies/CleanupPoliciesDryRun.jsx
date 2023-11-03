@@ -19,7 +19,8 @@ import {
   NxFormSelect,
   NxH2,
   NxLoadWrapper,
-  NxP
+  NxP,
+  NxTooltip
 } from '@sonatype/react-shared-components';
 import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
 
@@ -32,6 +33,7 @@ export default function CleanupPoliciesDryRun({policyData}) {
   const [state, send] = useMachine(cleanupPoliciesDryRunMachine, {devTools: true});
   const {loadError, repository, repositories} = state.context;
   const isLoading = state.matches('loading');
+  const criteriaSelected = (policyData.criteriaLastDownloaded || policyData.criteriaLastBlobUpdated || policyData.criteriaAssetRegex);
   const generateCSVUrl = ExtJS.urlOf('/service/rest/internal/cleanup-policies/preview/components/csv' +
     '?repository=' + repository +
     (policyData.name ? `&name=${policyData.name}` : '') +
@@ -72,13 +74,15 @@ export default function CleanupPoliciesDryRun({policyData}) {
               )}
             </NxFormSelect>
             <NxButtonBar>
-              <a aria-disabled={!repository}
-                 className={`nx-btn ${!repository ? 'disabled' : ''}`}
-                 download
-                 href={!repository ? undefined : generateCSVUrl}
-                 role={!repository ? 'link' : undefined}>
-                {BUTTON}
-              </a>
+              <NxTooltip title={!repository || !criteriaSelected ? UIStrings.CLEANUP_POLICIES.DRY_RUN.BUTTON_TOOLTIP : undefined}>
+                <a aria-disabled={!repository || !criteriaSelected}
+                  className={`nx-btn ${(!repository || !criteriaSelected) ? 'disabled' : ''}`}
+                  download
+                  href={!repository || !criteriaSelected ? undefined : generateCSVUrl}
+                  role={!repository || !criteriaSelected ? 'link' : undefined}>
+                  {BUTTON}
+                </a>
+              </NxTooltip>
             </NxButtonBar>
           </NxFormRow>
         </>

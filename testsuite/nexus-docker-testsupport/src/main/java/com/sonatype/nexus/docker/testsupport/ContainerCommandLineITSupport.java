@@ -23,6 +23,8 @@ import javax.annotation.Nullable;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerClient;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 
+import org.sonatype.goodies.common.ComponentSupport;
+
 import com.spotify.docker.client.messages.PortBinding;
 
 import static java.util.Collections.emptyMap;
@@ -36,6 +38,7 @@ import static java.util.Objects.nonNull;
  * @since 3.6.1
  */
 public abstract class ContainerCommandLineITSupport
+    extends ComponentSupport
     implements CommandLine
 {
   private static final String CMD_LS = "ls ";

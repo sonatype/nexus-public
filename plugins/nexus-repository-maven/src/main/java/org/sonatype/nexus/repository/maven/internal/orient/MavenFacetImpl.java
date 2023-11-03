@@ -568,7 +568,15 @@ public class MavenFacetImpl
     AttributesMap contentAttributesWithLastModified = Content.maintainLastModified(asset, contentAttributes);
     Content.applyToAsset(asset, contentAttributesWithLastModified);
 
+    boolean isNew = asset.blobCreated() == null;
+
     tx.attachBlob(asset, assetBlob);
+
+    Optional<DateTime> blobCreated = assetBlob.getCreatedTime();
+    if (isNew) {
+      blobCreated.ifPresent(asset::blobCreated);
+    }
+    blobCreated.ifPresent(asset::blobUpdated);
 
     // Used in nx2->nx3 migration
     if (contentAttributesWithLastModified.contains(AssetEntityAdapter.P_BLOB_CREATED)) {

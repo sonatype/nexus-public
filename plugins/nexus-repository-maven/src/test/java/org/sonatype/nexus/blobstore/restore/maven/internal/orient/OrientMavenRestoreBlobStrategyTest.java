@@ -23,9 +23,9 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -64,6 +64,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -84,9 +85,6 @@ public class OrientMavenRestoreBlobStrategyTest
 
   @Mock
   RepositoryManager repositoryManager;
-
-  @Mock
-  BlobStoreManager blobStoreManager;
 
   @Mock
   MavenPath mavenPath;
@@ -150,7 +148,6 @@ public class OrientMavenRestoreBlobStrategyTest
       protected void configure() {
         bind(NodeAccess.class).toInstance(nodeAccess);
         bind(RepositoryManager.class).toInstance(repositoryManager);
-        bind(BlobStoreManager.class).toInstance(blobStoreManager);
         bind(DryRunPrefix.class).toInstance(new DryRunPrefix("dryrun"));
         bind(MavenPathParser.class).toInstance(maven2MavenPathParser);
       }
@@ -263,9 +260,10 @@ public class OrientMavenRestoreBlobStrategyTest
   @Test
   public void shouldSkipOlderBlob() throws Exception {
     when(mavenFacet.get(mavenPath)).thenReturn(mock(Content.class));
-    when(asset.blobCreated()).thenReturn(DateTime.now());
+    mockBlobCreated(DateTime.now());
     when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
     underTest.restore(properties, blob, blobStore, false);
+    verify(asset, never()).blobCreated();
     verify(mavenFacet).get(mavenPath);
     verifyNoMoreInteractions(mavenFacet);
   }
@@ -273,11 +271,22 @@ public class OrientMavenRestoreBlobStrategyTest
   @Test
   public void shouldRestoreMoreRecentBlob() throws Exception {
     when(mavenFacet.get(mavenPath)).thenReturn(mock(Content.class));
-    when(asset.blobCreated()).thenReturn(DateTime.now().minusDays(1));
+    mockBlobCreated(DateTime.now().minusDays(1));
     when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
     underTest.restore(properties, blob, blobStore, false);
+    verify(asset, never()).blobCreated();
     verify(mavenFacet).get(mavenPath);
     verify(mavenFacet).put(eq(mavenPath), any(), eq(null));
     verifyNoMoreInteractions(mavenFacet);
+  }
+
+  private void mockBlobCreated(final DateTime date) {
+    BlobRef ref = mock(BlobRef.class);
+    when(asset.blobRef()).thenReturn(ref);
+    Blob existingBlob = mock(Blob.class);
+    BlobMetrics metrics = mock(BlobMetrics.class);
+    when(existingBlob.getMetrics()).thenReturn(metrics);
+    when(metrics.getCreationTime()).thenReturn(date);
+    when(storageTx.getBlob(ref)).thenReturn(existingBlob);
   }
 }

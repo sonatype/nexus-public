@@ -13,11 +13,13 @@
 package org.sonatype.nexus.repository.storage;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -25,6 +27,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.HashCode;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -222,6 +225,12 @@ public class AssetBlob
    */
   public void setReplicated(final boolean replicated) {
     this.replicated = replicated;
+  }
+
+  public Optional<DateTime> getCreatedTime() {
+    return Optional.ofNullable(getBlob())
+        .map(Blob::getMetrics)
+        .map(BlobMetrics::getCreationTime);
   }
 
   @VisibleForTesting

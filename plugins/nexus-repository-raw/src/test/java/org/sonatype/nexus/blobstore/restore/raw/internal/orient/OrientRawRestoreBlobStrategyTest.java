@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.restore.raw.internal.orient;
 
 import java.io.ByteArrayInputStream;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -22,17 +23,23 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.TransactionModule;
@@ -40,6 +47,7 @@ import org.sonatype.nexus.transaction.TransactionModule;
 import com.google.common.hash.HashCode;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -50,13 +58,18 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 public class OrientRawRestoreBlobStrategyTest
     extends TestSupport
@@ -106,6 +119,15 @@ public class OrientRawRestoreBlobStrategyTest
   private RawContentFacet rawContentFacet;
 
   @Mock
+  private Bucket bucket;
+
+  @Mock
+  private Asset asset;
+
+  @Mock
+  private Component component;
+
+  @Mock
   private StorageTx storageTx;
 
   @Mock
@@ -115,7 +137,13 @@ public class OrientRawRestoreBlobStrategyTest
   private RepositoryManager repositoryManager;
 
   @Mock
-  private BlobStoreManager blobStoreManager;
+  private EntityId entityId;
+
+  @Mock
+  private EntityMetadata entityMetadata;
+
+  @Mock
+  private BlobMetrics blobMetrics;
 
   private OrientRawRestoreBlobStrategy underTest;
 
@@ -139,16 +167,24 @@ public class OrientRawRestoreBlobStrategyTest
 
     when(rawContentFacet.assetExists(BLOB_NAME)).thenReturn(!EXISTS);
 
+    when(blob.getMetrics()).thenReturn(blobMetrics);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(blobStore.getBlobAttributes(nullable(BlobId.class))).thenReturn(blobAttributes);
     when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
+
+    when(storageTx.findBucket(repository)).thenReturn(bucket);
+    when(storageTx.findAssetWithProperty(eq(P_NAME), anyString(), any(Bucket.class))).thenReturn(asset);
+    when(storageTx.findComponents(any(), any())).thenReturn(Collections.singletonList(component));
+
+    when(asset.componentId()).thenReturn(entityId);
+    when(component.getEntityMetadata()).thenReturn(entityMetadata);
+    when(entityMetadata.getId()).thenReturn(entityId);
 
     underTest = Guice.createInjector(new TransactionModule(), new AbstractModule() {
       @Override
       protected void configure() {
         bind(NodeAccess.class).toInstance(nodeAccess);
         bind(RepositoryManager.class).toInstance(repositoryManager);
-        bind(BlobStoreManager.class).toInstance(blobStoreManager);
         bind(DryRunPrefix.class).toInstance(DRY_RUN_PREFIX);
       }
     }).getInstance(OrientRawRestoreBlobStrategy.class);
@@ -199,5 +235,49 @@ public class OrientRawRestoreBlobStrategyTest
     verify(rawContentFacet).put(eq(BLOB_NAME), assetBlobCaptor.capture(), eq(NO_CONTENT_ATTRIBUTES));
     assertThat(assetBlobCaptor.getValue().getHashes(), equalTo(expectedHashes));
     assertThat(assetBlobCaptor.getValue().getContentType(), equalTo(CONTENT_TYPE));
+  }
+
+  @Test
+  public void shouldSkipDeletedBlob() throws Exception {
+    when(blobAttributes.isDeleted()).thenReturn(true);
+    underTest.restore(properties, blob, blobStore, false);
+    verifyNoMoreInteractions(rawContentFacet);
+  }
+
+  @Test
+  public void shouldSkipOlderBlob() throws Exception {
+    when(rawContentFacet.assetExists(BLOB_NAME)).thenReturn(EXISTS);
+    mockBlobCreated(DateTime.now());
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now().minusDays(1));
+
+    underTest.restore(properties, blob, blobStore, false);
+
+    verify(asset, never()).blobCreated();
+    verify(rawContentFacet).assetExists(any());
+    verifyNoMoreInteractions(rawContentFacet);
+  }
+
+  @Test
+  public void shouldRestoreMoreRecentBlob() throws Exception {
+    when(rawContentFacet.assetExists(BLOB_NAME)).thenReturn(EXISTS);
+    mockBlobCreated(DateTime.now().minusDays(1));
+
+    when(blobMetrics.getCreationTime()).thenReturn(DateTime.now());
+    underTest.restore(properties, blob, blobStore, false);
+
+    verify(asset, never()).blobCreated();
+    verify(rawContentFacet).assetExists(any());
+    verify(rawContentFacet).put(eq(BLOB_NAME), any(), eq(NO_CONTENT_ATTRIBUTES));
+    verifyNoMoreInteractions(rawContentFacet);
+  }
+
+  private void mockBlobCreated(final DateTime date) {
+    BlobRef ref = mock(BlobRef.class);
+    when(asset.blobRef()).thenReturn(ref);
+    Blob existingBlob = mock(Blob.class);
+    BlobMetrics metrics = mock(BlobMetrics.class);
+    when(existingBlob.getMetrics()).thenReturn(metrics);
+    when(metrics.getCreationTime()).thenReturn(date);
+    when(storageTx.getBlob(ref)).thenReturn(existingBlob);
   }
 }

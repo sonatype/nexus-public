@@ -22,7 +22,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.common.app.FeatureFlag;
@@ -67,10 +66,9 @@ public class OrientMavenRestoreBlobStrategy
       final MavenPathParser mavenPathParser,
       final NodeAccess nodeAccess,
       final RepositoryManager repositoryManager,
-      final BlobStoreManager blobStoreManager,
       final DryRunPrefix dryRunPrefix)
   {
-    super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
+    super(nodeAccess, repositoryManager, dryRunPrefix);
     this.mavenPathParser = checkNotNull(mavenPathParser);
   }
 

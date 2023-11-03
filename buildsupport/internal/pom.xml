@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.62.0-SNAPSHOT</version>
+    <version>3.63.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-internal</artifactId>
@@ -101,6 +101,10 @@
           <exclusion>
             <groupId>com.sonatype.insight.scan</groupId>
             <artifactId>insight-scanner-tools</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.spdx</groupId>
+            <artifactId>spdx-jackson-store</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

@@ -48,6 +48,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.empty;
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -201,6 +202,18 @@ public class CleanupServiceImplTest
     underTest.cleanup(cancelledCheck);
 
     verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+  }
+
+  @Test
+  public void skipPolicyWithExclusionIfNonPro() {
+    assumeFalse(useRetainCleanup);
+    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(cleanupPolicy1.getCriteria()).thenReturn(
+        ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1", "retain", "3", "sortBy", "version"));
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, never()).run(repository1, Stream.of(component1, component2), cancelledCheck);
   }
 
   @Test
