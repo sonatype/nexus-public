@@ -102,10 +102,6 @@
             <groupId>com.sonatype.insight.scan</groupId>
             <artifactId>insight-scanner-tools</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>org.spdx</groupId>
-            <artifactId>spdx-jackson-store</artifactId>
-          </exclusion>
         </exclusions>
       </dependency>
 
