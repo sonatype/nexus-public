@@ -31,6 +31,8 @@ Ext.define('NX.coreui.view.browse.BrowseRepositoryList', {
   stateful: true,
   stateId: 'nx-coreui-browse-repository-list',
 
+  hideBlobStore: true,
+
   store: 'RepositoryReference',
 
   tbar: {
