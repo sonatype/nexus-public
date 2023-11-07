@@ -112,7 +112,7 @@ public class RestTestHelper
 
   private static final Logger log = LoggerFactory.getLogger(RestTestHelper.class);
 
-  private static final String REST_SERVICE_PATH = "service/rest";
+  public static final String REST_SERVICE_PATH = "service/rest";
 
   @Inject
   private ObjectMapper mapper;
