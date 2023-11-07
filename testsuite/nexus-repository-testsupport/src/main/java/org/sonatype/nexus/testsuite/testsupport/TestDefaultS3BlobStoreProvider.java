@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -51,6 +50,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.S3_ENDPOINT_PROPERTY;
 
 /**
  * When enabled this replaces the default {@link BlobStore} with an S3 store for tests.
@@ -134,7 +134,7 @@ public class TestDefaultS3BlobStoreProvider
       return;
     }
     // the existence property indicates maven is managing the s3mock server
-    String mavenMockEndpoint = System.getProperty("mock.s3.service.endpoint");
+    String mavenMockEndpoint = System.getProperty(S3_ENDPOINT_PROPERTY);
     if (mavenMockEndpoint == null) {
       try (TcclBlock ignored = TcclBlock.begin(classLoader)) {
         if (s3MockContainer == null || !s3MockContainer.isRunning()) {
