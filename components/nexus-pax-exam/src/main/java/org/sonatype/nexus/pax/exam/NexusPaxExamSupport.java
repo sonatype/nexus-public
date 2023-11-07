@@ -57,6 +57,7 @@ import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationFileExtend
 import org.ops4j.pax.exam.options.MavenUrlReference;
 import org.ops4j.pax.exam.options.OptionalCompositeOption;
 import org.ops4j.pax.exam.options.ProvisionOption;
+import org.ops4j.pax.exam.options.extra.EnvironmentOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.slf4j.Logger;
@@ -549,7 +550,9 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
             "rmiServerPort", Integer.toString(PortAllocator.nextFreePort())),
 
-        propagateSystemProperty("it.nexus.recordTaskLogs")
+        propagateSystemProperty("it.nexus.recordTaskLogs"),
+
+        new EnvironmentOption("TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=docker-all.repo.sonatype.com/")
     );
   }
 
