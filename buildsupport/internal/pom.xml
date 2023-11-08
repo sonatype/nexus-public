@@ -29,8 +29,8 @@
 
   <properties>
     <sonatype-licensing.version>1.6.0</sonatype-licensing.version>
-    <clm.dto.model.version>1.54.0-01</clm.dto.model.version>
-    <insight-brain.version>1.167.0-01</insight-brain.version>
+    <clm.dto.model.version>1.57.0-01</clm.dto.model.version>
+    <insight-brain.version>1.168.0-01</insight-brain.version>
     <insight-scanner.version>2.36.66-01</insight-scanner.version>
   </properties>
 
@@ -103,6 +103,12 @@
             <artifactId>insight-scanner-tools</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20231013</version>
       </dependency>
 
       <dependency>
