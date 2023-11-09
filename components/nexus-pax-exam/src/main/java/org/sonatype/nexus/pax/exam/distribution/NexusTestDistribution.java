@@ -23,6 +23,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfi
 import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PROPERTIES_FILE;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.SYSTEM_PROPERTIES_FILE;
+import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.java11CompositeOption;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.nexusFeature;
 
 public interface NexusTestDistribution
@@ -46,7 +47,8 @@ public interface NexusTestDistribution
 
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
-        wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*")
+        wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*"),
+        java11CompositeOption()
     );
   }
 }

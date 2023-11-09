@@ -54,10 +54,13 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationFileExtendOption;
+import org.ops4j.pax.exam.options.CompositeOption;
+import org.ops4j.pax.exam.options.DefaultCompositeOption;
 import org.ops4j.pax.exam.options.MavenUrlReference;
 import org.ops4j.pax.exam.options.OptionalCompositeOption;
 import org.ops4j.pax.exam.options.ProvisionOption;
 import org.ops4j.pax.exam.options.extra.EnvironmentOption;
+import org.ops4j.pax.exam.options.extra.VMOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.slf4j.Logger;
@@ -891,5 +894,16 @@ public abstract class NexusPaxExamSupport
     }
 
     return result;
+  }
+
+  public static CompositeOption java11CompositeOption() {
+    if (!System.getProperty("java.version").startsWith("1.8")) {
+      return new DefaultCompositeOption(
+          new VMOption("--add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED"),
+          new VMOption("--patch-module"),
+          new VMOption("java.base=lib/endorsed/org.apache.karaf.specs.locator-" +
+              System.getProperty("karaf.version") + ".jar"));
+    }
+    return new DefaultCompositeOption();
   }
 }
