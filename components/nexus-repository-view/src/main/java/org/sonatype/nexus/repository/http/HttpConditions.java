@@ -180,8 +180,8 @@ public class HttpConditions
           .map(lastModified.get()::isAfter)
           .orElse(true);
       if (!modifiedAfterSpecifiedDate) {
-        log.debug("Not Modified - If-Modified-Since {} is after LastModified {}", ifModifiedHeader.get(),
-            lastModified.get());
+        log.debug("Not Modified - LastModified {} is after If-Modified-Since {}", lastModified.get(),
+            ifModifiedHeader.get());
         return Optional.of(buildNotModified(getResponse));
       }
     }
