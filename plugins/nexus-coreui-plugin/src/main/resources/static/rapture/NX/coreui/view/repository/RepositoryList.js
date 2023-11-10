@@ -30,21 +30,6 @@ Ext.define('NX.coreui.view.repository.RepositoryList', {
 
   stateful: true,
   stateId: 'nx-coreui-repository-list',
-  listeners: {
-    afterrender: function (grid) {
-      var view = grid.getView();
-      var header = grid.getHeaderContainer();
-
-      header.insert(4, {
-        text: NX.I18n.get('Repository_RepositoryList_BlobStore_Header'),
-        dataIndex: 'blobStoreName',
-        stateId: 'blobStoreName',
-        flex: 1,
-      });
-
-      view.refresh();
-    }
-  },
 
   /**
    * @override

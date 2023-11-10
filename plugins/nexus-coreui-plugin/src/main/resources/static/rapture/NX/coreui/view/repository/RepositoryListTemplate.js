@@ -62,6 +62,13 @@ Ext.define('NX.coreui.view.repository.RepositoryListTemplate', {
         renderer: Ext.htmlEncode
       },
       {
+        text: NX.I18n.get('Repository_RepositoryList_BlobStore_Header'),
+        dataIndex: 'blobStoreName',
+        stateId: 'blobStoreName',
+        flex: 1,
+        hidden: me.hideBlobStore,
+      },
+      {
         header: NX.I18n.get('Repository_RepositoryList_Status_Header'), dataIndex: 'status', stateId: 'status', flex: 1,
         xtype: 'templatecolumn',
         tpl: new Ext.XTemplate(

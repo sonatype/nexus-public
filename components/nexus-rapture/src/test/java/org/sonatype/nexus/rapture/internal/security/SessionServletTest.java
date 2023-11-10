@@ -12,12 +12,16 @@
  */
 package org.sonatype.nexus.rapture.internal.security;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 
 import org.apache.shiro.session.Session;
+import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.After;
@@ -42,11 +46,20 @@ public class SessionServletTest
   @Mock
   private Subject subject;
 
+  @Mock
+  private EventManager eventManager;
+
   private SessionServlet underTest;
 
   @Before
   public void setup() {
-    underTest = new SessionServlet();
+    underTest = new SessionServlet(eventManager);
+
+    PrincipalCollection principalCollection = mock(PrincipalCollection.class);
+    when(subject.getPrincipals()).thenReturn(principalCollection);
+    when(principalCollection.getRealmNames()).thenReturn(new HashSet<>(Arrays.asList("realm")));
+    when(subject.getPrincipal()).thenReturn("someuser");
+
     when(subject.isAuthenticated()).thenReturn(true);
     when(subject.getSession(false)).thenReturn(mock(Session.class));
     ThreadContext.bind(subject);

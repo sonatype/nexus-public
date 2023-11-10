@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -38,6 +37,7 @@ import org.sonatype.nexus.common.net.PortAllocator;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
+import com.adobe.testing.s3mock.testcontainers.S3MockContainer;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import org.junit.After;
@@ -54,9 +54,13 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationFileExtendOption;
+import org.ops4j.pax.exam.options.CompositeOption;
+import org.ops4j.pax.exam.options.DefaultCompositeOption;
 import org.ops4j.pax.exam.options.MavenUrlReference;
 import org.ops4j.pax.exam.options.OptionalCompositeOption;
 import org.ops4j.pax.exam.options.ProvisionOption;
+import org.ops4j.pax.exam.options.extra.EnvironmentOption;
+import org.ops4j.pax.exam.options.extra.VMOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.slf4j.Logger;
@@ -64,9 +68,12 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.utility.DockerImageName;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
+import static java.util.Objects.isNull;
 import static org.ops4j.pax.exam.CoreOptions.composite;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
@@ -132,6 +139,8 @@ public abstract class NexusPaxExamSupport
   public static final String PAX_URL_MAVEN_FILE = "etc/karaf/org.ops4j.pax.url.mvn.cfg";
 
   public static final String KARAF_MANAGEMENT_FILE = "etc/karaf/org.apache.karaf.management.cfg";
+
+  public static final String S3_ENDPOINT_PROPERTY = "mock.s3.service.endpoint";
 
   public static String TEST_JDBC_URL_PROPERTY = "nexus.test.jdbcUrl";
 
@@ -217,6 +226,8 @@ public abstract class NexusPaxExamSupport
   public static final String DB_PASSWORD = "nxrmPassword";
 
   private static GenericContainer postgresContainer = null;
+
+  private static S3MockContainer s3Container;
 
   protected final Logger log = checkNotNull(createLogger());
 
@@ -542,7 +553,9 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
             "rmiServerPort", Integer.toString(PortAllocator.nextFreePort())),
 
-        propagateSystemProperty("it.nexus.recordTaskLogs")
+        propagateSystemProperty("it.nexus.recordTaskLogs"),
+
+        new EnvironmentOption("TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=docker-all.repo.sonatype.com/")
     );
   }
 
@@ -595,7 +608,7 @@ public abstract class NexusPaxExamSupport
   protected static Option configureBlobstore() {
     switch (System.getProperty(BLOB_STORE_KEY, "")) {
       case "s3":
-        String mockS3endpoint = "mock.s3.service.endpoint";
+        String mockS3endpoint = S3_ENDPOINT_PROPERTY;
         String bucket = "nexus.test.s3.bucket";
         String region = "nexus.test.s3.region";
         String accessKey = "nexus.test.s3.accessKey";
@@ -654,6 +667,13 @@ public abstract class NexusPaxExamSupport
     }
   }
 
+  @AfterClass
+  public static void shutdownS3() {
+    if (s3Container != null && s3Container.isRunning()) {
+      s3Container.stop();
+    }
+  }
+
   /**
    * @return Pax-Exam option to change the context path for the Nexus distribution
    */
@@ -668,6 +688,26 @@ public abstract class NexusPaxExamSupport
     return composite(
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus-args", "${jetty.etc}/jetty-https.xml"),
         replaceConfigurationFile("etc/ssl/keystore.jks", keystore));
+  }
+
+  public static Option withS3() {
+    String s3Endpoint = System.getProperty(S3_ENDPOINT_PROPERTY);
+    // If S3 endpoint has not been provided, we need to use S3 mock container
+    if (isNullOrEmpty(s3Endpoint)) {
+      // If container object has not been initialised, we need to create it
+      if (isNull(s3Container)) {
+        String s3mockImage = System.getProperty("it.blobstore.s3image", "docker-all.repo.sonatype.com/adobe/s3mock:2.17.0");
+        DockerImageName image = DockerImageName.parse(s3mockImage).asCompatibleSubstituteFor(S3MockContainer.IMAGE_NAME);
+        s3Container = new S3MockContainer(image);
+      }
+      // If container is not running, we need to start it
+      if (!s3Container.isRunning()) {
+        s3Container.start();
+      }
+      s3Endpoint = s3Container.getHttpEndpoint();
+    }
+    // Pass S3 endpoint to Nexus Repository configuration file
+    return editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, S3_ENDPOINT_PROPERTY, s3Endpoint);
   }
 
   /**
@@ -854,5 +894,16 @@ public abstract class NexusPaxExamSupport
     }
 
     return result;
+  }
+
+  public static CompositeOption java11CompositeOption() {
+    if (!System.getProperty("java.version").startsWith("1.8")) {
+      return new DefaultCompositeOption(
+          new VMOption("--add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED"),
+          new VMOption("--patch-module"),
+          new VMOption("java.base=lib/endorsed/org.apache.karaf.specs.locator-" +
+              System.getProperty("karaf.version") + ".jar"));
+    }
+    return new DefaultCompositeOption();
   }
 }

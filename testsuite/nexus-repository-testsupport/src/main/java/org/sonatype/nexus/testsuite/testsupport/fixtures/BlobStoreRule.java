@@ -43,6 +43,7 @@ import static java.lang.Boolean.TRUE;
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
+import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.S3_ENDPOINT_PROPERTY;
 
 /**
  * @since 3.20
@@ -62,7 +63,7 @@ public class BlobStoreRule
 
   private static final String S3_TYPE = "S3";
 
-  private static final String S3_SERVICE_ENDPOINT = System.getProperty("mock.s3.service.endpoint");
+  private static final String S3_SERVICE_ENDPOINT = System.getProperty(S3_ENDPOINT_PROPERTY);
 
   private final Function<String, BlobStore> defaultBlobstoreCreator;
 

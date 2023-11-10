@@ -12,12 +12,16 @@
  */
 package org.sonatype.nexus.rapture.internal.security;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.event.EventManager;
 
+import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.After;
@@ -25,9 +29,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static com.google.common.net.HttpHeaders.SET_COOKIE;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
@@ -44,11 +48,19 @@ public class JwtServletTest
   @Mock
   private Subject subject;
 
+  @Mock
+  private EventManager eventManager;
+
   private JwtServlet underTest;
 
   @Before
   public void setup() {
-    underTest = new JwtServlet("/");
+    underTest = new JwtServlet("/", eventManager);
+    PrincipalCollection principalCollection = mock(PrincipalCollection.class);
+    when(subject.getPrincipals()).thenReturn(principalCollection);
+    when(principalCollection.getRealmNames()).thenReturn(new HashSet<>(Arrays.asList("realm")));
+    when(subject.getPrincipal()).thenReturn("someuser");
+
     when(subject.isAuthenticated()).thenReturn(true);
     ThreadContext.bind(subject);
   }

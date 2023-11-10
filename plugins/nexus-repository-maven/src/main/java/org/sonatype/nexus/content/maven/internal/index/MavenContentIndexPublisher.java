@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
@@ -160,6 +162,7 @@ public class MavenContentIndexPublisher
       final DuplicateDetectionStrategy<Record> duplicateDetectionStrategy)
   {
     return assets.stream()
+        .filter(Asset::hasBlob)
         .filter(asset -> asset.component().isPresent())
         .map(asset -> toRecord(asset, mavenContentFacet))
         .filter(duplicateDetectionStrategy)
@@ -173,55 +176,57 @@ public class MavenContentIndexPublisher
 
     Component component = asset.component().get();
 
-    Record record = new Record(ARTIFACT_ADD, new HashMap<>());
-    record.put(REC_MODIFIED,  asset.lastUpdated().toEpochSecond());
+    Record assetRecord = new Record(ARTIFACT_ADD, new HashMap<>());
 
-    record.put(GROUP_ID, component.namespace());
-    record.put(ARTIFACT_ID, component.name());
+    OffsetDateTime lastUpdated = asset.blob().get().blobCreated();
+    assetRecord.put(REC_MODIFIED, lastUpdated.toEpochSecond());
+
+    assetRecord.put(GROUP_ID, component.namespace());
+    assetRecord.put(ARTIFACT_ID, component.name());
 
     Optional.ofNullable(asset.attributes(Maven2Format.NAME).get(P_CLASSIFIER))
-        .ifPresent(classifier -> record.put(CLASSIFIER, classifier.toString()));
+        .ifPresent(classifier -> assetRecord.put(CLASSIFIER, classifier.toString()));
 
-    copyComponentAttributes(mavenPath, component.attributes(Maven2Format.NAME), record);
+    copyComponentAttributes(mavenPath, component.attributes(Maven2Format.NAME), assetRecord);
 
-    record.put(HAS_SOURCES, mavenContentFacet.exists(mavenPath.locate("jar", "sources")));
-    record.put(HAS_JAVADOC, mavenContentFacet.exists(mavenPath.locate("jar", "javadoc")));
-    record.put(HAS_SIGNATURE, mavenContentFacet.exists(mavenPath.signature(SignatureType.GPG)));
+    assetRecord.put(HAS_SOURCES, mavenContentFacet.exists(mavenPath.locate("jar", "sources")));
+    assetRecord.put(HAS_JAVADOC, mavenContentFacet.exists(mavenPath.locate("jar", "javadoc")));
+    assetRecord.put(HAS_SIGNATURE, mavenContentFacet.exists(mavenPath.signature(SignatureType.GPG)));
 
-    record.put(FILE_EXTENSION, pathExtension(mavenPath.getFileName()));
+    assetRecord.put(FILE_EXTENSION, pathExtension(mavenPath.getFileName()));
 
     ofNullable(asset.download().getAttributes().get(CONTENT_LAST_MODIFIED))
         .ifPresent(contentLastModified ->
-            record.put(FILE_MODIFIED, DateTime.parse(contentLastModified.toString()).getMillis()));
+            assetRecord.put(FILE_MODIFIED, DateTime.parse(contentLastModified.toString()).getMillis()));
 
-    copyBlobAttributes(asset, record);
-    return record;
+    copyBlobAttributes(asset, assetRecord);
+    return assetRecord;
   }
 
   private void copyComponentAttributes(
       final MavenPath mavenPath,
       final NestedAttributesMap componentFormatAttributes,
-      final Record record)
+      final Record assetRecord)
   {
     Optional.ofNullable(componentFormatAttributes.get(P_BASE_VERSION))
-        .ifPresent(baseVersion -> record.put(VERSION, baseVersion.toString()));
+        .ifPresent(baseVersion -> assetRecord.put(VERSION, baseVersion.toString()));
 
     String packaging = ofNullable(componentFormatAttributes.get(P_PACKAGING))
         .map(Object::toString)
         .orElseGet(() -> pathExtension(mavenPath.getFileName()));
-    record.put(PACKAGING, packaging);
+    assetRecord.put(PACKAGING, packaging);
 
-    record.put(NAME, ofNullable(componentFormatAttributes.get(P_POM_NAME))
+    assetRecord.put(NAME, ofNullable(componentFormatAttributes.get(P_POM_NAME))
         .map(Object::toString).orElse(EMPTY));
 
-    record.put(NAME,
+    assetRecord.put(NAME,
         ofNullable(componentFormatAttributes.get(P_POM_DESCRIPTION)).map(Object::toString).orElse(EMPTY));
   }
 
-  private void copyBlobAttributes(final FluentAsset asset, final Record record) {
+  private void copyBlobAttributes(final FluentAsset asset, final Record assetRecord) {
     asset.blob().ifPresent(assetBlob -> {
-      record.put(FILE_SIZE, assetBlob.blobSize());
-      record.put(SHA1, assetBlob.checksums().get(HashAlgorithm.SHA1.name()));
+      assetRecord.put(FILE_SIZE, assetBlob.blobSize());
+      assetRecord.put(SHA1, assetBlob.checksums().get(HashAlgorithm.SHA1.name()));
     });
   }
 

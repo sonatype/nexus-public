@@ -13,7 +13,8 @@
 package org.sonatype.nexus.rapture.internal.security;
 
 import java.io.IOException;
-
+import java.util.Optional;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletException;
@@ -22,6 +23,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.security.authc.LoginEvent;
+import org.sonatype.nexus.security.authc.LogoutEvent;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
@@ -50,6 +54,12 @@ public class SessionServlet
 {
   private static final Logger log = LoggerFactory.getLogger(SessionServlet.class);
 
+  private final EventManager eventManager;
+
+  @Inject
+  public SessionServlet(final EventManager eventManager) {
+    this.eventManager = eventManager;
+  }
   /**
    * Create session.
    */
@@ -59,6 +69,8 @@ public class SessionServlet
   {
     Subject subject = SecurityUtils.getSubject();
     log.info("Created session for user: {}", subject.getPrincipal());
+    Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+    realmName.ifPresent(realm -> eventManager.post(new LoginEvent(subject.getPrincipal().toString(), realm)));
 
     // sanity check
     checkState(subject.isAuthenticated());
@@ -79,6 +91,8 @@ public class SessionServlet
   {
     Subject subject = SecurityUtils.getSubject();
     log.info("Deleting session for user: {}", subject.getPrincipal());
+    Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+    realmName.ifPresent(realm -> eventManager.post(new LogoutEvent(subject.getPrincipal().toString(), realm)));
     subject.logout();
 
     // sanity check

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.rapture.internal.security;
 
 import java.io.IOException;
-
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -24,6 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.security.authc.LoginEvent;
+import org.sonatype.nexus.security.authc.LogoutEvent;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
@@ -55,9 +58,12 @@ public class JwtServlet
 
   private final String contextPath;
 
+  private final EventManager eventManager;
+
   @Inject
-  public JwtServlet(@Named("${nexus-context-path}") final String contextPath) {
+  public JwtServlet(@Named("${nexus-context-path}") final String contextPath, final EventManager eventManager) {
     this.contextPath = contextPath;
+    this.eventManager = eventManager;
   }
 
   /**
@@ -69,6 +75,8 @@ public class JwtServlet
   {
     Subject subject = SecurityUtils.getSubject();
     log.debug("Created token for user: {}", subject.getPrincipal());
+    Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+    realmName.ifPresent(realm -> eventManager.post(new LoginEvent(subject.getPrincipal().toString(), realm)));
 
     // sanity check
     checkState(subject.isAuthenticated());
@@ -88,6 +96,8 @@ public class JwtServlet
   {
     Subject subject = SecurityUtils.getSubject();
     log.debug("Deleting token for user: {}", subject.getPrincipal());
+    Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+    realmName.ifPresent(realm -> eventManager.post(new LogoutEvent(subject.getPrincipal().toString(), realm)));
     subject.logout();
 
     // sanity check
