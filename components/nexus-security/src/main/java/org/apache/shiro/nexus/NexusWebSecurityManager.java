@@ -12,6 +12,7 @@
  */
 package org.apache.shiro.nexus;
 
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.UserIdMdcHelper;
 import org.sonatype.nexus.security.authc.AuthenticationEvent;
 import org.sonatype.nexus.security.authc.AuthenticationFailureReason;
+import org.sonatype.nexus.security.authc.LoginEvent;
 import org.sonatype.nexus.security.authc.NexusAuthenticationException;
 
 import org.apache.shiro.authc.AuthenticationException;
@@ -84,6 +86,11 @@ public class NexusWebSecurityManager
       subject = super.login(subject, token);
       UserIdMdcHelper.set(subject);
       post(token, true, emptySet());
+      Optional<String> realmName = subject.getPrincipals().getRealmNames().stream()
+          .filter(realm -> realm.equals("SamlRealm")).findFirst();
+      String principal = subject.getPrincipal().toString();
+      realmName.ifPresent(realm -> eventManager.get().post(new LoginEvent(principal, realm)));
+
       return subject;
     }
     catch (NexusAuthenticationException e) {

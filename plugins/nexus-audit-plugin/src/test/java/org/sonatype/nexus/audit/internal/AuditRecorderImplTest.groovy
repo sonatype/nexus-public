@@ -92,6 +92,24 @@ class AuditRecorderImplTest
   }
 
   @Test
+  void 'unknown is replaced if principal is present'() {
+    when(initiatorProvider.get()).thenReturn("*UNKNOWN/1.2.3.4")
+
+    AuditData data = makeAuditData()
+    data.attributes.principal = "someuser"
+    underTest.record(data)
+
+    def argument = ArgumentCaptor.forClass(Object.class)
+    verify(eventManager).post(argument.capture())
+    verifyNoMoreInteractions(eventManager)
+
+    AuditDataRecordedEvent captured = (AuditDataRecordedEvent) argument.value
+    assert captured.data.timestamp != null
+    assert captured.data.nodeId == nodeId
+    assert captured.data.initiator == "someuser/1.2.3.4"
+  }
+
+  @Test
   void 'event fired when data recorded'() {
     AuditData data = makeAuditData()
     underTest.record(data)

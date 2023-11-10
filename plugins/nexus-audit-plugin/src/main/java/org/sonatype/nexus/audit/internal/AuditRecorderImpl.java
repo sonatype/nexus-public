@@ -25,6 +25,7 @@ import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.security.UserIdHelper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +86,13 @@ public class AuditRecorderImpl
         data.setNodeId(nodeAccess.getId());
       }
       if (data.getInitiator() == null) {
-        data.setInitiator(initiatorProvider.get());
+        String initiator = initiatorProvider.get();
+        if (initiator.contains(UserIdHelper.UNKNOWN)) {
+          setInitiator(data, initiator);
+        }
+        else {
+          data.setInitiator(initiator);
+        }
       }
 
       try {
@@ -98,4 +105,15 @@ public class AuditRecorderImpl
       }
     }
   }
+
+  private void setInitiator(final AuditData data, final String initiator) {
+    if (data.getAttributes().containsKey("principal")) {
+      String newInitiator = initiator.replace(UserIdHelper.UNKNOWN, data.getAttributes().get("principal").toString());
+      data.setInitiator(newInitiator);
+    }
+    else {
+      data.setInitiator(initiator);
+    }
+  }
+
 }
