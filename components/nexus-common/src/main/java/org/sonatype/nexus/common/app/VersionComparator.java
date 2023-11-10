@@ -74,7 +74,7 @@ public class VersionComparator
     }
   }
 
-  private boolean isVersionLike(final String version) {
+  protected boolean isVersionLike(final String version) {
     return VERSION_RE.matcher(version).matches();
   }
 }
