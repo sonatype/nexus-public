@@ -62,10 +62,12 @@ import Tags from './components/pages/browse/Tags/Tags';
 import Upload from './components/pages/browse/Upload/Upload';
 import Nodes from "./components/pages/admin/Nodes/NodeList";
 import Browse from './components/pages/browse/Browse/Browse';
+import UsageMetricsAlert from './components/pages/user/Welcome/UsageMetricsAlert';
 
 window.ReactComponents = {
   ...window.ReactComponents,
-  AnalyzeApplication
+  AnalyzeApplication,
+  UsageMetricsAlert
 };
 
 window.BlobStoreTypes = {
