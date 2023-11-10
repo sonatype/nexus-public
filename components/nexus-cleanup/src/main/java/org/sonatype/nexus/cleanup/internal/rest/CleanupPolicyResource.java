@@ -307,14 +307,14 @@ public class CleanupPolicyResource
     }
 
     CleanupPolicyPreviewXO xo = new CleanupPolicyPreviewXO();
-    xo.setCriteria(new CleanupPolicyCriteria());
-    xo.getCriteria().setLastBlobUpdated(request.getCriteriaLastBlobUpdated());
-    xo.getCriteria().setLastDownloaded(request.getCriteriaLastDownloaded());
-    xo.getCriteria().setReleaseType(request.getCriteriaReleaseType());
-    xo.getCriteria().setRegex(request.getCriteriaAssetRegex());
-    xo.getCriteria().setRetain(request.getCriteriaRetain());
-    xo.getCriteria().setSortBy(request.getCriteriaSortBy());
-
+    CleanupPolicyCriteria criteria = new CleanupPolicyCriteria(
+        request.getCriteriaLastBlobUpdated(),
+        request.getCriteriaLastDownloaded(),
+        request.getCriteriaReleaseType(),
+        request.getCriteriaAssetRegex(),
+        request.getCriteriaRetain(),
+        request.getCriteriaSortBy());
+    xo.setCriteria(criteria);
     QueryOptions options = new QueryOptions(request.getFilter(), "name", "asc", 0, PREVIEW_ITEM_COUNT);
 
     try {
@@ -356,13 +356,14 @@ public class CleanupPolicyResource
     StreamingOutput streamingOutput = output -> {
       CleanupPolicyPreviewXO xo = new CleanupPolicyPreviewXO();
       xo.setRepositoryName(repositoryName);
-      xo.setCriteria(new CleanupPolicyCriteria());
-      xo.getCriteria().setLastBlobUpdated(criteriaLastBlobUpdated);
-      xo.getCriteria().setLastDownloaded(criteriaLastDownloaded);
-      xo.getCriteria().setReleaseType(criteriaReleaseType);
-      xo.getCriteria().setRegex(criteriaAssetRegex);
-      xo.getCriteria().setRetain(criteriaRetain);
-      xo.getCriteria().setSortBy(criteriaSortBy);
+      CleanupPolicyCriteria criteria = new CleanupPolicyCriteria(
+          criteriaLastBlobUpdated,
+          criteriaLastDownloaded,
+          criteriaReleaseType,
+          criteriaAssetRegex,
+          criteriaRetain,
+          criteriaSortBy);
+      xo.setCriteria(criteria);
 
       Stream<ComponentXO> components =
           cleanupPreviewHelper.get().getSearchResultsStream(xo, repository, null);
