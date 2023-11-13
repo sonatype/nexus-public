@@ -113,7 +113,8 @@ public interface MavenContentFacet
 
   /**
    * Find Components by Group Artifact Version(GAVs)
-   *
+   * Eagerly fetches {@link org.sonatype.nexus.repository.content.store.AssetBlobData}
+   * & {@link org.sonatype.nexus.repository.content.store.AssetData}
    * @param name artifact name
    * @param group artifact group
    * @param baseVersion artifact base version

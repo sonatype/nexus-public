@@ -15,6 +15,7 @@ package org.sonatype.nexus.content.maven.internal.snapshot;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -27,6 +28,9 @@ import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
@@ -146,7 +150,7 @@ public class RemoveSnapshotsFacetImpl
     int keptSnapshotsCount = 0;
     if (config.getMinimumRetained() >= 0) {
       for (Maven2ComponentData component : components) {
-        if (retentionTimeBorder.isAfter(component.lastUpdated()) && keptSnapshotsCount >= config.getMinimumRetained()) {
+        if (retentionTimeBorder.isAfter(calculateLastUpdated(component)) && keptSnapshotsCount >= config.getMinimumRetained()) {
           snapshotsToDelete.add(component);
         }
         else {
@@ -155,6 +159,23 @@ public class RemoveSnapshotsFacetImpl
       }
     }
     return snapshotsToDelete;
+  }
+
+  /**
+   * Calculate component last updated based {@link AssetBlob#blobCreated()}
+   */
+  @VisibleForTesting
+  OffsetDateTime calculateLastUpdated(final ComponentData component) {
+    OffsetDateTime lastUpdated = component.lastUpdated();
+    if (component.getAssets() != null) {
+      lastUpdated = component.getAssets().stream()
+          .map(Asset::blob)
+          .filter(Optional::isPresent)
+          .map(assetBlob -> assetBlob.get().blobCreated())
+          .max(OffsetDateTime::compareTo)
+          .orElse(lastUpdated);
+    }
+    return lastUpdated;
   }
 
   /**

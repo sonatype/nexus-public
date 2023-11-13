@@ -23,6 +23,8 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.content.maven.store.GAV;
+import org.sonatype.nexus.content.maven.store.Maven2AssetBlobDAO;
+import org.sonatype.nexus.content.maven.store.Maven2AssetDAO;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentDAO;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.content.maven.store.Maven2ContentRepositoryDAO;
@@ -56,7 +58,9 @@ public class Maven2ComponentDAOTest
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME)
       .handle(new BlobRefTypeHandler())
       .access(Maven2ContentRepositoryDAO.class)
-      .access(Maven2ComponentDAO.class);
+      .access(Maven2ComponentDAO.class)
+      .access(Maven2AssetBlobDAO.class)
+      .access(Maven2AssetDAO.class);
 
   @Before
   public void setupContent() {

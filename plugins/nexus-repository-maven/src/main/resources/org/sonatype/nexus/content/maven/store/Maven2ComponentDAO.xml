@@ -35,11 +35,35 @@
     HAVING COUNT(*) &gt; #{minimumRetained};
   </select>
 
-  <select id="findComponentsForGav" resultType="Maven2ComponentData">
-    SELECT * FROM maven2_component
-    WHERE (name = #{name} AND namespace = #{group})
-    AND ((repository_id = #{repositoryId} AND base_version = #{baseVersion}) OR base_version = #{releaseVersion})
-    AND base_version LIKE '%-SNAPSHOT'
+  <resultMap id="BlobComponentAssetsDataMap"
+             type="org.sonatype.nexus.content.maven.store.Maven2ComponentData"
+             extends="ComponentAssetsDataMap">
+    <collection property="assets"
+                javaType="List"
+                ofType="org.sonatype.nexus.repository.content.store.AssetData"
+                notNullColumn="asset_id"
+                fetchType="eager">
+      <id property="assetId" column="asset_id"/>
+      <result property="componentId" column="component_id"/>
+      <result property="assetBlobId" column="asset_blob_id"/>
+      <association property="assetBlob" column="blob"
+                   javaType="org.sonatype.nexus.repository.content.store.AssetBlobData">
+        <id property="assetBlobId" column="asset_blob_id"/>
+        <result property="blobCreated" column="blob_created"/>
+      </association>
+    </collection>
+  </resultMap>
+
+  <select id="findComponentsForGav" resultType="Maven2ComponentData" resultMap="BlobComponentAssetsDataMap">
+    SELECT c.*, a.asset_id, a.asset_blob_id, b.blob_created
+    FROM maven2_component c
+           LEFT JOIN maven2_asset as a ON c.component_id = a.component_id
+           LEFT JOIN maven2_asset_blob as b ON a.asset_blob_id = b.asset_blob_id
+    WHERE (c.name = #{name} AND c.namespace = #{group})
+      AND c.repository_id = #{repositoryId}
+      AND (c.base_version = #{baseVersion} OR
+           c.base_version = #{releaseVersion})
+      AND c.base_version LIKE '%-SNAPSHOT'
     ORDER BY version DESC;
   </select>
 

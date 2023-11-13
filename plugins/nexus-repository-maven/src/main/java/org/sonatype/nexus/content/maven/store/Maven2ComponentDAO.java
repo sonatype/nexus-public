@@ -59,6 +59,8 @@ public interface Maven2ComponentDAO
 
   /**
    * Find components by Group Artifact Version(GAVs)
+   * Eagerly fetches {@link org.sonatype.nexus.repository.content.store.AssetBlobData}
+   * & {@link org.sonatype.nexus.repository.content.store.AssetData}
    *
    * @param repositoryId the repository to select from
    * @param name artifact name
