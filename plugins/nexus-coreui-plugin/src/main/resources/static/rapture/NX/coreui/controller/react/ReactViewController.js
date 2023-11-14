@@ -53,12 +53,14 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
         refresh: 'refresh'
       },
       '#State': {
-        changed: function()
-        { this.getReactFooterContainer().refresh(); }
+        changed: function() {
+          this.getReactFooterContainer().refresh();
+        }
       },
       '#Permissions': {
-        changed: function()
-        { this.getReactFooterContainer().refresh(); }
+        changed: function() {
+          this.getReactFooterContainer().refresh();
+        }
       }
     },
     component: {

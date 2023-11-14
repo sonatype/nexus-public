@@ -12,13 +12,13 @@
  */
 import React from 'react';
 import {render, screen} from '@testing-library/react';
-import {when} from "jest-when";
-import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
-import {SOFT_LIMIT_REACHED} from "./UsageMetrics.testdata";
-import {act} from "react-dom/test-utils";
-import UsageMetricsAlert from "./UsageMetricsAlert";
-import {ExtJS} from "@sonatype/nexus-ui-plugin";
 import userEvent from "@testing-library/user-event";
+import {when} from "jest-when";
+
+import UsageMetricsAlert from './UsageMetricsAlert';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {HARD_LIMIT_REACHED, SOFT_LIMIT_REACHED} from './UsageMetrics.testdata';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -26,42 +26,58 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
     }),
-  },
+  }
 }));
 
 const selectors = {
   ...TestUtils.selectors,
-  getWarningMessage: () => screen.getByRole('alert'),
-  getCloseButton: () => screen.getByRole('button'),
+  getAlert: () => screen.getByRole('alert'),
+  getAlertContent: (t) => screen.getByText(t),
+  getLearnAboutLink: () => screen.getByRole('link', {name: 'Learn about Pro'}),
+  getCloseButton: () => screen.getByRole('button', {name: 'Close'})
 };
 
 describe('Usage Metrics Alert', () => {
-  beforeEach(() => {
+  async function renderView(usage, onClose = null) {
     when(ExtJS.state().getValue)
         .calledWith('contentUsageEvaluationResult')
-        .mockReturnValue(SOFT_LIMIT_REACHED);
+        .mockReturnValue(usage);
+
+    render(<UsageMetricsAlert onClose={onClose}/>);
+  };
+
+  it('renders hard limit alert when hard limit value reached', async () => {
+    await renderView(HARD_LIMIT_REACHED);
+
+    const alert = selectors.getAlert();
+    const alertMessage = 'Users can not currently upload to this repository. This repository contains the ' +
+      'maximum of 75,000 components. Review your usage and consider removing unused components or consider ' +
+      'upgrading to Pro for unlimited usage.';
+    const link = selectors.getLearnAboutLink();
+
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveTextContent(alertMessage);
+    expect(link).toBeInTheDocument();
   });
 
   it("renders the warning when at least one limit is reached", async () => {
+    await renderView(SOFT_LIMIT_REACHED);
 
-    await act(async () => {
-      render(<UsageMetricsAlert/>);
-    });
+    const alert = selectors.getAlert();
+    const alertMessage = 'This repository is approaching the maximum of 75,000 components. Users will not be ' +
+      'able to upload to this repository once this limit is reached. Review your usage and consider removing ' +
+      'unused components or consider upgrading to Pro for unlimited usage.'
 
-    const alert = selectors.getWarningMessage();
     expect(alert).toBeInTheDocument();
-    expect(alert).toHaveTextContent('This repository is approaching the maximum of 75,000 components');
+    expect(alert).toHaveTextContent(alertMessage);
 
   });
 
   it("tests the close button in the alert", async () => {
-
     const onClose = jest.fn();
-    await act(async () => {
-      render(<UsageMetricsAlert onClose={onClose}/>);
-    });
+    await renderView(SOFT_LIMIT_REACHED, onClose);
 
-    const alert = selectors.getWarningMessage();
+    const alert = selectors.getAlert();
     expect(alert).toBeInTheDocument();
     userEvent.click(selectors.getCloseButton());
     expect(onClose).toBeCalled();

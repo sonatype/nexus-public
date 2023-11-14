@@ -14,6 +14,60 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+export const HARD_LIMIT_REACHED = [
+  {
+    "metricName": "peak_requests_per_day",
+    "metricValue": 36300,
+    "limits": [
+      {
+        "limitName": "HARD_LIMIT",
+        "limitValue": 250000
+      },
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 187500
+      }
+    ],
+    "limitLevel": "FREE_TIER"
+  },
+  {
+    "metricName": "peak_requests_per_minute_1d",
+    "metricValue": 0,
+    "limits": [],
+    "limitLevel": "FREE_TIER"
+  },
+  {
+    "metricName": "component_total_count",
+    "metricValue": 77500,
+    "limits": [
+      {
+        "limitName": "HARD_LIMIT",
+        "limitValue": 75000
+      },
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 56250
+      }
+    ],
+    "limitLevel": "HARD_LIMIT"
+  },
+  {
+    "metricName": "successful_last_30d",
+    "metricValue": 26,
+    "limits": [
+      {
+        "limitName": "HARD_LIMIT",
+        "limitValue": 100
+      },
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 75
+      }
+    ],
+    "limitLevel": "FREE_TIER"
+  }
+];
+
 export const SOFT_LIMIT_REACHED = [
   {
     "metricName": "peak_requests_per_day",
@@ -67,4 +121,3 @@ export const SOFT_LIMIT_REACHED = [
     "limitLevel": "FREE_TIER"
   }
 ];
-

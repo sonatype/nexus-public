@@ -23,12 +23,12 @@
  */
 Ext.define('NX.coreui.view.react.FooterContainer', {
   extend: 'Ext.Component',
-  requires: [
-    'NX.State',
-    'NX.Permissions'
-  ],
-
   alias: 'widget.nx-coreui-react-footer-container',
+
+  requires: [
+    'NX.Permissions',
+    'NX.State'
+  ],
 
   reactView: undefined,
 
@@ -64,17 +64,19 @@ Ext.define('NX.coreui.view.react.FooterContainer', {
   },
 
   maybeSetVisible: function() {
-
-    const isCircuitBreakerEnabled = NX.State.getValue('nexus.circuitb.enabled');
-    const contentUsageEvaluationResults = NX.State.getValue('contentUsageEvaluationResult');
-    const isHa = NX.State.getValue('nexus.datastore.clustered.enabled');
-    const isProEdition = NX.State.getEdition() === 'PRO';
     const canViewMetrics = NX.Permissions.check('nexus:metrics:read');
-    const softLimitCards = contentUsageEvaluationResults.filter(function(m) {
+    const isHa = NX.State.getValue('nexus.datastore.clustered.enabled');
+    const isCircuitBreakerEnabled = NX.State.getValue('nexus.circuitb.enabled');
+    const isOss = NX.State.getEdition() === 'OSS';
+    const metrics = NX.State.getValue('contentUsageEvaluationResult');
+    const hardLimitCards = metrics.filter(function(m) {
+      return m.limitLevel === 'HARD_LIMIT';
+    });
+    const softLimitCards = metrics.filter(function(m) {
       return m.limitLevel === 'SOFT_LIMIT';
     });
 
-    this.setVisible(!isProEdition && isCircuitBreakerEnabled && !isHa && softLimitCards.length > 0 && canViewMetrics);
+    this.setVisible(canViewMetrics && !isHa && isCircuitBreakerEnabled && isOss && (hardLimitCards.length > 0 || softLimitCards.length > 0));
     this.updateLayout();
   },
 

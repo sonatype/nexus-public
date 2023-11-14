@@ -11,39 +11,53 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {NxWarningAlert} from '@sonatype/react-shared-components';
+import {NxButtonBar, NxErrorAlert, NxWarningAlert} from '@sonatype/react-shared-components';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {isEmpty} from 'ramda';
 
 import UIStrings from '../../../../constants/UIStrings';
 
 import './UsageMetricsAlert.scss';
 
-const {WELCOME: {USAGE: {SOFT_LIMIT_ALERT_CONTENT}}} = UIStrings;
+const {WELCOME: {USAGE: {LEARN_ABOUT_PRO, HARD_LIMIT_ALERT_CONTENT, SOFT_LIMIT_ALERT_CONTENT}}} = UIStrings;
+const HARD_LIMIT = 'HARD_LIMIT';
 const SOFT_LIMIT = 'SOFT_LIMIT';
 const PEAK_REQUESTS_PER_DAY = 'peak_requests_per_day';
 const COMPONENT_TOTAL_COUNT = 'component_total_count';
 const SUCCESSFUL_LOGINS = 'successful_last_30d';
 
-export default function UsageMetricsAlert(props) {
-  const metrics = ExtJS.state().getValue('contentUsageEvaluationResult');
-
-  function close() {
-    Ext.get('nxrm-warning-alert').setDisplayed(false);
-    Ext.getCmp('nxrm-react-footer-container').updateLayout();
-  }
-
-  const WarningContent = function({metric}) {
-    return metric.limitLevel === SOFT_LIMIT ?
-        <>
-          {metric.metricName === PEAK_REQUESTS_PER_DAY && <div>{SOFT_LIMIT_ALERT_CONTENT.REQUESTS_PER_DAY}</div>}
-          {metric.metricName === COMPONENT_TOTAL_COUNT && <div>{SOFT_LIMIT_ALERT_CONTENT.TOTAL_COMPONENTS}</div>}
-          {metric.metricName === SUCCESSFUL_LOGINS && <div>{SOFT_LIMIT_ALERT_CONTENT.UNIQUE_LOGINS}</div>}
-        </> : null;
+const AlertContent = function({metric, content}) {
+  return <>
+    {metric.metricName === PEAK_REQUESTS_PER_DAY && <p>{content.REQUESTS_PER_DAY}</p>}
+    {metric.metricName === COMPONENT_TOTAL_COUNT && <p>{content.TOTAL_COMPONENTS}</p>}
+    {metric.metricName === SUCCESSFUL_LOGINS && <p>{content.UNIQUE_LOGINS}</p>}
+  </>
   };
 
-  return <NxWarningAlert onClose={props.onClose} role="alert">
-    <div>
-      {metrics.map(m => <WarningContent key={m.metricName} metric={m}/>)}
-    </div>
-  </NxWarningAlert>
-}
+export default function UsageMetricsAlert(props) {
+  const metrics = ExtJS.state().getValue('contentUsageEvaluationResult');
+  const hardLimitMetrics = metrics.filter(m => m.limitLevel === HARD_LIMIT);
+  const softLimitMetrics = metrics.filter(m => m.limitLevel === SOFT_LIMIT);
+
+  return <>
+    {!isEmpty(hardLimitMetrics) &&
+      <NxErrorAlert>
+        <div>
+          {hardLimitMetrics.map(m => <AlertContent key={m.metricName} metric={m} content={HARD_LIMIT_ALERT_CONTENT}/>)}
+        </div>
+        <NxButtonBar>
+          <a className="nxrm-learn-about-link"
+            href={LEARN_ABOUT_PRO.URL}
+            target="_blank">
+            {LEARN_ABOUT_PRO.TEXT}
+          </a>
+        </NxButtonBar>
+      </NxErrorAlert>}
+    {!isEmpty(softLimitMetrics) &&
+      <NxWarningAlert onClose={props.onClose} role="alert">
+        <div>
+          {softLimitMetrics.map(m => <AlertContent key={m.metricName} metric={m} content={SOFT_LIMIT_ALERT_CONTENT}/>)}
+        </div>
+      </NxWarningAlert>}
+  </>
+};
