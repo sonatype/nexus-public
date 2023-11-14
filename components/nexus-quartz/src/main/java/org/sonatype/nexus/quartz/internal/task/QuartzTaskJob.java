@@ -51,6 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
+import static org.sonatype.nexus.scheduling.TaskInfo.EXTENDED_DESCRIPTION_CONTEXT_KEY;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING_BLOCKED;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING_STARTING;
@@ -131,7 +132,7 @@ public class QuartzTaskJob
 
       // create TaskConfiguration, and using that the Task
       final TaskConfiguration config = configurationOf(context.getJobDetail());
-      task = taskFactory.create(config);
+      task = taskFactory.create(config, taskInfo);
       // after this point, cancellation will be handled okay too
 
       try {
@@ -143,6 +144,7 @@ public class QuartzTaskJob
               context.setResult(task.call());
             }
             finally {
+              clearExtendedState(taskInfo);
               // put back any state task modified to have it persisted
               updateJobData(context.getJobDetail(), task.taskConfiguration());
             }
@@ -285,5 +287,14 @@ public class QuartzTaskJob
       throw new UnableToInterruptJobException("Task not cancelable: " + task);
     }
     // else premature/too-late; ignore
+  }
+
+  /**
+   * Clear the current extended task state, called when task is done running
+   */
+  private void clearExtendedState(final TaskInfo taskInfo) {
+    if (taskInfo.getContext() != null) {
+      taskInfo.getContext().remove(EXTENDED_DESCRIPTION_CONTEXT_KEY);
+    }
   }
 }

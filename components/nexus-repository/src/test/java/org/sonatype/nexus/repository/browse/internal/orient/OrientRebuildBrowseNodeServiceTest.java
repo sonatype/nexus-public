@@ -50,7 +50,9 @@ import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -145,7 +147,7 @@ public class OrientRebuildBrowseNodeServiceTest
     when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
     when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
 
-    underTest.rebuild(repository);
+    doRebuild();
 
     verify(assetStore, times(2)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
 
@@ -156,7 +158,7 @@ public class OrientRebuildBrowseNodeServiceTest
   public void executeTruncatesNodesForNoAssets() throws RebuildBrowseNodeFailedException {
     when(assetStore.countAssets(any())).thenReturn(0L);
 
-    underTest.rebuild(repository);
+    doRebuild(false);
 
     verify(browseNodeManager).deleteByRepository(repository.getName());
     verify(assetStore).countAssets(any());
@@ -185,7 +187,7 @@ public class OrientRebuildBrowseNodeServiceTest
     when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
     when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
 
-    underTest.rebuild(repository);
+    doRebuild();
 
     verify(assetStore, times(3)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
 
@@ -224,10 +226,9 @@ public class OrientRebuildBrowseNodeServiceTest
     thrown.expect(RebuildBrowseNodeFailedException.class);
     thrown.expectCause(instanceOf(TaskInterruptedException.class));
 
-    underTest.rebuild(repository);
+    doRebuild();
 
     verify(assetStore, times(1)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
-
   }
 
   private Asset createMockAsset(final String id) {
@@ -251,5 +252,15 @@ public class OrientRebuildBrowseNodeServiceTest
 
   private Entry<Object, EntityId> createIndexEntry(final ORID bucketId, final EntityId id) {
     return new SimpleEntry<>(new OCompositeKey(bucketId), id);
+  }
+
+  private void doRebuild() throws RebuildBrowseNodeFailedException {
+    doRebuild(true);
+  }
+
+  private void doRebuild(final boolean shouldProgressUpdateOccur) throws RebuildBrowseNodeFailedException {
+    final AtomicBoolean progressUpdated = new AtomicBoolean(false);
+    underTest.rebuild(repository, progressMessage -> progressUpdated.set(true));
+    assertThat(progressUpdated.get(), is(shouldProgressUpdateOccur));
   }
 }

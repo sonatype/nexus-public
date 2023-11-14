@@ -13,10 +13,13 @@
 package org.sonatype.nexus.repository.content.browse;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -46,6 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Math.max;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
@@ -58,6 +62,8 @@ public class BrowseFacetImpl
     extends FacetSupport
     implements BrowseFacet
 {
+  private static final int COMPONENT_ID_CACHE_SIZE = 10_000;
+
   private final Map<String, FormatStoreManager> formatStoreManagersByFormat;
 
   private final Map<String, BrowseNodeGenerator> browseNodeGeneratorsByFormat;
@@ -116,11 +122,13 @@ public class BrowseFacetImpl
   public void addPathsToAssets(Collection<EntityId> assetIds) {
     FluentAssets lookup = facet(ContentFacet.class).assets();
 
+    Map<Integer, Integer> componentsProcessed = newComponentCache();
+
     assetIds.stream()
         .map(lookup::find)
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .forEach(this::createBrowseNodes);
+        .forEach(fluentAsset -> createBrowseNodes(fluentAsset, componentsProcessed));
   }
 
   @Guarded(by = STARTED)
@@ -131,26 +139,28 @@ public class BrowseFacetImpl
 
   @Guarded(by = STARTED)
   @Override
-  public void rebuildBrowseNodes() {
+  public void rebuildBrowseNodes(final Consumer<String> progressUpdater) {
     log.info("Deleting browse nodes for repository {}", getRepository().getName());
 
     browseNodeManager.deleteBrowseNodes();
 
     log.info("Rebuilding browse nodes for repository {}", getRepository().getName());
 
-    createBrowseNodes();
+    createBrowseNodes(progressUpdater);
   }
 
   /**
    * Create browse nodes for every asset and their components in the repository.
    */
-  private void createBrowseNodes() {
+  private void createBrowseNodes(final Consumer<String> progressUpdater) {
     String repositoryName = getRepository().getName();
     try {
       FluentAssets assets = getRepository().facet(ContentFacet.class).assets();
 
       long total = assets.count();
       if (total > 0) {
+        // useful for formats that have multiple assets per component
+        Map<Integer,Integer> processedComponents = newComponentCache();
         ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
         Stopwatch sw = Stopwatch.createStarted();
 
@@ -158,13 +168,16 @@ public class BrowseFacetImpl
 
         Continuation<FluentAsset> page = assets.browse(pageSize, null);
         while (!page.isEmpty()) {
-
-          page.forEach(this::createBrowseNodes);
+          page.forEach(fluentAsset -> createBrowseNodes(fluentAsset, processedComponents));
           processed += page.size();
 
           long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
           progressLogger.info("Processed {} / {} {} assets in {} ms",
               processed, total, repositoryName, elapsed);
+          if (progressUpdater != null) {
+            progressUpdater.accept(
+                String.format("processing repository %s %d/%d assets completed", repositoryName, processed, total));
+          }
 
           checkCancellation();
 
@@ -179,7 +192,7 @@ public class BrowseFacetImpl
     }
   }
 
-  private void createBrowseNodes(final FluentAsset asset) {
+  private void createBrowseNodes(final FluentAsset asset, final Map<Integer,Integer> componentsProcessed) {
     if (!browseNodeManager.hasAssetNode(asset)) {
       List<BrowsePath> assetPaths = browseNodeGenerator.computeAssetPaths(asset);
       if (!assetPaths.isEmpty()) {
@@ -191,12 +204,16 @@ public class BrowseFacetImpl
     }
 
     asset.component().ifPresent(component -> {
-      List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
-      if (!componentPaths.isEmpty()) {
-        browseNodeManager.createBrowseNodes(componentPaths, node -> {
-          node.setComponent(component);
-          findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
-        });
+      Integer internalComponentId = internalComponentId(component);
+      // null will be returned when adding a key that isn't already in the cache
+      if (componentsProcessed.put(internalComponentId, internalComponentId) == null) {
+        List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
+        if (!componentPaths.isEmpty() && !browseNodeManager.hasComponentNode(component)) {
+          browseNodeManager.createBrowseNodes(componentPaths, node -> {
+            node.setComponent(component);
+            findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
+          });
+        }
       }
     });
   }
@@ -227,5 +244,16 @@ public class BrowseFacetImpl
     }
     checkState(generator != null, "Could not find a browse node generator for format: %s", format);
     return generator;
+  }
+
+  private Map<Integer,Integer> newComponentCache() {
+    // 0.75f is the DEFAULT_LOAD_FACTOR
+    return new LinkedHashMap<Integer, Integer>(COMPONENT_ID_CACHE_SIZE, 0.75f, true)
+    {
+      @Override
+      protected boolean removeEldestEntry(final Entry eldest) {
+        return size() > COMPONENT_ID_CACHE_SIZE;
+      }
+    };
   }
 }
