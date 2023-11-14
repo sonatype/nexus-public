@@ -66,22 +66,57 @@ export default {
     FIREWALL_ENABLE_BUTTON_CONTENT : 'Enable Capability',
     USAGE: {
       MENU: {
-        text: 'Usage'
+        TEXT: 'Usage'
       },
       TOTAL_COMPONENTS: {
-        title: 'Total components'
+        TITLE: 'Total components'
       },
       UNIQUE_LOGINS: {
-        title: 'Unique logins',
-        subTitle: 'Past 30 days'
+        TITLE: 'Unique logins',
+        SUB_TITLE: 'Past 30 days'
       },
       PEAK_REQUESTS_PER_MINUTE: {
-        title: 'Peak requests per minute',
-        subTitle: 'Past 24 hours'
+        TITLE: 'Peak requests per minute',
+        SUB_TITLE: 'Past 24 hours'
       },
       PEAK_REQUESTS_PER_DAY: {
-        title: 'Peak requests per day',
-        subTitle:'Past 30 days'
+        TITLE: 'Peak requests per day',
+        SUB_TITLE: 'Past 30 days'
+      },
+      CIRCUIT_BREAKER: {
+        TOTAL_COMPONENTS: {
+          TITLE: 'Total Components',
+          SUB_TITLE: 'Current',
+          LIMIT: 'Limit',
+          HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
+          METRIC_NAME: 'component_total_count',
+          METRIC_NAME_PRO: 'component_total_count',
+          AGGREGATE_NAME: 'component_total_count',
+          TOOLTIP: 'The free version of Sonatype Nexus Repository includes up to 75,000 components across all repositories.'
+        },
+        UNIQUE_LOGINS: {
+          TITLE: 'Unique Logins',
+          SUB_TITLE: 'Current',
+          LIMIT: 'Limit per 30 days',
+          HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
+          METRIC_NAME: 'successful_last_30d',
+          AGGREGATE_NAME: 'unique_user_count',
+          TOOLTIP: 'The free version of Sonatype Nexus Repository includes up to 100 unique authentications per 30 days.'
+        },
+        REQUESTS_PER_DAY: {
+          TITLE: 'Requests Per Day',
+          SUB_TITLE: 'Current',
+          LIMIT: 'Limit per 24 hours',
+          HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
+          METRIC_NAME: 'peak_requests_per_day',
+          METRIC_NAME_PRO: 'peak_requests_per_day_30d',
+          AGGREGATE_NAME: 'content_request_count',
+          TOOLTIP: 'The free version of Sonatype Nexus Repository includes up to 250,000 HTTP requests to repository endpoints per day.'
+        }
+      },
+      UPGRADE_TO_PRO: {
+        TEXT: 'Upgrade to Pro to remove limits',
+        URL: '/'
       },
       LEARN_ABOUT_PRO: {
         TEXT: 'Learn about Pro',

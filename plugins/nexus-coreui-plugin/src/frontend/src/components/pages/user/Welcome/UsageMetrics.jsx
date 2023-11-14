@@ -12,11 +12,17 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import {NxCard, NxDivider, NxH2, NxH3, NxLoadWrapper} from '@sonatype/react-shared-components';
+import {
+  NxCard,
+  NxDivider,
+  NxH2,
+  NxH3,
+  NxLoadWrapper} from '@sonatype/react-shared-components';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import UsageMetricsMachine from './UsageMetricsMachine';
+import UsageMetricsWithCircuitBreaker from './UsageMetricsWithCircuitBreaker';
 
 import './UsageMetrics.scss';
 
@@ -35,58 +41,63 @@ export default function UsageMetrics() {
 
   const isProEdition = ExtJS.isProEdition();
   const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
+  const isCircuitBreakerEnabled = ExtJS.state().getValue('nexus.circuitb.enabled');
 
   function retry() {
     send('RETRY');
-  }
+  };
 
-  return !isHa && <div className="nxrm-usage-metrics">
+  return !isHa && <div className={`nxrm-usage-metrics${isCircuitBreakerEnabled ? '-circuit-breaker' : ''}`}>
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       {() =>
         <>
-          <NxH2>{MENU.text}</NxH2>
+          <NxH2>{MENU.TEXT}</NxH2>
           <NxCard.Container>
-            <NxCard aria-label="total components">
-              <NxCard.Header>
-                <NxH3>{TOTAL_COMPONENTS.title}</NxH3>
-              </NxCard.Header>
-              <NxCard.Content>
-                <NxCard.Text>{totalComponents.toLocaleString()}</NxCard.Text>
-              </NxCard.Content>
-            </NxCard>
-            {!isProEdition &&
-              <NxCard aria-label="unique logins">
-                <NxCard.Header>
-                  <NxH3>{UNIQUE_LOGINS.title}</NxH3>
-                </NxCard.Header>
-                <NxCard.Content>
-                  <NxCard.Text>{uniqueLogins.toLocaleString()}</NxCard.Text>
-                  <NxCard.Text className="nxrm-usage-subtitle">{UNIQUE_LOGINS.subTitle}</NxCard.Text>
-                </NxCard.Content>
-              </NxCard>
+            {!isCircuitBreakerEnabled ?
+              <>
+                <NxCard aria-label={TOTAL_COMPONENTS.TITLE}>
+                  <NxCard.Header>
+                    <NxH3>{TOTAL_COMPONENTS.TITLE}</NxH3>
+                  </NxCard.Header>
+                  <NxCard.Content>
+                    <NxCard.Text>{totalComponents.toLocaleString()}</NxCard.Text>
+                  </NxCard.Content>
+                </NxCard>
+                {!isProEdition &&
+                  <NxCard aria-label={UNIQUE_LOGINS.TITLE}>
+                    <NxCard.Header>
+                      <NxH3>{UNIQUE_LOGINS.TITLE}</NxH3>
+                    </NxCard.Header>
+                    <NxCard.Content>
+                      <NxCard.Text>{uniqueLogins.toLocaleString()}</NxCard.Text>
+                      <NxCard.Text className="nxrm-usage-subtitle">{UNIQUE_LOGINS.SUB_TITLE}</NxCard.Text>
+                    </NxCard.Content>
+                  </NxCard>
+                }
+                <NxCard aria-label={PEAK_REQUESTS_PER_MINUTE.TITLE}>
+                  <NxCard.Header>
+                    <NxH3>{PEAK_REQUESTS_PER_MINUTE.TITLE}</NxH3>
+                  </NxCard.Header>
+                  <NxCard.Content>
+                    <NxCard.Text>{peakRequestsPerMin.toLocaleString()}</NxCard.Text>
+                    <NxCard.Text className="nxrm-usage-subtitle">{PEAK_REQUESTS_PER_MINUTE.SUB_TITLE}</NxCard.Text>
+                  </NxCard.Content>
+                </NxCard>
+                <NxCard aria-label={PEAK_REQUESTS_PER_DAY.TITLE}>
+                  <NxCard.Header>
+                    <NxH3>{PEAK_REQUESTS_PER_DAY.TITLE}</NxH3>
+                  </NxCard.Header>
+                  <NxCard.Content>
+                    <NxCard.Text>{peakRequestsPerDay.toLocaleString()}</NxCard.Text>
+                    <NxCard.Text className="nxrm-usage-subtitle">{PEAK_REQUESTS_PER_DAY.SUB_TITLE}</NxCard.Text>
+                  </NxCard.Content>
+                </NxCard>
+              </> : <UsageMetricsWithCircuitBreaker />
             }
-            <NxCard aria-label="peak requests per minute">
-              <NxCard.Header>
-                <NxH3>{PEAK_REQUESTS_PER_MINUTE.title}</NxH3>
-              </NxCard.Header>
-              <NxCard.Content>
-                <NxCard.Text>{peakRequestsPerMin.toLocaleString()}</NxCard.Text>
-                <NxCard.Text className="nxrm-usage-subtitle">{PEAK_REQUESTS_PER_MINUTE.subTitle}</NxCard.Text>
-              </NxCard.Content>
-            </NxCard>
-            <NxCard aria-label="peak requests per day">
-              <NxCard.Header>
-                <NxH3>{PEAK_REQUESTS_PER_DAY.title}</NxH3>
-              </NxCard.Header>
-              <NxCard.Content>
-                <NxCard.Text>{peakRequestsPerDay.toLocaleString()}</NxCard.Text>
-                <NxCard.Text className="nxrm-usage-subtitle">{PEAK_REQUESTS_PER_DAY.subTitle}</NxCard.Text>
-              </NxCard.Content>
-            </NxCard>
           </NxCard.Container>
           <NxDivider />
         </>
       }
     </NxLoadWrapper>
   </div>
-}
+};
