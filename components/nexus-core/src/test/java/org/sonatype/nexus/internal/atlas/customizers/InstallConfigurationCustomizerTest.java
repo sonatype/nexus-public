@@ -240,10 +240,11 @@ public class InstallConfigurationCustomizerTest
     SanitizedDataStoreFileSource source = new SanitizedDataStoreFileSource(CONFIG, "test/file", temp, DEFAULT);
     source.prepare();
 
-    final String expected = "password=**REDACTED**\n" +
-        "name=config\n" +
-        "type=jdbc\n" +
-        "jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password\\=**REDACTED**&password\\=**REDACTED**\n" +
+    final String expected = "password=**REDACTED**" + System.lineSeparator() +
+        "name=config" + System.lineSeparator() +
+        "type=jdbc" + System.lineSeparator() +
+        "jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password\\=**REDACTED**&password\\=**REDACTED**" +
+        System.lineSeparator() +
         "username=postgres";
 
     // Skip the timestamp line at the top of the file
