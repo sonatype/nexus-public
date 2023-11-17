@@ -205,4 +205,9 @@ public abstract class MavenITSupport
   protected void updateLastUpdated(final Repository repository, final Date date) {
     componentAssetTestHelper.setComponentLastUpdatedTime(repository, date);
   }
+
+  protected void setBlobUpdatedTime(final Repository repository, final String pathRegex, final Date date) {
+    componentAssetTestHelper.setBlobUpdatedTime(repository, pathRegex, date);
+  }
+
 }

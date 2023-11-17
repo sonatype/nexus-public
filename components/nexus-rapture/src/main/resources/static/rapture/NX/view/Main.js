@@ -71,9 +71,16 @@ Ext.define('NX.view.Main', {
       },
 
       {
+        xtype: 'nx-coreui-react-footer-container',
+        reactView: window.ReactComponents.UsageMetricsAlert,
+        region: 'south'
+      },
+
+      {
         xtype: 'nx-footer-analytics-opt-out',
         region: 'south'
       },
+
       {
         xtype: 'nx-footer',
         region: 'south',

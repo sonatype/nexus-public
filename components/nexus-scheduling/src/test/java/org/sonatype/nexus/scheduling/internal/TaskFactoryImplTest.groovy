@@ -16,6 +16,7 @@ import java.lang.annotation.Annotation
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.scheduling.TaskConfiguration
+import org.sonatype.nexus.scheduling.TaskInfo
 
 import com.google.inject.Key
 import com.google.inject.util.Providers
@@ -38,6 +39,9 @@ class TaskFactoryImplTest
 {
   @Mock
   private BeanLocator beanLocator
+
+  @Mock
+  private TaskInfo taskInfo
 
   private TaskFactoryImpl underTest
 
@@ -93,7 +97,7 @@ class TaskFactoryImplTest
         typeId: 'no-such-type-id'
     )
     try {
-      underTest.create(config)
+      underTest.create(config, taskInfo)
       fail()
     }
     catch (IllegalArgumentException e) {
@@ -109,9 +113,10 @@ class TaskFactoryImplTest
         id: UUID.randomUUID().toString(),
         typeId: SimpleTaskDescriptor.TYPE_ID
     )
-    def task = underTest.create(config)
+    def task = underTest.create(config, taskInfo)
 
     assert task != null
     assert task instanceof SimpleTask
+    assert task.taskInfo == taskInfo
   }
 }

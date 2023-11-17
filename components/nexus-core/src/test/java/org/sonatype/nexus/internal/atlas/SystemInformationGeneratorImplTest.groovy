@@ -21,6 +21,7 @@ import org.sonatype.nexus.common.app.ApplicationVersion
 import org.sonatype.nexus.common.node.DeploymentAccess
 import org.sonatype.nexus.common.node.NodeAccess
 
+import org.apache.commons.lang.SystemUtils
 import org.apache.karaf.bundle.core.BundleService
 import org.osgi.framework.BundleContext
 import spock.lang.Specification
@@ -129,7 +130,11 @@ class SystemInformationGeneratorImplTest
     given:
       def generator = mockSystemInformationGenerator()
       // we need to exec some command to set up environment variables.
-      def processBuilder = new ProcessBuilder('mvn', 'version')
+      String cmd = 'mvn'
+      if (SystemUtils.IS_OS_WINDOWS) {
+        cmd = 'mvn.cmd';
+      }
+      def processBuilder = new ProcessBuilder(cmd, 'version')
       processBuilder.environment().put('AZURE_CLIENT_SECRET', 'azureSecretValue')
       processBuilder.environment().put('AZURE_TOKEN', 'azureTokenValue')
       processBuilder.environment().put('MY_PASSWORD_FOR_NXRM', 'admin123')

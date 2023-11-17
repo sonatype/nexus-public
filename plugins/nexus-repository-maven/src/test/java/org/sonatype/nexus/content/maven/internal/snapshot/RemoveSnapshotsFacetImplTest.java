@@ -26,6 +26,9 @@ import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.store.GAV;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.store.AssetBlobData;
+import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsConfig;
 import org.sonatype.nexus.repository.types.GroupType;
 
@@ -37,6 +40,8 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -184,6 +189,40 @@ public class RemoveSnapshotsFacetImplTest
     verifyGetSnapshotsToDelete(config(-1, 0, true, 0),
         Collections.singletonList(component("1.0-20160101", 0, "1.0-SNAPSHOT")), Collections.emptyList());
   }
+
+  @Test
+  public void testCalculateLastUpdatedWhereAreNoAssets() {
+    OffsetDateTime lastUpdated = OffsetDateTime.now();
+    Maven2ComponentData componentData = new Maven2ComponentData();
+    componentData.setAssets(null);
+    componentData.setLastUpdated(lastUpdated);
+
+    assertThat(removeSnapshotsFacet.calculateLastUpdated(componentData), is(lastUpdated));
+    componentData.setAssets(Collections.emptyList());
+    assertThat(removeSnapshotsFacet.calculateLastUpdated(componentData), is(lastUpdated));
+  }
+
+  @Test
+  public void testCalculateLastUpdatedWithAssets() {
+    OffsetDateTime blobCreated = OffsetDateTime.now();
+    OffsetDateTime lastUpdated = OffsetDateTime.now().minusMonths(4);
+    Maven2ComponentData componentData = new Maven2ComponentData();
+    AssetData assetData1 = new AssetData(); // latest
+    AssetData assetData2 = new AssetData(); // 5 days ago
+    AssetData assetData3 = new AssetData(); // no blob
+    AssetBlobData assetBlob1 = new AssetBlobData();
+    AssetBlobData assetBlob2 = new AssetBlobData();
+    assetBlob1.setBlobCreated(blobCreated);
+    assetBlob1.setAssetBlobId(1);
+    assetBlob2.setBlobCreated(blobCreated.minusDays(2));
+    assetBlob2.setAssetBlobId(2);
+    assetData1.setAssetBlob(assetBlob1);
+    assetData2.setAssetBlob(assetBlob2);
+    componentData.setAssets(Arrays.asList(assetData1,assetData2, assetData3));
+    componentData.setLastUpdated(lastUpdated);
+    assertThat(removeSnapshotsFacet.calculateLastUpdated(componentData), is(blobCreated));
+  }
+
 
   @Test
   public void testGetSnapshotsToDelete_removeIfReleasedOnlyWithNoRelease() {
