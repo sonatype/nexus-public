@@ -30,6 +30,10 @@
   }
 
   .retain-n {
+    &-criteria__alert {
+      margin: 24px;
+    }
+
     &__alert {
       margin-top: 0;
     }
