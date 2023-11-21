@@ -38,8 +38,6 @@ import static java.util.Collections.emptyMap;
  */
 public interface TaskInfo
 {
-  String EXTENDED_DESCRIPTION_CONTEXT_KEY = "task.extended.description";
-
   /**
    * Returns a unique ID of the task instance.
    *

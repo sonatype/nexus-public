@@ -43,8 +43,6 @@ public abstract class TaskSupport
 
   private final boolean taskLoggingEnabled;
 
-  private TaskInfo taskInfo;
-
   public TaskSupport() {
     this(true);
   }
@@ -153,15 +151,5 @@ public abstract class TaskSupport
   @Override
   public String toString() {
     return String.format("%s(id=%s, name=%s)", getClass().getSimpleName(), getId(), getName());
-  }
-
-  @Override
-  public TaskInfo getTaskInfo() {
-    return taskInfo;
-  }
-
-  @Override
-  public void setTaskInfo(final TaskInfo taskInfo) {
-    this.taskInfo = taskInfo;
   }
 }

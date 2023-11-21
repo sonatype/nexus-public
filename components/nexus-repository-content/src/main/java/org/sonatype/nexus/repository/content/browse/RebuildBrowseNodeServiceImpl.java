@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
-import java.util.function.Consumer;
-
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Repository;
@@ -33,9 +31,7 @@ public class RebuildBrowseNodeServiceImpl
     implements RebuildBrowseNodeService
 {
   @Override
-  public void rebuild(final Repository repository, final Consumer<String> progressUpdater) throws RebuildBrowseNodeFailedException {
-    repository.optionalFacet(BrowseFacet.class).ifPresent(browseFacet -> {
-      browseFacet.rebuildBrowseNodes(progressUpdater);
-    });
+  public void rebuild(final Repository repository) throws RebuildBrowseNodeFailedException {
+    repository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::rebuildBrowseNodes);
   }
 }

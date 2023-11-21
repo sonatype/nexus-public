@@ -47,11 +47,11 @@
     CREATE UNIQUE INDEX IF NOT EXISTS uk_${format}_browse_node_parent_display
         ON ${format}_browse_node (repository_id, parent_id, display_name);
 
-    CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_asset_id
-        ON ${format}_browse_node (asset_id);
+    CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_tree
+        ON ${format}_browse_node (repository_id, parent_id, display_name);
 
     CREATE INDEX IF NOT EXISTS idx_${format}_browse_node_component_id
-        ON ${format}_browse_node (component_id);
+      ON ${format}_browse_node (component_id);
     --
   </insert>
 

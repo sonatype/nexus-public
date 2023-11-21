@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.coreui;
 
-import javax.inject.Provider;
-import javax.validation.Validator;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
@@ -29,7 +26,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.Mock;
+import org.mockito.MockSettings;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
@@ -45,18 +42,13 @@ public class TaskComponentTest
   public ExpectedException thrown = ExpectedException.none();
 
   private TaskComponent component;
-
   private TaskScheduler scheduler;
-
-  @Mock
-  private Validator validator;
-
-  private final Provider<Validator> validatorProvider = () -> validator;
 
   @Before
   public void setUp() {
     scheduler = mock(TaskScheduler.class, Mockito.RETURNS_DEEP_STUBS);
-    component = new TaskComponent(scheduler, validatorProvider, false);
+    component = new TaskComponent();
+    component.setScheduler(scheduler);
   }
 
   @Test
@@ -68,11 +60,11 @@ public class TaskComponentTest
     when(taskInfo.getId()).thenReturn("taskId");
     when(taskInfo.getCurrentState()).thenReturn(localState);
     when(extState.getState()).thenReturn(TaskState.RUNNING);
-    when(scheduler.toExternalTaskState(taskInfo)).thenReturn(extState);
+    when(component.getScheduler().toExternalTaskState(taskInfo)).thenReturn(extState);
 
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("Task can not be edited while it is being executed or it is in line to be executed");
-    component.validateState("taskId", taskInfo);
+    component.validateState(taskInfo);
   }
 
   @Test
@@ -84,9 +76,9 @@ public class TaskComponentTest
     when(taskInfo.getId()).thenReturn("taskId");
     when(taskInfo.getCurrentState()).thenReturn(localState);
     when(extState.getState()).thenReturn(TaskState.WAITING);
-    when(scheduler.toExternalTaskState(taskInfo)).thenReturn(extState);
+    when(component.getScheduler().toExternalTaskState(taskInfo)).thenReturn(extState);
 
-    component.validateState("taskId", taskInfo);
+    component.validateState(taskInfo);
   }
 
   @Test
@@ -114,7 +106,7 @@ public class TaskComponentTest
     TaskXO taskXO = new TaskXO();
     taskXO.setProperties(ImmutableMap.of("source", "println 'hello world'"));
 
-    component = new TaskComponent(scheduler, validatorProvider, true);
+    component.setAllowCreation(true);
     component.validateScriptUpdate(taskInfo, taskXO);
   }
 
@@ -132,11 +124,12 @@ public class TaskComponentTest
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("Script source updates are not allowed");
 
+    component.setAllowCreation(false);
     component.validateScriptUpdate(taskInfo, taskXO);
   }
 
   @Test
-  public void testNotExposedTaskCannotBeCreated() throws Exception {
+  public void testNotExposedTaskCannotBeCreated() {
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString("source", "println 'hello'");
     taskConfiguration.setExposed(false);
