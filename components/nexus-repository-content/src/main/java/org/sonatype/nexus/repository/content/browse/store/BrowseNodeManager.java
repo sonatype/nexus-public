@@ -93,7 +93,7 @@ public class BrowseNodeManager
    * Creates browse nodes for the path (runs in a single transaction).
    */
   protected void doCreateBrowseNodes(final List<BrowsePath> paths, final Consumer<BrowseNodeData> finalStep) {
-    Integer parentId = null;
+    Long parentId = null;
     for (int i = 0; i < paths.size(); i++) {
       BrowseNodeData node = new BrowseNodeData();
       node.setRepositoryId(repositoryId);
