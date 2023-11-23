@@ -18,8 +18,9 @@ import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory;
 import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
-import org.sonatype.nexus.cleanup.internal.content.search.CleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
@@ -41,7 +42,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mock;
-import org.mockito.Spy;
 
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Arrays.asList;
@@ -51,7 +51,6 @@ import static java.util.stream.Stream.empty;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -60,8 +59,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
-import static org.sonatype.nexus.cleanup.internal.content.service.CleanupServiceImpl.COMPONENT_SET_CLEANUP_BROWSE_NAME;
-import static org.sonatype.nexus.cleanup.internal.content.service.CleanupServiceImpl.DEFAULT_CLEANUP_BROWSE_NAME;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.streamContains;
@@ -100,9 +97,6 @@ public class CleanupServiceImplTest
   private CleanupMethod cleanupMethod;
 
   @Mock
-  private CleanupFeatureCheck cleanupFeatureCheck;
-
-  @Mock
   private Format format;
 
   @Mock
@@ -117,8 +111,8 @@ public class CleanupServiceImplTest
   @Mock
   private DeletionProgress deletionProgress;
 
-  @Spy
-  private Map<String, CleanupComponentBrowse> browseServices;
+  @Mock
+  private CleanupBrowseServiceFactory cleanupBrowseFactory;
 
   private CleanupServiceImpl underTest;
 
@@ -130,11 +124,10 @@ public class CleanupServiceImplTest
 
   @Before
   public void setup() throws Exception {
-    browseServices = spy(ImmutableMap.of(
-        DEFAULT_CLEANUP_BROWSE_NAME, browseService,
-        COMPONENT_SET_CLEANUP_BROWSE_NAME, browseService));
-    underTest = new CleanupServiceImpl(repositoryManager, browseServices, cleanupPolicyStorage, cleanupMethod,
-        new GroupType(), RETRY_LIMIT, cleanupFeatureCheck);
+    when(cleanupBrowseFactory.get(any())).thenReturn(browseService);
+
+    underTest = new CleanupServiceImpl(repositoryManager, cleanupPolicyStorage, cleanupMethod,
+        new GroupType(), RETRY_LIMIT, cleanupBrowseFactory);
 
     setupRepository(repository1, POLICY_1_NAME);
     setupRepository(repository2, POLICY_2_NAME);
@@ -156,7 +149,6 @@ public class CleanupServiceImplTest
     when(deletionProgress.isFailed()).thenReturn(false);
     when(cleanupMethod.run(any(), any(), any())).thenReturn(deletionProgress);
 
-    when(cleanupFeatureCheck.isRetainSupported(any())).thenReturn(this.useRetainCleanup);
     when(repository1.getFormat()).thenReturn(format);
     when(repository2.getFormat()).thenReturn(format);
     when(repository3.getFormat()).thenReturn(format);
@@ -329,17 +321,6 @@ public class CleanupServiceImplTest
 
     verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
     verify(cleanupMethod, times(3)).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
-  }
-
-  @Test
-  public void newCleanupOverride() {
-    underTest.cleanup(cancelledCheck);
-    if (this.useRetainCleanup) {
-      verify(browseServices, atLeastOnce()).get(COMPONENT_SET_CLEANUP_BROWSE_NAME);
-    }
-    else {
-      verify(browseServices, atLeastOnce()).get(DEFAULT_CLEANUP_BROWSE_NAME);
-    }
   }
 
   private void setupRepository(final Repository repository, final String... policyName) {

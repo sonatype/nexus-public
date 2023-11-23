@@ -19,6 +19,7 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Named;
 
+import org.sonatype.nexus.cleanup.datastore.search.criteria.ComponentCleanupEvaluator;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;

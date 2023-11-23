@@ -15,14 +15,17 @@ package org.sonatype.nexus.cleanup.internal.rest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -53,6 +56,8 @@ import org.sonatype.nexus.cleanup.content.CleanupPolicyDeletedEvent;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyUpdatedEvent;
 import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
+import org.sonatype.nexus.cleanup.rest.CleanupPolicyRequestValidator;
+import org.sonatype.nexus.cleanup.rest.CleanupPolicyXO;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyCriteria;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyPreviewXO;
@@ -63,16 +68,11 @@ import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.CleanupDryRunEvent;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
-import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
-import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
-import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.rest.Resource;
-import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.validation.Validate;
 import org.sonatype.nexus.validation.group.Create;
@@ -123,8 +123,6 @@ public class CleanupPolicyResource
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
-  private final CleanupFeatureCheck cleanupFeatureCheck;
-
   private final List<String> formatNames;
 
   private final List<Format> formats;
@@ -139,27 +137,25 @@ public class CleanupPolicyResource
 
   private final EventManager eventManager;
 
-  private final GlobalKeyValueStore globalKeyValueStore;
-
   private final boolean isPreviewEnabled;
 
   private final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
 
+  private final Collection<CleanupPolicyRequestValidator> cleanupPolicyValidators;
+
   @Inject
   public CleanupPolicyResource(
       final CleanupPolicyStorage cleanupPolicyStorage,
-      final CleanupFeatureCheck cleanupFeatureCheck,
       final List<Format> formats,
       final Map<String, CleanupPolicyConfiguration> cleanupFormatConfigurationMap,
       final Provider<CleanupPreviewHelper> cleanupPreviewHelper,
       final RepositoryManager repositoryManager,
       final EventManager eventManager,
-      final GlobalKeyValueStore globalKeyValueStore,
       @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled,
-      final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter)
+      final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter,
+      final Collection<CleanupPolicyRequestValidator> cleanupPolicyValidators)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
-    this.cleanupFeatureCheck = checkNotNull(cleanupFeatureCheck);
     this.formats = checkNotNull(formats);
     this.formatNames = formats.stream().map(Format::getValue).collect(Collectors.toList());
     this.eventManager = checkNotNull(eventManager);
@@ -168,9 +164,9 @@ public class CleanupPolicyResource
     this.defaultCleanupFormatConfiguration = checkNotNull(cleanupFormatConfigurationMap.get("default"));
     this.cleanupPreviewHelper = checkNotNull(cleanupPreviewHelper);
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.globalKeyValueStore = checkNotNull(globalKeyValueStore);
     this.isPreviewEnabled = isPreviewEnabled;
     this.csvCleanupPreviewContentWriter = checkNotNull(csvCleanupPreviewContentWriter);
+    this.cleanupPolicyValidators = checkNotNull(cleanupPolicyValidators);
   }
 
   @GET
@@ -194,7 +190,9 @@ public class CleanupPolicyResource
       throw new ValidationErrorsException("format", "specified format " + cleanupPolicyXO.getFormat() + " is not valid.");
     }
 
-    validateRetainAttributes(cleanupPolicyXO);
+    for (CleanupPolicyRequestValidator validator : cleanupPolicyValidators) {
+      validator.validate(cleanupPolicyXO);
+    }
 
     CleanupPolicyXO cleanupXO = CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.add(toCleanupPolicy(cleanupPolicyXO)), 0);
     eventManager.post(new CleanupPolicyCreatedEvent(toCleanupPolicy(cleanupXO)));
@@ -242,7 +240,9 @@ public class CleanupPolicyResource
       throw new ValidationErrorsException("format", "You cannot change the format of a policy that is in use.");
     }
 
-    validateRetainAttributes(cleanupPolicyXO);
+    for (CleanupPolicyRequestValidator validator : cleanupPolicyValidators) {
+      validator.validate(cleanupPolicyXO);
+    }
 
     cleanupPolicy.setNotes(cleanupPolicyXO.getNotes());
     cleanupPolicy.setFormat(cleanupPolicyXO.getFormat());
@@ -344,9 +344,26 @@ public class CleanupPolicyResource
   )
   {
 
-    if (!cleanupFeatureCheck.isPostgres() || !isPreviewEnabled) {
+    if (!isPreviewEnabled) {
       return Response.status(Status.NOT_FOUND).build();
     }
+
+    for (CleanupPolicyRequestValidator validator : cleanupPolicyValidators) {
+      CleanupPolicyXO cleanupPolicyXO = new CleanupPolicyXO();
+      cleanupPolicyXO.setName(name);
+      if (criteriaLastBlobUpdated != null) {
+        cleanupPolicyXO.setCriteriaLastBlobUpdated(criteriaLastBlobUpdated.longValue());
+      }
+      if (criteriaLastDownloaded != null) {
+        cleanupPolicyXO.setCriteriaLastDownloaded(criteriaLastDownloaded.longValue());
+      }
+      cleanupPolicyXO.setCriteriaReleaseType(criteriaReleaseType);
+      cleanupPolicyXO.setCriteriaAssetRegex(criteriaAssetRegex);
+      cleanupPolicyXO.setRetain(criteriaRetain);
+      cleanupPolicyXO.setSortBy(criteriaSortBy);
+      validator.validate(cleanupPolicyXO);
+    }
+
     Map<String, Object> cleanupDryRunXO = new HashMap<>();
     cleanupDryRunXO.put(STARTED_AT_IN_MILLISECONDS, System.currentTimeMillis());
     Repository repository = repositoryManager.get(repositoryName);
@@ -381,55 +398,6 @@ public class CleanupPolicyResource
     return Response.ok(streamingOutput)
         .header("Content-Disposition", "attachment; filename=" + filename)
         .build();
-  }
-
-  private void validateRetainAttributes(final CleanupPolicyXO cleanupPolicyXO) {
-    if (cleanupPolicyXO.getRetain() != null || cleanupPolicyXO.getSortBy() != null) {
-      validateFeatureAvailability(cleanupPolicyXO.getFormat());
-      validateNormalizationState(cleanupPolicyXO.getFormat());
-      if (cleanupPolicyXO.getRetain() != null && cleanupPolicyXO.getSortBy() == null) {
-        throw new ValidationErrorsException("sortBy", "sortBy should be defined if retain is set");
-      }
-
-      if (cleanupPolicyXO.getSortBy() != null && cleanupPolicyXO.getRetain() == null) {
-        throw new ValidationErrorsException("retain", "retain should be defined if sortBy is set");
-      }
-    }
-  }
-
-  private void validateFeatureAvailability(final String format) {
-    if (!cleanupFeatureCheck.isRetainSupported(format)) {
-      if (!cleanupFeatureCheck.isProVersion()) {
-        throw new BadRequestException(Response.status(Status.BAD_REQUEST)
-            .entity(new ValidationErrorXO("Exclusion criteria is not supported."))
-            .build());
-      }
-      else if (!cleanupFeatureCheck.isPostgres()) {
-        throw new BadRequestException(Response.status(Status.BAD_REQUEST)
-            .entity(new ValidationErrorXO("The current data source is not supported by the exclusion criteria."))
-            .build());
-      }
-      else {
-        throw new ValidationErrorsException("format",
-            "The specified format is not supported by the exclusion criteria.");
-      }
-    }
-  }
-
-  /**
-   * Validates if the {@link NormalizeComponentVersionTask} already normalized the specified format
-   * @param format  the format to be validated
-   * @throws ValidationErrorsException if the format is not ready for exclusion (Retain-N)
-   */
-  private void validateNormalizationState(final String format) {
-    boolean isFormatNormalized = globalKeyValueStore
-        .getKey(String.format(NormalizeComponentVersionTask.KEY_FORMAT, format))
-        .map(NexusKeyValue::getAsBoolean)
-        .orElse(false);
-
-    if (!isFormatNormalized) {
-      throw new ValidationErrorsException("format", "the specified format is not ready for the exclusion criteria.");
-    }
   }
 
   private CleanupPolicy toCleanupPolicy(final CleanupPolicyXO cleanupPolicyXO) {

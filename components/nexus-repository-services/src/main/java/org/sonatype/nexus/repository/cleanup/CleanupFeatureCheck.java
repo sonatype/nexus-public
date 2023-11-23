@@ -12,57 +12,11 @@
  */
 package org.sonatype.nexus.repository.cleanup;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Named;
+public interface CleanupFeatureCheck
+{
+  boolean isRetainSupported(String formatName);
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ApplicationVersion;
-import org.sonatype.nexus.repository.db.DatabaseCheck;
+  boolean isProVersion();
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_DOCKER_RETAIN;
-import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_MAVEN_RETAIN;
-
-public class CleanupFeatureCheck extends ComponentSupport {
-
-  static final String PRO_EDITION = "PRO";
-
-  private final DatabaseCheck databaseCheck;
-
-  private final ApplicationVersion applicationVersion;
-
-  private final Set<String> retainEnabledSet;
-
-  @Inject
-  public CleanupFeatureCheck(
-      final DatabaseCheck databaseCheck,
-      final ApplicationVersion applicationVersion,
-      @Named("${" + CLEANUP_MAVEN_RETAIN + ":-false}") final boolean mavenRetainEnabled,
-      @Named("${" + CLEANUP_DOCKER_RETAIN + ":-false}") final boolean dockerRetainEnabled)
-  {
-    this.databaseCheck = checkNotNull(databaseCheck);
-    this.applicationVersion = checkNotNull(applicationVersion);
-    this.retainEnabledSet = new HashSet<>();
-    if (mavenRetainEnabled) {
-      this.retainEnabledSet.add("maven2");
-    }
-    if (dockerRetainEnabled) {
-      this.retainEnabledSet.add("docker");
-    }
-  }
-
-  public final boolean isProVersion() {
-    return PRO_EDITION.equals(applicationVersion.getEdition());
-  }
-
-  public final boolean isPostgres() {
-    return databaseCheck.isPostgresql();
-  }
-
-  public final boolean isRetainSupported(String formatName) {
-    boolean retainEnabled = this.retainEnabledSet.contains(formatName);
-    return isPostgres() && isProVersion() && retainEnabled;
-  }
+  boolean isPostgres();
 }

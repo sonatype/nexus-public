@@ -10,14 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.tasks.normalize;
+package org.sonatype.nexus.cleanup.datastore.search.criteria;
 
-import java.util.Map;
+import java.util.function.Predicate;
 
-import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Asset;
 
-public interface NormalizationPriorityService
+/**
+ * An evaluator of a cleanup policy criteria which is only concerned with an Asset
+ *
+ * @since 3.38
+ */
+public interface AssetCleanupEvaluator
 {
-  Map<Format, FormatStoreManager> getPrioritizedFormats();
+  /**
+   * Creates a predicate which indicates whether the asset is eligible for cleanup.
+   *
+   * @param repository  the source repository for the assets which will be fed into the predicate
+   * @param value       the value associated with the CleanupPolicy for use with this criteria
+   * @return            the predicate
+   */
+  Predicate<Asset> getPredicate(Repository repository, String value);
 }
