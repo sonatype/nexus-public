@@ -12,42 +12,39 @@
  */
 package org.sonatype.nexus.repository.content.upgrades;
 
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-
 /**
- * Remove duplicate, unnecessary index
- * Add additional index for asset querying (similar to component)
+ * Change node_id and parent_id to BIGINT to mitigate sequence exhaustion
  */
 @Named
-public class BrowseNodeMigrationStep_1_32
+public class BrowseNodeMigrationStep_1_33
     extends ComponentSupport implements DatabaseMigrationStep
 {
   private final List<Format> formats;
 
   @Inject
-  public BrowseNodeMigrationStep_1_32(final List<Format> formats) {
+  public BrowseNodeMigrationStep_1_33(final List<Format> formats) {
     this.formats = formats;
   }
 
-  private static final String DROP_INDEX = "DROP INDEX IF EXISTS idx_%s_browse_node_tree";
+  private static final String ALTER_NODE_ID = "ALTER TABLE %s_browse_node ALTER COLUMN node_id SET DATA TYPE BIGINT;";
 
-  private static final String CREATE_ASSET_INDEX = "CREATE INDEX IF NOT EXISTS " +
-      "idx_%s_browse_node_asset_id ON %s_browse_node (asset_id);";
+  private static final String ALTER_PARENT_ID = "ALTER TABLE %s_browse_node ALTER COLUMN parent_id SET DATA TYPE BIGINT;";
 
   @Override
   public Optional<String> version() {
-    return Optional.of("1.32");
+    return Optional.of("1.33");
   }
 
   @Override
@@ -58,17 +55,15 @@ public class BrowseNodeMigrationStep_1_32
   private void migrateFormat(final Connection connection, final Format format) {
     try {
       String formatName = format.getValue();
-      try (PreparedStatement select = connection.prepareStatement(String.format(DROP_INDEX, formatName))) {
+      try (PreparedStatement select = connection.prepareStatement(String.format(ALTER_NODE_ID, formatName))) {
         select.executeUpdate();
       }
-      try (PreparedStatement select = connection.prepareStatement(
-          String.format(CREATE_ASSET_INDEX, formatName, formatName))) {
+      try (PreparedStatement select = connection.prepareStatement(String.format(ALTER_PARENT_ID, formatName))) {
         select.executeUpdate();
       }
     }
     catch (SQLException e) {
-      log.error("Failed to apply browse_node index changes", e);
-      throw new RuntimeException(e);
+      throw new IllegalStateException("Failed to apply browse_node id/parent datatype changes", e);
     }
   }
 }

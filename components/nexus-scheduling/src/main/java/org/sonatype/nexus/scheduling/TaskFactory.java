@@ -38,5 +38,5 @@ public interface TaskFactory
   /**
    * Create a task from given configuration.
    */
-  Task create(TaskConfiguration config, TaskInfo taskInfo);
+  Task create(TaskConfiguration config);
 }

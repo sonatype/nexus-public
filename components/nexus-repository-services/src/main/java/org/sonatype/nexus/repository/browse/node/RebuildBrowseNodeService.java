@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.browse.node;
 
-import java.util.function.Consumer;
-
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -26,5 +24,5 @@ public interface RebuildBrowseNodeService
   /**
    * @param repository {@link Repository} to rebuild browse node data for.
    */
-  void rebuild(Repository repository, Consumer<String> progressUpdater) throws RebuildBrowseNodeFailedException;
+  void rebuild(Repository repository) throws RebuildBrowseNodeFailedException;
 }

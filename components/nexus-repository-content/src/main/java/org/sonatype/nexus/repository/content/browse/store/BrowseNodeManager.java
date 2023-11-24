@@ -27,6 +27,8 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.transaction.Transactional;
 
+import org.apache.commons.lang3.StringUtils;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
@@ -91,7 +93,7 @@ public class BrowseNodeManager
    * Creates browse nodes for the path (runs in a single transaction).
    */
   protected void doCreateBrowseNodes(final List<BrowsePath> paths, final Consumer<BrowseNodeData> finalStep) {
-    Integer parentId = null;
+    Long parentId = null;
     for (int i = 0; i < paths.size(); i++) {
       BrowseNodeData node = new BrowseNodeData();
       node.setRepositoryId(repositoryId);

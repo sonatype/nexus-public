@@ -21,16 +21,20 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.cleanup.internal.datastore.search.criteria.AssetCleanupEvaluator;
-import org.sonatype.nexus.cleanup.internal.datastore.search.criteria.ComponentCleanupEvaluator;
+import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.content.search.ContinuationBrowse;
+import org.sonatype.nexus.cleanup.datastore.search.criteria.AssetCleanupEvaluator;
+import org.sonatype.nexus.cleanup.datastore.search.criteria.ComponentCleanupEvaluator;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
@@ -40,11 +44,12 @@ import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory.DEFAULT_BROWSE_SERVICE;
 
 /**
  * @since 3.38
  */
-@Named("DataStoreCleanupComponentBrowse")
+@Named(DEFAULT_BROWSE_SERVICE)
 @Singleton
 public class DataStoreCleanupComponentBrowse
     extends ComponentSupport
@@ -61,6 +66,14 @@ public class DataStoreCleanupComponentBrowse
   {
     this.componentCriteria = checkNotNull(componentCriteria);
     this.assetCriteria = checkNotNull(assetCriteria);
+  }
+
+  /**
+   * @return true as the default DataStoreComponentBrowse implementation applies to all formats with no other conditions
+   */
+  @Override
+  public boolean isApplicableTo(final Format format) {
+    return true;
   }
 
   @Override

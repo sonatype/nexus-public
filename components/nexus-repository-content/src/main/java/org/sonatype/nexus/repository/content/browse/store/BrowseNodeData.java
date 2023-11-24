@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
 public class BrowseNodeData
     implements BrowseNode
 {
-  Integer nodeId; // NOSONAR: internal id
+  Long nodeId; // NOSONAR: internal id
 
   int repositoryId; // NOSONAR: internal repository id
 
@@ -44,7 +44,7 @@ public class BrowseNodeData
 
   private String displayName;
 
-  int parentId; // NOSONAR: internal id
+  long parentId; // NOSONAR: internal id
 
   private boolean leaf;
   
@@ -95,7 +95,7 @@ public class BrowseNodeData
   /**
    * Sets the internal node id.
    */
-  public void setNodeId(final int nodeId) {
+  public void setNodeId(final long nodeId) {
     this.nodeId = nodeId;
   }
 
@@ -123,7 +123,7 @@ public class BrowseNodeData
   /**
    * Sets the internal parent node id.
    */
-  public void setParentId(final int parentId) {
+  public void setParentId(final long parentId) {
     this.parentId = parentId;
   }
 

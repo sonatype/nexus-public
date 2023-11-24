@@ -143,31 +143,62 @@ export default FormUtils.buildFormMachine({
     }),
     setCriteriaLastDownloadedEnabled: assign({
       criteriaLastDownloadedEnabled: (_, {checked}) => checked,
+      exclusionCriteriaEnabled: ({
+        criteriaLastBlobUpdatedEnabled,
+        criteriaAssetRegexEnabled,
+        exclusionCriteriaEnabled
+      }, { checked }) => {
+        if (criteriaLastBlobUpdatedEnabled || criteriaAssetRegexEnabled || checked) {
+          return exclusionCriteriaEnabled;
+        } 
+        return false;
+      },
       isTouched: ({isTouched}) =>
           mergeDeepRight(isTouched, {criteriaLastDownloaded:  true}),
-      data: ({data}, {checked}) =>
+      data: ({data, criteriaLastBlobUpdatedEnabled, criteriaAssetRegexEnabled}, {checked}) =>
         mergeDeepRight(data, {
           criteriaLastDownloaded: checked ? data.criteriaLastDownloaded : null,
+          retain: !checked || !criteriaLastBlobUpdatedEnabled || !criteriaAssetRegexEnabled ? null : data.retain,
         }),
     }),
     setCriteriaLastBlobUpdatedEnabled: assign({
       criteriaLastBlobUpdatedEnabled: (_, {checked}) => checked,
+      exclusionCriteriaEnabled: ({
+        criteriaLastDownloadedEnabled,
+        criteriaAssetRegexEnabled,
+        exclusionCriteriaEnabled
+      }, {checked}) => {
+        if (criteriaLastDownloadedEnabled || criteriaAssetRegexEnabled || checked){
+          return exclusionCriteriaEnabled;
+        } 
+        return false;
+      },
       isTouched: ({isTouched}) =>
           mergeDeepRight(isTouched, {criteriaLastBlobUpdated:  true}),
-      data: ({data}, {checked}) =>
+      data: ({data, criteriaLastDownloadedEnabled, criteriaAssetRegexEnabled}, {checked}) =>
         mergeDeepRight(data, {
-          criteriaLastBlobUpdated: checked
-            ? data.criteriaLastBlobUpdated
-            : null,
+          criteriaLastBlobUpdated: checked ? data.criteriaLastBlobUpdated : null,
+          retain: !checked || !criteriaLastDownloadedEnabled || !criteriaAssetRegexEnabled ? null : data.retain,
         }),
     }),
     setCriteriaAssetRegexEnabled: assign({
       criteriaAssetRegexEnabled: (_, {checked}) => checked,
+      exclusionCriteriaEnabled: ({
+        criteriaLastDownloadedEnabled,
+        criteriaLastBlobUpdatedEnabled,
+        exclusionCriteriaEnabled
+      }, {checked}) => {
+        if (criteriaLastDownloadedEnabled || criteriaLastBlobUpdatedEnabled || checked){
+          return exclusionCriteriaEnabled;
+        } 
+        return false;
+      },
       isTouched: ({isTouched}) =>
           mergeDeepRight(isTouched, {criteriaAssetRegex: true}),
-      data: ({data}, {checked}) =>
+      data: ({data, criteriaLastDownloadedEnabled, criteriaLastBlobUpdatedEnabled}, {checked}) =>
         mergeDeepRight(data, {
           criteriaAssetRegex: checked ? data.criteriaAssetRegex : null,
+          retain: !checked || !criteriaLastBlobUpdatedEnabled || !criteriaLastDownloadedEnabled ? null : data.retain,
         }),
     }),
     setExclusionCriteriaEnabled: assign({
@@ -246,7 +277,16 @@ export default FormUtils.buildFormMachine({
       cachedRetain: (_, event) => {
         return event.value
       }, 
-    })
+    }),
+    onLoadedEntry: assign({
+      data: ({data}) => ({
+        ...data,
+        exclusionCriteriaEnabled:
+        Boolean(data?.criteriaLastDownloaded) ||
+        Boolean(data?.criteriaLastBlobUpdated) ||
+        Boolean(data?.criteriaAssetRegex)
+      }),
+    }),
   },
   guards: {
     isEdit: ({pristineData}) => isEdit(pristineData),

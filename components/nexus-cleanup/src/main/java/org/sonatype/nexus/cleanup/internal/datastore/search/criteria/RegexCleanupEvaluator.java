@@ -19,6 +19,7 @@ import java.util.regex.PatternSyntaxException;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.cleanup.datastore.search.criteria.AssetCleanupEvaluator;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 

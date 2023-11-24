@@ -22,8 +22,6 @@ import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.Cancelable;
 
-import static org.sonatype.nexus.scheduling.TaskInfo.EXTENDED_DESCRIPTION_CONTEXT_KEY;
-
 /**
  * Browse nodes rebuild task.
  *
@@ -53,8 +51,7 @@ public class RebuildBrowseNodesTask
   protected void execute(final Repository repo) {
     try {
       delayIfPyPi(repo);
-      rebuildBrowseNodeService.rebuild(repo,
-          progressMessage -> getTaskInfo().getContext().put(EXTENDED_DESCRIPTION_CONTEXT_KEY, progressMessage));
+      rebuildBrowseNodeService.rebuild(repo);
     }
     catch (RebuildBrowseNodeFailedException e) {
       log.error("Error rebuilding browse nodes for repository: {}", repo, e);

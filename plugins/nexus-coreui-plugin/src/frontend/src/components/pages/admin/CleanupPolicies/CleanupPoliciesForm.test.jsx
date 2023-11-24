@@ -77,6 +77,8 @@ const selectors = {
     screen.getByLabelText(LABELS.EXCLUSION_CRITERIA.LABEL),
   versionAlertMessage: () =>
     screen.queryByText(LABELS.EXCLUSION_CRITERIA.ALERT),
+  additionalCriteriaMessage: () =>
+    screen.queryByText(LABELS.EXCLUSION_CRITERIA.ADDITIONAL_CRITERIA_ALERT),
   normalizedVersionAlertMessage: () =>
     screen.queryByText(LABELS.EXCLUSION_CRITERIA.NORMALIZED_VERSION_ALERT),
   cancelButton: () => screen.getByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
@@ -745,6 +747,9 @@ describe('CleanupPoliciesForm', function () {
         getCriteriaVersionCheckbox,
         releaseType,
         versionAlertMessage,
+        additionalCriteriaMessage, 
+        getCriteriaLastBlobUpdatedCheckbox,
+        criteriaLastBlobUpdated
       } = selectors;
 
       await renderView();
@@ -761,9 +766,14 @@ describe('CleanupPoliciesForm', function () {
 
       await TestUtils.changeField(releaseType, 'RELEASES');
 
-      expect(getCriteriaVersionCheckbox()).toBeEnabled();
-      expect(versionAlertMessage()).not.toBeInTheDocument();
+      expect(additionalCriteriaMessage()).toBeInTheDocument();
 
+      expect(versionAlertMessage()).not.toBeInTheDocument();
+      expect(getCriteriaVersionCheckbox()).toBeDisabled();
+
+      userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+      await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
+      
       userEvent.click(getCriteriaVersionCheckbox());
       expect(criteriaVersion()).toBeVisible();
       expect(criteriaVersion()).toBeEnabled();
@@ -772,6 +782,7 @@ describe('CleanupPoliciesForm', function () {
 
       expect(getCriteriaVersionCheckbox()).toBeDisabled();
       expect(versionAlertMessage()).toBeInTheDocument();
+      expect(additionalCriteriaMessage()).not.toBeInTheDocument();
 
       await TestUtils.changeField(releaseType, '');
 
