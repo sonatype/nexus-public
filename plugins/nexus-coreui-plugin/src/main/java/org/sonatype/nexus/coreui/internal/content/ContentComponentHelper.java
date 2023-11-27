@@ -48,10 +48,12 @@ import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.search.ComponentFinder;
 import org.sonatype.nexus.repository.content.security.AssetPermissionChecker;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.types.GroupType;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorFactory;
@@ -69,6 +71,8 @@ import static org.sonatype.nexus.repository.content.store.AssetDAO.FILTER_PARAMS
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
+import static org.sonatype.nexus.repository.view.Content.CONTENT;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
@@ -90,6 +94,8 @@ public class ContentComponentHelper
 
   private final AssetPermissionChecker assetPermissionChecker;
 
+  private final RepositoryManager repositoryManager;
+
   private final SelectorFactory selectorFactory;
 
   @Inject
@@ -97,13 +103,15 @@ public class ContentComponentHelper
       final MaintenanceService maintenanceService,
       final Map<String, ComponentFinder> componentFinders,
       final AssetPermissionChecker assetPermissionChecker,
-      final SelectorFactory selectorFactory)
+      final SelectorFactory selectorFactory,
+      final RepositoryManager repositoryManager)
   {
     this.maintenanceService = checkNotNull(maintenanceService);
     this.componentFinders = checkNotNull(componentFinders);
     this.assetPermissionChecker = checkNotNull(assetPermissionChecker);
     this.defaultComponentFinder = checkNotNull(componentFinders.get("default"));
     this.selectorFactory = checkNotNull(selectorFactory);
+    this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   @Override
@@ -301,7 +309,7 @@ public class ContentComponentHelper
   }
 
   @SuppressWarnings({"unchecked"})
-  private static AssetXO toAssetXO(
+  protected AssetXO toAssetXO(
       final String repositoryName,
       final String containingRepositoryName,
       final String format,
@@ -347,6 +355,11 @@ public class ContentComponentHelper
       assetXO.setCreatedBy(blob.createdBy().orElse(null));
       assetXO.setCreatedByIp(blob.createdByIp().orElse(null));
     });
+
+    if (repositoryManager.get(repositoryName).getType() instanceof HostedType && attributes.containsKey(CONTENT)) {
+      Map<String, Object> contentMap = (Map<String, Object>) attributes.get(CONTENT);
+      contentMap.remove(CONTENT_LAST_MODIFIED);
+    }
 
     assetXO.setAttributes(attributes);
 
