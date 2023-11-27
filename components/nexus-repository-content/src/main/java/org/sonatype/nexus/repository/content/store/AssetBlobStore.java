@@ -56,8 +56,9 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<AssetBlob> browseUnusedAssetBlobs(final int limit, @Nullable final String continuationToken) {
-    return dao().browseUnusedAssetBlobs(limit, continuationToken);
+  public Continuation<AssetBlob> browseUnusedAssetBlobs(final int limit,
+      final int blobCreatedDelayHour, @Nullable final String continuationToken) {
+    return dao().browseUnusedAssetBlobs(limit, blobCreatedDelayHour, continuationToken);
   }
 
   /**

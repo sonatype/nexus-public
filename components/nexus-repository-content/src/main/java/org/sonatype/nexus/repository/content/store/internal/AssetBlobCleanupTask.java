@@ -63,6 +63,9 @@ public class AssetBlobCleanupTask
 
   static final boolean HARD_DELETE = getBoolean(PROPERTY_PREFIX + "hardDelete", false);
 
+  static final int BLOB_CREATED_DELAY_HOUR =
+      getInteger(PROPERTY_PREFIX + "blobCreatedDelayHour", 1);
+
   /**
    * Comma-separated formats that will ignore batch deletion. Default value null.
    * maven2,npm
@@ -151,7 +154,8 @@ public class AssetBlobCleanupTask
   {
     int deleteCount = 0;
 
-    Continuation<AssetBlob> unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, null);
+    Continuation<AssetBlob> unusedAssetBlobs =
+        assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, null);
     while (!isCanceled() && !unusedAssetBlobs.isEmpty()) {
       log.debug("Found {} unused {} blobs in {}", unusedAssetBlobs.size(), format, contentStore);
       for (AssetBlob assetBlob : unusedAssetBlobs) {
@@ -172,7 +176,8 @@ public class AssetBlobCleanupTask
           log.debug("Could not delete {} blob {} from {}", format, assetBlob.blobRef(), contentStore, e);
         }
       }
-      unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, unusedAssetBlobs.nextContinuationToken());
+      unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(
+          BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, unusedAssetBlobs.nextContinuationToken());
     }
     return deleteCount;
   }
@@ -189,7 +194,8 @@ public class AssetBlobCleanupTask
       final String contentStore)
   {
     int deleteCount = 0;
-    Continuation<AssetBlob> unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, null);
+    Continuation<AssetBlob> unusedAssetBlobs =
+        assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, null);
     while (!isCanceled() && !unusedAssetBlobs.isEmpty()) {
       if (isCanceled()) {
         break;
@@ -204,7 +210,8 @@ public class AssetBlobCleanupTask
       assetBlobStore.deleteAssetBlobBatch(blobRefIds);
       deleteCount += blobRefAll.size();
 
-      unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, unusedAssetBlobs.nextContinuationToken());
+      unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(
+          BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, unusedAssetBlobs.nextContinuationToken());
     }
     return deleteCount;
   }

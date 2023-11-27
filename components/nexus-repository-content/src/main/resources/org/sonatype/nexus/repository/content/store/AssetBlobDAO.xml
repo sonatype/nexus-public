@@ -59,10 +59,10 @@
         </if>
         <choose>
           <when test="_databaseId == 'PostgreSQL'">
-            AND B.blob_created &lt;= NOW() - INTERVAL '1' HOUR
+            AND B.blob_created &lt;= NOW() - #{blobCreatedDelayHour} * INTERVAL '1' HOUR
           </when>
           <otherwise>
-            AND B.blob_created &lt;= DATEADD(HOUR, -1, NOW())
+            AND B.blob_created &lt;= DATEADD(HOUR, 0-#{blobCreatedDelayHour}, NOW())
           </otherwise>
         </choose>
         LIMIT #{limit};

@@ -50,6 +50,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTask.BATCH_SIZE;
+import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTask.BLOB_CREATED_DELAY_HOUR;
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTaskDescriptor.CONTENT_STORE_FIELD_ID;
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTaskDescriptor.FORMAT_FIELD_ID;
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTaskDescriptor.TYPE_ID;
@@ -105,9 +106,12 @@ public class AssetBlobCleanupTaskTest
 
     Continuation<AssetBlobData> emptyPage = new ContinuationArrayList<>();
 
-    when(assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, null)).thenReturn((Continuation) firstPage);
-    when(assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, "NEXT")).thenReturn((Continuation) lastPage);
-    when(assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, "EOL")).thenReturn((Continuation) emptyPage);
+    when(assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR,
+        null)).thenReturn((Continuation) firstPage);
+    when(assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR,
+        "NEXT")).thenReturn((Continuation) lastPage);
+    when(assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR,
+        "EOL")).thenReturn((Continuation) emptyPage);
 
     when(assetBlobStore.deleteAssetBlob(any())).thenReturn(true);
     when(assetBlobStore.deleteAssetBlobBatch(any())).thenReturn(true);
@@ -137,7 +141,8 @@ public class AssetBlobCleanupTaskTest
     task.execute();
 
     // first page
-    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, null);
+    inOrder.verify(assetBlobStore)
+        .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, null);
     inOrder.verify(assetBlobStore).deleteAssetBlob(blobRefCaptor.capture());
     inOrder.verify(blobStore).delete(blobRefCaptor.getValue().getBlobId(), EXPECTED_REASON);
     inOrder.verify(assetBlobStore).deleteAssetBlob(blobRefCaptor.capture());
@@ -152,7 +157,8 @@ public class AssetBlobCleanupTaskTest
     when(assetBlobStore.deleteAssetBlob(blobRefBecomesUsed)).thenReturn(false);
 
     // last page
-    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, "NEXT");
+    inOrder.verify(assetBlobStore)
+        .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, "NEXT");
     inOrder.verify(assetBlobStore).deleteAssetBlob(blobRefCaptor.capture());
     inOrder.verify(blobStore).delete(blobRefCaptor.getValue().getBlobId(), EXPECTED_REASON);
     inOrder.verify(assetBlobStore).deleteAssetBlob(blobRefCaptor.capture());
@@ -160,7 +166,8 @@ public class AssetBlobCleanupTaskTest
     inOrder.verify(assetBlobStore).deleteAssetBlob(blobRefCaptor.capture());
     inOrder.verify(blobStore).delete(blobRefCaptor.getValue().getBlobId(), EXPECTED_REASON);
 
-    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, "EOL");
+    inOrder.verify(assetBlobStore)
+        .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, "EOL");
 
     inOrder.verifyNoMoreInteractions();
 
@@ -214,13 +221,16 @@ public class AssetBlobCleanupTaskTest
     task.execute();
 
     // first page
-    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, null);
+    inOrder.verify(assetBlobStore)
+        .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, null);
     inOrder.verify(assetBlobStore).deleteAssetBlobBatch(blobRefIdCaptor.capture());
     when(assetBlobStore.deleteAssetBlobBatch(
         new String[]{blobRefBecomesUsed.getBlobId().toString()})).thenReturn(false);
-    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, "NEXT");
+    inOrder.verify(assetBlobStore)
+        .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, "NEXT");
     inOrder.verify(assetBlobStore).deleteAssetBlobBatch(blobRefIdCaptor.capture());
-    inOrder.verify(assetBlobStore).browseUnusedAssetBlobs(BATCH_SIZE, "EOL");
+    inOrder.verify(assetBlobStore)
+        .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, "EOL");
 
     inOrder.verifyNoMoreInteractions();
   }
