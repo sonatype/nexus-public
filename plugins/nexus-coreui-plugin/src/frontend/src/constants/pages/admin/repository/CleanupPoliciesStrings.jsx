@@ -49,14 +49,14 @@ export default {
     FORMAT_LABEL: 'Format',
     DESCRIPTION_LABEL: 'Description',
     CRITERIA_LABEL: 'Cleanup Criteria',
-    CRITERIA_DESCRIPTION: 'Remove all componets that match all selected criteria',
-    LAST_UPDATED_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Component Age Criteria`,
+    CRITERIA_DESCRIPTION: 'Remove all components that match all selected criteria',
+    LAST_UPDATED_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Component Age Criterion`,
     LAST_UPDATED_LABEL: 'Component Age',
-    LAST_DOWNLOADED_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Component Usage Criteria`,
+    LAST_DOWNLOADED_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Component Usage Criterion`,
     LAST_DOWNLOADED_LABEL: 'Component Usage',
-    RELEASE_TYPE_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Release Type Criteria`,
+    RELEASE_TYPE_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Release Type Criterion`,
     RELEASE_TYPE_LABEL: 'Release Type',
-    ASSET_NAME_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Asset Name Matcher Criteria`,
+    ASSET_NAME_CHECKBOX_TITLE: (enabled) => `${enabled ? 'Disable' : 'Enable'} Asset Name Matcher Criterion`,
     ASSET_NAME_LABEL: 'Asset Name Matcher',
     FORMAT_SELECT: 'Select a format...',
     RELEASE_TYPE_SELECT: 'Remove components that are of the following release type:',
@@ -132,7 +132,7 @@ export default {
         return `Component count (matching criteria) viewing first ${actual}`;
       },
       SAMPLE_WARNING: 'Results may only be a sample of what will be deleted using the current criteria.',
-      BUTTON_TOOLTIP: 'Please select a repository and at least one cleanup criteria',
+      BUTTON_TOOLTIP: 'Please select a repository and at least one cleanup criterion',
     },
 
     DRY_RUN: {
@@ -144,7 +144,7 @@ export default {
     },
 
     MESSAGES: {
-      NO_CRITERIA_ERROR: 'At least one criteria must be selected',
+      NO_CRITERIA_ERROR: 'At least one criterion must be selected',
       SAVE_ERROR: 'An error occurred while saving the cleanup policy',
       DELETE_ERROR: (name) => `Cleanup policy ${name} is in use and cannot be deleted`,
 
