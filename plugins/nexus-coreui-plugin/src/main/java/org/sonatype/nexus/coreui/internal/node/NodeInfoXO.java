@@ -10,12 +10,49 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.datastore
+package org.sonatype.nexus.coreui.internal.node;
 
 /**
- * @since 3.19
+ * For transmitting info about nodes in cluster
  */
-class DataStoreXO
+public class NodeInfoXO
 {
-  String name
+  private String name;
+
+  private Boolean local;
+
+  private String displayName;
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(final String name) {
+    this.name = name;
+  }
+
+  public Boolean getLocal() {
+    return local;
+  }
+
+  public void setLocal(final Boolean local) {
+    this.local = local;
+  }
+
+  public String getDisplayName() {
+    return displayName;
+  }
+
+  public void setDisplayName(final String displayName) {
+    this.displayName = displayName;
+  }
+
+  @Override
+  public String toString() {
+    return "NodeInfoXO(" +
+        "name=" + name +
+        ", local=" + local +
+        ", displayName=" + displayName +
+        ")";
+  }
 }
