@@ -10,28 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store;
+package org.sonatype.nexus.repository.content;
 
-import org.sonatype.nexus.repository.content.Component;
+import org.apache.ibatis.annotations.Param;
 
-/**
- * {@link Component} data backed by the content data store, that has a dynamic continuation token to allow being
- * returned as part of database queries with differing ORDER BY clauses, and not tied to component ID
- */
-public class OrderedComponentData extends ComponentData {
-
-  String orderedToken;
-
-  public OrderedComponentData() {
-    //empty constructor to be able to instantiate object using myBatis
-  }
-
-  public void setOrderedToken(final String orderedToken) {
-    this.orderedToken = orderedToken;
-  }
-
-  @Override
-  public String nextContinuationToken() {
-    return orderedToken;
-  }
+public interface SqlGenerator<P extends SqlQueryParameters>
+{
+    String generateSelectStatement(@Param("params") final P params);
 }

@@ -120,8 +120,7 @@
     ORDER BY component_id LIMIT #{limit};
   </select>
 
-  <resultMap id="ComponentAssetsDataMap"
-             type="org.sonatype.nexus.repository.content.store.ComponentData">
+  <resultMap id="ComponentDataMap" type="ComponentData">
     <id property="componentId" column="component_id"/>
     <result property="namespace" column="namespace" />
     <result property="name" column="name" />
@@ -131,6 +130,18 @@
     <result property="attributes" column="attributes"/>
     <result property="created" column="created"/>
     <result property="lastUpdated" column="last_updated"/>
+  </resultMap>
+
+  <!--resultMap to obtain components using a custom order (orderedToken) -->
+  <resultMap id="OrderedComponentDataMap"
+             type="org.sonatype.nexus.repository.content.store.OrderedComponentData"
+             extends="ComponentDataMap">
+    <result property="orderedToken" column="orderedToken"/>
+  </resultMap>
+
+  <resultMap id="ComponentAssetsDataMap"
+             type="org.sonatype.nexus.repository.content.store.ComponentData"
+             extends="ComponentDataMap">
     <!--    collections of assets     -->
     <collection property="assets"
                 javaType="List"
@@ -138,14 +149,21 @@
                 notNullColumn="asset_id">
       <id property="assetId" column="asset_id"/>
       <result property="path" column="path"/>
-      <result property="kind" column="kind" />
-      <result property="componentId" column="component_id" />
+      <result property="kind" column="kind"/>
+      <result property="componentId" column="component_id"/>
       <result property="assetBlobId" column="asset_blob_id"/>
       <result property="lastDownloaded" column="last_downloaded"/>
       <result property="attributes" column="attributes"/>
       <result property="created" column="created"/>
       <result property="lastUpdated" column="last_updated"/>
     </collection>
+  </resultMap>
+
+  <!--resultMap to obtain component with assets using a custom order (orderedToken) -->
+  <resultMap id="OrderedComponentAssetsDataMap"
+             type="org.sonatype.nexus.repository.content.store.OrderedComponentData"
+             extends="ComponentAssetsDataMap">
+    <result property="orderedToken" column="orderedToken" />
   </resultMap>
 
   <select id="browseComponentsEager"
@@ -186,78 +204,6 @@
   <select id="browseComponentsBySet" resultType="ComponentData">
     <include refid="selectComponentsBySet"/>
   </select>
-
-  <!-- Generic cleanup implementation that does not handle retain-n, based on component sets (namespace/name)
-         NB: Some formats (may override this with a browseComponentsForCleanupEx method
-             any changes here should also be validated in those overrides to ensure integrity -->
-  <select id="browseComponentsForCleanup" resultType="ComponentData">
-    <choose>
-      <!-- Only run select if supported criteria are present, otherwise all data may be selected
-           Do not select anything if Prerelease as that is not supported in a generic way -->
-      <when test="criteria.isPrerelease != 'true' and (criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null)">
-        <choose>
-          <when test="includeAssets">
-            WITH cleanup_components AS ( <include refid="selectBrowseComponentsForCleanup"/> )
-            SELECT component.*, asset.*
-            FROM cleanup_components
-            LEFT JOIN ${format}_component AS component ON component.component_id = cleanup_components.component_id
-            LEFT JOIN ${format}_asset AS asset ON component.component_id = asset.component_id
-            ORDER BY component.component_id
-          </when>
-          <otherwise><include refid="selectBrowseComponentsForCleanup"/></otherwise>
-        </choose>
-      </when>
-      <otherwise>SELECT * FROM ${format}_component LIMIT 0</otherwise>
-    </choose>
-  </select>
-
-  <sql id="selectBrowseComponentsForCleanup">
-    <choose>
-      <when test="includeAssets">SELECT ${format}_component.component_id FROM ${format}_component </when>
-      <otherwise>SELECT ${format}_component.* FROM ${format}_component </otherwise>
-    </choose>
-
-    <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null or criteria.regex != null">
-      LEFT OUTER JOIN ${format}_asset on ${format}_component.component_id = ${format}_asset.component_id
-    </if>
-    <if test="criteria.lastDownloaded != null or criteria.lastBlobUpdated != null">
-      LEFT JOIN ${format}_asset_blob ON ${format}_asset.asset_blob_id = ${format}_asset_blob.asset_blob_id
-    </if>
-
-    WHERE
-    <choose>
-      <when test="namespace == null and name == null"> ${format}_component.repository_id = #{repositoryId}</when>
-      <otherwise> <include refid="componentSetMatch"/></otherwise>
-    </choose>
-
-    <if test="continuationToken != null"> AND ${format}_component.component_id > #{continuationToken}</if>
-
-    GROUP BY ${format}_component.component_id
-    <!-- trim allows us to only include the HAVING keyword and clauses when needed, ensuring removal of AND if there
-         is no preceding clause -->
-    <trim prefix="HAVING" prefixOverrides="AND ">
-      <if test="criteria.lastDownloaded != null">
-        <!-- CDATA is used here to enable syntax with <= (less than would otherwise have to be URL-encoded) -->
-        <![CDATA[
-            (max(coalesce(${format}_asset.last_downloaded, ${format}_asset_blob.blob_created))
-              <= (now() - interval '${criteria.lastDownloaded} seconds'))
-        ]]>
-      </if>
-      <if test="criteria.lastBlobUpdated != null">
-        <![CDATA[
-            AND (max(${format}_asset_blob.blob_created) <= (now() - interval '${criteria.lastBlobUpdated} seconds'))
-        ]]>
-      </if>
-      <if test="criteria.regex != null">
-        <![CDATA[
-            AND bool_or(${format}_asset.path ~ #{criteria.regex})
-        ]]>
-      </if>
-    </trim>
-     ORDER BY ${format}_component.component_id
-
-    <if test="limit > 0"> LIMIT #{limit}</if>
-  </sql>
 
   <select id="browseNamespaces" resultType="String">
     SELECT DISTINCT(namespace) FROM ${format}_component WHERE repository_id = #{repositoryId};

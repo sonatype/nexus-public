@@ -21,11 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -348,28 +346,33 @@ public class CleanupPolicyResource
       return Response.status(Status.NOT_FOUND).build();
     }
 
+    Repository repository = repositoryManager.get(repositoryName);
+
+    if (repository == null) {
+      throw new NotFoundException("Repository " + repositoryName + " not found.");
+    }
+
+    CleanupPolicyXO cleanupPolicyXO = new CleanupPolicyXO();
+    cleanupPolicyXO.setName(name);
+    cleanupPolicyXO.setFormat(repository.getFormat().getValue());
+    if (criteriaLastBlobUpdated != null) {
+      cleanupPolicyXO.setCriteriaLastBlobUpdated(criteriaLastBlobUpdated.longValue());
+    }
+    if (criteriaLastDownloaded != null) {
+      cleanupPolicyXO.setCriteriaLastDownloaded(criteriaLastDownloaded.longValue());
+    }
+    cleanupPolicyXO.setCriteriaReleaseType(criteriaReleaseType);
+    cleanupPolicyXO.setCriteriaAssetRegex(criteriaAssetRegex);
+    cleanupPolicyXO.setRetain(criteriaRetain);
+    cleanupPolicyXO.setSortBy(criteriaSortBy);
+
     for (CleanupPolicyRequestValidator validator : cleanupPolicyValidators) {
-      CleanupPolicyXO cleanupPolicyXO = new CleanupPolicyXO();
-      cleanupPolicyXO.setName(name);
-      if (criteriaLastBlobUpdated != null) {
-        cleanupPolicyXO.setCriteriaLastBlobUpdated(criteriaLastBlobUpdated.longValue());
-      }
-      if (criteriaLastDownloaded != null) {
-        cleanupPolicyXO.setCriteriaLastDownloaded(criteriaLastDownloaded.longValue());
-      }
-      cleanupPolicyXO.setCriteriaReleaseType(criteriaReleaseType);
-      cleanupPolicyXO.setCriteriaAssetRegex(criteriaAssetRegex);
-      cleanupPolicyXO.setRetain(criteriaRetain);
-      cleanupPolicyXO.setSortBy(criteriaSortBy);
       validator.validate(cleanupPolicyXO);
     }
 
     Map<String, Object> cleanupDryRunXO = new HashMap<>();
     cleanupDryRunXO.put(STARTED_AT_IN_MILLISECONDS, System.currentTimeMillis());
-    Repository repository = repositoryManager.get(repositoryName);
-    if (repository == null) {
-      throw new NotFoundException("Repository " + repositoryName + " not found.");
-    }
+
     StreamingOutput streamingOutput = output -> {
       CleanupPolicyPreviewXO xo = new CleanupPolicyPreviewXO();
       xo.setRepositoryName(repositoryName);

@@ -115,6 +115,9 @@
 
     <!-- fabric8 container naming pattern: {imageName}-{buildTimestamp}-{index} -->
     <docker.containerNamePattern>%n-%t-%i</docker.containerNamePattern>
+
+    <!-- max heap memory for surefire-plugin -->
+    <surefire.maxHeap>-Xmx300M</surefire.maxHeap>
   </properties>
 
   <modules>
@@ -690,7 +693,7 @@
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
             <argLine>
-              -Xmx300M
+              ${surefire.maxHeap}
               -XX:MaxDirectMemorySize=2G
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/surefire-reports

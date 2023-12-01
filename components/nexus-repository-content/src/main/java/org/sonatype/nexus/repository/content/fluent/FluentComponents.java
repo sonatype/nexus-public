@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.fluent;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -23,6 +22,8 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ComponentSet;
+import org.sonatype.nexus.repository.content.SqlGenerator;
+import org.sonatype.nexus.repository.content.SqlQueryParameters;
 import org.sonatype.nexus.repository.content.store.ComponentSetData;
 
 /**
@@ -68,14 +69,19 @@ public interface FluentComponents
   Continuation<FluentComponent> bySet(final ComponentSet componentSet, final int limit, final String continuationToken);
 
   /**
-   * Query components within the given set that satisfy the provided cleanup criteria
+   * Select components using the provided query generator and parameters.
+   *
+   * @param generator  generator for the select
+   * @param params     parameters for the select
    */
-  Continuation<FluentComponent> byCleanupCriteria(
-      final ComponentSet componentSet,
-      final Map<String, String> cleanupCriteria,
-      final boolean includeAssets,
-      final int limit,
-      final String continuationToken);
+  Continuation<FluentComponent> selectComponents(final SqlGenerator<? extends SqlQueryParameters> generator, final SqlQueryParameters params);
+
+  /**
+   * Select components and related assets using the provided query generator and parameters.
+   * @param generator generator for the select
+   * @param params parameters for the select
+   */
+  Continuation<FluentComponent> selectComponentsWithAssets(final SqlGenerator<? extends SqlQueryParameters> generator, final SqlQueryParameters params);
 
   /**
    * List all namespaces of components in the repository.
