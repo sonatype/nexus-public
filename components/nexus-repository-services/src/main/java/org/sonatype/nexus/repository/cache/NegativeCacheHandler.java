@@ -18,6 +18,9 @@ import javax.annotation.Nonnull;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpStatus;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
@@ -67,7 +70,8 @@ public class NegativeCacheHandler
     Status status = negativeCache.get(key);
     if (status == null) {
       response = context.proceed();
-      if (isNotFound(response)) {
+
+      if (isNotFound(response) && !isAutoBlocked(context)) {
         negativeCache.put(key, response.getStatus());
         log.debug("Couldn't find {} - adding to NFC", key);
       }
@@ -92,5 +96,10 @@ public class NegativeCacheHandler
 
   private boolean isNotFound(final Response response) {
     return HttpStatus.NOT_FOUND == response.getStatus().getCode();
+  }
+
+  private boolean isAutoBlocked(final Context context) {
+    RemoteConnectionStatus remoteConnectionStatus = context.getRepository().facet(HttpClientFacet.class).getStatus();
+    return remoteConnectionStatus.getType() == RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
   }
 }

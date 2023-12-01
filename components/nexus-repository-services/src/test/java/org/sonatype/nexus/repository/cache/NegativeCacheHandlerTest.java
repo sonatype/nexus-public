@@ -18,6 +18,9 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.http.HttpStatus;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
 import org.sonatype.nexus.repository.replication.PullReplicationSupport;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
@@ -51,6 +54,12 @@ public class NegativeCacheHandlerTest
   @Mock
   private Repository mockRepository;
 
+  @Mock
+  private HttpClientFacet mockHttpFacet;
+
+  @Mock
+  private RemoteConnectionStatus mockConnectionStatus;
+
   private NegativeCacheHandler underTest;
 
   @Before
@@ -59,6 +68,9 @@ public class NegativeCacheHandlerTest
 
     when(mockContext.getRequest()).thenReturn(mockRequest);
     when(mockContext.getRepository()).thenReturn(mockRepository);
+    when(mockRepository.facet(HttpClientFacet.class)).thenReturn(mockHttpFacet);
+    when(mockHttpFacet.getStatus()).thenReturn(mockConnectionStatus);
+    when(mockConnectionStatus.getType()).thenReturn(RemoteConnectionStatusType.AVAILABLE);
     when(mockRequest.getAction()).thenReturn(HttpMethods.GET);
     when(mockRepository.facet(NegativeCacheFacet.class)).thenReturn(mockNegativeCacheFacet);
     when(mockNegativeCacheFacet.getCacheKey(mockContext)).thenReturn(mockNegativeCacheKey);
@@ -139,6 +151,28 @@ public class NegativeCacheHandlerTest
   public void a404ResponseGetsCachedForGet() throws Exception {
     when(mockRequest.getAction()).thenReturn(HttpMethods.GET);
     verify404Cached();
+  }
+
+  /**
+   * Given:
+   * - no cached key present
+   * - a 404 response from context for GET
+   * - context (remote) is auto blocked
+   * Then:
+   *  - 404 response is cached
+   */
+  @Test
+  public void a404ResponseSkipsCacheForBlockedRemote() throws Exception {
+    when(mockRequest.getAction()).thenReturn(HttpMethods.GET);
+    when(mockConnectionStatus.getType()).thenReturn(RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE);
+    Response contextResponse = HttpResponses.notFound("404");
+    when(mockContext.proceed()).thenReturn(contextResponse);
+    when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(null);
+    Response response = underTest.handle(mockContext);
+    assert response == contextResponse;
+    verify(mockContext).proceed();
+    verify(mockNegativeCacheFacet, never()).put(any(NegativeCacheKey.class), any(Status.class));
+    verify(mockNegativeCacheFacet, never()).invalidate(mockNegativeCacheKey);
   }
 
   /**

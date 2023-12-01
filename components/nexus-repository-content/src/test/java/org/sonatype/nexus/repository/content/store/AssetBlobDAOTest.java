@@ -67,17 +67,18 @@ public class AssetBlobDAOTest
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
-      assertThat(dao.browseUnusedAssetBlobs(1, null), emptyIterable());
+      assertThat(dao.browseUnusedAssetBlobs(1, 1, null), emptyIterable());
 
       dao.createAssetBlob(assetBlob1);
 
-      assertThat(dao.browseUnusedAssetBlobs(1, null), contains(sameBlob(assetBlob1)));
+      assertThat(dao.browseUnusedAssetBlobs(1, 1, null), contains(sameBlob(assetBlob1)));
 
       dao.createAssetBlob(assetBlob2);
 
-      assertThat(dao.browseUnusedAssetBlobs(1, null), contains(sameBlob(assetBlob1)));
+      assertThat(dao.browseUnusedAssetBlobs(1, 1, null), contains(sameBlob(assetBlob1)));
 
-      assertThat(dao.browseUnusedAssetBlobs(2, null), contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
+      assertThat(dao.browseUnusedAssetBlobs(2, 1, null),
+          contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
 
       session.getTransaction().commit();
     }
@@ -125,11 +126,11 @@ public class AssetBlobDAOTest
 
       assertTrue(dao.deleteAssetBlob(blobRef1));
 
-      assertThat(dao.browseUnusedAssetBlobs(1, null), contains(sameBlob(assetBlob2)));
+      assertThat(dao.browseUnusedAssetBlobs(1, 1, null), contains(sameBlob(assetBlob2)));
 
       assertTrue(dao.deleteAssetBlob(blobRef2));
 
-      assertThat(dao.browseUnusedAssetBlobs(1, null), emptyIterable());
+      assertThat(dao.browseUnusedAssetBlobs(1, 1, null), emptyIterable());
 
       assertFalse(dao.deleteAssetBlob(new BlobRef(NODE_ID, "test-store", BLOB_ID)));
     }

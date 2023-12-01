@@ -405,7 +405,7 @@ public class AssetDAOTestSupport
       session.access(TestAssetDAO.class).createAsset(asset, entityVersionEnabled);
       session.getTransaction().commit();
 
-      assertThat(dao.browseUnusedAssetBlobs(10, null),
+      assertThat(dao.browseUnusedAssetBlobs(10, 1, null),
           contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
 
       assertEntityVersion(componentData.componentId, componentDAO, entityVersionEnabled ? 2 : null);
@@ -438,7 +438,7 @@ public class AssetDAOTestSupport
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, 1, null),
           contains(sameBlob(assetBlob2)));
     }
 
@@ -469,7 +469,7 @@ public class AssetDAOTestSupport
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, 1, null),
           contains(sameBlob(assetBlob1)));
     }
 
@@ -500,7 +500,7 @@ public class AssetDAOTestSupport
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, 1, null),
           contains(sameBlob(assetBlob1)));
     }
 
@@ -529,7 +529,7 @@ public class AssetDAOTestSupport
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, 1, null),
           contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
     }
 
@@ -559,7 +559,7 @@ public class AssetDAOTestSupport
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, 1, null),
           contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
     }
   }

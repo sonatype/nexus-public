@@ -61,15 +61,15 @@ const selectors = {
   notes: () => screen.getByLabelText(LABELS.DESCRIPTION_LABEL),
   releaseType: () => screen.getByLabelText(LABELS.RELEASE_TYPE_LABEL),
   getCriteriaLastBlobUpdatedCheckbox: () =>
-    screen.getByTitle(/(Enable|Disable) Component Age Criteria/),
+    screen.getByTitle(/(Enable|Disable) Component Age Criterion/),
   criteriaLastBlobUpdated: () =>
     screen.queryByLabelText(LABELS.LAST_UPDATED_LABEL),
   getCriteriaLastDownloadedCheckbox: () =>
-    screen.getByTitle(/(Enable|Disable) Component Usage Criteria/),
+    screen.getByTitle(/(Enable|Disable) Component Usage Criterion/),
   criteriaLastDownloaded: () =>
     screen.queryByLabelText(LABELS.LAST_DOWNLOADED_LABEL),
   getCriteriaAssetRegexCheckbox: () =>
-    screen.getByTitle(/(Enable|Disable) Asset Name Matcher Criteria/),
+    screen.getByTitle(/(Enable|Disable) Asset Name Matcher Criterion/),
   criteriaAssetRegex: () => screen.getByLabelText(LABELS.ASSET_NAME_LABEL),
   criteriaVersion: () =>
     screen.queryByLabelText(LABELS.EXCLUSION_CRITERIA.VERSION_LABEL),
