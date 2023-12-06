@@ -293,7 +293,7 @@ public interface ComponentDAO
    * @param limit        when positive limits the number of components deleted per-call
    * @return {@code true} if any components were deleted
    */
-  boolean deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
+  int deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 
   /**
    * Selects components in the given repository whose assets were last downloaded more than given number of days ago.
