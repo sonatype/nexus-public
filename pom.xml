@@ -713,8 +713,6 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <!-- 2.22.2 causes tests to eventually hang -->
-          <version>2.18.1</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
             <forkCount>1</forkCount>
