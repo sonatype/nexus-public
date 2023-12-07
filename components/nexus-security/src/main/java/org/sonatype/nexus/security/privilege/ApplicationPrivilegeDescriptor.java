@@ -13,13 +13,14 @@
 package org.sonatype.nexus.security.privilege;
 
 import java.util.List;
-
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.formfields.SetOfCheckboxesFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
@@ -32,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED;
 
 /**
  * Application {@link PrivilegeDescriptor}.
@@ -69,13 +71,19 @@ public class ApplicationPrivilegeDescriptor
         "options include create, read, update, delete, and a wildcard (*) " +
         "<a href='https://links.sonatype.com/products/nxrm3/docs/privileges' target='_blank'>Help</a>")
     String actionsHelp();
+
+    @DefaultMessage("The actions you wish to allow")
+    String actionsCheckboxesHelp();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
 
   private final List<FormField> formFields;
 
-  public ApplicationPrivilegeDescriptor() {
+  private static final String P_OPTIONS = "options";
+
+  @Inject
+  public ApplicationPrivilegeDescriptor(@Named(REACT_PRIVILEGES_NAMED) final boolean isReactPrivileges) {
     super(TYPE);
     this.formFields = ImmutableList.of(
         new StringTextFormField(
@@ -84,6 +92,13 @@ public class ApplicationPrivilegeDescriptor
             messages.domainHelp(),
             FormField.MANDATORY
         ),
+        isReactPrivileges ?
+        new SetOfCheckboxesFormField(
+            P_ACTIONS,
+            messages.actions(),
+            messages.actionsCheckboxesHelp(),
+            FormField.MANDATORY
+        ).withAttribute(P_OPTIONS, PrivilegeAction.getCrudActionStrings()) :
         new StringTextFormField(
             P_ACTIONS,
             messages.actions(),

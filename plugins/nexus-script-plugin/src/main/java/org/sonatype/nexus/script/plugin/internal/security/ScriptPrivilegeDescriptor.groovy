@@ -20,6 +20,7 @@ import org.sonatype.goodies.i18n.I18N
 import org.sonatype.goodies.i18n.MessageBundle
 import org.sonatype.goodies.i18n.MessageBundle.DefaultMessage
 import org.sonatype.nexus.formfields.FormField
+import org.sonatype.nexus.formfields.SetOfCheckboxesFormField
 import org.sonatype.nexus.formfields.StringTextFormField
 import org.sonatype.nexus.rest.WebApplicationMessageException
 import org.sonatype.nexus.script.ScriptManager
@@ -39,6 +40,7 @@ import javax.ws.rs.core.Response
 
 import static com.google.common.base.Preconditions.checkArgument
 import static com.google.common.base.Preconditions.checkNotNull
+import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED
 
 /**
  * Descriptor for {@link ScriptPermission}
@@ -77,6 +79,9 @@ class ScriptPrivilegeDescriptor
     options include browse, read, edit, add, delete, run, and a wildcard (*) 
     <a href="https://links.sonatype.com/products/nxrm3/docs/privileges" target='_blank'>Help</a>""")
     String actionsHelp()
+
+    @DefaultMessage("The actions you wish to allow")
+    String actionsCheckboxesHelp()
   }
 
   private static final Messages messages = I18N.create(Messages.class)
@@ -85,8 +90,13 @@ class ScriptPrivilegeDescriptor
 
   private final ScriptManager scriptManager;
 
+  private static final String P_OPTIONS = "options";
+
   @Inject
-  public ScriptPrivilegeDescriptor(final ScriptManager scriptManager) {
+  public ScriptPrivilegeDescriptor(
+      final ScriptManager scriptManager,
+      @Named(REACT_PRIVILEGES_NAMED) final boolean isReactPrivileges)
+  {
     super(TYPE)
     this.formFields = ImmutableList.of(
         (FormField) new StringTextFormField(
@@ -95,6 +105,13 @@ class ScriptPrivilegeDescriptor
             messages.scriptNameHelp(),
             FormField.MANDATORY
         ),
+        isReactPrivileges ?
+        (FormField) new SetOfCheckboxesFormField(
+            P_ACTIONS,
+            messages.actions(),
+            messages.actionsCheckboxesHelp(),
+            FormField.MANDATORY
+        ).withAttribute(P_OPTIONS, PrivilegeAction.getBreadRunActionStrings()) :
         (FormField) new StringTextFormField(
             P_ACTIONS,
             messages.actions(),

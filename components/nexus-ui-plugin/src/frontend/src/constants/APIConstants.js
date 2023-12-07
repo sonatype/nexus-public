@@ -239,6 +239,9 @@ export default {
       get USAGE_METRICS() {
         return `${this.BASE_URL}usage-metrics`;
       },
+      get PRIVILEGES_TYPES() {
+        return `${this.BASE_URL}privileges/types`;
+      }
     },
     PUBLIC: {
       BASE_URL: '/service/rest/v1/',

@@ -69,7 +69,7 @@ public class PrivilegeApiResourceTest
     when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
 
     Map<String, PrivilegeDescriptor> privilegeDescriptors = new HashMap<>();
-    privilegeDescriptors.put(ApplicationPrivilegeDescriptor.TYPE, new ApplicationPrivilegeDescriptor());
+    privilegeDescriptors.put(ApplicationPrivilegeDescriptor.TYPE, new ApplicationPrivilegeDescriptor(false));
     privilegeDescriptors.put(WildcardPrivilegeDescriptor.TYPE, new WildcardPrivilegeDescriptor());
 
     underTest = new PrivilegeApiResource(securitySystem, privilegeDescriptors);

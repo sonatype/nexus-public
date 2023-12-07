@@ -25,6 +25,7 @@ import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.formfields.SelectorComboFormField;
+import org.sonatype.nexus.formfields.SetOfCheckboxesFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
+import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 import org.sonatype.nexus.selector.SelectorManager;
 
 import com.google.common.base.Joiner;
@@ -43,6 +45,7 @@ import org.apache.shiro.authz.Permission;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED;
 
 /**
  * Repository selector {@link PrivilegeDescriptor}.
@@ -90,6 +93,9 @@ public class RepositoryContentSelectorPrivilegeDescriptor
         "options include browse, read, edit, add, delete, and a wildcard (*) " +
         "<a href='https://links.sonatype.com/products/nxrm3/docs/privileges' target='_blank'>Help</a>")
     String actionsHelp();
+
+    @DefaultMessage("The actions you wish to allow")
+    String actionsCheckboxesHelp();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
@@ -98,10 +104,14 @@ public class RepositoryContentSelectorPrivilegeDescriptor
 
   private final SelectorManager selectorManager;
 
+  private static final String P_OPTIONS = "options";
+
   @Inject
-  public RepositoryContentSelectorPrivilegeDescriptor(final RepositoryManager repositoryManager,
-                                                      final SelectorManager selectorManager,
-                                                      final List<Format> formats)
+  public RepositoryContentSelectorPrivilegeDescriptor(
+      final RepositoryManager repositoryManager,
+      final SelectorManager selectorManager,
+      final List<Format> formats,
+      @Named(REACT_PRIVILEGES_NAMED) final boolean isReactPrivileges)
   {
     super(TYPE, repositoryManager, formats);
     this.selectorManager = checkNotNull(selectorManager);
@@ -118,6 +128,13 @@ public class RepositoryContentSelectorPrivilegeDescriptor
             messages.repositoryHelp(),
             true
         ).includeEntriesForAllFormats(),
+        isReactPrivileges ?
+        new SetOfCheckboxesFormField(
+            P_ACTIONS,
+            messages.actions(),
+            messages.actionsCheckboxesHelp(),
+            FormField.MANDATORY
+        ).withAttribute(P_OPTIONS, PrivilegeAction.getBreadActionStrings()) :
         new StringTextFormField(
             P_ACTIONS,
             messages.actions(),

@@ -14,7 +14,7 @@ package org.sonatype.nexus.security.privilege.rest;
 
 import java.util.Arrays;
 import java.util.List;
-
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -103,5 +103,26 @@ public enum PrivilegeAction
 
   public static List<PrivilegeAction> getCrudActions() {
     return Arrays.asList(READ, EDIT, ADD, DELETE, ASSOCIATE, DISASSOCIATE, ALL);
+  }
+
+  public static List<String> getBreadActionStrings() {
+    return Arrays.asList(BROWSE, READ, EDIT, ADD, DELETE)
+        .stream()
+        .map(PrivilegeAction::getBreadAction)
+        .collect(Collectors.toList());
+  }
+
+  public static List<String> getBreadRunActionStrings() {
+    return Arrays.asList(BROWSE, READ, EDIT, ADD, DELETE, RUN)
+        .stream()
+        .map(PrivilegeAction::getBreadRunAction)
+        .collect(Collectors.toList());
+  }
+
+  public static List<String> getCrudActionStrings() {
+    return Arrays.asList(READ, EDIT, ADD, DELETE)
+        .stream()
+        .map(PrivilegeAction::getCrudAction)
+        .collect(Collectors.toList());
   }
 }

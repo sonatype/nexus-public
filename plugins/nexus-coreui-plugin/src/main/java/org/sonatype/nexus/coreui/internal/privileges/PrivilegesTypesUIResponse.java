@@ -12,34 +12,37 @@
  */
 package org.sonatype.nexus.coreui.internal.privileges;
 
+import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.rapture.StateContributor;
+import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 
-import com.google.common.collect.ImmutableMap;
-
-import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES;
-import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED;
-
-@Named
-@Singleton
-public class PrivilegesStateContributor
-    extends ComponentSupport
-    implements StateContributor
+public class PrivilegesTypesUIResponse
 {
-  private final Map<String, Object> state;
+  private final String id;
 
-  @Inject
-  public PrivilegesStateContributor(@Named(REACT_PRIVILEGES_NAMED) final Boolean featureFlag) {
-    state = ImmutableMap.of(REACT_PRIVILEGES, featureFlag);
+  private final String name;
+
+  private final List<FormField> formFields;
+
+  public PrivilegesTypesUIResponse(final Map.Entry<String, PrivilegeDescriptor> entry) {
+    PrivilegeDescriptor privilegeDescriptor = entry.getValue();
+
+    this.id = privilegeDescriptor.getType();
+    this.name = privilegeDescriptor.getName();
+    this.formFields = privilegeDescriptor.getFormFields();
   }
 
-  @Override
-  public Map<String, Object> getState() {
-    return state;
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public List<FormField> getFormFields() {
+    return formFields;
   }
 }
