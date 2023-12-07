@@ -64,7 +64,8 @@ export default function Welcome() {
         usertype: getUserType(user),
         daysToExpiry: ExtJS.useLicense().daysToExpiry
       },
-      canViewMetrics = ExtJS.checkPermission(Permissions.METRICS.READ);
+      canViewMetrics = ExtJS.checkPermission(Permissions.METRICS.READ),
+      hasUser = getUserType(user) !== 'anonymous';
 
   function load() {
     send('LOAD');
@@ -133,7 +134,7 @@ export default function Welcome() {
                 </NxWarningAlert>
               </section>
           }
-          {canViewMetrics && <UsageMetrics />}
+          {canViewMetrics && hasUser && <UsageMetrics />}
           <OutreachActions />
           { state.context.data?.showOutreachIframe &&
               <iframe

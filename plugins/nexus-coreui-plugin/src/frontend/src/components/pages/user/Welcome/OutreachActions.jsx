@@ -57,14 +57,14 @@ const ACTIONS = [
     title: SYSTEM_HEALTH.title,
     subTitle: SYSTEM_HEALTH.subTitle,
     icon: faMedkit,
-    isVisible: () => ExtJS.checkPermission(Permissions.METRICS.READ),
+    isVisible: () => ExtJS.checkPermission(Permissions.METRICS.READ) && ExtJS.state().getUser(),
     event: {type: 'REDIRECT', url: '#admin/support/status'},
   },
   {
     title: CLEANUP_POLICIES.title,
     subTitle: CLEANUP_POLICIES.subTitle,
     icon: faSearch,
-    isVisible: () => ExtJS.checkPermission(Permissions.ADMIN),
+    isVisible: () => ExtJS.checkPermission(Permissions.ADMIN) && ExtJS.state().getUser(),
     event: {type: 'REDIRECT', url: '#admin/repository/cleanuppolicies'},
   },
   {

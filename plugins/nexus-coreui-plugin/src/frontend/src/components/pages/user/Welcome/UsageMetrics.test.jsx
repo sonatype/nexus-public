@@ -37,6 +37,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     isProEdition: jest.fn().mockReturnValue(false),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
+      getUser: jest.fn().mockReturnValue({ administrator: true }),
     }),
   },
 }));

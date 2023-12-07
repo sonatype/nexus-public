@@ -54,7 +54,9 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
       },
       '#State': {
         changed: function() {
-          this.getReactFooterContainer().refresh();
+          if (Ext.dom.Query.select('div.nxrm-metrics-section')[0]) {
+            this.refresh();
+          }
         }
       },
       '#Permissions': {
