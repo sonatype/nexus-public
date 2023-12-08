@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
-import org.sonatype.nexus.repository.content.fluent.internal.FluentContinuation;
+import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;

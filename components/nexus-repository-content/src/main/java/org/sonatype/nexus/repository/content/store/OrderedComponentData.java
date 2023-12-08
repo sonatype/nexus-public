@@ -22,6 +22,14 @@ public class OrderedComponentData extends ComponentData {
 
   String orderedToken;
 
+  public OrderedComponentData() {
+    //empty constructor to be able to instantiate object using myBatis
+  }
+
+  public void setOrderedToken(final String orderedToken) {
+    this.orderedToken = orderedToken;
+  }
+
   @Override
   public String nextContinuationToken() {
     return orderedToken;

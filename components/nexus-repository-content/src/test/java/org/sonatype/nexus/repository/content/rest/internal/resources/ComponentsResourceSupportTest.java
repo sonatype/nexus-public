@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
-import org.sonatype.nexus.repository.content.fluent.internal.FluentContinuation;
+import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.content.store.ComponentData;

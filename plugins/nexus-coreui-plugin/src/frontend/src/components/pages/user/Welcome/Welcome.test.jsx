@@ -324,6 +324,7 @@ describe('Welcome', function() {
 
     it('shows "System Health", "Cleanup Policies" and "Browse" for admin', async function() {
       const {quickAction, loadingStatus} = selectors;
+      user = { administrator: true };
 
       when(ExtJS.checkPermission).calledWith(Permissions.METRICS.READ).mockReturnValue(true);
       when(ExtJS.checkPermission).calledWith(Permissions.ADMIN).mockReturnValue(true);

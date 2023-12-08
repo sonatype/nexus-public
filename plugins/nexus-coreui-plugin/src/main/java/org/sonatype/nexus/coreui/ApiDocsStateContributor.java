@@ -10,28 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.capability
+package org.sonatype.nexus.coreui;
 
-import org.sonatype.nexus.coreui.FormFieldXO
+import java.util.Map;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import groovy.transform.ToString
-import javax.validation.constraints.NotEmpty
+import org.sonatype.nexus.rapture.StateContributor;
+
+import com.google.common.collect.ImmutableMap;
 
 /**
- * Capability Type exchange object.
- *
- * @since 3.0
+ * API feature flag
  */
-@ToString(includePackage = false, includeNames = true)
-class CapabilityTypeXO
+@Named
+@Singleton
+public class ApiDocsStateContributor
+    implements StateContributor
 {
-  @NotEmpty
-  String id
+  private final boolean enabled;
 
-  @NotEmpty
-  String name
-  
-  String about
-  
-  List<FormFieldXO> formFields
+  @Inject
+  public ApiDocsStateContributor(@Named("${nexus.admin.system.apidocs.enabled:-true}") final boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  @Override
+  @Nullable
+  public Map<String, Object> getState() {
+    return ImmutableMap.of("api", enabled);
+  }
 }

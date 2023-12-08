@@ -15,7 +15,6 @@ package org.sonatype.nexus.cleanup.internal.rest;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import javax.inject.Provider;
 import javax.ws.rs.core.Response;
 
@@ -28,7 +27,6 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.junit.Before;
@@ -67,14 +65,13 @@ public class CleanupPolicyResourceTest
   private EventManager eventManager;
 
   @Mock
-  private GlobalKeyValueStore globalKeyValueStore;
-
-  @Mock
   private CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
-
 
   @Mock
   private CleanupPolicyRequestValidator cleanupPolicyValidator;
+
+  @Mock
+  private Format mockFormat;
 
   private Collection<CleanupPolicyRequestValidator> cleanupPolicyValidators;
 
@@ -88,6 +85,8 @@ public class CleanupPolicyResourceTest
     Repository repository = mock(Repository.class);
     when(repositoryManager.get(repositoryName)).thenReturn(repository);
     when(repository.getName()).thenReturn(repositoryName);
+    when(repository.getFormat()).thenReturn(mockFormat);
+    when(mockFormat.getValue()).thenReturn("test-format");
     cleanupPolicyValidators = singleton(cleanupPolicyValidator);
   }
 

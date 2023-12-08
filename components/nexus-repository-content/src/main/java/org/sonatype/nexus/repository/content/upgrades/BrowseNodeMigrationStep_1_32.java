@@ -10,32 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.log
+package org.sonatype.nexus.repository.content.upgrades;
 
-import javax.validation.constraints.NotNull
+import java.sql.Connection;
+import java.util.Optional;
+import javax.inject.Named;
 
-import org.sonatype.nexus.common.log.LoggerLevel
-
-import groovy.transform.ToString
-import javax.validation.constraints.NotEmpty
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 /**
- * Logger exchange object.
- *
- * @since 3.0
+ * Placeholder step, no-op, original step was moved to BrowseNodeMigrationStep_1_34 to retain proper order
  */
-@ToString(includePackage = false, includeNames = true)
-class LoggerXO
+@Named
+public class BrowseNodeMigrationStep_1_32
+    extends ComponentSupport
+    implements DatabaseMigrationStep
 {
-  @NotEmpty
-  String name
+  @Override
+  public Optional<String> version() {
+    return Optional.of("1.32");
+  }
 
-  @NotNull
-  LoggerLevel level
-
-  boolean override
-
-  static LoggerXO fromEntry(Map.Entry<String, LoggerLevel> entry) {
-    return new LoggerXO(name: entry.getKey(), level: entry.getValue());
+  @Override
+  public void migrate(final Connection connection) throws Exception {
+    //no-op simply placeholder so version doesn't get lost
   }
 }

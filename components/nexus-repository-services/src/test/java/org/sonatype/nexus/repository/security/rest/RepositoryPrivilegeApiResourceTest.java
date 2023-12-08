@@ -103,14 +103,14 @@ public class RepositoryPrivilegeApiResourceTest
     List<Format> formats = Arrays.asList(format1, format2);
 
     Map<String, PrivilegeDescriptor> privilegeDescriptors = new HashMap<>();
-    privilegeDescriptors.put(ApplicationPrivilegeDescriptor.TYPE, new ApplicationPrivilegeDescriptor());
+    privilegeDescriptors.put(ApplicationPrivilegeDescriptor.TYPE, new ApplicationPrivilegeDescriptor(false));
     privilegeDescriptors.put(WildcardPrivilegeDescriptor.TYPE, new WildcardPrivilegeDescriptor());
     privilegeDescriptors.put(RepositoryAdminPrivilegeDescriptor.TYPE,
-        new RepositoryAdminPrivilegeDescriptor(repositoryManager, formats));
+        new RepositoryAdminPrivilegeDescriptor(repositoryManager, formats, false));
     privilegeDescriptors
-        .put(RepositoryViewPrivilegeDescriptor.TYPE, new RepositoryViewPrivilegeDescriptor(repositoryManager, formats));
+        .put(RepositoryViewPrivilegeDescriptor.TYPE, new RepositoryViewPrivilegeDescriptor(repositoryManager, formats, false));
     privilegeDescriptors.put(RepositoryContentSelectorPrivilegeDescriptor.TYPE,
-        new RepositoryContentSelectorPrivilegeDescriptor(repositoryManager, selectorManager, formats));
+        new RepositoryContentSelectorPrivilegeDescriptor(repositoryManager, selectorManager, formats, false));
 
     underTest = new RepositoryPrivilegeApiResource(securitySystem, privilegeDescriptors);
   }

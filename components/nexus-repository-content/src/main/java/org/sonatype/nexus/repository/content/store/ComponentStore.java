@@ -28,6 +28,8 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ComponentSet;
+import org.sonatype.nexus.repository.content.SqlGenerator;
+import org.sonatype.nexus.repository.content.SqlQueryParameters;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
@@ -36,7 +38,7 @@ import org.sonatype.nexus.repository.content.event.component.ComponentPreDeleteE
 import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentsPurgedAuditEvent;
-import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.content.event.component.RepositoryDeletedComponentEvent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -46,6 +48,7 @@ import org.apache.ibatis.annotations.Param;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * {@link Component} store.
@@ -193,31 +196,25 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
-   * Browse all components in the given repository and component set, after filtering by cleanup policy criteria, in a
-   * paged fashion.
+   * Select components using the provided query generator and parameters.
    *
-   * @param repositoryId          the repository to browse
-   * @param componentSet          the component set to browse
-   * @param cleanupPolicyCriteria the criteria to filter by
-   * @Param includeAssets        whether to include asset data
-   * @param limit                 maximum number of components to return
-   * @param continuationToken     optional token to continue from a previous request
-   * @return collection of components and the next continuation token
-   * @see Continuation#nextContinuationToken()
+   * @param generator  generator for the select
+   * @param params     parameters for the select
    */
   @Transactional
-  public Continuation<Component> browseComponentsForCleanup(
-      final int repositoryId,
-      final ComponentSet componentSet,
-      final Map<String, String> cleanupPolicyCriteria,
-      final boolean includeAssets,
-      final int limit,
-      @Nullable final String continuationToken)
-  {
-    String namespace = componentSet == null ? null : componentSet.namespace();
-    String name = componentSet == null ? null : componentSet.name();
-    return dao().browseComponentsForCleanup(repositoryId, namespace, name,
-        cleanupPolicyCriteria, includeAssets, limit, continuationToken);
+  public Continuation<Component> selectComponents(final SqlGenerator<? extends SqlQueryParameters> generator, final SqlQueryParameters params) {
+    return dao().selectComponents(generator, params);
+  }
+
+  /**
+   * Select components with its related assets using the provided query generator and parameters.
+   *
+   * @param generator  generator for the select
+   * @param params     parameters for the select
+   */
+  @Transactional
+  public Continuation<Component> selectComponentsWithAssets(final SqlGenerator<? extends SqlQueryParameters> generator, final SqlQueryParameters params) {
+    return dao().selectComponentsWithAssets(generator, params);
   }
 
   /**
@@ -409,21 +406,20 @@ public class ComponentStore<T extends ComponentDAO>
   /**
    * Deletes all components in the given repository from the content data store.
    * <p>
-   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeletedEvent}.
    *
    * @param repositoryId the repository containing the components
    * @return {@code true} if any components were deleted
    */
   @Transactional
-  public boolean deleteComponents(final int repositoryId) {
+  public void deleteComponents(final int repositoryId) {
     log.debug("Deleting all components in repository {}", repositoryId);
-    boolean deleted = false;
-    while (dao().deleteComponents(repositoryId, deleteBatchSize())) {
-      commitChangesSoFar();
-      deleted = true;
+    int deletedCount;
+    while ((deletedCount = dao().deleteComponents(repositoryId, deleteBatchSize())) > 0) {
+      final int finalDeletedCount = deletedCount;
+      postCommitEvent(() -> new RepositoryDeletedComponentEvent(repositoryId, finalDeletedCount));
+      checkCancellation();
     }
     log.debug("Deleted all components in repository {}", repositoryId);
-    return deleted;
   }
 
   /**
@@ -444,7 +440,7 @@ public class ComponentStore<T extends ComponentDAO>
       }
       purged += purge(repositoryId, componentIds);
 
-      commitChangesSoFar();
+      checkCancellation();
     }
     return purged;
   }

@@ -162,17 +162,21 @@ public class NegativeCacheHandlerTest
    *  - 404 response is cached
    */
   @Test
-  public void a404ResponseSkipsCacheForBlockedRemote() throws Exception {
-    when(mockRequest.getAction()).thenReturn(HttpMethods.GET);
-    when(mockConnectionStatus.getType()).thenReturn(RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE);
-    Response contextResponse = HttpResponses.notFound("404");
-    when(mockContext.proceed()).thenReturn(contextResponse);
-    when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(null);
-    Response response = underTest.handle(mockContext);
-    assert response == contextResponse;
-    verify(mockContext).proceed();
-    verify(mockNegativeCacheFacet, never()).put(any(NegativeCacheKey.class), any(Status.class));
-    verify(mockNegativeCacheFacet, never()).invalidate(mockNegativeCacheKey);
+  public void a404ResponseSkipsCacheForAutoBlockedRemote() throws Exception {
+    verifyCacheForBlockedRemote(RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE);
+  }
+
+  /**
+   * Given:
+   * - no cached key present
+   * - a 404 response from context for GET
+   * - context (remote) is manually blocked
+   * Then:
+   *  - 404 response is cached
+   */
+  @Test
+  public void a404ResponseSkipsCacheForManualBlockedRemote() throws Exception {
+    verifyCacheForBlockedRemote(RemoteConnectionStatusType.BLOCKED);
   }
 
   /**
@@ -268,5 +272,18 @@ public class NegativeCacheHandlerTest
     verify(mockContext).proceed();
     verify(mockNegativeCacheFacet).put(mockNegativeCacheKey, response.getStatus());
     verify(mockNegativeCacheFacet, never()).invalidate(any(NegativeCacheKey.class));
+  }
+
+  private void verifyCacheForBlockedRemote(final RemoteConnectionStatusType statusType) throws Exception {
+    when(mockRequest.getAction()).thenReturn(HttpMethods.GET);
+    when(mockConnectionStatus.getType()).thenReturn(statusType);
+    Response contextResponse = HttpResponses.notFound("404");
+    when(mockContext.proceed()).thenReturn(contextResponse);
+    when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(null);
+    Response response = underTest.handle(mockContext);
+    assert response == contextResponse;
+    verify(mockContext).proceed();
+    verify(mockNegativeCacheFacet, never()).put(any(NegativeCacheKey.class), any(Status.class));
+    verify(mockNegativeCacheFacet, never()).invalidate(mockNegativeCacheKey);
   }
 }

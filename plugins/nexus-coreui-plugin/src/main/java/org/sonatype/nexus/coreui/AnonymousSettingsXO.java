@@ -10,19 +10,49 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui
-
-import groovy.transform.ToString
+package org.sonatype.nexus.coreui;
 
 /**
  * Anonymous Security Settings exchange object.
- *
- * @since 3.0
  */
-@ToString(includePackage = false, includeNames = true)
-class AnonymousSettingsXO
+public class AnonymousSettingsXO
 {
-  Boolean enabled
-  String userId
-  String realmName
+  private Boolean enabled;
+
+  private String userId;
+
+  private String realmName;
+
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(final Boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public String getUserId() {
+    return userId;
+  }
+
+  public void setUserId(final String userId) {
+    this.userId = userId;
+  }
+
+  public String getRealmName() {
+    return realmName;
+  }
+
+  public void setRealmName(final String realmName) {
+    this.realmName = realmName;
+  }
+
+  @Override
+  public String toString() {
+    return "AnonymousSettingsXO(" +
+        "enabled:" + enabled +
+        ", userId:" + userId +
+        ", realmName:" + realmName +
+        ")";
+  }
 }

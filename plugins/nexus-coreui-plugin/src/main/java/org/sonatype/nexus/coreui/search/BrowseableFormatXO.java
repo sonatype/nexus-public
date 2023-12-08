@@ -10,23 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.capability
-
-import org.sonatype.nexus.validation.group.Update
-
-import groovy.transform.ToString
-import javax.validation.constraints.NotEmpty
+package org.sonatype.nexus.coreui.search;
 
 /**
- * Capability notes exchange object.
- *
- * @since 3.0
+ * BrowseableFormat exchange object.
  */
-@ToString(includePackage = false, includeNames = true)
-class CapabilityNotesXO
+public class BrowseableFormatXO
 {
-  @NotEmpty(groups = Update.class)
-  String id
+  private String id;
 
-  String notes
+  public String getId() {
+    return id;
+  }
+
+  public void setId(final String id) {
+    this.id = id;
+  }
+
+  @Override
+  public String toString() {
+    return "BrowseableFormatXO(" +
+        "id:" + id +
+        ")";
+  }
 }

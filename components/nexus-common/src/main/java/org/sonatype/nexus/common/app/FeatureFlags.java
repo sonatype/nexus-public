@@ -112,4 +112,8 @@ public interface FeatureFlags
   String FIREWALL_QUARANTINE_FIX_ENABLED_NAMED = "${nexus.firewall.quarantineFix.enabled:-false}";
 
   String CIRCUIT_BREAKER_ENABLED = "nexus.circuitb.enabled";
+
+  String REACT_PRIVILEGES = "nexus.react.privileges";
+
+  String REACT_PRIVILEGES_NAMED = "${nexus.react.privileges:-false}";
 }

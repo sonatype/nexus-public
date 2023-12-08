@@ -22,6 +22,9 @@ import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES;
+import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED;
+
 @Named
 @Singleton
 public class PrivilegesStateContributor
@@ -31,8 +34,8 @@ public class PrivilegesStateContributor
   private final Map<String, Object> state;
 
   @Inject
-  public PrivilegesStateContributor(@Named("${nexus.react.privileges:-false}") final Boolean featureFlag) {
-    state = ImmutableMap.of("nexus.react.privileges", featureFlag);
+  public PrivilegesStateContributor(@Named(REACT_PRIVILEGES_NAMED) final Boolean featureFlag) {
+    state = ImmutableMap.of(REACT_PRIVILEGES, featureFlag);
   }
 
   @Override

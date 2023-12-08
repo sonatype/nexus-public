@@ -44,6 +44,10 @@ public class ComponentData
 
   private List<Asset> assets;
 
+  public ComponentData() {
+    //empty constructor to be able to instantiate object using myBatis
+  }
+
   // Component API
 
   @Override

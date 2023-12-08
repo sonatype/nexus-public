@@ -10,12 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.datastore
+package org.sonatype.nexus.coreui.internal.capability;
 
-/**
- * @since 3.19
- */
-class DataStoreXO
+import javax.validation.constraints.NotEmpty;
+
+import org.sonatype.nexus.validation.group.Update;
+
+public class CapabilityNotesXO
 {
-  String name
+  @NotEmpty(groups = Update.class)
+  private String id;
+
+  private String notes;
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(final String id) {
+    this.id = id;
+  }
+
+  public String getNotes() {
+    return notes;
+  }
+
+  public void setNotes(final String notes) {
+    this.notes = notes;
+  }
+
+  @Override
+  public String toString() {
+    return "CapabilityNotesXO(" +
+        "id:" + id +
+        ", notes:" + notes +
+        ")";
+  }
 }

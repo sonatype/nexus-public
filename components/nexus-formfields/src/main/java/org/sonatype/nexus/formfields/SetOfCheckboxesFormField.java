@@ -10,19 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.node
-
-import groovy.transform.ToString
+package org.sonatype.nexus.formfields;
 
 /**
- * For transmitting info about nodes in cluster
- *
- * @since 3.2
+ * Set of checkboxes field.
  */
-@ToString(includePackage = false, includeNames = true)
-class NodeInfoXO
+public class SetOfCheckboxesFormField
+    extends AbstractFormField<Boolean>
 {
-  String name
-  Boolean local
-  String displayName
+  public SetOfCheckboxesFormField(String id, String label, String helpText, boolean required) {
+    super(id, label, helpText, required);
+  }
+
+  public String getType() {
+    return "setOfCheckboxes";
+  }
 }

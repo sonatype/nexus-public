@@ -42,18 +42,20 @@ export default function UsageMetrics() {
   const isProEdition = ExtJS.isProEdition();
   const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
   const isCircuitBreakerEnabled = ExtJS.state().getValue('nexus.circuitb.enabled');
+  const isAdmin = ExtJS.state().getUser()?.administrator;
+  const showMetricsWithMeter = isCircuitBreakerEnabled && isAdmin;
 
   function retry() {
     send('RETRY');
   };
 
-  return !isHa && <div className={`nxrm-usage-metrics${isCircuitBreakerEnabled ? '-circuit-breaker' : ''}`}>
+  return !isHa && <div className={`nxrm-usage-metrics${isCircuitBreakerEnabled ? '-circuit-breaker' : ''} nxrm-metrics-section`}>
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       {() =>
         <>
           <NxH2>{MENU.TEXT}</NxH2>
           <NxCard.Container>
-            {!isCircuitBreakerEnabled ?
+            {showMetricsWithMeter ? <UsageMetricsWithCircuitBreaker /> :
               <>
                 <NxCard aria-label={TOTAL_COMPONENTS.TITLE}>
                   <NxCard.Header>
@@ -92,7 +94,7 @@ export default function UsageMetrics() {
                     <NxCard.Text className="nxrm-usage-subtitle">{PEAK_REQUESTS_PER_DAY.SUB_TITLE}</NxCard.Text>
                   </NxCard.Content>
                 </NxCard>
-              </> : <UsageMetricsWithCircuitBreaker />
+              </>
             }
           </NxCard.Container>
           <NxDivider />

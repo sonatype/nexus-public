@@ -28,7 +28,7 @@
 @Grab(group = 'org.apache.commons', module = 'commons-compress', version = '1.15')
 @Grab(group = 'commons-io', module = 'commons-io', version = '2.6')
 @Grab(group = 'org.apache.maven', module = 'maven-model', version = '3.5.0')
-@Grab(group = 'org.rauschig', module = 'jarchivelib', version = '0.7.1')
+@Grab(group = 'org.rauschig', module = 'jarchivelib', version = '1.2.0')
 @Grab(group = 'com.google.guava', module = 'guava', version = '25.0-jre')
 
 import java.nio.file.Paths
@@ -53,6 +53,7 @@ import static java.time.ZoneId.systemDefault
 import static java.time.format.DateTimeFormatter.ofPattern
 import static org.slf4j.Logger.ROOT_LOGGER_NAME as ROOT
 import static org.slf4j.LoggerFactory.getLogger
+import java.util.zip.*
 
 // set default log level (jgit seems to have something on DEBUG by default)
 ((Logger) getLogger(ROOT)).setLevel(INFO)

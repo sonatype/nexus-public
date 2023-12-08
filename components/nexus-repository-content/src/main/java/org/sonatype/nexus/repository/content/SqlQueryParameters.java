@@ -10,28 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.audit.internal
+package org.sonatype.nexus.repository.content;
 
-import javax.inject.Named
-import javax.inject.Singleton
-
-import org.sonatype.goodies.common.ComponentSupport
-import org.sonatype.nexus.common.log.LogConfigurationCustomizer
-import org.sonatype.nexus.common.log.LoggerLevel
-
-/**
- * Audit {@link LogConfigurationCustomizer}.
- *
- * @since 3.1
- */
-@Named
-@Singleton
-class LogConfigurationCustomizerImpl
-    extends ComponentSupport
-    implements LogConfigurationCustomizer
+public interface SqlQueryParameters
 {
-  @Override
-  void customize(final LogConfigurationCustomizer.Configuration configuration) {
-    configuration.setLoggerLevel('org.sonatype.nexus.audit', LoggerLevel.DEFAULT)
-  }
 }

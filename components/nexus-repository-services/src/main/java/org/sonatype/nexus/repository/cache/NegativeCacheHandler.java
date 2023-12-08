@@ -71,7 +71,7 @@ public class NegativeCacheHandler
     if (status == null) {
       response = context.proceed();
 
-      if (isNotFound(response) && !isAutoBlocked(context)) {
+      if (isNotFound(response) && !isRemoteBlocked(context)) {
         negativeCache.put(key, response.getStatus());
         log.debug("Couldn't find {} - adding to NFC", key);
       }
@@ -98,8 +98,9 @@ public class NegativeCacheHandler
     return HttpStatus.NOT_FOUND == response.getStatus().getCode();
   }
 
-  private boolean isAutoBlocked(final Context context) {
+  private boolean isRemoteBlocked(final Context context) {
     RemoteConnectionStatus remoteConnectionStatus = context.getRepository().facet(HttpClientFacet.class).getStatus();
-    return remoteConnectionStatus.getType() == RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
+    return remoteConnectionStatus.getType() == RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE ||
+        remoteConnectionStatus.getType() == RemoteConnectionStatusType.BLOCKED;
   }
 }

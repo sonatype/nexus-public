@@ -15,16 +15,21 @@ package org.sonatype.nexus.content.maven.store;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.SqlAdapter;
+import org.sonatype.nexus.repository.content.SqlGenerator;
+import org.sonatype.nexus.repository.content.SqlQueryParameters;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
+import org.sonatype.nexus.repository.content.store.OrderedComponentData;
 
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.ResultMap;
+import org.apache.ibatis.annotations.ResultType;
+import org.apache.ibatis.annotations.SelectProvider;
 
 /**
  * Maven Component {@link ContentDataAccess}.
@@ -116,30 +121,17 @@ public interface Maven2ComponentDAO
                                             @Param("olderThan") LocalDate olderThan,
                                             @Param("limit") long limit);
 
+  @Override
+  @ResultMap("OrderedComponentDataMap")
+  @ResultType(OrderedComponentData.class)
+  @SelectProvider(type = SqlAdapter.class, method = "select")
+  Continuation<Component> selectComponents(final SqlGenerator generator,
+                                           @Param("params") final SqlQueryParameters params);
 
-  /**
-   * Browse all components in the given repository, namespace and name, after filtering by cleanup policy criteria, in a
-   * paged fashion.
-   * <P/>
-   * This method is technically an override of {@link ComponentDAO#browseComponentsForCleanup} but mybatis does not allow standard
-   * inheritance and as such this method has Ex (Extended) as a suffix.
-   *
-   * @param repositoryId      the repository to browse
-   * @param namespace         the component namespace to browse
-   * @param name              the component name to browse
-   * @param criteria          the criteria to filter by
-   * @param includeAssets     whether to include asset data
-   * @param limit             maximum number of components to return
-   * @param continuationToken optional token to continue from a previous request
-   * @return collection of components and the next continuation token
-   * @see Continuation#nextContinuationToken()
-   */
-  Continuation<Component> browseComponentsForCleanupEx(
-      @Param("repositoryId") int repositoryId,
-      @Param("namespace") String namespace,
-      @Param("name") String name,
-      @Nullable @Param("criteria") Map<String, String> criteria,
-      @Param("includeAssets") boolean includeAssets,
-      @Param("limit") int limit,
-      @Nullable @Param("continuationToken") String continuationToken);
+  @Override
+  @ResultMap("OrderedComponentAssetsDataMap")
+  @ResultType(OrderedComponentData.class)
+  @SelectProvider(type = SqlAdapter.class, method = "select")
+  Continuation<Component> selectComponentsWithAssets(final SqlGenerator generator,
+                                                     @Param("params")final SqlQueryParameters params);
 }

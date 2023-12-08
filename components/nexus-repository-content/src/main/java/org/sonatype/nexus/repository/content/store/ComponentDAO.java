@@ -24,8 +24,14 @@ import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.SqlAdapter;
+import org.sonatype.nexus.repository.content.SqlGenerator;
+import org.sonatype.nexus.repository.content.SqlQueryParameters;
 
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.ResultMap;
+import org.apache.ibatis.annotations.ResultType;
+import org.apache.ibatis.annotations.SelectProvider;
 
 /**
  * Component {@link ContentDataAccess}.
@@ -132,28 +138,23 @@ public interface ComponentDAO
       @Nullable @Param("continuationToken") String continuationToken);
 
   /**
-   * Browse all components in the given repository, namespace and name, after filtering by cleanup policy criteria, in a
-   * paged fashion.
+   * Select components using the provided query generator and parameters.
    *
-   * @param repositoryId      the repository to browse
-   * @param namespace         the component namespace to browse
-   * @param name              the component name to browse
-   * @param criteria          the criteria to filter by
-   * @param includeAssets     whether to include asset data
-   * @param limit             maximum number of components to return
-   * @param continuationToken optional token to continue from a previous request
-   * @return collection of components and the next continuation token
-   * @see Continuation#nextContinuationToken()
-   */
-  Continuation<Component> browseComponentsForCleanup(
-      @Param("repositoryId") int repositoryId,
-      @Param("namespace") String namespace,
-      @Param("name") String name,
-      @Nullable @Param("criteria") Map<String, String> criteria,
-      @Param("includeAssets") boolean includeAssets,
-      @Param("limit") int limit,
-      @Nullable @Param("continuationToken") String continuationToken);
+   * @param generator  generator for the select
+   * @param params     parameters for the select
+  */
+  @ResultMap("ComponentDataMap")
+  @ResultType(ComponentData.class)
+  @SelectProvider(type = SqlAdapter.class, method = "select")
+  Continuation<Component> selectComponents(final SqlGenerator<? extends SqlQueryParameters> generator,
+                                           @Param("params") final SqlQueryParameters params);
 
+
+  @ResultMap("ComponentAssetsDataMap")
+  @ResultType(ComponentData.class)
+  @SelectProvider(type = SqlAdapter.class, method = "select")
+  Continuation<Component> selectComponentsWithAssets(final SqlGenerator<? extends SqlQueryParameters> generator,
+                                                     @Param("params") final SqlQueryParameters params);
   /**
    * Browse all component namespaces in the given repository.
    * <P/>
@@ -292,7 +293,7 @@ public interface ComponentDAO
    * @param limit        when positive limits the number of components deleted per-call
    * @return {@code true} if any components were deleted
    */
-  boolean deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
+  int deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 
   /**
    * Selects components in the given repository whose assets were last downloaded more than given number of days ago.

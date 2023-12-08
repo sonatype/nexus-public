@@ -26,11 +26,14 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ComponentSet;
+import org.sonatype.nexus.repository.content.SqlGenerator;
+import org.sonatype.nexus.repository.content.SqlQueryParameters;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentSetData;
@@ -177,15 +180,13 @@ public class FluentComponentsImpl
   }
 
   @Override
-  public Continuation<FluentComponent> byCleanupCriteria(
-      final ComponentSet componentSet,
-      final Map<String, String> criteria,
-      final boolean includeAssets,
-      final int limit,
-      final String continuationToken)
-  {
-    return new FluentContinuation<>(componentStore.browseComponentsForCleanup(facet.contentRepositoryId(),
-        componentSet, criteria, includeAssets, limit, continuationToken), this::with);
+  public Continuation<FluentComponent> selectComponents(final SqlGenerator<? extends SqlQueryParameters> generator, final SqlQueryParameters params) {
+    return new FluentContinuation<>(componentStore.selectComponents(generator, params), this::with);
+  }
+
+  @Override
+  public Continuation<FluentComponent> selectComponentsWithAssets(final SqlGenerator<? extends SqlQueryParameters> generator, final SqlQueryParameters params) {
+    return new FluentContinuation<>(componentStore.selectComponentsWithAssets(generator, params), this::with);
   }
 
   @Override

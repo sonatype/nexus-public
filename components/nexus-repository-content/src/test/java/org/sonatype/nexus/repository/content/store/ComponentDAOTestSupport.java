@@ -45,6 +45,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -307,7 +308,7 @@ public class ComponentDAOTestSupport
           dao.readCoordinate(repositoryId, component3.namespace(), component3.name(), component3.version()).get(),
           entityVersionEnabled ? 1 : null);
 
-      assertTrue(dao.deleteComponents(repositoryId, 0));
+      assertThat(dao.deleteComponents(repositoryId, 0), greaterThan(0));
 
       assertThat(browseComponents(dao, repositoryId, null, 10, null), emptyIterable());
 

@@ -39,7 +39,7 @@ Ext.define('NX.coreui.view.react.MainContainer', {
   },
 
   initReactView: function() {
-    var reactElement = react.createElement(this.reactView, this.reactViewProps, null);
+    const reactElement = react.createElement(this.reactView, this.reactViewProps, null);
     ReactDOM.render(reactElement, this.getEl().dom);
   },
 

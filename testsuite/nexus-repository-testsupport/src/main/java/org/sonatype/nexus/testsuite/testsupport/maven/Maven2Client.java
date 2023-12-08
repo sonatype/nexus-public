@@ -21,6 +21,7 @@ import org.sonatype.nexus.testsuite.testsupport.FormatClientSupport;
 import com.google.common.net.HttpHeaders;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
@@ -55,7 +56,7 @@ public class Maven2Client
     return execute(get);
   }
 
-  public HttpResponse put(String path, HttpEntity entity) throws IOException {
+  public CloseableHttpResponse put(String path, HttpEntity entity) throws IOException {
     final URI uri = resolve(path);
     final HttpPut put = new HttpPut(uri);
     put.setEntity(entity);

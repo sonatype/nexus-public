@@ -101,7 +101,7 @@ public class CleanupServiceImpl
         totalDeletedCount.addAndGet(this.cleanup(repository, cancelledCheck));
       }
     });
-    log.info("{} components cleaned up across all repositories", totalDeletedCount.get());
+    log.info("{} assets cleaned up across all repositories", totalDeletedCount.get());
   }
 
   private Long cleanup(final Repository repository, final BooleanSupplier cancelledCheck) {
@@ -109,7 +109,7 @@ public class CleanupServiceImpl
     findPolicies(repository).forEach(policy -> {
       CleanupComponentBrowse browseService = browseServiceFactory.get(repository.getFormat());
       deleted.addAndGet(deleteByPolicy(repository, policy, cancelledCheck, browseService));
-      log.info("{} components cleaned up for repository {} in total", deleted, repository.getName());
+      log.info("{} assets cleaned up for repository {} in total", deleted, repository.getName());
     });
     return deleted.get();
   }
@@ -119,7 +119,7 @@ public class CleanupServiceImpl
                                 final BooleanSupplier cancelledCheck,
                                 CleanupComponentBrowse browseService)
   {
-    log.info("Deleting components in repository {} using policy {}", repository.getName(), policy.getName());
+    log.info("Deleting components and assets in repository {} using policy {}", repository.getName(), policy.getName());
 
     DeletionProgress deletionProgress = new DeletionProgress(cleanupRetryLimit);
 

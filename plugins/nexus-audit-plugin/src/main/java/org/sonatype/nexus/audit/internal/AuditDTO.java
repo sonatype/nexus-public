@@ -55,7 +55,7 @@ public class AuditDTO
     //deserialization
   }
 
-  public AuditDTO(AuditData auditData) {
+  public AuditDTO(final AuditData auditData) {
     if (auditData.getTimestamp() != null) {
       this.timestamp = auditData.getTimestamp().toInstant().atZone(ZoneId.systemDefault()).toOffsetDateTime().format(DATE_FORMAT);
     }

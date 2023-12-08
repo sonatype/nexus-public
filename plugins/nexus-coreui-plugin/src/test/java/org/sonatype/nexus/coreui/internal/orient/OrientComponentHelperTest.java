@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -135,14 +134,9 @@ public class OrientComponentHelperTest
   public void setup() {
     objectMapper = new ObjectMapper();
 
-    orientHelper = new OrientComponentHelper();
-    orientHelper.setRepositoryManager(repositoryManager);
-    orientHelper.setContentPermissionChecker(contentPermissionChecker);
-    orientHelper.setVariableResolverAdapterManager(variableResolverAdapterManager);
-    orientHelper.setBrowseService(browseService);
-    orientHelper.setMaintenanceService(maintenanceService);
-    orientHelper.setComponentFinders(componentFinders);
-    orientHelper.setBucketStore(bucketStore);
+    orientHelper =
+        new OrientComponentHelper(repositoryManager, contentPermissionChecker, variableResolverAdapterManager,
+            browseService, maintenanceService, componentFinders, bucketStore);
 
     underTest = new ComponentComponent();
     underTest.setRepositoryManager(repositoryManager);
@@ -241,7 +235,7 @@ public class OrientComponentHelperTest
     Asset asset = mock(Asset.class);
     EntityMetadata entityMetadata = mock(EntityMetadata.class);
     VariableSource variableSource = mock(VariableSource.class);
-    when(contentPermissionChecker.isPermitted(anyString(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(anyString(), any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
     when(component.getEntityMetadata()).thenReturn(entityMetadata);
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(storageTx.findComponent(eq(new DetachedEntityId("someid")))).thenReturn(component);
@@ -257,14 +251,15 @@ public class OrientComponentHelperTest
   public void testReadComponent_notAllowed() {
     Component component = mock(Component.class);
     Asset asset = mock(Asset.class);
-    when(contentPermissionChecker.isPermitted(anyString(),any(), any(), any())).thenReturn(false);
+    when(contentPermissionChecker.isPermitted(anyString(), any(), any(), any())).thenReturn(false);
     when(storageTx.findComponent(eq(new DetachedEntityId("someid")))).thenReturn(component);
     when(storageTx.browseAssets(component)).thenReturn(Arrays.asList(asset));
 
     try {
       underTest.readComponent("someid", "testRepositoryName");
       fail("AuthorizationException should have been thrown");
-    } catch (AuthorizationException ae) {
+    }
+    catch (AuthorizationException ae) {
       // expected
     }
   }
@@ -307,7 +302,7 @@ public class OrientComponentHelperTest
     when(asset.bucketId()).thenReturn(bucketId);
     when(asset.attributes()).thenReturn(new NestedAttributesMap("attributes", new HashMap<>()));
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
-    when(contentPermissionChecker.isPermitted(anyString(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(anyString(), any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
 
     when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
     when(bucketStore.getById(bucketId)).thenReturn(bucket);
@@ -329,12 +324,13 @@ public class OrientComponentHelperTest
     when(bucketStore.getById(bucketId)).thenReturn(bucket);
     when(bucket.getRepositoryName()).thenReturn("testRepositoryName");
     when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
-    when(contentPermissionChecker.isPermitted(anyString(),any(), any(), any())).thenReturn(false);
+    when(contentPermissionChecker.isPermitted(anyString(), any(), any(), any())).thenReturn(false);
 
-    try{
+    try {
       underTest.readAsset("someid", "testRepositoryName");
       fail("AuthorizationException should have been thrown");
-    } catch (AuthorizationException ae) {
+    }
+    catch (AuthorizationException ae) {
       //expected
     }
   }

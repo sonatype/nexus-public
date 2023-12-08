@@ -130,6 +130,18 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-script</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-script-plugin</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>
