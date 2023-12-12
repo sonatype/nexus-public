@@ -27,6 +27,7 @@ import org.sonatype.nexus.scheduling.CurrentState
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskState
+import org.sonatype.nexus.scheduling.schedule.Cron
 import org.sonatype.nexus.scheduling.schedule.Daily
 import org.sonatype.nexus.scheduling.schedule.Hourly
 import org.sonatype.nexus.scheduling.schedule.Manual
@@ -59,13 +60,13 @@ import org.quartz.spi.JobStore
 import org.quartz.spi.OperableTrigger
 
 import static junit.framework.TestCase.assertEquals
+import static junit.framework.TestCase.fail
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.hasSize
 import static org.mockito.ArgumentMatchers.any
 import static org.mockito.ArgumentMatchers.isNotNull
 import static org.mockito.ArgumentMatchers.eq
-import static org.mockito.ArgumentMatchers.notNull
 import static org.mockito.Mockito.*
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED
 import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_END_STATE
@@ -187,6 +188,41 @@ class QuartzSchedulerSPITest
     def recordDelete = ArgumentCaptor.forClass(JobKey)
     verify(schedulerListener).jobDeleted(recordDelete.capture())
     assert recordDelete.value.name == 'testJobKeyName'
+  }
+
+  @Test
+  void 'Updating a task should validate cron expression'() {
+    def now = DateTime.now()
+    def startAt = DateTime.parse('2010-06-30T01:20')
+    def taskConfig = new TaskConfiguration(id: 'test', typeId: 'test')
+    underTest.scheduleTask(taskConfig, new Hourly(startAt.toDate()))
+
+    def spyUnderTest = spy(underTest)
+    def taskInfo = mock(QuartzTaskInfo.class);
+    def jobKey = mock(JobKey.class)
+
+    when(jobKey.name).thenReturn('test')
+    when(taskInfo.jobKey).thenReturn(jobKey)
+    when(taskInfo.configuration).thenReturn(taskConfig)
+    when(spyUnderTest.findTaskById(anyString())).thenReturn(taskInfo)
+
+    // An invalid cron expression should cause an error.
+    try {
+      spyUnderTest.scheduleTask(taskConfig, new Cron(startAt.toDate(), "*0 0 /3 * * ?*"))
+      fail 'Failed to throw IllegalArgumentException'
+    }
+    catch(Exception e) {
+      assert e.getMessage().contains("java.lang.IllegalArgumentException: Invalid Cron expression:")
+    }
+
+    // A valid cron expression should work
+    try {
+      spyUnderTest.scheduleTask(taskConfig, new Cron(startAt.toDate(), "29 * * * * ?"))
+    }
+    catch(Exception e) {
+      fail 'Failed to schedule task with a valid cron expression ' + e.message
+    }
+
   }
 
   @Test
