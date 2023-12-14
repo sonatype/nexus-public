@@ -443,7 +443,7 @@ public class S3BlobStore
         }
 
         if (blobAttributes.isDeleted() && !includeDeleted) {
-          log.warn("Attempt to access soft-deleted blob {} attributes: {}", blobId, blobAttributes);
+          log.debug("Attempt to access soft-deleted blob {} attributes: {}", blobId, blobAttributes);
           return null;
         }
 
