@@ -51,6 +51,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskRemovedException;
 import org.sonatype.nexus.scheduling.TaskState;
+import org.sonatype.nexus.scheduling.schedule.Cron;
 import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Now;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
@@ -92,6 +93,8 @@ import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_END
 import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY;
 import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
+import static org.sonatype.nexus.scheduling.schedule.Schedule.SCHEDULE_START_AT;
+import static org.sonatype.nexus.scheduling.schedule.Schedule.stringToDate;
 
 /**
  * Quartz {@link SchedulerSPI}.
@@ -676,7 +679,14 @@ public abstract class QuartzSchedulerSPI
     scheduler.addJob(jobDetail, true, true);
     scheduler.rescheduleJob(trigger.getKey(), trigger);
 
-    // update TaskInfo, but only if it's WAITING, as running one will pick up the change by job listener when done
+    JobDataMap jobData = trigger.getJobDataMap();
+    String type = jobData.getString(Schedule.SCHEDULE_TYPE);
+
+    if (Cron.TYPE.equals(type)) {
+      verifyCron(jobData);
+    }
+
+      // update TaskInfo, but only if it's WAITING, as running one will pick up the change by job listener when done
     old.setNexusTaskStateIfWaiting(
         new QuartzTaskState(
             config,
@@ -694,6 +704,17 @@ public abstract class QuartzSchedulerSPI
     }
 
     return old;
+  }
+
+  private void verifyCron(final JobDataMap jobData) throws SchedulerException {
+    Date startAt = stringToDate(jobData.getString(SCHEDULE_START_AT));
+    String cronExpression = jobData.getString(Cron.SCHEDULE_CRON_EXPRESSION);
+    try {
+      scheduleFactory.cron(startAt, cronExpression);
+    }
+    catch (Exception e) {
+      throw new SchedulerException(e);
+    }
   }
 
   private JobDetail buildJob(final TaskConfiguration config, final JobKey jobKey) {
@@ -798,6 +819,7 @@ public abstract class QuartzSchedulerSPI
    * Returns task-info for given identifier, or null.
    */
   @Nullable
+  @VisibleForTesting
   protected QuartzTaskInfo findTaskById(final String id) throws SchedulerException {
     try (TcclBlock tccl = TcclBlock.begin(this)) {
       return allTasks().values().stream()
