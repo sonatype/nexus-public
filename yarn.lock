@@ -1672,10 +1672,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@braintree/sanitize-url@npm:=6.0.0":
-  version: 6.0.0
-  resolution: "@braintree/sanitize-url@npm:6.0.0"
-  checksum: 409ce7709dc1a0c67bc887d20af1becd4145d5c62cc5124b1c4c1f3ea2a8d69b0ee9f582d446469c6f5294b56442b99048cbbba6861dd5c834d4e019b95e1f40
+"@braintree/sanitize-url@npm:=6.0.4":
+  version: 6.0.4
+  resolution: "@braintree/sanitize-url@npm:6.0.4"
+  checksum: 1154b1bdd92d3d308fb7d19243ea45a348661b656dccd8f6e90d59d117f4f8d4272287f0d6ad36082293f0c8d120eca4adc6d7a9fbe16e4771e540939dec52a3
   languageName: node
   linkType: hard
 
@@ -11426,7 +11426,7 @@ __metadata:
   resolution: "swagger-ui-react@npm:4.11.1"
   dependencies:
     "@babel/runtime-corejs3": ^7.16.8
-    "@braintree/sanitize-url": =6.0.0
+    "@braintree/sanitize-url": =6.0.4
     base64-js: ^1.5.1
     classnames: ^2.3.1
     css.escape: 1.5.1
