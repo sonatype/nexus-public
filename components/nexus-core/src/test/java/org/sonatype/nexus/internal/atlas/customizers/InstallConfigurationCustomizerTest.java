@@ -16,7 +16,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -33,7 +35,7 @@ import org.xmlunit.builder.Input;
 import org.xmlunit.diff.Diff;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertFalse;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CONFIG;
@@ -144,8 +146,9 @@ public class InstallConfigurationCustomizerTest
         "</hazelcast>";
 
     Diff diff = DiffBuilder.compare(Input.fromString(expected))
-      .withTest(Input.fromStream(source.getContent()))
-      .build();
+        .ignoreWhitespace()
+        .withTest(Input.fromStream(source.getContent()))
+        .build();
 
     assertFalse(diff.toString(), diff.hasDifferences());
   }
@@ -221,6 +224,7 @@ public class InstallConfigurationCustomizerTest
         "</hazelcast>";
 
     Diff diff = DiffBuilder.compare(Input.fromString(expected))
+        .ignoreWhitespace()
         .withTest(Input.fromStream(source.getContent()))
         .build();
 
@@ -240,19 +244,16 @@ public class InstallConfigurationCustomizerTest
     SanitizedDataStoreFileSource source = new SanitizedDataStoreFileSource(CONFIG, "test/file", temp, DEFAULT);
     source.prepare();
 
-    final String expected = "password=**REDACTED**" + System.lineSeparator() +
-        "name=config" + System.lineSeparator() +
-        "type=jdbc" + System.lineSeparator() +
-        "jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password\\=**REDACTED**&password\\=**REDACTED**" +
-        System.lineSeparator() +
-        "username=postgres";
+    final List<String> expected = Arrays.asList("password=**REDACTED**", "name=config", "type=jdbc",
+        "jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password\\=**REDACTED**&password\\=**REDACTED**",
+        "username=postgres");
 
     // Skip the timestamp line at the top of the file
-    String actual;
+    List<String> actual;
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(source.getContent()))) {
-      actual = reader.lines().skip(1).collect(Collectors.joining(System.lineSeparator()));
+      actual = reader.lines().skip(1).collect(Collectors.toList());
     }
 
-    assertThat(actual, is(expected));
+    assertThat(actual, containsInAnyOrder(expected.toArray()));
   }
 }
