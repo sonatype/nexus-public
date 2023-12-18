@@ -56,12 +56,14 @@ const browseableFormats = [{id: 'test'}];
 
 describe('Welcome', function() {
   let user;
+  let status;
 
   beforeEach(function() {
     user = null;
+    status = {edition: 'OSS'};
 
     jest.spyOn(axios, 'post').mockResolvedValue(testData.simpleSuccessResponse)
-    jest.spyOn(ExtJS, 'useStatus').mockReturnValue({});
+    jest.spyOn(ExtJS, 'useStatus').mockReturnValue(status);
     jest.spyOn(ExtJS, 'useLicense').mockReturnValue({});
     jest.spyOn(ExtJS, 'checkPermission').mockReturnValue({});
     jest.spyOn(ExtJS, 'useUser').mockImplementation(() => user);
@@ -71,6 +73,7 @@ describe('Welcome', function() {
     jest.spyOn(Object.getPrototypeOf(localStorage), 'setItem');
 
     when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue([]);
+    when(ExtJS.state().getValue).calledWith('status').mockReturnValue(status);
   });
 
   it('renders a main content area', function() {
@@ -238,7 +241,7 @@ describe('Welcome', function() {
     });
 
     it('sets the iframe URL with the appropriate query parameters based on the status and license', async function() {
-      jest.spyOn(ExtJS, 'useStatus').mockReturnValue({ version: '1.2.3-foo', edition: 'bar' });
+      jest.spyOn(ExtJS, 'useStatus').mockReturnValue({ version: '1.2.3-foo', edition: 'OSS' });
       jest.spyOn(ExtJS, 'useLicense').mockReturnValue({ daysToExpiry: 42 });
 
       render(<Welcome />);
@@ -246,7 +249,7 @@ describe('Welcome', function() {
       const frame = await selectors.outreachFrame('find');
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.+&)?version=1\.2\.3-foo/));
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.+&)?versionMm=1\.2/));
-      expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.+&)?edition=bar/));
+      expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.+&)?edition=OSS/));
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.+&)?daysToExpiry=42/));
     });
 
@@ -268,7 +271,15 @@ describe('Welcome', function() {
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?usertype=normal/));
     });
 
-    it('sets the usertype query param to "anonymous" if the user is not logged in', async function() {
+    it('sets the source of iframe to empty if user is not logged and edition is PRO', async function() {
+      when(ExtJS.state().getValue).calledWith('status').mockReturnValue({edition: 'PRO'});
+
+      render(<Welcome />);
+
+      expect(selectors.outreachFrame('query')).not.toBeInTheDocument();
+    });
+
+    it('sets the usertype query param to "anonymous" if the user is not logged and edition is OSS', async function() {
       render(<Welcome />);
 
       const frame = await selectors.outreachFrame('find');
