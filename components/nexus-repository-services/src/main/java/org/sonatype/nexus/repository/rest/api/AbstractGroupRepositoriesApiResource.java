@@ -28,7 +28,6 @@ import javax.ws.rs.core.Response;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupHandler;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
@@ -57,18 +56,11 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
 
   private ConstraintViolationFactory constraintViolationFactory;
 
-  private RepositoryManager repositoryManager;
-
   private ApplicationVersion applicationVersion;
 
   @Inject
   public void setConstraintViolationFactory(final ConstraintViolationFactory constraintViolationFactory) {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
-  }
-
-  @Inject
-  public void setRepositoryManager(final RepositoryManager repositoryManager) {
-    this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   @Inject

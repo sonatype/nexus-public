@@ -36,6 +36,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
+import static org.sonatype.nexus.rest.ApiDocConstants.BAD_REQUEST;
 import static org.sonatype.nexus.rest.ApiDocConstants.DISABLED_IN_HIGH_AVAILABILITY;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_CREATED;
@@ -67,6 +68,7 @@ public abstract class AptHostedRepositoriesApiResource
   @ApiOperation("Update APT hosted repository")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = REPOSITORY_UPDATED),
+      @ApiResponse(code = 400, message = BAD_REQUEST),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
       @ApiResponse(code = 404, message = REPOSITORY_NOT_FOUND)

@@ -50,5 +50,9 @@ public class ApiDocConstants
 
   public static final String BLOBSTORE_NOT_FOUND = "Blob store not found";
 
+  public static final String INCORRECT_BLOBSTORE = "Changing a repository blobstore name is not supported";
+
+  public static final String BAD_REQUEST = "Bad request";
+
   public static final String DISABLED_IN_HIGH_AVAILABILITY = "Feature is disabled in High Availability";
 }

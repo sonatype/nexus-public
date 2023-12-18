@@ -37,4 +37,10 @@ public class WebApplicationMessageException
         .entity(new GenericEntity<>(new ValidationErrorXO(checkNotNull(message).toString()), ValidationErrorXO.class))
         .type(mediaType).build());
   }
+
+  public WebApplicationMessageException(int status, final Object message, final String mediaType) {
+    super(Response.status(status)
+            .entity(new GenericEntity<>(new ValidationErrorXO(checkNotNull(message).toString()), ValidationErrorXO.class))
+            .type(mediaType).build());
+  }
 }
