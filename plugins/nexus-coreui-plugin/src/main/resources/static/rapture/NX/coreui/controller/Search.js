@@ -136,6 +136,9 @@ Ext.define('NX.coreui.controller.Search', {
         },
         '#State': {
           userchanged: me.onUserChanged
+        },
+        '#Permissions': {
+          changed: me.onPermissionsChange
         }
       },
       component: {
@@ -185,8 +188,22 @@ Ext.define('NX.coreui.controller.Search', {
     if (!user) {
       if (searchResultStore !== null) {
         searchResultStore.clearFilter(true);
-        searchResultStore.load(function() {});
       }
+    }
+  },
+
+  /**
+   * Update search results after permissions changed.
+   *
+   * @private
+   */
+  onPermissionsChange: function () {
+    var me = this,
+        searchResultStore = me.getSearchResultStore();
+    if (NX.Permissions.check('nexus:search:read')
+        && searchResultStore !== undefined
+        && searchResultStore !== null) {
+      searchResultStore.load();
     }
   },
 

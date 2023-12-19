@@ -103,7 +103,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       iconCls: 'x-fa fa-database',
       authenticationRequired: false,
       visible: function() {
-        return !NX.State.getValue('nexus.react.browse', false);
+        return !NX.State.getValue('nexus.react.browse', false)
+            && NX.State.getValue('browseableformats', []).length > 0;
       }
     };
 
