@@ -29,7 +29,7 @@
 
   <properties>
     <bouncycastle.version>1.75</bouncycastle.version>
-    <apache-shiro.version>1.12.0</apache-shiro.version>
+    <apache-shiro.version>1.13.0</apache-shiro.version>
     <java-jwt.version>3.16.0</java-jwt.version>
   </properties>
 
