@@ -64,6 +64,9 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
   @Inject
   private ServerTestSystem servers;
 
+  @Inject
+  private ConfigTestSystem config;
+
   protected NexusTestSystemSupport(
       final R repositories,
       final C capabilities)
@@ -153,10 +156,24 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
     return servers;
   }
 
+  public ConfigTestSystem config() {
+    return config;
+  }
+
+  /**
+   * Wait for nexus to be done active processing of any running tasks and any elasticsearch updates.  If you have a
+   * test that is acting 'flaky' not having this after running a task or adding/removing components is likely the cause
+   */
+  public void waitForCalmPeriod() {
+    tasks.waitForCalmPeriod();
+    searchTestSystem.waitForSearch();
+  }
+
   @Override
   protected void before() throws Throwable {
     securityRealms.before();
     repositories.before();
+    config.before();
   }
 
   @Override
@@ -170,6 +187,7 @@ public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C e
     blobstores.after();
     security.after();
     securityRealms.after();
+    config.after();
   }
 
   public static class NexusTestSystemRule

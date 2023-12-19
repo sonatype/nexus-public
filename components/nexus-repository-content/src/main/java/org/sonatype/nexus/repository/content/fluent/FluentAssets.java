@@ -37,6 +37,18 @@ public interface FluentAssets
   FluentAsset with(Asset asset);
 
   /**
+   * To include only group member content, ignoring assets in the group repository itself.  By default, only group
+   * repository content is returned
+   */
+  FluentQuery<FluentAsset> withOnlyGroupMemberContent();
+
+  /**
+   * To include both group content and group member content in the query.  By default, only group
+   * repository content is returned
+   */
+  FluentQuery<FluentAsset> withGroupMemberContent();
+
+  /**
    * Query assets that have the given kind.
    *
    * @since 3.26

@@ -157,4 +157,11 @@ public class BrowseNodeData
   public void setPackageUrl(@Nullable final String packageUrl) {
     this.packageUrl = packageUrl;
   }
+
+  @Override
+  public String toString() {
+    return "BrowseNode{" + "nodeId='" + nodeId + "', repositoryId='" + repositoryId + "', displayName='" + displayName +
+        "', requestPath='" + requestPath + "', leaf='" + leaf + "', parentId='" + parentId + "', packageUrl='" +
+        packageUrl + "', dbComponentId='" + dbComponentId + "', dbAssetId='" + dbAssetId + "}'";
+  }
 }

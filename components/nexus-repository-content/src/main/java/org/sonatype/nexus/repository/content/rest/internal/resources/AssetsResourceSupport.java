@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
+import org.sonatype.nexus.repository.types.GroupType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -60,6 +61,11 @@ abstract class AssetsResourceSupport
   }
 
   private Continuation<FluentAsset> getAssets(Repository repository, final String continuationToken) {
+    // helper for users, if they query by group chances are they want the list of member content
+    if (GroupType.NAME.equals(repository.getType().getValue())) {
+      return repository.facet(ContentFacet.class).assets().withOnlyGroupMemberContent()
+          .browse(LIMIT, continuationToken);
+    }
     return repository.facet(ContentFacet.class).assets().browse(LIMIT, continuationToken);
   }
 

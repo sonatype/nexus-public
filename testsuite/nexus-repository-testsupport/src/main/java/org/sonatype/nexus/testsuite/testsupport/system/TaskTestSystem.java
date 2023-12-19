@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -46,9 +46,9 @@ public class TaskTestSystem
 {
   private static final Logger log = LoggerFactory.getLogger(TaskTestSystem.class);
 
-  private final List<TaskEvent> events = new ArrayList<>();
+  private final List<TaskEvent> events = new CopyOnWriteArrayList<>();
 
-  private final List<TaskInfo> tasks = new ArrayList<>();
+  private final List<TaskInfo> tasks = new CopyOnWriteArrayList<>();
 
   private final TaskScheduler scheduler;
 

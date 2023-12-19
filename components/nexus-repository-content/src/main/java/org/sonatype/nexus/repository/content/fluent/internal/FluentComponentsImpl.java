@@ -13,12 +13,12 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -43,8 +43,7 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getLeafRepositoryIds;
-import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.isGroupRepository;
+import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getRepositoryIds;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
 
@@ -117,15 +116,14 @@ public class FluentComponentsImpl
     return doBrowseEager(limit, continuationToken, null, null, null);
   }
 
-  Continuation<FluentComponent> doBrowseEager(final int limit,
-                                              @Nullable final String continuationToken,
-                                              @Nullable final String kind,
-                                              @Nullable final String filter,
-                                              @Nullable final Map<String, Object> filterParams) {
-    Set<Integer> repositoryIds = Collections.singleton(facet.contentRepositoryId());
-    if (isGroupRepository(facet.repository())) {
-      repositoryIds = getLeafRepositoryIds(facet.repository());
-    }
+  Continuation<FluentComponent> doBrowseEager(
+      final int limit,
+      @Nullable final String continuationToken,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
+  {
+    Set<Integer> repositoryIds = getRepositoryIds(null, facet, facet.repository());
 
     Continuation<ComponentData> componentAssetsData = componentStore
         .browseComponentsEager(repositoryIds, limit, continuationToken, kind, filter, filterParams);
@@ -148,14 +146,14 @@ public class FluentComponentsImpl
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
-    if (isGroupRepository(facet.repository())) {
-      Set<Integer> leafRepositoryIds = getLeafRepositoryIds(facet.repository());
-      if (!leafRepositoryIds.isEmpty()) {
-        return new FluentContinuation<>(componentStore.browseComponents(
-            leafRepositoryIds, limit, continuationToken), this::with);
-      }
+    Set<Integer> repositoryIds = getRepositoryIds(null, facet, facet.repository());
+
+    if (repositoryIds.size() > 1) {
+      // with more than 1 repository, the kind/filter/filterParams all get ignored
+      return new FluentContinuation<>(componentStore.browseComponents(repositoryIds, limit, continuationToken),
+          this::with);
     }
-    return new FluentContinuation<>(componentStore.browseComponents(facet.contentRepositoryId(),
+    return new FluentContinuation<>(componentStore.browseComponents(repositoryIds.iterator().next(),
         limit, continuationToken, kind, filter, filterParams), this::with);
   }
 

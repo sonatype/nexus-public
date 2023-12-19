@@ -207,7 +207,7 @@ public class BrowseNodeQueryServiceImpl
    * Returns stream of all non-group repositories reachable from the given repository.
    */
   private static Stream<Repository> members(final Repository repository) {
-    return repository.facet(GroupFacet.class).leafMembers().stream();
+    return repository.facet(GroupFacet.class).allMembers().stream();
   }
 
   /**

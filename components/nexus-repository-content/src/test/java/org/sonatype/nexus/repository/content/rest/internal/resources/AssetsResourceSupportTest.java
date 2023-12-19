@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
+import org.sonatype.nexus.repository.types.HostedType;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -39,12 +40,12 @@ import org.mockito.Mock;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -188,6 +189,7 @@ public class AssetsResourceSupportTest
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository.getUrl()).thenReturn(REPOSITORY_URL);
     when(repository.getFormat()).thenReturn(aFormat);
+    when(repository.getType()).thenReturn(new HostedType());
     when(aFormat.getValue()).thenReturn(A_FORMAT);
   }
 

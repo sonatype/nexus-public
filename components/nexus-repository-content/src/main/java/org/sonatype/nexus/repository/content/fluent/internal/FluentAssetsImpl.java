@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -27,13 +29,19 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
+import org.sonatype.nexus.repository.content.fluent.constraints.FluentQueryConstraint;
+import org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getLeafRepositoryIds;
+import static java.util.Collections.singletonList;
+import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.BOTH;
+import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.LOCAL;
+import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.MEMBERS;
+import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getRepositoryIds;
 import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.isGroupRepository;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
@@ -62,8 +70,7 @@ public class FluentAssetsImpl
 
   @Override
   public FluentAsset with(final Asset asset) {
-    return asset instanceof FluentAsset ? (FluentAsset) asset
-        : new FluentAssetImpl(facet, asset);
+    return asset instanceof FluentAsset ? (FluentAsset) asset : new FluentAssetImpl(facet, asset);
   }
 
   @Override
@@ -71,16 +78,21 @@ public class FluentAssetsImpl
     return doCount(null, null, null);
   }
 
-  int doCount(@Nullable final String kind,
-              @Nullable final String filter,
-              @Nullable final Map<String, Object> filterParams)
+  int doCount(
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
   {
     return assetStore.countAssets(facet.contentRepositoryId(), kind, filter, filterParams);
   }
 
   @Override
   public Continuation<FluentAsset> browse(final int limit, final String continuationToken) {
-    return doBrowse(limit, continuationToken, null, null, null);
+    List<FluentQueryConstraint> constraints = new ArrayList<>();
+    if (isGroupRepository(facet.repository())) {
+      constraints.add(new GroupRepositoryConstraint(LOCAL));
+    }
+    return doBrowse(limit, continuationToken, null, null, null, constraints);
   }
 
   @Override
@@ -88,21 +100,28 @@ public class FluentAssetsImpl
     throw new UnsupportedOperationException();
   }
 
-  Continuation<FluentAsset> doBrowse(final int limit,
-                                     @Nullable final String continuationToken,
-                                     @Nullable final String kind,
-                                     @Nullable final String filter,
-                                     @Nullable final Map<String, Object> filterParams)
+  Continuation<FluentAsset> doBrowse(
+      final int limit,
+      @Nullable final String continuationToken,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams,
+      @Nullable final List<FluentQueryConstraint> constraints)
   {
-    if (isGroupRepository(facet.repository())) {
-      Set<Integer> leafRepositoryIds = getLeafRepositoryIds(facet.repository());
-      if (!leafRepositoryIds.isEmpty()) {
-        return new FluentContinuation<>(assetStore.browseAssets(leafRepositoryIds,
-            continuationToken, kind, filter, filterParams, limit), this::with);
-      }
-    }
-    return new FluentContinuation<>(assetStore.browseAssets(facet.contentRepositoryId(),
+    Set<Integer> repositoryIds = getRepositoryIds(constraints, facet, facet.repository());
+
+    return new FluentContinuation<>(assetStore.browseAssets(repositoryIds,
         continuationToken, kind, filter, filterParams, limit), this::with);
+  }
+
+  @Override
+  public FluentQuery<FluentAsset> withGroupMemberContent() {
+    return new FluentAssetQueryImpl(this, singletonList(new GroupRepositoryConstraint(BOTH)));
+  }
+
+  @Override
+  public FluentQuery<FluentAsset> withOnlyGroupMemberContent() {
+    return new FluentAssetQueryImpl(this, singletonList(new GroupRepositoryConstraint(MEMBERS)));
   }
 
   @Override
