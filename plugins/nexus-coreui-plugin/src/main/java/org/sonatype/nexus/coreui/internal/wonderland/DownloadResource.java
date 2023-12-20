@@ -92,7 +92,7 @@ public class DownloadResource
 
       log.debug("Sending support ZIP file: {}", fileName);
       return Response.ok(download.getBytes())
-          .header(CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+          .header(CONTENT_DISPOSITION, "attachment; filename=\"${fileName}\"")
           .header(CONTENT_LENGTH, download.getLength())
           .build();
     }
