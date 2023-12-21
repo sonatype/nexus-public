@@ -69,14 +69,11 @@ Ext.define('NX.coreui.view.react.FooterContainer', {
     const isCircuitBreakerEnabled = NX.State.getValue('nexus.circuitb.enabled');
     const isOss = NX.State.getEdition() === 'OSS';
     const metrics = NX.State.getValue('contentUsageEvaluationResult');
-    const hardLimitCards = metrics.filter(function(m) {
-      return m.limitLevel === 'HARD_LIMIT';
-    });
     const softLimitCards = metrics.filter(function(m) {
       return m.limitLevel === 'SOFT_LIMIT';
     });
 
-    this.setVisible(canViewMetrics && !isHa && isCircuitBreakerEnabled && isOss && (hardLimitCards.length > 0 || softLimitCards.length > 0));
+    this.setVisible(canViewMetrics && !isHa && isCircuitBreakerEnabled && isOss && softLimitCards.length > 0);
     this.updateLayout();
   },
 
