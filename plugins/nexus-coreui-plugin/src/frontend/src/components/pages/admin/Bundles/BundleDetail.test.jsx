@@ -55,7 +55,7 @@ describe('BundleDetail', function() {
     expect(selectors.getTerm(7)).toHaveTextContent("Last Modified");
     expect(selectors.getDefinition(7)).toHaveTextContent(mockData[0].lastModified);
     expect(selectors.getTerm(8)).toHaveTextContent("Fragment");
-    expect(selectors.getDefinition(8)).toHaveTextContent(mockData[0].fragment);
+    expect(selectors.getDefinition(8)).toHaveTextContent(mockData[0].fragment.toString());
     expect(selectors.getTerm(9)).toHaveTextContent("Bnd-LastModified");
     expect(selectors.getDefinition(9)).toHaveTextContent(mockData[0].headers['Bnd-LastModified']);
     expect(selectors.getTerm(10)).toHaveTextContent("Build-Jdk-Spec");

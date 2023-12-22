@@ -67,7 +67,7 @@ export default function BundleDetail({itemId, service}) {
                   </div>
                   <div className="nx-list__item">
                     <dt className="nx-list__term">{UIStrings.BUNDLES.BUNDLES_DETAIL.LIST.FRAGMENT_LABEL}</dt>
-                    <dd className="nx-list__description">{data.fragment}</dd>
+                    <dd className="nx-list__description">{data.fragment?.toString()}</dd>
                   </div>
                   {
                     Object.entries(data.headers).map(([headerTitle, headerDesc]) => {
