@@ -63,8 +63,8 @@ public class AssetBlobCleanupTask
 
   static final boolean HARD_DELETE = getBoolean(PROPERTY_PREFIX + "hardDelete", false);
 
-  static final int BLOB_CREATED_DELAY_HOUR =
-      getInteger(PROPERTY_PREFIX + "blobCreatedDelayHour", 1);
+  static final int BLOB_CREATED_DELAY_MINUTE =
+      getInteger(PROPERTY_PREFIX + "blobCreatedDelayMinute", 60);
 
   /**
    * Comma-separated formats that will ignore batch deletion. Default value null.
@@ -155,7 +155,7 @@ public class AssetBlobCleanupTask
     int deleteCount = 0;
 
     Continuation<AssetBlob> unusedAssetBlobs =
-        assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, null);
+        assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, null);
     while (!isCanceled() && !unusedAssetBlobs.isEmpty()) {
       log.debug("Found {} unused {} blobs in {}", unusedAssetBlobs.size(), format, contentStore);
       for (AssetBlob assetBlob : unusedAssetBlobs) {
@@ -177,7 +177,7 @@ public class AssetBlobCleanupTask
         }
       }
       unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(
-          BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, unusedAssetBlobs.nextContinuationToken());
+          BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, unusedAssetBlobs.nextContinuationToken());
     }
     return deleteCount;
   }
@@ -195,7 +195,7 @@ public class AssetBlobCleanupTask
   {
     int deleteCount = 0;
     Continuation<AssetBlob> unusedAssetBlobs =
-        assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, null);
+        assetBlobStore.browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, null);
     while (!isCanceled() && !unusedAssetBlobs.isEmpty()) {
       if (isCanceled()) {
         break;
@@ -211,7 +211,7 @@ public class AssetBlobCleanupTask
       deleteCount += blobRefAll.size();
 
       unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(
-          BATCH_SIZE, BLOB_CREATED_DELAY_HOUR, unusedAssetBlobs.nextContinuationToken());
+          BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, unusedAssetBlobs.nextContinuationToken());
     }
     return deleteCount;
   }
