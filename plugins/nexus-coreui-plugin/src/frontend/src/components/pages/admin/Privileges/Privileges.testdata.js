@@ -34,9 +34,19 @@ const PRIVILEGE_TYPES_UNIQUE_FIELDS = [
       },
       {
         id: 'actions',
-        type: 'string',
+        type: 'setOfCheckboxes',
         label: 'Actions',
-        helpText: 'The comma-delimited list of actions',
+        helpText: 'The actions you wish to allow',
+        attributes: {
+          options: [
+            "browse",
+            "read",
+            "edit",
+            "add",
+            "delete",
+            "run"
+          ]
+        },
       }
     ]
   },
@@ -60,9 +70,18 @@ const PRIVILEGE_TYPES_UNIQUE_FIELDS = [
       },
       {
         id: 'actions',
-        type: 'string',
+        type: 'setOfCheckboxes',
         label: 'Actions',
-        helpText: 'The comma-delimited list of actions',
+        helpText: 'The actions you wish to allow',
+        attributes: {
+          options: [
+            "browse",
+            "read",
+            "edit",
+            "add",
+            "delete"
+          ]
+        }
       }
     ]
   },
@@ -87,9 +106,18 @@ const PRIVILEGE_TYPES_UNIQUE_FIELDS = [
       },
       {
         id: 'actions',
-        type: 'string',
+        type: 'setOfCheckboxes',
         label: 'Actions',
-        helpText: 'The comma-delimited list of actions',
+        helpText: 'The actions you wish to allow',
+        attributes: {
+          options: [
+            "browse",
+            "read",
+            "edit",
+            "add",
+            "delete"
+          ]
+        }
       }
     ]
   },
@@ -113,9 +141,18 @@ const PRIVILEGE_TYPES_UNIQUE_FIELDS = [
       },
       {
         id: 'actions',
-        type: 'string',
+        type: 'setOfCheckboxes',
         label: 'Actions',
-        helpText: 'The comma-delimited list of actions',
+        helpText: 'The actions you wish to allow',
+        attributes: {
+          options: [
+            "browse",
+            "read",
+            "edit",
+            "add",
+            "delete"
+          ]
+        }
       }
     ]
   },
@@ -131,9 +168,17 @@ const PRIVILEGE_TYPES_UNIQUE_FIELDS = [
       },
       {
         id: 'actions',
-        type: 'string',
+        type: 'setOfCheckboxes',
         label: 'Actions',
-        helpText: 'The comma-delimited list of actions',
+        helpText: 'The actions you wish to allow',
+        attributes: {
+          options: [
+            "read",
+            "update",
+            "create",
+            "delete"
+          ]
+        }
       }
     ]
   },
@@ -155,6 +200,8 @@ export const TYPES = PRIVILEGE_TYPES_UNIQUE_FIELDS.map(type => {
   type.formFields = type.formFields.map(field => ({...DEFAULT_FIELD_CONFIG, ...field}));
   return type;
 });
+
+export const BREADR_ACTIONS = ['Browse', 'Read', 'Edit', 'Add', 'Delete', 'Run'];
 
 export const TYPES_MAP = indexBy(prop('id'), TYPES);
 

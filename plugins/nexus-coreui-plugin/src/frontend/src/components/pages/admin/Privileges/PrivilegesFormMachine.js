@@ -16,26 +16,34 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
-import {mergeDeepRight} from 'ramda';
+import {isEmpty, filter, mergeDeepRight} from 'ramda';
 
 import {
   ExtJS,
   FormUtils,
   ValidationUtils,
-  ExtAPIUtils,
   APIConstants,
   FormFieldsFactory,
 } from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
-import {EMPTY_DATA, URL, modifyFormFields, convertActionsToArray, convertActionsToString} from './PrivilegesHelper';
+import {
+  EMPTY_DATA,
+  URL,
+  FIELDS,
+  modifyFormFields,
+  convertActionsToArray,
+  convertActionsToObject
+} from './PrivilegesHelper';
 
-const {EXT: {PRIVILEGE: {ACTION, METHODS: {READ_TYPES}}, }} = APIConstants;
+
+const {REST: {INTERNAL}} = APIConstants;
 const {PRIVILEGES: {MESSAGES: LABELS}} = UIStrings;
 
 const {singlePrivilegeUrl, updatePrivilegeUrl, createPrivilegeUrl} = URL;
 
 const isEdit = (name) => ValidationUtils.notBlank(name);
+const actionFieldName = FIELDS.ACTIONS.NAME;
 
 function validateName(name) {
   if (ValidationUtils.isBlank(name)) {
@@ -45,6 +53,13 @@ function validateName(name) {
     return UIStrings.ERROR.INVALID_NAME_CHARS;
   }
   return null;
+}
+
+function validateActionSelected(data) {
+  if (data.hasOwnProperty(actionFieldName)) {
+    const actions = data[actionFieldName];
+    return isEmpty(filter(v => v === true, actions)) ? LABELS.NO_ACTION_ERROR : undefined;
+  }
 }
 
 export default FormUtils.buildFormMachine({
@@ -69,10 +84,11 @@ export default FormUtils.buildFormMachine({
         name: ValidationUtils.validateNotBlank(data.name) || ValidationUtils.validateName(data.name),
         type: ValidationUtils.validateNotBlank(data.type),
         ...FormFieldsFactory.getValidations(data, types),
+        actionSelected: validateActionSelected(data)
       })
     }),
     setData: assign((_, {data: [types, privilege]}) => {
-      const data = convertActionsToString(privilege.data);
+      const data = convertActionsToObject(privilege.data);
       return {
         types: modifyFormFields(types.data),
         data,
@@ -92,7 +108,7 @@ export default FormUtils.buildFormMachine({
   services: {
     fetchData: ({pristineData: {name}}) => {
       return Axios.all([
-        ExtAPIUtils.extAPIRequest(ACTION, READ_TYPES).then(v => v.data.result),
+        Axios.get(INTERNAL.PRIVILEGES_TYPES),
         isEdit(name)
             ? Axios.get(singlePrivilegeUrl(name))
             : Promise.resolve({data: EMPTY_DATA}),

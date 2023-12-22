@@ -80,6 +80,7 @@ export default {
         NO: 'Cancel'
       },
       DELETE_SUCCESS: (name) => `Privilege deleted: ${name}`,
+      NO_ACTION_ERROR: 'At least one action must be selected'
     },
   }
 };

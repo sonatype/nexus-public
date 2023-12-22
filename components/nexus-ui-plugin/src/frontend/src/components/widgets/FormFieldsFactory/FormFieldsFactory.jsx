@@ -10,10 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {filter, keys} from "ramda";
 import ValidationUtils from '../../../interface/ValidationUtils';
 
 import TextFieldFactory from './factory/TextFieldFactory';
 import ComboboxFieldFactory from './factory/ComboboxFieldFactory';
+import SetOfCheckboxesFieldFactory from './factory/SetOfCheckboxesFieldFactory';
 
 import {SUPPORTED_FIELD_TYPES} from './FormFieldsFactoryConstants';
 
@@ -21,6 +23,7 @@ export default class {
   static ALL_FIELDS = [
       TextFieldFactory,
       ComboboxFieldFactory,
+      SetOfCheckboxesFieldFactory
   ];
 
   static getFields(fields) {
@@ -37,7 +40,7 @@ export default class {
     const fields = types[type]?.formFields;
     const result = {};
     let value = null;
-    fields?.forEach(({id, type, initialValue}) => {
+    fields?.forEach(({attributes, id, type, initialValue}) => {
       if (initialValue) {
         value = initialValue;
       } else if (
@@ -45,6 +48,10 @@ export default class {
           SUPPORTED_FIELD_TYPES.COMBOBOX.includes(type)
       ) {
         value = '';
+      } else if (
+          SUPPORTED_FIELD_TYPES.SET_OF_CHECKBOXES.includes(type)
+      ) {
+        value = {};
       }
       result[id] = value;
     });
@@ -58,7 +65,11 @@ export default class {
 
     fields?.forEach(({id, required}) => {
       if (required) {
-        errors[id] = ValidationUtils.validateNotBlank(data[id]);
+        if (id === 'actions') {
+          errors[id] = ValidationUtils.validateNotBlank(keys(filter(v => v === true, data[id])).join());
+        } else {
+          errors[id] = ValidationUtils.validateNotBlank(data[id]);
+        }
       }
     });
     return errors;

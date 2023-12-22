@@ -120,7 +120,7 @@ public enum PrivilegeAction
   }
 
   public static List<String> getCrudActionStrings() {
-    return Arrays.asList(READ, EDIT, ADD, DELETE)
+    return Arrays.asList(ADD, READ, EDIT, DELETE)
         .stream()
         .map(PrivilegeAction::getCrudAction)
         .collect(Collectors.toList());

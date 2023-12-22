@@ -14,7 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {find, propEq, findIndex, indexBy, insert, prop} from 'ramda';
+import {filter, find, findIndex, indexBy, insert, keys, prop, propEq} from 'ramda';
 import {APIConstants} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -92,16 +92,28 @@ export const URL = {privilegesUrl, singlePrivilegeUrl, updatePrivilegeUrl, creat
 
 export const convertActionsToArray = data => {
   const fieldName = FIELDS.ACTIONS.NAME;
-  if (data.hasOwnProperty(fieldName) && typeof data[fieldName] === 'string') {
-    data[fieldName] = data[fieldName].split(',');
+  if (data.hasOwnProperty(fieldName)) {
+    const actionsArr = keys(filter(v => v === true, data[fieldName])).map(e => {
+      return e === 'create' ? ACTIONS.ADD : e === 'update' ? ACTIONS.EDIT : e;
+    })
+
+    data[fieldName] = actionsArr;
   }
   return data;
 };
 
-export const convertActionsToString = data => {
+export const convertActionsToObject = data => {
   const fieldName = FIELDS.ACTIONS.NAME;
   if (data.hasOwnProperty(fieldName)) {
-    data[fieldName] = data[fieldName].join(',');
+    const actionsObj = Object.assign(...data[fieldName].map(e => {
+      if (data.type === TYPES.APPLICATION) {
+        return e === ACTIONS.ADD ? {'create': true} : e === ACTIONS.EDIT ? {'update': true} : {[e.toLowerCase()]: true};
+      } else {
+        return {[e.toLowerCase()]: true};
+      }
+    }));
+
+    data[fieldName] = actionsObj;
   }
   return data;
 };
