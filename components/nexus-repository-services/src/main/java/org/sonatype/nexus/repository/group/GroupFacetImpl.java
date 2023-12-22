@@ -219,6 +219,11 @@ public class GroupFacetImpl
   }
 
   private static List<Repository> allMembers(final List<Repository> members, final Repository root) {
+    // obviously dealing with a duplicate in the tree, back out
+    if (members.contains(root)) {
+      return members;
+    }
+
     members.add(root);
     List<Repository> groupMembers = root.optionalFacet(GroupFacet.class).map(GroupFacet::members)
         .orElseGet(Collections::emptyList);

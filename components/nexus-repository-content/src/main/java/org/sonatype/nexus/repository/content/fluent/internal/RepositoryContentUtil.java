@@ -12,14 +12,18 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
-import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.content.fluent.constraints.FluentQueryConstraint;
 import org.sonatype.nexus.repository.types.GroupType;
 
+import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toSet;
 
 /**
@@ -36,10 +40,29 @@ final class RepositoryContentUtil
     return GroupType.NAME.equals(repository.getType().getValue());
   }
 
-  static Set<Integer> getLeafRepositoryIds(final Repository repository) {
-    return repository.facet(GroupFacet.class).leafMembers().stream()
-        .map(leafRepository -> leafRepository.facet(ContentFacet.class))
-        .map(ContentRepository::contentRepositoryId)
+  static Set<Integer> getRepositoryIds(
+      @Nullable final List<FluentQueryConstraint> constraints,
+      final ContentFacet contentFacet,
+      final Repository repository)
+  {
+    // no constraints supplied, just use the repository of the contentFacet supplied
+    if (constraints == null || constraints.isEmpty()) {
+      return singleton(contentFacet.contentRepositoryId());
+    }
+
+    Set<Integer> repositoryIds = constraints.stream()
+        .map(constraint -> constraint.getRepositoryIds(repository))
+        .flatMap(Collection::stream)
         .collect(toSet());
+
+    constraints.forEach(constraint -> repositoryIds.addAll(constraint.getRepositoryIds(repository)));
+
+    // if we get to this point and no repository has been selected based on constraints, fallback to the repository
+    // of the contentFacet supplied
+    if (repositoryIds.isEmpty()) {
+      repositoryIds.add(contentFacet.contentRepositoryId());
+    }
+
+    return repositoryIds;
   }
 }

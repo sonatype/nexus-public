@@ -67,7 +67,10 @@ const welcomeMachine = createMachine({
   },
   services: {
     fetch: async () => {
-      const isAdmin = ExtJS.state().getUser()?.administrator,
+      const user = ExtJS.state().getUser(),
+          edition = ExtJS.state().getValue('status')?.edition,
+          isAdmin = user?.administrator,
+          requiresOutreach = edition === 'OSS' || !!user,
           outreachStatusRequest = { action, method: outreachStatusMethod },
           proxyDownloadNumbersRequest = { action, method: proxyDownloadNumbersMethod },
           firewallRequest = { action, method: firewallMethod },
@@ -89,7 +92,7 @@ const welcomeMachine = createMachine({
 
       // the outreach response includes a `data` property that is a long hexadecimal string (when the iframe should
       // be enabled) or null when the iframe should be disabled
-      const showOutreachIframe =
+      const showOutreachIframe = requiresOutreach &&
               Boolean(outreachStatusResponse?.result?.success) && outreachStatusResponse?.result?.data !== null,
           proxyDownloadNumberParams = ExtAPIUtils.extractResult(wrappedProxyDownloadNumbersResponse),
           firewallDisclaimer = isAdmin ? ExtAPIUtils.extractResult(wrappedFirewallResponse) : null;

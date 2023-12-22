@@ -29,6 +29,14 @@ public abstract class RawTestHelper
   private RestTestHelper rest;
 
   /**
+   * Create a {@Link RawClient} for the given repository, using default admin credentials
+   */
+  public RawClient rawClient(final Repository repository) throws Exception {
+    checkNotNull(repository);
+    return rawClient("/repository/" + repository.getName() + "/", "admin", "admin123");
+  }
+
+  /**
    * Create a {@link RawClient} for the given repository using the provided authentication.
    */
   public RawClient rawClient(final Repository repository, final String username, final String password) throws Exception {

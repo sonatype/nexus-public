@@ -42,7 +42,8 @@ const SOFT_LIMIT = 'SOFT_LIMIT';
 function Card({card, usage}) {
   const {HIGHEST_RECORDED_COUNT, METRIC_NAME_PRO, SUB_TITLE, TITLE} = card;
   const cardData = usage?.find(m => m.metricName === METRIC_NAME_PRO);
-  const {metricValue} = cardData;
+  const metricValue =
+      cardData && typeof cardData === 'object' && 'metricValue' in cardData ? cardData.metricValue : 0;
 
   return (
     <NxCard aria-label={TITLE}>

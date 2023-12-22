@@ -13,7 +13,9 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
@@ -31,7 +33,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
 import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
@@ -51,6 +55,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.sonatype.nexus.rest.ApiDocConstants.INCORRECT_BLOBSTORE;
 
 /**
  * @since 3.20
@@ -62,6 +67,8 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     implements Resource
 {
   private AuthorizingRepositoryManager authorizingRepositoryManager;
+
+  protected RepositoryManager repositoryManager;
 
   private AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter;
 
@@ -79,6 +86,11 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @Inject
   public void setAuthorizingRepositoryManager(final AuthorizingRepositoryManager authorizingRepositoryManager) {
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
+  }
+
+  @Inject
+  public void setRepositoryManager(final RepositoryManager repositoryManager) {
+    this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   @Inject
@@ -130,8 +142,9 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   {
     try {
       Configuration newConfiguration = configurationAdapter.convert(request);
-      ensureRepositoryNameMatches(request, repositoryName);
+      validateRequest(newConfiguration, repositoryName);
       boolean updated = authorizingRepositoryManager.update(newConfiguration);
+
       Status status = updated ? Status.NO_CONTENT : Status.NOT_FOUND;
       return Response.status(status).build();
     }
@@ -146,6 +159,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
       }
       String message = stringJoiner.toString();
       log.debug("Failed to edit a repository via REST: {}", message, e);
+      
       throw new WebApplicationMessageException(BAD_REQUEST, message, APPLICATION_JSON);
     }
   }
@@ -173,9 +187,32 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     return true;
   }
 
-  private void ensureRepositoryNameMatches(final T request, final String repositoryName) {
-    if (!repositoryName.equals(request.getName())) {
+  private void validateRequest(final Configuration newConfig, String repositoryName) {
+    ensureRepositoryNameMatches(newConfig, repositoryName);
+    ensureBlobStoreNameMatches(newConfig, repositoryName);
+  }
+
+  private void ensureRepositoryNameMatches(Configuration newConfig, final String repositoryName) {
+    if (!repositoryName.equals(newConfig.getRepositoryName())) {
       throw new ValidationErrorsException("name", "Renaming a repository is not supported");
+    }
+  }
+
+  private void ensureBlobStoreNameMatches(Configuration newConfiguration, String repositoryName) {
+    Repository repository = repositoryManager.get(repositoryName);
+    if (repository == null) {
+      return;
+    }
+
+    Function<Map<String, Map<String, Object>>, String> getBlobStorageFromAttributes =
+            storageAttr -> (String) storageAttr.get("storage").get("blobStoreName");
+
+    String newBlobStoreName = Optional.ofNullable(newConfiguration.getAttributes())
+            .map(getBlobStorageFromAttributes).orElse("");
+    String currentBlobStore = getBlobStorageFromAttributes.apply(repository.getConfiguration().getAttributes());
+
+    if (!newBlobStoreName.equals(currentBlobStore)) {
+      throw new ValidationErrorsException("BlobStoreName", INCORRECT_BLOBSTORE);
     }
   }
 

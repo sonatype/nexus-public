@@ -25,7 +25,7 @@ export default [
     location: 'testLocationData',
     startLevel: 'testStartLevelData',
     lastModified: 'testLastModifiedData',
-    fragment: 'testFragmentData',
+    fragment: false,
     fragments: [],
     fragmentHosts: [],
     headers: {
@@ -54,7 +54,7 @@ export default [
     location: 'testLocationData2',
     startLevel: 'testStartLevelData2',
     lastModified: 'testLastModifiedData2',
-    fragment: 'testFragmentData2',
+    fragment: false,
     fragments: [],
     fragmentHosts: [],
     headers: {

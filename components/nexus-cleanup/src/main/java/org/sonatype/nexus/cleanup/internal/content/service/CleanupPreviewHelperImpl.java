@@ -127,7 +127,7 @@ public class CleanupPreviewHelperImpl
       CancelableHelper.set(cancelled);
       try {
         // compute preview and return it
-        CleanupComponentBrowse browseService = browseServiceFactory.get(repository.getFormat());
+        CleanupComponentBrowse browseService = browseServiceFactory.getPreviewService();
         return browseService.browseByPage(policy, repository, queryOptions);
       }
       finally {

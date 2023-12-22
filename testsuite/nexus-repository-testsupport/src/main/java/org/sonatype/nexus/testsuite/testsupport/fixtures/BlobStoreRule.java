@@ -15,6 +15,7 @@ package org.sonatype.nexus.testsuite.testsupport.fixtures;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -222,7 +223,7 @@ public class BlobStoreRule
           blobstore.deleteHard(blobId);
         }
         catch (UncheckedIOException e) {
-          if (e.getCause() instanceof FileNotFoundException) {
+          if (e.getCause() instanceof FileNotFoundException || e.getCause() instanceof NoSuchFileException) {
             log.trace("Attempt to delete file that doesn't exist, just ignore and move on.", e);
           }
           else {

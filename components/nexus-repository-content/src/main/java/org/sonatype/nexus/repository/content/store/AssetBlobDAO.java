@@ -47,7 +47,7 @@ public interface AssetBlobDAO
    */
   Continuation<AssetBlob> browseUnusedAssetBlobs(
       @Param("limit") int limit,
-      @Param("blobCreatedDelayHour") int blobCreatedDelayHour,
+      @Param("blobCreatedDelayMinute") int blobCreatedDelayMinute,
       @Param("continuationToken") @Nullable String continuationToken);
 
   /**

@@ -118,28 +118,6 @@ export default {
         TEXT: 'Upgrade to Pro to remove limits',
         URL: '/'
       },
-      LEARN_ABOUT_PRO: {
-        TEXT: 'Learn about Pro',
-        URL: '/'
-      },
-      HARD_LIMIT_ALERT_CONTENT: {
-        TOTAL_COMPONENTS:
-          <>
-            Users can not currently upload to this repository. This repository contains the maximum of 75,000
-            components. Review your usage and consider removing unused components or consider upgrading to Pro for
-            unlimited usage.
-          </>,
-        UNIQUE_LOGINS:
-          <>
-            Users can not currently upload to this repository. This repository has hit the maximum of 100 users
-            login in the past 30 days. Review your usage and consider upgrading to Pro for unlimited usage.
-          </>,
-        REQUESTS_PER_DAY:
-          <>
-            Users can not currently upload to this repository. This repository has hit the maximum of 250,000 peak
-            requests in the past 30 days. Review your usage and consider upgrading to Pro for unlimited usage.
-          </>
-      },
       SOFT_LIMIT_ALERT_CONTENT: {
         TOTAL_COMPONENTS:
           <>

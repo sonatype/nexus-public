@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.rest.internal.resources;
 
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;

@@ -18,7 +18,7 @@ import {when} from "jest-when";
 import UsageMetricsAlert from './UsageMetricsAlert';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import {HARD_LIMIT_REACHED, SOFT_LIMIT_REACHED} from './UsageMetrics.testdata';
+import {SOFT_LIMIT_REACHED} from './UsageMetrics.testdata';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -32,8 +32,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 const selectors = {
   ...TestUtils.selectors,
   getAlert: () => screen.getByRole('alert'),
-  getAlertContent: (t) => screen.getByText(t),
-  getLearnAboutLink: () => screen.getByRole('link', {name: 'Learn about Pro'}),
   getCloseButton: () => screen.getByRole('button', {name: 'Close'})
 };
 
@@ -45,20 +43,6 @@ describe('Usage Metrics Alert', () => {
 
     render(<UsageMetricsAlert onClose={onClose}/>);
   };
-
-  it('renders hard limit alert when hard limit value reached', async () => {
-    await renderView(HARD_LIMIT_REACHED);
-
-    const alert = selectors.getAlert();
-    const alertMessage = 'Users can not currently upload to this repository. This repository contains the ' +
-      'maximum of 75,000 components. Review your usage and consider removing unused components or consider ' +
-      'upgrading to Pro for unlimited usage.';
-    const link = selectors.getLearnAboutLink();
-
-    expect(alert).toBeInTheDocument();
-    expect(alert).toHaveTextContent(alertMessage);
-    expect(link).toBeInTheDocument();
-  });
 
   it("renders the warning when at least one limit is reached", async () => {
     await renderView(SOFT_LIMIT_REACHED);

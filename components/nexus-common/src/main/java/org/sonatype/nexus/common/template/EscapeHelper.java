@@ -78,8 +78,9 @@ public class EscapeHelper
     }
     else {
       return value
-          .replaceAll("%", "%25")
-          .replaceAll(" ", "%20");
+          .replace("%", "%25")
+          .replace(":", "%3A")
+          .replace(" ", "%20");
     }
   }
 

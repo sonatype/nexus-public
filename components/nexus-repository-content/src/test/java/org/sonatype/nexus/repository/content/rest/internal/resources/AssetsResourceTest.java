@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.rest.internal.resources;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.Optional;
-
 import javax.ws.rs.NotFoundException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -37,11 +36,11 @@ import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.rest.Page;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static java.util.Base64.getUrlEncoder;
@@ -51,8 +50,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.LIMIT;
@@ -100,21 +97,19 @@ public class AssetsResourceTest
   @Mock
   private MaintenanceService maintenanceService;
 
-
   @Mock
   private Continuation<FluentAsset> assetContinuation;
 
   @Mock
   private ContentAuthHelper contentAuthHelper;
 
-
-  @InjectMocks
   private AssetsResource underTest;
 
   @Before
   public void setup() {
     mockRepository();
     when(contentAuthHelper.checkPathPermissions(ASSET_PATH, A_FORMAT, repository.getName())).thenReturn(true);
+    underTest = new AssetsResource(repositoryManagerRESTAdapter, maintenanceService, contentAuthHelper, emptyMap());
   }
 
   @Test
@@ -175,6 +170,7 @@ public class AssetsResourceTest
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository.getUrl()).thenReturn(REPOSITORY_URL);
     when(repository.getFormat()).thenReturn(aFormat);
+    when(repository.getType()).thenReturn(new HostedType());
     when(aFormat.getValue()).thenReturn(A_FORMAT);
   }
 

@@ -12,14 +12,18 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
+import org.sonatype.nexus.repository.content.fluent.constraints.FluentQueryConstraint;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
 
 /**
  * {@link FluentQuery} implementation for {@link FluentAsset}s.
@@ -37,21 +41,34 @@ public class FluentAssetQueryImpl
 
   private final Map<String, Object> filterParams;
 
+  private final List<FluentQueryConstraint> constraints;
+
+  FluentAssetQueryImpl(final FluentAssetsImpl assets, final List<FluentQueryConstraint> constraints) {
+    this.assets = checkNotNull(assets);
+    this.constraints = checkNotNull(constraints);
+    this.filter = null;
+    this.filterParams = null;
+    this.kind = null;
+  }
+
   FluentAssetQueryImpl(final FluentAssetsImpl assets, final String kind) {
     this.assets = checkNotNull(assets);
     this.kind = checkNotNull(kind);
     this.filter = null;
     this.filterParams = null;
+    this.constraints = emptyList();
   }
 
-  FluentAssetQueryImpl(final FluentAssetsImpl assets,
-                       final String filter,
-                       final Map<String, Object> filterParams)
+  FluentAssetQueryImpl(
+      final FluentAssetsImpl assets,
+      final String filter,
+      final Map<String, Object> filterParams)
   {
     this.assets = checkNotNull(assets);
     this.kind = null;
     this.filter = checkNotNull(filter);
     this.filterParams = checkNotNull(filterParams);
+    this.constraints = emptyList();
   }
 
   @Override
@@ -61,7 +78,7 @@ public class FluentAssetQueryImpl
 
   @Override
   public Continuation<FluentAsset> browse(final int limit, final String continuationToken) {
-    return assets.doBrowse(limit, continuationToken, kind, filter, filterParams);
+    return assets.doBrowse(limit, continuationToken, kind, filter, filterParams, constraints);
   }
 
   @Override

@@ -51,5 +51,8 @@ public class EscapeHelperTest
   @Test
   public void testUriSegmentsEncoding() {
     assertThat(underTest.uriSegments("foo/bar+baz"), is("foo/bar+baz"));
+    assertThat(underTest.uriSegments("foo/bar%baz"), is("foo/bar%25baz"));
+    assertThat(underTest.uriSegments("foo/bar baz"), is("foo/bar%20baz"));
+    assertThat(underTest.uriSegments("foo:path/bar:baz"), is("foo%3Apath/bar%3Abaz"));
   }
 }
