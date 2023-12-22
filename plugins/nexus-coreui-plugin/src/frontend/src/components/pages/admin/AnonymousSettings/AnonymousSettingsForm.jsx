@@ -14,8 +14,7 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  FormUtils,
-  Textfield
+  FormUtils
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -23,6 +22,7 @@ import {
   NxFormGroup,
   NxFormSelect,
   NxStatefulForm,
+  NxTextInput,
   NxTooltip,
 } from '@sonatype/react-shared-components';
 
@@ -56,7 +56,7 @@ export default function AnonymousSettingsForm() {
         </NxCheckbox>
       </NxFormGroup>
       <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL} isRequired>
-        <Textfield
+        <NxTextInput
           {...FormUtils.fieldProps('userId', current)}
           onChange={FormUtils.handleUpdate('userId', send)}
           onBlur={FormUtils.trimOnBlur(send)}

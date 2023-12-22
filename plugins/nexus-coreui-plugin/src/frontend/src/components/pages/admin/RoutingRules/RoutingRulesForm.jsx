@@ -19,8 +19,7 @@ import {
   Page,
   PageHeader,
   PageTitle,
-  Section,
-  Textfield
+  Section
 } from '@sonatype/nexus-ui-plugin';
 
 import {
@@ -33,6 +32,7 @@ import {
   NxLoadWrapper,
   NxStatefulForm,
   NxSuccessAlert,
+  NxTextInput,
   NxTooltip,
 } from '@sonatype/react-shared-components';
 
@@ -77,8 +77,8 @@ export default function RoutingRulesForm({itemId, onDone}) {
     send({type: 'REMOVE_MATCHER', index});
   }
 
-  function updateMatcher(event, index) {
-    send({type: 'UPDATE_MATCHER', index, value: event.target.value})
+  function updateMatcher(value, index) {
+    send({type: 'UPDATE_MATCHER', index, value})
   }
 
   function update(event) {
@@ -95,8 +95,8 @@ export default function RoutingRulesForm({itemId, onDone}) {
     }
   }
 
-  function updatePath(event) {
-    send({type: 'UPDATE_PATH', path: event.target.value});
+  function updatePath(value) {
+    send({type: 'UPDATE_PATH', path: value});
   }
 
   function test() {
@@ -129,15 +129,15 @@ export default function RoutingRulesForm({itemId, onDone}) {
         >
           {hasData && <>
             <NxFormGroup label={ROUTING_RULES.FORM.NAME_LABEL} isRequired>
-              <Textfield
+              <NxTextInput
                   {...FormUtils.fieldProps('name', current)}
-                  onChange={update}/>
+                  onChange={FormUtils.handleUpdate('name', send)}/>
             </NxFormGroup>
             <NxFormGroup label={ROUTING_RULES.FORM.DESCRIPTION_LABEL}>
-              <Textfield
+              <NxTextInput
                   className="nx-text-input--long"
                   {...FormUtils.fieldProps('description', current)}
-                  onChange={update}/>
+                  onChange={FormUtils.handleUpdate('description', send)}/>
             </NxFormGroup>
             <NxFormGroup
                 id="nxrm-routing-rules-mode"
@@ -159,13 +159,13 @@ export default function RoutingRulesForm({itemId, onDone}) {
                     <div className="nx-form-group">
                       {/*This nx-label is required to ensure the button is at the correct height*/}
                       <label className="nx-label">
-                        <Textfield
+                        <NxTextInput
                             aria-label={ROUTING_RULES.FORM.MATCHER_LABEL(index)}
                             aria-describedby="matchers-description"
                             className="nx-text-input--long"
                             {...FormUtils.fieldProps(`matchers[${index}]`, current)}
                             value={value}
-                            onChange={(event) => updateMatcher(event, index)}/>
+                            onChange={(value) => updateMatcher(value, index)}/>
                       </label>
                     </div>
                     {data.matchers.length > 1 &&

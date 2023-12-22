@@ -21,7 +21,6 @@ import {
   PageTitle,
   Section,
   Textarea,
-  Textfield,
   FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 
@@ -31,7 +30,8 @@ import {
   NxFormGroup,
   NxP,
   NxReadOnly,
-  NxStatefulForm
+  NxStatefulForm,
+  NxTextInput
 } from '@sonatype/react-shared-components';
 
 import ContentSelectorsFormMachine from './ContentSelectorsFormMachine';
@@ -89,11 +89,11 @@ export default function ContentSelectorsForm({itemId, onDone}) {
         >
           {hasData && !Boolean(pristineData.name) &&
               <NxFormGroup label={UIStrings.CONTENT_SELECTORS.NAME_LABEL} isRequired={!pristineData.name}>
-                <Textfield
+                <NxTextInput
                     className="nx-text-input--long"
                     {...FormUtils.fieldProps('name', current)}
                     disabled={pristineData.name}
-                    onChange={update}/>
+                    onChange={FormUtils.handleUpdate('name', send)}/>
               </NxFormGroup>}
           {hasData && <>
             <NxReadOnly>
@@ -101,10 +101,10 @@ export default function ContentSelectorsForm({itemId, onDone}) {
               <NxReadOnly.Data>{data.type?.toUpperCase()}</NxReadOnly.Data>
             </NxReadOnly>
             <NxFormGroup label={UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL}>
-              <Textfield
+              <NxTextInput
                   className="nx-text-input--long"
                   {...FormUtils.fieldProps('description', current)}
-                  onChange={update}/>
+                  onChange={FormUtils.handleUpdate('description', send)}/>
             </NxFormGroup>
             <NxFormGroup label={UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL}
                          sublable={UIStrings.CONTENT_SELECTORS.EXPRESSION_DESCRIPTION}
