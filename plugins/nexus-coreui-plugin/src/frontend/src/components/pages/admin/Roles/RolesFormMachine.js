@@ -59,6 +59,10 @@ export default FormUtils.buildFormMachine({
                     'sendDataToActor',
                 ],
               },
+              UPDATE_ROLES: {
+                target: 'loaded',
+                actions: ['updateRoles']
+              },
             }
           },
         }
@@ -96,6 +100,9 @@ export default FormUtils.buildFormMachine({
       data: () => EMPTY_DATA,
       roleType: '',
       externalRoleType: '',
+    }),
+    updateRoles: assign({
+      data: ({data}, {newRoles}) => ({...data, roles: newRoles}),
     }),
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
     logDeleteSuccess: ({data}) => ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS(data.name)),

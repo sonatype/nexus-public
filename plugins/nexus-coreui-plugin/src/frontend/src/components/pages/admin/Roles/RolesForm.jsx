@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useState} from 'react';
 import {useService} from '@xstate/react';
 
 import {
@@ -36,6 +36,8 @@ import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {TYPES} from './RolesHelper';
+
+import RolesSelectionModal from './RolesSelectionModal';
 
 const {ROLES: {FORM: LABELS}} = UIStrings;
 
@@ -75,6 +77,12 @@ export default function RolesForm({roleId, service, onDone}) {
   const setRoleType = (event) => send({type: 'SET_ROLE_TYPE', roleType: event.target.value});
 
   const setExternalRoleType = (event) => send({type: 'SET_EXTERNAL_ROLE_TYPE', externalRoleType: event.target.value});
+
+  const [showModalRoles, setShowModalRoles] = useState(false);
+
+  function saveModalRoles (newRoles) {
+    send({ type: 'UPDATE_ROLES', newRoles: newRoles });
+  }
 
   return <NxStatefulForm
       {...FormUtils.formProps(state, send)}
@@ -160,7 +168,20 @@ export default function RolesForm({roleId, service, onDone}) {
             showMoveAll
         />
 
-        <NxH2>{LABELS.SECTIONS.ROLES}</NxH2>
+        <div className='modal-selection-section'>
+          <NxH2 className='modal-section-title'>Applied Roles</NxH2>
+          <NxButton onClick={() => setShowModalRoles(true)} className="modal-button" variant="tertiary" type="button">Modify Applied Roles</NxButton>
+          {showModalRoles &&
+            <RolesSelectionModal
+              title={LABELS.SECTIONS.ROLES}
+              allRoles={roles.filter(r => r.id != data.id)}
+              onModalClose={() => setShowModalRoles(false)}
+              selectedRoles={data.roles}
+              saveModal={saveModalRoles}
+            />
+          }
+        </div>
+
         <NxStatefulTransferList
             id="roles-select"
             availableItemsLabel={LABELS.ROLES.AVAILABLE}

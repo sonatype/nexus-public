@@ -1,4 +1,4 @@
-/*
+/**
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,21 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
 
-import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+.modal-button {
+    float: right;
+}
 
-import RolesList from './RolesList';
-import RolesDetails from './RolesDetails';
-import './Roles.scss';
+.modal-table {
+    margin-bottom: 0;
+}
 
-export default function Roles() {
-  return <MasterDetail path="admin/security/roles">
-    <Master>
-      <RolesList/>
-    </Master>
-    <Detail>
-      <RolesDetails/>
-    </Detail>
-  </MasterDetail>;
+.modal-section-title {
+    display: inline;
+}
+
+.nx-modal__filter {
+    float: right;
+    margin-top: 24px;
+}
+
+.modal-selection-section {
+    width: 745px;
+    margin: 30px 0;
+}
+
+tr.counter-row th {
+    background-color: var(--nx-color-component-background);
+    border-bottom: 1px solid var(--nx-color-border-secondary);
+    text-transform: capitalize;
+}
+
+.modal-pagination {
+    border: 1px solid var(--nx-color-border);
+    border-radius: var(--nx-border-radius);
+}
+
+.counter-cell {
+    padding: 16px;
 }

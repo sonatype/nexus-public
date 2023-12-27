@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import Axios from 'axios';
-import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {render, screen, within, waitFor, act, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 
@@ -141,6 +141,12 @@ const selectors = {
     description: () => screen.getByText(LABELS.DESCRIPTION.LABEL).nextSibling,
     privileges: () => screen.queryAllByRole('list')[0],
     roles: () => screen.queryAllByRole('list')[1],
+  },
+  modalButton: () => screen.getByRole('button', {name: 'Modify Applied Roles'}),
+  roleModal: {
+    modal: () => screen.queryByRole('dialog'),
+    cancel: () => within(selectors.roleModal.modal()).getByRole('button', {name: 'Cancel'}),
+    confirmButton: () => within(selectors.roleModal.modal()).getByRole('button', {name: 'Confirm'}),
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
   saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
@@ -406,6 +412,60 @@ describe('RolesDetails', function() {
 
       expect(warning()).toBeInTheDocument();
       shouldSeeDetailsInReadOnlyMode();
+    });
+  });
+
+  describe('Roles Selection Modal', function () {
+    it('opens the modal when button is clicked', async function () {
+      const { queryLoadingMask, modalButton, roleModal: { modal, cancel } } = selectors;
+
+      renderDetails(testRoleId);
+      await waitForElementToBeRemoved(queryLoadingMask());
+
+      expect(modal()).not.toBeInTheDocument();
+
+      userEvent.click(modalButton());
+      expect(modal()).toBeInTheDocument();
+
+      userEvent.click(cancel());
+      expect(modal()).not.toBeInTheDocument();
+    });
+
+    it('add the role to the transfer list once the modal is confirmed', async function () {
+      const {
+        queryLoadingMask,
+        type,
+        id,
+        name,
+        description,
+        modalButton,
+        roleModal: { modal, confirmButton }
+      } = selectors;
+
+      renderDetails();
+      await waitForElementToBeRemoved(queryLoadingMask());
+
+      userEvent.selectOptions(type(), TYPES.INTERNAL);
+      await TestUtils.changeField(id, testRoleId);
+      await TestUtils.changeField(name, testRoleName);
+      await TestUtils.changeField(description, testRoleDescription);
+
+      expect(modal()).not.toBeInTheDocument();
+      userEvent.click(modalButton());
+      expect(modal()).toBeInTheDocument();
+
+      const transferList = screen.getAllByRole('group');
+      expect(transferList[3]).toHaveTextContent('0 items transferred');
+
+      const tableRow = (index) => modal().querySelectorAll('tbody tr')[index];
+      expect(tableRow(0).cells[1]).toHaveTextContent('nx-admin');
+      expect(modal().querySelectorAll('thead tr')[1].cells[2].textContent).toBe('0 Selected');
+
+      userEvent.click(within(modal()).getAllByRole('checkbox')[0]);
+      expect(modal().querySelectorAll('thead tr')[1].cells[2].textContent).toBe('1 Selected');
+
+      await act(async () => userEvent.click(confirmButton()));
+      expect(transferList[3]).toHaveTextContent('1 item transferred');
     });
   });
 });
