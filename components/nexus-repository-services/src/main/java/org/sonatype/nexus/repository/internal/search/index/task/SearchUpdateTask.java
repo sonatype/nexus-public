@@ -22,6 +22,8 @@ import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
+import org.elasticsearch.ElasticsearchException;
+
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTaskDescriptor.REPOSITORY_NAMES_FIELD_ID;
 
@@ -53,11 +55,15 @@ public class SearchUpdateTask
     for(String name : repositoryNames) {
       Repository repository = repositoryManager.get(name);
       if (repository != null) {
-        log.info("Updating search index for repo {}", name);
-        SearchIndexFacet searchIndexFacet = repository.facet(SearchIndexFacet.class);
-        searchIndexFacet.rebuildIndex();
-        searchUpdateService.doneReindexing(repository);
-        log.info("Completed update of search index for repo {}", name);
+        try {
+          log.info("Updating search index for repo {}", name);
+          SearchIndexFacet searchIndexFacet = repository.facet(SearchIndexFacet.class);
+          searchIndexFacet.rebuildIndex();
+          searchUpdateService.doneReindexing(repository);
+          log.info("Completed update of search index for repo {}", name);
+        } catch (ElasticsearchException e) {
+          log.error("Could not perform search index update for repo {}, {}", name, e.getMessage());
+        }
       }
     }
 

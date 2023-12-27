@@ -19,10 +19,13 @@ import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
+import org.elasticsearch.cluster.metadata.ProcessClusterEventTimeoutException;
+import org.elasticsearch.common.unit.TimeValue;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,6 +97,18 @@ public class SearchUpdateTaskTest
     verify(searchIndexFacet1).rebuildIndex();
     verify(searchIndexFacet2).rebuildIndex();
     verify(searchUpdateService).doneReindexing(repository1);
+    verify(searchUpdateService).doneReindexing(repository2);
+  }
+
+  @Test
+  public void runOnMultipleRepositoriesButFailRebuildingIndex() {
+    doThrow(new ProcessClusterEventTimeoutException(
+        new TimeValue(30000), "failed to process cluster event (delete-index)"))
+        .when(searchIndexFacet1).rebuildIndex();
+    configuration.setString("repositoryNames", "repository1,repository2");
+    underTest.configure(configuration);
+    underTest.execute();
+    verify(searchIndexFacet2).rebuildIndex();
     verify(searchUpdateService).doneReindexing(repository2);
   }
 }
