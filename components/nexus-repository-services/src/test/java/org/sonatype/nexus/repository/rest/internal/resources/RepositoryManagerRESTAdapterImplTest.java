@@ -163,7 +163,7 @@ public class RepositoryManagerRESTAdapterImplTest
 
     Map<String, Recipe> recipes = ImmutableMap.of(RECIPE_NAME, recipe, RECIPE_NAME_2, recipe2, RECIPE_NAME_3, recipe3);
     underTest = new RepositoryManagerRESTAdapterImpl(
-        repositoryManager, store, recipes, repositoryPermissionChecker);
+        repositoryManager, store, recipes, repositoryPermissionChecker, null);
   }
 
   @Test

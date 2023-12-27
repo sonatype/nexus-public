@@ -61,6 +61,8 @@ public class RepositoriesResource
   @Override
   @Path("/{repositoryName}")
   public RepositoryXO getRepository(@PathParam("repositoryName") final String repositoryName) {
-    return RepositoryXO.fromRepository(repositoryManagerRESTAdapter.getReadableRepository(repositoryName));
+    return RepositoryXO.fromRepository(
+            repositoryManagerRESTAdapter.getReadableRepository(repositoryName),
+            repositoryManagerRESTAdapter.getRepositorySize(repositoryName).orElse(null));
   }
 }

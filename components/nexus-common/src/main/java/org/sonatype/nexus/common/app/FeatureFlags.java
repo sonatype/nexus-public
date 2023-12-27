@@ -116,4 +116,9 @@ public interface FeatureFlags
   String REACT_PRIVILEGES = "nexus.react.privileges";
 
   String REACT_PRIVILEGES_NAMED = "${nexus.react.privileges:-false}";
+
+  /**
+   * Feature flag to determine if we should include the repository sizes feature
+   */
+  String REPOSITORY_SIZE_ENABLED = "nexus.repository.size";
 }
