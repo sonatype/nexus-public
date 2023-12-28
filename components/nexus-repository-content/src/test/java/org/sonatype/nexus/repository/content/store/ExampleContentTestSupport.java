@@ -61,7 +61,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.toHexString;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableSet;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.is;
@@ -110,6 +109,13 @@ public class ExampleContentTestSupport
 
   public ExampleContentTestSupport(final Class<? extends DataAccess> accessType) {
     sessionRule.access(accessType);
+  }
+
+  @SafeVarargs
+  public ExampleContentTestSupport(final Class<? extends DataAccess>... accessTypes) {
+    for (Class<? extends DataAccess> accessType : accessTypes) {
+      sessionRule.access(accessType);
+    }
   }
 
   protected List<ContentRepositoryData> generatedRepositories() {
