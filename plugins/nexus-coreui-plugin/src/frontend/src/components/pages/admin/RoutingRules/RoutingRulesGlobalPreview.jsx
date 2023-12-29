@@ -55,8 +55,8 @@ export default function RoutingRulesList() {
     send({type: 'UPDATE_AND_CLEAR', name: 'repositories', value: event.target.value});
   }
 
-  function updatePath(event) {
-    send({type: 'UPDATE_AND_CLEAR', name: 'path', value: event.target.value});
+  function updatePath(value) {
+    send({type: 'UPDATE_AND_CLEAR', name: 'path', value});
   }
 
   function updateFilter(value) {

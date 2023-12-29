@@ -22,7 +22,6 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  Textfield,
   FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 import {
@@ -101,11 +100,8 @@ export default function BlobStoresForm({itemId, onDone}) {
     send({type: 'UPDATE_SOFT_QUOTA', name: 'enabled', value: event.currentTarget.checked, data});
   }
 
-  const updateQuotaField = (event) => {
-    const name = event.target.name.replace('softQuota.', '');
-    const value = event.target.value;
-    send({type: 'UPDATE_SOFT_QUOTA', name, value});
-  }
+  const updateSoftQuotaType = (event) => send({ type: 'UPDATE_SOFT_QUOTA', name: 'type', value: event.target.value});
+  const updateSoftQuotaLimit = (value) => send({ type: 'UPDATE_SOFT_QUOTA', name: 'limit', value});
 
   const confirmDelete = () => send({type: 'CONFIRM_DELETE'});
   const modalConvertToGroupOpen = () => send({type: 'MODAL_CONVERT_TO_GROUP_OPEN'});
@@ -186,14 +182,14 @@ export default function BlobStoresForm({itemId, onDone}) {
               <NxFormGroup label={FORM.SOFT_QUOTA.TYPE.label} isRequired>
                 {canUseSpaceUsedQuotaOnly(type)
                   ? <NxP>{spaceUsedQuotaName}</NxP>
-                  : <NxFormSelect {...FormUtils.fieldProps(['softQuota', 'type'], current)} validatable onChange={updateQuotaField}>
+                  : <NxFormSelect {...FormUtils.fieldProps(['softQuota', 'type'], current)} validatable onChange={updateSoftQuotaType}>
                       <option value="" disabled></option>
                       {quotaTypes.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
                     </NxFormSelect>
                 }
               </NxFormGroup>
               <NxFormGroup label={FORM.SOFT_QUOTA.LIMIT.label} isRequired>
-                <Textfield {...FormUtils.fieldProps(['softQuota', 'limit'], current)} onChange={updateQuotaField}/>
+                <NxTextInput {...FormUtils.fieldProps(['softQuota', 'limit'], current)} onChange={updateSoftQuotaLimit}/>
               </NxFormGroup>
             </>
             }

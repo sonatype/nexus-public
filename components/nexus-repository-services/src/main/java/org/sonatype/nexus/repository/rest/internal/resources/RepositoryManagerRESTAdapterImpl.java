@@ -16,8 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.NotFoundException;
@@ -34,6 +36,8 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.rest.api.RepositoryXO;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -42,6 +46,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
@@ -64,17 +69,21 @@ public class RepositoryManagerRESTAdapterImpl
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
+  private final Optional<RepositoryMetricsService> repositoryMetricsService;
+
   @Inject
   public RepositoryManagerRESTAdapterImpl(
       final RepositoryManager repositoryManager,
       final ConfigurationStore configurationStore,
       final Map<String, Recipe> recipes,
-      final RepositoryPermissionChecker repositoryPermissionChecker)
+      final RepositoryPermissionChecker repositoryPermissionChecker,
+      @Nullable final RepositoryMetricsService repositoryMetricsService)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.configurationStore = checkNotNull(configurationStore);
     this.recipes = checkNotNull(recipes);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.repositoryMetricsService = Optional.ofNullable(repositoryMetricsService);
   }
 
   @Override
@@ -134,14 +143,22 @@ public class RepositoryManagerRESTAdapterImpl
   @Override
   public List<RepositoryXO> getRepositories() {
     Configuration[] configurations = configurationStore.list().toArray(new Configuration[0]);
+    Map<String, Long> repositorySizes = repositoryMetricsService.
+        map(s -> s.list().stream().collect(
+            toMap(RepositoryMetricsDTO::getName, RepositoryMetricsDTO::getSize))).orElse(null);
     return repositoryPermissionChecker.userCanBrowseRepositories(configurations).stream()
-        .map(this::asRepository)
+        .map(c -> asRepository(c, repositorySizes))
         .collect(Collectors.toList());
   }
 
   @Override
   public List<String> findContainingGroups(final String repositoryName) {
     return repositoryManager.findContainingGroups(repositoryName);
+  }
+
+  @Override
+  public Optional<Long> getRepositorySize(String repositoryName) {
+    return repositoryMetricsService.flatMap(s -> s.get(repositoryName).map(d -> d.totalSize));
   }
 
   private Type getType(final Configuration configuration) {
@@ -170,7 +187,7 @@ public class RepositoryManagerRESTAdapterImpl
     return emptyMap();
   }
 
-  private RepositoryXO asRepository(final Configuration configuration) {
+  private RepositoryXO asRepository(final Configuration configuration, final Map<String, Long> sizeMap) {
     RepositoryXO xo = new RepositoryXO();
     String repositoryName = configuration.getRepositoryName();
     Type type = getType(configuration);
@@ -181,6 +198,12 @@ public class RepositoryManagerRESTAdapterImpl
     xo.setUrl(getUrl(repositoryName));
     xo.setAttributes(attributes(configuration));
 
+    if (sizeMap != null) {
+      xo.setSize(sizeMap.getOrDefault(repositoryName, null));
+    }
+
     return xo;
   }
+
+
 }

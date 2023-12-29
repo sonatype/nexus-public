@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.rest.api
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import io.swagger.annotations.ApiModelProperty
+import org.eclipse.sisu.Hidden
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.types.ProxyType
 
@@ -39,18 +42,27 @@ class RepositoryXO
 
   String url
 
+  @ApiModelProperty(hidden = true)
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  Long size
+
   /**
    * @since 3.17
    */
   Map<String, Object> attributes
 
   static RepositoryXO fromRepository(final Repository repository) {
+    return fromRepository(repository, null)
+  }
+
+  static RepositoryXO fromRepository(final Repository repository, final Long size) {
     return builder()
         .name(repository.getName())
         .format(repository.getFormat().getValue())
         .type(repository.getType().getValue())
         .url(repository.getUrl())
         .attributes(attributes(repository))
+        .size(size)
         .build()
   }
 

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {render, screen, waitFor, waitForElementToBeRemoved, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import Axios from 'axios';
@@ -21,15 +21,14 @@ import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import UIStrings from '../../../../constants/UIStrings';
 import PrivilegesDetails from './PrivilegesDetails';
-import {TYPES as TYPE_IDS, FIELDS} from './PrivilegesHelper';
-import {TYPES, TYPES_MAP, SELECTORS, REPOSITORIES} from './Privileges.testdata';
-import {URL} from './PrivilegesHelper';
+import {TYPES as TYPE_IDS, FIELDS, URL} from './PrivilegesHelper';
+import {BREADR_ACTIONS, TYPES, TYPES_MAP, SELECTORS, REPOSITORIES} from './Privileges.testdata';
 
 const {privilegesUrl, singlePrivilegeUrl, updatePrivilegeUrl, createPrivilegeUrl} = URL;
 
 const XSS_STRING = TestUtils.XSS_STRING;
-const {PRIVILEGES: {FORM: LABELS}, SETTINGS} = UIStrings;
-const {EXT: {PRIVILEGE: {METHODS: {READ_TYPES}}, URL: EXT_URL}} = APIConstants;
+const {PRIVILEGES: {FORM: LABELS, MESSAGES: {NO_ACTION_ERROR}}, SETTINGS} = UIStrings;
+const {EXT: {URL: EXT_URL}, REST: {INTERNAL: {PRIVILEGES_TYPES}}} = APIConstants;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -52,7 +51,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 const testName = 'PrivilegeName';
 const testDescription = 'Test Privilege Description';
 const testScriptName = 'TestScriptName';
-const testActions = 'RUN,ADD';
+const testScriptActions = 'run,add';
+const testContentSelectorActions = 'browse,read';
 const testContentSelector = 'Test_Selector_1';
 const testRepository = 'TestRepository';
 const testFormat = 'TestFormat';
@@ -62,7 +62,7 @@ const SCRIPT_PRIVILEGE = {
   name: testName,
   description: testDescription,
   scriptName: testScriptName,
-  actions: testActions.split(','),
+  actions: testScriptActions.split(','),
 };
 
 const REPO_SELECTOR_PRIVILEGE = {
@@ -72,7 +72,7 @@ const REPO_SELECTOR_PRIVILEGE = {
   contentSelector: testContentSelector,
   format: testFormat,
   repository: testRepository,
-  actions: testActions.split(','),
+  actions: testContentSelectorActions.split(','),
 };
 
 const selectors = {
@@ -86,6 +86,8 @@ const selectors = {
   contentSelector: () => screen.queryByLabelText(FIELDS.CONTENT_SELECTOR.LABEL),
   format: () => screen.queryByLabelText(FIELDS.FORMAT.LABEL),
   repository: () => screen.queryByLabelText(FIELDS.REPOSITORY.LABEL),
+  getActionsGroup: () => screen.queryByRole('group', {name: FIELDS.ACTIONS.LABEL}),
+  getActionCheckbox: (c, n) => within(c).getByRole('checkbox', {name: n}),
   readOnly: {
     type: () => screen.getByText(LABELS.TYPE.LABEL).nextSibling,
     name: () => screen.getByText(LABELS.NAME.LABEL).nextSibling,
@@ -96,8 +98,8 @@ const selectors = {
     format: () => screen.getByText(FIELDS.FORMAT.LABEL).nextSibling,
     repository: () => screen.getByText(FIELDS.REPOSITORY.LABEL).nextSibling,
   },
-  cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
-  deleteButton: () => screen.getByText(SETTINGS.DELETE_BUTTON_LABEL),
+  cancelButton: () => screen.queryByRole('button', {name: SETTINGS.CANCEL_BUTTON_LABEL}),
+  deleteButton: () => screen.queryByRole('button', {name: SETTINGS.DELETE_BUTTON_LABEL}),
 };
 
 describe('PrivilegesDetails', function() {
@@ -110,8 +112,8 @@ describe('PrivilegesDetails', function() {
   }
 
   beforeEach(() => {
-    when(Axios.post).calledWith(EXT_URL, expect.objectContaining({method: READ_TYPES}))
-        .mockResolvedValue({data: TestUtils.makeExtResult(clone(TYPES))});
+    when(Axios.get).calledWith(PRIVILEGES_TYPES)
+        .mockResolvedValue({data: clone(TYPES)});
     when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
       data: {...SCRIPT_PRIVILEGE, readOnly: false}
     });
@@ -119,7 +121,7 @@ describe('PrivilegesDetails', function() {
   });
 
   it('renders the resolved data', async function() {
-    const {type, name, description, scriptName, actions, querySubmitButton, queryFormError} = selectors;
+    const {type, name, description, scriptName, getActionsGroup, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad(testName);
 
@@ -129,20 +131,20 @@ describe('PrivilegesDetails', function() {
     expect(name()).toBeDisabled();
     expect(description()).toHaveValue(testDescription);
     expect(scriptName()).toHaveValue(testScriptName);
-    expect(actions()).toHaveValue(testActions);
+    expectActionsToRender(getActionsGroup(), BREADR_ACTIONS, ['Run', 'Add']);
 
     userEvent.click(querySubmitButton());
     expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders the resolved data with XSS', async function() {
-    const {name, description, scriptName, actions} = selectors;
+    const {name, description, scriptName, getActionsGroup} = selectors;
     const XSS_PRIVILEGE = {
       ...SCRIPT_PRIVILEGE,
       name: XSS_STRING,
       description: XSS_STRING,
       scriptName: XSS_STRING,
-      actions: [XSS_STRING],
+      actions: testScriptActions.split(','),
     };
 
     when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
@@ -154,13 +156,13 @@ describe('PrivilegesDetails', function() {
     expect(name()).toHaveValue(XSS_STRING);
     expect(description()).toHaveValue(XSS_STRING);
     expect(scriptName()).toHaveValue(XSS_STRING);
-    expect(actions()).toHaveValue(XSS_STRING);
+    expectActionsToRender(getActionsGroup(), BREADR_ACTIONS, ['Run', 'Add']);
   });
 
   it('renders load error message', async function() {
     const message = 'Load error message!';
 
-    Axios.post.mockReturnValue(Promise.reject({message}));
+    Axios.get.mockReturnValue(Promise.reject({message}));
 
     await renderAndWaitForLoad();
 
@@ -187,7 +189,7 @@ describe('PrivilegesDetails', function() {
   });
 
   it('renders validation messages for the Script privilege', async function() {
-    const {type, name, description, scriptName, actions, querySubmitButton, queryFormError} = selectors;
+    const {type, name, description, scriptName, getActionsGroup, getActionCheckbox, querySubmitButton, queryFormError} = selectors;
 
     await renderAndWaitForLoad();
 
@@ -198,11 +200,11 @@ describe('PrivilegesDetails', function() {
     expect(name()).toBeInTheDocument();
     expect(description()).toBeInTheDocument();
     expect(scriptName()).not.toBeInTheDocument();
-    expect(actions()).not.toBeInTheDocument();
+    expect(getActionsGroup()).not.toBeInTheDocument();
 
     userEvent.selectOptions(type(), TYPE_IDS.SCRIPT);
     expect(scriptName()).toBeInTheDocument();
-    expect(actions()).toBeInTheDocument();
+    expect(getActionsGroup()).toBeInTheDocument();
     expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, testName);
@@ -219,17 +221,19 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(scriptName, testScriptName);
     expect(scriptName()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
 
-    await TestUtils.changeField(actions, testActions);
-    userEvent.clear(actions());
-    expect(actions()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
-    await TestUtils.changeField(actions, testActions);
-    expect(actions()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    const browseCheckbox = getActionCheckbox(getActionsGroup(), 'Browse');
+    userEvent.click(browseCheckbox);
+    expect(getActionsGroup()).not.toHaveAccessibleDescription(NO_ACTION_ERROR);
+    userEvent.click(browseCheckbox);
+    expect(getActionsGroup()).toHaveAccessibleDescription(NO_ACTION_ERROR);
+    userEvent.click(browseCheckbox);
+    expect(getActionsGroup()).not.toHaveAccessibleDescription(NO_ACTION_ERROR);
 
     expect(queryFormError()).not.toBeInTheDocument();
   });
 
   it('creates Script privilege', async function() {
-    const {type, name, description, scriptName, actions, querySubmitButton} = selectors;
+    const {type, name, description, scriptName, getActionsGroup, getActionCheckbox, querySubmitButton} = selectors;
 
     when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), SCRIPT_PRIVILEGE).mockResolvedValue({data: {}});
 
@@ -239,7 +243,10 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(name, testName);
     await TestUtils.changeField(description, testDescription);
     await TestUtils.changeField(scriptName, testScriptName);
-    await TestUtils.changeField(actions, testActions);
+    const runCheckbox = getActionCheckbox(getActionsGroup(), 'Run');
+    const addCheckbox = getActionCheckbox(getActionsGroup(), 'Add');
+    userEvent.click(runCheckbox);
+    userEvent.click(addCheckbox);
 
     userEvent.click(querySubmitButton());
     await waitForElementToBeRemoved(selectors.querySavingMask());
@@ -249,14 +256,14 @@ describe('PrivilegesDetails', function() {
   });
 
   it('renders validation messages for the Repository Content Selector privilege', async function() {
-    const {type, name, description, contentSelector, actions, repository, querySubmitButton,
+    const {type, name, description, contentSelector, getActionsGroup, repository, querySubmitButton,
       queryFormError, format} = selectors;
 
     when(Axios.post).calledWith(EXT_URL, expect.objectContaining({action: 'coreui_Selector'}))
         .mockResolvedValue({data: TestUtils.makeExtResult(clone(SELECTORS))});
 
     await renderAndWaitForLoad();
-    expect(Axios.post).toHaveBeenCalledWith(EXT_URL, expect.objectContaining({method: READ_TYPES}));
+    expect(Axios.get).toHaveBeenCalledWith(PRIVILEGES_TYPES);
 
     userEvent.selectOptions(type(), TYPE_IDS.REPOSITORY_CONTENT_SELECTOR);
     await waitFor(() => {
@@ -267,17 +274,17 @@ describe('PrivilegesDetails', function() {
     expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(description()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(contentSelector()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
-    expect(actions()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(format()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(repository()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(getActionsGroup()).not.toHaveAccessibleDescription(NO_ACTION_ERROR);
 
     userEvent.click(querySubmitButton());
     expect(queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     expect(name()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(contentSelector()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
-    expect(actions()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(format()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
     expect(repository()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
+    expect(getActionsGroup()).toHaveAccessibleDescription(NO_ACTION_ERROR);
   });
 
   it('creates Repository Content Selector privilege', async function() {
@@ -286,7 +293,8 @@ describe('PrivilegesDetails', function() {
       name,
       description,
       contentSelector,
-      actions,
+      getActionsGroup,
+      getActionCheckbox,
       repository,
       querySubmitButton,
       querySavingMask,
@@ -306,12 +314,16 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(name, testName);
     await TestUtils.changeField(description, testDescription);
     userEvent.selectOptions(contentSelector(), testContentSelector);
-    await TestUtils.changeField(actions, testActions);
     await TestUtils.changeField(format, testFormat);
 
     await TestUtils.changeField(repository, 'm');
     await waitFor(() => expect(screen.getByText(testRepository)).toBeInTheDocument());
     userEvent.click(screen.getByText(testRepository));
+
+    const browseCheckbox = getActionCheckbox(getActionsGroup(), 'Browse');
+    const readCheckbox = getActionCheckbox(getActionsGroup(), 'Read');
+    userEvent.click(browseCheckbox);
+    userEvent.click(readCheckbox);
 
     userEvent.click(querySubmitButton());
     await waitForElementToBeRemoved(querySavingMask());
@@ -324,14 +336,14 @@ describe('PrivilegesDetails', function() {
   });
 
   it('updates Script privilege', async function() {
-    const {description, scriptName, actions, querySubmitButton, querySavingMask} = selectors;
+    const {description, scriptName, getActionsGroup, getActionCheckbox, querySubmitButton, querySavingMask} = selectors;
 
     const data = {
       type: TYPE_IDS.SCRIPT,
       name: testName,
       description: 'Updated description',
       scriptName: 'NewScriptName',
-      actions: ['DELETE', 'EDIT'],
+      actions: ['delete', 'edit'],
       readOnly: false,
     };
 
@@ -341,7 +353,14 @@ describe('PrivilegesDetails', function() {
 
     await TestUtils.changeField(description, data.description);
     await TestUtils.changeField(scriptName, data.scriptName);
-    await TestUtils.changeField(actions, data.actions.join(','));
+    const runCheckbox = getActionCheckbox(getActionsGroup(), 'Run');
+    const addCheckbox = getActionCheckbox(getActionsGroup(), 'Add');
+    userEvent.click(runCheckbox);
+    userEvent.click(addCheckbox);
+    const deleteCheckbox = getActionCheckbox(getActionsGroup(), 'Delete');
+    const editCheckbox = getActionCheckbox(getActionsGroup(), 'Edit');
+    userEvent.click(deleteCheckbox);
+    userEvent.click(editCheckbox);
 
     userEvent.click(querySubmitButton());
     await waitForElementToBeRemoved(querySavingMask());
@@ -352,7 +371,7 @@ describe('PrivilegesDetails', function() {
 
   it('shows save API errors', async function() {
     const message = "Use a unique privilegeId";
-    const {type, name, description, scriptName, actions, querySubmitButton, querySavingMask} = selectors;
+    const {type, name, description, scriptName, getActionsGroup, getActionCheckbox, querySubmitButton, querySavingMask} = selectors;
 
     when(Axios.post).calledWith(createPrivilegeUrl(TYPE_IDS.SCRIPT), expect.objectContaining({name: testName}))
         .mockRejectedValue({response: {data: message}});
@@ -364,7 +383,8 @@ describe('PrivilegesDetails', function() {
     await TestUtils.changeField(name, testName);
     await TestUtils.changeField(description, testDescription);
     await TestUtils.changeField(scriptName, testScriptName);
-    await TestUtils.changeField(actions, testActions);
+    const addCheckbox = getActionCheckbox(getActionsGroup(), 'Add');
+    userEvent.click(addCheckbox);
 
     userEvent.click(querySubmitButton());
     await waitForElementToBeRemoved(querySavingMask());
@@ -417,14 +437,14 @@ describe('PrivilegesDetails', function() {
       shouldSeeDetailsInReadOnlyMode(TYPES_MAP[TYPE_IDS.SCRIPT].name);
 
       expect(scriptName()).toHaveTextContent(testScriptName);
-      expect(actions()).toHaveTextContent(testActions);
+      expect(actions()).toHaveTextContent("Run, Add");
 
       userEvent.click(cancelButton());
       await waitFor(() => expect(onDone).toBeCalled());
     });
 
     it('renders Repository Content Selector privilege in Read Only Mode', async () => {
-      const {cancelButton, readOnly: {contentSelector, format, repository}} = selectors;
+      const {cancelButton, readOnly: {actions, contentSelector, format, repository}} = selectors;
 
       const warning = () => screen.getByText(LABELS.DEFAULT_PRIVILEGE_WARNING);
 
@@ -440,6 +460,7 @@ describe('PrivilegesDetails', function() {
       expect(contentSelector()).toHaveTextContent(testContentSelector);
       expect(format()).toHaveTextContent(testFormat);
       expect(repository()).toHaveTextContent(testRepository);
+      expect(actions()).toHaveTextContent("Browse, Read");
 
       userEvent.click(cancelButton());
       await waitFor(() => expect(onDone).toBeCalled());
@@ -457,7 +478,7 @@ describe('PrivilegesDetails', function() {
       shouldSeeDetailsInReadOnlyMode(TYPES_MAP[TYPE_IDS.SCRIPT].name);
 
       expect(scriptName()).toHaveTextContent(testScriptName);
-      expect(actions()).toHaveTextContent(testActions);
+      expect(actions()).toHaveTextContent("Run, Add");
     });
   });
 
@@ -471,3 +492,14 @@ describe('PrivilegesDetails', function() {
     expect(createPrivilegeUrl('repository-admin')).toBe('/service/rest/v1/security/privileges/repository-admin');
   });
 });
+
+function expectActionsToRender(actionsGroup, actions, selectedActions) {
+  const {getActionCheckbox} = selectors;
+
+  expect(actionsGroup).toBeInTheDocument();
+  for (let a of actions) {
+    const checkbox = getActionCheckbox(actionsGroup, a);
+    expect(checkbox).toBeInTheDocument();
+    selectedActions.includes(a) ? expect(checkbox).toBeChecked() : expect(checkbox).not.toBeChecked();
+  }
+}

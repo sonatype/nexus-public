@@ -16,6 +16,7 @@ import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
 import RolesList from './RolesList';
 import RolesDetails from './RolesDetails';
+import './Roles.scss';
 
 export default function Roles() {
   return <MasterDetail path="admin/security/roles">

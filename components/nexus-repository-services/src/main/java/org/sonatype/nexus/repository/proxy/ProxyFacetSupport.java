@@ -418,6 +418,11 @@ public abstract class ProxyFacetSupport
     try {
       return getCachedContent(context);
     }
+    catch (MissingBlobException e) {
+      log.warn("Unable to find blob {} for {}, will check remote", e.getBlobRef(),
+          getUrl(context));
+      return null;
+    }
     catch (RetryDeniedException e) {
       if (e.getCause() instanceof MissingBlobException) {
         log.warn("Unable to find blob {} for {}, will check remote", ((MissingBlobException) e.getCause()).getBlobRef(),

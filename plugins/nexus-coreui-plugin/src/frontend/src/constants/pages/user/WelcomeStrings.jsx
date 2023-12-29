@@ -117,26 +117,6 @@ export default {
       UPGRADE_TO_PRO: {
         TEXT: 'Upgrade to Pro to remove limits',
         URL: '/'
-      },
-      SOFT_LIMIT_ALERT_CONTENT: {
-        TOTAL_COMPONENTS:
-          <>
-            This repository is approaching the maximum of 75,000 components. Users will not be able to upload to this
-            repository once this limit is reached. Review your usage and consider removing unused components or
-            consider upgrading to Pro for unlimited usage.
-          </>,
-        UNIQUE_LOGINS:
-          <>
-            This repository is approaching the maximum of 100 users login in the past 30 days. Users will not be able
-            to upload to this repository once this limit is reached. Review your usage and consider upgrading to Pro
-            for unlimited usage.
-          </>,
-        REQUESTS_PER_DAY:
-          <>
-            This repository is approaching the maximum of 250,000 peak requests in the past 30 days. Users will not be
-            able to upload to this repository once this limit is reached. Review your usage and consider upgrading to
-            Pro for unlimited usage.
-          </>
       }
     }
   }

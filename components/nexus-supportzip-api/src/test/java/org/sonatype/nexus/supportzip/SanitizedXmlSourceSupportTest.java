@@ -13,18 +13,20 @@
 package org.sonatype.nexus.supportzip;
 
 import java.io.File;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type;
 
-import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import org.junit.Test;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.builder.Input;
+import org.xmlunit.diff.Diff;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * UT for {@link SanitizedXmlSourceSupport}.
@@ -39,8 +41,6 @@ public class SanitizedXmlSourceSupportTest
    */
   @Test
   public void testSanitizeContent() throws Exception {
-
-    String expected = Resources.toString(Resources.getResource(getClass(), "output.xml"), Charset.forName("UTF-8"));
     String stylesheet = Resources.toString(Resources.getResource(getClass(), "sanitize.xsl"), Charset.forName("UTF-8"));
 
     File file = new File(Resources.getResource(getClass(), "input.xml").toURI());
@@ -52,7 +52,13 @@ public class SanitizedXmlSourceSupportTest
 
     support.prepare();
 
-    assertEquals(expected, CharStreams.toString(new InputStreamReader(support.getContent(), "UTF-8")));
-    assertEquals(expected.length(), support.getSize());
+    try (InputStream in = support.getContent()) {
+      Diff diff = DiffBuilder.compare(Input.fromURL(Resources.getResource(getClass(), "output.xml")))
+          .withTest(Input.fromStream(support.getContent()))
+          .ignoreWhitespace()
+          .build();
+
+      assertFalse(diff.toString(), diff.hasDifferences());
+    }
   }
 }

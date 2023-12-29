@@ -11,8 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {Textfield} from '@sonatype/nexus-ui-plugin';
-import {NxButton} from '@sonatype/react-shared-components';
+import {NxButton, NxTextInput} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -32,13 +31,14 @@ export default function RoutingRulesPreview({value, onChange, onTest}) {
       <div className="nx-form-group">
         {/* Ensure the button is at the correct height and prepend with a / */}
         <label className="nx-label nxrm-path">
-          <Textfield
+          <NxTextInput
             className="nx-text-input--long"
             name="path"
             value={value}
             onChange={onChange}
             onKeyPress={handleEnter}
             validatable={false}
+            isPristine={true}
           />
         </label>
       </div>

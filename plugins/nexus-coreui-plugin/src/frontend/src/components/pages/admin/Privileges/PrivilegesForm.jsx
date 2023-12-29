@@ -22,6 +22,7 @@ import {
 import {
   NxButton,
   NxH2,
+  NxFieldset,
   NxFontAwesomeIcon,
   NxFormGroup,
   NxFormSelect,
@@ -41,7 +42,9 @@ export default function PrivilegesForm({itemId, service, onDone}) {
 
   const {
     data: {type, readOnly},
+    isTouched,
     types = {},
+    validationErrors: {actionSelected}
   } = current.context;
 
   const isCreate = ValidationUtils.isBlank(itemId);
@@ -100,6 +103,22 @@ export default function PrivilegesForm({itemId, service, onDone}) {
 
       {type && <>
         {FormFieldsFactory.getFields(fields)?.map(({Field, props}) => (
+          props.id === 'actions' ?
+            <NxFieldset
+                key={props.id}
+                label={props.label}
+                sublabel={props.helpText}
+                isRequired={props.required}
+                isPristine={!isTouched.actions}
+                validationErrors={actionSelected}
+            >
+              <Field
+                  id={props.id}
+                  dynamicProps={props}
+                  current={current}
+                  onChange={onChangeField}
+              />
+            </NxFieldset> :
             <NxFormGroup
                 key={props.id}
                 label={props.label}

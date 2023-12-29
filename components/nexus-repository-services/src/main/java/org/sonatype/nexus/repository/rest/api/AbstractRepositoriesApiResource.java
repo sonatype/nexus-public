@@ -55,7 +55,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.sonatype.nexus.rest.ApiDocConstants.INCORRECT_BLOBSTORE;
+import static org.sonatype.nexus.rest.ApiDocConstants.BLOBSTORE_CHANGE_NOT_ALLOWED;
 
 /**
  * @since 3.20
@@ -212,7 +212,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     String currentBlobStore = getBlobStorageFromAttributes.apply(repository.getConfiguration().getAttributes());
 
     if (!newBlobStoreName.equals(currentBlobStore)) {
-      throw new ValidationErrorsException("BlobStoreName", INCORRECT_BLOBSTORE);
+      throw new ValidationErrorsException("BlobStoreName", BLOBSTORE_CHANGE_NOT_ALLOWED);
     }
   }
 
