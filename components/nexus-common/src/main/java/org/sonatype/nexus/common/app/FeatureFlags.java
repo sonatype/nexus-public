@@ -121,4 +121,8 @@ public interface FeatureFlags
    * Feature flag to determine if we should include the repository sizes feature
    */
   String REPOSITORY_SIZE_ENABLED = "nexus.repository.size";
+
+  String REACT_ROLES_MODAL_ENABLED = "nexus.react.roles.modal.enabled";
+
+  String REACT_ROLES_MODAL_NAMED = "${nexus.react.roles.modal.enabled:-false}";
 }

@@ -13,6 +13,7 @@
 
 .modal-button {
     float: right;
+    margin-right: 0;
 }
 
 .modal-table {
@@ -29,7 +30,7 @@
 }
 
 .modal-selection-section {
-    width: 745px;
+    width: 650px;
     margin: 30px 0;
 }
 
@@ -46,4 +47,15 @@ tr.counter-row th {
 
 .counter-cell {
     padding: 16px;
+}
+
+.modal-selection-section {
+    .nx-transfer-list__half {
+        width: 650px;
+        margin-top: var(--nx-spacing-8x)
+    }
+
+    .nx-legend {
+        display: none;
+    }
 }
