@@ -17,8 +17,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventManager;
@@ -32,11 +34,14 @@ import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.security.SecurityHelper;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -63,6 +68,9 @@ public class RepositoryUiServiceTest
   private RepositoryManager repositoryManager;
 
   @Mock
+  private RepositoryMetricsService repositoryMetricsService;
+
+  @Mock
   private ConfigurationStore configurationStore;
 
   @Mock
@@ -70,6 +78,9 @@ public class RepositoryUiServiceTest
 
   @Mock
   private Map<String, Recipe> recipes;
+
+  @Mock
+  private Recipe recipe;
 
   @Mock
   private TaskScheduler taskScheduler;
@@ -103,6 +114,8 @@ public class RepositoryUiServiceTest
   @Before
   public void setup() {
     mockRepository();
+    mockRecipes();
+    BaseUrlHolder.set("http://nexus-url", "");
     when(format.getValue()).thenReturn("format");
     when(repositoryManager.browse()).thenReturn(Collections.singleton(repository));
     when(configurationStore.list()).thenReturn(Collections.singletonList(configuration));
@@ -110,8 +123,8 @@ public class RepositoryUiServiceTest
     when(repository.getConfiguration()).thenReturn(configuration);
     when(configuration.copy()).thenReturn(configuration);
 
-    underTest = new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager, configurationStore,
-        securityHelper, recipes, taskScheduler, typeLookup, formats, repositoryPermissionChecker)
+    underTest = new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager, repositoryMetricsService,
+        configurationStore, securityHelper, recipes, taskScheduler, typeLookup, formats, repositoryPermissionChecker)
     {
       @Override
       RepositoryXO asRepository(final Repository input) {
@@ -172,6 +185,27 @@ public class RepositoryUiServiceTest
     verify(configuration).setAttributes(testAttributes);
   }
 
+  @Test
+  public void testReadContainsRepoSize() {
+    String repoName = "testRepo";
+    String recipeName = "testRecipe";
+    Long repoSize = 123456L;
+    RepositoryMetricsDTO repoMetrics = new RepositoryMetricsDTO(repoName, repoSize);
+
+    when(configuration.getRecipeName()).thenReturn(recipeName);
+    when(repositoryMetricsService.get(anyString())).thenReturn(Optional.of(repoMetrics));
+    when(configuration.getRepositoryName()).thenReturn(repoName);
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermissionFor(any(Iterable.class), anyString()))
+        .thenReturn(Collections.singletonList(configuration));
+    List<RepositoryXO> repos = underTest.read();
+    Assert.assertEquals(1, repos.size());
+    RepositoryXO repoXo = repos.get(0);
+    Assert.assertEquals(repoName, repoXo.getName());
+    Assert.assertEquals(Long.valueOf(123456), repoXo.getSize());
+    Assert.assertEquals("maven2", repoXo.getFormat());
+    Assert.assertEquals("hosted", repoXo.getType());
+  }
+
   private List<RepositoryReferenceXO> getTestRepositories() {
     RepositoryReferenceXO nugetRepoProxy = mock(RepositoryReferenceXO.class);
     when(nugetRepoProxy.getName()).thenReturn("nuget-proxy");
@@ -190,6 +224,13 @@ public class RepositoryUiServiceTest
     when(repository.getName()).thenReturn("repository");
     when(repository.getType()).thenReturn(new HostedType());
     when(repository.getFormat()).thenReturn(format);
+  }
+
+  private void mockRecipes() {
+    when(recipe.getType()).thenReturn(new HostedType());
+    when(recipe.getFormat()).thenReturn(new Format("maven2") { });
+    recipes = new HashMap<>();
+    recipes.put("testRecipe", recipe);
   }
 
   private static StoreLoadParameters createParameters() {

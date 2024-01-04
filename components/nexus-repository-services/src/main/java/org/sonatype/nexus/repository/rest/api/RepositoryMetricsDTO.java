@@ -29,6 +29,20 @@ public class RepositoryMetricsDTO
 
     public DateTime lastUpdated;
 
+    public RepositoryMetricsDTO(String repositoryName, String repositoryFormat, Long totalSize,
+                                Long blobCount, DateTime lastUpdated) {
+        this.repositoryName = repositoryName;
+        this.repositoryFormat = repositoryFormat;
+        this.totalSize = totalSize;
+        this.blobCount = blobCount;
+        this.lastUpdated = lastUpdated;
+    }
+
+    public RepositoryMetricsDTO(String repositoryName, Long totalSize) {
+        this.repositoryName = repositoryName;
+        this.totalSize = totalSize;
+    }
+
     public String getName() { return repositoryName; }
 
     public Long getSize() { return totalSize; }

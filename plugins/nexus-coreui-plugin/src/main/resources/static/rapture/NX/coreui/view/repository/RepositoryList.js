@@ -37,6 +37,8 @@ Ext.define('NX.coreui.view.repository.RepositoryList', {
   initComponent: function() {
     this.store = 'Repository';
 
+    this.hideSize = NX.State.getValue("nexus.repository.size", false) !== true;
+
     this.dockedItems = [
       {
         xtype: 'nx-actions',

@@ -340,6 +340,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositorySettingsForm_Update_Error: 'You do not have permission to update repositories',
     Repository_RepositoryList_New_Button: 'Create repository',
     Repository_RepositoryList_Name_Header: 'Name',
+    Repository_RepositoryList_Size_Header: 'Size',
     Repository_RepositoryList_Type_Header: 'Type',
     Repository_RepositoryList_Format_Header: 'Format',
     Repository_RepositoryList_Status_Header: 'Status',

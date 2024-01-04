@@ -58,6 +58,7 @@ import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.search.index.RebuildIndexTask;
 import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
@@ -91,6 +92,8 @@ public class RepositoryUiService
 
   private final RepositoryManager repositoryManager;
 
+  private final Optional<RepositoryMetricsService> repositoryMetricsService;
+
   private final ConfigurationStore configurationStore;
 
   private final SecurityHelper securityHelper;
@@ -109,6 +112,7 @@ public class RepositoryUiService
   public RepositoryUiService(
       final RepositoryCacheInvalidationService repositoryCacheInvalidationService,
       final RepositoryManager repositoryManager,
+      @Nullable final RepositoryMetricsService repositoryMetricsService,
       final ConfigurationStore configurationStore,
       final SecurityHelper securityHelper,
       final Map<String, Recipe> recipes,
@@ -119,6 +123,7 @@ public class RepositoryUiService
   {
     this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryMetricsService = Optional.ofNullable(repositoryMetricsService);
     this.configurationStore = checkNotNull(configurationStore);
     this.securityHelper = checkNotNull(securityHelper);
     this.recipes = new HashMap<>(checkNotNull(recipes));
@@ -356,6 +361,7 @@ public class RepositoryUiService
     xo.setName(input.getRepositoryName());
     xo.setType(getType(input));
     xo.setFormat(getFormat(input));
+    xo.setSize(getSize(input));
     xo.setOnline(input.isOnline());
     xo.setRecipe(input.getRecipeName());
     xo.setStatus(buildStatus(input));
@@ -535,6 +541,12 @@ public class RepositoryUiService
   private String getType(final Configuration configuration) {
     Recipe recipe = recipes.get(configuration.getRecipeName());
     return recipe.getType().getValue();
+  }
+
+  private Long getSize(final Configuration configuration) {
+    return repositoryMetricsService
+        .flatMap(s -> s.get(configuration.getRepositoryName()).map(repoMetrics -> repoMetrics.totalSize))
+        .orElse(null);
   }
 
   /**

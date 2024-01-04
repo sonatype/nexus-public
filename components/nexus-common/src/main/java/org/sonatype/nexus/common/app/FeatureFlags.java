@@ -122,7 +122,10 @@ public interface FeatureFlags
    */
   String REPOSITORY_SIZE_ENABLED = "nexus.repository.size";
 
+  String REPOSITORY_SIZE_ENABLED_NAMED = "${nexus.repository.size:-false}";
+
   String REACT_ROLES_MODAL_ENABLED = "nexus.react.roles.modal.enabled";
 
   String REACT_ROLES_MODAL_NAMED = "${nexus.react.roles.modal.enabled:-false}";
+
 }
