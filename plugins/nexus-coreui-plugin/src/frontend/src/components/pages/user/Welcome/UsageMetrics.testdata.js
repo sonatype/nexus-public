@@ -78,7 +78,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
     ]
   },
   {
-    "metricName": "successful_last_30d",
+    "metricName": "successful_last_24h",
     "metricValue": 26,
     "limits": [
       {
