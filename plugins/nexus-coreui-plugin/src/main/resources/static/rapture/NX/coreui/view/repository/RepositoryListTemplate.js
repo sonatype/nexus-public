@@ -28,6 +28,8 @@ Ext.define('NX.coreui.view.repository.RepositoryListTemplate', {
     'NX.I18n'
   ],
 
+  hideSize: true,
+
   /**
    * @override
    */
@@ -48,6 +50,13 @@ Ext.define('NX.coreui.view.repository.RepositoryListTemplate', {
         stateId: 'name',
         flex: 1,
         renderer: Ext.htmlEncode
+      },
+      {
+        text: NX.I18n.get('Repository_RepositoryList_Size_Header'),
+        dataIndex: 'size',
+        stateId: 'size',
+        renderer: Ext.util.Format.fileSize,
+        hidden: me.hideSize,
       },
       {
         text: NX.I18n.get('Repository_RepositoryList_Type_Header'),

@@ -40,6 +40,8 @@ class RepositoryXO
 
   String format
 
+  Long size
+
   @NotBlank(groups = Create)
   String recipe
 

@@ -28,6 +28,7 @@ import {
   NxStatefulTransferList,
   NxFormSelect,
   NxTile,
+  NxTransferListHalf
 } from '@sonatype/react-shared-components';
 
 import ExternalRolesCombobox from './ExternalRolesCombobox'
@@ -79,6 +80,12 @@ export default function RolesForm({roleId, service, onDone}) {
   const setExternalRoleType = (event) => send({type: 'SET_EXTERNAL_ROLE_TYPE', externalRoleType: event.target.value});
 
   const [showModalRoles, setShowModalRoles] = useState(false);
+
+  const selectedRoles = rolesList.filter(r => data.roles.includes(r.id));
+  const rolesFooter = `${selectedRoles.length} Item${selectedRoles.length != 1 ? 's' : ''} Available`;
+
+  const [rolesFilterList, setRolesFilterList] = useState('');
+  const isRolesModalEnabled = ExtJS.state().getValue('nexus.react.roles.modal.enabled');
 
   function saveModalRoles (newRoles) {
     send({ type: 'UPDATE_ROLES', newRoles: newRoles });
@@ -168,29 +175,42 @@ export default function RolesForm({roleId, service, onDone}) {
             showMoveAll
         />
 
-        <div className='modal-selection-section'>
-          <NxH2 className='modal-section-title'>Applied Roles</NxH2>
-          <NxButton onClick={() => setShowModalRoles(true)} className="modal-button" variant="tertiary" type="button">Modify Applied Roles</NxButton>
-          {showModalRoles &&
-            <RolesSelectionModal
-              title={LABELS.SECTIONS.ROLES}
-              allRoles={roles.filter(r => r.id != data.id)}
-              onModalClose={() => setShowModalRoles(false)}
-              selectedRoles={data.roles}
-              saveModal={saveModalRoles}
-            />
-          }
-        </div>
+        {isRolesModalEnabled &&
+          <div className='modal-selection-section'>
+            <NxH2 className='modal-section-title'>Applied Roles</NxH2>
+            <NxButton onClick={() => setShowModalRoles(true)} className="modal-button" variant="tertiary" type="button">Modify Applied Roles</NxButton>
+            {showModalRoles &&
+              <RolesSelectionModal
+                title={LABELS.SECTIONS.ROLES}
+                allRoles={roles.filter(r => r.id != data.id)}
+                onModalClose={() => setShowModalRoles(false)}
+                selectedRoles={data.roles}
+                saveModal={saveModalRoles}
+              />
+            }
+            <NxTransferListHalf
+              label="Applied Roles"
+              filterValue={rolesFilterList}
+              onFilterChange={setRolesFilterList}
+              items={selectedRoles}
+              footerContent={rolesFooter} />
+          </div>
+        }
 
-        <NxStatefulTransferList
-            id="roles-select"
-            availableItemsLabel={LABELS.ROLES.AVAILABLE}
-            selectedItemsLabel={LABELS.ROLES.SELECTED}
-            allItems={rolesList}
-            selectedItems={data.roles || []}
-            onChange={FormUtils.handleUpdate('roles', send)}
-            showMoveAll
-        />
+        {!isRolesModalEnabled &&
+          <>
+            <NxH2>{LABELS.SECTIONS.ROLES}</NxH2>
+            <NxStatefulTransferList
+              id="roles-select"
+              availableItemsLabel={LABELS.ROLES.AVAILABLE}
+              selectedItemsLabel={LABELS.ROLES.SELECTED}
+              allItems={rolesList}
+              selectedItems={data.roles || []}
+              onChange={FormUtils.handleUpdate('roles', send)}
+              showMoveAll
+            />
+          </>
+        }
       </>}
     </NxTile.Content>
   </NxStatefulForm>;

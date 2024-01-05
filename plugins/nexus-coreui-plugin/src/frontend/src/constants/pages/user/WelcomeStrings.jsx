@@ -99,7 +99,7 @@ export default {
           SUB_TITLE: 'Current',
           LIMIT: 'Limit per 30 days',
           HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
-          METRIC_NAME: 'successful_last_30d',
+          METRIC_NAME: 'successful_last_24h',
           AGGREGATE_NAME: 'unique_user_count',
           TOOLTIP: 'The free version of Sonatype Nexus Repository includes up to 100 unique authentications per 30 days.'
         },

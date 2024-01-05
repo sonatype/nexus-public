@@ -53,7 +53,7 @@ const ROLE = {
   name: testRoleName,
   description: testRoleDescription,
   privileges: ['nx-blobstores-all'],
-  roles: ['replication-role', 'nx-admin'],
+  roles: ['TestRole', 'replication-role', 'nx-admin'],
 };
 
 const PRIVILEGES = [{
@@ -134,7 +134,7 @@ const selectors = {
   name: () => screen.queryByLabelText(LABELS.NAME.LABEL),
   description: () => screen.queryByLabelText(LABELS.DESCRIPTION.LABEL),
   privileges: () => screen.queryByRole('group', {name: LABELS.PRIVILEGES.SELECTED}),
-  roles: () => screen.queryByRole('group', {name: LABELS.ROLES.SELECTED}),
+  roles: () => screen.queryByRole('group', {name: "Applied Roles"}),
   readOnly: {
     id: () => screen.getByText(LABELS.ID.LABEL).nextSibling,
     name: () => screen.getByText(LABELS.NAME.LABEL).nextSibling,
@@ -154,7 +154,7 @@ const selectors = {
 };
 
 const clickOnPrivileges = privileges => privileges.forEach(it => userEvent.click(screen.getByText(it)));
-const clickOnRoles = roles => roles.forEach(it => userEvent.click(screen.getByText(ROLES[it].name)));
+const clickOnRoles = (checkboxes) => checkboxes.forEach((it) => userEvent.click(it));
 
 describe('RolesDetails', function() {
   const CONFIRM = Promise.resolve();
@@ -165,6 +165,10 @@ describe('RolesDetails', function() {
   }
 
   beforeEach(() => {
+    ExtJS.state = jest.fn().mockReturnValue({
+      getValue: jest.fn(),
+    });
+    when(ExtJS.state().getValue).calledWith('nexus.react.roles.modal.enabled').mockReturnValue(true);
     when(Axios.get).calledWith(defaultRolesUrl).mockResolvedValue({data: Object.values(ROLES)});
     when(Axios.get).calledWith(privilegesUrl).mockResolvedValue({data: PRIVILEGES});
     when(Axios.get).calledWith(singleRoleUrl(testRoleId)).mockResolvedValue({data: {...ROLE, readOnly: false}});
@@ -258,7 +262,8 @@ describe('RolesDetails', function() {
   });
 
   it('creates internal role', async function() {
-    const {type, id, name, queryLoadingMask, description, saveButton} = selectors;
+    const {type, id, name, queryLoadingMask, description, saveButton, modalButton,
+      roleModal: {modal, confirmButton}} = selectors;
 
     when(Axios.post).calledWith(rolesUrl, ROLE).mockResolvedValue({data: {}});
 
@@ -271,7 +276,10 @@ describe('RolesDetails', function() {
     await TestUtils.changeField(description, testRoleDescription);
 
     clickOnPrivileges(ROLE.privileges);
-    clickOnRoles(ROLE.roles);
+
+    userEvent.click(modalButton());
+    clickOnRoles(within(modal()).getAllByRole('checkbox'));
+    await act(async () => userEvent.click(confirmButton()));
 
     expect(saveButton()).not.toHaveClass('disabled');
     userEvent.click(saveButton());
@@ -281,7 +289,8 @@ describe('RolesDetails', function() {
   });
 
   it('creates external role', async function() {
-    const {type, name, queryLoadingMask, description, saveButton, externalRoleType, mappedRole} = selectors;
+    const {type, name, queryLoadingMask, description, saveButton, externalRoleType, mappedRole, modalButton,
+      roleModal: {modal, confirmButton}} = selectors;
     const crowdType = SOURCE_TYPES.Crowd.id;
     const testCrowdRoleId = CROWD_ROLES[0].id;
     const externalRole = {...ROLE, id: testCrowdRoleId};
@@ -303,7 +312,10 @@ describe('RolesDetails', function() {
     await TestUtils.changeField(description, testRoleDescription);
 
     clickOnPrivileges(ROLE.privileges);
-    clickOnRoles(ROLE.roles);
+
+    userEvent.click(modalButton());
+    clickOnRoles(within(modal()).getAllByRole('checkbox'));
+    await act(async () => userEvent.click(confirmButton()));
 
     expect(saveButton()).not.toHaveClass('disabled');
     userEvent.click(saveButton());
@@ -313,12 +325,13 @@ describe('RolesDetails', function() {
   });
 
   it('updates', async function() {
-    const {name, description, queryLoadingMask, saveButton} = selectors;
+    const {name, description, queryLoadingMask, saveButton, modalButton, roleModal: {modal, confirmButton}} = selectors;
     const data = {
+      id: 'RoleId',
       name: 'Updated name',
       description: 'Updated description',
       privileges: ['nx-all'],
-      roles: ['TestRole'],
+      roles: ['TestRole', 'replication-role', 'nx-admin'],
     };
 
     Axios.put.mockReturnValue(Promise.resolve());
@@ -330,10 +343,13 @@ describe('RolesDetails', function() {
     await TestUtils.changeField(description, data.description);
 
     clickOnPrivileges(ROLE.privileges);
-    clickOnRoles(ROLE.roles);
+
+    userEvent.click(modalButton());
+    clickOnRoles(within(modal()).getAllByRole('checkbox'));
+    clickOnRoles(within(modal()).getAllByRole('checkbox'));
+    await act(async () => userEvent.click(confirmButton()));
 
     clickOnPrivileges(data.privileges);
-    clickOnRoles(data.roles);
 
     expect(saveButton()).not.toHaveClass('disabled');
     userEvent.click(saveButton());
@@ -439,6 +455,7 @@ describe('RolesDetails', function() {
         name,
         description,
         modalButton,
+        roles,
         roleModal: { modal, confirmButton }
       } = selectors;
 
@@ -454,8 +471,7 @@ describe('RolesDetails', function() {
       userEvent.click(modalButton());
       expect(modal()).toBeInTheDocument();
 
-      const transferList = screen.getAllByRole('group');
-      expect(transferList[3]).toHaveTextContent('0 items transferred');
+      expect(roles()).toHaveTextContent('0 Items Available');
 
       const tableRow = (index) => modal().querySelectorAll('tbody tr')[index];
       expect(tableRow(0).cells[1]).toHaveTextContent('nx-admin');
@@ -465,7 +481,7 @@ describe('RolesDetails', function() {
       expect(modal().querySelectorAll('thead tr')[1].cells[2].textContent).toBe('1 Selected');
 
       await act(async () => userEvent.click(confirmButton()));
-      expect(transferList[3]).toHaveTextContent('1 item transferred');
+      expect(roles()).toHaveTextContent('1 Item Available');
     });
   });
 });
