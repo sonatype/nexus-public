@@ -15,6 +15,7 @@ package org.sonatype.nexus.content.maven.internal.search.table;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,10 +24,10 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.search.table.SearchCustomFieldContributor;
-import org.sonatype.nexus.repository.content.search.table.SearchTableData;
+import org.sonatype.nexus.repository.content.search.sql.SearchCustomFieldContributor;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
+import org.sonatype.nexus.repository.search.sql.SearchRecord;
+import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContribution;
 
 import static java.util.stream.Collectors.joining;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
@@ -34,7 +35,6 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VER
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_EXTENSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
-import static org.sonatype.nexus.repository.search.SqlSearchQueryContribution.preventTokenization;
 
 @Singleton
 @Named(Maven2Format.NAME)
@@ -42,7 +42,7 @@ public class MavenSearchCustomFieldContributor
     implements SearchCustomFieldContributor
 {
   @Override
-  public void populateSearchCustomFields(final SearchTableData searchTableData, final Asset asset) {
+  public void populateSearchCustomFields(final SearchRecord searchTableData, final Asset asset) {
 
     Object formatAttributes = asset.attributes().get(Maven2Format.NAME);
 
@@ -50,13 +50,18 @@ public class MavenSearchCustomFieldContributor
     Map<String, String> attributes =
         formatAttributes instanceof Map ? (Map<String, String>) formatAttributes : Collections.emptyMap();
 
-    searchTableData.addFormatFieldValue1(preventTokenization(attributes.get(P_BASE_VERSION)));
-    searchTableData.addFormatFieldValue2(attributes.get(P_EXTENSION));
-    searchTableData.addFormatFieldValue3(attributes.get(P_CLASSIFIER));
+    Optional.ofNullable(attributes.get(P_BASE_VERSION))
+        .map(SqlSearchQueryContribution::preventTokenization)
+        .ifPresent(searchTableData::addFormatFieldValue1);
+    Optional.ofNullable(attributes.get(P_EXTENSION))
+        .ifPresent(searchTableData::addFormatFieldValue2);
+    Optional.ofNullable(attributes.get(P_CLASSIFIER))
+        .ifPresent(searchTableData::addFormatFieldValue3);
+
     buildGavec(searchTableData, attributes);
   }
 
-  private void buildGavec(final SearchTableData searchTableData, final Map<String, String> attributes) {
+  private void buildGavec(final SearchRecord searchTableData, final Map<String, String> attributes) {
     searchTableData.addFormatFieldValue4(getMavenAttributes(attributes)
         .filter(Objects::nonNull)
         .map(SqlSearchQueryContribution::preventTokenization)

@@ -12,23 +12,9 @@
  */
 package org.sonatype.nexus.repository.search.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.stream.Stream;
 
-import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.util.Objects.nonNull;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * Accumulates conditions created by the {@link SqlSearchQueryContribution} implementations for each {@link
@@ -36,39 +22,9 @@ import static java.util.stream.Collectors.toMap;
  *
  * @since 3.38
  */
-public class SqlSearchQueryBuilder
+public interface SqlSearchQueryBuilder
 {
-  private static final String AND = " AND ";
-
-  private static final String OR = " OR ";
-
-  private final List<SqlSearchQueryCondition> conditions = new ArrayList<>();
-
-  private final String operator;
-
-  private SqlSearchQueryBuilder(final String operator) {
-    this.operator = operator;
-  }
-
-  public SqlSearchQueryBuilder add(final SqlSearchQueryCondition condition) {
-    checkArgument(nonNull(condition), "Condition must not be blank.");
-    conditions.add(condition);
-    return this;
-  }
-
-  /**
-   * Create a query builder with the AND operator
-   */
-  public static SqlSearchQueryBuilder conjunctionBuilder() {
-    return new SqlSearchQueryBuilder(AND);
-  }
-
-  /**
-   * Create a query builder with the OR operator
-   */
-  public static SqlSearchQueryBuilder disjunctionBuilder() {
-    return new SqlSearchQueryBuilder(OR);
-  }
+  SqlSearchQueryBuilder add(SqlSearchQueryCondition condition);
 
   /**
    * Concatenates all the SqlSearchQueryCondition conditions into a single one.
@@ -82,33 +38,5 @@ public class SqlSearchQueryBuilder
    * @return A {@link SqlSearchQueryCondition} which is a consolidation of all the conditionFormats and named values in
    * this object.
    */
-  public Optional<SqlSearchQueryCondition> buildQuery() {
-    if (conditions.isEmpty()) {
-      return empty();
-    }
-    return of(new SqlSearchQueryCondition(joinQueryFormats(), getValues()));
-  }
-
-  private String joinQueryFormats() {
-    Stream<String> conditionsStream = conditions.stream()
-        .map(SqlSearchQueryCondition::getSqlConditionFormat);
-
-    if (conditions.size() > 1) {
-      conditionsStream = conditionsStream.map(SqlSearchQueryBuilder::wrapInBrackets);
-    }
-
-    return conditionsStream.collect(joining(operator));
-  }
-
-  private static String wrapInBrackets(final String input) {
-    return "(" + input + ")";
-  }
-
-  private Map<String, String> getValues() {
-    return conditions.stream()
-        .map(SqlSearchQueryCondition::getValues)
-        .map(Map::entrySet)
-        .flatMap(Collection::stream)
-        .collect(toMap(Entry::getKey, Entry::getValue));
-  }
+  Optional<SqlSearchQueryCondition> buildQuery();
 }

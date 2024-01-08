@@ -10,35 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.datastore.internal.search.sql;
+package org.sonatype.nexus.repository.content.search.sql;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.search.sql.SearchRecord;
 
-import org.junit.Test;
-import org.mockito.Mock;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-public class AptSearchCustomFieldContributorTest
-    extends TestSupport
+/**
+ * Allows contribution of data from assets to {@link SearchRecord}
+ *
+ * May be used by formats to contribute custom fields to search indexes.
+ */
+public interface SearchCustomFieldContributor
 {
-  @Mock
-  private Asset asset;
+  /**
+   * From the given {@link Asset} the passed in {@link SearchRecord} will have its custom search fields populated.
+   */
+  void populateSearchCustomFields(SearchRecord searchRecord, Asset asset);
 
-  private final AptSearchCustomFieldContributor underTest = new AptSearchCustomFieldContributor();
-
-  @Test
-  public void shouldAddPathWithoutLeadingSlash() {
-    SearchRecord data = mock(SearchRecord.class);
-    String path = "/org/foo/1.0/foo-1.0.txt";
-    when(asset.path()).thenReturn(path);
-
-    underTest.populateSearchCustomFields(data, asset);
-
-    verify(data).addKeyword(path.substring(1));
+  /**
+   * Should be an asset path searchable or not. By default, the path will be indexed.
+   *
+   * @param path the asset path.
+   * @return {@code true} the path will be indexed, {@code false} otherwise.
+   */
+  default boolean isEnableSearchByPath(final String path) {
+    return true;
   }
 }

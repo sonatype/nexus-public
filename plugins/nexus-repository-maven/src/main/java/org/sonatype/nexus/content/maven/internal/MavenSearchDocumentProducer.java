@@ -19,8 +19,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.search.DefaultSearchDocumentProducer;
-import org.sonatype.nexus.repository.content.search.SearchDocumentExtension;
+import org.sonatype.nexus.repository.content.search.elasticsearch.DefaultSearchDocumentProducer;
+import org.sonatype.nexus.repository.content.search.elasticsearch.SearchDocumentExtension;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.search.MavenVersionNormalizer;
 

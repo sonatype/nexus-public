@@ -12,13 +12,43 @@
  */
 package org.sonatype.nexus.repository.search.sql;
 
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 /**
- * Utility for fetching the {@link SqlSearchQueryConditionBuilder} for a given column.
+ * Provides search results.
  *
+ * @since 3.41
  */
-public interface SqlSearchQueryConditionBuilderMapping
+public interface SearchResult
 {
-  SqlSearchQueryConditionBuilder getConditionBuilder(final SearchFieldSupport fieldMapping);
+  /**
+   * When the metadata was first created.
+   */
+  OffsetDateTime lastModified();
+
+  Integer componentId();
+
+  Integer repositoryId();
+
+  String format();
+
+  String namespace();
+
+  String componentName();
+
+  String repositoryName();
+
+  String version();
+
+  String normalisedVersion();
+
+  List<String> tags();
+
+  /**
+   * Schemaless content attributes.
+   */
+  NestedAttributesMap attributes();
 }

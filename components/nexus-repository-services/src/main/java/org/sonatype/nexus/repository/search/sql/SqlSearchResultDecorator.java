@@ -12,13 +12,14 @@
  */
 package org.sonatype.nexus.repository.search.sql;
 
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import org.sonatype.nexus.repository.search.ComponentSearchResult;
 
 /**
- * Utility for fetching the {@link SqlSearchQueryConditionBuilder} for a given column.
- *
+ * Allows for data to be contributed to the {@link ComponentSearchResult}. Implement this interface when you need to
+ * contribute data depending on format, field or some other condition which is not true for every row in the search
+ * table.
  */
-public interface SqlSearchQueryConditionBuilderMapping
+public interface SqlSearchResultDecorator
 {
-  SqlSearchQueryConditionBuilder getConditionBuilder(final SearchFieldSupport fieldMapping);
+  void updateComponent(ComponentSearchResult component, SearchResult searchResult);
 }

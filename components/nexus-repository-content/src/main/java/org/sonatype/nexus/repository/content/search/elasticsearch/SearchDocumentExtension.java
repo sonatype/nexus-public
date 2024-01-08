@@ -10,15 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
+package org.sonatype.nexus.repository.content.search.elasticsearch;
 
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import java.util.Map;
+
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 
 /**
- * Utility for fetching the {@link SqlSearchQueryConditionBuilder} for a given column.
+ * Extension point to contribute fields to {@link SearchDocumentProducer}.
  *
+ * @since 3.25
  */
-public interface SqlSearchQueryConditionBuilderMapping
+public interface SearchDocumentExtension
 {
-  SqlSearchQueryConditionBuilder getConditionBuilder(final SearchFieldSupport fieldMapping);
+  /**
+   * Retrieves additional fields to be indexed for the given component.
+   *
+   * @return additional field names and their values in Map format
+   */
+  Map<String, Object> getFields(FluentComponent component);
 }
