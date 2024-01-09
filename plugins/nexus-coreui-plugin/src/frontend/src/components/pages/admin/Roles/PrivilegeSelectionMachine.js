@@ -18,8 +18,8 @@ import { mergeDeepRight } from 'ramda';
 import { assign } from 'xstate';
 import { ListMachineUtils } from '@sonatype/nexus-ui-plugin';
 
-const RoleSelectionMachine = ListMachineUtils.buildListMachine({
-  id: 'RoleSelectionMachine',
+const PrivilegeSelectionMachine = ListMachineUtils.buildListMachine({
+  id: 'PrivilegeSelectionMachine',
   sortableFields: ['select', 'name', 'description'],
   sortField: 'name',
   initial: 'loaded',
@@ -27,9 +27,9 @@ const RoleSelectionMachine = ListMachineUtils.buildListMachine({
     states: {
       loaded: {
         on: {
-          SELECT_ROLE: {
+          SELECT_PRIVILEGE: {
             target: 'loaded',
-            actions: ['selectRole']
+            actions: ['selectPrivilege']
           },
           ON_CONFIRM: {
             target: 'loaded',
@@ -45,15 +45,16 @@ const RoleSelectionMachine = ListMachineUtils.buildListMachine({
   }),
 }).withConfig({
   actions: {
-    selectRole: assign({
-      data: ({ data }, { role }) => data.map(oldRole => oldRole === role ?
-        { ...role, isSelected: !role.isSelected } : oldRole),
-      tempSelectedRoles: ({ data }, { role }) =>
-        data.filter(oldRole => oldRole === role ? !oldRole.isSelected : oldRole.isSelected).map(role => role.id)
+    selectPrivilege: assign({
+      data: ({ data }, { privilege }) => data.map(oldPrivilege => oldPrivilege === privilege ?
+        { ...privilege, isSelected: !privilege.isSelected } : oldPrivilege),
+      tempSelectedPrivileges: ({ data }, { privilege }) =>
+        data.filter(oldPrivilege => oldPrivilege === privilege ?
+          !oldPrivilege.isSelected : oldPrivilege.isSelected).map(privilege => privilege.name)
     }),
 
     onConfirm: assign({
-      selectedRoles: ({ tempSelectedRoles }) => tempSelectedRoles
+      selectedPrivileges: ({ tempSelectedPrivileges }) => tempSelectedPrivileges
     }),
 
     changePage: assign({
@@ -68,7 +69,7 @@ const RoleSelectionMachine = ListMachineUtils.buildListMachine({
     filterData: assign({
       filteredData: ({ filter, data }, _) =>
         data.filter(({ name, description }) => ListMachineUtils.hasAnyMatches([name, description], filter)),
-      numberOfRoles: ({ filter, data }, _) =>
+      numberOfPrivileges: ({ filter, data }, _) =>
         (data.filter(({ name, description }) => ListMachineUtils.hasAnyMatches([name, description], filter))).length,
     }),
 
@@ -87,4 +88,4 @@ const RoleSelectionMachine = ListMachineUtils.buildListMachine({
   }
 });
 
-export default RoleSelectionMachine;
+export default PrivilegeSelectionMachine;

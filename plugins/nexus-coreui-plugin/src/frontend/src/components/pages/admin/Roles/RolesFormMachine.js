@@ -63,6 +63,10 @@ export default FormUtils.buildFormMachine({
                 target: 'loaded',
                 actions: ['updateRoles']
               },
+              UPDATE_PRIVILEGES: {
+                target: 'loaded',
+                actions: ['updatePrivileges']
+              },
             }
           },
         }
@@ -103,6 +107,9 @@ export default FormUtils.buildFormMachine({
     }),
     updateRoles: assign({
       data: ({data}, {newRoles}) => ({...data, roles: newRoles}),
+    }),
+    updatePrivileges: assign({
+      data: ({data}, {newPrivileges}) => ({...data, privileges: newPrivileges}),
     }),
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
     logDeleteSuccess: ({data}) => ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS(data.name)),

@@ -28,49 +28,54 @@ import {
   NxFooter
 } from '@sonatype/react-shared-components';
 
-import { ListMachineUtils } from '@sonatype/nexus-ui-plugin';
-
-import RoleSelectionMachine from './RoleSelectionMachine';
+import PrivilegeSelectionMachine from './PrivilegeSelectionMachine';
 import { useMachine } from '@xstate/react';
 import { createPortal } from 'react-dom';
+import { ListMachineUtils } from '@sonatype/nexus-ui-plugin';
 import classNames from 'classnames';
 
-export default function RolesSelectionModal({
+export default function PrivilegesSelectionModal({
     title,
-    allRoles,
+    allPrivileges,
     onModalClose,
-    selectedRoles,
-    saveModal 
+    selectedPrivileges,
+    saveModal
   }) {
-  const [state, send] = useMachine(RoleSelectionMachine, {
+  const [state, send] = useMachine(PrivilegeSelectionMachine, {
     context: {
       offsetPage: 0,
-      data: allRoles.map(item => ({
+      data: allPrivileges.map(item => ({
         ...item,
-        isSelected: selectedRoles.includes(item.id)
+        isSelected: selectedPrivileges.includes(item.name)
       })),
-      selectedRoles: selectedRoles,
-      tempSelectedRoles: selectedRoles,
-      filteredData: allRoles,
-      numberOfRoles: allRoles.length,
+      selectedPrivileges: selectedPrivileges,
+      tempSelectedPrivileges: selectedPrivileges,
+      filteredData: allPrivileges,
+      numberOfPrivileges: allPrivileges.length,
     },
     devTools: true
   });
 
-  const { offsetPage, tempSelectedRoles, numberOfRoles, filteredData, filter: filterText } = state.context;
+  const {
+    offsetPage,
+    tempSelectedPrivileges,
+    numberOfPrivileges,
+    filteredData,
+    filter: filterText,
+  } = state.context;
 
-  const onRoleSelected = (role) => send({ type: 'SELECT_ROLE', role: role });
-  const isRoleSelected = (role) => { return tempSelectedRoles.includes(role) };
+  const onPrivilegeSelected = (privilege) => send({ type: 'SELECT_PRIVILEGE', privilege: privilege });
+  const isPrivilegeSelected = (privilege) => { return tempSelectedPrivileges.includes(privilege) };
   const confirmModal = () => {
     onModalClose();
     send({ type: 'ON_CONFIRM' });
-    saveModal(tempSelectedRoles);
+    saveModal(tempSelectedPrivileges);
   }
 
   const filter = (value) => send({ type: 'FILTER', filter: value });
 
   const rowsPerPage = 10;
-  const pages = Math.ceil(numberOfRoles / rowsPerPage);
+  const pages = Math.ceil(numberOfPrivileges / rowsPerPage);
   const changePage = (event) => send({ type: 'CHANGE_PAGE', offsetPage: event });
   const lowerBound = offsetPage * rowsPerPage;
   const upperBound = lowerBound + rowsPerPage;
@@ -84,7 +89,7 @@ export default function RolesSelectionModal({
   const sortByDescription = () => send('SORT_BY_DESCRIPTION');
 
   const counterClasses = classNames('nx-pull-right', {
-    'nx-counter--active': tempSelectedRoles.length > 0
+    'nx-counter--active': tempSelectedPrivileges.length > 0
   });
 
   return (<>
@@ -105,29 +110,29 @@ export default function RolesSelectionModal({
               <NxTableRow>
                 <NxTableCell className="select-column" onClick={sortBySelect} isSortable sortDir={selectSortDir}>Select</NxTableCell>
                 <NxTableCell className="name-column" onClick={sortByName} isSortable sortDir={nameSortDir}>Name</NxTableCell>
-                <NxTableCell onClick={sortByDescription} isSortable sortDir={descriptionSortDir}>Description</NxTableCell>
+                <NxTableCell className="desc-column" onClick={sortByDescription} isSortable sortDir={descriptionSortDir}>Description</NxTableCell>
               </NxTableRow>
               <NxTableRow className="counter-row">
                 <NxTableCell></NxTableCell>
                 <NxTableCell></NxTableCell>
                 <NxTableCell className="counter-cell">
-                  <NxCounter className={counterClasses}>{tempSelectedRoles.length} Selected</NxCounter>
+                  <NxCounter className={counterClasses}>{tempSelectedPrivileges.length} Selected</NxCounter>
                 </NxTableCell>
               </NxTableRow>
             </NxTableHead>
 
-            <NxTableBody emptyMessage="No roles available">
-              {filteredData.slice(lowerBound, upperBound).map((role) => (
-                  <NxTableRow key={role.id}>
-                    <NxTableCell className="select-column">
-                      <NxCheckbox
-                        onChange={() => onRoleSelected(role)}
-                        isChecked={isRoleSelected(role.id)}>
-                      </NxCheckbox>
-                    </NxTableCell>
-                    <NxTableCell>{role.name}</NxTableCell>
-                    <NxTableCell>{role.description}</NxTableCell>
-                  </NxTableRow>))}
+            <NxTableBody emptyMessage="No privileges available">
+              {filteredData.slice(lowerBound, upperBound).map((privilege) => (
+                <NxTableRow key={privilege.name}>
+                  <NxTableCell className="select-column">
+                    <NxCheckbox
+                      onChange={() => onPrivilegeSelected(privilege)}
+                      isChecked={isPrivilegeSelected(privilege.name)}>
+                    </NxCheckbox>
+                  </NxTableCell>
+                  <NxTableCell>{privilege.name}</NxTableCell>
+                  <NxTableCell>{privilege.description}</NxTableCell>
+                </NxTableRow>))}
             </NxTableBody>
           </NxTable>
 
