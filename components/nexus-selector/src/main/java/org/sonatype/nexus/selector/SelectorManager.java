@@ -122,7 +122,7 @@ public interface SelectorManager
    * Use the specified CselToSql implementation to convert the selector configuration to SQL for use as a 'where'
    * clause
    */
-  void toSql(SelectorConfiguration selector, SelectorSqlBuilder sqlBuilder, CselToSql cselToSql)
+  <T> void toSql(SelectorConfiguration selector, T sqlBuilder, CselToSql<T> cselToSql)
       throws SelectorEvaluationException;
 
   /**

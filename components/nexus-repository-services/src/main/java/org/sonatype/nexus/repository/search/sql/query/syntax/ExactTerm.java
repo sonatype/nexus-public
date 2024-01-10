@@ -10,20 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.sql;
+package org.sonatype.nexus.repository.search.sql.query.syntax;
 
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
-import org.sonatype.nexus.repository.search.SortDirection;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.38
+ * A term which is expected to be matched precisely.
  */
-public class RepositorySearchField
-    extends SearchFieldSupport
+public class ExactTerm
+    extends TermSupport<String>
+    implements StringTerm
 {
-  private static final String TABLE = "repository";
-
-  public RepositorySearchField(final String columnName, final String sortColumnName) {
-    super(TABLE, columnName, sortColumnName, SortDirection.ASC, TextualQueryType.FULL_TEXT_SEARCH_QUERY);
+  public ExactTerm(final String term) {
+    super(checkNotNull(term));
   }
 }

@@ -10,15 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
+package org.sonatype.nexus.repository.search.sql.query.syntax;
 
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Utility for fetching the {@link SqlSearchQueryConditionBuilder} for a given column.
- *
- */
-public interface SqlSearchQueryConditionBuilderMapping
+public class WildcardTerm
+    extends TermSupport<String>
+    implements StringTerm
 {
-  SqlSearchQueryConditionBuilder getConditionBuilder(final SearchFieldSupport fieldMapping);
+  public WildcardTerm(final String term) {
+    super(checkNotNull(term));
+  }
 }

@@ -267,10 +267,10 @@ public class SelectorManagerImpl
   }
 
   @Override
-  public void toSql(
+  public <T> void toSql(
       final SelectorConfiguration selectorConfiguration,
-      final SelectorSqlBuilder sqlBuilder,
-      final CselToSql cselToSql) throws SelectorEvaluationException
+      final T sqlBuilder,
+      final CselToSql<T> cselToSql) throws SelectorEvaluationException
   {
     try {
       selectorCache.get(selectorConfiguration).toSql(sqlBuilder, cselToSql);
@@ -327,10 +327,10 @@ public class SelectorManagerImpl
 
   @Override
   public SelectorConfiguration newSelectorConfiguration(
-      String name,
-      String type,
-      String description,
-      Map<String, ?> attributes)
+      final String name,
+      final String type,
+      final String description,
+      final Map<String, ?> attributes)
   {
     SelectorConfiguration selectorConfiguration = store.newSelectorConfiguration();
     selectorConfiguration.setName(name);

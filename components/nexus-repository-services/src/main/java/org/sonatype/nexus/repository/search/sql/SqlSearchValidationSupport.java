@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.repository.search.sql;
 
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,23 +23,24 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.ANY_CHARACTER;
-import static org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilder.ZERO_OR_MORE_CHARACTERS;
-
 /**
  * Support class for SQL search validation
  */
 public abstract class SqlSearchValidationSupport
     extends ComponentSupport
 {
+  private static final char ZERO_OR_MORE_CHARACTERS = '*';
+
+  private static final char ANY_CHARACTER = '?';
+
   private static final int MIN_ALLOWED_SYMBOLS_TO_SEARCH = 3;
 
   /*
    * For SQL search we prohibit leading wildcards and less than 3 characters with wildcards for performance reasons.
    */
-  protected Set<String> getValidTokens(final Set<String> tokens) {
+  protected Collection<String> getValidTokens(final Collection<String> tokens) {
     ValidationErrorsException validation = new ValidationErrorsException();
-    Set<String> validTokens = new HashSet<>(tokens);
+    Set<String> validTokens = new LinkedHashSet<>(tokens);
 
     Set<String> invalidTokens = tokens.stream()
         .filter(Objects::nonNull)
@@ -85,7 +87,7 @@ public abstract class SqlSearchValidationSupport
 
   private static boolean hasLeadingWildcard(final String token) {
     String trimmedToken = token.trim();
-    return isWildcard(trimmedToken.charAt(0));
+    return trimmedToken.length() > 0 && isWildcard(trimmedToken.charAt(0));
   }
 
   private static boolean hasLeadingSpecialCharacterAndWildcard(final String token) {
@@ -93,7 +95,8 @@ public abstract class SqlSearchValidationSupport
     if (trimmedToken.length() < 2) {
       return false;
     }
-    return !Character.isLetterOrDigit(trimmedToken.charAt(0)) && isWildcard(trimmedToken.charAt(1));
+    char firstChar = trimmedToken.charAt(0);
+    return !(firstChar == '\\' || Character.isLetterOrDigit(firstChar)) && isWildcard(trimmedToken.charAt(1));
   }
 
   private static boolean isWildcard(final char character) {

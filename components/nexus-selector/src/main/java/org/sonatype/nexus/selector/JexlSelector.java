@@ -51,7 +51,7 @@ public class JexlSelector
   }
 
   @Override
-  public void toSql(final SelectorSqlBuilder sqlBuilder, final CselToSql cselToSql) {
+  public <T> void toSql(final T sqlBuilder, final CselToSql<T> cselToSql) {
     throw new UnsupportedOperationException();
   }
 

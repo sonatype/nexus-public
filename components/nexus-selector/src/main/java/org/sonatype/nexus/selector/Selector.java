@@ -43,5 +43,5 @@ public interface Selector
    * @param sqlBuilder used to accumulate 'where' clauses for content selectors
    * @param cselToSql  transforms selector expressions into sql
    */
-  void toSql(SelectorSqlBuilder sqlBuilder, final CselToSql cselToSql);
+  <T> void toSql(T sqlBuilder, final CselToSql<T> cselToSql);
 }

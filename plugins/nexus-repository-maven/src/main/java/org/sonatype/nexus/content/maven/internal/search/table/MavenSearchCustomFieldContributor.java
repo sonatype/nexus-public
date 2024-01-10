@@ -16,8 +16,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Named;
@@ -27,9 +25,9 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.search.sql.SearchCustomFieldContributor;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.sql.SearchRecord;
-import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContribution;
 
 import static java.util.stream.Collectors.joining;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
@@ -51,7 +49,7 @@ public class MavenSearchCustomFieldContributor
         formatAttributes instanceof Map ? (Map<String, String>) formatAttributes : Collections.emptyMap();
 
     Optional.ofNullable(attributes.get(P_BASE_VERSION))
-        .map(SqlSearchQueryContribution::preventTokenization)
+        .map(MavenSearchCustomFieldContributor::preventTokenization)
         .ifPresent(searchTableData::addFormatFieldValue1);
     Optional.ofNullable(attributes.get(P_EXTENSION))
         .ifPresent(searchTableData::addFormatFieldValue2);
@@ -64,7 +62,7 @@ public class MavenSearchCustomFieldContributor
   private void buildGavec(final SearchRecord searchTableData, final Map<String, String> attributes) {
     searchTableData.addFormatFieldValue4(getMavenAttributes(attributes)
         .filter(Objects::nonNull)
-        .map(SqlSearchQueryContribution::preventTokenization)
+        .map(MavenSearchCustomFieldContributor::preventTokenization)
         .collect(joining(" "))
     );
   }
@@ -77,9 +75,18 @@ public class MavenSearchCustomFieldContributor
         attributes.get(P_CLASSIFIER));
   }
 
-  public static Set<String> toStoredBaseVersionFormat(final Set<String> baseVersions) {
-    return baseVersions.stream()
-        .map(SqlSearchQueryContribution::matchUntokenizedValue)
-        .collect(Collectors.toSet());
+  /**
+   * Only used for maven G.A.BV.E.C and repository names.
+   *
+   * Tokenization is the essence of Postgres's Full Text Search and it generally results in more search results (not
+   * less) unless you perform a more restrictive search. We should accept the tokenization behaviour of
+   * Full text search in the majority of cases and should only prevent the tokenization if there's
+   * no other way of performing a more restrictive search for that particular use case.
+   *
+   * Note: nexus doesn't allow G.A.BV.E.C or repository name to begin with a '/'.
+   * Thus, it's ok to use '/' as a marker to prevent Full Text search tokenization.
+   */
+  static String preventTokenization(final String searchTerm) {
+    return isBlank(searchTerm) ? "" : "/" + searchTerm;
   }
 }

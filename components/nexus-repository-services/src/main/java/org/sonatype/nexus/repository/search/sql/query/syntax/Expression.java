@@ -10,24 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.sql;
-
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
-import org.sonatype.nexus.repository.search.SortDirection;
+package org.sonatype.nexus.repository.search.sql.query.syntax;
 
 /**
- * Represents a field that is unsupported.
- *
- * @since 3.38
+ * Represents a truthy expression for use in SQL such as {@code WHERE expression}.
  */
-public final class UnsupportedSearchField
-    extends SearchFieldSupport
+public interface Expression
 {
-  private static final String UNSUPPORTED = "unsupported";
-
-  public static final SearchFieldSupport INSTANCE = new UnsupportedSearchField();
-
-  private UnsupportedSearchField() {
-    super(UNSUPPORTED, UNSUPPORTED, UNSUPPORTED, SortDirection.ASC, TextualQueryType.DEFAULT_TEXT_QUERY);
-  }
+  /**
+   * The operand used by the expression
+   */
+  Operand operand();
 }

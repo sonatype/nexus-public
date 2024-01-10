@@ -20,11 +20,18 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
-import org.sonatype.nexus.repository.rest.sql.ComponentSearchField;
-import org.sonatype.nexus.repository.rest.sql.RepositorySearchField;
+import org.sonatype.nexus.repository.rest.sql.SearchField;
 
 import com.google.common.collect.ImmutableList;
 
+import static org.sonatype.nexus.repository.rest.sql.SearchField.FORMAT;
+import static org.sonatype.nexus.repository.rest.sql.SearchField.KEYWORDS;
+import static org.sonatype.nexus.repository.rest.sql.SearchField.MD5;
+import static org.sonatype.nexus.repository.rest.sql.SearchField.NAME;
+import static org.sonatype.nexus.repository.rest.sql.SearchField.NAMESPACE;
+import static org.sonatype.nexus.repository.rest.sql.SearchField.SHA1;
+import static org.sonatype.nexus.repository.rest.sql.SearchField.SHA256;
+import static org.sonatype.nexus.repository.rest.sql.SearchField.SHA512;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.IS_PRERELEASE_KEY;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 
@@ -45,28 +52,22 @@ public class DefaultSearchMappings
 
   public static final String VERSION = "version";
 
-  public static final String SEARCH_REPOSITORY_NAME = "tsvector_search_repository_name";
-
   public static final String PRERELEASE = "prerelease";
 
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
-      new SearchMapping("q", "keyword", "Query by keyword", ComponentSearchField.KEYWORD),
-      new SearchMapping("repository", REPOSITORY_NAME, "Repository name",
-          new RepositorySearchField(SEARCH_REPOSITORY_NAME, "search_repository_name")),
-      new SearchMapping("format", "format", "Query by format", ComponentSearchField.FORMAT),
-      new SearchMapping("group", GROUP_RAW, "Component group", ComponentSearchField.NAMESPACE),
-      new SearchMapping(NAME_RAW_ALIAS, NAME_RAW, "Component name", ComponentSearchField.NAME),
-      new SearchMapping(VERSION, VERSION, "Component version", ComponentSearchField.VERSION),
-      new SearchMapping(PRERELEASE, IS_PRERELEASE_KEY, "Prerelease version flag", ComponentSearchField.PRERELEASE),
-      new SearchMapping("md5", "assets.attributes.checksum.md5",
-          "Specific MD5 hash of component's asset", ComponentSearchField.MD5),
-      new SearchMapping("sha1", "assets.attributes.checksum.sha1",
-          "Specific SHA-1 hash of component's asset", ComponentSearchField.SHA1),
-      new SearchMapping("sha256", "assets.attributes.checksum.sha256",
-          "Specific SHA-256 hash of component's asset", ComponentSearchField.SHA256),
-      new SearchMapping("sha512", "assets.attributes.checksum.sha512",
-          "Specific SHA-512 hash of component's asset", ComponentSearchField.SHA512)
-  );
+      new SearchMapping("q", "keyword", "Query by keyword", KEYWORDS, false),
+      new SearchMapping("repository", REPOSITORY_NAME, "Repository name", SearchField.REPOSITORY_NAME),
+      new SearchMapping("format", "format", "Query by format", FORMAT),
+      new SearchMapping("group", GROUP_RAW, "Component group", NAMESPACE),
+      new SearchMapping(NAME_RAW_ALIAS, NAME_RAW, "Component name", NAME),
+      new SearchMapping(VERSION, VERSION, "Component version", SearchField.VERSION),
+      new SearchMapping(PRERELEASE, IS_PRERELEASE_KEY, "Prerelease version flag", SearchField.PRERELEASE),
+      new SearchMapping("md5", "assets.attributes.checksum.md5", "Specific MD5 hash of component's asset", MD5),
+      new SearchMapping("sha1", "assets.attributes.checksum.sha1", "Specific SHA-1 hash of component's asset", SHA1),
+      new SearchMapping("sha256", "assets.attributes.checksum.sha256", "Specific SHA-256 hash of component's asset",
+          SHA256),
+      new SearchMapping("sha512", "assets.attributes.checksum.sha512", "Specific SHA-512 hash of component's asset",
+          SHA512));
 
   @Override
   public Iterable<SearchMapping> get() {

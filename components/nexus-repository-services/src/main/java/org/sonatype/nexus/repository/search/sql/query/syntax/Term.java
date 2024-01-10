@@ -10,24 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
-
-import java.util.Optional;
-
-import org.sonatype.nexus.repository.search.query.SearchFilter;
-import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
+package org.sonatype.nexus.repository.search.sql.query.syntax;
 
 /**
- * Allows creation of sql search query condition(s) based on a given SearchFilter.
- *
- * @see SearchFilter
- * @see SqlSearchQueryCondition
- * @since 3.38
+ * Represents the a term, or collection of terms on the right of the operand in a {@link SqlPredicate}
  */
-public interface SqlSearchQueryContribution
+public interface Term
 {
-  /**
-   * Creates {@link Expresion}(s) for the specified SearchFilter
-   */
-  Optional<Expression> createPredicate(SearchFilter filter);
+  // No implementation
 }

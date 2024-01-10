@@ -10,35 +10,45 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.selector;
+package org.sonatype.nexus.repository.search.sql.query.syntax;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
- * Subset of JEXL selectors that can also be represented as SQL.
- *
- * @since 3.6
+ * Support class for {@link Term} implementations which contain a single value.
  */
-public class CselSelector
-    extends JexlSelector
+public abstract class TermSupport<T>
+    implements Term
 {
-  public static final String TYPE = "csel";
+  private final T term;
 
-  private final CselToSql cselToSql;
+  protected TermSupport(final T term) {
+    this.term = term;
+  }
 
-  public CselSelector(final CselToSql cselToSql, final JexlExpression expression) {
-    super(expression);
-    this.cselToSql = checkNotNull(cselToSql);
-
+  public T get() {
+    return term;
   }
 
   @Override
-  public void toSql(final SelectorSqlBuilder sqlBuilder) {
-    cselToSql.transformCselToSql(expression.getSyntaxTree(), sqlBuilder);
+  public int hashCode() {
+    return Objects.hash(term);
   }
 
   @Override
-  public <T> void toSql(final T sqlBuilder, final CselToSql<T> cselToSql) {
-    cselToSql.transformCselToSql(expression.getSyntaxTree(), sqlBuilder);
+  public boolean equals(final Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    TermSupport<?> other = (TermSupport<?>) obj;
+    return Objects.equals(term, other.term);
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + " [" + term + "]";
   }
 }

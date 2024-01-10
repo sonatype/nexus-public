@@ -10,24 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+@FeatureFlag(name = DATASTORE_TABLE_SEARCH)
 package org.sonatype.nexus.repository.search.sql;
 
-import java.util.Optional;
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-import org.sonatype.nexus.repository.search.query.SearchFilter;
-import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
-
-/**
- * Allows creation of sql search query condition(s) based on a given SearchFilter.
- *
- * @see SearchFilter
- * @see SqlSearchQueryCondition
- * @since 3.38
- */
-public interface SqlSearchQueryContribution
-{
-  /**
-   * Creates {@link Expresion}(s) for the specified SearchFilter
-   */
-  Optional<Expression> createPredicate(SearchFilter filter);
-}
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;

@@ -10,24 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.sql;
+package org.sonatype.nexus.repository.search.sql.query.syntax;
 
-import java.util.Optional;
-
-import org.sonatype.nexus.repository.search.query.SearchFilter;
-import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Allows creation of sql search query condition(s) based on a given SearchFilter.
- *
- * @see SearchFilter
- * @see SqlSearchQueryCondition
- * @since 3.38
+ * A term which allows tokenization while matching. This allows {@code foo.bar} to potentially match {@code foo-bar}
+ * depending on the underlying search implementation. Unlike {@link WildcardTerm} this is not a prefix search so
+ * {@code term=foo} will not match {@code foobar}
  */
-public interface SqlSearchQueryContribution
+public class LenientTerm
+    extends TermSupport<String>
+    implements StringTerm
 {
-  /**
-   * Creates {@link Expresion}(s) for the specified SearchFilter
-   */
-  Optional<Expression> createPredicate(SearchFilter filter);
+  public LenientTerm(final String term) {
+    super(checkNotNull(term));
+  }
 }

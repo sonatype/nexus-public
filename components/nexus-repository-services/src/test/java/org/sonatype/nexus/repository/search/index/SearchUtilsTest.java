@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.SearchUtils;
 
 import com.google.common.collect.ImmutableList;
@@ -49,7 +50,7 @@ public class SearchUtilsTest
 
     Map<String, SearchMappings> searchMappings = ImmutableMap.of(
         "default", () -> ImmutableList.of(
-            new SearchMapping(SHA1_ALIAS, VALID_SHA1_ATTRIBUTE_NAME, "")
+            new SearchMapping(SHA1_ALIAS, VALID_SHA1_ATTRIBUTE_NAME, "", SearchField.SHA1)
         )
     );
 

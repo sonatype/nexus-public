@@ -19,7 +19,7 @@ import org.apache.commons.jexl3.parser.ASTJexlScript;
  *
  * @since 3.24
  */
-public interface CselToSql
+public interface CselToSql<T>
 {
   /**
    * Transforms the given CSEL expression (in script form) to SQL for use in a 'where' clause.
@@ -27,5 +27,5 @@ public interface CselToSql
    * @param script the CSEL script to transform
    * @param builder the SQL builder to use
    */
-  void transformCselToSql(final ASTJexlScript script, final SelectorSqlBuilder builder);
+  void transformCselToSql(final ASTJexlScript script, final T builder);
 }

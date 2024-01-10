@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.rest;
 
 import java.util.Objects;
 
-import org.sonatype.nexus.repository.rest.sql.UnsupportedSearchField;
+import org.sonatype.nexus.repository.rest.sql.SearchField;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -30,7 +30,7 @@ public class SearchMapping
 
   private final String description;
 
-  private final SearchFieldSupport field;
+  private final SearchField field;
 
   private final boolean exactMatch;
 
@@ -41,25 +41,16 @@ public class SearchMapping
       final String alias,
       final String attribute,
       final String description,
-      final SearchFieldSupport field)
+      final SearchField field)
   {
     this(alias, attribute, description, field, true);
-  }
-
-  /**
-   * @deprecated legacy constructor for pre-SQL search implementations, will lead to UnsupportedOperationExceptions when
-   *             submitted as part of SQL queries.
-   */
-  @Deprecated
-  public SearchMapping(final String alias, final String attribute, final String description) {
-    this(alias, attribute, description, UnsupportedSearchField.INSTANCE);
   }
 
   public SearchMapping(
       final String alias,
       final String attribute,
       final String description,
-      final SearchFieldSupport field,
+      final SearchField field,
       final boolean exactMatch) {
     this.alias = checkNotNull(alias);
     this.attribute = checkNotNull(attribute);
@@ -94,7 +85,7 @@ public class SearchMapping
   /**
    * The column in which SQL search stores the value for this term.
    */
-  public SearchFieldSupport getField() {
+  public SearchField getField() {
     return field;
   }
 
