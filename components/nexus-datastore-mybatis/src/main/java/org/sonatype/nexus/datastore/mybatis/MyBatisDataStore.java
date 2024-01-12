@@ -66,6 +66,7 @@ import org.sonatype.nexus.datastore.mybatis.handlers.NestedAttributesMapTypeHand
 import org.sonatype.nexus.datastore.mybatis.handlers.PasswordCharacterArrayTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.PrincipalCollectionTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.SetTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.TokenizingTypeHandler;
 import org.sonatype.nexus.security.PasswordHelper;
 import org.sonatype.nexus.transaction.TransactionIsolation;
 
@@ -289,7 +290,7 @@ public class MyBatisDataStore
   }
 
   @Override
-  public void unregister(Class<? extends DataAccess> accessType) {
+  public void unregister(final Class<? extends DataAccess> accessType) {
     // unregistration of custom access types is not supported
   }
 
@@ -447,6 +448,7 @@ public class MyBatisDataStore
     register(new PasswordCharacterArrayTypeHandler(passwordHelper));
     register(new PrincipalCollectionTypeHandler());
     registerDetached(new EncryptedStringTypeHandler()); // detached so it doesn't apply to all Strings
+    registerDetached(new TokenizingTypeHandler()); // detached so it doesn't apply to all Strings
 
     // enable automatic encryption of sensitive JSON fields in the config store
     sensitiveAttributeFilter = buildSensitiveAttributeFilter(mybatisConfig);
@@ -536,7 +538,7 @@ public class MyBatisDataStore
    * Searches the directly declared interfaces for one annotated with {@link SchemaTemplate}.
    */
   @Nullable
-  private Class<?> findTemplateType(Class<? extends DataAccess> accessType) {
+  private Class<?> findTemplateType(final Class<? extends DataAccess> accessType) {
     for (Class<?> candidate : accessType.getInterfaces()) {
       if (candidate.isAnnotationPresent(SchemaTemplate.class)) {
         return candidate;

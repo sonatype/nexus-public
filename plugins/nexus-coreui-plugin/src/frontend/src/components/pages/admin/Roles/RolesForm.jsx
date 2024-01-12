@@ -40,6 +40,8 @@ import {TYPES} from './RolesHelper';
 
 import RolesSelectionModal from './RolesSelectionModal';
 
+import PrivilegesSelectionModal from './PrivilegesSelectionModal';
+
 const {ROLES: {FORM: LABELS}} = UIStrings;
 
 export default function RolesForm({roleId, service, onDone}) {
@@ -86,9 +88,15 @@ export default function RolesForm({roleId, service, onDone}) {
 
   const [rolesFilterList, setRolesFilterList] = useState('');
   const isRolesModalEnabled = ExtJS.state().getValue('nexus.react.roles.modal.enabled');
+  const [showModalPrivileges, setShowModalPrivileges] = useState(false);
+  const isPrivilegesModalEnabled = ExtJS.state().getValue('nexus.react.privileges.modal.enabled');
 
   function saveModalRoles (newRoles) {
     send({ type: 'UPDATE_ROLES', newRoles: newRoles });
+  }
+
+  function saveModalPrivileges (newPrivileges) {
+    send({ type: 'UPDATE_PRIVILEGES', newPrivileges: newPrivileges });
   }
 
   return <NxStatefulForm
@@ -164,20 +172,39 @@ export default function RolesForm({roleId, service, onDone}) {
           />
         </NxFormGroup>
 
-        <NxH2>{LABELS.SECTIONS.PRIVILEGES}</NxH2>
+        {!isPrivilegesModalEnabled &&
+          <NxH2>{LABELS.SECTIONS.PRIVILEGES}</NxH2>
+        }
+
+        {isPrivilegesModalEnabled &&
+          <div className="modal-selection-section">
+            <NxH2 className="modal-section-title">Applied Privileges</NxH2>
+            <NxButton onClick={() => setShowModalPrivileges(true)} className="modal-button" variant="tertiary" type="button">Modify Applied Privileges</NxButton>
+            {showModalPrivileges &&
+              <PrivilegesSelectionModal
+                title={LABELS.SECTIONS.PRIVILEGES}
+                allPrivileges={privileges.filter(r => r.name != data.name)}
+                onModalClose={() => setShowModalPrivileges(false)}
+                selectedPrivileges={data.privileges}
+                saveModal={saveModalPrivileges}
+              />
+            }
+          </div>
+        }
+
         <NxStatefulTransferList
-            id="privileges-select"
-            availableItemsLabel={LABELS.PRIVILEGES.AVAILABLE}
-            selectedItemsLabel={LABELS.PRIVILEGES.SELECTED}
-            allItems={privilegesList}
-            selectedItems={data.privileges || []}
-            onChange={FormUtils.handleUpdate('privileges', send)}
-            showMoveAll
+          id="privileges-select"
+          availableItemsLabel={LABELS.PRIVILEGES.AVAILABLE}
+          selectedItemsLabel={LABELS.PRIVILEGES.SELECTED}
+          allItems={privilegesList}
+          selectedItems={data.privileges || []}
+          onChange={FormUtils.handleUpdate('privileges', send)}
+          showMoveAll
         />
 
         {isRolesModalEnabled &&
-          <div className='modal-selection-section'>
-            <NxH2 className='modal-section-title'>Applied Roles</NxH2>
+          <div className="modal-selection-section">
+            <NxH2 className="modal-section-title">Applied Roles</NxH2>
             <NxButton onClick={() => setShowModalRoles(true)} className="modal-button" variant="tertiary" type="button">Modify Applied Roles</NxButton>
             {showModalRoles &&
               <RolesSelectionModal

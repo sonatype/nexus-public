@@ -155,7 +155,7 @@ describe('RolesSelectionModal', function () {
         return render(<RolesSelectionModal title={"Roles"} allRoles={roles} onModalClose={() => { }} selectedRoles={[]} />);
     }
 
-    it('sorts the selected above the rest of the roles alphabetically', async function () {
+    it('sorts the selected above the rest of the roles alphabetically when sorting select ascending', async function () {
         const { modal } = selectors;
         renderModal(ROLES);
 
@@ -171,10 +171,14 @@ describe('RolesSelectionModal', function () {
         const checkboxes = (index) => within(modal()).queryAllByRole('checkbox')[index];
         userEvent.click(checkboxes(2));
 
+        userEvent.click(tableRowHeader(0).cells[0]);
+
         expect(tableRowHeader(1).cells[2].textContent).toBe('1 Selected');
         expect(tableRow(0).cells[1]).toHaveTextContent('nx-apikey-all');
 
         userEvent.click(checkboxes(0));
+        userEvent.click(tableRowHeader(0).cells[2]);
+
         expect(tableRowHeader(1).cells[2].textContent).toBe('0 Selected');
         expect(tableRow(0).cells[1]).toHaveTextContent('nx-admin');
         expect(tableRow(2).cells[1]).toHaveTextContent('nx-apikey-all');

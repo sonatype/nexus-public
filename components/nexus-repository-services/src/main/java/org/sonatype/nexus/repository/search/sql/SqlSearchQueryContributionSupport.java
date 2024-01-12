@@ -12,36 +12,37 @@
  */
 package org.sonatype.nexus.repository.search.sql;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
-import org.sonatype.nexus.repository.rest.SearchFieldSupport;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.rest.SearchMapping;
-import org.sonatype.nexus.repository.rest.SearchMappings;
-import org.sonatype.nexus.repository.rest.sql.ComponentSearchField;
-import org.sonatype.nexus.repository.search.SqlSearchQueryContribution;
-import org.sonatype.nexus.repository.search.SqlSearchValidationSupport;
+import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
-
-import org.apache.commons.collections.CollectionUtils;
+import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
+import org.sonatype.nexus.repository.search.sql.query.syntax.LenientTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
+import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
+import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.unmodifiableMap;
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.StreamSupport.stream;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
+import static org.sonatype.nexus.repository.search.sql.query.syntax.Operand.EQ;
+import static org.sonatype.nexus.repository.search.sql.query.syntax.Operand.OR;
 
 /**
  * Base implementation for {@link SqlSearchQueryContribution}
@@ -54,95 +55,186 @@ public abstract class SqlSearchQueryContributionSupport
 {
   private static final String QUOTE = "\"";
 
-  private static final String DEFAULT_REGEX = "[^\\s\"]+|\"[^\"]+\"";
+  protected SearchMappingService mappingService;
 
-  private static final Pattern PATTERN = Pattern.compile(DEFAULT_REGEX);
-
-  public static final String NAME_PREFIX = "datastore_search_";
-
-  public static final String GAVEC = "gavec";
-
-  protected final SqlSearchQueryConditionBuilderMapping conditionBuilders;
-
-  protected final Map<String, SearchFieldSupport> fieldMappings;
-
-  protected SqlSearchQueryContributionSupport(
-      final SqlSearchQueryConditionBuilderMapping conditionBuilders,
-      final Map<String, SearchMappings> searchMappings)
-  {
-    this.conditionBuilders = checkNotNull(conditionBuilders);
-    this.fieldMappings = unmodifiableMap(fieldMappingsByAttribute(checkNotNull(searchMappings)));
+  @Inject
+  public void init(final SearchMappingService mappingService) {
+    this.mappingService = checkNotNull(mappingService);
   }
 
   @Override
-  public void contribute(final SqlSearchQueryBuilder queryBuilder, final SearchFilter searchFilter) {
-    ofNullable(searchFilter)
-        .flatMap(this::buildQueryCondition)
-        .ifPresent(queryBuilder::add);
-  }
+  public Optional<Expression> createPredicate(@Nullable final SearchFilter filter) {
+    Optional<SearchField> field = getField(filter);
 
-  protected Optional<SqlSearchQueryCondition> buildQueryCondition(final SearchFilter searchFilter) {
-    final SearchFieldSupport fieldMappingDef = fieldMappings.get(searchFilter.getProperty());
-    log.debug("Mapping for {} is {}", searchFilter, fieldMappingDef);
-    final SqlSearchQueryConditionBuilder builder = conditionBuilders.getConditionBuilder(fieldMappingDef);
+    log.debug("Mapping for {} is {}", filter, field);
 
-    final SearchFilter mappedField = getFieldMapping(searchFilter);
-    return ofNullable(mappedField)
+    if (filter == null || !field.isPresent()) {
+      return Optional.empty();
+    }
+
+    boolean exact = isExact(filter);
+
+    return Optional.ofNullable(filter)
         .map(SearchFilter::getValue)
-        .map(this::split)
-        .filter(CollectionUtils::isNotEmpty)
-        .map(this::getValidTokens)
-        .map(values -> builder.condition(mappedField.getProperty(), values));
+        .filter(Objects::nonNull)
+        .map(String::trim)
+        .map(query -> split(query)
+            .map(tokens -> tokenize(exact, tokens))
+            .map(TermCollection::create)
+            .map(terms -> new SqlPredicate(EQ, field.get(), terms))
+            .collect(Collectors.toList())
+        )
+        .map(expressions -> SqlClause.create(OR, expressions));
   }
 
-  protected Set<String> split(final String value) {
+  /**
+   * Split the query by spaces outside of quotes. i.e. {@code "nexus*core foo*" -> ["nexus*core", "foo*"]}
+   *
+   * @param value a search filter
+   */
+  protected Stream<String> split(final String value) {
     if (isBlank(value)) {
-      return emptySet();
+      return Stream.of("");
     }
 
-    Matcher matcher = getMatcher(value);
-    Set<String> matches = new HashSet<>();
-    while (matcher.find()) {
-      matches.add(maybeTrimQuotes(matcher.group()));
-    }
-    return matches;
-  }
+    Set<String> tokens = new LinkedHashSet<>();
+    char[] chars = value.toCharArray();
 
-  protected Matcher getMatcher(final String value) {
-    return PATTERN.matcher(value);
-  }
-
-  public static String maybeTrimQuotes(String value) {
-    value = removeEnd(value, QUOTE);
-    value = removeStart(value, QUOTE);
-    return value;
-  }
-
-  public static Map<String, SearchFieldSupport> fieldMappingsByAttribute(final Map<String, SearchMappings> searchMappings) {
-    final Map<String, SearchFieldSupport> byAttribute = searchMappings.entrySet().stream()
-        .flatMap(e -> stream(e.getValue().get().spliterator(), false))
-        .collect(toMap(SearchMapping::getAttribute, SearchMapping::getField));
-    return addCustomMappings(byAttribute);
-  }
-
-  private static Map<String, SearchFieldSupport> addCustomMappings(final Map<String, SearchFieldSupport> byAttribute) {
-    Map<String, SearchFieldSupport> mappings = new HashMap<>(byAttribute);
-    mappings.put(GAVEC, ComponentSearchField.FORMAT_FIELD_4);
-    return mappings;
-  }
-
-  @Nullable
-  private SearchFilter getFieldMapping(final SearchFilter searchFilter) {
-    final String property = searchFilter.getProperty();
-    final SearchFieldSupport searchFieldSupport = fieldMappings.get(property);
-
-    if (searchFieldSupport != null) {
-      String fieldMapping = searchFieldSupport.getColumnName();
-      if (isNotBlank(fieldMapping)) {
-        return new SearchFilter(fieldMapping, searchFilter.getValue());
+    StringBuilder token = new StringBuilder();
+    boolean quoted = false;
+    for (int i=0; i<chars.length; i++) {
+      char c = chars[i];
+      if (c == '\\') {
+        token.append(c);
+        if (i + 1 < chars.length) {
+          token.append(chars[++i]);
+        }
       }
-      log.debug("Ignoring unsupported search field {}", property);
+      else if (c == '"') {
+        if (quoted) {
+          tokens.add(token.toString().trim());
+          token = new StringBuilder();
+          quoted = false;
+        }
+        else {
+          quoted = true;
+        }
+      }
+      else if (!quoted && c == ' ') {
+        tokens.add(token.toString().trim());
+        token = new StringBuilder();
+      }
+      else {
+        token.append(c);
+      }
     }
-    return null;
+
+    if (Strings2.notBlank(token.toString())) {
+      tokens.add(token.toString().trim());
+    }
+
+    return getValidTokens(tokens).stream();
+  }
+
+  /**
+   * Tokenize terms query strings into StringTerm instances
+   *
+   * @param exact indicates whether the associated {@link SearchMapping} indicated exact matching
+   * @param value a string from {@link #split} to tokenize
+   */
+  protected Collection<StringTerm> tokenize(final boolean exact, final String value) {
+    if (isBlank(value)) {
+      return Collections.singleton(new ExactTerm(""));
+    }
+
+    Set<StringTerm> tokens = new LinkedHashSet<>();
+    char[] chars = value.toCharArray();
+
+    StringBuilder token = new StringBuilder();
+    boolean quoted = false;
+    boolean terminated = false;
+    boolean terminalWildcard = false;
+    for (int i=0; i<chars.length; i++) {
+      char c = chars[i];
+      if (c == '\\') {
+        if (i + 1 < chars.length) {
+          token.append(chars[++i]);
+        }
+      }
+      else if (c == '"') {
+        if (quoted) {
+          doCreateMatchTerm(exact, token).ifPresent(tokens::add);
+          token = new StringBuilder();
+          quoted = false;
+        }
+        else {
+          quoted = true;
+        }
+      }
+      else if (!quoted && (c == ' ' || c == '*' || c == '?')) {
+        terminalWildcard |= c == '*' || c == '?';
+        terminated = true;
+      }
+      else if (terminated == true) {
+        create(exact, terminalWildcard, token.toString().trim()).ifPresent(tokens::add);
+
+        terminalWildcard = terminated = false;
+        token = new StringBuilder();
+        token.append(c);
+      }
+      else {
+        token.append(c);
+      }
+    }
+
+    create(exact, terminalWildcard, token.toString().trim()).ifPresent(tokens::add);
+
+    return tokens;
+  }
+
+  private Optional<StringTerm> create(final boolean exact, final boolean terminalWildcard, final String token) {
+    if (!terminalWildcard) {
+      return doCreateMatchTerm(exact, token);
+    }
+
+    return Optional.of(new WildcardTerm(token));
+  }
+
+  private Optional<StringTerm> doCreateMatchTerm(final boolean exact, final CharSequence value) {
+    return Optional.of(value)
+        .map(CharSequence::toString)
+        .map(String::trim)
+        .filter(Strings2::notBlank)
+        .map(t -> createMatchTerm(exact, t));
+  }
+
+  /**
+   * Create a {@link StringTerm} from the value, and the {@link SearchMapping}'s indication whether the filter should be
+   * treated as exact.
+   *
+   * @param exact indicates whether the associated {@link SearchMapping} indicated exact matching
+   * @param value the term
+   */
+  protected StringTerm createMatchTerm(final boolean exact, final String value) {
+    return exact ? new ExactTerm(value) : new LenientTerm(value);
+  }
+
+  protected static String maybeTrimQuotes(String term) {
+    term = removeEnd(term, QUOTE);
+    term = removeStart(term, QUOTE);
+    return term;
+  }
+
+  protected boolean isExact(@Nullable final SearchFilter filter) {
+    return Optional.ofNullable(filter)
+        .map(SearchFilter::getProperty)
+        .map(mappingService::isExactMatch)
+        .orElse(false);
+  }
+
+  protected Optional<SearchField> getField(@Nullable final SearchFilter filter) {
+    return Optional.ofNullable(filter)
+        .map(SearchFilter::getProperty)
+        .flatMap(mappingService::getSearchField);
   }
 }

@@ -31,7 +31,6 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
-import org.sonatype.nexus.repository.content.search.SearchDocumentProducer;
 import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 

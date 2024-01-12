@@ -28,16 +28,20 @@ import {
   NxFooter
 } from '@sonatype/react-shared-components';
 
+import { ListMachineUtils } from '@sonatype/nexus-ui-plugin';
+
 import RoleSelectionMachine from './RoleSelectionMachine';
 import { useMachine } from '@xstate/react';
 import { createPortal } from 'react-dom';
+import classNames from 'classnames';
 
 export default function RolesSelectionModal({
-  title,
-  allRoles,
-  onModalClose,
-  selectedRoles,
-  saveModal }) {
+    title,
+    allRoles,
+    onModalClose,
+    selectedRoles,
+    saveModal 
+  }) {
   const [state, send] = useMachine(RoleSelectionMachine, {
     context: {
       offsetPage: 0,
@@ -71,7 +75,17 @@ export default function RolesSelectionModal({
   const lowerBound = offsetPage * rowsPerPage;
   const upperBound = lowerBound + rowsPerPage;
 
-  const counterClass = tempSelectedRoles.length > 0 ? "nx-counter--active nx-pull-right" : "nx-counter nx-pull-right"
+  const selectSortDir = ListMachineUtils.getSortDirection('select', state.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
+  const descriptionSortDir = ListMachineUtils.getSortDirection('description', state.context);
+
+  const sortBySelect = () => send('SORT_BY_SELECT');
+  const sortByName = () => send('SORT_BY_NAME');
+  const sortByDescription = () => send('SORT_BY_DESCRIPTION');
+
+  const counterClasses = classNames('nx-pull-right', {
+    'nx-counter--active': tempSelectedRoles.length > 0
+  });
 
   return (<>
     {createPortal(
@@ -86,27 +100,26 @@ export default function RolesSelectionModal({
             onChange={filter} />
         </div>
         <div className="nx-modal-content">
-          <NxTable className='modal-table'>
+          <NxTable className="modal-table">
             <NxTableHead>
               <NxTableRow>
-                <NxTableCell>Select</NxTableCell>
-                <NxTableCell>Name</NxTableCell>
-                <NxTableCell>Description</NxTableCell>
+                <NxTableCell className="select-column" onClick={sortBySelect} isSortable sortDir={selectSortDir}>Select</NxTableCell>
+                <NxTableCell className="name-column" onClick={sortByName} isSortable sortDir={nameSortDir}>Name</NxTableCell>
+                <NxTableCell onClick={sortByDescription} isSortable sortDir={descriptionSortDir}>Description</NxTableCell>
               </NxTableRow>
-              <NxTableRow className='counter-row'>
+              <NxTableRow className="counter-row">
                 <NxTableCell></NxTableCell>
                 <NxTableCell></NxTableCell>
-                <NxTableCell className='counter-cell'>
-                  <NxCounter className={counterClass}>{tempSelectedRoles.length} Selected</NxCounter>
+                <NxTableCell className="counter-cell">
+                  <NxCounter className={counterClasses}>{tempSelectedRoles.length} Selected</NxCounter>
                 </NxTableCell>
               </NxTableRow>
             </NxTableHead>
 
             <NxTableBody emptyMessage="No roles available">
-              {filteredData.sort((a, b) => Number(b.isSelected) - Number(a.isSelected)
-                || a.name.localeCompare(b.name)).slice(lowerBound, upperBound).map((role) => (
+              {filteredData.slice(lowerBound, upperBound).map((role) => (
                   <NxTableRow key={role.id}>
-                    <NxTableCell>
+                    <NxTableCell className="select-column">
                       <NxCheckbox
                         onChange={() => onRoleSelected(role)}
                         isChecked={isRoleSelected(role.id)}>
@@ -118,7 +131,7 @@ export default function RolesSelectionModal({
             </NxTableBody>
           </NxTable>
 
-          <div className='modal-pagination'>
+          <div className="modal-pagination">
             <NxPagination
               onChange={changePage}
               pageCount={pages > 0 ? pages : 1}

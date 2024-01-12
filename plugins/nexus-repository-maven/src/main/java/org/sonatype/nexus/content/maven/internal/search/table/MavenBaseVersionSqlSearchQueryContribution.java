@@ -12,21 +12,18 @@
  */
 package org.sonatype.nexus.content.maven.internal.search.table;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
-import org.sonatype.nexus.repository.search.sql.SqlSearchQueryBuilder;
-import org.sonatype.nexus.repository.search.sql.SqlSearchQueryConditionBuilderMapping;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
+import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
+import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.sonatype.nexus.content.maven.internal.search.table.MavenSearchCustomFieldContributor.toStoredBaseVersionFormat;
 
 /**
  * Creates sql query conditions for the assets.attributes.baseVersion search term.
@@ -38,29 +35,21 @@ public class MavenBaseVersionSqlSearchQueryContribution
 {
   protected static final String BASE_VERSION = "attributes.maven2.baseVersion";
 
-  public static final String NAME = SqlSearchQueryContributionSupport.NAME_PREFIX + BASE_VERSION;
-
-  @Inject
-  public MavenBaseVersionSqlSearchQueryContribution(
-      final SqlSearchQueryConditionBuilderMapping conditionBuilders,
-      final Map<String, SearchMappings> searchMappings)
-  {
-    super(conditionBuilders, searchMappings);
-  }
+  public static final String NAME = BASE_VERSION;
 
   @Override
-  public void contribute(final SqlSearchQueryBuilder queryBuilder, final SearchFilter searchFilter) {
+  public Optional<Expression> createPredicate(final SearchFilter searchFilter) {
     String value = searchFilter.getValue();
     if (isNotBlank(value)) {
-      super.contribute(queryBuilder, new SearchFilter(searchFilter.getProperty(), value));
+      return super.createPredicate(new SearchFilter(searchFilter.getProperty(), value.trim()));
     }
     else {
-      super.contribute(queryBuilder, searchFilter);
+      return super.createPredicate(searchFilter);
     }
   }
 
   @Override
-  protected Set<String> split(final String baseVersion) {
-    return toStoredBaseVersionFormat(super.split(baseVersion));
+  protected StringTerm createMatchTerm(final boolean exact, final String match) {
+    return new ExactTerm("/" + match);
   }
 }

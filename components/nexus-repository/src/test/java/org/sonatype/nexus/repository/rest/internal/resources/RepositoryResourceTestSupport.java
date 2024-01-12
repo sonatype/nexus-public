@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.SearchUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -66,12 +67,12 @@ public abstract class RepositoryResourceTestSupport
 
   Map<String, SearchMappings> searchMappings = ImmutableMap.of(
       "default", () -> ImmutableList.of(
-          new SearchMapping("sha1", "assets.attributes.checksum.sha1", ""),
-          new SearchMapping("sha256", "assets.attributes.checksum.sha256", ""),
-          new SearchMapping("maven.extension", "assets.attributes.maven2.extension", ""),
-          new SearchMapping("maven.classifier", "assets.attributes.maven2.classifier", ""),
-          new SearchMapping("mvn.extension", "assets.attributes.maven2.extension", ""),
-          new SearchMapping("q", "keyword", "")
+          new SearchMapping("sha1", "assets.attributes.checksum.sha1", "", SearchField.SHA1),
+          new SearchMapping("sha256", "assets.attributes.checksum.sha256", "", SearchField.SHA256),
+          new SearchMapping("maven.extension", "assets.attributes.maven2.extension", "", SearchField.FORMAT_FIELD_2),
+          new SearchMapping("maven.classifier", "assets.attributes.maven2.classifier", "", SearchField.FORMAT_FIELD_3),
+          new SearchMapping("mvn.extension", "assets.attributes.maven2.extension", "", SearchField.FORMAT_FIELD_2),
+          new SearchMapping("q", "keyword", "", SearchField.KEYWORDS)
       )
   );
 

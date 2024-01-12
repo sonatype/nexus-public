@@ -117,6 +117,10 @@ public interface FeatureFlags
 
   String REACT_PRIVILEGES_NAMED = "${nexus.react.privileges:-false}";
 
+  String REACT_PRIVILEGES_MODAL_ENABLED = "nexus.react.privileges.modal.enabled";
+
+  String REACT_PRIVILEGES_MODAL_NAMED = "${nexus.react.privileges.modal.enabled:-false}";
+
   /**
    * Feature flag to determine if we should include the repository sizes feature
    */

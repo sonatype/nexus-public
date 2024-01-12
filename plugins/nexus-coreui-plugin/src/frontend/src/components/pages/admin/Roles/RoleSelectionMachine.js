@@ -20,7 +20,8 @@ import { ListMachineUtils } from '@sonatype/nexus-ui-plugin';
 
 const RoleSelectionMachine = ListMachineUtils.buildListMachine({
   id: 'RoleSelectionMachine',
-  sortField: 'isSelected',
+  sortableFields: ['select', 'name', 'description'],
+  sortField: 'name',
   initial: 'loaded',
   config: config => mergeDeepRight(config, {
     states: {
@@ -50,24 +51,39 @@ const RoleSelectionMachine = ListMachineUtils.buildListMachine({
       tempSelectedRoles: ({ data }, { role }) =>
         data.filter(oldRole => oldRole === role ? !oldRole.isSelected : oldRole.isSelected).map(role => role.id)
     }),
+
     onConfirm: assign({
       selectedRoles: ({ tempSelectedRoles }) => tempSelectedRoles
     }),
+
     changePage: assign({
       offsetPage: (_, { offsetPage }) => offsetPage
     }),
+
     setFilter: assign({
       filter: (_, { filter }) => filter,
       offsetPage: 0,
     }),
+
     filterData: assign({
       filteredData: ({ filter, data }, _) =>
-        data.filter(({ name, description }) => name.toLowerCase().indexOf(filter.toLowerCase()) !== -1
-          || description.toLowerCase().indexOf(filter.toLowerCase()) !== -1),
+        data.filter(({ name, description }) => ListMachineUtils.hasAnyMatches([name, description], filter)),
       numberOfRoles: ({ filter, data }, _) =>
-        (data.filter(({ name, description }) => name.toLowerCase().indexOf(filter.toLowerCase()) !== -1
-          || description.toLowerCase().indexOf(filter.toLowerCase()) !== -1)).length,
+        (data.filter(({ name, description }) => ListMachineUtils.hasAnyMatches([name, description], filter))).length,
     }),
+
+    sortData: assign({
+      filteredData: ({ sortField, sortDirection, filteredData }) => {
+        if (sortField === 'select') {
+          return sortDirection === 'asc' ? filteredData.sort((a, b) =>
+            Number(b.isSelected) - Number(a.isSelected) || a.name.localeCompare(b.name))
+            : filteredData.sort((a, b) => Number(a.isSelected) - Number(b.isSelected) || a.name.localeCompare(b.name));
+        } else {
+          return ListMachineUtils.sortDataByFieldAndDirection({ useLowerCaseSorting: true })
+            ({ sortField, sortDirection, data: filteredData });
+        }
+      }
+    })
   }
 });
 

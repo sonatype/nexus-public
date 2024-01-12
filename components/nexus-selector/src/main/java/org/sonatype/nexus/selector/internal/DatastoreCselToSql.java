@@ -43,7 +43,7 @@ import org.apache.commons.jexl3.parser.JexlNode;
 @Singleton
 public class DatastoreCselToSql
     extends ParserVisitorSupport
-    implements CselToSql
+    implements CselToSql<SelectorSqlBuilder>
 {
   private static final String EXPECTED_STRING_LITERAL = "Expected string literal";
 

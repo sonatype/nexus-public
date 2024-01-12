@@ -18,18 +18,18 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.content.search.table.SearchTableData;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.search.sql.SearchRecord;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MavenSearchCustomFieldContributorTest
@@ -61,31 +61,31 @@ public class MavenSearchCustomFieldContributorTest
     mockAttributes();
     mockComponentAttributes();
 
-    SearchTableData searchTableData = new SearchTableData();
+    SearchRecord searchRecord = mock(SearchRecord.class);
 
-    underTest.populateSearchCustomFields(searchTableData, asset);
+    underTest.populateSearchCustomFields(searchRecord, asset);
 
-    assertThat(searchTableData.getFormatFieldValues1(), hasItems("/1.1.1"));
-    assertThat(searchTableData.getFormatFieldValues2(), hasItems("testExtension"));
-    assertThat(searchTableData.getFormatFieldValues3(), hasItems("testClassifier"));
+    verify(searchRecord).addFormatFieldValue1("/1.1.1");
+    verify(searchRecord).addFormatFieldValue2("testExtension");
+    verify(searchRecord).addFormatFieldValue3("testClassifier");
 
     childAttributes.set("baseVersion", "1.1-SNAPSHOT");
 
-    underTest.populateSearchCustomFields(searchTableData, asset);
+    underTest.populateSearchCustomFields(searchRecord, asset);
 
-    assertThat(searchTableData.getFormatFieldValues1(), hasItems("/1.1-SNAPSHOT"));
+    verify(searchRecord).addFormatFieldValue1("/1.1-SNAPSHOT");
   }
 
   @Test
   public void operationIsSuccessfulWithNoCustomSearchData() {
-    SearchTableData searchTableData = new SearchTableData();
+    SearchRecord searchRecord = mock(SearchRecord.class);
 
     when(asset.attributes()).thenReturn(attributes);
 
-    underTest.populateSearchCustomFields(searchTableData, asset);
+    underTest.populateSearchCustomFields(searchRecord, asset);
 
-    assertThat(searchTableData.getFormatFieldValues2(), is(empty()));
-    assertThat(searchTableData.getFormatFieldValues3(), is(empty()));
+    verify(searchRecord, never()).addFormatFieldValue1(any());
+    verify(searchRecord, never()).addFormatFieldValue2(any());
   }
 
   private void mockAttributes() {

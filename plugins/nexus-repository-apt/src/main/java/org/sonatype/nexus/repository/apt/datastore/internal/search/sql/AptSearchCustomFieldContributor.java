@@ -18,8 +18,8 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.search.table.SearchCustomFieldContributor;
-import org.sonatype.nexus.repository.content.search.table.SearchTableData;
+import org.sonatype.nexus.repository.content.search.sql.SearchCustomFieldContributor;
+import org.sonatype.nexus.repository.search.sql.SearchRecord;
 
 @Named(AptFormat.NAME)
 @Singleton
@@ -28,7 +28,7 @@ public class AptSearchCustomFieldContributor
     implements SearchCustomFieldContributor
 {
   @Override
-  public void populateSearchCustomFields(final SearchTableData searchTableData, final Asset asset) {
+  public void populateSearchCustomFields(final SearchRecord searchTableData, final Asset asset) {
     searchTableData.addKeyword(asset.path().substring(1));
   }
 }

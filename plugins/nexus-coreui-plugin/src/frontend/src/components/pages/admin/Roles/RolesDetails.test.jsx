@@ -53,7 +53,7 @@ const ROLE = {
   name: testRoleName,
   description: testRoleDescription,
   privileges: ['nx-blobstores-all'],
-  roles: ['TestRole', 'replication-role', 'nx-admin'],
+  roles: ['nx-admin', 'TestRole', 'replication-role'],
 };
 
 const PRIVILEGES = [{
@@ -142,7 +142,7 @@ const selectors = {
     privileges: () => screen.queryAllByRole('list')[0],
     roles: () => screen.queryAllByRole('list')[1],
   },
-  modalButton: () => screen.getByRole('button', {name: 'Modify Applied Roles'}),
+  roleModalButton: () => screen.getByRole('button', {name: 'Modify Applied Roles'}),
   roleModal: {
     modal: () => screen.queryByRole('dialog'),
     cancel: () => within(selectors.roleModal.modal()).getByRole('button', {name: 'Cancel'}),
@@ -262,7 +262,7 @@ describe('RolesDetails', function() {
   });
 
   it('creates internal role', async function() {
-    const {type, id, name, queryLoadingMask, description, saveButton, modalButton,
+    const {type, id, name, queryLoadingMask, description, saveButton, roleModalButton,
       roleModal: {modal, confirmButton}} = selectors;
 
     when(Axios.post).calledWith(rolesUrl, ROLE).mockResolvedValue({data: {}});
@@ -277,7 +277,7 @@ describe('RolesDetails', function() {
 
     clickOnPrivileges(ROLE.privileges);
 
-    userEvent.click(modalButton());
+    userEvent.click(roleModalButton());
     clickOnRoles(within(modal()).getAllByRole('checkbox'));
     await act(async () => userEvent.click(confirmButton()));
 
@@ -289,7 +289,7 @@ describe('RolesDetails', function() {
   });
 
   it('creates external role', async function() {
-    const {type, name, queryLoadingMask, description, saveButton, externalRoleType, mappedRole, modalButton,
+    const {type, name, queryLoadingMask, description, saveButton, externalRoleType, mappedRole, roleModalButton,
       roleModal: {modal, confirmButton}} = selectors;
     const crowdType = SOURCE_TYPES.Crowd.id;
     const testCrowdRoleId = CROWD_ROLES[0].id;
@@ -313,7 +313,7 @@ describe('RolesDetails', function() {
 
     clickOnPrivileges(ROLE.privileges);
 
-    userEvent.click(modalButton());
+    userEvent.click(roleModalButton());
     clickOnRoles(within(modal()).getAllByRole('checkbox'));
     await act(async () => userEvent.click(confirmButton()));
 
@@ -325,13 +325,13 @@ describe('RolesDetails', function() {
   });
 
   it('updates', async function() {
-    const {name, description, queryLoadingMask, saveButton, modalButton, roleModal: {modal, confirmButton}} = selectors;
+    const {name, description, queryLoadingMask, saveButton, roleModalButton, roleModal: {modal, confirmButton}} = selectors;
     const data = {
       id: 'RoleId',
       name: 'Updated name',
       description: 'Updated description',
       privileges: ['nx-all'],
-      roles: ['TestRole', 'replication-role', 'nx-admin'],
+      roles: ['nx-admin', 'TestRole', 'replication-role'],
     };
 
     Axios.put.mockReturnValue(Promise.resolve());
@@ -344,7 +344,7 @@ describe('RolesDetails', function() {
 
     clickOnPrivileges(ROLE.privileges);
 
-    userEvent.click(modalButton());
+    userEvent.click(roleModalButton());
     clickOnRoles(within(modal()).getAllByRole('checkbox'));
     clickOnRoles(within(modal()).getAllByRole('checkbox'));
     await act(async () => userEvent.click(confirmButton()));
@@ -433,14 +433,14 @@ describe('RolesDetails', function() {
 
   describe('Roles Selection Modal', function () {
     it('opens the modal when button is clicked', async function () {
-      const { queryLoadingMask, modalButton, roleModal: { modal, cancel } } = selectors;
+      const { queryLoadingMask, roleModalButton, roleModal: { modal, cancel } } = selectors;
 
       renderDetails(testRoleId);
       await waitForElementToBeRemoved(queryLoadingMask());
 
       expect(modal()).not.toBeInTheDocument();
 
-      userEvent.click(modalButton());
+      userEvent.click(roleModalButton());
       expect(modal()).toBeInTheDocument();
 
       userEvent.click(cancel());
@@ -454,7 +454,7 @@ describe('RolesDetails', function() {
         id,
         name,
         description,
-        modalButton,
+        roleModalButton,
         roles,
         roleModal: { modal, confirmButton }
       } = selectors;
@@ -468,7 +468,7 @@ describe('RolesDetails', function() {
       await TestUtils.changeField(description, testRoleDescription);
 
       expect(modal()).not.toBeInTheDocument();
-      userEvent.click(modalButton());
+      userEvent.click(roleModalButton());
       expect(modal()).toBeInTheDocument();
 
       expect(roles()).toHaveTextContent('0 Items Available');

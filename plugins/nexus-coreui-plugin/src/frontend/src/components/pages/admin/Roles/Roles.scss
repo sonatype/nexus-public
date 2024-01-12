@@ -59,3 +59,18 @@ tr.counter-row th {
         display: none;
     }
 }
+
+.nx-modal-content {
+  .select-column {
+    width: 10%;
+
+    .nx-checkbox {
+      margin: auto;
+      padding-right: 20px;
+    }
+  }
+
+  .name-column {
+    width: 40%;
+  }
+}

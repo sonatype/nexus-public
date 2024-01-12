@@ -48,7 +48,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 @VisibleForTesting
 public class OrientCselToSql
     extends ParserVisitorSupport
-    implements CselToSql
+    implements CselToSql<SelectorSqlBuilder>
 {
   @Override
   public void transformCselToSql(final ASTJexlScript script, final SelectorSqlBuilder builder) {

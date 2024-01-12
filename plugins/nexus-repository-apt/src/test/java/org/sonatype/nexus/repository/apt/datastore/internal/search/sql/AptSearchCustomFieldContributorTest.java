@@ -14,13 +14,13 @@ package org.sonatype.nexus.repository.apt.datastore.internal.search.sql;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.search.table.SearchTableData;
+import org.sonatype.nexus.repository.search.sql.SearchRecord;
 
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class AptSearchCustomFieldContributorTest
@@ -33,12 +33,12 @@ public class AptSearchCustomFieldContributorTest
 
   @Test
   public void shouldAddPathWithoutLeadingSlash() {
-    SearchTableData data = new SearchTableData();
+    SearchRecord data = mock(SearchRecord.class);
     String path = "/org/foo/1.0/foo-1.0.txt";
     when(asset.path()).thenReturn(path);
 
     underTest.populateSearchCustomFields(data, asset);
 
-    assertThat(data.getKeywords(), contains(path.substring(1)));
+    verify(data).addKeyword(path.substring(1));
   }
 }
