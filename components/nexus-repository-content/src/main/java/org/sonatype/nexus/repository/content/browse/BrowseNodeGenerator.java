@@ -37,6 +37,12 @@ public interface BrowseNodeGenerator
   List<BrowsePath> computeComponentPaths(Asset asset);
 
   /**
+   * Whether this format supports multiple assets per component.  Formats that have a 1:1 mapping can streamline some
+   * queries
+   */
+  boolean hasMultipleAssetsPerComponent();
+
+  /**
    * Finds the last segment of the given path.
    */
   default String lastSegment(final String path) {
