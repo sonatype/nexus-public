@@ -49,6 +49,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.empty;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -114,6 +115,9 @@ public class CleanupServiceImplTest
   @Mock
   private CleanupBrowseServiceFactory cleanupBrowseFactory;
 
+  @Mock
+  private CleanupFeatureCheck cleanupFeatureCheck;
+
   private CleanupServiceImpl underTest;
 
   private boolean useRetainCleanup;
@@ -127,7 +131,7 @@ public class CleanupServiceImplTest
     when(cleanupBrowseFactory.get(any())).thenReturn(browseService);
 
     underTest = new CleanupServiceImpl(repositoryManager, cleanupPolicyStorage, cleanupMethod,
-        new GroupType(), RETRY_LIMIT, cleanupBrowseFactory);
+        new GroupType(), RETRY_LIMIT, cleanupBrowseFactory, cleanupFeatureCheck);
 
     setupRepository(repository1, POLICY_1_NAME);
     setupRepository(repository2, POLICY_2_NAME);
@@ -153,6 +157,8 @@ public class CleanupServiceImplTest
     when(repository2.getFormat()).thenReturn(format);
     when(repository3.getFormat()).thenReturn(format);
     when(format.getValue()).thenReturn("maven2");
+
+    when(cleanupFeatureCheck.isRetainSupported(any())).thenReturn(true);
   }
 
   @Test
@@ -202,6 +208,19 @@ public class CleanupServiceImplTest
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
     when(cleanupPolicy1.getCriteria()).thenReturn(
         ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1", "retain", "3", "sortBy", "version"));
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, never()).run(repository1, Stream.of(component1, component2), cancelledCheck);
+  }
+
+  @Test
+  public void skipPolicyWithExclusionIfUnsupportedFormat() {
+    assumeTrue(useRetainCleanup);
+    when(cleanupFeatureCheck.isRetainSupported(any())).thenReturn(false);
+    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(cleanupPolicy1.getCriteria()).thenReturn(
+            ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1", "retain", "3", "sortBy", "version"));
 
     underTest.cleanup(cancelledCheck);
 
