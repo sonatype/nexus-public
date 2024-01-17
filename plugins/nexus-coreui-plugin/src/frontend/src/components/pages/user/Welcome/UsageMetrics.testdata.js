@@ -28,15 +28,11 @@ export const METRICS_CONTENT = {
 export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
   {
     "metricName": "peak_requests_per_day",
-    "metricValue": 36300,
+    "metricValue": 3300,
     "limits": [
       {
-        "limitName": "HARD_LIMIT",
-        "limitValue": 250000
-      },
-      {
         "limitName": "SOFT_LIMIT",
-        "limitValue": 187500
+        "limitValue": 20000
       }
     ],
     "limitLevel": "FREE_TIER",
@@ -49,23 +45,12 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
     ]
   },
   {
-    "metricName": "peak_requests_per_minute_1d",
-    "metricValue": 0,
-    "limits": [],
-    "limitLevel": "FREE_TIER",
-    "aggregates": []
-  },
-  {
     "metricName": "component_total_count",
-    "metricValue": 1234,
+    "metricValue": 85000,
     "limits": [
       {
-        "limitName": "HARD_LIMIT",
-        "limitValue": 75000
-      },
-      {
         "limitName": "SOFT_LIMIT",
-        "limitValue": 56250
+        "limitValue": 100000
       }
     ],
     "limitLevel": "FREE_TIER",
@@ -82,12 +67,8 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
     "metricValue": 26,
     "limits": [
       {
-        "limitName": "HARD_LIMIT",
-        "limitValue": 100
-      },
-      {
         "limitName": "SOFT_LIMIT",
-        "limitValue": 75
+        "limitValue": 100
       }
     ],
     "limitLevel": "FREE_TIER",
@@ -103,10 +84,69 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
 
 export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO = [
   {
+    "metricName": "peak_requests_per_day",
+    "metricValue": 12500,
+    "limits": [
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 20000
+      }
+    ],
+    "limitLevel": "FREE_TIER",
+    "aggregates": [
+      {
+        "name": "content_request_count",
+        "value": 95000,
+        "period": "peak_recorded_count_30d"
+      }
+    ]
+  },
+  {
+    "metricName": "requests_per_minute",
+    "aggregates": [
+      {
+        "name": "peak_recorded_count",
+        "value": 1200,
+        "period": "last_24h"
+      },
+      {
+        "name": "peak_recorded_count",
+        "value": 2500,
+        "period": "last_30d"
+      }
+    ]
+  },
+  {
+    "metricName": "component_total_count",
+    "metricValue": 75000,
+    "limits": [
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 100000
+      }
+    ],
+    "limitLevel": "FREE_TIER",
+    "aggregates": [
+      {
+        "name": "component_total_count",
+        "value": 66666,
+        "period": "peak_recorded_count_30d"
+      }
+    ]
+  }
+];
+
+export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL = [
+  {
     "metricName": "peak_requests_per_day_30d",
     "metricValue": 145302,
     "limits": [],
     "limitLevel": "UNLIMITED",
+    "aggregates": []
+  },
+  {
+    "metricName": "requests_per_minute",
+    "metricValue": 1236,
     "aggregates": []
   },
   {

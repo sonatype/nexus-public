@@ -64,7 +64,15 @@ $card-width: 1016px;
 
     // Note: Firefox and Chrome pseudo-elements must be in separate declarations, as the browser invalidates the
     // entire thing if it doesn't recognize one pseudo-element
-    &.nxrm-soft-limit {
+    &::-webkit-meter-optimum-value {
+      background: #2AB472;
+    }
+
+    &::-moz-meter-bar {
+      background: #2AB472;
+    }
+
+    &.nxrm-meter-warning {
       &::-webkit-meter-optimum-value {
         background: var(--nx-swatch-yellow-50);
       }
@@ -74,13 +82,13 @@ $card-width: 1016px;
       }
     }
 
-    &.nxrm-hard-limit {
+    &.nxrm-meter-danger {
       &::-webkit-meter-optimum-value {
-        background: var(--nx-swatch-red-40);
+        background: var(--nx-swatch-orange-50);
       }
 
       &::-moz-meter-bar {
-        background: var(--nx-swatch-red-40);
+        background: var(--nx-swatch-orange-50);
       }
     }
   }
@@ -88,6 +96,10 @@ $card-width: 1016px;
   .nxrm-label-container {
     display: flex;
     justify-content: space-between;
+
+    &.no-meter {
+      margin-top: var(--nx-spacing-6x);
+    }
   }
 
   .nxrm-label {
@@ -115,23 +127,21 @@ $card-width: 1016px;
   .nxrm-highest-records {
 
     & > :first-child {
-      color: var(--nx-swatch-grey-30);
+      font-weight: bold;
     }
 
     & > :nth-child(2) {
-      font-weight: bold;
+      color: var(--nx-swatch-grey-30);
+      font-size: var(--nx-font-size-xs);
     }
 
     & > span > .nx-icon {
       margin-left: 0;
+      margin-right: 5px;
     }
 
-    .recorded-count-soft-limit {
-      color: var(--nx-swatch-orange-40);
-    }
-
-    .recorded-count-hard-limit {
-      color: var(--nx-swatch-red-40);
+    .recorded-count-with-error-icon {
+      color: var(--nx-swatch-orange-45);
     }
   }
 
