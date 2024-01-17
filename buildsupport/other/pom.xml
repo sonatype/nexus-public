@@ -345,7 +345,7 @@
       <dependency>
         <groupId>com.amazon.ion</groupId>
         <artifactId>ion-java</artifactId>
-        <version>1.8.0</version>
+        <version>1.10.5</version>
       </dependency>
 
       <dependency>
