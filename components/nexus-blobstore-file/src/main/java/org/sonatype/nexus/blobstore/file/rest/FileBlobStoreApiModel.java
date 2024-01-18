@@ -25,7 +25,7 @@ public class FileBlobStoreApiModel
 {
   @ApiModelProperty(
       "The path to the blobstore contents. This can be an absolute path to anywhere on the system Nexus Repository Manager " +
-          "has access to or it can be a path relative to the sonatype-work directory."
+          "has access to or it can be a path relative to <data-directory>/blobs."
   )
   @NotEmpty(message = "Path is required")
   private String path;
