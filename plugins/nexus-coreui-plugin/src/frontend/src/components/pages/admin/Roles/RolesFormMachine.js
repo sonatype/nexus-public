@@ -42,6 +42,10 @@ export default FormUtils.buildFormMachine({
   id: 'RolesFormMachine',
   config: (config) =>
       mergeDeepRight(config, {
+        context: {
+          privilegesListFilter: '',
+          rolesListFilter: ''
+        },
         states: {
           loaded: {
             on: {
@@ -67,6 +71,14 @@ export default FormUtils.buildFormMachine({
                 target: 'loaded',
                 actions: ['updatePrivileges']
               },
+              SET_PRIVILEGES_LIST_FILTER: {
+                target: 'loaded',
+                actions: ['updatePrivilegesListFilter']
+              },
+              SET_ROLES_LIST_FILTER: {
+                target: 'loaded',
+                actions: ['updateRolesListFilter']
+              }
             }
           },
         }
@@ -110,6 +122,12 @@ export default FormUtils.buildFormMachine({
     }),
     updatePrivileges: assign({
       data: ({data}, {newPrivileges}) => ({...data, privileges: newPrivileges}),
+    }),
+    updatePrivilegesListFilter: assign({
+      privilegesListFilter: (_, {privilegesListFilter}) => privilegesListFilter
+    }),
+    updateRolesListFilter: assign({
+      rolesListFilter: (_, {rolesListFilter}) => rolesListFilter
     }),
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.response?.data),
     logDeleteSuccess: ({data}) => ExtJS.showSuccessMessage(LABELS.DELETE_SUCCESS(data.name)),
