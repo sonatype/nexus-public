@@ -39,7 +39,14 @@ public class S3BlobStoreException
 
   public static final String BUCKET_OWNERSHIP_ERR_MSG = "Bucket exists but is not owned by you.";
 
+  // If you have the correct permissions, but you're not using an identity
+  // that belongs to the bucket owner's account, Amazon S3 returns a 405 Method Not Allowed error.
+  // https://docs.aws.amazon.com/cli/latest/reference/s3api/get-bucket-policy.html#description
+  public static final String INVALID_IDENTITY_ERR_MSG = "The identity used does not belong to the bucket owner's account.";
+
   public static final String ACCESS_DENIED_CODE = "AccessDenied";
+
+  public static final String METHOD_NOT_ALLOWED_CODE = "MethodNotAllowed";
 
   public static final String INVALID_ACCESS_KEY_ID_CODE = "InvalidAccessKeyId";
 
@@ -81,6 +88,10 @@ public class S3BlobStoreException
 
   public static S3BlobStoreException bucketOwnershipError() {
     return new S3BlobStoreException(BUCKET_OWNERSHIP_ERR_MSG);
+  }
+
+  public static S3BlobStoreException invalidIdentityError() {
+    return new S3BlobStoreException(INVALID_IDENTITY_ERR_MSG);
   }
 
   @Override
