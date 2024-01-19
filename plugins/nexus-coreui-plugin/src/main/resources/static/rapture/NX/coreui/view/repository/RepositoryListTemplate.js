@@ -57,6 +57,7 @@ Ext.define('NX.coreui.view.repository.RepositoryListTemplate', {
         stateId: 'size',
         renderer: Ext.util.Format.fileSize,
         hidden: me.hideSize,
+        hideable: !me.hideSize
       },
       {
         text: NX.I18n.get('Repository_RepositoryList_Type_Header'),
