@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.cleanup;
 
 public interface CleanupFeatureCheck
 {
+  boolean isSQLCleanupSupported();
+
   boolean isRetainSupported(String formatName);
 
   boolean isProVersion();

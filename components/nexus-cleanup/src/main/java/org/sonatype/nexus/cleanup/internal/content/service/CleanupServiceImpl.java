@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -34,6 +35,7 @@ import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cleanup.CleanupFeatureCheck;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.task.DeletionProgress;
@@ -77,13 +79,16 @@ public class CleanupServiceImpl
 
   private final CleanupBrowseServiceFactory browseServiceFactory;
 
+  private final CleanupFeatureCheck cleanupFeatureCheck;
+
   @Inject
   public CleanupServiceImpl(final RepositoryManager repositoryManager,
                             final CleanupPolicyStorage cleanupPolicyStorage,
                             final CleanupMethod cleanupMethod,
                             final GroupType groupType,
                             @Named("${nexus.cleanup.retries:-3}") final int cleanupRetryLimit,
-                            final CleanupBrowseServiceFactory browseServiceFactory)
+                            final CleanupBrowseServiceFactory browseServiceFactory,
+                            @Nullable final CleanupFeatureCheck cleanupFeatureCheck)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.cleanupMethod = checkNotNull(cleanupMethod);
@@ -91,6 +96,7 @@ public class CleanupServiceImpl
     this.groupType = checkNotNull(groupType);
     this.cleanupRetryLimit = cleanupRetryLimit;
     this.browseServiceFactory = checkNotNull(browseServiceFactory);
+    this.cleanupFeatureCheck = cleanupFeatureCheck;
   }
 
   @Override
@@ -123,7 +129,9 @@ public class CleanupServiceImpl
 
     DeletionProgress deletionProgress = new DeletionProgress(cleanupRetryLimit);
 
-    if (hasExclusionCriteria(policy.getCriteria()) && !browseService.isApplicableTo(repository.getFormat())) {
+    // Skip the policy if it somehow has exclusion criteria but exclusion (retain) is not supported by the format.
+    if (hasExclusionCriteria(policy.getCriteria()) &&
+            (cleanupFeatureCheck==null || !cleanupFeatureCheck.isRetainSupported(repository.getFormat().getValue()))) {
       log.warn("Skipping policy {} in repository {} since exclusion criteria is not currently supported.",
           repository.getName(), policy.getName());
 

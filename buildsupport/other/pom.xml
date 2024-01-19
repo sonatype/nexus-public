@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.65.0-SNAPSHOT</version>
+    <version>3.66.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-other</artifactId>
@@ -345,7 +345,7 @@
       <dependency>
         <groupId>com.amazon.ion</groupId>
         <artifactId>ion-java</artifactId>
-        <version>1.8.0</version>
+        <version>1.10.5</version>
       </dependency>
 
       <dependency>

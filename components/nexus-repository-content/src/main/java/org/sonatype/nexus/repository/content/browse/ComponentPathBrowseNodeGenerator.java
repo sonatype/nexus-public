@@ -26,6 +26,11 @@ public abstract class ComponentPathBrowseNodeGenerator
     extends AssetPathBrowseNodeGenerator
 {
   @Override
+  public boolean hasMultipleAssetsPerComponent() {
+    return true;
+  }
+
+  @Override
   public List<BrowsePath> computeComponentPaths(final Asset asset) {
     List<BrowsePath> assetPaths = computeAssetPaths(asset);
     return assetPaths.subList(0, assetPaths.size() - 1);

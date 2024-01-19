@@ -132,6 +132,7 @@ public class BrowseFacetImpl
         .map(lookup::find)
         .filter(Optional::isPresent)
         .map(Optional::get)
+        .filter(fluentAsset -> !browseNodeManager.hasAssetNode(fluentAsset))
         .forEach(fluentAsset -> createBrowseNodes(fluentAsset, componentsProcessed));
   }
 
@@ -150,13 +151,13 @@ public class BrowseFacetImpl
 
     log.info("Rebuilding browse nodes for repository {}", getRepository().getName());
 
-    createBrowseNodes();
+    createAllBrowseNodes();
   }
 
   /**
    * Create browse nodes for every asset and their components in the repository.
    */
-  private void createBrowseNodes() {
+  private void createAllBrowseNodes() {
     String repositoryName = getRepository().getName();
     try {
       FluentAssets assets = getRepository().facet(ContentFacet.class).assets();
@@ -192,30 +193,66 @@ public class BrowseFacetImpl
     }
   }
 
+  /**
+   * Create browse nodes for an asset and it's component.  Using a cache of component ids to limit component
+   * nodes being recreated
+   */
   private void createBrowseNodes(final FluentAsset asset, final Map<Integer,Integer> componentsProcessed) {
-    if (!browseNodeManager.hasAssetNode(asset)) {
-      List<BrowsePath> assetPaths = browseNodeGenerator.computeAssetPaths(asset);
-      if (!assetPaths.isEmpty()) {
-        browseNodeManager.createBrowseNodes(assetPaths, node -> node.setAsset(asset));
-      }
+    if (browseNodeGenerator.hasMultipleAssetsPerComponent()) {
+      createAssetBrowseNodes(asset);
+      asset.component().ifPresent(component -> createComponentBrowseNodes(asset, component, componentsProcessed));
     }
     else {
-      log.debug("Skipping asset {}", asset.path());
+      createCombinedAssetAndComponentBrowseNodes(asset);
     }
+  }
 
-    asset.component().ifPresent(component -> {
-      Integer internalComponentId = internalComponentId(component);
-      // null will be returned when adding a key that isn't already in the cache
-      if (componentsProcessed.put(internalComponentId, internalComponentId) == null) {
-        List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
-        if (!componentPaths.isEmpty()) {
-          browseNodeManager.createBrowseNodes(componentPaths, node -> {
-            node.setComponent(component);
-            findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
-          });
-        }
+  /**
+   * Create browse nodes for each segment in an asset's path, assigning the asset to the final node
+   */
+  private void createAssetBrowseNodes(final FluentAsset asset) {
+    List<BrowsePath> assetPaths = browseNodeGenerator.computeAssetPaths(asset);
+    if (!assetPaths.isEmpty()) {
+      browseNodeManager.createBrowseNodes(assetPaths, node -> node.setAsset(asset));
+    }
+  }
+
+  /**
+   * Create browse nodes for each segment in an asset's component's path, assigning the component to the final node,
+   * if the asset has a component
+   */
+  private void createComponentBrowseNodes(
+      final FluentAsset asset,
+      final Component component,
+      final Map<Integer, Integer> componentsProcessed)
+  {
+    Integer internalComponentId = internalComponentId(component);
+    // null will be returned when adding a key that isn't already in the cache
+    if (componentsProcessed.put(internalComponentId, internalComponentId) == null) {
+      List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
+      if (!componentPaths.isEmpty()) {
+        browseNodeManager.createBrowseNodes(componentPaths, node -> {
+          node.setComponent(component);
+          findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
+        });
       }
-    });
+    }
+  }
+
+  /**
+   * Create browse nodes for each segment in the asset's path, and assign the asset and component to the final node
+   */
+  private void createCombinedAssetAndComponentBrowseNodes(final FluentAsset asset) {
+    List<BrowsePath> assetPaths = browseNodeGenerator.computeAssetPaths(asset);
+    if (!assetPaths.isEmpty()) {
+      browseNodeManager.createBrowseNodes(assetPaths, node -> {
+        node.setAsset(asset);
+        asset.component().ifPresent(component -> {
+          node.setComponent(component);
+          findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
+        });
+      });
+    }
   }
 
   /**

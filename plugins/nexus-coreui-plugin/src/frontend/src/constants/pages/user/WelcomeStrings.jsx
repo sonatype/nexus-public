@@ -87,36 +87,56 @@ export default {
         TOTAL_COMPONENTS: {
           TITLE: 'Total Components',
           SUB_TITLE: 'Current',
-          LIMIT: 'Limit',
+          THRESHOLD: 'Threshold',
           HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
           METRIC_NAME: 'component_total_count',
-          METRIC_NAME_PRO: 'component_total_count',
-          AGGREGATE_NAME: 'component_total_count',
-          TOOLTIP: 'The free version of Sonatype Nexus Repository includes up to 75,000 components across all repositories.'
+          METRIC_NAME_PRO_POSTGRESQL: 'component_total_count',
+          AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
+          TOOLTIP: 'Sonatype Nexus Repository OSS performs best when your total component counts remain under the threshold.',
+          TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.'
         },
         UNIQUE_LOGINS: {
           TITLE: 'Unique Logins',
-          SUB_TITLE: 'Current',
-          LIMIT: 'Limit per 30 days',
-          HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
+          SUB_TITLE: 'Last 24 hours',
+          HIGHEST_RECORDED_COUNT: 'Last 30 days',
           METRIC_NAME: 'successful_last_24h',
-          AGGREGATE_NAME: 'unique_user_count',
-          TOOLTIP: 'The free version of Sonatype Nexus Repository includes up to 100 unique authentications per 30 days.'
+          AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
+          TOOLTIP: 'Measures unique users who login over a period of time.'
+        },
+        REQUESTS_PER_MINUTE: {
+          TITLE: 'Requests Per Minute',
+          TITLE_PRO_POSTGRESQL: 'Peak Requests Per Minute',
+          SUB_TITLE: 'Peak minute in last 24 hours',
+          SUB_TITLE_PRO_POSTGRESQL: 'Past 24 hours',
+          HIGHEST_RECORDED_COUNT: 'Peak minute in last 30 days',
+          METRIC_NAME: 'requests_per_minute',
+          METRIC_NAME_PRO_POSTGRESQL: 'requests_per_minute',
+          AGGREGATE_PERIOD_24_H: 'last_24h',
+          AGGREGATE_PERIOD_30_D: 'last_30d',
+          TOOLTIP_PRO: 'Measures requests per minute to your Sonatype Nexus Repository Pro instance.'
         },
         REQUESTS_PER_DAY: {
           TITLE: 'Requests Per Day',
-          SUB_TITLE: 'Current',
-          LIMIT: 'Limit per 24 hours',
+          TITLE_PRO_POSTGRESQL: 'Peak Requests Per Day',
+          SUB_TITLE: 'Last 24 hours',
+          SUB_TITLE_PRO_POSTGRESQL: 'Past 30 days',
+          THRESHOLD: 'Threshold',
           HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
           METRIC_NAME: 'peak_requests_per_day',
-          METRIC_NAME_PRO: 'peak_requests_per_day_30d',
-          AGGREGATE_NAME: 'content_request_count',
-          TOOLTIP: 'The free version of Sonatype Nexus Repository includes up to 250,000 HTTP requests to repository endpoints per day.'
-        }
+          METRIC_NAME_PRO_POSTGRESQL: 'peak_requests_per_day_30d',
+          AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
+          TOOLTIP: 'Sonatype Nexus Repository OSS performs best when requests per day remain under the threshold.',
+          TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.',
+        },
+        PERCENTAGE: 0.75
       },
-      UPGRADE_TO_PRO: {
-        TEXT: 'Upgrade to Pro to remove limits',
-        URL: '/'
+      CARD_LINK_OSS: {
+        TEXT: 'Explore ways to improve performance',
+        URL: 'https://sonatype.atlassian.net/wiki/spaces/HELP/pages/edit-v2/241893499?draftShareId=44e1e02f-446c-484c-9ba6-a6aa68970197&inEditorTemplatesPanel=auto_closed'
+      },
+      CARD_LINK_PRO: {
+        TEXT: 'Explore ways to improve performance',
+        URL: 'https://sonatype.atlassian.net/wiki/spaces/HELP/pages/edit-v2/241337020?draftShareId=ece47942-0c7e-4ba6-943f-898b69630d97&inEditorTemplatesPanel=auto_closed'
       }
     }
   }

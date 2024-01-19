@@ -55,6 +55,8 @@ export default function RolesForm({roleId, service, onDone}) {
     sources,
     roleType,
     externalRoleType,
+    privilegesListFilter,
+    rolesListFilter
   } = state.context;
 
   const isCreate = ValidationUtils.isBlank(roleId);
@@ -82,21 +84,26 @@ export default function RolesForm({roleId, service, onDone}) {
   const setExternalRoleType = (event) => send({type: 'SET_EXTERNAL_ROLE_TYPE', externalRoleType: event.target.value});
 
   const [showModalRoles, setShowModalRoles] = useState(false);
+  const [showModalPrivileges, setShowModalPrivileges] = useState(false);
 
   const selectedRoles = rolesList.filter(r => data.roles.includes(r.id));
-  const rolesFooter = `${selectedRoles.length} Item${selectedRoles.length != 1 ? 's' : ''} Available`;
+  const selectedPrivileges = privilegesList.filter(r => data.privileges.includes(r.id));
 
-  const [rolesFilterList, setRolesFilterList] = useState('');
+  const rolesFooter = `${selectedRoles.length} Item${selectedRoles.length != 1 ? 's' : ''} Available`;
+  const privilegesFooter = `${selectedPrivileges.length} Item${selectedPrivileges.length != 1 ? 's' : ''} Available`;
+
   const isRolesModalEnabled = ExtJS.state().getValue('nexus.react.roles.modal.enabled');
-  const [showModalPrivileges, setShowModalPrivileges] = useState(false);
   const isPrivilegesModalEnabled = ExtJS.state().getValue('nexus.react.privileges.modal.enabled');
 
-  function saveModalRoles (newRoles) {
-    send({ type: 'UPDATE_ROLES', newRoles: newRoles });
-  }
+  const setPrivilegesListFilter = (event) => send({type: 'SET_PRIVILEGES_LIST_FILTER', privilegesListFilter: event});
+  const setRolesListFilter = (event) => send({type: 'SET_ROLES_LIST_FILTER', rolesListFilter: event});
 
   function saveModalPrivileges (newPrivileges) {
     send({ type: 'UPDATE_PRIVILEGES', newPrivileges: newPrivileges });
+  }
+
+  function saveModalRoles (newRoles) {
+    send({ type: 'UPDATE_ROLES', newRoles: newRoles });
   }
 
   return <NxStatefulForm
@@ -173,7 +180,18 @@ export default function RolesForm({roleId, service, onDone}) {
         </NxFormGroup>
 
         {!isPrivilegesModalEnabled &&
-          <NxH2>{LABELS.SECTIONS.PRIVILEGES}</NxH2>
+          <>
+            <NxH2>{LABELS.SECTIONS.PRIVILEGES}</NxH2>
+            <NxStatefulTransferList
+              id="privileges-select"
+              availableItemsLabel={LABELS.PRIVILEGES.AVAILABLE}
+              selectedItemsLabel={LABELS.PRIVILEGES.SELECTED}
+              allItems={privilegesList}
+              selectedItems={data.privileges || []}
+              onChange={FormUtils.handleUpdate('privileges', send)}
+              showMoveAll
+            />
+          </>
         }
 
         {isPrivilegesModalEnabled &&
@@ -189,18 +207,14 @@ export default function RolesForm({roleId, service, onDone}) {
                 saveModal={saveModalPrivileges}
               />
             }
+            <NxTransferListHalf
+              label="Applied Privileges"
+              filterValue={privilegesListFilter}
+              onFilterChange={setPrivilegesListFilter}
+              items={selectedPrivileges}
+              footerContent={privilegesFooter} />
           </div>
         }
-
-        <NxStatefulTransferList
-          id="privileges-select"
-          availableItemsLabel={LABELS.PRIVILEGES.AVAILABLE}
-          selectedItemsLabel={LABELS.PRIVILEGES.SELECTED}
-          allItems={privilegesList}
-          selectedItems={data.privileges || []}
-          onChange={FormUtils.handleUpdate('privileges', send)}
-          showMoveAll
-        />
 
         {isRolesModalEnabled &&
           <div className="modal-selection-section">
@@ -217,8 +231,8 @@ export default function RolesForm({roleId, service, onDone}) {
             }
             <NxTransferListHalf
               label="Applied Roles"
-              filterValue={rolesFilterList}
-              onFilterChange={setRolesFilterList}
+              filterValue={rolesListFilter}
+              onFilterChange={setRolesListFilter}
               items={selectedRoles}
               footerContent={rolesFooter} />
           </div>

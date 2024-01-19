@@ -105,6 +105,8 @@ public interface FeatureFlags
 
   String CLEANUP_DOCKER_RETAIN = "nexus.cleanup.dockerRetain";
 
+  String CLEANUP_USE_SQL = "nexus.cleanup.useSQL";
+
   String FORMAT_RETAIN_PATTERN = "nexus.cleanup.{format}Retain";
 
   String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";

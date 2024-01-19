@@ -13,16 +13,17 @@
 import React from 'react';
 import axios from 'axios';
 import {render, screen, waitForElementToBeRemoved, within} from '@testing-library/react';
-import {when} from "jest-when";
+import {when} from 'jest-when';
 
 import UsageMetrics from './UsageMetrics';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
-import {act} from "react-dom/test-utils";
+import {act} from 'react-dom/test-utils';
 import {
   METRICS_CONTENT,
   METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS,
-  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO} from './UsageMetrics.testdata';
+  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO,
+  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL} from './UsageMetrics.testdata';
 
 const {USAGE_METRICS} = APIConstants.REST.INTERNAL;
 
@@ -52,7 +53,7 @@ const selectors = {
   getCardContent: (c, t) => within(c).getByText(t),
   getCardInfoIcon: (c) => c.querySelector('[data-icon="info-circle"]'),
   getCardMeter: (c) => within(c).getByTestId('meter'),
-  getCardTextLink: (c) => within(c).getByRole('link', {name: 'Upgrade to Pro to remove limits'})
+  getCardTextLink: (c) => within(c).queryByRole('link', {name: 'Explore ways to improve performance'})
 };
 
 describe('Usage Metrics', () => {
@@ -143,6 +144,10 @@ describe('Usage Metrics', () => {
           .calledWith('nexus.datastore.clustered.enabled')
           .mockReturnValue(false);
 
+      when(ExtJS.state().getValue)
+          .calledWith('datastore.isPostgresql')
+          .mockReturnValue(false);
+
       ExtJS.isProEdition.mockReturnValue(false);
     });
 
@@ -156,11 +161,12 @@ describe('Usage Metrics', () => {
       const card1 = selectors.getCard('Total Components'),
           card1Header = selectors.getCardHeader(card1, 'Total Components'),
           card1SubTitle = selectors.getCardContent(card1,'Current'),
-          card1LimitTitle = selectors.getCardContent(card1,'Limit'),
+          card1LimitTitle = selectors.getCardContent(card1,'Threshold'),
           card1Meter = selectors.getCardMeter(card1),
           card1TextLink = selectors.getCardTextLink(card1),
-          totalComponents = selectors.getCardContent(card1, '1,234'),
-          componentsLimit = selectors.getCardContent(card1, '75,000'),
+          totalComponents = selectors.getCardContent(card1, '85,000'),
+          componentsLimit = selectors.getCardContent(card1, '100,000'),
+          card1HighestRecordedCountTitle = selectors.getCardContent(card1, 'Highest Recorded Count (30 days)'),
           componentsHighestRecordedCount = selectors.getCardContent(card1, '12,500');
 
       expectCardToRender(
@@ -172,41 +178,37 @@ describe('Usage Metrics', () => {
           card1TextLink,
           totalComponents,
           componentsLimit,
+          card1HighestRecordedCountTitle,
           componentsHighestRecordedCount
       );
 
-      // card 2 of unique logins
+      // card 2 of unique logins - no meter and threshold
       const card2 = selectors.getCard('Unique Logins'),
           card2Header = selectors.getCardHeader(card2,'Unique Logins'),
-          card2SubTitle = selectors.getCardContent(card2,'Current'),
-          card2LimitTitle = selectors.getCardContent(card2,'Limit per 30 days'),
-          card2Meter = selectors.getCardMeter(card2),
-          card2TextLink = selectors.getCardTextLink(card2),
-          uniqueLogins = selectors.getCardContent(card2, '26'),
-          loginsLimit = selectors.getCardContent(card2, '100'),
-          loginsHighestRecordedCount = selectors.getCardContent(card2, '52');
+          card2SubTitle = selectors.getCardContent(card2,'Last 24 hours'),
+          uniqueLogins24H = selectors.getCardContent(card2, '26'),
+          uniqueLogins30DTitle = selectors.getCardContent(card2, 'Last 30 days'),
+          uniqueLogins30D = selectors.getCardContent(card2, '52');
 
       expectCardToRender(
           card2,
           card2Header,
           card2SubTitle,
-          card2LimitTitle,
-          card2Meter,
-          card2TextLink,
-          uniqueLogins,
-          loginsLimit,
-          loginsHighestRecordedCount
+          uniqueLogins24H,
+          uniqueLogins30DTitle,
+          uniqueLogins30D
       );
 
       // card 3 of requests per day
       const card3 = selectors.getCard('Requests Per Day'),
           card3Header = selectors.getCardHeader(card3, 'Requests Per Day'),
-          card3SubTitle = selectors.getCardContent(card3, 'Current'),
-          card3LimitTitle = selectors.getCardContent(card3,'Limit per 24 hours'),
+          card3SubTitle = selectors.getCardContent(card3, 'Last 24 hours'),
+          card3LimitTitle = selectors.getCardContent(card3,'Threshold'),
           card3Meter = selectors.getCardMeter(card3),
           card3TextLink = selectors.getCardTextLink(card3),
-          reqsPerDay = selectors.getCardContent(card3, '36,300'),
-          reqsLimit = selectors.getCardContent(card3, '250,000'),
+          reqsPerDay = selectors.getCardContent(card3, '3,300'),
+          reqsLimit = selectors.getCardContent(card3, '20,000'),
+          card3HighestRecordedCountTitle = selectors.getCardContent(card3, 'Highest Recorded Count (30 days)'),
           reqsHighestRecordedCount = selectors.getCardContent(card3, '75,000');
 
       expectCardToRender(
@@ -215,48 +217,140 @@ describe('Usage Metrics', () => {
           card3SubTitle,
           card3LimitTitle,
           card3Meter,
-          card3TextLink,
           reqsPerDay,
           reqsLimit,
+          card3HighestRecordedCountTitle,
           reqsHighestRecordedCount
       );
+      // only render link when reaching 75% or more of threshold
+      expect(card3TextLink).not.toBeInTheDocument();
     });
 
-    it('renders data correctly when Pro edition', async () => {
+    it('renders data correctly when PRO edition', async () => {
       ExtJS.isProEdition.mockReturnValue(true);
       await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO);
 
       expect(selectors.getHeading('Usage')).toBeInTheDocument();
-      expect(selectors.getAllCards().length).toBe(2);
+      expect(selectors.getAllCards().length).toBe(3);
 
       // card 1 of total components
       const card1 = selectors.getCard('Total Components'),
           card1Header = selectors.getCardHeader(card1, 'Total Components'),
           card1SubTitle = selectors.getCardContent(card1,'Current'),
-          totalComponents = selectors.getCardContent(card1, '4,758');
+          card1LimitTitle = selectors.getCardContent(card1,'Threshold'),
+          card1Meter = selectors.getCardMeter(card1),
+          card1TextLink = selectors.getCardTextLink(card1),
+          totalComponents = selectors.getCardContent(card1, '75,000'),
+          componentsLimit = selectors.getCardContent(card1, '100,000'),
+          card1HighestRecordedCountTitle = selectors.getCardContent(card1, 'Highest Recorded Count (30 days)'),
+          componentsHighestRecordedCount = selectors.getCardContent(card1, '66,666');
 
       expectCardToRender(
           card1,
           card1Header,
           card1SubTitle,
+          card1LimitTitle,
+          card1Meter,
+          card1TextLink,
           totalComponents,
+          componentsLimit,
+          card1HighestRecordedCountTitle,
+          componentsHighestRecordedCount
       );
 
-      // card 2 of requests per day
-      const card2 = selectors.getCard('Requests Per Day'),
-          card2Header = selectors.getCardHeader(card2, 'Requests Per Day'),
-          card2SubTitle = selectors.getCardContent(card2, 'Highest Recorded Count (30 days)'),
-          highestReqsPerDay = selectors.getCardContent(card2, '145,302');
+      // card 2 of requests per minute - no meter and threshold
+      const card2 = selectors.getCard('Requests Per Minute'),
+          card2Header = selectors.getCardHeader(card2,'Requests Per Minute'),
+          card2SubTitle = selectors.getCardContent(card2,'Peak minute in last 24 hours'),
+          requestsPerMinute24H = selectors.getCardContent(card2, '1,200'),
+          RequestsPerMinute30DTitle = selectors.getCardContent(card2, 'Peak minute in last 30 days'),
+          requestsPerMinute30D = selectors.getCardContent(card2, '2,500');
 
       expectCardToRender(
           card2,
           card2Header,
           card2SubTitle,
+          requestsPerMinute24H,
+          RequestsPerMinute30DTitle,
+          requestsPerMinute30D
+      );
+
+      // card 3 of requests per day
+      const card3 = selectors.getCard('Requests Per Day'),
+          card3Header = selectors.getCardHeader(card3, 'Requests Per Day'),
+          card3SubTitle = selectors.getCardContent(card3, 'Last 24 hours'),
+          card3LimitTitle = selectors.getCardContent(card3,'Threshold'),
+          card3Meter = selectors.getCardMeter(card3),
+          card3TextLink = selectors.getCardTextLink(card3),
+          reqsPerDay = selectors.getCardContent(card3, '12,500'),
+          reqsLimit = selectors.getCardContent(card3, '20,000'),
+          card3HighestRecordedCountTitle = selectors.getCardContent(card3, 'Highest Recorded Count (30 days)'),
+          reqsHighestRecordedCount = selectors.getCardContent(card3, '95,000');
+
+      expectCardToRender(
+          card3,
+          card3Header,
+          card3SubTitle,
+          card3LimitTitle,
+          card3Meter,
+          reqsPerDay,
+          reqsLimit,
+          card3HighestRecordedCountTitle,
+          reqsHighestRecordedCount
+      );
+      // only render link when reaching 75% or more of threshold
+      expect(card3TextLink).not.toBeInTheDocument();
+    });
+
+    it('renders data correctly when Pro edition with Postgresql DB', async () => {
+      ExtJS.isProEdition.mockReturnValue(true);
+      when(ExtJS.state().getValue)
+          .calledWith('datastore.isPostgresql')
+          .mockReturnValue(true);
+      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL);
+
+      expect(selectors.getHeading('Usage')).toBeInTheDocument();
+      expect(selectors.getAllCards().length).toBe(3);
+
+      // card 1 of total components
+      const card1 = selectors.getCard('Total Components'),
+          card1Header = selectors.getCardHeader(card1, 'Total Components'),
+          totalComponents = selectors.getCardContent(card1, '4,758');
+
+      expectCardToRender(
+          card1,
+          card1Header,
+          totalComponents,
+      );
+
+      // card 2 of peak requests per minute
+      const card2 = selectors.getCard('Peak Requests Per Minute'),
+          card2Header = selectors.getCardHeader(card2, 'Peak Requests Per Minute'),
+          card2SubTitle = selectors.getCardContent(card2, 'Past 24 hours'),
+          highestReqsPerMinute = selectors.getCardContent(card2, '1,236');
+
+      expectCardToRender(
+          card2,
+          card2Header,
+          card2SubTitle,
+          highestReqsPerMinute
+      );
+
+      // card 3 of peak requests per day
+      const card3 = selectors.getCard('Peak Requests Per Day'),
+          card3Header = selectors.getCardHeader(card3, 'Peak Requests Per Day'),
+          card3SubTitle = selectors.getCardContent(card3, 'Past 30 days'),
+          highestReqsPerDay = selectors.getCardContent(card3, '145,302');
+
+      expectCardToRender(
+          card3,
+          card3Header,
+          card3SubTitle,
           highestReqsPerDay
       );
     });
 
-    it('renders tooltips when hovering on the info icon', async () => {
+    it('renders tooltips when hovering on the info icon when OSS edition', async () => {
       await renderView();
 
       const totalComponentsCard = selectors.getCard('Total Components'),
@@ -265,15 +359,36 @@ describe('Usage Metrics', () => {
 
       let infoIcon = selectors.getCardInfoIcon(totalComponentsCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'The free version of Sonatype Nexus Repository includes up to 75,000 components across all repositories.');
+          'Sonatype Nexus Repository OSS performs best when your total component counts remain under the threshold.');
 
       infoIcon = selectors.getCardInfoIcon(uniqueLoginsCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'The free version of Sonatype Nexus Repository includes up to 100 unique authentications per 30 days.');
+          'Measures unique users who login over a period of time.');
 
       infoIcon = selectors.getCardInfoIcon(reqsPerDayCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'The free version of Sonatype Nexus Repository includes up to 250,000 HTTP requests to repository endpoints per day.');
+          'Sonatype Nexus Repository OSS performs best when requests per day remain under the threshold.');
+    });
+
+    it('renders tooltips when hovering on the info icon when PRO edition', async () => {
+      ExtJS.isProEdition.mockReturnValue(true);
+      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO);
+
+      const totalComponentsCard = selectors.getCard('Total Components'),
+          reqsPerMinuteCard = selectors.getCard('Requests Per Minute'),
+          reqsPerDayCard = selectors.getCard('Requests Per Day');
+
+      let infoIcon = selectors.getCardInfoIcon(totalComponentsCard);
+      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
+          'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.');
+
+      infoIcon = selectors.getCardInfoIcon(reqsPerMinuteCard);
+      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
+          'Measures requests per minute to your Sonatype Nexus Repository Pro instance.');
+
+      infoIcon = selectors.getCardInfoIcon(reqsPerDayCard);
+      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
+          'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.');
     });
   });
 });

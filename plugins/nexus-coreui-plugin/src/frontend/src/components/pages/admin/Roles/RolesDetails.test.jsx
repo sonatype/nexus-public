@@ -52,7 +52,7 @@ const ROLE = {
   id: testRoleId,
   name: testRoleName,
   description: testRoleDescription,
-  privileges: ['nx-blobstores-all'],
+  privileges: ['nx-all', 'nx-blobstores-all'],
   roles: ['nx-admin', 'TestRole', 'replication-role'],
 };
 
@@ -133,7 +133,7 @@ const selectors = {
   mappedRole: () => screen.queryByLabelText(LABELS.MAPPED_ROLE.LABEL),
   name: () => screen.queryByLabelText(LABELS.NAME.LABEL),
   description: () => screen.queryByLabelText(LABELS.DESCRIPTION.LABEL),
-  privileges: () => screen.queryByRole('group', {name: LABELS.PRIVILEGES.SELECTED}),
+  privileges: () => screen.queryByRole('group', {name: "Applied Privileges"}),
   roles: () => screen.queryByRole('group', {name: "Applied Roles"}),
   readOnly: {
     id: () => screen.getByText(LABELS.ID.LABEL).nextSibling,
@@ -143,18 +143,18 @@ const selectors = {
     roles: () => screen.queryAllByRole('list')[1],
   },
   roleModalButton: () => screen.getByRole('button', {name: 'Modify Applied Roles'}),
-  roleModal: {
+  privilegeModalButton: () => screen.getByRole('button', {name: 'Modify Applied Privileges'}),
+  selectionModal: {
     modal: () => screen.queryByRole('dialog'),
-    cancel: () => within(selectors.roleModal.modal()).getByRole('button', {name: 'Cancel'}),
-    confirmButton: () => within(selectors.roleModal.modal()).getByRole('button', {name: 'Confirm'}),
+    cancel: () => within(selectors.selectionModal.modal()).getByRole('button', {name: 'Cancel'}),
+    confirmButton: () => within(selectors.selectionModal.modal()).getByRole('button', {name: 'Confirm'}),
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
   saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
   deleteButton: () => screen.getByText(SETTINGS.DELETE_BUTTON_LABEL),
 };
 
-const clickOnPrivileges = privileges => privileges.forEach(it => userEvent.click(screen.getByText(it)));
-const clickOnRoles = (checkboxes) => checkboxes.forEach((it) => userEvent.click(it));
+const clickOnCheckboxes = (checkboxes) => checkboxes.forEach((it) => userEvent.click(it));
 
 describe('RolesDetails', function() {
   const CONFIRM = Promise.resolve();
@@ -169,6 +169,7 @@ describe('RolesDetails', function() {
       getValue: jest.fn(),
     });
     when(ExtJS.state().getValue).calledWith('nexus.react.roles.modal.enabled').mockReturnValue(true);
+    when(ExtJS.state().getValue).calledWith('nexus.react.privileges.modal.enabled').mockReturnValue(true);
     when(Axios.get).calledWith(defaultRolesUrl).mockResolvedValue({data: Object.values(ROLES)});
     when(Axios.get).calledWith(privilegesUrl).mockResolvedValue({data: PRIVILEGES});
     when(Axios.get).calledWith(singleRoleUrl(testRoleId)).mockResolvedValue({data: {...ROLE, readOnly: false}});
@@ -262,8 +263,8 @@ describe('RolesDetails', function() {
   });
 
   it('creates internal role', async function() {
-    const {type, id, name, queryLoadingMask, description, saveButton, roleModalButton,
-      roleModal: {modal, confirmButton}} = selectors;
+    const {type, id, name, queryLoadingMask, description, saveButton, roleModalButton, privilegeModalButton,
+      selectionModal: {modal, confirmButton}} = selectors;
 
     when(Axios.post).calledWith(rolesUrl, ROLE).mockResolvedValue({data: {}});
 
@@ -275,10 +276,12 @@ describe('RolesDetails', function() {
     await TestUtils.changeField(name, testRoleName);
     await TestUtils.changeField(description, testRoleDescription);
 
-    clickOnPrivileges(ROLE.privileges);
+    userEvent.click(privilegeModalButton());
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
+    await act(async () => userEvent.click(confirmButton()));
 
     userEvent.click(roleModalButton());
-    clickOnRoles(within(modal()).getAllByRole('checkbox'));
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
     await act(async () => userEvent.click(confirmButton()));
 
     expect(saveButton()).not.toHaveClass('disabled');
@@ -290,7 +293,7 @@ describe('RolesDetails', function() {
 
   it('creates external role', async function() {
     const {type, name, queryLoadingMask, description, saveButton, externalRoleType, mappedRole, roleModalButton,
-      roleModal: {modal, confirmButton}} = selectors;
+      privilegeModalButton, selectionModal: {modal, confirmButton}} = selectors;
     const crowdType = SOURCE_TYPES.Crowd.id;
     const testCrowdRoleId = CROWD_ROLES[0].id;
     const externalRole = {...ROLE, id: testCrowdRoleId};
@@ -311,10 +314,12 @@ describe('RolesDetails', function() {
     await TestUtils.changeField(name, testRoleName);
     await TestUtils.changeField(description, testRoleDescription);
 
-    clickOnPrivileges(ROLE.privileges);
+    userEvent.click(privilegeModalButton());
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
+    await act(async () => userEvent.click(confirmButton()));
 
     userEvent.click(roleModalButton());
-    clickOnRoles(within(modal()).getAllByRole('checkbox'));
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
     await act(async () => userEvent.click(confirmButton()));
 
     expect(saveButton()).not.toHaveClass('disabled');
@@ -325,12 +330,13 @@ describe('RolesDetails', function() {
   });
 
   it('updates', async function() {
-    const {name, description, queryLoadingMask, saveButton, roleModalButton, roleModal: {modal, confirmButton}} = selectors;
+    const {name, description, queryLoadingMask, saveButton, roleModalButton,privilegeModalButton,
+      selectionModal: {modal, confirmButton}} = selectors;
     const data = {
       id: 'RoleId',
       name: 'Updated name',
       description: 'Updated description',
-      privileges: ['nx-all'],
+      privileges: ['nx-all', 'nx-blobstores-all'],
       roles: ['nx-admin', 'TestRole', 'replication-role'],
     };
 
@@ -342,14 +348,15 @@ describe('RolesDetails', function() {
     await TestUtils.changeField(name, data.name);
     await TestUtils.changeField(description, data.description);
 
-    clickOnPrivileges(ROLE.privileges);
-
-    userEvent.click(roleModalButton());
-    clickOnRoles(within(modal()).getAllByRole('checkbox'));
-    clickOnRoles(within(modal()).getAllByRole('checkbox'));
+    userEvent.click(privilegeModalButton());
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
     await act(async () => userEvent.click(confirmButton()));
 
-    clickOnPrivileges(data.privileges);
+    userEvent.click(roleModalButton());
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
+    await act(async () => userEvent.click(confirmButton()));
 
     expect(saveButton()).not.toHaveClass('disabled');
     userEvent.click(saveButton());
@@ -433,7 +440,7 @@ describe('RolesDetails', function() {
 
   describe('Roles Selection Modal', function () {
     it('opens the modal when button is clicked', async function () {
-      const { queryLoadingMask, roleModalButton, roleModal: { modal, cancel } } = selectors;
+      const { queryLoadingMask, roleModalButton, selectionModal: { modal, cancel } } = selectors;
 
       renderDetails(testRoleId);
       await waitForElementToBeRemoved(queryLoadingMask());
@@ -456,7 +463,7 @@ describe('RolesDetails', function() {
         description,
         roleModalButton,
         roles,
-        roleModal: { modal, confirmButton }
+        selectionModal: { modal, confirmButton }
       } = selectors;
 
       renderDetails();
@@ -482,6 +489,60 @@ describe('RolesDetails', function() {
 
       await act(async () => userEvent.click(confirmButton()));
       expect(roles()).toHaveTextContent('1 Item Available');
+    });
+  });
+
+  describe('Privileges Selection Modal', function () {
+    it('opens the modal when button is clicked', async function () {
+      const { queryLoadingMask, privilegeModalButton, selectionModal: { modal, cancel } } = selectors;
+
+      renderDetails(testRoleId);
+      await waitForElementToBeRemoved(queryLoadingMask());
+
+      expect(modal()).not.toBeInTheDocument();
+
+      userEvent.click(privilegeModalButton());
+      expect(modal()).toBeInTheDocument();
+
+      userEvent.click(cancel());
+      expect(modal()).not.toBeInTheDocument();
+    });
+
+    it('add the role to the transfer list once the modal is confirmed', async function () {
+      const {
+        queryLoadingMask,
+        type,
+        id,
+        name,
+        description,
+        privilegeModalButton,
+        privileges,
+        selectionModal: { modal, confirmButton }
+      } = selectors;
+
+      renderDetails();
+      await waitForElementToBeRemoved(queryLoadingMask());
+
+      userEvent.selectOptions(type(), TYPES.INTERNAL);
+      await TestUtils.changeField(id, testRoleId);
+      await TestUtils.changeField(name, testRoleName);
+      await TestUtils.changeField(description, testRoleDescription);
+
+      expect(modal()).not.toBeInTheDocument();
+      userEvent.click(privilegeModalButton());
+      expect(modal()).toBeInTheDocument();
+
+      expect(privileges()).toHaveTextContent('0 Items Available');
+
+      const tableRow = (index) => modal().querySelectorAll('tbody tr')[index];
+      expect(tableRow(0).cells[1]).toHaveTextContent('nx-all');
+      expect(modal().querySelectorAll('thead tr')[1].cells[2].textContent).toBe('0 Selected');
+
+      userEvent.click(within(modal()).getAllByRole('checkbox')[0]);
+      expect(modal().querySelectorAll('thead tr')[1].cells[2].textContent).toBe('1 Selected');
+
+      await act(async () => userEvent.click(confirmButton()));
+      expect(privileges()).toHaveTextContent('1 Item Available');
     });
   });
 });

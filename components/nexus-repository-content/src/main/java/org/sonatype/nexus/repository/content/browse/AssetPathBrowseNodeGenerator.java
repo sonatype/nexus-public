@@ -32,6 +32,11 @@ public abstract class AssetPathBrowseNodeGenerator
     implements BrowseNodeGenerator
 {
   @Override
+  public boolean hasMultipleAssetsPerComponent() {
+    return false;
+  }
+
+  @Override
   public List<BrowsePath> computeAssetPaths(final Asset asset) {
     checkNotNull(asset);
     List<String> pathSegments = Splitter.on(SLASH_CHAR).omitEmptyStrings().splitToList(asset.path());
