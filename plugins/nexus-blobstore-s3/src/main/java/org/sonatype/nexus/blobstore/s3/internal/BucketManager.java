@@ -39,13 +39,7 @@ import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getBucketPrefix;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredBucket;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.INVALID_ACCESS_KEY_ID_CODE;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.SIGNATURE_DOES_NOT_MATCH_CODE;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.bucketOwnershipError;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.insufficientCreatePermissionsError;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.unexpectedError;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.*;
 
 /**
  * Creates and deletes buckets for the {@link S3BlobStore}.
@@ -87,9 +81,17 @@ public class BucketManager
     }
     else {
       // bucket exists, we should test that the correct lifecycle config is present
-      BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(bucket);
-      if (!isExpirationLifecycleConfigurationPresent(lifecycleConfiguration, blobStoreConfiguration)) {
-        setBucketLifecycleConfiguration(s3, blobStoreConfiguration, lifecycleConfiguration);
+      try {
+        BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(bucket);
+        if (!isExpirationLifecycleConfigurationPresent(lifecycleConfiguration, blobStoreConfiguration)) {
+          setBucketLifecycleConfiguration(s3, blobStoreConfiguration, lifecycleConfiguration);
+        }
+      } catch (AmazonS3Exception e) {
+        if (NOT_IMPLEMENTED_CODE.equals(e.getErrorCode())) {
+          log.warn("Bucket {} does not support managing lifecycle config.", bucket, e);
+        } else {
+          throw e;
+        }
       }
     }
   }
@@ -103,13 +105,21 @@ public class BucketManager
     }
     else {
       log.info("Not removing S3 bucket {} because it is not empty", bucket);
-      BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(bucket);
-      List<Rule> nonBlobstoreRules = nonBlobstoreRules(lifecycleConfiguration, blobStoreConfiguration.getName());
-      if(!isEmpty(nonBlobstoreRules)) {
-        lifecycleConfiguration.setRules(nonBlobstoreRules);
-        s3.setBucketLifecycleConfiguration(bucket, lifecycleConfiguration);
-      } else {
-        s3.deleteBucketLifecycleConfiguration(bucket);
+      try {
+        BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(bucket);
+        List<Rule> nonBlobstoreRules = nonBlobstoreRules(lifecycleConfiguration, blobStoreConfiguration.getName());
+        if(!isEmpty(nonBlobstoreRules)) {
+          lifecycleConfiguration.setRules(nonBlobstoreRules);
+          s3.setBucketLifecycleConfiguration(bucket, lifecycleConfiguration);
+        } else {
+          s3.deleteBucketLifecycleConfiguration(bucket);
+        }
+      } catch (AmazonS3Exception e) {
+        if (NOT_IMPLEMENTED_CODE.equals(e.getErrorCode())) {
+          log.warn("Bucket {} does not support managing lifecycle config.", bucket, e);
+        } else {
+          throw e;
+        }
       }
     }
   }
@@ -181,11 +191,19 @@ public class BucketManager
     String bucket = getConfiguredBucket(blobStoreConfiguration);
     BucketLifecycleConfiguration newLifecycleConfiguration =
         makeLifecycleConfiguration(lifecycleConfiguration, blobStoreConfiguration);
-    if (newLifecycleConfiguration != null) {
-      s3.setBucketLifecycleConfiguration(bucket, newLifecycleConfiguration);
-    }
-    else if (lifecycleConfiguration != null && !lifecycleConfiguration.getRules().isEmpty()) {
-      s3.deleteBucketLifecycleConfiguration(bucket);
+    try {
+      if (newLifecycleConfiguration != null) {
+        s3.setBucketLifecycleConfiguration(bucket, newLifecycleConfiguration);
+      }
+      else if (lifecycleConfiguration != null && !lifecycleConfiguration.getRules().isEmpty()) {
+        s3.deleteBucketLifecycleConfiguration(bucket);
+      }
+    } catch (AmazonS3Exception e) {
+      if (NOT_IMPLEMENTED_CODE.equals(e.getErrorCode())) {
+        log.warn("Bucket {} does not support managing lifecycle config.", bucket, e);
+      } else {
+        throw e;
+      }
     }
   }
 
