@@ -76,9 +76,11 @@ export default function Welcome() {
   }
 
   const onLoad = () => {
-    setIframeHeight(
-      ref.current.contentWindow.document.body.scrollHeight + iframePadding
-    );
+    if (ref.current?.contentWindow) {
+      setIframeHeight(
+        ref.current.contentWindow.document.body.scrollHeight + iframePadding
+      )
+    }
   };
 
   useEffect(load, [user]);
