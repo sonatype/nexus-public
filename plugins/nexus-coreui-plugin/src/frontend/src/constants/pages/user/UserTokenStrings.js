@@ -34,6 +34,9 @@ export default {
     MESSAGES: {
       ACCESS_AUTHENTICATION: 'Accessing user tokens requires validation of your credentials',
       RESET_AUTHENTICATION: 'Resetting user tokens requires validation of your credentials',
+      ACCESS_ERROR: 'You must authenticate successfully to access your token',
+      RESET_SUCCESS: 'Your user token has been reset',
+      RESET_ERROR: 'You must authenticate successfully to reset your token'
     },
     BUTTONS: {
       ACCESS: 'Access user token',
