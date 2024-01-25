@@ -104,14 +104,6 @@ Ext.define('NX.coreui.controller.Repositories', {
       selector: 'nx-coreui-repository-add numberfield[name=attributes.proxy.contentMaxAge]'
     },
     {
-      ref: 'removeNonCataloged',
-      selector: 'nx-coreui-repository-npm-proxy-facet checkbox[name=attributes.npm.removeNonCataloged]'
-    },
-    {
-      ref: 'npmProxyRemoveNonCatalogedDisableWarning',
-      selector: 'nx-coreui-repository-npm-proxy-facet panel[name=npmProxyRemoveNonCatalogedDisableWarning]'
-    },
-    {
       ref: 'removeQuarantinedVersions',
       selector: 'nx-coreui-repository-npm-proxy-facet checkbox[name=attributes.npm.removeQuarantinedVersions]'
     },
@@ -276,14 +268,6 @@ Ext.define('NX.coreui.controller.Repositories', {
         me.hideUnsupportedReplicationFields(settingsPanel, model.get('format'));
 
         me.checkFirewallCapabilitiesStatus(model.get('name'), function(isNpmProxyFacetEnabled) {
-          var removeNonCataloged = me.getRemoveNonCataloged();
-          if (removeNonCataloged) {
-            removeNonCataloged.setDisabled(!isNpmProxyFacetEnabled);
-          }
-          var npmProxyRemoveNonCatalogedDisableWarning = me.getNpmProxyRemoveNonCatalogedDisableWarning();
-          if (npmProxyRemoveNonCatalogedDisableWarning && isNpmProxyFacetEnabled) {
-            npmProxyRemoveNonCatalogedDisableWarning.setTitle(NX.I18n.format('Repository_Facet_Npm_RemoveNonCataloged_Disable_Warning'))
-          }
           var removeQuarantinedVersions = me.getRemoveQuarantinedVersions();
           if (removeQuarantinedVersions) {
             removeQuarantinedVersions.setDisabled(!isNpmProxyFacetEnabled);

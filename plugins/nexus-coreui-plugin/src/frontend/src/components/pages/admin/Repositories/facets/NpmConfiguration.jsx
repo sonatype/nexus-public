@@ -24,7 +24,7 @@ import {
 import UIStrings from '../../../../../constants/UIStrings';
 
 const {
-  NPM: {REMOVE_NON_CATALOGED, REMOVE_QUARANTINED},
+  NPM: {REMOVE_QUARANTINED},
   LEARN_MORE
 } = UIStrings.REPOSITORIES.EDITOR;
 
@@ -42,19 +42,6 @@ export default function NpmConfiguration({parentMachine}) {
 
   return (
     <>
-      <NxFieldset
-        label={REMOVE_NON_CATALOGED.LABEL}
-        sublabel={getSubLabel(REMOVE_NON_CATALOGED.SUBLABEL)}
-        className="nxrm-form-group-remove-non-cataloged"
-      >
-        <NxCheckbox
-          {...FormUtils.checkboxProps('npm.removeNonCataloged', currentParent)}
-          onChange={FormUtils.handleUpdate('npm.removeNonCataloged', sendParent)}
-        >
-          {REMOVE_NON_CATALOGED.DESCR}
-        </NxCheckbox>
-      </NxFieldset>
-
       <NxFieldset
         label={REMOVE_QUARANTINED.LABEL}
         sublabel={getSubLabel(REMOVE_QUARANTINED.SUBLABEL)}

@@ -253,7 +253,6 @@ const repositoryFormats = {
     defaultValues: {
       ...genericDefaultValues.proxy,
       npm: {
-        removeNonCataloged: false,
         removeQuarantined: false
       }
     },

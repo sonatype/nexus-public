@@ -175,8 +175,6 @@ describe('RepositoriesForm', () => {
     getRepodataDepthSelect: () => screen.getByLabelText(EDITOR.REPODATA_DEPTH_LABEL),
     getLayoutPolicySelect: () => screen.getByLabelText(EDITOR.LAYOUT_POLICY_LABEL),
     getContentDispositionSelect: () => screen.getByLabelText(EDITOR.CONTENT_DISPOSITION_LABEL),
-    getRemoveNonCataloguedCheckbox: () =>
-      screen.getByRole('checkbox', {name: EDITOR.NPM.REMOVE_NON_CATALOGED.DESCR}),
     getRemoveQuarantinedCheckbox: () =>
       screen.getByRole('checkbox', {name: EDITOR.NPM.REMOVE_QUARANTINED.DESCR}),
     getVersionPolicySelect: () => screen.getByLabelText(EDITOR.VERSION_POLICY_LABEL),
@@ -1007,7 +1005,6 @@ describe('RepositoriesForm', () => {
 
     it('renders npm proxy fields with correct default values', async () => {
       await renderViewAndSetRequiredFields({format: 'npm', type: 'proxy'});
-      expect(selectors.getRemoveNonCataloguedCheckbox()).not.toBeChecked();
       expect(selectors.getRemoveQuarantinedCheckbox()).not.toBeChecked();
     });
 
