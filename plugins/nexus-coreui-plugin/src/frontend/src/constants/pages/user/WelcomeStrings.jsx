@@ -132,11 +132,11 @@ export default {
       },
       CARD_LINK_OSS: {
         TEXT: 'Explore ways to improve performance',
-        URL: 'https://sonatype.atlassian.net/wiki/spaces/HELP/pages/edit-v2/241893499?draftShareId=44e1e02f-446c-484c-9ba6-a6aa68970197&inEditorTemplatesPanel=auto_closed'
+        URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-free'
       },
       CARD_LINK_PRO: {
         TEXT: 'Explore ways to improve performance',
-        URL: 'https://sonatype.atlassian.net/wiki/spaces/HELP/pages/edit-v2/241337020?draftShareId=ece47942-0c7e-4ba6-943f-898b69630d97&inEditorTemplatesPanel=auto_closed'
+        URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-pro'
       }
     }
   }

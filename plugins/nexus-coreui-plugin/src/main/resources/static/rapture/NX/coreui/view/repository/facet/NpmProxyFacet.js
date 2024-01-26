@@ -46,24 +46,6 @@ Ext.define('NX.coreui.view.repository.facet.NpmProxyFacet', {
         items: [
           {
             xtype: 'checkbox',
-            name: 'attributes.npm.removeNonCataloged',
-            value: false,
-            disabled: true,
-            fieldLabel: NX.I18n.get('Repository_Facet_Npm_RemoveNonCataloged_Label'),
-            helpText: NX.I18n.get('Repository_Facet_Npm_RemoveNonCataloged_HelpText')
-          },
-          {
-            xtype: 'panel',
-            name: 'npmProxyRemoveNonCatalogedDisableWarning',
-            itemId: 'npmProxyRemoveNonCatalogedDisableWarning',
-            ui: 'nx-drilldown-message',
-            cls: 'nx-drilldown-warning',
-            iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-            title: NX.I18n.format('Repository_Facet_Npm_RemoveNonCataloged_Disable_Warning'),
-            hidden: false
-          },
-          {
-            xtype: 'checkbox',
             name: 'attributes.npm.removeQuarantinedVersions',
             value: false,
             disabled: true,

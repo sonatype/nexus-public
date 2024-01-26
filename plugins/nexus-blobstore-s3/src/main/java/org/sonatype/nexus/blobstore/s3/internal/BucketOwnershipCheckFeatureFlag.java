@@ -10,31 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.firewall.event;
+package org.sonatype.nexus.blobstore.s3.internal;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.goodies.packageurl.PackageUrl;
+import org.sonatype.nexus.common.app.FeatureFlags;
 
-/**
- * @since 3.29
- */
-public class ComponentVersionsRequest
+@Named
+@Singleton
+public class BucketOwnershipCheckFeatureFlag
 {
-  private final CompletableFuture<List<String>> result = new CompletableFuture<>();
+  private final boolean isDisabled;
 
-  private final PackageUrl packageUrl;
-
-  public ComponentVersionsRequest(final PackageUrl packageUrl) {
-    this.packageUrl = packageUrl;
+  @Inject
+  public BucketOwnershipCheckFeatureFlag(
+      @Named(FeatureFlags.BLOBSTORE_OWNERSHIP_CHECK_DISABLED_NAMED) final Boolean isDisabled)
+  {
+    this.isDisabled = Boolean.TRUE.equals(isDisabled);
   }
 
-  public CompletableFuture<List<String>> getResult() {
-    return result;
-  }
-
-  public PackageUrl getPackageUrl() {
-    return packageUrl;
+  public boolean isDisabled() {
+    return isDisabled;
   }
 }

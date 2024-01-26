@@ -13,7 +13,7 @@
 package org.sonatype.nexus.blobstore.s3.internal;
 
 import java.util.List;
-
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -31,7 +31,9 @@ import com.amazonaws.services.s3.model.lifecycle.LifecycleFilter;
 import com.amazonaws.services.s3.model.lifecycle.LifecycleFilterPredicate;
 import com.amazonaws.services.s3.model.lifecycle.LifecyclePrefixPredicate;
 import com.amazonaws.services.s3.model.lifecycle.LifecycleTagPredicate;
+import com.google.common.annotations.VisibleForTesting;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
@@ -41,10 +43,12 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationH
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.INVALID_ACCESS_KEY_ID_CODE;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.METHOD_NOT_ALLOWED_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.SIGNATURE_DOES_NOT_MATCH_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.bucketOwnershipError;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.insufficientCreatePermissionsError;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.invalidIdentityError;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.unexpectedError;
 
 /**
@@ -62,6 +66,13 @@ public class BucketManager
   static final String LIFECYCLE_EXPIRATION_RULE_ID_PREFIX = "Expire soft-deleted objects in blobstore ";
 
   private AmazonS3 s3;
+
+  private final BucketOwnershipCheckFeatureFlag ownershipCheckFeatureFlag;
+
+  @Inject
+  public BucketManager(BucketOwnershipCheckFeatureFlag featureFlag) {
+    this.ownershipCheckFeatureFlag = checkNotNull(featureFlag);
+  }
 
   public void setS3(final AmazonS3 s3) {
     this.s3 = s3;
@@ -114,7 +125,8 @@ public class BucketManager
     }
   }
 
-  private boolean isExpirationLifecycleConfigurationPresent(final BucketLifecycleConfiguration lifecycleConfiguration,
+  @VisibleForTesting
+  boolean isExpirationLifecycleConfigurationPresent(final BucketLifecycleConfiguration lifecycleConfiguration,
                                                             final BlobStoreConfiguration blobStoreConfiguration) {
     String bucketPrefix = getBucketPrefix(blobStoreConfiguration);
     int expirationInDays = getConfiguredExpirationInDays(blobStoreConfiguration);
@@ -217,7 +229,7 @@ public class BucketManager
 
   private void checkPermissions(final String bucket) {
     checkCredentials(bucket);
-    if (s3.doesBucketExistV2(bucket)) {
+    if (!ownershipCheckFeatureFlag.isDisabled() && s3.doesBucketExistV2(bucket)) {
       checkBucketOwner(bucket);
     }
   }
@@ -239,14 +251,20 @@ public class BucketManager
 
   private void checkBucketOwner(final String bucket) {
     try {
-      s3.getBucketAcl(bucket);
+      s3.getBucketPolicy(bucket);
     }
     catch (AmazonS3Exception e) {
-      if (ACCESS_DENIED_CODE.equals(e.getErrorCode())) {
-        log.debug("Exception thrown checking bucket owner.", e);
+      String errorCode = e.getErrorCode();
+      String logMessage = String.format("Exception thrown checking ownership of \"%s\" bucket.", bucket);
+      if (ACCESS_DENIED_CODE.equals(errorCode)) {
+        log.debug(logMessage, e);
         throw bucketOwnershipError();
       }
-      log.info("Exception thrown checking bucket owner.", e);
+      if (METHOD_NOT_ALLOWED_CODE.equals(errorCode)) {
+        log.debug(logMessage, e);
+        throw invalidIdentityError();
+      }
+      log.info(logMessage, log.isDebugEnabled() ? e : e.getMessage());
       throw unexpectedError("checking bucket ownership");
     }
   }

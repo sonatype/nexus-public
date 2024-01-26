@@ -67,14 +67,6 @@ export default {
 
   SAVE_SUCCESS: 'The form was saved successfully',
 
-  USER_TOKEN: {
-    MESSAGES: {
-      ACCESS_ERROR: 'You must authenticate successfully to access your token',
-      RESET_SUCCESS: 'Your user token has been reset',
-      RESET_ERROR: 'You must authenticate successfully to reset your token'
-    }
-  },
-
   MULTI_SELECT: {
     FROM_LABEL: 'Available',
     TO_LABEL: 'Selected',

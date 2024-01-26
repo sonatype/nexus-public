@@ -16,6 +16,7 @@ import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -144,5 +145,10 @@ public class FluentComponentImpl
   @Override
   public Component unwrap() {
     return component;
+  }
+
+  @Override
+  public String toString() {
+    return toStringExternal();
   }
 }

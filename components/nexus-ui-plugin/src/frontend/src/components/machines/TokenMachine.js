@@ -83,13 +83,13 @@ export default Machine(
     {
       actions: {
         showResetSuccess: () => {
-          ExtJS.showSuccessMessage(UIStrings.USER_TOKEN.MESSAGES.RESET_SUCCESS)
+          console.error('showResetSuccess function must be overridden in order to show the appropriate message');
         },
         showResetError: () => {
-          ExtJS.showErrorMessage(UIStrings.USER_TOKEN.MESSAGES.RESET_ERROR)
+          console.error('showResetError function must be overridden in order to show the appropriate message');
         },
         showAccessError: () => {
-          ExtJS.showErrorMessage(UIStrings.USER_TOKEN.MESSAGES.ACCESS_ERROR);
+          console.error('showAccessError function must be overridden in order to show the appropriate message');
         },
         setToken: assign({
           token: (_, event) => event.data.data

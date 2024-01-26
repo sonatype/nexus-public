@@ -41,6 +41,11 @@ export default {
       REGISTER_TEXT: 'You can register this key for a given repository with the following command',
       REGISTER_COMMAND: 'nuget setapikey {0} -source {1}',
       AUTO_CLOSE: 'This window will automatically close after one minute.'
+    },
+    MESSAGES: {
+      ACCESS_ERROR: 'You must authenticate successfully to access your NuGet API Key',
+      RESET_SUCCESS: 'Your user NuGet API Key has been reset',
+      RESET_ERROR: 'You must authenticate successfully to reset your NuGet API Key'
     }
   }
 };

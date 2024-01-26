@@ -194,11 +194,6 @@ export default {
         }
       },
       NPM: {
-        REMOVE_NON_CATALOGED: {
-          LABEL: 'Remove Non-catalogued Versions',
-          SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect.',
-          DESCR: 'Remove non-catalogued versions from the package metadata'
-        },
         REMOVE_QUARANTINED: {
           LABEL: 'Remove Quarantined Versions',
           SUBLABEL: 'IQ Audit and Quarantine capability must be enabled for this feature to take effect.',

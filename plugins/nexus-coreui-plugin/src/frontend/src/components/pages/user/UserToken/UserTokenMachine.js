@@ -21,6 +21,17 @@ import {ExtJS, TokenMachine} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default TokenMachine.withConfig({
+      actions: {
+        showResetSuccess: () => {
+          ExtJS.showSuccessMessage(UIStrings.USER_TOKEN.MESSAGES.RESET_SUCCESS)
+        },
+        showResetError: () => {
+          ExtJS.showErrorMessage(UIStrings.USER_TOKEN.MESSAGES.RESET_ERROR)
+        },
+        showAccessError: () => {
+          ExtJS.showErrorMessage(UIStrings.USER_TOKEN.MESSAGES.ACCESS_ERROR);
+        }
+      },
       services: {
         resetToken: () => ExtJS.requestAuthenticationToken(UIStrings.USER_TOKEN.MESSAGES.RESET_AUTHENTICATION)
             .then(authToken =>
