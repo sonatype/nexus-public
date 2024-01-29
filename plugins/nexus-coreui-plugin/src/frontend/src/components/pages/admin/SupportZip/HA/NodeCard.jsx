@@ -24,6 +24,8 @@ import {
   NxButton,
 } from '@sonatype/react-shared-components';
 
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+
 import UIStrings from '../../../../../constants/UIStrings';
 import {
   faSync,
@@ -32,8 +34,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import './SupportZipHa.scss';
-
-import {URL} from './NodeCardHelper';
 
 const {SUPPORT_ZIP: LABELS} = UIStrings;
 
@@ -73,7 +73,7 @@ export default function NodeCard({actor, createZip, isBlobStoreConfigured}) {
 
     return (
       <NxP className="nxrm-p-zip-updated">
-        <NxTextLink href={URL.downloadZipFile(data.blobRef)} download>
+        <NxTextLink href={ExtJS.urlOf(`service/rest/wonderland/download/${data.blobRef}`)} download>
           {LABELS.DOWNLOAD_ZIP}
           <br />
           {formatDate(new Date(data.lastUpdated))}
