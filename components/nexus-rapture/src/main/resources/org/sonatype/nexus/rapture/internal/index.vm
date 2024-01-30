@@ -55,6 +55,9 @@
       document.getElementById('loading-msg').innerHTML=msg;
     }
   </script>
+  #if ( $designInput )
+    <script type="text/javascript" src="https://clm-staging.sonatype.com/user-telemetry-rm.js"></script>
+  #end
   #macro(message $text)
     <script type="text/javascript">progressMessage('$text');</script>
   #end
