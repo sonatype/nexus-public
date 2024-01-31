@@ -26,7 +26,7 @@ import javax.validation.constraints.NotEmpty;
  */
 public class StorageAttributes
 {
-  @ApiModelProperty(value = "Blob store used to store repository contents", example = "default")
+  @ApiModelProperty(value = "Blob store used to store repository contents", example = "default", required = true)
   @NotEmpty
   protected String blobStoreName;
 
