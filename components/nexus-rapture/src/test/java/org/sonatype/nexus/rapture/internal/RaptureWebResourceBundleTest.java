@@ -62,7 +62,7 @@ public class RaptureWebResourceBundleTest
     underTest =
         new RaptureWebResourceBundle(applicationVersion, Providers.of(httpServletRequest), Providers.of(stateComponent),
             templateHelper, asList(new UiPluginDescriptorImpl()),
-            asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")), null);
+            asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")), null, false);
   }
 
   @Test

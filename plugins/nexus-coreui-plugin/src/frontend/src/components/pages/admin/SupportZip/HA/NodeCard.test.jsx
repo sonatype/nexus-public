@@ -13,12 +13,23 @@
 import React from 'react';
 import {spawn} from 'xstate';
 import {render, screen} from '@testing-library/react';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import userEvent from '@testing-library/user-event';
 import NodeCard from './NodeCard';
 import NodeCardTestData from './NodeCard.testdata';
 import UIStrings from '../../../../../constants/UIStrings';
 import NodeCardMachine from './NodeCardMachine';
 const {SUPPORT_ZIP: LABELS} = UIStrings;
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+  ExtJS: {
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn(),
+    }),
+    urlOf: jest.fn().mockImplementation((path) => '/' + path)
+  },
+}));
 
 describe('NodeCard', function () {
   const testNodes = NodeCardTestData;
@@ -36,6 +47,7 @@ describe('NodeCard', function () {
     noZipCreated: () => screen.getByText(LABELS.NO_ZIP_CREATED),
     zipCreate: () => screen.getByText(LABELS.GENERATE_NEW_ZIP_FILE),
     zipCreating: () => screen.getByText(LABELS.CREATING_ZIP),
+    zipLink: () => screen.getByRole('link'),
     errorMessage: () => screen.getByText(LABELS.GENERATE_ERROR),
     retryButton: () => screen.getByRole('button', {name: LABELS.RETRY}),
   };
@@ -73,8 +85,29 @@ describe('NodeCard', function () {
 
     expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
     expect(selectors.generateZipStatus()).toBeInTheDocument();
-    expect(screen.getByRole('link')).toHaveTextContent(
+    expect(selectors.zipLink()).toHaveTextContent(
       'Download Zip Generated2022-5-7 0:0:0 (GMT-0500)'
+    );
+    expect(selectors.zipLink()).toHaveAttribute(
+        'href', '/service/rest/wonderland/download/http://download.com?support-zip.zip'
+    );
+  });
+
+  it('renders zip link with context path when provided', () => {
+    jest
+        .spyOn(Date.prototype, 'toTimeString')
+        .mockReturnValue('00:00:00 GMT-0500 (Standard Time)');
+
+    ExtJS.urlOf.mockImplementation((path) => '/test/' + path);
+
+    const node = testNodes[ZIP_CREATED_NODE_INDEX];
+    renderView(node);
+
+    expect(selectors.zipLink()).toHaveTextContent(
+        'Download Zip Generated2022-5-7 0:0:0 (GMT-0500)'
+    );
+    expect(selectors.zipLink()).toHaveAttribute(
+        'href', '/test/service/rest/wonderland/download/http://download.com?support-zip.zip'
     );
   });
 

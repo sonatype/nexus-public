@@ -85,6 +85,8 @@ public class RaptureWebResourceBundle
 
   private final String cacheBuster;
 
+  private final boolean designInput;
+
   public final static String PROPERTY_WEBRESOURCES_CACHEBUSTER = "nexus.webresources.cachebuster";
 
   @Inject
@@ -94,7 +96,8 @@ public class RaptureWebResourceBundle
                                   final TemplateHelper templateHelper,
                                   final List<UiPluginDescriptor> pluginDescriptors,
                                   final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors,
-                                  @Nullable @Named("${" + PROPERTY_WEBRESOURCES_CACHEBUSTER + "}") final String cacheBuster)
+                                  @Nullable @Named("${" + PROPERTY_WEBRESOURCES_CACHEBUSTER + "}") final String cacheBuster,
+                                  @Named("${nexus.design.input:-false}") final boolean designInput)
   {
     this.applicationVersion = checkNotNull(applicationVersion);
     this.servletRequestProvider = checkNotNull(servletRequestProvider);
@@ -102,6 +105,7 @@ public class RaptureWebResourceBundle
     this.templateHelper = checkNotNull(templateHelper);
     this.pluginDescriptors = checkNotNull(pluginDescriptors);
     this.extJsPluginDescriptors = checkNotNull(extJsPluginDescriptors);
+    this.designInput = designInput;
     if (cacheBuster == null) {
       this.cacheBuster = applicationVersion.getBuildTimestamp();
     } else {
@@ -185,6 +189,7 @@ public class RaptureWebResourceBundle
                 .set("styles", getStyles())
                 .set("scripts", getScripts())
                 .set("util", new TemplateUtil())
+                .set("designInput", designInput)
         );
       }
     };

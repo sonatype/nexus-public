@@ -17,15 +17,8 @@
 import Axios from 'axios';
 import {APIConstants} from '@sonatype/nexus-ui-plugin';
 
-const downloadZipFile = (blobRef) =>
-  `/service/rest/wonderland/download/${blobRef}`;
-
 export const cleanNode = async (nodeId) => {
   return await Axios.delete(
     APIConstants.REST.INTERNAL.CLEAR_SUPPORT_ZIP_HISTORY + nodeId
   );
-};
-
-export const URL = {
-  downloadZipFile,
 };
