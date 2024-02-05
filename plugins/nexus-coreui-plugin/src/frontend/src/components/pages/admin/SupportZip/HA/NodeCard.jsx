@@ -24,7 +24,7 @@ import {
   NxButton,
 } from '@sonatype/react-shared-components';
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, DateUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../../constants/UIStrings';
 import {
@@ -76,7 +76,7 @@ export default function NodeCard({actor, createZip, isBlobStoreConfigured}) {
         <NxTextLink href={ExtJS.urlOf(`service/rest/wonderland/download/${data.blobRef}`)} download>
           {LABELS.DOWNLOAD_ZIP}
           <br />
-          {formatDate(new Date(data.lastUpdated))}
+          {DateUtils.prettyDateTime(new Date(data.lastUpdated))}
         </NxTextLink>
       </NxP>
     );
@@ -84,12 +84,6 @@ export default function NodeCard({actor, createZip, isBlobStoreConfigured}) {
 
   const generateButtonDisabled =
     !isNodeActive || !isBlobStoreConfigured || zipCreating;
-
-  const formatDate = (date) => {
-    const tz = date.toTimeString().split(' ')[1];
-    const month = date.getMonth() + 1;
-    return `${date.getFullYear()}-${month}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} (${tz})`;
-  };
 
   const handleGenerate = () => {
     if (!generateButtonDisabled) {

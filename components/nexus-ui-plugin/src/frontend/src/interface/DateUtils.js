@@ -58,4 +58,22 @@ export default class DateUtils {
       return null;
     }
   }
+
+  /**
+   * @param {Date} date a Date
+   * @returns {string|null} a human-friendly date time string
+   */
+  static prettyDateTime(date) {
+    try {
+      const options = {
+        timeZoneName: 'longOffset',
+        hour12: false,
+      };
+      return date.toLocaleString("en-US", options);
+    }
+    catch (e) {
+      console.debug(ERROR_MESSAGE(date));
+      return null;
+    }
+  }
 }
