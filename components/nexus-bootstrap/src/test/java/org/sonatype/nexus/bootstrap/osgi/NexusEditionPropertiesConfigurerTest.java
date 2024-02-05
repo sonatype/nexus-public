@@ -32,7 +32,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
-public class BootstrapListenerTest
+public class NexusEditionPropertiesConfigurerTest
     extends TestSupport
 {
   @Parameters(name = "{index}: hasLoadAsOss: {0}, loadAsOss: {1}, edition_pro: {2}, "
@@ -98,7 +98,7 @@ public class BootstrapListenerTest
   }
 
   @Spy
-  private BootstrapListener underTest = new BootstrapListener();
+  private NexusEditionPropertiesConfigurer underTest = new NexusEditionPropertiesConfigurer();
 
   @Mock
   private Path workDirPath;
@@ -120,7 +120,7 @@ public class BootstrapListenerTest
 
   private Boolean is_oss;
 
-  public BootstrapListenerTest(
+  public NexusEditionPropertiesConfigurerTest(
       final Boolean hasLoadAsOss,
       final Boolean loadAsOss,
       final Boolean edition_pro,
