@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.testsuite.testsupport;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -52,7 +53,7 @@ import static org.apache.http.HttpHeaders.IF_MODIFIED_SINCE;
  */
 public class FormatClientSupport
     extends ComponentSupport
-    implements AutoCloseable
+    implements Closeable
 {
   protected final CloseableHttpClient httpClient;
 
@@ -82,7 +83,7 @@ public class FormatClientSupport
   /**
    * GET a conditional response from the repository using the If-Modified-Since header.
    */
-  public HttpResponse getIfModifiedSince(final String path, final String modified) throws IOException {
+  public CloseableHttpResponse getIfModifiedSince(final String path, final String modified) throws IOException {
     HttpGet get = new HttpGet(resolve(path));
     get.setHeader(IF_MODIFIED_SINCE, modified);
     return execute(get);
@@ -91,7 +92,7 @@ public class FormatClientSupport
   /**
    * GET a response from the repository, adding headers to the request.
    */
-  public CloseableHttpResponse get(final String path, Map<String, String> headers) throws IOException {
+  public CloseableHttpResponse get(final String path, final Map<String, String> headers) throws IOException {
     final URI uri = resolve(path);
     final HttpGet get = new HttpGet(uri);
     for (Entry<String, String> header : headers.entrySet()) {

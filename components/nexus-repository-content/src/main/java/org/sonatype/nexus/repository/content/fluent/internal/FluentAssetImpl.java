@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
@@ -190,7 +191,13 @@ public class FluentAssetImpl
     if (!(repository().getType() instanceof HostedType) && attributes().contains(CONTENT)) {
       // external cache details previously recorded from upstream content
       AttributesMap contentHeaders = attributes(CONTENT);
-      contentAttributes.set(CONTENT_LAST_MODIFIED, new DateTime(contentHeaders.get(CONTENT_LAST_MODIFIED)));
+
+      Object lastModified = contentHeaders.get(CONTENT_LAST_MODIFIED);
+      if (lastModified == null && (repository().getType() instanceof GroupType)) {
+        lastModified = blob.getMetrics().getCreationTime();
+      }
+
+      contentAttributes.set(CONTENT_LAST_MODIFIED, new DateTime(lastModified));
       contentAttributes.set(CONTENT_ETAG, contentHeaders.get(CONTENT_ETAG));
     }
     else {

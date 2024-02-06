@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -168,9 +169,15 @@ public class Content
     checkNotNull(hashAlgorithms);
     final NestedAttributesMap assetAttributes = asset.attributes().child(CONTENT);
     final DateTime lastModified = toDateTime(assetAttributes.get(P_LAST_MODIFIED, Date.class));
-    final String etag = assetAttributes.get(P_ETAG, String.class);
 
     final Map<HashAlgorithm, HashCode> checksums = asset.getChecksums(hashAlgorithms);
+    String etag = assetAttributes.get(P_ETAG, String.class);
+    if (etag == null) {
+      etag = Optional.ofNullable(checksums)
+          .map(chk -> chk.get(HashAlgorithm.SHA1))
+          .map(HashCode::toString)
+          .orElse(null);
+    }
 
     contentAttributes.set(Asset.class, asset);
     contentAttributes.set(Content.CONTENT_LAST_MODIFIED, lastModified);
