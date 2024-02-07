@@ -13,16 +13,19 @@
 package org.sonatype.nexus.extender;
 
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.EnumSet;
 import java.util.Hashtable;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import java.util.stream.Collectors;
 import javax.servlet.Filter;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -97,8 +100,20 @@ public class NexusContextListener
    */
   public static final int NEXUS_PLUGIN_START_LEVEL = 200;
 
+  private static final List<String> SUPPORTED_EDITIONS = Collections.unmodifiableList(Arrays.asList(
+      "oss",
+      "pro",
+      "pro-starter"
+  ));
+
+  private static final String EDITIONS_PATTERN = String.format(
+      "(?<edition>(%s)(,(%s))*)",
+      String.join("|", SUPPORTED_EDITIONS),
+      String.join("|", SUPPORTED_EDITIONS)
+  );
+
   private static final Pattern INSTALL_MODE_FEATURE_FLAG_PATTERN = compile(
-      "(?:(?<edition>oss|pro):)?featureFlag:(?<enabled>enabledByDefault:)?(?<flag>.+)");
+      "(?:" + EDITIONS_PATTERN +":)?featureFlag:(?<enabled>enabledByDefault:)?(?<flag>.+)");
 
   private static final String EDITION = "edition";
 
@@ -357,17 +372,28 @@ public class NexusContextListener
       Matcher matcher = INSTALL_MODE_FEATURE_FLAG_PATTERN.matcher(installMode);
       if (matcher.matches()) {
         boolean enabled = getBoolean(matcher.group(FLAG), matcher.group(ENABLED) != null);
-        String expectedEdition = matcher.group(EDITION);
-        if (expectedEdition != null) {
-          enabled = enabled && expectedEdition.equalsIgnoreCase(edition);
+        if (!enabled) {
+          return false;
         }
-        return enabled;
+
+        String editions = matcher.group(EDITION);
+        if (editions == null) {
+          return true;
+        }
+        Set<String> editionsSet = extractEditions(editions);
+        return editionsSet.stream().anyMatch(it -> it.equalsIgnoreCase(edition));
       }
       else {
         log.warn("Malformed feature flag: '{}'", installMode);
       }
     }
     return false;
+  }
+
+  private Set<String> extractEditions(final String editions) {
+    return Arrays.stream(editions.split(","))
+        .map(String::toLowerCase)
+        .collect(Collectors.toSet());
   }
 
   /**

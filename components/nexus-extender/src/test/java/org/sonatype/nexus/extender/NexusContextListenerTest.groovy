@@ -30,6 +30,7 @@ import static org.sonatype.nexus.extender.NexusContextListener.NEXUS_EXTENDER_ST
 /**
  * Tests for {@link NexusContextListener}
  */
+// TODO NEXUS-41424
 class NexusContextListenerTest
     extends Specification
 {
@@ -49,6 +50,7 @@ class NexusContextListenerTest
    * Tests the parsing of the Karaf {@code installMode} string to determine if the feature
    * should be enabled/installed.
    */
+  // TODO NEXUS-41424
   @Unroll
   def 'installMode: #installMode, flag: #flag, flagValue: #flagValue, edition: #edition, isFeatureFlagEnabled: #featureEnabled'() {
     given:
@@ -68,6 +70,18 @@ class NexusContextListenerTest
     where:
       installMode                                    | flag          | flagValue | edition  || featureEnabled
       // oss-only feature flag
+      'oss,pro,pro-starter:featureFlag:enabledByDefault:foo.enabled' | 'foo.enabled' | 'true'    | 'PRO-STARTER' || true
+      'oss,pro,pro-starter:featureFlag:enabledByDefault:foo.enabled' | 'foo.enabled' | 'true'    | 'OSS'         || true
+      'oss,pro,pro-starter:featureFlag:enabledByDefault:foo.enabled' | 'foo.enabled' | 'true'    | 'PRO'         || true
+      'oss,pro-starter:featureFlag:enabledByDefault:foo.enabled'     | 'foo.enabled' | 'true'    | 'PRO'         || false
+      'oss,pro-starter:featureFlag:enabledByDefault:foo.enabled'     | 'foo.enabled' | 'true'    | 'OSS'         || true
+      'pro,pro-starter:featureFlag:enabledByDefault:foo.enabled'     | 'foo.enabled' | 'true'    | 'OSS'         || false
+      'pro,pro-starter:featureFlag:enabledByDefault:foo.enabled'     | 'foo.enabled' | 'true'    | 'PRO'         || true
+      'pro,pro-starter:featureFlag:enabledByDefault:foo.enabled'     | 'foo.enabled' | 'true'    | 'PRO-STARTER' || true
+      'pro-starter:featureFlag:enabledByDefault:foo.enabled'         | 'foo.enabled' | 'true'    | 'OSS'         || false
+      'pro-starter:featureFlag:enabledByDefault:foo.enabled'         | 'foo.enabled' | 'true'    | 'PRO-STARTER' || true
+      'featureFlag:enabledByDefault:foo.enabled'                     | 'foo.enabled' | 'true'    | 'PRO-STARTER' || true
+
       'oss:featureFlag:foo.enabled'                  | 'foo.enabled' | 'true'    | 'OSS'    || true
       'oss:featureFlag:foo.enabled'                  | 'foo.enabled' | 'true'    | 'PRO'    || false
       'oss:featureFlag:foo.enabled'                  | 'foo.enabled' | 'false'   | 'OSS'    || false
