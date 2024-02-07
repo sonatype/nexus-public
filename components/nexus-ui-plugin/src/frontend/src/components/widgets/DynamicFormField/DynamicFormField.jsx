@@ -44,7 +44,7 @@ export default function DynamicFormField({current, dynamicProps, id, initialValu
   }
   else if (dynamicProps.type === 'combobox') {
     const fieldProps = FormUtils.selectProps(id, current, initialValue || '');
-    return <NxFormSelect {...fieldProps} onChange={(event) => onChange(fieldProps.name, event.currentTarget.value)}>
+    return <NxFormSelect {...fieldProps} onChange={(value) => onChange(fieldProps.name, value)}>
       <option/>
       {values(mapObjIndexed((v, k) => <option key={k} value={k}>{v}</option>, dynamicProps.attributes.options))}
     </NxFormSelect>;

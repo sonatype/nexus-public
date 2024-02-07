@@ -24,7 +24,7 @@
     "@fortawesome/fontawesome-svg-core": "1.2.25",
     "@fortawesome/free-solid-svg-icons": "5.11.2",
     "@fortawesome/react-fontawesome": "0.1.4",
-    "@sonatype/react-shared-components": "12.10.3",
+    "@sonatype/react-shared-components": "13.1.6",
     "classnames": "2.3.1",
     "file-size": "1.0.0",
     "node-gyp": "8.1.0",
@@ -40,7 +40,7 @@
     "@babel/plugin-transform-runtime": "7.17.0",
     "@babel/preset-env": "7.16.11",
     "@babel/preset-react": "7.16.7",
-    "@sonatype/react-shared-components": "12.10.3",
+    "@sonatype/react-shared-components": "13.1.6",
     "@testing-library/jest-dom": "5.14.1",
     "@testing-library/react": "12.1.2",
     "@testing-library/user-event": "12.8.3",
@@ -53,7 +53,7 @@
     "xstate": "4.16.0"
   },
   "peerDependencies": {
-    "@sonatype/react-shared-components": "12.10.3",
+    "@sonatype/react-shared-components": "13.1.6",
     "react": "16.14.0",
     "react-dom": "16.14.0",
     "xstate": "4.16.0"

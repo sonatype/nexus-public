@@ -69,8 +69,8 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     update('name', value);
   }
 
-  function updateLevel(event) {
-    update('level', event.currentTarget.value);
+  function updateLevel(value) {
+    update('level', value);
   }
 
   function save() {

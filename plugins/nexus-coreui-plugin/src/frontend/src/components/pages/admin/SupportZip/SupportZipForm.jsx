@@ -28,70 +28,70 @@ export default function SupportZipForm({params, setParams, submit, clustered, ha
           <NxCheckbox
               checkboxId='systemInformation'
               isChecked={params.systemInformation}
-              onChange={setParams}
+              onChange={(value) => setParams('systemInformation', value)}
           >
             {UIStrings.SUPPORT_ZIP.REPORT_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='threadDump'
               isChecked={params.threadDump}
-              onChange={setParams}
+              onChange={(value) => setParams('threadDump', value)}
           >
             {UIStrings.SUPPORT_ZIP.DUMP_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='configuration'
               isChecked={params.configuration}
-              onChange={setParams}
+              onChange={(value) => setParams('configuration', value)}
           >
             {UIStrings.SUPPORT_ZIP.CONFIGURATION_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='security'
               isChecked={params.security}
-              onChange={setParams}
+              onChange={(value) => setParams('security', value)}
           >
             {UIStrings.SUPPORT_ZIP.SECURITY_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='log'
               isChecked={params.log}
-              onChange={setParams}
+              onChange={(value) => setParams('log', value)}
           >
             {UIStrings.SUPPORT_ZIP.LOGFILES_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='taskLog'
               isChecked={params.taskLog}
-              onChange={setParams}
+              onChange={(value) => setParams('taskLog', value)}
           >
             {UIStrings.SUPPORT_ZIP.TASKLOGFILES_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='replication'
               isChecked={params.replication}
-              onChange={setParams}
+              onChange={(value) => setParams('replication', value)}
           >
             {UIStrings.SUPPORT_ZIP.REPLICATION_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='auditLog'
               isChecked={params.auditLog}
-              onChange={setParams}
+              onChange={(value) => setParams('auditLog', value)}
           >
             {UIStrings.SUPPORT_ZIP.AUDITLOGFILES_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='metrics'
               isChecked={params.metrics}
-              onChange={setParams}
+              onChange={(value) => setParams('metrics', value)}
           >
             {UIStrings.SUPPORT_ZIP.METRICS_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='jmx'
               isChecked={params.jmx}
-              onChange={setParams}
+              onChange={(value) => setParams('jmx', value)}
           >
             {UIStrings.SUPPORT_ZIP.JMX_LABEL}
           </NxCheckbox>
@@ -100,14 +100,14 @@ export default function SupportZipForm({params, setParams, submit, clustered, ha
           <NxCheckbox
               checkboxId='limitFileSizes'
               isChecked={params.limitFileSizes}
-              onChange={setParams}
+              onChange={(value) => setParams('limitFileSizes', value)}
           >
             {UIStrings.SUPPORT_ZIP.LIMITFILESIZES_LABEL}
           </NxCheckbox>
           <NxCheckbox
               checkboxId='limitZipSize'
               isChecked={params.limitZipSize}
-              onChange={setParams}
+              onChange={(value) => setParams('limitZipSize', value)}
           >
             {UIStrings.SUPPORT_ZIP.LIMITZIPSIZE_LABEL}
           </NxCheckbox>

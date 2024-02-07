@@ -20,9 +20,9 @@ import {NxCheckbox} from "@sonatype/react-shared-components";
  * @since 3.29
  */
 export default function CheckboxControlledWrapper({id, children, onChange, ...attrs}) {
-  function handleChange(event) {
+  function handleChange(value) {
     if (onChange) {
-      onChange(event.target.checked);
+      onChange(value);
     }
   }
 

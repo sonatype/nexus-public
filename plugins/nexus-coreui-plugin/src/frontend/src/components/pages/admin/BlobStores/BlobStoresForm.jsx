@@ -85,7 +85,7 @@ export default function BlobStoresForm({itemId, onDone}) {
       null;
   const isTypeSelected = Boolean(type)
 
-  const setType = (event) => send({type: 'SET_TYPE', value: event.currentTarget.value});
+  const setType = (value) => send({type: 'SET_TYPE', value});
 
   const updateDynamicField = (name, value) => {
     send({
@@ -96,11 +96,11 @@ export default function BlobStoresForm({itemId, onDone}) {
     });
   }
 
-  const toggleSoftQuota = (event) => {
-    send({type: 'UPDATE_SOFT_QUOTA', name: 'enabled', value: event.currentTarget.checked, data});
+  const toggleSoftQuota = (value) => {
+    send({type: 'UPDATE_SOFT_QUOTA', name: 'enabled', value, data});
   }
 
-  const updateSoftQuotaType = (event) => send({ type: 'UPDATE_SOFT_QUOTA', name: 'type', value: event.target.value});
+  const updateSoftQuotaType = (value) => send({ type: 'UPDATE_SOFT_QUOTA', name: 'type', value});
   const updateSoftQuotaLimit = (value) => send({ type: 'UPDATE_SOFT_QUOTA', name: 'limit', value});
 
   const confirmDelete = () => send({type: 'CONFIRM_DELETE'});

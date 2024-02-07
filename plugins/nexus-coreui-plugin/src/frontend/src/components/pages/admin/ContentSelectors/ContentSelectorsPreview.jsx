@@ -42,7 +42,7 @@ export default function ContentSelectorsPreview({type, expression}) {
   const isLoading = current.matches('loading');
   const isLoadingPreview = current.matches('preview');
 
-  const repositoryChangeHandler = (event) => send('SET_REPOSITORIES', {repositories: event.target.value});
+  const repositoryChangeHandler = (repositories) => send('SET_REPOSITORIES', {repositories});
   const previewHandler = () => send('PREVIEW', {selectorType: type, expression});
   const filter = (value) => send('FILTER', {filter: value});
 

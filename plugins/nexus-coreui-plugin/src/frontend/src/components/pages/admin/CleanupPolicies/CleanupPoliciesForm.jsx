@@ -132,8 +132,8 @@ export default function CleanupPoliciesForm({itemId, onDone}) {
     );
   }
 
-  function setReleaseType(event) {
-    send({type: 'UPDATE_RELEASE_TYPE', value: event.target.value});
+  function setReleaseType(value) {
+    send({type: 'UPDATE_RELEASE_TYPE', value});
   }
 
   return (

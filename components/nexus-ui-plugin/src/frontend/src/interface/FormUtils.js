@@ -518,34 +518,23 @@ export default class FormUtils {
    * @returns {(function(*): void)|*}
    */
   static handleUpdate(name, send, type = 'UPDATE') {
-    return (eventOrValue) => {
-      let value;
-      if (Utils.isInstanceOfAny([String, Array, FileList], eventOrValue) || eventOrValue == null) {
-        value = eventOrValue;
-      } else if (eventOrValue instanceof Set) {
-        value = Array.from(eventOrValue);
-      } else if (eventOrValue.currentTarget.type === 'checkbox') {
-        value = eventOrValue.currentTarget.checked;
-      } else {
-        value = eventOrValue.currentTarget.value;
+    return (value) => {
+      if (value instanceof Set) {
+        value = Array.from(value);
       }
-      send({
-        type,
-        name,
-        value
-      });
+      send({type, name, value});
     };
   }
 
   /**
    * Removes trailing spaces for a given input value on blur event.
+   * @param name of the field to update
    * @param send - a function that sends events to the machine.
    * @returns {(function(event): void)|*}
    */
-  static trimOnBlur(send) {
+  static trimOnBlur(name, send) {
     return (event) => {
-      const name = event.currentTarget.name;
-      const value = event.currentTarget.value.trim();
+      const value = event.target.value.trim();
       this.handleUpdate(name, send)(value);
     }
   }

@@ -56,7 +56,7 @@ export default function UserTokensForm({service}) {
 
   const discard = () => send('RESET');
   const showResetConfirmation = () => send('RESET_CONFIRMATION');
-  const setEnabled = (e) => send({type: 'SET_ENABLED', value: e.currentTarget.checked});
+  const setEnabled = (value) => send({type: 'SET_ENABLED', value});
 
   return (
     <>

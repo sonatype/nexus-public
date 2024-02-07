@@ -58,7 +58,7 @@ export default function PrivilegesForm({itemId, service, onDone}) {
 
   const confirmDelete = () => send('CONFIRM_DELETE');
 
-  const setType = event => send({type: 'SET_TYPE', privilegeType: event.target.value});
+  const setType = privilegeType => send({type: 'SET_TYPE', privilegeType});
 
   const onChangeField = (name, value) => send({type: 'UPDATE', data: {[name]: value}});
 

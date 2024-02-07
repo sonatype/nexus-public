@@ -44,14 +44,12 @@ export default function GenericFormatConfiguration({parentMachine}) {
 
   const {format, type} = currentParent.context.data;
 
-  const handleFormatUpdate = (event) => {
-    const format = event.target.value;
+  const handleFormatUpdate = (format) => {
     const repoType = types.get(format)?.includes(type) ? type : '';
     sendParent({type: 'RESET_DATA', format, repoType});
   };
 
-  const handleTypeUpdate = (event) => {
-    const repoType = event.target.value;
+  const handleTypeUpdate = (repoType) => {
     sendParent({type: 'RESET_DATA', format, repoType});
   };
 

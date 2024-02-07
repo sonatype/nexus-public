@@ -27,8 +27,7 @@ export default function GenericHttpAuthConfiguration({parentMachine}) {
 
   const type = httpClient.authentication?.type;
 
-  const updateType = (event) => {
-    const authType = event.currentTarget.value;
+  const updateType = (authType) => {
     if (authType === '') {
       sendParent({
         type: 'UPDATE',

@@ -32,7 +32,7 @@ export default function RoutingRulesPreview({value, onChange, onTest}) {
         {/* Ensure the button is at the correct height and prepend with a / */}
         <label className="nx-label nxrm-path">
           <NxTextInput
-            className="nx-text-input--long"
+            className="nx-text-input--long nxrm-path-input"
             name="path"
             value={value}
             onChange={onChange}

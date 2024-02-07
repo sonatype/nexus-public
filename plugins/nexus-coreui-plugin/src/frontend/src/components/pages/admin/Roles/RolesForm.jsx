@@ -79,9 +79,9 @@ export default function RolesForm({roleId, service, onDone}) {
 
   const confirmDelete = () => send('CONFIRM_DELETE');
 
-  const setRoleType = (event) => send({type: 'SET_ROLE_TYPE', roleType: event.target.value});
+  const setRoleType = (roleType) => send({type: 'SET_ROLE_TYPE', roleType});
 
-  const setExternalRoleType = (event) => send({type: 'SET_EXTERNAL_ROLE_TYPE', externalRoleType: event.target.value});
+  const setExternalRoleType = (externalRoleType) => send({type: 'SET_EXTERNAL_ROLE_TYPE', externalRoleType});
 
   const [showModalRoles, setShowModalRoles] = useState(false);
   const [showModalPrivileges, setShowModalPrivileges] = useState(false);
@@ -197,7 +197,9 @@ export default function RolesForm({roleId, service, onDone}) {
         {isPrivilegesModalEnabled &&
           <div className="modal-selection-section">
             <NxH2 className="modal-section-title">Applied Privileges</NxH2>
-            <NxButton onClick={() => setShowModalPrivileges(true)} className="modal-button" variant="tertiary" type="button">Modify Applied Privileges</NxButton>
+            <NxButton onClick={() => setShowModalPrivileges(true)} className="modal-button privileges-modal" variant="tertiary" type="button">
+              Modify Applied Privileges
+            </NxButton>
             {showModalPrivileges &&
               <PrivilegesSelectionModal
                 title={LABELS.SECTIONS.PRIVILEGES}
@@ -219,7 +221,9 @@ export default function RolesForm({roleId, service, onDone}) {
         {isRolesModalEnabled &&
           <div className="modal-selection-section">
             <NxH2 className="modal-section-title">Applied Roles</NxH2>
-            <NxButton onClick={() => setShowModalRoles(true)} className="modal-button" variant="tertiary" type="button">Modify Applied Roles</NxButton>
+            <NxButton onClick={() => setShowModalRoles(true)} className="modal-button roles-modal" variant="tertiary" type="button">
+              Modify Applied Roles
+            </NxButton>
             {showModalRoles &&
               <RolesSelectionModal
                 title={LABELS.SECTIONS.ROLES}

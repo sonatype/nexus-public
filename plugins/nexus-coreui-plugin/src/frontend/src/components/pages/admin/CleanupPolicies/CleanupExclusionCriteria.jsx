@@ -46,9 +46,9 @@ export default function CleanupExclusionCriteria({actor}) {
   const isPreRelease = () => criteriaByFormat?.some(
       ({id, availableCriteria}) => id === format && availableCriteria.includes("isPrerelease"));
 
-  const setExclusionCriteriaEnabled = ({target}) => {
+  const setExclusionCriteriaEnabled = (checked) => {
     if (isNormalizedVersionTaskDone) {
-      send({type: 'SET_EXCLUSION_CRITERIA_ENABLED', checked: target.checked});
+      send({type: 'SET_EXCLUSION_CRITERIA_ENABLED', checked});
     }
   }
 

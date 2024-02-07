@@ -102,7 +102,8 @@ export default function PrivilegesSelectionModal({
           <NxFilterInput className="nx-modal__filter"
             placeholder="Filter"
             value={filterText}
-            onChange={filter} />
+            onChange={filter} 
+            id= "modalFilter"/>
         </div>
         <div className="nx-modal-content">
           <NxTable className="modal-table">
@@ -123,7 +124,7 @@ export default function PrivilegesSelectionModal({
 
             <NxTableBody emptyMessage="No privileges available">
               {filteredData.slice(lowerBound, upperBound).map((privilege) => (
-                <NxTableRow key={privilege.name}>
+                <NxTableRow key={privilege.name} id={privilege.name}>
                   <NxTableCell className="select-column">
                     <NxCheckbox
                       onChange={() => onPrivilegeSelected(privilege)}

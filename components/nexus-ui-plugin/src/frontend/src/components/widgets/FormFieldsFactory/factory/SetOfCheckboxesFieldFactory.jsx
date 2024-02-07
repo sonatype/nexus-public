@@ -29,7 +29,7 @@ const Field = ({id, dynamicProps, current, onChange}) => {
   return options.map(option =>
       <NxCheckbox key={option}
                   {...FormUtils.checkboxProps([id, option], current)}
-                  onChange={ e => onChange(id, mergeDeepRight(data[id], {[option]: e.currentTarget.checked}))}>
+                  onChange={ e => onChange(id, mergeDeepRight(data[id], {[option]: e}))}>
         {option.charAt(0).toUpperCase() + option.slice(1)}
       </NxCheckbox>
   );

@@ -27,8 +27,8 @@ export default function NodeSelector({service}) {
 
   const {selectedNodeId, nodeIds} = state.context;
 
-  const handleSelectNode = (e) => {
-    send({type: 'SELECT_NODE', value: e.currentTarget.value});
+  const handleSelectNode = (value) => {
+    send({type: 'SELECT_NODE', value});
   };
 
   return (

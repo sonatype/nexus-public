@@ -39,12 +39,12 @@ export default function SupportZipSingleNode() {
     }
   }
 
-  function setParams({target}) {
+  function setParams(id, value) {
     send({
       type: 'UPDATE',
       params: {
         ...params,
-        [target.id]: target.checked
+        [id]: value
       }
     });
   }

@@ -64,11 +64,11 @@ export default function IqServerForm() {
     send('DISMISS');
   }
 
-  function handleAuthTypeChange(event) {
+  function handleAuthTypeChange(value) {
     send({
       type: 'UPDATE',
       data: {
-        authenticationType: event.currentTarget.value,
+        authenticationType: value,
         username: '',
         password: ''
       }

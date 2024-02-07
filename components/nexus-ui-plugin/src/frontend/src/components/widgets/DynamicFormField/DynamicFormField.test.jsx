@@ -60,13 +60,13 @@ describe('DynamicFormField', () => {
     });
 
     it('renders a readonly field', () => {
-      const {getByRole} = render(<DynamicFormField {...stringFieldProps} dynamicProps={{
+      const {container} = render(<DynamicFormField {...stringFieldProps} dynamicProps={{
         type: 'string',
         attributes: {},
         readOnly: true
       }}/>);
 
-      expect(getByRole('textbox')).toHaveAttribute('readonly');
+      expect(container.querySelector('.nx-text-input')).toHaveAttribute('readonly');
     });
 
     it('renders a MultiSelect field', () => {
@@ -77,14 +77,14 @@ describe('DynamicFormField', () => {
           options
         }
       }
-      const {container} = render(<DynamicFormField
+      render(<DynamicFormField
          {...makeContext('test', [])} dynamicProps={dynamicProps}
         />);
 
       expect(screen.getByText('Available Items')).toBeInTheDocument();  
       expect(screen.getByText('Transferred Items')).toBeInTheDocument(); 
-      expect(screen.getByLabelText(options[0])).toBeInTheDocument();
-      expect(screen.getByLabelText(options[1])).toBeInTheDocument();
+      expect(screen.getByText(options[0])).toBeInTheDocument();
+      expect(screen.getByText(options[1])).toBeInTheDocument();
     });
 
     it('renders a Select field', () => {
