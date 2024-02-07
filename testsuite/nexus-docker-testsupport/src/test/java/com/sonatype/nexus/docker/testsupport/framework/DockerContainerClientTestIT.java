@@ -12,14 +12,25 @@
  */
 package com.sonatype.nexus.docker.testsupport.framework;
 
+import java.util.Optional;
+
 import org.junit.After;
 import org.junit.Test;
-import org.junit.Ignore;
+import org.testcontainers.containers.Container.ExecResult;
+import org.testcontainers.containers.ContainerFetchException;
 
 import static java.util.UUID.randomUUID;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * Test Docker containers can be pulled and running with commands.
+ */
 public class DockerContainerClientTestIT
 {
   private static final String IMAGE_HELLO_WORLD = "docker-all.repo.sonatype.com/hello-world";
@@ -35,46 +46,57 @@ public class DockerContainerClientTestIT
     underTest.close();
   }
 
-  @Ignore("Failing Internal Orient #729 - JIRA: NEXUS-37531")
-  @Test
-  public void when_Pull_HelloWorld_Expect_Container_Exists() {
+  @Test(expected = Test.None.class)
+  public void when_Pull_HelloWorld_Expect_Container_UpAndRunning() {
     underTest = new DockerContainerClient(IMAGE_HELLO_WORLD);
-    assertTrue(underTest.pull().isPresent());
-  }
-
-  @Ignore("Failing on Internal Orient #859 - NEXUS-38444")
-  @Test
-  public void when_Run_HelloWorld_Expect_Container_Exists() {
-    underTest = new DockerContainerClient(IMAGE_HELLO_WORLD);
-    assertTrue(underTest.run(null).isPresent());
+    underTest.run();
   }
 
   @Test
-  @Ignore
-  //TODO NEXUS-31759
   public void when_Exec_YumVersion_On_CentosLatest_Expect_Execution_To_Succeed() {
     underTest = new DockerContainerClient(IMAGE_CENTOS);
-    assertTrue(underTest.exec("yum --version").isPresent());
+    Optional<ExecResult> result = underTest.exec("yum --version");
+    assertTrue(result.isPresent());
+    assertEquals(0, result.get().getExitCode());
+    assertFalse(result.get().getStdout().isEmpty());
+    assertTrue(result.get().getStderr().isEmpty());
   }
 
-  @Ignore("Failing on Internal Orient #801 - NEXUS-38179")
   @Test
   public void when_Exec_YumVersion_On_Centos_6_9_Expect_Execution_To_Succeed() {
     underTest = new DockerContainerClient(IMAGE_CENTOS + ":6.9");
-    assertTrue(underTest.exec("yum --version").isPresent());
+    Optional<ExecResult> result = underTest.exec("yum --version");
+    assertTrue(result.isPresent());
+    assertEquals(0, result.get().getExitCode());
+    assertFalse(result.get().getStdout().isEmpty());
+    assertTrue(result.get().getStderr().isEmpty());
   }
 
   @Test
-  @Ignore
-  //TODO NEXUS-32586
   public void when_Exec_DockerVersion_On_DockerLatest_Expect_Execution_To_Succeed() {
     underTest = new DockerContainerClient(IMAGE_DOCKER);
-    assertTrue(underTest.exec("docker --version").isPresent());
+    Optional<ExecResult> result = underTest.exec("docker --version");
+    assertTrue(result.isPresent());
+    assertEquals(0, result.get().getExitCode());
+    assertTrue(result.get().getStderr().isEmpty());
+    assertThat(result.get().getStdout(), is(containsString("Docker version")));
+  }
+
+  @Test(expected = ContainerFetchException.class)
+  public void when_Pull_UnknownImage_Expect_Fail() {
+    underTest = new DockerContainerClient("unknown-image-" + randomUUID());
+    underTest.run();
   }
 
   @Test
-  public void when_Exec_Pwd_On_UnknownImage_Expect_Execution_To_Fail() {
-    underTest = new DockerContainerClient("unknown-image-" + randomUUID().toString());
-    assertFalse(underTest.exec("pwd").isPresent());
+  public void test_Successfully_Bind_Port() {
+    String exposedPort = "80";
+    DockerContainerConfig containerConfig = DockerContainerConfig.builder(IMAGE_CENTOS)
+        .withExposedPort(exposedPort)
+        .build();
+    underTest = new DockerContainerClient(containerConfig);
+    underTest.runAndKeepAlive();
+    Integer mappedPort = underTest.getMappedPort(exposedPort);
+    assertThat(mappedPort, notNullValue());
   }
 }

@@ -16,27 +16,22 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 import com.sonatype.nexus.docker.testsupport.ContainerCommandLineITSupport;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 
-import org.sonatype.goodies.common.Loggers;
-
-import org.slf4j.Logger;
-
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.common.io.NetworkHelper.findLocalHostAddress;
-import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.waitFor;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 public class IdpCommandLineITSupport
     extends ContainerCommandLineITSupport
 {
-  public static final  String IDP_CONTAINER_PORT = "8080";
+  public static final String IDP_CONTAINER_PORT = "8080";
 
-  protected final Logger log = Loggers.getLogger(this);
-
-  private String idpHostPort;
+  private Integer idpHostPort;
 
   private String idpHost;
 
@@ -50,7 +45,7 @@ public class IdpCommandLineITSupport
 
     log.info("Awaiting idp server {}:{}", idpHost, idpHostPort);
 
-    waitFor(this::isIdpServerAvailable, 120000); // waiting 120 seconds (like IQ)
+    await().atMost(2, TimeUnit.MINUTES).until(this::isIdpServerAvailable); // waiting 120 seconds (like IQ)
 
     log.info("Finished waiting for idp server {}:{}", idpHost, idpHostPort);
   }
@@ -80,13 +75,5 @@ public class IdpCommandLineITSupport
 
   public URI getIdpUri() {
     return URI.create(format("http://%s:%s", idpHost, idpHostPort)).normalize();
-  }
-
-  public String getIdpHost() {
-    return idpHost;
-  }
-
-  public String getIdpHostPort() {
-    return idpHostPort;
   }
 }

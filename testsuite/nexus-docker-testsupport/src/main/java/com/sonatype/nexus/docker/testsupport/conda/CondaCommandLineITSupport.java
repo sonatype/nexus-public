@@ -70,40 +70,6 @@ public class CondaCommandLineITSupport
   }
 
   /**
-   * Runs a <code>conda info</code>
-   *
-   * @return List of {@link String} of output from execution
-   */
-  private List<String> condaInfo() {
-    return condaExec("info");
-  }
-
-  /**
-   * @return {@link String} current OS name
-   */
-  public String condaOS() {
-    return condaInfo().stream().filter(row -> row.contains("platform")).findFirst().map(row -> row.split(" : ")[1])
-        .get().trim();
-  }
-
-  /**
-   * Runs a <code>conda update</code>
-   *
-   * @return List of {@link String} of output from execution
-   */
-  public List<String> condaUpdate() {
-    return condaExec("update -y conda");
-  }
-
-  /**
-   * @return {@link String} current version name
-   */
-  public String condaVersion() {
-    return condaInfo().stream().filter(row -> row.contains("conda version")).findFirst().map(row -> row.split(" : ")[1])
-        .get().trim();
-  }
-
-  /**
    * Runs a <code>conda activate</code>
    *
    * @return List of {@link String} of output from execution
