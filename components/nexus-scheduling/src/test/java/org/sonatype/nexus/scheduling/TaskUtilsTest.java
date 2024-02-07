@@ -61,8 +61,9 @@ public class TaskUtilsTest
     when(taskInfo.getCurrentState()).thenReturn(currentState);
     when(currentState.getState()).thenReturn(RUNNING);
     when(taskConfiguration.getString("key")).thenReturn("value");
+    when(taskResultStateStore.isSupported()).thenReturn(false);
 
-    underTest = new TaskUtils(Providers.of(taskScheduler), null);
+    underTest = new TaskUtils(Providers.of(taskScheduler), taskResultStateStore);
   }
 
   @Test

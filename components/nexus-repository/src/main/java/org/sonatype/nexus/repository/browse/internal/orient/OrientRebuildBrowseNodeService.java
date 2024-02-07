@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-
+import java.util.function.Consumer;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -84,7 +84,9 @@ public class OrientRebuildBrowseNodeService
   }
 
   @Override
-  public void rebuild(final Repository repository) throws RebuildBrowseNodeFailedException {
+  public void rebuild(final Repository repository, final Consumer<String> progressUpdater)
+      throws RebuildBrowseNodeFailedException
+  {
     log.info("Deleting browse nodes for repository {}", repository.getName());
 
     browseNodeManager.deleteByRepository(repository.getName());
@@ -122,6 +124,11 @@ public class OrientRebuildBrowseNodeService
 
           long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
           progressLogger.info("Rebuilt browse nodes for {} / {} assets in {} ms", processed, total, elapsed);
+          if (progressUpdater != null) {
+            progressUpdater.accept(
+                String.format("processing repository %s %d/%d assets completed", repository.getName(), processed,
+                    total));
+          }
 
           nextPage = assetStore.getNextPage(cursor, rebuildPageSize);
         }

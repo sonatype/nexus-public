@@ -36,7 +36,7 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.api.TaskXO;
-import org.sonatype.nexus.scheduling.internal.resources.doc.TasksResourceDoc;
+import org.sonatype.nexus.scheduling.internal.resources.doc.TasksApiResourceDoc;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -60,7 +60,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Consumes(APPLICATION_JSON)
 public class TasksResource
     extends ComponentSupport
-    implements Resource, TasksResourceDoc
+    implements Resource, TasksApiResourceDoc
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/tasks";
 

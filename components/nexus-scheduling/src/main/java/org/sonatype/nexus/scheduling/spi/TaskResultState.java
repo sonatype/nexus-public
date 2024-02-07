@@ -32,16 +32,20 @@ public class TaskResultState
 
   private final Date nextFireTime;
 
+  private final String progress;
+
   public TaskResultState(
       final String taskId,
       final TaskState state,
       @Nullable final Date nextFireTime,
-      @Nullable final LastRunState lastRunState)
+      @Nullable final LastRunState lastRunState,
+      @Nullable final String progress)
   {
     this.taskId = checkNotNull(taskId);
     this.state = checkNotNull(state);
     this.nextFireTime = nextFireTime;
     this.lastRunState = lastRunState;
+    this.progress = progress;
   }
 
   public Date getNextFireTime() {
@@ -79,5 +83,10 @@ public class TaskResultState
     return getLastRunState()
         .map(LastRunState::getRunDuration)
         .orElse(null);
+  }
+
+  @Nullable
+  public String getProgress() {
+    return progress;
   }
 }

@@ -59,4 +59,14 @@ public interface Task
    * on configuration.
    */
   String getMessage();
+
+  /**
+   * Returns the task runtime status object
+   */
+  TaskInfo getTaskInfo();
+
+  /**
+   * Assign the runtime status object to the task
+   */
+  void setTaskInfo(TaskInfo taskInfo);
 }

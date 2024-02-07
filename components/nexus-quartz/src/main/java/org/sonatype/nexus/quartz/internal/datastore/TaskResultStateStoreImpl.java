@@ -17,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -33,6 +32,7 @@ import org.sonatype.nexus.scheduling.spi.TaskResultState;
 import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 import org.sonatype.nexus.transaction.Transactional;
 
+import org.quartz.JobDataMap;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -40,6 +40,7 @@ import org.quartz.Trigger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.quartz.TriggerKey.triggerKey;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
 
 @Named
 @Singleton
@@ -66,6 +67,14 @@ public class TaskResultStateStoreImpl
         .map(jobStates -> aggregate(taskInfo, jobStates));
   }
 
+  @Override
+  public void updateJobDataMap(final TaskInfo taskInfo) {
+    String jobName = ((QuartzTaskInfo) taskInfo).getJobKey().getName();
+    JobDataMap jobDataMap = new JobDataMap();
+    updateJobData(jobDataMap, taskInfo.getConfiguration());
+    doUpdateJobDataMap(jobName, jobDataMap);
+  }
+
   @Transactional
   protected List<QuartzTaskStateData> getQuartzStates() {
     return dao().getStates();
@@ -74,6 +83,14 @@ public class TaskResultStateStoreImpl
   @Transactional
   protected Optional<QuartzTaskStateData> getQuartzState(final String taskId) {
     return dao().getState(taskId);
+  }
+
+  @Transactional
+  protected void doUpdateJobDataMap(final String jobName, final JobDataMap jobDataMap) {
+    QuartzTaskStateData quartzTaskStateData = new QuartzTaskStateData();
+    quartzTaskStateData.setJobName(jobName);
+    quartzTaskStateData.setJobData(jobDataMap);
+    dao().updateJobDataMap(quartzTaskStateData);
   }
 
   private TaskResultState aggregate(final TaskInfo taskInfo, final List<QuartzTaskStateData> jobStates) {
@@ -106,6 +123,6 @@ public class TaskResultStateStoreImpl
         .anyMatch("EXECUTING"::equals);
 
     return new TaskResultState(taskConfiguration.getId(), running ? TaskState.RUNNING : TaskState.WAITING,
-        nextFireTime, taskConfiguration.getLastRunState());
+        nextFireTime, taskConfiguration.getLastRunState(), taskConfiguration.getProgress());
   }
 }

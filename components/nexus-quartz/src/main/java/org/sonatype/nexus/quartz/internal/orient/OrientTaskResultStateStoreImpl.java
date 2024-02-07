@@ -10,21 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.node;
+package org.sonatype.nexus.quartz.internal.orient;
 
-import java.util.function.Consumer;
+import java.util.Optional;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.scheduling.TaskInfo;
+import org.sonatype.nexus.scheduling.spi.TaskResultState;
+import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
-/**
- * Service for rebuilding browse node data.
- *
- * @since 3.22
- */
-public interface RebuildBrowseNodeService
+@Named
+@Singleton
+public class OrientTaskResultStateStoreImpl
+    implements TaskResultStateStore
 {
-  /**
-   * @param repository {@link Repository} to rebuild browse node data for.
-   */
-  void rebuild(Repository repository, Consumer<String> progressUpdater) throws RebuildBrowseNodeFailedException;
+  @Override
+  public Optional<TaskResultState> getState(final TaskInfo taskInfo) {
+    // functionality not supported in orient
+    return Optional.empty();
+  }
+
+  @Override
+  public void updateJobDataMap(final TaskInfo taskInfo) {
+    // functionality not supported in orient
+  }
+
+  @Override
+  public boolean isSupported() {
+    return false;
+  }
 }

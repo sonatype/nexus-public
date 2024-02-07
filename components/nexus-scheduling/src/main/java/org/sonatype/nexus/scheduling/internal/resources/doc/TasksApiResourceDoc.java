@@ -27,7 +27,7 @@ import org.sonatype.nexus.rest.Page;
  * @since 3.6
  */
 @Api(value = "Tasks")
-public interface TasksResourceDoc
+public interface TasksApiResourceDoc
 {
   @ApiOperation("List tasks")
   Page<TaskXO> getTasks(@ApiParam(value = "Type of the tasks to get") final String type);

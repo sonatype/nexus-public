@@ -111,7 +111,10 @@ public class QuartzTaskUtils {
    * Saves {@link TaskConfiguration} back to the given {@link JobDetail}.
    */
   public static void updateJobData(final JobDetail jobDetail, final TaskConfiguration taskConfiguration) {
-    JobDataMap jobDataMap = jobDetail.getJobDataMap();
+    updateJobData(jobDetail.getJobDataMap(), taskConfiguration);
+  }
+
+  public static void updateJobData(final JobDataMap jobDataMap, final TaskConfiguration taskConfiguration) {
     taskConfiguration.asMap().forEach((key, value) -> {
       if (TaskConfiguration.REMOVE_ATTRIBUTE_MARKER.equals(value)) {
         jobDataMap.remove(key);

@@ -213,4 +213,8 @@
     WHERE D.job_name = #{value};
   </select>
 
+  <update id="updateJobDataMap" parameterType="QuartzTaskStateData">
+    UPDATE qrtz_job_details SET job_data = #{jobData} WHERE job_name = #{jobName};
+  </update>
+
 </mapper>
