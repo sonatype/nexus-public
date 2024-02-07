@@ -20,47 +20,20 @@ import java.util.Properties;
 
 import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static java.lang.Boolean.parseBoolean;
-import static java.util.prefs.Preferences.userRoot;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
-import static org.sonatype.nexus.common.app.FeatureFlags.CHANGE_REPO_BLOBSTORE_TASK_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_DEVELOPER;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
-import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 
 public class NexusEditionPropertiesConfigurer
 {
-
-  private static final String NEXUS_LOAD_AS_OSS_PROP_NAME = "nexus.loadAsOSS";
-
-  private static final String EDITION_PRO_PATH = "edition_pro";
-
   static final String NEXUS_EDITION = "nexus-edition";
 
   static final String NEXUS_FULL_EDITION = "nexus-full-edition";
 
-  private static final String NEXUS_FEATURES = "nexus-features";
-
-  private static final String NEXUS_PRO_FEATURE = "nexus-pro-feature";
-
-  private static final String NEXUS_OSS_EDITION = "nexus-oss-edition";
-
-  private static final String NEXUS_OSS_FEATURE = "nexus-oss-feature";
-
   static final String NEXUS_DB_FEATURE = "nexus-db-feature";
 
-  private static final String NEXUS_EXCLUDE_FEATURES =  "nexus-exclude-features";
+  private static final String NEXUS_FEATURES = "nexus-features";
 
-  private static final Logger log = LoggerFactory.getLogger(NexusEditionPropertiesConfigurer.class);
-
-  private static Path workDirPath;
+  private static final String NEXUS_EXCLUDE_FEATURES = "nexus-exclude-features";
 
   public Properties getPropertiesFromConfiguration() throws IOException {
 
@@ -73,18 +46,12 @@ public class NexusEditionPropertiesConfigurer
     requireProperty(properties, "karaf.base");
     requireProperty(properties, "karaf.data");
 
-    File workDir = new File(properties.getProperty("karaf.data")).getCanonicalFile();
-    workDirPath = workDir.toPath();
+    Path workDirPath = new File(properties.getProperty("karaf.data")).getCanonicalFile().toPath();
     DirectoryHelper.mkdir(workDirPath);
 
-    if (hasProFeature(properties)) {
-      if (shouldSwitchToOss(workDirPath)) {
-        adjustEditionProperties(properties);
-      }
-      else {
-        createProEditionMarker(workDirPath);
-      }
-    }
+    NexusEditionType editionType = assumeEditionByProperties(properties);
+    NexusEdition edition = NexusEditionFactory.getEdition(editionType);
+    edition.adjustEditionProperties(workDirPath, properties);
 
     selectDatastoreFeature(properties);
     selectAuthenticationFeature(properties);
@@ -94,94 +61,26 @@ public class NexusEditionPropertiesConfigurer
     requireProperty(properties, NEXUS_DB_FEATURE);
 
     return properties;
+  }
 
+  private NexusEditionType assumeEditionByProperties(Properties properties) {
+    if (hasProFeature(properties)) {
+      return NexusEditionType.PRO;
+    }
+    if (hasProStarterFeature(properties)) {
+      return NexusEditionType.PRO_STARTER;
+    }
+    return NexusEditionType.OSS;
+  }
 
+  private boolean hasProStarterFeature(final Properties properties) {
+    return properties.getProperty(NEXUS_FEATURES, "")
+        .contains(NexusEditionFeature.PRO_STARTER_FEATURE.featureString);
   }
 
   private boolean hasProFeature(final Properties properties) {
-    return properties.getProperty(NEXUS_FEATURES, "").contains(NEXUS_PRO_FEATURE);
-  }
-
-  /**
-   * Ensure that the oss edition is loaded, regardless of what the configuration specifies.
-   * @param properties
-   */
-  private void adjustEditionProperties(final Properties properties) {
-    log.info("Loading OSS Edition");
-    //override to load nexus-oss-edition
-    properties.put(NEXUS_EDITION, NEXUS_OSS_EDITION);
-    properties
-        .put(NEXUS_FEATURES, properties.getProperty(NEXUS_FEATURES).replace(NEXUS_PRO_FEATURE, NEXUS_OSS_FEATURE));
-  }
-
-  /**
-   * Determine whether or not we should be booting the OSS edition or not, based on the presence of a pro edition marker
-   * file, license, or a System property that can be used to override the behaviour.
-   */
-  boolean shouldSwitchToOss(final Path workDirPath) {
-    File proEditionMarker = getProEditionMarker(workDirPath);
-    boolean switchToOss;
-
-    if (hasNexusLoadAsOSS()) {
-      switchToOss = isNexusLoadAsOSS();
-    }
-    else if (proEditionMarker.exists()) {
-      switchToOss = false;
-    }
-    else if (isNexusClustered()) {
-      switchToOss = false; // avoid switching the edition when clustered
-    }
-    else {
-      switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicense();
-    }
-
-    return switchToOss;
-  }
-
-  boolean hasNexusLoadAsOSS() {
-    return null != System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME);
-  }
-
-  boolean isNexusLoadAsOSS() {
-    return Boolean.getBoolean(NEXUS_LOAD_AS_OSS_PROP_NAME);
-  }
-
-  File getProEditionMarker(final Path workDirPath) {
-    return workDirPath.resolve(EDITION_PRO_PATH).toFile();
-  }
-
-  private void createProEditionMarker(final Path workDirPath) {
-    File proEditionMarker = getProEditionMarker(workDirPath);
-    try {
-      if (proEditionMarker.createNewFile()) {
-        log.debug("Created pro edition marker file: {}", proEditionMarker);
-      }
-    }
-    catch (IOException e) {
-      log.error("Failed to create pro edition marker file: {}", proEditionMarker, e);
-    }
-  }
-
-  boolean isNexusClustered() {
-    return Boolean.getBoolean("nexus.clustered");
-  }
-
-  boolean isNullNexusLicenseFile() {
-    return System.getProperty("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
-  }
-
-  boolean isNullJavaPrefLicense() {
-    Thread currentThread = Thread.currentThread();
-    ClassLoader tccl = currentThread.getContextClassLoader();
-    // Java prefs spawns a Timer-Task that inherits the current TCCL;
-    // temporarily clear it so we can be GC'd if we bounce the KERNEL
-    currentThread.setContextClassLoader(null);
-    try {
-      return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
-    }
-    finally {
-      currentThread.setContextClassLoader(tccl);
-    }
+    return properties.getProperty(NEXUS_FEATURES, "")
+        .contains(NexusEditionFeature.PRO_FEATURE.featureString);
   }
 
   private void readEnvironmentVariables(final Properties properties) {
