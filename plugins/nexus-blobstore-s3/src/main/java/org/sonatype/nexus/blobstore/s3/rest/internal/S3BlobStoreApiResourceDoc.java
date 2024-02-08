@@ -61,9 +61,10 @@ public interface S3BlobStoreApiResourceDoc
   @ApiOperation("Get a S3 blob store configuration by name")
   @ApiResponses(value = {
       @ApiResponse(code = 200, message = SUCCESS, response = S3BlobStoreApiModel.class),
-      @ApiResponse(code = 400, message = UNKNOWN_S3_BLOB_STORE),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
-      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
+      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
+      @ApiResponse(code = 404, message = UNKNOWN_S3_BLOB_STORE)
   })
-  S3BlobStoreApiModel getBlobStore(@ApiParam(value = "Name of the blob store configuration to fetch") String blobStoreName);
+  S3BlobStoreApiModel getBlobStore(
+      @ApiParam(value = "Name of the blob store configuration to fetch") String blobStoreName);
 }

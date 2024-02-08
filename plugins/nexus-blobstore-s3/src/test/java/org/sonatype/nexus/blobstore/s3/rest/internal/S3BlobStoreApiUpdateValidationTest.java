@@ -32,9 +32,9 @@ import static org.junit.rules.ExpectedException.none;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
-import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiUpdateValidation.BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE;
-import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiUpdateValidation.BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT;
-import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiUpdateValidation.NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConstants.BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConstants.BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConstants.NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT;
 
 public class S3BlobStoreApiUpdateValidationTest
     extends TestSupport

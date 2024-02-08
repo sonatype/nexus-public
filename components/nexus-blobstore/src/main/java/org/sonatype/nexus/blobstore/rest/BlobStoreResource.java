@@ -14,7 +14,6 @@ package org.sonatype.nexus.blobstore.rest;
 
 import java.util.List;
 import java.util.Map;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -95,9 +94,8 @@ public class BlobStoreResource
   @GET
   public List<GenericBlobStoreApiResponse> listBlobStores() {
     Map<String, BlobStore> blobstoresByName = blobStoreManager.getByName();
-    return store.list().stream()
-        .map(configuration -> new GenericBlobStoreApiResponse(configuration,
-            blobstoresByName.get(configuration.getName())))
+    return store.list().stream().map(
+            configuration -> new GenericBlobStoreApiResponse(configuration, blobstoresByName.get(configuration.getName())))
         .collect(toList());
   }
 
@@ -108,7 +106,7 @@ public class BlobStoreResource
   @Path("/{name}")
   public void deleteBlobStore(@PathParam("name") final String name) throws Exception {
     if (!blobStoreManager.exists(name)) {
-      BlobStoreResourceUtil.throwBlobStoreNotFoundException();
+      BlobStoreResourceUtil.throwCreateBlobStoreNotFoundException("", name);
     }
     try {
       blobStoreManager.delete(name);

@@ -13,7 +13,6 @@
 package org.sonatype.nexus.blobstore.file.rest;
 
 import java.util.Optional;
-
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -80,8 +79,9 @@ public class FileBlobStoreResource
   @PUT
   @Path("/file/{name}")
   @Validate
-  public void updateFileBlobStore(@PathParam("name") final String name,
-                                  @Valid final FileBlobStoreApiUpdateRequest request)
+  public void updateFileBlobStore(
+      @PathParam("name") final String name,
+      @Valid final FileBlobStoreApiUpdateRequest request)
       throws Exception
   {
     // Confirm that the blobstore name and type are the expected name and type
@@ -108,7 +108,7 @@ public class FileBlobStoreResource
   private BlobStoreConfiguration getBlobStoreConfiguration(final String name) {
     BlobStoreConfiguration configuration = Optional.ofNullable(blobStoreManager.get(name))
         .map(BlobStore::getBlobStoreConfiguration)
-        .orElseThrow(BlobStoreResourceUtil::createBlobStoreNotFoundException);
+        .orElseThrow(() -> BlobStoreResourceUtil.createBlobStoreNotFoundException(FileBlobStore.TYPE, name));
 
     if (!configuration.getType().equals(FileBlobStore.TYPE)) {
       throw new WebApplicationMessageException(
