@@ -30,7 +30,7 @@ public interface NexusTestDistribution
 {
   public static enum Distribution
   {
-    BASE, OSS, PRO
+    BASE, OSS, PRO, PRO_STARTER
   }
 
   int priority(TestDatabase database, Distribution dist);
