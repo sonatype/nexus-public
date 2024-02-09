@@ -10,39 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.sonatype.nexus.edition.oss;
+package org.sonatype.nexus.common.event.licensing;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.common.app.ApplicationVersion;
-import org.sonatype.nexus.common.app.ApplicationVersionSupport;
-import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.licensing.ProductEditionChangedEvent;
-
-import com.google.common.eventbus.Subscribe;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * OSS {@link ApplicationVersion}.
+ * This event is used when the edition of the license installed changes
  *
- * @since 3.0
  */
-@Named("OSS")
-@Singleton
-public class ApplicationVersionImpl
-    extends ApplicationVersionSupport
-    implements EventAware
+public class ProductEditionChangedEvent
 {
-  private String edition = "OSS";
+  private final String edition;
 
-  @Override
+  public ProductEditionChangedEvent(final String edition) {
+    this.edition = checkNotNull(edition);
+  }
+
   public String getEdition() {
     return edition;
   }
-
-  @Subscribe
-  public void on(final ProductEditionChangedEvent event) {
-    edition = event.getEdition();
-  }
-
 }
