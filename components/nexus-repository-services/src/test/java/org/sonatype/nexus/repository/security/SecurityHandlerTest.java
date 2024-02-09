@@ -16,12 +16,14 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Handler;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,11 +42,14 @@ public class SecurityHandlerTest
   @Mock
   private SecurityFacet securityFacet;
 
+  @Mock
+  private Handler loginsCounterHandler;
+
   private AttributesMap attributesMap;
 
   @Before
   public void setup() {
-    underTest = new SecurityHandler();
+    underTest = new SecurityHandler(null);
 
     attributesMap = new AttributesMap();
     when(repository.facet(SecurityFacet.class)).thenReturn(securityFacet);
@@ -63,5 +68,18 @@ public class SecurityHandlerTest
     attributesMap.set(SecurityHandler.AUTHORIZED_KEY, true);
     underTest.handle(context);
     verify(securityFacet, never()).ensurePermitted(any());
+  }
+
+  @Test
+  public void testHandle_loginsCounterHandlerIsNull() throws Exception {
+    underTest.handle(context);
+    verify(context, never()).insertHandler(loginsCounterHandler);
+  }
+
+  @Test
+  public void testHandle_loginsCounterHandlerNonNull() throws Exception {
+    underTest = new SecurityHandler(loginsCounterHandler);
+    underTest.handle(context);
+    verify(context, atMostOnce()).insertHandler(loginsCounterHandler);
   }
 }

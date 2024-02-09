@@ -13,11 +13,14 @@
 package org.sonatype.nexus.repository.security;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -36,6 +39,13 @@ public class SecurityHandler
   @VisibleForTesting
   static final String AUTHORIZED_KEY = "security.authorized";
 
+  private final Handler loginsCounterHandler;
+
+  @Inject
+  public SecurityHandler(@Named("nexus.analytics.loginsCounterHandler") @Nullable final Handler loginsCounterHandler) {
+    this.loginsCounterHandler = loginsCounterHandler;
+  }
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
@@ -46,6 +56,9 @@ public class SecurityHandler
     if (context.getAttributes().get(AUTHORIZED_KEY) == null) {
       securityFacet.ensurePermitted(context.getRequest());
       context.getAttributes().set(AUTHORIZED_KEY, true);
+      if (loginsCounterHandler != null) {
+        context.insertHandler(loginsCounterHandler);
+      }
     }
 
     return context.proceed();

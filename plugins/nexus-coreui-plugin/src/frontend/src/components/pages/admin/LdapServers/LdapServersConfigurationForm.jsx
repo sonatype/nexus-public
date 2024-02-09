@@ -99,8 +99,8 @@ export default forwardRef(({actor, onDone}, ref) => {
     }
   };
 
-  const updateProtocol = (e) =>
-    send({type: 'UPDATE_PROTOCOL', value: e.target.value});
+  const updateProtocol = (value) =>
+    send({type: 'UPDATE_PROTOCOL', value});
 
   const onChangePassword = () => send('CHANGE_PASSWORD');
 

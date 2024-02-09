@@ -79,7 +79,8 @@ describe('RoutingRulesForm', function() {
       name: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.NAME_LABEL),
       description: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.DESCRIPTION_LABEL),
       mode: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MODE_LABEL),
-      matcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)),
+      emptyMatcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)),
+      matcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)).querySelector('input'),
       matcherButton: (index) => within(screen.getByText('Matchers').closest('.nx-form-group')).getAllByRole('button')[index],
       createButton: () => queryByText(UIStrings.ROUTING_RULES.FORM.CREATE_BUTTON, {selector: '.nx-btn'}),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
@@ -250,7 +251,7 @@ describe('RoutingRulesForm', function() {
       }
     });
 
-    const {loadingMask, matcher, saveButton, matcherButton} = renderEditView(itemId);
+    const {loadingMask, matcher, saveButton, matcherButton, emptyMatcher} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -263,10 +264,10 @@ describe('RoutingRulesForm', function() {
     expect(matcherButton(2)).toBeInTheDocument();
 
     userEvent.click(matcherButton(2));
-    expect(matcher(2)).not.toBeInTheDocument();
+    expect(emptyMatcher(2)).not.toBeInTheDocument();
 
     userEvent.click(matcherButton(1));
-    expect(matcher(1)).not.toBeInTheDocument();
+    expect(emptyMatcher(1)).not.toBeInTheDocument();
 
     expect(saveButton()).not.toHaveClass('disabled');
 

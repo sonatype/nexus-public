@@ -121,7 +121,7 @@ public interface FeatureFlags
 
   String REACT_PRIVILEGES_MODAL_ENABLED = "nexus.react.privileges.modal.enabled";
 
-  String REACT_PRIVILEGES_MODAL_NAMED = "${nexus.react.privileges.modal.enabled:-false}";
+  String REACT_PRIVILEGES_MODAL_NAMED = "${nexus.react.privileges.modal.enabled:-true}";
 
   /**
    * Feature flag to determine if we should include the repository sizes feature
@@ -130,9 +130,13 @@ public interface FeatureFlags
 
   String REPOSITORY_SIZE_ENABLED_NAMED = "${nexus.repository.size:-false}";
 
+  String CONTENT_USAGE_ENABLED = "nexus.contentUsageMetrics.enabled";
+
+  String CONTENT_USAGE_ENABLED_NAMED = "${nexus.contentUsageMetrics.enabled:-true}";
+
   String REACT_ROLES_MODAL_ENABLED = "nexus.react.roles.modal.enabled";
 
-  String REACT_ROLES_MODAL_NAMED = "${nexus.react.roles.modal.enabled:-false}";
+  String REACT_ROLES_MODAL_NAMED = "${nexus.react.roles.modal.enabled:-true}";
 
   String BLOBSTORE_OWNERSHIP_CHECK_DISABLED_NAMED = "${nexus.blobstore.s3.ownership.check.disabled:-false}";
 

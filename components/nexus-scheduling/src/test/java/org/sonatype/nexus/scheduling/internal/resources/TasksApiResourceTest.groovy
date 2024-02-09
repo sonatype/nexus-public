@@ -35,7 +35,7 @@ import static org.sonatype.nexus.scheduling.TaskState.OK
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING
 import static org.sonatype.nexus.scheduling.TaskState.WAITING
 
-class TasksResourceTest
+class TasksApiResourceTest
     extends Specification {
   def tasksResource
 
@@ -57,12 +57,12 @@ class TasksResourceTest
   ]
 
   def setup() {
-    tasksResource = new TasksResource(taskScheduler)
+    tasksResource = new TasksApiResource(taskScheduler)
   }
 
   def 'resource path is the expected value'() {
     expect:
-      TasksResource.RESOURCE_URI == '/v1/tasks'
+      TasksApiResource.RESOURCE_URI == '/v1/tasks'
   }
 
   def 'getTasks gets list of scheduled tasks'() {

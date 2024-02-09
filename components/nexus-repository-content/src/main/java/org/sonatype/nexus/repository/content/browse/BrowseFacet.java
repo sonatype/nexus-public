@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.browse;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -61,5 +61,5 @@ public interface BrowseFacet
   /**
    * Rebuilds the browse node tree for this repository.
    */
-  void rebuildBrowseNodes();
+  void rebuildBrowseNodes(Consumer<String> progressUpdater);
 }

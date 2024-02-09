@@ -66,7 +66,7 @@ export default function UsersList({onCreate, onEdit}) {
   const sortByStatus = () => send('SORT_BY_STATUS');
 
   const onUserIdFilterChange = (value) => send({type: 'FILTER', filter: value});
-  const onSourceFilterChange = (event) => send({type: 'FILTER_BY_SOURCE', filter: event.currentTarget.value});
+  const onSourceFilterChange = (value) => send({type: 'FILTER_BY_SOURCE', filter: value});
   const canCreate = ExtJS.checkPermission('nexus:users:create');
 
 

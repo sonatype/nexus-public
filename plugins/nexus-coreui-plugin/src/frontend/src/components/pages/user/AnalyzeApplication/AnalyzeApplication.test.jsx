@@ -17,7 +17,9 @@ import AnalyzeApplication from './AnalyzeApplication';
 import {waitForElementToBeRemoved} from '@testing-library/react';
 import UIStrings from '../../../../constants/UIStrings';
 
-const componentName = 'componentName';
+const componentName = {
+  'componentName': 'foobar'
+};
 
 jest.mock('axios', () => {
   return {

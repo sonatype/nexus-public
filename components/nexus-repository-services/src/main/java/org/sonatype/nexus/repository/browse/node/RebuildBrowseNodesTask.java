@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.browse.node;
 
 import java.util.concurrent.TimeUnit;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -21,6 +20,9 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.Cancelable;
+import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Browse nodes rebuild task.
@@ -32,14 +34,17 @@ public class RebuildBrowseNodesTask
     extends RepositoryTaskSupport
     implements Cancelable
 {
-  private final RebuildBrowseNodeService rebuildBrowseNodeService;
-
   private static final String PYPI_FORMAT_NAME = "pypi";
 
+  private final RebuildBrowseNodeService rebuildBrowseNodeService;
+
+  private final TaskResultStateStore taskResultStateStore;
+
   @Inject
-  public RebuildBrowseNodesTask(final RebuildBrowseNodeService rebuildBrowseNodeService)
+  public RebuildBrowseNodesTask(final RebuildBrowseNodeService rebuildBrowseNodeService, final TaskResultStateStore taskResultStateStore)
   {
-    this.rebuildBrowseNodeService = rebuildBrowseNodeService;
+    this.rebuildBrowseNodeService = checkNotNull(rebuildBrowseNodeService);
+    this.taskResultStateStore = checkNotNull(taskResultStateStore);
   }
 
   @Override
@@ -50,8 +55,10 @@ public class RebuildBrowseNodesTask
   @Override
   protected void execute(final Repository repo) {
     try {
+      //since this task doesn't support 'resume', the progress should be cleared each time it is run
+      updateProgress(taskResultStateStore, null);
       delayIfPyPi(repo);
-      rebuildBrowseNodeService.rebuild(repo);
+      rebuildBrowseNodeService.rebuild(repo, progressMessage -> updateProgress(taskResultStateStore, progressMessage));
     }
     catch (RebuildBrowseNodeFailedException e) {
       log.error("Error rebuilding browse nodes for repository: {}", repo, e);

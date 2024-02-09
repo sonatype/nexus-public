@@ -67,6 +67,8 @@ public class TaskConfiguration
 
   public static final String LAST_RUN_STATE_RUN_DURATION = "lastRunState.runDuration";
 
+  public static final String PROGRESS_KEY = ".progress";
+
   static final String ID_KEY = ".id";
 
   static final String NAME_KEY = ".name";
@@ -291,6 +293,14 @@ public class TaskConfiguration
 
   public void setLogTaskState(final boolean logTaskState) {
     setBoolean(LOG_STATE_KEY, logTaskState);
+  }
+
+  public String getProgress() {
+    return getString(PROGRESS_KEY);
+  }
+
+  public void setProgress(final String progress) {
+    setString(PROGRESS_KEY, progress);
   }
 
   //

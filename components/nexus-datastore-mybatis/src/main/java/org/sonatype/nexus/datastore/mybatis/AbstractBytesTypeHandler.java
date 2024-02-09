@@ -13,7 +13,10 @@
 package org.sonatype.nexus.datastore.mybatis;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,13 +26,14 @@ import java.util.function.Supplier;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Intended for use for reading from Quartz
+ * Abstract {@link TypeHandler} that supports serializing/deserializing Java objects to/from a byte array.
  */
 public abstract class AbstractBytesTypeHandler<T>
     extends BaseTypeHandler<T>
@@ -61,13 +65,13 @@ public abstract class AbstractBytesTypeHandler<T>
   }
 
   @Override
-  public void setNonNullParameter(
+  public final void setNonNullParameter(
       final PreparedStatement ps,
-      final int i,
+      final int parameterIndex,
       final T parameter,
       final JdbcType jdbcType) throws SQLException
   {
-    throw new UnsupportedOperationException("Unimplemented");
+    ps.setBytes(parameterIndex, serialize(parameter));
   }
 
   /**
@@ -79,5 +83,17 @@ public abstract class AbstractBytesTypeHandler<T>
     return blob.map(ByteArrayInputStream::new)
         .map(this::deserialize)
         .orElseGet(defaultValueSupplier::get);
+  }
+
+  private byte[] serialize(final T object) throws SQLException {
+    try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
+         ObjectOutputStream out = new ObjectOutputStream(buf)) {
+      out.writeObject(object);
+      out.flush();
+      return buf.toByteArray();
+    }
+    catch (IOException e) {
+      throw new SQLException("Problem serializing: " + object.getClass().getName(), e);
+    }
   }
 }

@@ -48,15 +48,69 @@
 
   ## Loading progress helpers
   <script type="text/javascript">
-    function progressMessage(msg) {
+    function log(msg) {
       if (console && console.log) {
         console.log(msg);
       }
+    }
+    function progressMessage(msg) {
+      log(msg);
       document.getElementById('loading-msg').innerHTML=msg;
     }
   </script>
   #if ( $designInput )
-    <script type="text/javascript" src="https://clm-staging.sonatype.com/user-telemetry-rm.js"></script>
+    <script type="text/javascript">
+      function servicePath(service) {
+        return window.location.origin + window.location.pathname + service;
+      }
+
+      async function createWrapperScript() {
+        try {
+          const telemetryService = 'service/rest/v1/user-telemetry/javascript';
+          const response = await fetch(servicePath(telemetryService));
+          const jsContent = await response.text();
+          if (jsContent.length > 0) {
+            log('Creating wrapper script');
+            const scriptElement = document.createElement('script');
+            scriptElement.type = 'text/javascript';
+            scriptElement.text = jsContent;
+            scriptElement.style.display = 'none';
+            document.head.appendChild(scriptElement);
+          }
+          else {
+            log('Invalid wrapper script');
+          }
+        } catch (error) {
+          console.error('Error fetching or executing script:', error);
+        }
+      }
+      async function getTelemetryConfig() {
+        try {
+          const telemetryService = 'service/rest/v1/user-telemetry/config';
+          const response = await fetch(servicePath(telemetryService));
+          return await response.json();
+        } catch (error) {
+          console.error('Error fetching config:', error);
+        }
+      }
+
+      async function initializeTelemetry(createWrapper = false) {
+        if (createWrapper) {
+          await createWrapperScript();
+        }
+        if (window.userTelemetry) {
+          log('Initializing telemetry');
+          let config = await getTelemetryConfig();
+          window.userTelemetry.initialize(config);
+        }
+        else {
+          console.error('telemetry during telemetry initialization');
+        }
+      }
+      initializeTelemetry(true);
+      window.initializeTelemetry = initializeTelemetry;
+
+    </script>
   #end
   #macro(message $text)
     <script type="text/javascript">progressMessage('$text');</script>

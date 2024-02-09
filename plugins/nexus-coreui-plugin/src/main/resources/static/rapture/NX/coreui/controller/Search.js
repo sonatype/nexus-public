@@ -353,7 +353,7 @@ Ext.define('NX.coreui.controller.Search', {
       return;
     }
 
-    if (this.timedOutMessage) {
+    if (this.timedOutMessage && NX.State.isSqlSearchEnabled() && warning) {
       warning.setTitle(this.timedOutMessage);
       warning.show();
     }
@@ -361,7 +361,7 @@ Ext.define('NX.coreui.controller.Search', {
       warning.hide();
     }
 
-    if (this.limitMessage) {
+    if (this.limitMessage && NX.State.isSqlSearchEnabled() && info) {
       info.setTitle(this.limitMessage);
       info.show();
     }
@@ -568,7 +568,7 @@ Ext.define('NX.coreui.controller.Search', {
     cmp.focus();
     searchCriteriaPanel.add(addButton);
 
-    if (criteria.getId() === 'keyword') {
+    if (criteria.getId() === 'keyword' && NX.State.isSqlSearchEnabled() && searchInfo) {
       searchInfo.setTitle(NX.I18n.get('Search_KeywordSearchRestrictions'));
     }
   },

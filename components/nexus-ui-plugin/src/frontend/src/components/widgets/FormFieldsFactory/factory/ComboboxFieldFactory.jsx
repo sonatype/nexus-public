@@ -150,7 +150,7 @@ const Field = ({id, dynamicProps, current:parentState, onChange}) => {
         : <NxFormSelect
             {...FormUtils.fieldProps(id, parentState, initialValue || '')}
             value={value}
-            onChange={event => onChange(id, event.currentTarget.value)}
+            onChange={value => onChange(id, value)}
         >
           <option value=""/>
           {data?.map(({id, displayName}) => <option key={id} value={id}>{displayName}</option>)}

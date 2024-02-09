@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.logging.task.TaskLoggerFactory;
 import org.sonatype.nexus.logging.task.TaskLoggerHelper;
+import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
 import com.google.common.base.Strings;
 
@@ -42,6 +43,8 @@ public abstract class TaskSupport
   private final AtomicBoolean canceledFlag;
 
   private final boolean taskLoggingEnabled;
+
+  private TaskInfo taskInfo;
 
   public TaskSupport() {
     this(true);
@@ -151,5 +154,20 @@ public abstract class TaskSupport
   @Override
   public String toString() {
     return String.format("%s(id=%s, name=%s)", getClass().getSimpleName(), getId(), getName());
+  }
+
+  @Override
+  public TaskInfo getTaskInfo() {
+    return taskInfo;
+  }
+
+  @Override
+  public void setTaskInfo(final TaskInfo taskInfo) {
+    this.taskInfo = taskInfo;
+  }
+
+  protected void updateProgress(final TaskResultStateStore taskResultStateStore, final String progress) {
+    taskInfo.getConfiguration().setProgress(progress);
+    taskResultStateStore.updateJobDataMap(taskInfo);
   }
 }

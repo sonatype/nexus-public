@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -144,20 +145,20 @@ public class BrowseFacetImpl
 
   @Guarded(by = STARTED)
   @Override
-  public void rebuildBrowseNodes() {
+  public void rebuildBrowseNodes(final Consumer<String> progressUpdater) {
     log.info("Deleting browse nodes for repository {}", getRepository().getName());
 
     browseNodeManager.deleteBrowseNodes();
 
     log.info("Rebuilding browse nodes for repository {}", getRepository().getName());
 
-    createAllBrowseNodes();
+    createAllBrowseNodes(progressUpdater);
   }
 
   /**
    * Create browse nodes for every asset and their components in the repository.
    */
-  private void createAllBrowseNodes() {
+  private void createAllBrowseNodes(final Consumer<String> progressUpdater) {
     String repositoryName = getRepository().getName();
     try {
       FluentAssets assets = getRepository().facet(ContentFacet.class).assets();
@@ -179,6 +180,10 @@ public class BrowseFacetImpl
           long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
           progressLogger.info("Processed {} / {} {} assets in {} ms",
               processed, total, repositoryName, elapsed);
+          if (progressUpdater != null) {
+            progressUpdater.accept(
+                String.format("processing repository %s %d/%d assets completed", repositoryName, processed, total));
+          }
 
           checkCancellation();
 

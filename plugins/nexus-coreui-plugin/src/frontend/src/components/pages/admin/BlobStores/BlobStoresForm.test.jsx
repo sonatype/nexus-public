@@ -742,7 +742,6 @@ describe('BlobStoresForm', function() {
     const {
       availableMembers,
       getByText,
-      getByLabelText,
       loadingMask,
       name,
       selectedMembers,
@@ -758,8 +757,8 @@ describe('BlobStoresForm', function() {
     expect(typeSelect()).not.toBeInTheDocument();
     expect(name()).not.toBeInTheDocument();
 
-    expect(availableMembers()).toContainElement(getByLabelText('default'));
-    expect(selectedMembers()).toContainElement(getByLabelText('test-converted'));
+    expect(availableMembers()).toHaveTextContent('default');
+    expect(selectedMembers()).toHaveTextContent('test-converted');
   });
 
   it('convert to group is not shown when editing a group', async function() {

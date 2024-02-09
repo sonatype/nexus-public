@@ -41,8 +41,8 @@ export default function AnalyzeApplicationModal(props) {
   const enableAssetSelection = assetMap !== undefined ? Object.entries(assetMap).length > 1 : false;
   const isLoading = state.matches('loading');
 
-  function handleAssetChange({target}) {
-    send('ASSET', {data: {[target.name]: target.value}});
+  function handleAssetChange(value) {
+    send('ASSET', {data: {'selectedAsset': value}});
   }
 
   function handleUpdate(event) {

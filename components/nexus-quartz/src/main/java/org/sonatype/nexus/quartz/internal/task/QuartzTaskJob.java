@@ -131,7 +131,7 @@ public class QuartzTaskJob
 
       // create TaskConfiguration, and using that the Task
       final TaskConfiguration config = configurationOf(context.getJobDetail());
-      task = taskFactory.create(config);
+      task = taskFactory.create(config, taskInfo);
       // after this point, cancellation will be handled okay too
 
       try {

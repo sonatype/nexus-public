@@ -66,8 +66,8 @@ export default function CleanupPoliciesPreview({policyData}) {
   const sortByGroup = () => sendToList({type: 'SORT_BY_GROUP'});
   const sortByVersion = () => sendToList({type: 'SORT_BY_VERSION'});
 
-  function repositoryChangeHandler(event) {
-    sendToForm({type: 'SET_REPOSITORY', repository: event.target.value});
+  function repositoryChangeHandler(repository) {
+    sendToForm({type: 'SET_REPOSITORY', repository});
   }
 
   function retryForm() {

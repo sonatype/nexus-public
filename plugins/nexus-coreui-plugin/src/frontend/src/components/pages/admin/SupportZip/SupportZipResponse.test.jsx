@@ -38,9 +38,9 @@ describe('SupportZipResponse', function() {
 
     const {container} = await renderView(response);
 
-    expect(container.querySelector('input[name="name"]')).toHaveValue("support-20200527-095617-6.zip");
-    expect(container.querySelector('input[name="size"]')).toHaveValue("281152");
-    expect(container.querySelector('input[name="file"]')).toHaveValue("/Users/ataylor/dev/sonatype/nexus-internal/target/sonatype-work/nexus3/downloads/support-20200527-095617-6.zip");
+    expect(container.querySelector('input[id="name"]')).toHaveValue("support-20200527-095617-6.zip");
+    expect(container.querySelector('input[id="size"]')).toHaveValue("281152");
+    expect(container.querySelector('input[id="file"]')).toHaveValue("/Users/ataylor/dev/sonatype/nexus-internal/target/sonatype-work/nexus3/downloads/support-20200527-095617-6.zip");
   });
 
   it('downloads', async function() {

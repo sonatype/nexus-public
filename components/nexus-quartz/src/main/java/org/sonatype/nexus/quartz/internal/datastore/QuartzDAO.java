@@ -30,4 +30,6 @@ public interface QuartzDAO
   List<QuartzTaskStateData> getStates();
 
   Optional<QuartzTaskStateData> getState(String jobName);
+
+  void updateJobDataMap(QuartzTaskStateData taskState);
 }

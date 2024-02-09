@@ -23,21 +23,10 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
  */
 public class BlobStoreResourceUtil
 {
-  public static WebApplicationMessageException createBlobStoreNotFoundException() {
-    return new WebApplicationMessageException(
-        NOT_FOUND,
-        "\"Unable to find blobstore\"",
-        APPLICATION_JSON
-    );
-  }
-
-  public static void throwBlobStoreNotFoundException() throws WebApplicationMessageException {
-    throw createBlobStoreNotFoundException();
-  }
-
   /**
-   * Throws {@link BAD_REQUEST} exception in case when BlobStore manager could not perform operation
-   * (for example, blobstore is in use)
+   * Throws {@link BAD_REQUEST} exception in case when BlobStore manager could not perform operation (for example,
+   * blobstore is in use)
+   *
    * @param message error message
    * @throws WebApplicationMessageException
    */
@@ -47,5 +36,37 @@ public class BlobStoreResourceUtil
         "\"" + message + "\"",
         APPLICATION_JSON
     );
+  }
+
+  /**
+   * Returns a {@link NOT_FOUND} WebApplicationMessageException when blobstore is not found.
+   *
+   * @param blobStoreType The type of the blobstore (e.g.: File, Group, S3, Azure Cloud Storage).
+   * @param blobStoreName The name of the blobstore.
+   * @return {@link WebApplicationMessageException}.
+   */
+  public static WebApplicationMessageException createBlobStoreNotFoundException(
+      final String blobStoreType,
+      final String blobStoreName)
+  {
+    return new WebApplicationMessageException(
+        NOT_FOUND,
+        String.format("\"Unable to find %s '%s' blobstore\"", blobStoreType, blobStoreName),
+        APPLICATION_JSON
+    );
+  }
+
+  /**
+   * Throws a {@link NOT_FOUND} WebApplicationMessageException when blobstore is not found.
+   *
+   * @param blobStoreType The type of the blobstore (e.g.: File, Group, S3, Azure Cloud Storage).
+   * @param blobStoreName The name of the blobstore.
+   * @throws {@link WebApplicationMessageException}.
+   */
+  public static void throwCreateBlobStoreNotFoundException(
+      final String blobStoreType,
+      final String blobStoreName)
+  {
+    throw createBlobStoreNotFoundException(blobStoreType, blobStoreName);
   }
 }

@@ -72,19 +72,17 @@ export default function LogViewer({itemId}) {
     }
   });
 
-  function onChangePeriod({target}) {
-    const newPeriod = Number(target.value);
-    if (newPeriod == 0) {
-      send('MANUAL_REFRESH', {period: newPeriod});
+  function onChangePeriod(period) {
+    if (period == 0) {
+      send('MANUAL_REFRESH', {period});
     }
     else {
       send('UPDATE_PERIOD', {period: newPeriod});
     }
   }
 
-  function onChangeSize({target}) {
-    const newSize = Number(target.value);
-    send('UPDATE_SIZE', {size: newSize});
+  function onChangeSize(size) {
+    send('UPDATE_SIZE', {size});
   }
 
   function updateMark(value) {

@@ -118,7 +118,7 @@ export default function RolesSelectionModal({
 
             <NxTableBody emptyMessage="No roles available">
               {filteredData.slice(lowerBound, upperBound).map((role) => (
-                  <NxTableRow key={role.id}>
+                  <NxTableRow key={role.id} id={role.id}>
                     <NxTableCell className="select-column">
                       <NxCheckbox
                         onChange={() => onRoleSelected(role)}

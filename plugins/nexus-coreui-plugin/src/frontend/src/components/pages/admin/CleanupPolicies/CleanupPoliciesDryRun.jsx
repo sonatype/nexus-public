@@ -48,8 +48,8 @@ export default function CleanupPoliciesDryRun({policyData}) {
     send({type: 'LOAD_REPOSITORIES', format: policyData.format});
   }, [policyData.format]);
 
-  function repositoryChangeHandler(event) {
-    send({type: 'SET_REPOSITORY', repository: event.target.value});
+  function repositoryChangeHandler(repository) {
+    send({type: 'SET_REPOSITORY', repository});
   }
 
   function retry() {

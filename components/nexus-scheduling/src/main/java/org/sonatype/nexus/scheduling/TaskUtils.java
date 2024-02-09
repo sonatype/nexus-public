@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -43,7 +41,7 @@ public class TaskUtils
   @Inject
   public TaskUtils(
       final Provider<TaskScheduler> taskSchedulerProvider,
-      @Nullable final TaskResultStateStore taskResultStateStoreProvider)
+      final TaskResultStateStore taskResultStateStoreProvider)
   {
     this.taskSchedulerProvider = checkNotNull(taskSchedulerProvider);
     this.taskResultStateStore = taskResultStateStoreProvider;
@@ -95,7 +93,7 @@ public class TaskUtils
   }
 
   private boolean isTaskRunning(final TaskInfo taskInfo) {
-    if (taskResultStateStore != null) {
+    if (taskResultStateStore.isSupported()) {
       log.debug("Checking state store for status of {}", taskInfo.getId());
       return taskResultStateStore.getState(taskInfo)
           .map(state -> state.getState().isRunning())

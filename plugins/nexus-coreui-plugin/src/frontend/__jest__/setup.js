@@ -26,6 +26,7 @@ window.crypto = {
 
 window.plugins = [];
 window.BlobStoreTypes = {};
+window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 global.NX = {
   Messages: {

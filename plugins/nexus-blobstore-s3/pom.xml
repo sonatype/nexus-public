@@ -168,7 +168,15 @@
         <configuration>
           <instructions>
             <Embed-Dependency>
-              aws-java-sdk-s3,aws-java-sdk-sts,aws-java-sdk-core,aws-java-sdk-kms,ion-java,jmespath-java,aws-java-sdk-cloudwatch,aws-java-sdk-cloudwatchmetrics,aws-java-sdk-dynamodb
+              aws-java-sdk-s3,
+              aws-java-sdk-sts,
+              aws-java-sdk-core,
+              aws-java-sdk-kms,
+              ion-java,
+              jmespath-java,
+              aws-java-sdk-cloudwatch,
+              aws-java-sdk-cloudwatchmetrics,
+              aws-java-sdk-dynamodb
             </Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>

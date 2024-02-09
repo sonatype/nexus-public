@@ -35,18 +35,22 @@ public class ExternalTaskState {
 
   private final Date nextFireTime;
 
+  private final String progress;
+
   public ExternalTaskState(
       final TaskState state,
       final Date nextFireTime,
       @Nullable final TaskState lastEndState,
       @Nullable final Date lastRunStarted,
-      @Nullable final Long lastRunDuration)
+      @Nullable final Long lastRunDuration,
+      @Nullable final String progress)
   {
     this.state = checkNotNull(state);
     this.nextFireTime = nextFireTime;
     this.lastEndState = lastEndState;
     this.lastRunStarted = lastRunStarted; // NOSONAR
     this.lastRunDuration = lastRunDuration;
+    this.progress = progress;
   }
 
   public ExternalTaskState(final TaskInfo taskInfo) {
@@ -55,7 +59,8 @@ public class ExternalTaskState {
         taskInfo.getCurrentState().getNextRun(),
         ofNullable(taskInfo.getLastRunState()).map(LastRunState::getEndState).orElse(null),
         ofNullable(taskInfo.getLastRunState()).map(LastRunState::getRunStarted).orElse(null),
-        ofNullable(taskInfo.getLastRunState()).map(LastRunState::getRunDuration).orElse(null)
+        ofNullable(taskInfo.getLastRunState()).map(LastRunState::getRunDuration).orElse(null),
+        taskInfo.getConfiguration().getProgress()
     );
   }
 
@@ -80,5 +85,10 @@ public class ExternalTaskState {
   @Nullable
   public Long getLastRunDuration() {
     return lastRunDuration;
+  }
+
+  @Nullable
+  public String getProgress() {
+    return progress;
   }
 }

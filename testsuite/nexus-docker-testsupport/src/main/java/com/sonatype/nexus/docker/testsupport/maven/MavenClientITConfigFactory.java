@@ -12,33 +12,25 @@
  */
 package com.sonatype.nexus.docker.testsupport.maven;
 
-import com.sonatype.nexus.docker.testsupport.framework.DockerCommandLineConfig;
-import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
-import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig.Builder;
+import java.util.Map;
 
-import static com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig.Builder.defaultDockerClientBuilder;
-import static com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig.Builder.defaultHostConfigBuilder;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 
 /**
- * @since 3.16
+ * Factory for creation of Maven required objects
  */
 public class MavenClientITConfigFactory
 {
   private MavenClientITConfigFactory() {
   }
 
-  public static DockerContainerConfig createMavenConfig(final String image, 
-                                                        final String tag,
-                                                        final DockerCommandLineConfig config) 
+  public static DockerContainerConfig createMavenConfig(
+      final String image,
+      final String tag,
+      final Map<String, String> pathBinds)
   {
-    return configBuilder(image + ":" + tag, config).build();
-  }
-
-  private static Builder configBuilder(final String image, final DockerCommandLineConfig config) {
-    return DockerContainerConfig.builder()
-        .image(image)
-        .withHostConfigBuilder(defaultHostConfigBuilder().appendBinds(config.getPathBinds()))
-        .withDockerClientBuilder(defaultDockerClientBuilder().readTimeoutMillis(SECONDS.toMillis(5000)));
+    return DockerContainerConfig.builder(image + ":" + tag)
+        .withPathBinds(pathBinds)
+        .build();
   }
 }

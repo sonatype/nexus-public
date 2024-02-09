@@ -59,7 +59,7 @@ export default function AnonymousSettingsForm() {
         <NxTextInput
           {...FormUtils.fieldProps('userId', current)}
           onChange={FormUtils.handleUpdate('userId', send)}
-          onBlur={FormUtils.trimOnBlur(send)}
+          onBlur={FormUtils.trimOnBlur('userId', send)}
         />
       </NxFormGroup>
       <NxFormGroup label={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL} isRequired>

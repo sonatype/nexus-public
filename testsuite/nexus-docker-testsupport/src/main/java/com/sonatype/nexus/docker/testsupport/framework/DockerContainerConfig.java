@@ -12,162 +12,135 @@
  */
 package com.sonatype.nexus.docker.testsupport.framework;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import com.spotify.docker.client.DefaultDockerClient;
-import com.spotify.docker.client.exceptions.DockerCertificateException;
-import com.spotify.docker.client.messages.HostConfig;
+import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.spotify.docker.client.messages.PortBinding.randomPort;
-import static java.util.Arrays.asList;
-import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
-import static java.util.Objects.isNull;
-import static java.util.stream.Collectors.toMap;
 
 /**
- * Configuration object for Docker Container. Creation is available through it's {@link #builder()}.
- *
- * The main objective of this configuration object is to provide a high amount of default behavior so that
- * implementers of Docker Clients can focus on the Clients rather than docker configuration.
- *
- * @since 3.6.1
+ * Configuration object for the Docker Container.
  */
 public class DockerContainerConfig
 {
-  public static final String[] PORT_MAPPING_PORTS = new String[]{"22", "80", "443"}; // NOSONAR
+  private final String image;
 
-  public static final String PORT_MAPPING_IP = "0.0.0.0"; // NOSONAR
+  private final Path dockerfile;
 
-  private static final String LATEST_TAG = "latest";
+  private List<Integer> exposedPorts;
 
-  private String image;
+  /**
+   * environment variable key value to environment variable value
+   */
+  private Map<String, String> env;
 
-  private List<String> env;
+  /**
+   * host path to container path
+   */
+  private Map<String, String> pathBinds;
 
   private String workingDir;
 
-  private HostConfig.Builder hostConfigBuilder;
-
-  private DefaultDockerClient.Builder dockerClientBuilder;
-
-  private DockerContainerConfig(Builder builder) {
-    this.image = imageTag(builder.image);
-    this.env = builder.env;
-    this.workingDir = builder.workingDir;
-    this.hostConfigBuilder = builder.hostConfigBuilder;
-    this.dockerClientBuilder = builder.dockerClientBuilder;
-  }
-
-  private String imageTag(final String image) {
-    String imageTag = image;
-
-    // By default we will use tag latest see https://github.com/spotify/docker-client/issues/857 for
-    // more details on why this is needed to at lease always pull the latest
-    if (imageTag.lastIndexOf(':') == -1) {
-      imageTag = imageTag + ":" + LATEST_TAG;
-    }
-
-    return imageTag;
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static class Builder
-  {
-    private String image;
-
-    private List<String> env = new ArrayList<>();
-
-    private String workingDir;
-
-    private HostConfig.Builder hostConfigBuilder;
-
-    private DefaultDockerClient.Builder dockerClientBuilder;
-
-    private Builder() {
-    }
-
-    public DockerContainerConfig build() {
-      checkNotNull(image);
-
-      if (isNull(this.hostConfigBuilder)) {
-        this.hostConfigBuilder = defaultHostConfigBuilder();
-      }
-
-      if (isNull(this.dockerClientBuilder)) {
-        this.dockerClientBuilder = defaultDockerClientBuilder();
-      }
-
-      return new DockerContainerConfig(this);
-    }
-
-    public Builder image(String image) {
-      this.image = image;
-      return this;
-    }
-
-    public Builder env(String... env) {
-      this.env.addAll(asList(env));
-      return this;
-    }
-
-    public Builder workingDir(String workingDir) {
-      this.workingDir = workingDir;
-      return this;
-    }
-
-    public Builder withHostConfigBuilder(HostConfig.Builder hostConfigBuilder) {
-      this.hostConfigBuilder = hostConfigBuilder;
-      return this;
-    }
-
-    public Builder withDockerClientBuilder(final DefaultDockerClient.Builder dockerClientBuilder) {
-      this.dockerClientBuilder = dockerClientBuilder;
-      return this;
-    }
-
-    public static HostConfig.Builder defaultHostConfigBuilder() {
-      return HostConfig.builder()
-          .portBindings(stream(PORT_MAPPING_PORTS)
-              .collect(toMap(o -> o, b -> singletonList(randomPort(PORT_MAPPING_IP)))));
-    }
-
-    public static DefaultDockerClient.Builder defaultDockerClientBuilder() {
-      DefaultDockerClient.Builder defaultClient = null;
-
-      try {
-        defaultClient = DefaultDockerClient.fromEnv();
-      }
-      catch (DockerCertificateException e) {
-        throw new RuntimeException(e);
-      }
-
-      return defaultClient;
-    }
+  private DockerContainerConfig(@Nullable final String image, @Nullable final Path dockerfile) {
+    checkArgument(!(image == null && dockerfile == null), "Image name or Dockerfile should be presented");
+    checkArgument(!(image !=null && dockerfile != null), "Image name and Dockerfile should not be presented both");
+    this.image = image;
+    this.dockerfile = dockerfile;
   }
 
   public String getImage() {
     return image;
   }
 
-  public List<String> getEnv() {
+  public Path getDockerfile() {
+    return dockerfile;
+  }
+
+  public List<Integer> getExposedPorts() {
+    return exposedPorts;
+  }
+
+  public Map<String, String> getEnv() {
     return env;
+  }
+
+  public Map<String, String> getPathBinds() {
+    return pathBinds;
   }
 
   public String getWorkingDir() {
     return workingDir;
   }
 
-  public HostConfig.Builder getHostConfigBuilder() {
-    return hostConfigBuilder;
+  public static Builder builder(final String image) {
+    return new Builder(image);
   }
 
-  public DefaultDockerClient.Builder getDockerClientBuilder() {
-    return dockerClientBuilder;
+  public static Builder builder(final Path dockerfile) {
+    return new Builder(dockerfile);
+  }
+
+  public static final class Builder
+  {
+    private String image;
+
+    private Path dockerfile;
+
+    private List<Integer> exposedPorts = new ArrayList<>();
+
+    private Map<String, String> env = new HashMap<>();
+
+    private Map<String, String> pathBinds = new HashMap<>();
+
+    private String workingDir;
+
+    private Builder(final String image) {
+      this.image = checkNotNull(image);
+    }
+
+    private Builder(final Path dockerfile) {
+      this.dockerfile = checkNotNull(dockerfile);
+    }
+
+    public Builder withExposedPort(final String exposedPort) {
+      this.exposedPorts = singletonList(Integer.parseInt(exposedPort));
+      return this;
+    }
+
+    public Builder withExposedPorts(final List<String> exposedPorts) {
+      this.exposedPorts = exposedPorts.stream().map(Integer::parseInt).collect(Collectors.toList());
+      return this;
+    }
+
+    public Builder withEnv(final Map<String, String> env) {
+      this.env = env;
+      return this;
+    }
+
+    public Builder withPathBinds(final Map<String, String> pathBinds) {
+      this.pathBinds = pathBinds;
+      return this;
+    }
+
+    public Builder withWorkingDir(final String workingDir) {
+      this.workingDir = workingDir;
+      return this;
+    }
+
+    public DockerContainerConfig build() {
+      DockerContainerConfig dockerContainerConfig = new DockerContainerConfig(image, dockerfile);
+      dockerContainerConfig.pathBinds = this.pathBinds;
+      dockerContainerConfig.exposedPorts = this.exposedPorts;
+      dockerContainerConfig.workingDir = this.workingDir;
+      dockerContainerConfig.env = this.env;
+      return dockerContainerConfig;
+    }
   }
 }

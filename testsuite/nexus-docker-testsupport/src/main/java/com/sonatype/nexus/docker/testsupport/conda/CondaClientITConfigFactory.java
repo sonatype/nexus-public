@@ -13,16 +13,9 @@
 package com.sonatype.nexus.docker.testsupport.conda;
 
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
-import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig.Builder;
-
-import static com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig.Builder.defaultDockerClientBuilder;
-import static com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig.Builder.defaultHostConfigBuilder;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Factory for creation of Conda required objects
- *
- * @since 3.19
  */
 public class CondaClientITConfigFactory
 {
@@ -32,13 +25,6 @@ public class CondaClientITConfigFactory
   }
 
   public static DockerContainerConfig createCondaConfig(final String imageTag) {
-    return condaConfigBuilder(IMAGE_CONDA + ":" + imageTag).build();
-  }
-
-  private static Builder condaConfigBuilder(final String image) {
-    return DockerContainerConfig.builder()
-        .image(image)
-        .withHostConfigBuilder(defaultHostConfigBuilder())
-        .withDockerClientBuilder(defaultDockerClientBuilder().readTimeoutMillis(SECONDS.toMillis(5000)));
+    return DockerContainerConfig.builder(IMAGE_CONDA + ":" + imageTag).build();
   }
 }

@@ -52,8 +52,8 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
 
   const isInvalid = FormUtils.isInvalid(validationErrors);
 
-  const updateTemplate = (e) =>
-    send({type: 'UPDATE_TEMPLATE', value: e.target.value});
+  const updateTemplate = (value) =>
+    send({type: 'UPDATE_TEMPLATE', value});
   const setSystemPassword = (value) => send({type: 'SET_PASSWORD', name: 'authPassword', value})
   const verifyLogin = () => send('VERIFY_LOGIN');
   const verifyUserMapping = () => send('VERIFY_USER_MAPPING');

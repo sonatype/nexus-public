@@ -48,12 +48,6 @@ export default function SamlConfiguration() {
     send('RESET');
   }
 
-  function trimOnBlur(evt) {
-    const name = evt.currentTarget.name;
-    const value = evt.currentTarget.value.trim();
-    send({type: 'UPDATE', name, value});
-  } 
-
   return <Page>
     <PageHeader><PageTitle icon={faIdCard} {...UIStrings.SAML_CONFIGURATION.MENU}/></PageHeader>
     <ContentBody className='nxrm-saml-configuration'>
@@ -109,35 +103,35 @@ export default function SamlConfiguration() {
               <NxTextInput
                 {...FormUtils.fieldProps('usernameAttr', current)}
                 onChange={FormUtils.handleUpdate('usernameAttr', send)}
-                onBlur={trimOnBlur}
+                onBlur={FormUtils.trimOnBlur('usernameAttr', send)}
               />
             </NxFormGroup>
             <NxFormGroup label={FIELDS.firstNameAttrLabel}>
               <NxTextInput
                 {...FormUtils.fieldProps('firstNameAttr', current)}
                 onChange={FormUtils.handleUpdate('firstNameAttr', send)}
-                onBlur={trimOnBlur}
+                onBlur={FormUtils.trimOnBlur('firstNameAttr', send)}
               />
             </NxFormGroup>
             <NxFormGroup label={FIELDS.lastNameAttrLabel}>
               <NxTextInput
                 {...FormUtils.fieldProps('lastNameAttr', current)}
                 onChange={FormUtils.handleUpdate('lastNameAttr', send)}
-                onBlur={trimOnBlur} 
+                onBlur={FormUtils.trimOnBlur('lastNameAttr', send)} 
               />
             </NxFormGroup>
             <NxFormGroup label={FIELDS.emailAttrLabel}>
               <NxTextInput
                 {...FormUtils.fieldProps('emailAttr', current)}
                 onChange={FormUtils.handleUpdate('emailAttr', send)}
-                onBlur={trimOnBlur} 
+                onBlur={FormUtils.trimOnBlur('emailAttr', send)} 
               />
             </NxFormGroup>
             <NxFormGroup label={FIELDS.roleAttrLabel}>
               <NxTextInput
                 {...FormUtils.fieldProps('roleAttr', current)}
                 onChange={FormUtils.handleUpdate('roleAttr', send)}
-                onBlur={trimOnBlur} 
+                onBlur={FormUtils.trimOnBlur('roleAttr', send)} 
               />
             </NxFormGroup>
           </NxFieldset>

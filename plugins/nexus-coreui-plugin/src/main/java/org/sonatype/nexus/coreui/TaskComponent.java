@@ -254,7 +254,11 @@ public class TaskComponent
     result.setTypeId(taskInfo.getConfiguration().getTypeId());
     result.setTypeName(taskInfo.getConfiguration().getTypeName());
     result.setStatus(taskState.name());
-    result.setStatusDescription(taskInfo.getConfiguration().isEnabled() ? taskState.getDescription() : "Disabled");
+    String statusDescription = taskInfo.getConfiguration().isEnabled() ? taskState.getDescription() : "Disabled";
+    if (taskInfo.getCurrentState().getState().isRunning() && taskInfo.getConfiguration().getProgress() != null) {
+      statusDescription += ": " + taskInfo.getConfiguration().getProgress();
+    }
+    result.setStatusDescription(statusDescription);
     result.setSchedule(getSchedule(taskInfo.getSchedule()));
     result.setLastRun(lastRun);
     result.setLastRunResult(getLastRunResult(endTaskState, runDuration));

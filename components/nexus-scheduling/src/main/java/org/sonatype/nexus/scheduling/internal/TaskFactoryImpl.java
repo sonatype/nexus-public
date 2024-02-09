@@ -29,6 +29,7 @@ import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskFactory;
+import org.sonatype.nexus.scheduling.TaskInfo;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -182,7 +183,7 @@ public class TaskFactoryImpl
   }
 
   @Override
-  public Task create(final TaskConfiguration config) {
+  public Task create(final TaskConfiguration config, final TaskInfo taskInfo) {
     checkNotNull(config);
     log.debug("Creating task instance: {}", config);
 
@@ -192,6 +193,7 @@ public class TaskFactoryImpl
     // create and configure the task
     Task task = newInstance(config.getTypeId());
     task.configure(config);
+    task.setTaskInfo(taskInfo);
 
     return task;
   }

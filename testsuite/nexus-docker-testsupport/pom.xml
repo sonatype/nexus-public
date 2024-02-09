@@ -45,9 +45,8 @@
     -->
 
     <dependency>
-      <groupId>com.spotify</groupId>
-      <artifactId>docker-client</artifactId>
-      <classifier>shaded</classifier>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
     </dependency>
 
     <dependency>

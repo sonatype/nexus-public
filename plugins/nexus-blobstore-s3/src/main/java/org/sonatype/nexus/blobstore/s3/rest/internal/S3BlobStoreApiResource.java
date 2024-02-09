@@ -13,7 +13,6 @@
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
 import java.util.Optional;
-
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -28,6 +27,8 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.rest.BlobStoreResourceUtil;
+import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.rest.Resource;
@@ -45,6 +46,7 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConstants.NOT_AN_S3_BLOB_STORE_MSG_FORMAT;
 import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelMapper.map;
 
 /**
@@ -58,10 +60,6 @@ public class S3BlobStoreApiResource
     extends ComponentSupport
     implements Resource, S3BlobStoreApiResourceDoc
 {
-  private static final String UNKNOWN_BLOB_STORE_MSG_FORMAT = "\"Blob store %s doesn't exist.\"";
-
-  private static final String NOT_AN_S3_BLOB_STORE_MSG_FORMAT = "\"%s is not an S3 blob store.\"";
-
   private final S3BlobStoreApiUpdateValidation s3BlobStoreApiUpdateValidation;
 
   private final BlobStoreManager blobStoreManager;
@@ -129,8 +127,7 @@ public class S3BlobStoreApiResource
   @RequiresPermissions("nexus:blobstores:read")
   public S3BlobStoreApiModel getBlobStore(@PathParam("name") final String blobStoreName) {
     return fetchBlobStoreConfiguration(blobStoreName)
-        .orElseThrow(() -> new WebApplicationMessageException(BAD_REQUEST,
-            String.format(UNKNOWN_BLOB_STORE_MSG_FORMAT, blobStoreName), APPLICATION_JSON));
+        .orElseThrow(() -> BlobStoreResourceUtil.createBlobStoreNotFoundException(S3BlobStore.TYPE, blobStoreName));
   }
 
   private Optional<S3BlobStoreApiModel> fetchBlobStoreConfiguration(final String blobStoreName) {

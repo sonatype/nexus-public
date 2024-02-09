@@ -70,12 +70,12 @@ export default function SupportZipHa() {
     sendToNxrmNodes('CANCEL');
   }
 
-  function setSupportFormParams({target}) {
+  function setSupportFormParams(name, value) {
     sendToSupportZip({
       type: 'UPDATE',
       params: {
         ...params,
-        [target.id]: target.checked,
+        [name]: value,
       },
     });
   }

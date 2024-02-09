@@ -14,7 +14,6 @@ package org.sonatype.nexus.blobstore.s3.rest.internal;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -30,6 +29,9 @@ import static java.lang.String.join;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConstants.BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConstants.BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConstants.NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT;
 
 /**
  * Performs validation checks on specified {@link S3BlobStoreApiModel} object containing updates to an S3 blob store.
@@ -41,12 +43,6 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 public class S3BlobStoreApiUpdateValidation
 {
   private static final String BLOB_STORE_NAME = "name";
-
-  static final String BLOB_STORE_NAME_UPDATE_ERROR_MESSAGE = "Renaming an S3 blob store name is not supported";
-
-  static final String NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT = "No S3 blob store called '%s'";
-
-  static final String BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT = "Blob store %s is not an S3 blob store";
 
   private static final String COMMA = ",";
 

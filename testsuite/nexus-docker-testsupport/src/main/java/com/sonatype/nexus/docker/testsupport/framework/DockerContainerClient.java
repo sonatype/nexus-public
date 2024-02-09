@@ -12,420 +12,241 @@
  */
 package com.sonatype.nexus.docker.testsupport.framework;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableSet;
-import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.LogMessage;
-import com.spotify.docker.client.LogStream;
-import com.spotify.docker.client.exceptions.DockerException;
-import com.spotify.docker.client.messages.ContainerConfig;
-import com.spotify.docker.client.messages.ContainerCreation;
-import com.spotify.docker.client.messages.ContainerInfo;
-import com.spotify.docker.client.messages.ExecCreation;
-import com.spotify.docker.client.messages.HostConfig;
-import com.spotify.docker.client.messages.ImageInfo;
-import com.spotify.docker.client.messages.PortBinding;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.io.output.TeeOutputStream;
+import javax.annotation.Nullable;
+
+import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.net.PortAllocator;
+
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Container.ExecResult;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 
-import static com.spotify.docker.client.DockerClient.ExecCreateParam.attachStderr;
-import static com.spotify.docker.client.DockerClient.ExecCreateParam.attachStdin;
-import static com.spotify.docker.client.DockerClient.ExecCreateParam.attachStdout;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
-import static java.util.Optional.ofNullable;
-import static org.apache.commons.io.IOUtils.copy;
 import static org.apache.commons.lang.StringUtils.left;
+import static org.sonatype.nexus.common.text.Strings2.notBlank;
+import static org.testcontainers.containers.BindMode.READ_WRITE;
 
 /**
  * Support class for helping to managing Docker Containers.
- *
- * @since 3.6.1
  */
 public class DockerContainerClient
 {
   private final Logger log = LoggerFactory.getLogger(getClass());
 
-  private static final String P1_KEEP_ALIVE = "while :; do sleep 1; done";
+  private static final String KEEP_ALIVE = "while true; do sleep 1; done";
 
   private static final int SHORT_ID_LENGTH = 12;
 
-  private final Object reuseStartedContainerLock = new Object[0];
+  private final Mutex lock = new Mutex();
 
-  private final Object clearStartedContainerLock = new Object[0];
+  private final DockerContainerConfig config;
 
-  private final DockerClient dockerClient;
+  private GenericContainer<?> dockerClient;
 
-  private final String image;
+  private InspectContainerResponse startedContainer;
 
-  private final List<String> env;
-
-  private final String workingDir;
-
-  private final HostConfig hostConfig;
-
-  private ContainerInfo startedContainer;
-
-  /**
-   * Constructor that will use a default configuration based on {@link DockerContainerConfig}.
-   *
-   * @param image name of image to use, can include tag. For example, centos:7
-   */
   public DockerContainerClient(final String image) {
-    this(DockerContainerConfig.builder().image(image).build());
+    this(DockerContainerConfig.builder(image).build());
+  }
+
+  public DockerContainerClient(final DockerContainerConfig config) {
+    this.config = checkNotNull(config);
   }
 
   /**
-   * Constructor.
-   *
-   * @param dockerContainerConfig configuration on how to handle this {@link DockerContainerClient}
+   * Runs a docker container for a given image. This method will pull the image that this container is supposed to run
+   * for, if it's not already existing.
    */
-  public DockerContainerClient(DockerContainerConfig dockerContainerConfig) {
-    this.dockerClient = dockerContainerConfig.getDockerClientBuilder().build();
-    this.image = dockerContainerConfig.getImage();
-    this.env = dockerContainerConfig.getEnv();
-    this.workingDir = dockerContainerConfig.getWorkingDir();
-    this.hostConfig = dockerContainerConfig.getHostConfigBuilder().build();
-
-    logDockerInfo();
+  public void run() {
+    runAndPullIfNotExist(null);
   }
 
   /**
-   * Pull a docker container image.
-   *
-   * @return Optional of {@link ImageInfo}
+   * Runs a docker container for a given image. This method will pull the image that this container is supposed to run
+   * for, if it's not already existing. Additionally, the method will assure that the containers process one will be
+   * running until stopped or killed.
    */
-  public Optional<ImageInfo> pull() {
-    return pullAndInspect();
+  public void runAndKeepAlive() {
+    runAndPullIfNotExist(KEEP_ALIVE);
   }
 
   /**
-   * Runs a docker container for given image. This method will pull the image that this container
-   * is supposed to run for, if it's not already existing. Additionally the method will
-   * assure that the containers process one will be running until stopped or killed.
+   * Runs a docker container for given image. This method will pull the image that this container is supposed to run
+   * for, if it's not already existing. Additionally, the method allows the caller to pass commands to the docker run
+   * command. Unless provided in the commands to run the container will stop immediately after it as run, just as normal
+   * docker behavior.
    *
-   * @return Optional of {@link ContainerInfo}, present if container was run by docker.
+   * @param commands to be run for docker container, can be {@code null}.
    */
-  public Optional<ContainerInfo> run() {
-    return runAndPullIfNotExist(P1_KEEP_ALIVE);
+  public void run(@Nullable final String commands) {
+    runAndPullIfNotExist(commands);
   }
 
   /**
-   * Runs a docker container for given image. This method will pull the image that this container
-   * is supposed to run for, if it's not already existing. Additionally the method allows the caller
-   * to pass commands to the docker run command. Unless provided in the commands to run
-   * the container will stop immediately after it as run, just as normal docker behavior.
+   * Execute commands on a docker container for a given image.
    *
-   * @param commands to be run for docker container
-   * @return Optional of {@link ContainerInfo}, present if container was run by docker.
+   * @param commands to be executed within docker container.
+   * @return results from a "docker exec" command.
    */
-  public Optional<ContainerInfo> run(final String commands) {
-    return runAndPullIfNotExist(commands);
+  public Optional<ExecResult> exec(final String commands) {
+    run(KEEP_ALIVE);
+    return execInDocker(commands);
   }
 
   /**
-   * Execute commands on a docker container for given image. The main difference between this and
-   * {@link #exec(String, OutputStream)} is that we provide our own {@link OutputStream}
-   * and return a {@link List} of {@link String}s that represents the output of the execution
-   * of the given commands.
-   *
-   * @param commands to be executed within docker container
-   * @return Optional of a {@link List} of {@link String}s representing command line output,
-   * present if execution of commands was successful
-   * @see #exec(String, OutputStream)
-   */
-  public Optional<List<String>> exec(final String commands) {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-    if (exec(commands, outputStream)) {
-      try {
-        return of(asList(outputStream.toString(UTF_8.name()).split("\\r?\\n")));
-      }
-      catch (UnsupportedEncodingException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    return empty();
-  }
-
-  /**
-   * Execute commands on a docker container for given image. Also see {@link #run()} for further understanding on
-   * how the underlying container was run. The main implication of {@link #run()} is that consecutive calls to
-   * this will use the last run container. I.e. previous executed commands are "persisted" until container
-   * is stopped or killed.
-   *
-   * @param commands     to be executed within docker container
-   * @param outputStream to stream command line output to (stdout and stderr)
-   * @return true if execution was successful, false otherwise.
-   * @see #run()
-   */
-  public boolean exec(final String commands, final OutputStream outputStream) {
-    return run(P1_KEEP_ALIVE).map(containerInfo -> exec(containerInfo, commands, outputStream)).orElse(false);
-  }
-
-  /**
-   * Close all resources for the underlying {@link DockerClient} and kills and removes any containers
-   * that were started, run and executed upon by this instance.
+   * Close all resources for the underlying {@link GenericContainer} and kills and removes any containers that were
+   * started, run and executed upon by this instance.
    */
   public void close() {
-    killAndRemoveStartedContainer();
-    dockerClient.close();
+    if (dockerClient != null && dockerClient.isRunning()) {
+      dockerClient.stop();
+    }
   }
 
   /**
-   * Download a container path to a local {@link File} location. This method will use the last running
-   * container if possible.
+   * Download a container path to a local {@link File} location. This method will use the last running container if
+   * possible.
    *
-   * @param fromContainerPath - the path in the container to download
-   * @param toLocal           - the path of the local file system to download to
-   * @return Optional {@link Set} of {@link File}s that were downloaded locally.
+   * @param fromContainerPath the path in the container to download
+   * @param toLocal           the path of the local file system to download to
    */
-  public Optional<Set<File>> download(final String fromContainerPath, final File toLocal) {
-    return run(P1_KEEP_ALIVE).map(containerInfo -> download(containerInfo, fromContainerPath, toLocal));
+  public void download(final String fromContainerPath, final File toLocal) {
+    run(KEEP_ALIVE);
+    dockerClient.copyFileFromContainer(fromContainerPath, toLocal.getAbsolutePath());
   }
 
-  /**
-   * Retrieve the host ports that were opened at runtime for communicating with the docker container. This method
-   * is only useful to call after the container is started as the host ports are not known before.
-   *
-   * @return Optional {@link Map} of container port keys with a {@link List} of {@link PortBinding}s
-   */
-  public Optional<Map<String, List<PortBinding>>> hostPortBindings() {
-    // reuse existing containers if they are running
-    if (nonNull(startedContainer)) {
-      try {
-        log.info("Inspecting container '{}' for host ports.", left(startedContainer.id(), SHORT_ID_LENGTH));
-
-        return ofNullable(dockerClient.inspectContainer(startedContainer.id()).networkSettings().ports());
-      }
-      catch (DockerException | InterruptedException e) {
-        log.error("Unable to inspect container for host ports '{}'", left(startedContainer.id(), SHORT_ID_LENGTH), e);
-      }
-    }
-
-    return empty();
-  }
-
-  private void logDockerInfo() {
-    try {
-      log.info("Docker version {} on host {}", dockerClient.version(), dockerClient.getHost());
-    }
-    catch (DockerException | InterruptedException e) {
-      log.error("Failed to log Docker information", e);
-    }
-  }
-
-  private boolean exec(final ContainerInfo container,
-                       final String commands,
-                       final OutputStream outputStream)
+  private Optional<ExecResult> execInDocker(final String commands)
   {
-    String containerId = container.id();
+    String image = config.getImage();
+    if (startedContainer == null) {
+      log.warn("Attempting to exec commands '{}' for image '{}' which is not started", commands, image);
+      return Optional.empty();
+    }
+
+    String containerId = startedContainer.getId();
     String shortId = left(containerId, SHORT_ID_LENGTH);
 
     log.info("Attempting to exec commands '{}' in container '{}' for image '{}'", commands, shortId, image);
 
     try {
-      // attach stdin as well as stdout/stderr to workaround https://github.com/spotify/docker-client/issues/513
-      final ExecCreation execCreation = dockerClient
-          .execCreate(containerId, cmd(commands), attachStdin(), attachStdout(), attachStderr());
+      ExecResult execResult = dockerClient.execInContainer(cmd(commands));
+      log.debug("$ {}", commands);
+      String stderr = execResult.getStderr();
 
-      ByteArrayOutputStream branchOutputStream = new ByteArrayOutputStream();
-      TeeOutputStream teeOutputStream = new TeeOutputStream(outputStream, branchOutputStream);
-      try (final LogStream stream = dockerClient.execStart(execCreation.id())) {
-        // pretend to be a command line, by printing command to run
-        log.debug("$ " + commands);
-
-        // Why read each, instead attaching to out and err stream? Mostly because
-        // Logstream preserves order of written out and err if/when they get written.
-        stream.forEachRemaining(logMessage -> write(teeOutputStream, logMessage));
+      log.debug("Output of command '{}' in container '{}' for image '{}' was:\n{}",
+          commands, shortId, image, execResult);
+      if (!stderr.isEmpty() && execResult.getExitCode() != 0) {
+        log.error("Failed exec commands '{}' in container '{}' for image '{}'. Error message: {}",
+            commands, shortId, image, stderr);
+      }
+      else {
+        log.info("Successfully exec commands '{}' in container '{}' for image '{}'", commands, shortId, image);
       }
 
-      log.debug("Output of command '{}' in container '{}' for image '{}' was:\n{}", commands, shortId, image,
-          branchOutputStream.toString());
-      log.info("Successfully exec commands '{}' in container '{}' for image '{}'", commands, shortId, image);
-
-      return true;
+      return Optional.of(execResult);
     }
-    catch (DockerException | InterruptedException e) {
+    catch (IOException | InterruptedException e) { // NOSONAR
       log.error("Failed to exec commands '{}' in container '{}' for image '{}'", commands, shortId, image, e);
     }
 
-    return false;
+    return Optional.empty();
   }
 
-  private void write(final OutputStream outputStream, final LogMessage logMessage) {
-    try {
-      String lines = UTF_8.decode(logMessage.content()).toString();
-      outputStream.write(lines.getBytes(UTF_8.name()));
-
-      // pretend to be a command line, by printing results
-      for (String line : lines.split("\\r?\\n")) {
-        if (line.length() > 0) {
-          log.trace(line);
-        }
-      }
-    }
-    catch (IOException ignore) { // NOSONAR
-      // we don't care, let loop continue
-    }
-  }
-
-  private Optional<ContainerInfo> runAndPullIfNotExist(String commands) {
+  private void runAndPullIfNotExist(@Nullable final String commands) {
+    String image = config.getImage();
+    Path dockerfile = config.getDockerfile();
     // assure that we don't have multiple threads set the started container
-    synchronized (reuseStartedContainerLock) {
+    synchronized (lock) {
       // reuse existing containers if they are running
-      if (nonNull(startedContainer)) {
-        log.info("Using existing container '{}' for image '{}'", left(startedContainer.id(), SHORT_ID_LENGTH), image);
-        return of(startedContainer);
+      if (nonNull(startedContainer) && dockerClient.isRunning()) {
+        String shortDockerId = left(startedContainer.getId(), SHORT_ID_LENGTH);
+        String msg = image != null ?
+            String.format("image '%s'", image) : String.format("Dockerfile '%s'", dockerfile);
+        log.info("Using existing container '{}' for {}", shortDockerId, msg);
+        return;
+      }
+      if (log.isInfoEnabled()) {
+        log.info(buildLogMessage("Attempting to run container", image, dockerfile, commands));
       }
 
-      if (pullIfNotExist().isPresent()) {
-        try {
-          ContainerCreation container = dockerClient
-              .createContainer(ContainerConfig
-                  .builder()
-                  .hostConfig(hostConfig)
-                  .exposedPorts(hostConfig.portBindings().keySet())
-                  .image(image)
-                  .env(env)
-                  .workingDir(workingDir)
-                  .cmd(cmd(commands))
-                  .build());
+      // Build the docker image based on the name or the Dockerfile
+      dockerClient = image != null ? new GenericContainer<>(image) :
+          new GenericContainer<>(new ImageFromDockerfile().withDockerfile(dockerfile));
 
-          String containerId = container.id();
-          String shortId = left(containerId, SHORT_ID_LENGTH);
-
-          startedContainer = dockerClient.inspectContainer(containerId);
-
-          log.info("Attempting to run container '{}' with commands '{}' for image '{}'", shortId, commands, image);
-
-          dockerClient.startContainer(containerId);
-
-          log.info("Successfully run container '{}' with commands '{}' for image '{}'", shortId, commands, image);
-
-          return of(startedContainer);
-        }
-        catch (Exception e) {
-          log.error("Failed to run container for image '{}'", image, e);
-        }
+      dockerClient.setCommand(cmd(commands));
+      config.getEnv().forEach((key, value) -> dockerClient.addEnv(key, value));
+      config.getPathBinds().forEach((key, value) -> dockerClient.addFileSystemBind(key, value, READ_WRITE));
+      if (!config.getExposedPorts().isEmpty()) {
+        List<String> portBindings = config.getExposedPorts().stream()
+            // hostPort:containerPort
+            .map(port -> PortAllocator.nextFreePort() + ":" + port)
+            .collect(Collectors.toList());
+        dockerClient.setPortBindings(portBindings);
+        dockerClient.setWaitStrategy(Wait.forListeningPort());
+      }
+      if (notBlank(config.getWorkingDir())) {
+        dockerClient.setWorkingDirectory(config.getWorkingDir());
       }
 
-      return empty();
-    }
-  }
-
-  private Set<File> download(final ContainerInfo containerInfo, final String fromContainerPath, final File toLocal) {
-    String containerId = containerInfo.id();
-    String shortId = left(containerId, SHORT_ID_LENGTH);
-
-    ImmutableSet.Builder<File> files = ImmutableSet.builder();
-
-    log.info("Attempting to download from path '{}' in container '{}' for image '{}'",
-        fromContainerPath, shortId, image);
-
-    try (final TarArchiveInputStream tarStream = new TarArchiveInputStream(
-        dockerClient.archiveContainer(containerId, fromContainerPath))) {
-
-      TarArchiveEntry entry;
-      while ((entry = tarStream.getNextTarEntry()) != null) {
-        log.info("Downloading entry '{}' in container '{}' for image '{}'", entry.getName(), shortId, image);
-
-        String entryName = entry.getName();
-        entryName = entryName.substring(entryName.indexOf('/') + 1);
-        if (entryName.isEmpty()) {
-          continue;
-        }
-
-        File file = (toLocal.exists() && toLocal.isDirectory()) ? new File(toLocal, entryName) : toLocal;
-        files.add(file);
-
-        try (OutputStream outStream = new FileOutputStream(file)) {
-          copy(tarStream, outStream);
+      // Work around for an issue in ITs which results in Testcontainers using the wrong class loader
+      ClassLoader threadLoader = Thread.currentThread().getContextClassLoader();
+      try {
+        Thread.currentThread().setContextClassLoader(GenericContainer.class.getClassLoader());
+        dockerClient.start();
+      }
+      finally {
+        if (threadLoader != null) {
+          Thread.currentThread().setContextClassLoader(threadLoader);
         }
       }
-    }
-    catch (Exception e) {
-      log.error("Failed to download from path '{}' in container '{}' for image '{}'",
-          fromContainerPath, shortId, image, e);
-    }
+      startedContainer = dockerClient.getContainerInfo();
 
-    return files.build();
-  }
+      String containerId = startedContainer.getId();
+      String shortId = left(containerId, SHORT_ID_LENGTH);
 
-  private void killAndRemoveStartedContainer() {
-    // assure that we do not have multiple threads clearing the started container at once.
-    synchronized (clearStartedContainerLock) {
-      if (nonNull(startedContainer)) {
-        String containerId = startedContainer.id();
-        String shortId = left(containerId, SHORT_ID_LENGTH);
-
-        startedContainer = null;
-
-        try {
-          log.info("Attempting to kill and remove container '{}' for image '{}'", shortId, image);
-
-          dockerClient.killContainer(containerId);
-          dockerClient.removeContainer(containerId);
-
-          log.info("Successfully killed and removed container '{}' for image '{}'", shortId, image);
-        }
-        catch (DockerException | InterruptedException e) { // NOSONAR
-          log.error("Failed to kill and/or remove container '{}'", shortId, log.isDebugEnabled() ? e : null);
-        }
+      if (log.isInfoEnabled()) {
+        log.info(buildLogMessage("Successfully run container '" + shortId + "'", image, dockerfile, commands));
       }
     }
   }
 
-  private Optional<ImageInfo> pullIfNotExist() {
-    return ofNullable(inspectImage().orElseGet(() -> {
-      log.info("Image '{}' is not local, attempting to pull", image);
-      return pull().orElse(null);
-    }));
-  }
-
-  private Optional<ImageInfo> pullAndInspect() {
-    try {
-      dockerClient.pull(image);
-
-      return inspectImage();
+  private static String buildLogMessage(
+      final String message,
+      final @Nullable String image,
+      final @Nullable Path dockerfile,
+      final @Nullable String commands)
+  {
+    StringBuilder msg = new StringBuilder(message);
+    if (commands != null) {
+      msg.append(" with commands '").append(commands).append("'");
     }
-    catch (DockerException | InterruptedException e) {
-      log.error("Failed to pull docker image '{}'", image, e);
+    if (image != null) {
+      msg.append(" for image '").append(image).append("'");
     }
-
-    return empty();
-  }
-
-  private Optional<ImageInfo> inspectImage() {
-    try {
-      return ofNullable(dockerClient.inspectImage(image));
-    }
-    catch (DockerException | InterruptedException e) {
-      log.warn("Unable to inspect image '{}'", image);
-      log.debug("Exception is : ", e);
+    if (dockerfile != null) {
+      msg.append(" for Dockerfile '").append(dockerfile).append("'");
     }
 
-    return empty();
+    return msg.toString();
   }
 
   private String[] cmd(String commands) {
-    return nonNull(commands) ? new String[]{"sh", "-c", commands} : new String[]{};
+    return nonNull(commands) ? new String[] {"/bin/sh", "-c", commands} : new String[] {};
+  }
+
+  public Integer getMappedPort(final String containerPort) {
+    return dockerClient.getMappedPort(Integer.parseInt(containerPort));
   }
 }

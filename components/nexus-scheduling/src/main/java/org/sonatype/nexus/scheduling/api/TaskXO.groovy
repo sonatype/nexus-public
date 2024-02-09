@@ -52,7 +52,12 @@ class TaskXO
     taskXO.name = taskInfo.name
     taskXO.type = taskInfo.typeId
     taskXO.message = taskInfo.message
-    taskXO.currentState = externalTaskState.getState()?.toString()
+    if (externalTaskState.getState().isRunning() && externalTaskState.progress) {
+      taskXO.currentState = externalTaskState.getState()?.toString() + ": " + externalTaskState.getProgress()
+    }
+    else {
+      taskXO.currentState = externalTaskState.getState()?.toString()
+    }
     taskXO.nextRun = taskInfo.currentState.nextRun
     taskXO.lastRunResult = externalTaskState.getLastEndState()?.toString()
     taskXO.lastRun = externalTaskState.getLastRunStarted()

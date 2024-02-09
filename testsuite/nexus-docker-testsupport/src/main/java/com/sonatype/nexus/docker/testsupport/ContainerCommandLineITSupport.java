@@ -13,36 +13,23 @@
 package com.sonatype.nexus.docker.testsupport;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-
-import javax.annotation.Nullable;
 
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerClient;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import com.spotify.docker.client.messages.PortBinding;
-
-import static java.util.Collections.emptyMap;
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
-
 /**
- * Abstract implementation of {@link CommandLine} to allow the sharing of commonalities
- * between Docker Container Command lines.
- *
- * @since 3.6.1
+ * Abstract implementation of {@link CommandLine} to allow the sharing of commonalities between
+ * Docker Container Command lines.
  */
 public abstract class ContainerCommandLineITSupport
     extends ComponentSupport
     implements CommandLine
 {
-  private static final String CMD_LS = "ls ";
-
   protected DockerContainerClient dockerContainerClient;
 
   /**
@@ -52,32 +39,29 @@ public abstract class ContainerCommandLineITSupport
    * @see ContainerCommandLineITSupport#ContainerCommandLineITSupport(DockerContainerConfig)
    */
   protected ContainerCommandLineITSupport(final String image) {
-    this(DockerContainerConfig.builder().image(image).build());
+    this(DockerContainerConfig.builder(image).build());
   }
 
   /**
-   * @param dockerContainerConfig {@link DockerContainerConfig}
-   * @param commands              to be run for docker container
-   * @see ContainerCommandLineITSupport#ContainerCommandLineITSupport(DockerContainerConfig)
+   * Constructor that creates and run the container with the corresponding commands based on provided configuration.
+   *
+   * @param dockerContainerConfig parameters to run a container.
+   * @param commands              to be run for docker container.
    */
-  protected ContainerCommandLineITSupport(DockerContainerConfig dockerContainerConfig, final String commands) {
+  protected ContainerCommandLineITSupport(final DockerContainerConfig dockerContainerConfig, final String commands) {
     dockerContainerClient = new DockerContainerClient(dockerContainerConfig);
     dockerContainerClient.run(commands);
   }
 
   /**
-   * Constructor that creates the {@link DockerContainerClient} to be used as the
-   * underlying client to run commands on. It additionally runs the {@link #init()} method
-   * to allow implementers to assure that certain setup would have been done before allowing
-   * of actual commands to be executed.
+   * Constructor that creates and run the container based on provided configuration.
    *
-   * @param dockerContainerConfig {@link DockerContainerConfig}
+   * @param dockerContainerConfig parameters to run a container.
    */
-  protected ContainerCommandLineITSupport(DockerContainerConfig dockerContainerConfig) {
+  protected ContainerCommandLineITSupport(final DockerContainerConfig dockerContainerConfig) {
     dockerContainerClient = new DockerContainerClient(dockerContainerConfig);
-    dockerContainerClient.run();
+    dockerContainerClient.runAndKeepAlive();
   }
-
 
   @Override
   public void init() {
@@ -91,48 +75,19 @@ public abstract class ContainerCommandLineITSupport
 
   @Override
   public Optional<List<String>> exec(final String s) {
-    return dockerContainerClient.exec(s);
+    return dockerContainerClient.exec(s)
+        // we need all logs from the container
+        .map(v -> v.getStdout() + "\n" + v.getStderr())
+        .map(result -> Arrays.asList(result.split("\n")));
   }
 
   @Override
-  public Optional<Set<File>> download(final String fromContainerPath, final File toLocal) {
-    return dockerContainerClient.download(fromContainerPath, toLocal);
+  public void download(final String fromContainerPath, final File toLocal) {
+    dockerContainerClient.download(fromContainerPath, toLocal);
   }
 
   @Override
-  public Optional<Map<String, List<PortBinding>>> hostPortBindings() {
-    return dockerContainerClient.hostPortBindings();
-  }
-
-  @Override
-  @Nullable
-  public String getHostTcpPort(final String containerPort) {
-    Map<String, List<PortBinding>> hostPortBindings = hostPortBindings().orElse(emptyMap());
-    List<PortBinding> portBindings = hostPortBindings.get(containerPort + "/tcp");
-
-    if (isNull(portBindings) || portBindings.isEmpty()) {
-      // be kind and attempt to find without appendix of tcp
-      portBindings = hostPortBindings.get(containerPort);
-    }
-
-    if (nonNull(portBindings) && !portBindings.isEmpty()) {
-      PortBinding portBinding = portBindings.get(0);
-
-      if(nonNull(portBinding)) {
-        return portBinding.hostPort();
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Run ls command.
-   *
-   * @param arguments that are allowed for the ls command
-   * @see #exec(String)
-   */
-  public Optional<List<String>> ls(String arguments) {
-    return exec(CMD_LS + arguments);
+  public Integer getHostTcpPort(final String containerPort) {
+    return dockerContainerClient.getMappedPort(containerPort);
   }
 }

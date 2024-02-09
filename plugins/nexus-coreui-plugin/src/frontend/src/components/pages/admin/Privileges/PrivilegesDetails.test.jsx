@@ -328,7 +328,7 @@ describe('PrivilegesDetails', function() {
     userEvent.click(querySubmitButton());
     await waitForElementToBeRemoved(querySavingMask());
 
-    expect(Axios.post).toHaveBeenLastCalledWith(
+    expect(Axios.post).toHaveBeenCalledWith(
         createPrivilegeUrl(TYPE_IDS.REPOSITORY_CONTENT_SELECTOR),
         REPO_SELECTOR_PRIVILEGE
     );

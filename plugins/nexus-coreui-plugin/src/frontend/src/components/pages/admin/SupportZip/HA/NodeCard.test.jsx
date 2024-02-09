@@ -13,7 +13,8 @@
 import React from 'react';
 import {spawn} from 'xstate';
 import {render, screen} from '@testing-library/react';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {when} from 'jest-when';
+import {DateUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 import userEvent from '@testing-library/user-event';
 import NodeCard from './NodeCard';
 import NodeCardTestData from './NodeCard.testdata';
@@ -29,6 +30,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     }),
     urlOf: jest.fn().mockImplementation((path) => '/' + path)
   },
+  DateUtils: {
+    prettyDateTime: jest.fn()
+  }
 }));
 
 describe('NodeCard', function () {
@@ -76,9 +80,7 @@ describe('NodeCard', function () {
   });
 
   it('renders zip is created', () => {
-    jest
-      .spyOn(Date.prototype, 'toTimeString')
-      .mockReturnValue('00:00:00 GMT-0500 (Standard Time)');
+    when(DateUtils.prettyDateTime).calledWith(expect.any(Date)).mockReturnValue('5-7-2022 00:00:00 (GMT-0500)');
 
     const node = testNodes[ZIP_CREATED_NODE_INDEX];
     renderView(node);
@@ -86,7 +88,7 @@ describe('NodeCard', function () {
     expect(selectors.nodeHostName(node.hostname)).toBeInTheDocument();
     expect(selectors.generateZipStatus()).toBeInTheDocument();
     expect(selectors.zipLink()).toHaveTextContent(
-      'Download Zip Generated2022-5-7 0:0:0 (GMT-0500)'
+      'Download Zip Generated5-7-2022 00:00:00 (GMT-0500)'
     );
     expect(selectors.zipLink()).toHaveAttribute(
         'href', '/service/rest/wonderland/download/http://download.com?support-zip.zip'
@@ -94,9 +96,7 @@ describe('NodeCard', function () {
   });
 
   it('renders zip link with context path when provided', () => {
-    jest
-        .spyOn(Date.prototype, 'toTimeString')
-        .mockReturnValue('00:00:00 GMT-0500 (Standard Time)');
+    when(DateUtils.prettyDateTime).calledWith(expect.any(Date)).mockReturnValue('5-7-2022 00:00:00 (GMT-0500)');
 
     ExtJS.urlOf.mockImplementation((path) => '/test/' + path);
 
@@ -104,7 +104,7 @@ describe('NodeCard', function () {
     renderView(node);
 
     expect(selectors.zipLink()).toHaveTextContent(
-        'Download Zip Generated2022-5-7 0:0:0 (GMT-0500)'
+        'Download Zip Generated5-7-2022 00:00:00 (GMT-0500)'
     );
     expect(selectors.zipLink()).toHaveAttribute(
         'href', '/test/service/rest/wonderland/download/http://download.com?support-zip.zip'

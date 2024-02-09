@@ -51,8 +51,8 @@ export default function RoutingRulesList() {
   const viewSelectedRow = isLoadingSelectedRow || current.matches('viewSelectedRow');
   const {error, filter, preview, path, repositories, selectedRule, selectedRowDetails} = current.context;
 
-  function updateRepositories(event) {
-    send({type: 'UPDATE_AND_CLEAR', name: 'repositories', value: event.target.value});
+  function updateRepositories(value) {
+    send({type: 'UPDATE_AND_CLEAR', name: 'repositories', value});
   }
 
   function updatePath(value) {

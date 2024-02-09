@@ -81,8 +81,8 @@ export default function RoutingRulesForm({itemId, onDone}) {
     send({type: 'UPDATE_MATCHER', index, value})
   }
 
-  function update(event) {
-    send({type: 'UPDATE', data: {[event.target.name]: event.target.value}});
+  function update(value) {
+    send({type: 'UPDATE', data: {mode: value}});
   }
 
   function cancel() {

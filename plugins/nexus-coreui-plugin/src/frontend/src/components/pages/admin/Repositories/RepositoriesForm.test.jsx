@@ -152,7 +152,7 @@ describe('RepositoriesForm', () => {
     getHostedSectionTitle: () => screen.queryByText(EDITOR.HOSTED_CAPTION),
     getCleanupSectionTitle: () => screen.queryByText(EDITOR.CLEANUP_CAPTION),
     getGroupSectionTitle: () => screen.queryByText(EDITOR.GROUP_CAPTION),
-    getTransferListOption: (optionLabel) => screen.getByLabelText(optionLabel),
+    getTransferListOption: (optionLabel) => screen.getByText(optionLabel),
     getRoutingRuleSelect: () => screen.queryByLabelText(EDITOR.ROUTING_RULE_LABEL),
     getRemoteUrlInput: () => screen.queryByLabelText(EDITOR.REMOTE_STORAGE_LABEL),
     getContentMaxAgeInput: () => screen.getByLabelText(EDITOR.MAX_COMP_AGE_LABEL),
@@ -1268,7 +1268,7 @@ describe('RepositoriesForm', () => {
 
       await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-      userEvent.click(screen.getByLabelText('raw-hosted'));
+      userEvent.click(screen.getByText('raw-hosted'));
 
       userEvent.click(selectors.querySubmitButton());
 
