@@ -582,6 +582,9 @@ public class MavenFacetImpl
     if (contentAttributesWithLastModified.contains(AssetEntityAdapter.P_BLOB_CREATED)) {
       asset.blobCreated(contentAttributesWithLastModified.get(AssetEntityAdapter.P_BLOB_CREATED, DateTime.class));
     }
+    if (contentAttributesWithLastModified.contains(AssetEntityAdapter.P_BLOB_UPDATED)) {
+      asset.blobUpdated(contentAttributesWithLastModified.get(AssetEntityAdapter.P_BLOB_UPDATED, DateTime.class));
+    }
   }
 
   @Override
