@@ -55,8 +55,6 @@ public interface Component
   default String toStringExternal() {
     return "namespace=" + namespace() +
         ", name=" + name() +
-        ", kind=" + kind() +
-        ", version=" + version() +
-        ", entityVersion=" + entityVersion();
+        ", version=" + version();
   }
 }
