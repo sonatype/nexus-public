@@ -131,11 +131,11 @@ export default {
         PERCENTAGE: 0.75
       },
       CARD_LINK_OSS: {
-        TEXT: 'Explore ways to improve performance',
+        TEXT: 'Understand your usage',
         URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-free'
       },
       CARD_LINK_PRO: {
-        TEXT: 'Explore ways to improve performance',
+        TEXT: 'Understand your usage',
         URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-pro'
       }
     }

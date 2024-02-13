@@ -53,7 +53,7 @@ const selectors = {
   getCardContent: (c, t) => within(c).getByText(t),
   getCardInfoIcon: (c) => c.querySelector('[data-icon="info-circle"]'),
   getCardMeter: (c) => within(c).getByTestId('meter'),
-  getCardTextLink: (c) => within(c).queryByRole('link', {name: 'Explore ways to improve performance'})
+  getCardTextLink: (c) => within(c).queryByRole('link', {name: 'Understand your usage'})
 };
 
 describe('Usage Metrics', () => {

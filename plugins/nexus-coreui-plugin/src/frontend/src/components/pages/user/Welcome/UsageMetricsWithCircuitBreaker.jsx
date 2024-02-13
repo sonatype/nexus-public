@@ -110,7 +110,7 @@ function CardWithThreshold({card, usage, link, tooltip}) {
               {highestRecordedCount.toLocaleString()}
             </span>
         <span>{HIGHEST_RECORDED_COUNT}</span>
-        {exceedsWarningLimit && <NxTextLink external truncate href={link.URL}>{link.TEXT}</NxTextLink>}
+        {exceedsWarningLimit && <NxTextLink external href={link.URL}>{link.TEXT}</NxTextLink>}
       </NxCard.Text>
     </NxCard.Content>
   </NxCard>
