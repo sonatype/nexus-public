@@ -26,112 +26,47 @@ public abstract class NexusEdition
 {
   static final String NEXUS_EDITION = "nexus-edition";
 
-  private static final String NEXUS_LOAD_AS_OSS_PROP_NAME = "nexus.loadAsOSS";
-
-  private static final String NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME = "nexus.loadAsProStarter";
-
-  private static final String EDITION_PRO_PATH = "edition_pro";
-
-  private static final String EDITION_PRO_STARTER_PATH = "edition_pro_starter";
-
-  private static final String NEXUS_FEATURES = "nexus-features";
+  public static final String NEXUS_FEATURES = "nexus-features";
 
   private static final Logger log = LoggerFactory.getLogger(NexusEdition.class);
+
+  public static final String NEXUS_LOAD_AS_OSS_PROP_NAME = "nexus.loadAsOSS";
+
+  public static final String NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME = "nexus.loadAsProStarter";
 
   public abstract NexusEditionType getEdition();
 
   public abstract NexusEditionFeature getEditionFeature();
 
-  public abstract void adjustEditionProperties(Path workDirPath, Properties properties);
-
-  protected void adjustEditionPropertiesToOSS(final Properties properties) {
-    log.info("Loading OSS Edition");
-    //override to load nexus-oss-edition
-    properties.put(NEXUS_EDITION, NexusEditionType.OSS.editionString);
-    String updatedNexusFeaturesProps = properties.getProperty(NEXUS_FEATURES)
-        .replace(NexusEditionFeature.PRO_FEATURE.featureString, NexusEditionFeature.OSS_FEATURE.featureString)
-        .replace(NexusEditionFeature.PRO_STARTER_FEATURE.featureString, NexusEditionFeature.OSS_FEATURE.featureString);
-
-    properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
-  }
-
-  protected void adjustEditionPropertiesToStarter(final Properties properties) {
-    log.info("Loading Pro Starter Edition");
-    //override to load nexus-pro-starter-edition
-    properties.put(NEXUS_EDITION, NexusEditionType.PRO_STARTER.editionString);
-    String updatedNexusFeaturesProps = properties.getProperty(NEXUS_FEATURES)
-        .replace(NexusEditionFeature.PRO_FEATURE.featureString, NexusEditionFeature.PRO_STARTER_FEATURE.featureString);
-
-    properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
-  }
-
   /**
-   * Determine whether or not we should be booting the Pro Starter edition or not, based on the presence of a pro
+   * Determine whether or not we should be booting to the corresponding edition or not, based on the presence of a
    * edition marker file, license, or a System property that can be used to override the behaviour.
    */
-  protected boolean shouldSwitchToProStarter(final Path workDirPath) {
-    File proEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO);
-    File starterEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO_STARTER);
-    boolean switchToStarter = false;
-    if (hasNexusLoadAsStarter()) {
-      switchToStarter = isNexusLoadAsStarter();
-    }
-    if (starterEditionMarker.exists()) {
-      switchToStarter = true;
-    }
-    if (proEditionMarker.exists()) {
-      switchToStarter = false;
-    }
-    if (isNexusClustered()) {
-      switchToStarter = false;
-    }
-    return switchToStarter;
+  protected abstract boolean doesApply(final Properties properties, final Path workDirPath);
+
+  protected abstract void doApply(final Properties properties, final Path workDirPath);
+
+  protected abstract File getEditionMarker(final Path workDirPath);
+
+  public boolean applies(final Properties properties, final Path workDirPath) {
+    return doesApply(properties, workDirPath);
   }
 
-  /**
-   * Determine whether or not we should be booting the OSS edition or not, based on the presence of a pro/pro starter
-   * edition markers file, license, or a System property that can be used to override the behaviour.
-   */
-  protected boolean shouldSwitchToOss(final Path workDirPath) {
-    File proEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO);
-    File proStarterEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO_STARTER);
-    boolean switchToOss;
-
-    if (hasNexusLoadAsStarter() && isNexusLoadAsStarter()) {
-      switchToOss = false;
-    }
-    else if (hasNexusLoadAsOSS()) {
-      switchToOss = isNexusLoadAsOSS();
-    }
-    else if (proEditionMarker.exists() || proStarterEditionMarker.exists()) {
-      switchToOss = false;
-    }
-    else if (isNexusClustered()) {
-      switchToOss = false; // avoid switching the edition when clustered
-    }
-    else {
-      switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicense();
-    }
-
-    return switchToOss;
+  public void apply(final Properties properties, final Path workDirPath) {
+    doApply(properties, workDirPath);
   }
 
-  protected File getEditionMarker(final Path workDirPath, NexusEditionType edition) {
-    switch (edition) {
-      case PRO: {
-        return workDirPath.resolve(EDITION_PRO_PATH).toFile();
-      }
-      case PRO_STARTER: {
-        return workDirPath.resolve(EDITION_PRO_STARTER_PATH).toFile();
-      }
-      default: {
-        throw new IllegalStateException("Marker for OSS edition not supported!");
-      }
-    }
+  public boolean hasNexusLoadAs(final String nexusProperty) {
+    return Boolean.getBoolean(nexusProperty);
+  }
+
+  public boolean hasFeature(final Properties properties, final String feature) {
+    return properties.getProperty(NEXUS_FEATURES, "")
+        .contains(feature);
   }
 
   protected void createEditionMarker(final Path workDirPath, NexusEditionType edition) {
-    File editionMarker = getEditionMarker(workDirPath, edition);
+    File editionMarker = getEditionMarker(workDirPath);
     try {
       if (editionMarker.createNewFile()) {
         log.debug("Created {} edition marker file: {}", edition.name(), editionMarker);
@@ -142,38 +77,14 @@ public abstract class NexusEdition
     }
   }
 
-  protected boolean hasNexusLoadAsOSS() {
-    return null != System.getProperty(NEXUS_LOAD_AS_OSS_PROP_NAME);
-  }
-
-  protected boolean isNexusLoadAsOSS() {
-    return Boolean.getBoolean(NEXUS_LOAD_AS_OSS_PROP_NAME);
-  }
-
-  protected boolean hasNexusLoadAsStarter() {
-    return null != System.getProperty(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME);
-  }
-
-  protected boolean isNexusLoadAsStarter() {
-    return Boolean.getBoolean(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME);
-  }
-
-  protected boolean isNexusClustered() {
-    return Boolean.getBoolean("nexus.clustered");
-  }
-
-  protected boolean isNullNexusLicenseFile() {
-    return System.getProperty("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
-  }
-
-  protected boolean isNullJavaPrefLicense() {
+  protected boolean isNullJavaPrefLicensePath(final String licensePath) {
     Thread currentThread = Thread.currentThread();
     ClassLoader tccl = currentThread.getContextClassLoader();
-    // Java prefs spawns a Timer-Task that inherits the current TCCL;
-    // temporarily clear it so we can be GC'd if we bounce the KERNEL
+    //Java prefs spawns a Timer-Task that inherits the current TCCL;
+    //temporarily clear it so we can be GC'd if we bounce the KERNEL
     currentThread.setContextClassLoader(null);
     try {
-      return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
+      return userRoot().node(licensePath).get("license", null) == null;
     }
     finally {
       currentThread.setContextClassLoader(tccl);

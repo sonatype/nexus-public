@@ -12,22 +12,27 @@
  */
 package org.sonatype.nexus.bootstrap.osgi;
 
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+
+import com.google.common.collect.ImmutableList;
+
 public class NexusEditionFactory
 {
-  public static NexusEdition getEdition(NexusEditionType edition) {
-    switch (edition) {
-      case OSS: {
-        return new OssNexusEdition();
-      }
-      case PRO_STARTER: {
-        return new ProStarterNexusEdition();
-      }
-      case PRO: {
-        return new ProNexusEdition();
-      }
-      default: {
-        throw new UnsupportedOperationException("Cannot create impl for edition " + edition.name());
-      }
+  private NexusEditionFactory() {
+    throw new IllegalStateException("NexusEditionFactory is a Utility class");
+  }
+
+  private static final List<NexusEdition> editions =
+      ImmutableList.of(new ProNexusEdition(), new ProStarterNexusEdition(), new OssNexusEdition());
+
+  public static void selectActiveEdition(final Properties properties, final Path workDirPath) {
+    NexusEdition nexusEdition =
+        editions.stream().filter(edition -> edition.applies(properties, workDirPath)).findFirst().orElse(null);
+    if (nexusEdition == null) {
+      nexusEdition = new OssNexusEdition();
     }
+    nexusEdition.apply(properties, workDirPath);
   }
 }

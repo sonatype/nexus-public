@@ -12,12 +12,17 @@
  */
 package org.sonatype.nexus.bootstrap.osgi;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OssNexusEdition
     extends NexusEdition
 {
+  private static final Logger log = LoggerFactory.getLogger(OssNexusEdition.class);
 
   @Override
   public NexusEditionType getEdition() {
@@ -30,7 +35,25 @@ public class OssNexusEdition
   }
 
   @Override
-  public void adjustEditionProperties(final Path workDirPath, final Properties properties) {
-    // do nothing
+  protected boolean doesApply(final Properties properties, final Path workDirPath) {
+    //If this method is executed there is no need to validate anything, the other
+    //nexus edition classes (Pro and Starter) already did all the checks needed.
+    return true;
+  }
+
+  @Override
+  protected void doApply(final Properties properties, final Path workDirPath) {
+    log.info("Loading OSS Edition");
+    properties.put(NEXUS_EDITION, NexusEditionType.OSS.editionString);
+    String updatedNexusFeaturesProps = properties.getProperty(NEXUS_FEATURES)
+        .replace(NexusEditionFeature.PRO_FEATURE.featureString, getEditionFeature().featureString)
+        .replace(NexusEditionFeature.PRO_STARTER_FEATURE.featureString, getEditionFeature().featureString);
+
+    properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
+  }
+
+  @Override
+  protected File getEditionMarker(final Path workDirPath) {
+    throw new IllegalStateException("Marker for OSS edition not supported!");
   }
 }

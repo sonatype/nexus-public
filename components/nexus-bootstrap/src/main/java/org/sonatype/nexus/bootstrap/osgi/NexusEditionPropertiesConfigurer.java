@@ -31,8 +31,6 @@ public class NexusEditionPropertiesConfigurer
 
   static final String NEXUS_DB_FEATURE = "nexus-db-feature";
 
-  private static final String NEXUS_FEATURES = "nexus-features";
-
   private static final String NEXUS_EXCLUDE_FEATURES = "nexus-exclude-features";
 
   public Properties getPropertiesFromConfiguration() throws IOException {
@@ -49,9 +47,7 @@ public class NexusEditionPropertiesConfigurer
     Path workDirPath = new File(properties.getProperty("karaf.data")).getCanonicalFile().toPath();
     DirectoryHelper.mkdir(workDirPath);
 
-    NexusEditionType editionType = assumeEditionByProperties(properties);
-    NexusEdition edition = NexusEditionFactory.getEdition(editionType);
-    edition.adjustEditionProperties(workDirPath, properties);
+    NexusEditionFactory.selectActiveEdition(properties,workDirPath);
 
     selectDatastoreFeature(properties);
     selectAuthenticationFeature(properties);
@@ -61,26 +57,6 @@ public class NexusEditionPropertiesConfigurer
     requireProperty(properties, NEXUS_DB_FEATURE);
 
     return properties;
-  }
-
-  private NexusEditionType assumeEditionByProperties(Properties properties) {
-    if (hasProFeature(properties)) {
-      return NexusEditionType.PRO;
-    }
-    if (hasProStarterFeature(properties)) {
-      return NexusEditionType.PRO_STARTER;
-    }
-    return NexusEditionType.OSS;
-  }
-
-  private boolean hasProStarterFeature(final Properties properties) {
-    return properties.getProperty(NEXUS_FEATURES, "")
-        .contains(NexusEditionFeature.PRO_STARTER_FEATURE.featureString);
-  }
-
-  private boolean hasProFeature(final Properties properties) {
-    return properties.getProperty(NEXUS_FEATURES, "")
-        .contains(NexusEditionFeature.PRO_FEATURE.featureString);
   }
 
   private void readEnvironmentVariables(final Properties properties) {
