@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.atlas
 
 import java.nio.file.FileSystems
+
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -20,8 +21,8 @@ import javax.inject.Singleton
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.goodies.common.Iso8601Date
 import org.sonatype.nexus.common.app.ApplicationDirectories
+import org.sonatype.nexus.common.app.ApplicationLicense
 import org.sonatype.nexus.common.app.ApplicationVersion
-import org.sonatype.nexus.common.app.SystemInformationHelper
 import org.sonatype.nexus.common.atlas.SystemInformationGenerator
 import org.sonatype.nexus.common.node.DeploymentAccess
 import org.sonatype.nexus.common.node.NodeAccess
@@ -50,6 +51,8 @@ class SystemInformationGeneratorImpl
 
   private final ApplicationVersion applicationVersion
 
+  private final ApplicationLicense applicationLicense
+
   private final Map<String, String> parameters
 
   private final BundleContext bundleContext
@@ -59,8 +62,6 @@ class SystemInformationGeneratorImpl
   private final NodeAccess nodeAccess
 
   private final DeploymentAccess deploymentAccess
-
-  private final Map<String, SystemInformationHelper> systemInformationHelpers;
 
   static final Map UNAVAILABLE = ['unavailable': true].asImmutable()
 
@@ -72,21 +73,21 @@ class SystemInformationGeneratorImpl
   @Inject
   SystemInformationGeneratorImpl(final ApplicationDirectories applicationDirectories,
                                  final ApplicationVersion applicationVersion,
+                                 final ApplicationLicense applicationLicense,
                                  final @Parameters Map<String, String> parameters,
                                  final BundleContext bundleContext,
                                  final BundleService bundleService,
                                  final NodeAccess nodeAccess,
-                                 final DeploymentAccess deploymentAccess,
-                                 final Map<String, SystemInformationHelper> systemInformationHelpers)
+                                 final DeploymentAccess deploymentAccess)
   {
     this.applicationDirectories = checkNotNull(applicationDirectories)
     this.applicationVersion = checkNotNull(applicationVersion)
+    this.applicationLicense = checkNotNull(applicationLicense)
     this.parameters = checkNotNull(parameters)
     this.bundleContext = checkNotNull(bundleContext)
     this.bundleService = checkNotNull(bundleService)
     this.nodeAccess = checkNotNull(nodeAccess)
     this.deploymentAccess = checkNotNull(deploymentAccess)
-    this.systemInformationHelpers = checkNotNull(systemInformationHelpers)
   }
 
   @Override
@@ -96,6 +97,7 @@ class SystemInformationGeneratorImpl
     // HACK: provide local references to prevent problems with Groovy BUG accessing private fields
     def applicationDirectories = this.applicationDirectories
     def applicationVersion = this.applicationVersion
+    def applicationLicense = this.applicationLicense
     def parameters = this.parameters
     def bundleContext = this.bundleContext
     def bundleService = this.bundleService
@@ -162,6 +164,27 @@ class SystemInformationGeneratorImpl
       return data
     }
 
+    def reportNexusLicense = {
+      def data = [
+          'licenseRequired': applicationLicense.required,
+          'licenseValid': applicationLicense.valid,
+          'licenseInstalled': applicationLicense.installed
+      ]
+
+      if (applicationLicense.installed) {
+        data += [
+            'licenseExpired': applicationLicense.expired,
+            'licenseFingerprint': applicationLicense.fingerprint,
+        ]
+
+        applicationLicense.attributes.each { key, value ->
+          data[key] = value
+        }
+      }
+
+      return data
+    }
+
     def reportNexusConfiguration = {
       return [
           'installDirectory'  : fileref(applicationDirectories.installDirectory),
@@ -212,14 +235,11 @@ class SystemInformationGeneratorImpl
         'system-filestores'  : reportFileStores(),
         'nexus-status'       : reportNexusStatus(),
         'nexus-node'         : reportNexusNode(),
+        'nexus-license'      : reportNexusLicense(),
         'nexus-properties'   : reportObfuscatedProperties(parameters),
         'nexus-configuration': reportNexusConfiguration(),
         'nexus-bundles'      : reportNexusBundles()
     ]
-
-    systemInformationHelpers.each { key, value ->
-      sections[key] = value.getValue();
-    };
 
     return sections
   }

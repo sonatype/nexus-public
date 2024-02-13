@@ -17,10 +17,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ApplicationVersionSupport;
-import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.licensing.ProductEditionChangedEvent;
-
-import com.google.common.eventbus.Subscribe;
 
 /**
  * OSS {@link ApplicationVersion}.
@@ -31,18 +27,9 @@ import com.google.common.eventbus.Subscribe;
 @Singleton
 public class ApplicationVersionImpl
     extends ApplicationVersionSupport
-    implements EventAware
 {
-  private String edition = "OSS";
-
   @Override
   public String getEdition() {
-    return edition;
+    return "OSS";
   }
-
-  @Subscribe
-  public void on(final ProductEditionChangedEvent event) {
-    edition = event.getEdition();
-  }
-
 }
