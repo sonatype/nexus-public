@@ -53,9 +53,6 @@ class MavenGroupRecipe
   Provider<MavenGroupFacet> mavenGroupFacet
 
   @Inject
-  Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
-
-  @Inject
   Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet
 
   @Inject
@@ -81,6 +78,7 @@ class MavenGroupRecipe
     repository.attach(mavenGroupFacet.get())
     repository.attach(mavenContentFacet.get())
     repository.attach(mavenGroupIndexFacet.get())
+    repository.attach(browseFacet.get())
     repository.attach(mavenPurgeSnapshotsFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(mavenMaintenanceFacet.get())

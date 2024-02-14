@@ -63,6 +63,7 @@ class RawGroupRecipe
     repository.attach(configure(viewFacet.get()))
     repository.attach(groupFacet.get())
     repository.attach(contentFacet.get())
+    repository.attach(browseFacet.get())
   }
 
 
