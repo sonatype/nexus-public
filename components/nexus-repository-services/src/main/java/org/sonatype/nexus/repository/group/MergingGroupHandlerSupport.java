@@ -120,7 +120,7 @@ public abstract class MergingGroupHandlerSupport
           .map(HttpResponses::ok)
           .orElse(notFoundResponse(context));
     }
-    if (successfulResponses.size() == 1 && shouldReturnOnlyRespondingMember(context.getRepository())) {
+    if (successfulResponses.size() == 1) {
       // When only a single member responds successfully we return its value and don't bother to persist.
       return Iterables.getOnlyElement(successfulResponses.values());
     }
@@ -257,14 +257,6 @@ public abstract class MergingGroupHandlerSupport
       done[0] = matcher.test(line);
       return false;
     };
-  }
-
-  /**
-   * When {@code true} is returned if only a single member returns a successful response we return that member's
-   * {@link Content}.
-   */
-  protected boolean shouldReturnOnlyRespondingMember(final Repository repository) {
-    return true;
   }
 
   protected static <T> BinaryOperator<T> throwingMerger() {
