@@ -100,16 +100,31 @@
         }
         if (window.userTelemetry) {
           log('Initializing telemetry');
+          const telemetryService = 'service/rest/v1/user-telemetry/events';
           let config = await getTelemetryConfig();
+          config.contentHost = servicePath(telemetryService);
+          config.dataHost = config.contentHost;
+          config.sanitizeUrl = sanitizeUrl;
+          config.filterUrls = ['*/#admin*'];
           window.userTelemetry.initialize(config);
         }
         else {
-          console.error('telemetry during telemetry initialization');
+          console.error('Error during telemetry initialization');
         }
       }
+
+      function sanitizeUrl(url) {
+        try {
+          const urlObject = new URL(url);
+          return `${urlObject.pathname}${urlObject.hash}`;
+        } catch (error) {
+          console.error("Invalid URL");
+          return '';
+        }
+      }
+
       initializeTelemetry(true);
       window.initializeTelemetry = initializeTelemetry;
-
     </script>
   #end
   #macro(message $text)
