@@ -36,11 +36,11 @@ import UIStrings from '../../../../constants/UIStrings';
 import ContentSelectorsPreviewMachine from './ContentSelectorsPreviewMachine';
 
 export default function ContentSelectorsPreview({type, expression}) {
-  const [current, send] = useMachine(ContentSelectorsPreviewMachine, {devTools: true});
+  const [state, send] = useMachine(ContentSelectorsPreviewMachine, {devTools: true});
   const previewUnavailable = Utils.isBlank(expression);
-  const {allRepositories, filterText, preview, previewError, repositories} = current.context;
-  const isLoading = current.matches('loading');
-  const isLoadingPreview = current.matches('preview');
+  const {allRepositories, filterText, preview, previewError, repositories} = state.context;
+  const isLoading = state.matches('loading');
+  const isLoadingPreview = state.matches('preview');
 
   const repositoryChangeHandler = (repositories) => send('SET_REPOSITORIES', {repositories});
   const previewHandler = () => send('PREVIEW', {selectorType: type, expression});
