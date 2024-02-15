@@ -125,12 +125,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.amazon.ion</groupId>
-      <artifactId>ion-java</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>jmespath-java</artifactId>
       <scope>provided</scope>
