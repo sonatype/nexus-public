@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <aws-java-sdk.version>1.12.299</aws-java-sdk.version>
+    <aws-java-sdk.version>1.12.658</aws-java-sdk.version>
     <woodstox-core.version>6.5.0</woodstox-core.version>
   </properties>
 
@@ -340,12 +340,6 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.amazon.ion</groupId>
-        <artifactId>ion-java</artifactId>
-        <version>1.10.5</version>
       </dependency>
 
       <dependency>
