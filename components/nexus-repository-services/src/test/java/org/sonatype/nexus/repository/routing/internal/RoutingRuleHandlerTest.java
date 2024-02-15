@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.routing.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Parameters;
@@ -31,6 +32,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,6 +56,9 @@ public class RoutingRuleHandlerTest
   @Mock
   private Response contextResponse;
 
+  @Mock
+  private Repository repository;
+
   @Before
   public void setup() throws Exception {
     underTest = new RoutingRuleHandler(routingRuleHelper);
@@ -62,6 +67,7 @@ public class RoutingRuleHandlerTest
     when(context.getRequest()).thenReturn(request);
     when(request.getParameters()).thenReturn(new Parameters());
     when(context.proceed()).thenReturn(contextResponse);
+    when(context.getRepository()).thenReturn(repository);
   }
 
   @Test
@@ -77,7 +83,13 @@ public class RoutingRuleHandlerTest
   public void testHandle_blocked() throws Exception {
     when(routingRuleHelper.isAllowed(nullable(Repository.class), eq(SOME_PATH))).thenReturn(false);
 
+    Type typeMock = mock(Type.class);
+    when(repository.getType()).thenReturn(typeMock);
+    when(typeMock.getValue()).thenReturn("repository-type");
+    when(repository.getName()).thenReturn("repository-name");
+
     Response response = underTest.handle(context);
+
     assertNotNull(response);
     assertThat(response.getStatus().getCode(), is(403));
     verify(context, times(0)).proceed();
