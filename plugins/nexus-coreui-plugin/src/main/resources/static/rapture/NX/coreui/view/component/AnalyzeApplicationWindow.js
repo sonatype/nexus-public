@@ -22,7 +22,7 @@
  * @since 3.1
  */
 Ext.define('NX.coreui.view.component.AnalyzeApplicationWindow', {
-  extend: 'NX.view.ModalDialog',
+  extend: 'Ext.container.Container',
   alias: 'widget.nx-coreui-component-analyze-window',
   requires: [
     'NX.I18n'
@@ -36,28 +36,30 @@ Ext.define('NX.coreui.view.component.AnalyzeApplicationWindow', {
   /**
    * @override
    */
-  initComponent: function () {
-    var me = this;
+  hide: function() {
+    const modalWindow = this.child('nx-coreui-react-main-container');
+    this.remove(modalWindow);
+    return this.callParent(arguments);
+  },
 
-    me.setWidth(NX.view.ModalDialog.LARGE_MODAL);
-
-    me.items = [
-      {
-        xtype: 'nx-coreui-react-main-container',
-        reactView: window.ReactComponents.AnalyzeApplication,
-        reactViewProps: {
-          componentModel: me.component,
-          rerender: function() {
-            me.updateLayout();
-            me.center();
-          },
-          onClose: function() {
-            me.close();
-          }
+   /**
+   * @override
+   */
+  show: function () {
+    const me = this;
+    this.add({
+      xtype: 'nx-coreui-react-main-container',
+      reactView: window.ReactComponents.AnalyzeApplication,
+      reactViewProps: {
+        componentModel: me.component,
+        rerender: function() {
+          me.updateLayout();
+        },
+        onClose: function() {
+          me.hide();
         }
       }
-    ];
-
-    me.callParent();
+    });
+    return this.callParent(arguments);
   },
 });

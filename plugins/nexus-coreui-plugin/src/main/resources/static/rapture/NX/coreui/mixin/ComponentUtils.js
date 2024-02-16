@@ -38,7 +38,10 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
     var me = this,
         componentModel = me.fetchComponentModelFromView();
 
-    Ext.widget('nx-coreui-component-analyze-window', {component: componentModel.getData()});
+    var modalWindow = Ext.first('nx-coreui-component-analyze-window');
+
+    modalWindow.component = componentModel.getData();
+    modalWindow.show();
   },
 
   updateAnalyzeButton: function(componentModel) {

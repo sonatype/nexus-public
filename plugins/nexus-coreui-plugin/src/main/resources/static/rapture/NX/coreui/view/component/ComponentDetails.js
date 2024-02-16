@@ -77,6 +77,10 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
             text: NX.I18n.get('ComponentDetails_Analyze_Button'),
             iconCls: 'x-fa fa-cog',
             action: 'analyzeApplication'
+          },
+          {
+            xtype: 'nx-coreui-component-analyze-window',
+            hidden: false
           }
         ]
       },
