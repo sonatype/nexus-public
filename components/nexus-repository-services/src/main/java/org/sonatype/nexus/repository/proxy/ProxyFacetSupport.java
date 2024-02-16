@@ -41,7 +41,6 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.replication.PullReplicationSupport;
@@ -318,14 +317,10 @@ public abstract class ProxyFacetSupport
       }
       remote = fetch(context, content);
       if (remote != null) {
-        if (HttpMethods.HEAD.equals(context.getRequest().getAction()) && isRequestToDirectory(context)) {
+        content = store(context, remote);
+        if (remote.equals(content)) {
+          // remote wasn't stored; make reusable copy for cooperation
           content = new TempContent(remote);
-        } else {
-          content = store(context, remote);
-          if (remote.equals(content)) {
-            // remote wasn't stored; make reusable copy for cooperation
-            content = new TempContent(remote);
-          }
         }
       }
     }
@@ -648,10 +643,5 @@ public abstract class ProxyFacetSupport
   @VisibleForTesting
   Map<String, Integer> getThreadCooperationPerRequest() {
     return proxyCooperation.getThreadCountPerKey();
-  }
-
-  @VisibleForTesting
-  boolean isRequestToDirectory(Context context) {
-    return context.getRequest().getPath().endsWith("/");
   }
 }

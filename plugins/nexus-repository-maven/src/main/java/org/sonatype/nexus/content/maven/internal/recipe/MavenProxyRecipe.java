@@ -25,7 +25,6 @@ import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
-import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenNx2MetaFilesMatcher;
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe;
@@ -57,8 +56,6 @@ public class MavenProxyRecipe
 
   private final Provider<PurgeUnusedFacet> purgeUnusedFacet;
 
-  private final Provider<RemoveSnapshotsFacet> removeSnapshotsFacet;
-
   private final NegativeCacheHandler negativeCacheHandler;
 
   private final ProxyHandler proxyHandler;
@@ -78,8 +75,7 @@ public class MavenProxyRecipe
       final NegativeCacheHandler negativeCacheHandler,
       final ProxyHandler proxyHandler,
       final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet,
-      final Provider<MavenMaintenanceFacet> mavenMaintenanceFacet,
-      final Provider<RemoveSnapshotsFacet> removeSnapshotsFacet)
+      final Provider<MavenMaintenanceFacet> mavenMaintenanceFacet)
   {
     super(type, format);
     this.httpClientFacet = checkNotNull(httpClientFacet);
@@ -90,7 +86,6 @@ public class MavenProxyRecipe
     this.proxyHandler = checkNotNull(proxyHandler);
     this.mavenProxyIndexFacet = checkNotNull(mavenProxyIndexFacet);
     this.mavenMaintenanceFacet = checkNotNull(mavenMaintenanceFacet);
-    this.removeSnapshotsFacet = checkNotNull(removeSnapshotsFacet);
   }
 
 
@@ -108,7 +103,7 @@ public class MavenProxyRecipe
     repository.attach(getBrowseFacet().get());
     repository.attach(mavenProxyIndexFacet.get());
     repository.attach(mavenMaintenanceFacet.get());
-    repository.attach(removeSnapshotsFacet.get());
+    repository.attach(getRemoveSnapshotsFacet().get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

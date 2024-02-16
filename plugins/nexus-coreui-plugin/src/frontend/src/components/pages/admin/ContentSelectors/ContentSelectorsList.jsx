@@ -17,6 +17,7 @@ import {faScroll} from '@fortawesome/free-solid-svg-icons';
 
 import {
   ContentBody,
+  ExtJS,
   HelpTile,
   ListMachineUtils,
   Page,
@@ -44,25 +45,27 @@ import UIStrings from '../../../../constants/UIStrings';
 const {CONTENT_SELECTORS: LABELS} = UIStrings;
 
 export default function ContentSelectorsList({onCreate, onEdit}) {
-  const [current, send] = useMachine(ContentSelectorsListMachine, {devTools: true});
-  const isLoading = current.matches('loading');
-  const data = current.context.data;
-  const filterText = current.context.filter;
-  const error = current.context.error;
+  const [state, send] = useMachine(ContentSelectorsListMachine, {devTools: true});
+  const isLoading = state.matches('loading');
+  const data = state.context.data;
+  const filterText = state.context.filter;
+  const error = state.context.error;
 
-  const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
-  const typeSortDir = ListMachineUtils.getSortDirection('type', current.context);
-  const descriptionSortDir = ListMachineUtils.getSortDirection('description', current.context);
+  const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
+  const typeSortDir = ListMachineUtils.getSortDirection('type', state.context);
+  const descriptionSortDir = ListMachineUtils.getSortDirection('description', state.context);
 
   function filter(value) {
     send('FILTER', {filter: value});
   }
 
+  const canCreate = ExtJS.checkPermission('nexus:selectors:create');
+
   return <Page className="nxrm-content-selectors">
     <PageHeader>
       <PageTitle icon={faScroll} {...LABELS.MENU}/>
       <PageActions>
-        <NxButton variant="primary" onClick={onCreate}>
+        <NxButton variant="primary" disabled={!canCreate} onClick={onCreate}>
           <span>{LABELS.CREATE_BUTTON}</span>
         </NxButton>
       </PageActions>

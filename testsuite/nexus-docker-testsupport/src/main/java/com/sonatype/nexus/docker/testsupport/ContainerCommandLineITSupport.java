@@ -13,7 +13,7 @@
 package com.sonatype.nexus.docker.testsupport;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +21,11 @@ import com.sonatype.nexus.docker.testsupport.framework.DockerContainerClient;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 
 import org.sonatype.goodies.common.ComponentSupport;
+
+import org.testcontainers.containers.Container.ExecResult;
+
+import static java.util.Arrays.asList;
+import static org.sonatype.nexus.common.text.Strings2.notBlank;
 
 /**
  * Abstract implementation of {@link CommandLine} to allow the sharing of commonalities between
@@ -75,10 +80,23 @@ public abstract class ContainerCommandLineITSupport
 
   @Override
   public Optional<List<String>> exec(final String s) {
-    return dockerContainerClient.exec(s)
-        // we need all logs from the container
-        .map(v -> v.getStdout() + "\n" + v.getStderr())
-        .map(result -> Arrays.asList(result.split("\n")));
+    Optional<ExecResult> execResult = dockerContainerClient.exec(s);
+    if (execResult.isPresent()) {
+      List<String> output = new ArrayList<>();
+      // we need all logs from the container
+      ExecResult result = execResult.get();
+      String stdout = result.getStdout();
+      if (notBlank(stdout)) {
+        output.addAll(asList(stdout.split("\\r?\\n")));
+      }
+      String stderr = result.getStderr();
+      if (notBlank(stderr)) {
+        output.addAll(asList(stderr.split("\\r?\\n")));
+      }
+      return Optional.of(output);
+    }
+
+    return Optional.empty();
   }
 
   @Override

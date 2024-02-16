@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.view.Context;
@@ -48,10 +49,23 @@ public class RoutingRuleHandler
 
   @Override
   public Response handle(final Context context) throws Exception {
-    if (routingRuleHelper.isAllowed(context.getRepository(), path(context.getRequest()))) {
-      return context.proceed();
+    Repository repository = context.getRepository();
+    String path = path(context.getRequest());
+
+    boolean isRoutingRuleAllowed = routingRuleHelper.isAllowed(repository, path);
+
+    if (!isRoutingRuleAllowed) {
+      String repositoryType = repository.getType().getValue();
+      String repositoryName = repository.getName();
+
+      log.info("Routing rules block the requested item for Repository{name='{}', type={}}",
+          repositoryName,
+          repositoryType);
+
+      return HttpResponses.forbidden(PATH_IS_BLOCKED);
     }
-    return HttpResponses.forbidden(PATH_IS_BLOCKED);
+
+    return context.proceed();
   }
 
   private String path(final Request request) {
@@ -59,7 +73,8 @@ public class RoutingRuleHandler
       return request.getPath();
     }
     StringBuilder sb = new StringBuilder();
-    request.getParameters().forEach(entry -> sb.append('&').append(entry.getKey()).append('=').append(entry.getValue()));
+    request.getParameters()
+        .forEach(entry -> sb.append('&').append(entry.getKey()).append('=').append(entry.getValue()));
     sb.replace(0, 1, "?");
     return request.getPath() + sb;
   }

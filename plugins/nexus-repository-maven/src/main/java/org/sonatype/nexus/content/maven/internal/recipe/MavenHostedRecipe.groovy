@@ -46,9 +46,6 @@ class MavenHostedRecipe
   Provider<MavenContentHostedIndexFacet> mavenIndexFacet
 
   @Inject
-  Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
-
-  @Inject
   Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet
 
   @Inject

@@ -11,17 +11,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine} from '@xstate/react';
+import {useService} from '@xstate/react';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import {
-  ContentBody,
-  Page,
-  PageHeader,
-  PageTitle,
   Section,
   Textarea,
   FormUtils,
+  ExtJS
 } from '@sonatype/nexus-ui-plugin';
 
 import {
@@ -34,28 +31,17 @@ import {
   NxTextInput
 } from '@sonatype/react-shared-components';
 
-import ContentSelectorsFormMachine from './ContentSelectorsFormMachine';
 import ContentSelectorsPreview from './ContentSelectorsPreview';
 import UIStrings from '../../../../constants/UIStrings';
 
-export default function ContentSelectorsForm({itemId, onDone}) {
-  const [current, send] = useMachine(ContentSelectorsFormMachine, {
-    context: {
-      pristineData: {
-        name: itemId
-      }
-    },
+export default function ContentSelectorsForm({service, onDone}) {
+  const stateMachine = useService(service);
+  const [state, send] = stateMachine;
 
-    actions: {
-      onSaveSuccess: onDone,
-      onDeleteSuccess: onDone
-    },
-
-    devTools: true
-  });
-
-  const {pristineData, data, loadError} = current.context;
+  const {pristineData, data, loadError} = state.context;
   const hasData = data && data !== {};
+  const canDelete = ExtJS.checkPermission('nexus:selectors:delete');
+  const isEdit = Boolean(pristineData.name);
 
   function update(event) {
     send('UPDATE', {data: {[event.target.name]: event.target.value}});
@@ -68,67 +54,60 @@ export default function ContentSelectorsForm({itemId, onDone}) {
   function confirmDelete() {
     send('CONFIRM_DELETE');
   }
-
-  return <Page className="nxrm-content-selectors">
-    <PageHeader>
-      <PageTitle text={Boolean(pristineData.name) ?
-          UIStrings.CONTENT_SELECTORS.EDIT_TITLE(pristineData.name) :
-          UIStrings.CONTENT_SELECTORS.MENU.text}/>
-    </PageHeader>
-    <ContentBody>
-      <Section className="nxrm-content-selectors-form">
-        <NxStatefulForm
-            {...FormUtils.formProps(current, send)}
-          onCancel={cancel}
-          additionalFooterBtns={itemId &&
-            <NxButton variant="tertiary" onClick={confirmDelete}>
-              <NxFontAwesomeIcon icon={faTrash}/>
-              <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
-            </NxButton>
-          }
-        >
-          {hasData && !Boolean(pristineData.name) &&
-              <NxFormGroup label={UIStrings.CONTENT_SELECTORS.NAME_LABEL} isRequired={!pristineData.name}>
-                <NxTextInput
-                    className="nx-text-input--long"
-                    {...FormUtils.fieldProps('name', current)}
-                    disabled={pristineData.name}
-                    onChange={FormUtils.handleUpdate('name', send)}/>
-              </NxFormGroup>}
-          {hasData && <>
-            <NxReadOnly>
-              <NxReadOnly.Label>{UIStrings.CONTENT_SELECTORS.TYPE_LABEL}</NxReadOnly.Label>
-              <NxReadOnly.Data>{data.type?.toUpperCase()}</NxReadOnly.Data>
-            </NxReadOnly>
-            <NxFormGroup label={UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL}>
+  
+  return <>
+    <Section className="nxrm-content-selectors-form">
+      <NxStatefulForm
+          {...FormUtils.formProps(state, send)}
+        onCancel={cancel}
+        additionalFooterBtns={isEdit && canDelete &&
+          <NxButton variant="tertiary" onClick={confirmDelete}>
+            <NxFontAwesomeIcon icon={faTrash}/>
+            <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
+          </NxButton>
+        }
+      >
+        {hasData && !Boolean(pristineData.name) &&
+            <NxFormGroup label={UIStrings.CONTENT_SELECTORS.NAME_LABEL} isRequired={!pristineData.name}>
               <NxTextInput
                   className="nx-text-input--long"
-                  {...FormUtils.fieldProps('description', current)}
-                  onChange={FormUtils.handleUpdate('description', send)}/>
-            </NxFormGroup>
-            <NxFormGroup label={UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL}
-                         sublable={UIStrings.CONTENT_SELECTORS.EXPRESSION_DESCRIPTION}
-                         isRequired>
-              <Textarea
-                  className="nx-text-input--long"
-                  {...FormUtils.fieldProps('expression', current)}
-                  onChange={update}
-              />
-            </NxFormGroup>
+                  {...FormUtils.fieldProps('name', state)}
+                  disabled={pristineData.name}
+                  onChange={FormUtils.handleUpdate('name', send)}/>
+            </NxFormGroup>}
+        {hasData && <>
+          <NxReadOnly>
+            <NxReadOnly.Label>{UIStrings.CONTENT_SELECTORS.TYPE_LABEL}</NxReadOnly.Label>
+            <NxReadOnly.Data>{data.type?.toUpperCase()}</NxReadOnly.Data>
+          </NxReadOnly>
+          <NxFormGroup label={UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL}>
+            <NxTextInput
+                className="nx-text-input--long"
+                {...FormUtils.fieldProps('description', state)}
+                onChange={FormUtils.handleUpdate('description', send)}/>
+          </NxFormGroup>
+          <NxFormGroup label={UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL}
+                        sublable={UIStrings.CONTENT_SELECTORS.EXPRESSION_DESCRIPTION}
+                        isRequired>
+            <Textarea
+                className="nx-text-input--long"
+                {...FormUtils.fieldProps('expression', state)}
+                onChange={update}
+            />
+          </NxFormGroup>
 
-            <h4>{UIStrings.CONTENT_SELECTORS.EXPRESSION_EXAMPLES}</h4>
-            <NxP>
-              {UIStrings.CONTENT_SELECTORS.RAW_EXPRESSION_EXAMPLE_LABEL}:
-              {' '}<code className="nx-code">format == "raw"</code>
-            </NxP>
-            <NxP>
-              {UIStrings.CONTENT_SELECTORS.MULTI_EXPRESSIONS_EXAMPLE_LABEL}:
-              {' '}<code className="nx-code">format == "maven2" and path =^ "/org"</code>
-            </NxP>
-          </>}
-        </NxStatefulForm>
-      </Section>
-      {!loadError && <ContentSelectorsPreview type={data?.type} expression={data?.expression}/>}
-    </ContentBody>
-  </Page>;
+          <h4>{UIStrings.CONTENT_SELECTORS.EXPRESSION_EXAMPLES}</h4>
+          <NxP>
+            {UIStrings.CONTENT_SELECTORS.RAW_EXPRESSION_EXAMPLE_LABEL}:
+            {' '}<code className="nx-code">format == "raw"</code>
+          </NxP>
+          <NxP>
+            {UIStrings.CONTENT_SELECTORS.MULTI_EXPRESSIONS_EXAMPLE_LABEL}:
+            {' '}<code className="nx-code">format == "maven2" and path =^ "/org"</code>
+          </NxP>
+        </>}
+      </NxStatefulForm>
+    </Section>
+    {!loadError && <ContentSelectorsPreview type={data?.type} expression={data?.expression}/>}
+  </>;
 }

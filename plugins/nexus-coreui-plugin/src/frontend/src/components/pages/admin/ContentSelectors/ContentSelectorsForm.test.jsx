@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {screen, waitFor, render, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {act} from 'react-dom/test-utils';
@@ -19,7 +19,7 @@ import axios from 'axios';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
-import ContentSelectorsForm from './ContentSelectorsForm';
+import ContentSelectorsDetails from './ContentSelectorsDetails';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -35,7 +35,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     requestConfirmation: jest.fn(),
-    showErrorMessage: jest.fn()
+    showErrorMessage: jest.fn(),
+    checkPermission: jest.fn(),
   },
   Utils: {
     buildFormMachine: function(args) {
@@ -61,7 +62,20 @@ const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.formSelectors,
 
-  getType: () => screen.getByText(UIStrings.CONTENT_SELECTORS.TYPE_LABEL).nextSibling
+  getType: () => screen.getByText(UIStrings.CONTENT_SELECTORS.TYPE_LABEL).nextSibling,
+  name: () => screen.queryByLabelText(UIStrings.CONTENT_SELECTORS.NAME_LABEL),
+  description: () => screen.queryByLabelText(UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL),
+  expression: () => screen.queryByLabelText(UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL),
+  cancelButton: () => screen.queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
+  deleteButton: () => screen.queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL),
+  previewButton: () => screen.queryByText(UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON),
+  readOnly: {
+    name: () => screen.getByText(UIStrings.CONTENT_SELECTORS.NAME_LABEL).nextSibling,
+    type: () => screen.getByText(UIStrings.CONTENT_SELECTORS.TYPE_LABEL).nextSibling,
+    description: () => screen.getByText(UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL).nextSibling,
+    expression: () => screen.getByText(UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL).nextSibling,
+    warning: () => screen.getByText(UIStrings.SETTINGS.READ_ONLY.WARNING)
+  },
 };
 
 describe('ContentSelectorsForm', function() {
@@ -69,23 +83,28 @@ describe('ContentSelectorsForm', function() {
   const onDone = jest.fn();
 
   function renderEditView(itemId) {
-    return renderView(<ContentSelectorsForm itemId={itemId} onDone={onDone}/>);
+    return render(<ContentSelectorsDetails itemId={itemId} onDone={onDone}/>);
   }
 
-  function renderCreateView() {
-    return renderView(<ContentSelectorsForm onDone={onDone}/>);
+  const renderCreateView = async () => {
+    return render(<ContentSelectorsDetails onDone={onDone}/>);
   }
 
-  function renderView(view) {
-    return TestUtils.render(view, ({queryByLabelText, queryByText}) => ({
-      name: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.NAME_LABEL),
-      description: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.DESCRIPTION_LABEL),
-      expression: () => queryByLabelText(UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL),
-      cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
-      deleteButton: () => queryByText(UIStrings.SETTINGS.DELETE_BUTTON_LABEL),
-      previewButton: () => queryByText(UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON)
-    }));
-  }
+  beforeEach(() => {
+    axios.post.mockReset();
+
+    when(ExtJS.checkPermission)
+      .calledWith('nexus:selectors:update')
+      .mockReturnValue(true);
+
+    when(ExtJS.checkPermission)
+    .calledWith('nexus:selectors:create')
+    .mockReturnValue(true);
+
+    when(ExtJS.checkPermission)
+    .calledWith('nexus:selectors:delete')
+    .mockReturnValue(true);
+  });
 
   it('renders the resolved data', async function() {
     const itemId = 'test';
@@ -106,9 +125,10 @@ describe('ContentSelectorsForm', function() {
       }
     });
 
-    const {loadingMask, description, expression} = renderEditView(itemId);
+    const {description, expression} = selectors;
+    renderEditView(itemId);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(selectors.queryTitle()).toHaveTextContent('Edit content-selector-name');
     expect(selectors.getType()).toHaveTextContent('CSEL');
@@ -123,9 +143,9 @@ describe('ContentSelectorsForm', function() {
   it('renders an error message', async function() {
     axios.get.mockReturnValue(Promise.reject({message: 'Error'}));
 
-    const {container, loadingMask} = renderEditView('itemId');
+    const {container} = renderEditView('itemId');
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(container.querySelector('.nx-alert--error')).toHaveTextContent('Error');
   });
@@ -133,9 +153,10 @@ describe('ContentSelectorsForm', function() {
   it('requires the name and expression fields when creating a new content selector', async function() {
     axios.get.mockReturnValue(Promise.resolve({data: []}));
 
-    const {loadingMask, name, expression} = renderCreateView();
+    const {name, expression} = selectors;
+    renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
@@ -157,9 +178,10 @@ describe('ContentSelectorsForm', function() {
   });
 
   it('fires onDone when cancelled', async function() {
-    const {loadingMask, cancelButton} = renderCreateView();
+    const {cancelButton} = selectors;
+    renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.click(cancelButton());
 
@@ -182,9 +204,10 @@ describe('ContentSelectorsForm', function() {
       }
     });
 
-    const {expression, getByText, loadingMask, name} = renderCreateView();
+    const {expression, name} = selectors;
+    renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await TestUtils.changeField(name, 'test');
     await TestUtils.changeField(expression, 'format == "maven2');
@@ -192,14 +215,15 @@ describe('ContentSelectorsForm', function() {
     userEvent.click(selectors.querySubmitButton());
 
     await waitForElementToBeRemoved(selectors.querySavingMask());
-    expect(getByText('An error occurred with the name field')).toBeInTheDocument();
-    expect(getByText('Invalid CSEL: tokenization error in \'"maven2\' at line 1 column 18')).toBeInTheDocument();
+    expect(screen.queryByText('An error occurred with the name field')).toBeInTheDocument();
+    expect(screen.queryByText('Invalid CSEL: tokenization error in \'"maven2\' at line 1 column 18')).toBeInTheDocument();
   });
 
   it('allows new line for expression textarea', async function() {
-    const {expression, loadingMask} = renderCreateView();
+    const {expression} = selectors;
+    renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.type(expression(), 'format == "raw"{enter}and format == "maven2"')
 
@@ -226,9 +250,10 @@ describe('ContentSelectorsForm', function() {
 
     axios.delete.mockReturnValue(Promise.resolve());
 
-    const {loadingMask, deleteButton} = renderEditView(itemId);
+    const {deleteButton} = selectors;
+    renderEditView(itemId);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     axios.put.mockReturnValue(Promise.resolve());
 
@@ -261,9 +286,10 @@ describe('ContentSelectorsForm', function() {
     axios.get.mockReturnValue(Promise.resolve({data: []}));
     axios.post.mockReturnValue(Promise.resolve());
 
-    const {loadingMask, name, description, expression} = renderCreateView();
+    const {name, description, expression} = selectors;
+    renderCreateView();
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await waitFor(() => expect(window.dirty).toEqual([]));
 
@@ -321,14 +347,16 @@ describe('ContentSelectorsForm', function() {
         }]
       }});
 
-      const {loadingMask, previewButton, getByText} = renderEditView(itemId);
-      await waitForElementToBeRemoved(loadingMask);
+      const {previewButton} = selectors;
+      renderEditView(itemId);
 
-      expect(getByText(emptyPreviewMessage)).toBeInTheDocument();
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      expect(screen.queryByText(emptyPreviewMessage)).toBeInTheDocument();
 
       await act(async () => userEvent.click(previewButton()));
 
-      expect(getByText('maven-aether-provider')).toBeInTheDocument();
+      expect(screen.queryByText('maven-aether-provider')).toBeInTheDocument();
     });
 
     it('shows preview error API message', async function () {
@@ -362,12 +390,49 @@ describe('ContentSelectorsForm', function() {
         }
       });
 
-      const {loadingMask, previewButton, getByText} = renderEditView(itemId);
-      await waitForElementToBeRemoved(loadingMask);
+      const {previewButton} = selectors;
+      renderEditView(itemId);
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
       await act(async () => userEvent.click(previewButton()));
 
-      expect(getByText('An error occurred loading data. Invalid CSEL')).toBeInTheDocument();
+      expect(screen.queryByText('An error occurred loading data. Invalid CSEL')).toBeInTheDocument();
+    });
+  });
+
+  describe('Read Only Mode', function() {
+    it('renders content selector without edit permissions', async function() {
+
+      when(ExtJS.checkPermission)
+      .calledWith('nexus:selectors:update')
+      .mockReturnValue(false);
+
+      axios.get.mockImplementation((url) => {
+        if (url === '/service/rest/v1/security/content-selectors/itemId') {
+          return Promise.resolve({
+            data: {
+              'name' : 'test',
+              'type' : 'csel',
+              'description' : 'test content selector with format raw',
+              'expression' : 'format == "raw"'
+            }
+          });
+        }
+      });
+
+      const {readOnly: {name, type, description, expression, warning}} = selectors;
+
+      await act(async () => {
+        renderEditView('itemId');
+      })
+
+      expect(warning()).toBeInTheDocument();
+
+      expect(name()).toHaveTextContent('test');
+      expect(type()).toHaveTextContent('CSEL');
+      expect(description()).toHaveTextContent('test content selector with format raw');
+      expect(expression()).toHaveTextContent('format == "raw"');
     });
   });
 });

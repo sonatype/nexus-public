@@ -13,9 +13,7 @@
 package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.time.Duration;
 
 import javax.annotation.Nonnull;
@@ -34,7 +32,6 @@ import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.view.Content;
@@ -42,7 +39,6 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.transaction.RetryDeniedException;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
@@ -70,7 +66,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
@@ -134,15 +129,6 @@ public class ProxyFacetSupportTest
   Context missingContext;
 
   @Mock
-  Context headContext;
-
-  @Mock
-  Request getRequest;
-
-  @Mock
-  Request headRequest;
-
-  @Mock
   CacheControllerHolder cacheControllerHolder;
 
   @Mock
@@ -165,17 +151,13 @@ public class ProxyFacetSupportTest
 
     when(cacheControllerHolder.getContentCacheController()).thenReturn(cacheController);
 
-    when(getRequest.getAction()).thenReturn(HttpMethods.GET);
-    when(cachedContext.getRequest()).thenReturn(getRequest);
     when(cachedContext.getRepository()).thenReturn(repository);
 
-    when(missingContext.getRepository()).thenReturn(repository);
-    when(missingContext.getRequest()).thenReturn(getRequest);
+    Request request = mock(Request.class);
+    when(cachedContext.getRequest()).thenReturn(request);
 
-    when(headRequest.getAction()).thenReturn(HttpMethods.HEAD);
-    when(headContext.getRequest()).thenReturn(headRequest);
-    when(headContext.getRepository()).thenReturn(repository);
-    when(headContext.getRequest().getAction()).thenReturn(HttpMethods.HEAD);
+    when(missingContext.getRepository()).thenReturn(repository);
+    when(missingContext.getRequest()).thenReturn(request);
 
     underTest.cacheControllerHolder = cacheControllerHolder;
     when(format.getValue()).thenReturn("raw");
@@ -209,71 +191,6 @@ public class ProxyFacetSupportTest
     Content foundContent = underTest.get(cachedContext);
 
     assertThat(foundContent, is(storedContent));
-  }
-
-  @Test
-  public void testGet_HEAD_to_Asset_Url_Cached() throws IOException {
-    when(cacheController.isStale(cacheInfo)).thenReturn(false);
-    doReturn(content).when(underTest).getCachedContent(headContext);
-    doReturn(false).when(underTest).isRequestToDirectory(any());
-
-    Content foundContent = underTest.get(headContext);
-
-    verify(underTest, times(0)).fetch(any(), any());
-    verify(underTest, times(0)).store(any(), any());
-    assertThat(foundContent, is(content));
-  }
-
-  @Test
-  public void testGet_HEAD_to_Directory_Url_Cached() throws IOException {
-    when(cacheController.isStale(cacheInfo)).thenReturn(false);
-    doReturn(content).when(underTest).getCachedContent(headContext);
-    doReturn(true).when(underTest).isRequestToDirectory(any());
-
-    Content foundContent = underTest.get(headContext);
-
-    verify(underTest, times(0)).fetch(any(), any());
-    verify(underTest, times(0)).store(any(), any());
-    assertThat(foundContent, is(content));
-  }
-
-  @Test
-  public void testGet_HEAD_to_Asset_Url_notCached() throws IOException {
-    when(cacheController.isStale(cacheInfo)).thenReturn(true);
-    doReturn(content).when(underTest).getCachedContent(headContext);
-
-    doReturn(reFetchedContent).when(underTest).fetch(headContext, content);
-    doReturn(storedContent).when(underTest).store(headContext, reFetchedContent);
-    doReturn(false).when(underTest).isRequestToDirectory(any());
-
-    Content foundContent = underTest.get(headContext);
-
-    verify(underTest, times(1)).fetch(headContext, content);
-    verify(underTest, times(1)).store(headContext, reFetchedContent);
-    assertThat(foundContent, is(storedContent));
-  }
-
-  @Test
-  public void testGet_HEAD_to_Directory_Url_notCached() throws IOException {
-    when(cacheController.isStale(cacheInfo)).thenReturn(true);
-    doReturn(content).when(underTest).getCachedContent(headContext);
-
-    InputStream contentStream = IOUtils.toInputStream("test content", Charset.defaultCharset());
-
-    when(reFetchedContent.openInputStream()).thenReturn(contentStream);
-    when(reFetchedContent.getContentType()).thenReturn("application/json");
-    when(reFetchedContent.getAttributes()).thenReturn(new AttributesMap());
-
-    doReturn(reFetchedContent).when(underTest).fetch(headContext, content);
-    doReturn(true).when(underTest).isRequestToDirectory(any());
-
-    Content foundContent = underTest.get(headContext);
-
-    verify(underTest, times(1)).fetch(headContext, content);
-    verify(underTest, times(0)).store(any(), any());
-    assertThat(foundContent.getContentType(), is("application/json"));
-    assertThat(foundContent.getAttributes().isEmpty(), is(true));
-    assertThat(foundContent.getPayload().getSize(), is(12L));
   }
 
   @Test

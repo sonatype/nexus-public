@@ -14,6 +14,8 @@ import React from 'react';
 import {waitForElementToBeRemoved} from '@testing-library/react';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {when} from 'jest-when';
 
 import ContentSelectorsList from './ContentSelectorsList';
 
@@ -21,6 +23,13 @@ import UIStrings from '../../../../constants/UIStrings';
 
 jest.mock('axios', () => ({
   get: jest.fn()
+}));
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+  ExtJS: {
+    checkPermission: jest.fn(),
+  }
 }));
 
 describe('ContentSelectorsList', function() {
@@ -67,5 +76,17 @@ describe('ContentSelectorsList', function() {
     await waitForElementToBeRemoved(loadingMask);
 
     expect(container.querySelector('.nx-cell--meta-info')).toHaveTextContent('Error');
+  });
+
+  it('disables create button without the permissions', async function() {
+    when(ExtJS.checkPermission)
+    .calledWith('nexus:selectors:create')
+    .mockReturnValue(false);
+
+    const {container, loadingMask} = renderView();
+
+    await waitForElementToBeRemoved(loadingMask);
+    
+    expect(container.querySelector('button', {text: 'Create Selector'})).toBeDisabled();
   });
 });

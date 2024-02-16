@@ -15,7 +15,7 @@ import React from 'react';
 import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
 import ContentSelectorsList from './ContentSelectorsList';
-import ContentSelectorsForm from './ContentSelectorsForm';
+import ContentSelectorsDetails from './ContentSelectorsDetails';
 
 export default function ContentSelectors() {
   return <MasterDetail path="admin/repository/selectors">
@@ -23,7 +23,7 @@ export default function ContentSelectors() {
       <ContentSelectorsList/>
     </Master>
     <Detail>
-      <ContentSelectorsForm/>
+      <ContentSelectorsDetails/>
     </Detail>
   </MasterDetail>;
 }

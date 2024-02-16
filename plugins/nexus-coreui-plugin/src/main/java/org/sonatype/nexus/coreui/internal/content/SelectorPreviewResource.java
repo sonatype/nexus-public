@@ -36,6 +36,7 @@ import org.sonatype.nexus.selector.SelectorFactory;
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.authz.annotation.Logical;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
@@ -77,7 +78,7 @@ public class SelectorPreviewResource
   @POST
   @Path("/preview")
   @RequiresAuthentication
-  @RequiresPermissions("nexus:selectors:*")
+  @RequiresPermissions(value = {"nexus:selectors:create", "nexus:selectors:update"}, logical = Logical.OR)
   public PageResult<AssetXO> previewContent(SelectorPreviewRequest request)
   {
     selectorFactory.validateSelector(request.getType().toLowerCase(), request.getExpression());

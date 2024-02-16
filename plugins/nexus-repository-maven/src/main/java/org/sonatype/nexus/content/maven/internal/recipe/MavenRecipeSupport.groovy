@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.maven.ContentDispositionHandler
 import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet
 import org.sonatype.nexus.repository.maven.MavenPathParser
+import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenArchetypeCatalogMatcher
@@ -124,6 +125,9 @@ abstract class MavenRecipeSupport
 
   @Inject
   Provider<MavenReplicationFacet> mavenReplicationFacet
+
+  @Inject
+  Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
 
   @Inject
   ContentDispositionHandler contentDispositionHandler
