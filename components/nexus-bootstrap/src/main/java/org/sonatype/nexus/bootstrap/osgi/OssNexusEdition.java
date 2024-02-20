@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.osgi;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Properties;
 
@@ -50,10 +49,5 @@ public class OssNexusEdition
         .replace(NexusEditionFeature.PRO_STARTER_FEATURE.featureString, getEditionFeature().featureString);
 
     properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
-  }
-
-  @Override
-  protected File getEditionMarker(final Path workDirPath) {
-    throw new IllegalStateException("Marker for OSS edition not supported!");
   }
 }

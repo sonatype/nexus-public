@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.osgi;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Properties;
 
@@ -22,9 +21,6 @@ import org.slf4j.LoggerFactory;
 public class ProNexusEdition
     extends NexusEdition
 {
-  private static final String EDITION_PRO_PATH = "edition_pro";
-
-  private static final String PRO_LICENSE_LOCATION = "/com/sonatype/nexus/professional";
 
   private static final Logger log = LoggerFactory.getLogger(ProNexusEdition.class);
 
@@ -40,29 +36,12 @@ public class ProNexusEdition
 
   @Override
   protected boolean doesApply(final Properties properties, final Path workDirPath) {
-    File proEditionMarker = getEditionMarker(workDirPath);
-
-    if (hasNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
-      return false;
-    }
-    if (hasNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME)) {
-      return false;
-    }
-    if (proEditionMarker.exists()) {
-      return true;
-    }
-    return !isNullJavaPrefLicensePath(PRO_LICENSE_LOCATION) &&
-        hasFeature(properties, getEditionFeature().featureString);
+    return !(shouldSwitchToProStarter(workDirPath) || shouldSwitchToOss(workDirPath));
   }
 
   @Override
   protected void doApply(final Properties properties, final Path workDirPath) {
     log.info("Loading Pro Edition");
     createEditionMarker(workDirPath, getEdition());
-  }
-
-  @Override
-  protected File getEditionMarker(final Path workDirPath) {
-    return workDirPath.resolve(EDITION_PRO_PATH).toFile();
   }
 }
