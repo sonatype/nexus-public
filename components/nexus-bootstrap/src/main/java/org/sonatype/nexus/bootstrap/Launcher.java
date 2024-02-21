@@ -14,16 +14,20 @@ package org.sonatype.nexus.bootstrap;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Handler;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.bootstrap.internal.ShutdownHelper;
 import org.sonatype.nexus.bootstrap.internal.TemporaryDirectory;
 import org.sonatype.nexus.bootstrap.jetty.JettyServer;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.impl.StaticLoggerBinder;
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
 
 /**
@@ -49,14 +53,20 @@ public class Launcher
 
   private static final boolean HAS_CONSOLE = Boolean.getBoolean("karaf.startLocalConsole");
 
+  private static final String LOGGING_OVERRIDE_PREFIX = "nexus.logging.level.";
+
   public static final String IGNORE_SHUTDOWN_HELPER = ShutdownHelper.class.getName() + ".ignore";
 
   public static final String SYSTEM_USERID = "*SYSTEM";
 
   private final JettyServer server;
 
-  public Launcher(final File defaultsFile, @Nullable final File propertiesFile,
-                  @Nullable final File nodeNamePropertiesFile) throws Exception {
+  public Launcher(
+      final File defaultsFile,
+      @Nullable final File propertiesFile,
+      @Nullable final File nodeNamePropertiesFile)
+      throws Exception
+  {
 
     configureLogging();
 
@@ -74,23 +84,15 @@ public class Launcher
 
     // log critical information about the runtime environment
     Logger log = LoggerFactory.getLogger(Launcher.class);
-    log.info("Java: {}, {}, {}, {}",
-        System.getProperty("java.version"),
-        System.getProperty("java.vm.name"),
-        System.getProperty("java.vm.vendor"),
-        System.getProperty("java.vm.version")
-    );
-    log.info("OS: {}, {}, {}",
-        System.getProperty("os.name"),
-        System.getProperty("os.version"),
-        System.getProperty("os.arch")
-    );
-    log.info("User: {}, {}, {}",
-        System.getProperty("user.name"),
-        System.getProperty("user.language"),
-        System.getProperty("user.home")
-    );
-    log.info("CWD: {}", System.getProperty("user.dir"));
+    if (log.isInfoEnabled()) {
+      log.info("Java: {}, {}, {}, {}", System.getProperty("java.version"), System.getProperty("java.vm.name"),
+          System.getProperty("java.vm.vendor"), System.getProperty("java.vm.version"));
+      log.info("OS: {}, {}, {}", System.getProperty("os.name"), System.getProperty("os.version"),
+          System.getProperty("os.arch"));
+      log.info("User: {}, {}, {}", System.getProperty("user.name"), System.getProperty("user.language"),
+          System.getProperty("user.home"));
+      log.info("CWD: {}", System.getProperty("user.dir"));
+    }
 
     // ensure the temporary directory is sane
     File tmpdir = TemporaryDirectory.get();
@@ -105,6 +107,8 @@ public class Launcher
     if (args == null || args.trim().isEmpty()) {
       throw new IllegalArgumentException("Missing nexus-args");
     }
+
+    configureInitialLoggingOverrides(props);
 
     this.server = new JettyServer(cl, props, args.split(","));
   }
@@ -144,7 +148,7 @@ public class Launcher
   }
 
   /**
-   * Customize logging of the application as necessary. 
+   * Customize logging of the application as necessary.
    */
   private void configureLogging() {
     if (!HAS_CONSOLE) {
@@ -156,5 +160,52 @@ public class Launcher
       org.slf4j.bridge.SLF4JBridgeHandler.removeHandlersForRootLogger();
       org.slf4j.bridge.SLF4JBridgeHandler.install();
     }
+  }
+
+  private static class Property
+  {
+    private String key;
+
+    private String value;
+
+    private Property(final Entry<String, String> entry) {
+      key = entry.getKey();
+      value = entry.getValue();
+    }
+
+    private Property withKeyPrefixRemoved() {
+      if (Launcher.LOGGING_OVERRIDE_PREFIX.length() < key.length()) {
+        key = key.substring(Launcher.LOGGING_OVERRIDE_PREFIX.length());
+      }
+      return this;
+    }
+  }
+
+  /**
+   * Customize logging overrides presented as properties. These will be superseded by any logback overrides.
+   */
+  private void configureInitialLoggingOverrides(final Map<String, String> props) {
+    LoggerContext loggerContext = loggerContext();
+    if (props != null) {
+      props.entrySet().stream()
+          .map(Property::new)
+          .filter(p -> p.key.startsWith(LOGGING_OVERRIDE_PREFIX))
+          .filter(p -> !p.value.isEmpty())
+          .map(Property::withKeyPrefixRemoved)
+          .forEach(p -> setLoggerLevel(loggerContext, p.key, p.value));
+    }
+  }
+
+  private void setLoggerLevel(final LoggerContext loggerContext, final String logger, final String level) {
+    loggerContext.getLogger(Launcher.class).debug("Initialising logger: {} = {}", logger, level);
+    loggerContext.getLogger(logger).setLevel(Level.valueOf(level));
+  }
+
+  private LoggerContext loggerContext() {
+    ILoggerFactory factory = LoggerFactory.getILoggerFactory();
+    if (factory instanceof LoggerContext) {
+      return (LoggerContext) factory;
+    }
+    return (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
   }
 }
