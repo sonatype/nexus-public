@@ -10,28 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.sonatype.nexus.edition.oss;
+package org.sonatype.nexus.common.app;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.util.Map;
 
-import org.sonatype.nexus.common.app.ApplicationVersion;
-import org.sonatype.nexus.common.app.ApplicationVersionSupport;
+import org.sonatype.nexus.common.atlas.SystemInformationGenerator;
 
 /**
- * OSS {@link ApplicationVersion}.
+ * Helper interface to populate system information {@link SystemInformationGenerator}
  *
- * @since 3.0
  */
-@Named("OSS")
-@Singleton
-public class ApplicationVersionImpl
-    extends ApplicationVersionSupport
+public interface SystemInformationHelper
 {
-
-  @Override
-  public String getEdition() {
-    return "OSS";
-  }
-
+  Map<String, Object> getValue();
 }
