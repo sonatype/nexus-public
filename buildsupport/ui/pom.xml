@@ -41,6 +41,12 @@
         <groupId>org.sonatype.directjngine</groupId>
         <artifactId>directjngine</artifactId>
         <version>2.2.10-01</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
