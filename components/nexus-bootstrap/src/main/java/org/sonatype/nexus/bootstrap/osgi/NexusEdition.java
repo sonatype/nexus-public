@@ -54,6 +54,8 @@ public abstract class NexusEdition
 
   protected abstract void doApply(final Properties properties, final Path workDirPath);
 
+  protected abstract boolean shouldSwitchToOss(final Path workDirPath);
+
   public boolean applies(final Properties properties, final Path workDirPath) {
     return doesApply(properties, workDirPath);
   }
@@ -95,51 +97,6 @@ public abstract class NexusEdition
     finally {
       currentThread.setContextClassLoader(tccl);
     }
-  }
-
-  protected boolean shouldSwitchToProStarter(final Path workDirPath) {
-    File proEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO);
-    File starterEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO_STARTER);
-    boolean switchToStarter;
-    if (hasNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME)) {
-      switchToStarter = isNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME);
-    }else if (proEditionMarker.exists()) {
-      switchToStarter = false;
-    }else if (starterEditionMarker.exists()) {
-      switchToStarter = true;
-    }else if (isNexusClustered()) {
-      switchToStarter = false;
-    }
-    else{
-      switchToStarter =  !isNullJavaPrefLicensePath(PRO_STARTER_LICENSE_LOCATION)
-          && isNullJavaPrefLicensePath(PRO_LICENSE_LOCATION);
-    }
-    return switchToStarter;
-  }
-
-  protected boolean shouldSwitchToOss(final Path workDirPath) {
-    File proEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO);
-    File proStarterEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO_STARTER);
-    boolean switchToOss;
-
-    if (isNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME) && hasNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME)) {
-      switchToOss = false;
-    }
-    else if (hasNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
-      switchToOss = isNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME);
-    }
-    else if (proEditionMarker.exists() || proStarterEditionMarker.exists()) {
-      switchToOss = false;
-    }
-    else if (isNexusClustered()) {
-      switchToOss = false; // avoid switching the edition when clustered
-    }
-    else {
-      switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicensePath(PRO_LICENSE_LOCATION)
-          && isNullJavaPrefLicensePath(PRO_STARTER_LICENSE_LOCATION);
-    }
-
-    return switchToOss;
   }
 
   protected File getEditionMarker(final Path workDirPath, NexusEditionType edition) {

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.bootstrap.osgi;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Properties;
 
@@ -21,7 +22,6 @@ import org.slf4j.LoggerFactory;
 public class ProNexusEdition
     extends NexusEdition
 {
-
   private static final Logger log = LoggerFactory.getLogger(ProNexusEdition.class);
 
   @Override
@@ -36,12 +36,33 @@ public class ProNexusEdition
 
   @Override
   protected boolean doesApply(final Properties properties, final Path workDirPath) {
-    return !(shouldSwitchToProStarter(workDirPath) || shouldSwitchToOss(workDirPath));
+    return properties.getProperty(NEXUS_FEATURES, "")
+        .contains(NexusEditionFeature.PRO_FEATURE.featureString) &&
+        !shouldSwitchToOss(workDirPath);
   }
 
   @Override
   protected void doApply(final Properties properties, final Path workDirPath) {
     log.info("Loading Pro Edition");
     createEditionMarker(workDirPath, getEdition());
+  }
+
+  @Override
+  protected boolean shouldSwitchToOss(final Path workDirPath) {
+    File proEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO);
+    boolean switchToOss;
+    if (hasNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
+      switchToOss = isNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME);
+    }
+    else if (proEditionMarker.exists()) {
+      switchToOss = false;
+    }
+    else if (isNexusClustered()) {
+      switchToOss = false; // avoid switching the edition when clustered
+    }
+    else {
+      switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicensePath(PRO_LICENSE_LOCATION);
+    }
+    return switchToOss;
   }
 }

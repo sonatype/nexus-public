@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.bootstrap.osgi;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Properties;
 
@@ -35,17 +36,33 @@ public class ProStarterNexusEdition
 
   @Override
   protected boolean doesApply(final Properties properties, final Path workDirPath) {
-    return !shouldSwitchToOss(workDirPath);
+    return properties.getProperty(NEXUS_FEATURES, "")
+        .contains(NexusEditionFeature.PRO_STARTER_FEATURE.featureString) &&
+        !shouldSwitchToOss(workDirPath);
   }
 
   @Override
   protected void doApply(final Properties properties, final Path workDirPath) {
     log.info("Loading Pro Starter Edition");
-    properties.put(NEXUS_EDITION, NexusEditionType.PRO_STARTER.editionString);
-    String updatedNexusFeaturesProps = properties.getProperty(NEXUS_FEATURES)
-        .replace(NexusEditionFeature.PRO_FEATURE.featureString, getEditionFeature().featureString);
-
-    properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
     createEditionMarker(workDirPath, getEdition());
+  }
+
+  @Override
+  protected boolean shouldSwitchToOss(final Path workDirPath) {
+    File proStarterEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO_STARTER);
+    boolean switchToOss;
+    if (isNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME) && hasNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME)) {
+      switchToOss = false;
+    }
+    else if (hasNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
+      switchToOss = isNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME);
+    }
+    else if (proStarterEditionMarker.exists()) {
+      switchToOss = false;
+    }
+    else {
+      switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicensePath(PRO_STARTER_LICENSE_LOCATION);
+    }
+    return switchToOss;
   }
 }

@@ -16,7 +16,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Properties;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
@@ -31,37 +30,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.bootstrap.osgi.NexusEdition.NEXUS_LOAD_AS_OSS_PROP_NAME;
-import static org.sonatype.nexus.bootstrap.osgi.NexusEdition.NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME;
 import static org.sonatype.nexus.bootstrap.osgi.NexusEdition.PRO_LICENSE_LOCATION;
-import static org.sonatype.nexus.bootstrap.osgi.NexusEdition.PRO_STARTER_LICENSE_LOCATION;
 
 @RunWith(Parameterized.class)
-public class NexusEditionTest
+public class ProNexusEditionTest
     extends TestSupport
 {
   @Spy
-  private NexusEdition underTest = new NexusEdition()
-  {
-    @Override
-    public NexusEditionType getEdition() {
-      return null;
-    }
-
-    @Override
-    public NexusEditionFeature getEditionFeature() {
-      return null;
-    }
-
-    @Override
-    protected boolean doesApply(final Properties properties, final Path workDirPath) {
-      return false;
-    }
-
-    @Override
-    protected void doApply(final Properties properties, final Path workDirPath) {
-
-    }
-  };
+  private ProNexusEdition underTest = new ProNexusEdition();
 
   @Mock
   private Path workDirPath;
@@ -70,13 +46,7 @@ public class NexusEditionTest
   private Path proPath;
 
   @Mock
-  private Path proStarterPath;
-
-  @Mock
   private File proEditionMarker;
-
-  @Mock
-  private File proStarterMarker;
 
   private Boolean hasLoadAsOss;
 
@@ -100,7 +70,7 @@ public class NexusEditionTest
 
   private Boolean is_starter;
 
-  public NexusEditionTest(
+  public ProNexusEditionTest(
       final Boolean hasLoadAsOss,
       final Boolean loadAsOss,
       final Boolean proMarkerExists,
@@ -186,40 +156,20 @@ public class NexusEditionTest
         {false, false, false, false, false, false, false, false, false, false, false},
         // if there is a license stored in javaprefs then is_oss = false
         {false, false, false, false, true, false, false, false, false, false, false},
-        // nexus.loadAsStarter has a value and it's true then is_starter == true
-        {false, false, false, false, false, true, true, true, false, false, true},
-         //clustered == true then is_starter == false
-        {false, false, false, true, false, true, false, true, false, false, false},
-        // proMarker == false , starterMarker == true then is_starter == true
-        {false, false, false, false, false, true, true, true, true, false, true},
-        // proMarker == true, starterMarker == true  then is_starter == false
-        {false, false, true, false, false, true, false, true, true, false, false}
-    });
+        });
   }
 
   @Test
   public void testProShouldSwitchToOss() {
     when(workDirPath.resolve("edition_pro")).thenReturn(proPath);
-    when(workDirPath.resolve("edition_pro_starter")).thenReturn(proStarterPath);
-
     when(proPath.toFile()).thenReturn(proEditionMarker);
-    when(proStarterPath.toFile()).thenReturn(proStarterMarker);
-
     when(proEditionMarker.exists()).thenReturn(proMarkerExists);
-    when(proStarterMarker.exists()).thenReturn(proStarterMarkerExists);
-
     when(underTest.hasNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)).thenReturn(hasLoadAsOss);
     when(underTest.isNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)).thenReturn(loadAsOss);
     when(underTest.isNexusClustered()).thenReturn(clustered);
     when(underTest.isNullNexusLicenseFile()).thenReturn(nullFileLic);
     when(underTest.isNullJavaPrefLicensePath(PRO_LICENSE_LOCATION)).thenReturn(nullPrefLic);
-    when(underTest.isNullJavaPrefLicensePath(PRO_STARTER_LICENSE_LOCATION)).thenReturn(nullPrefLic);
-
-    when(underTest.hasNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME)).thenReturn(hasLoadAsStarter);
-    when(underTest.isNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME)).thenReturn(loadAsStarter);
 
     assertThat(underTest.shouldSwitchToOss(workDirPath), is(is_oss));
-    assertThat(underTest.shouldSwitchToProStarter(workDirPath), is(is_starter));
   }
 }
-

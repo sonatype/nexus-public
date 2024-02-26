@@ -50,4 +50,9 @@ public class OssNexusEdition
 
     properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
   }
+
+  @Override
+  protected boolean shouldSwitchToOss(final Path workDirPath) {
+    return true;
+  }
 }
