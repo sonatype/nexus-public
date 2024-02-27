@@ -43,3 +43,15 @@
     grid-area: unset;
   }
 }
+
+/*
+  Style overrides for the ExtJS classes.
+*/
+
+.nx-coreui-component-details {
+  z-index: 4;
+}
+
+.nx-coreui-component-componentinfo .x-panel-header {
+  z-index: 1;
+}
