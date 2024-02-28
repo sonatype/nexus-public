@@ -42,7 +42,7 @@ class KMSEncrypterTest
   }
 
   @Unroll
-  def 'Supplying no kms id adds the correct kms parameters to \'#request\''() {
+  def 'Supplying no kms id adds the correct kms parameters to \'#requestType\''() {
     given: 'an encrypter without a selected key'
       def request = Mock(requestType)
       KMSEncrypter kmsEncrypter = new KMSEncrypter()
@@ -65,7 +65,7 @@ class KMSEncrypterTest
   }
 
   @Unroll
-  def 'Adds the correct kms parameters with key ID to \'#request\''() {
+  def 'Adds the correct kms parameters with key ID to \'#requestType\''() {
     given: 'an encrypter with a kms key ID'
       def request = Mock(requestType)
       KMSEncrypter kmsEncrypter = new KMSEncrypter(Optional.of('FakeKeyId'))

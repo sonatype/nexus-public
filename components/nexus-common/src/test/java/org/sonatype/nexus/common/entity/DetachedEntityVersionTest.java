@@ -10,25 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity
+package org.sonatype.nexus.common.entity;
 
-import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.goodies.testsupport.TestSupport;
 
-import org.junit.Test
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for {@link DetachedEntityVersion}
  */
-class DetachedEntityVersionTest
+public class DetachedEntityVersionTest
     extends TestSupport
 {
   @Test
-  void 'detached equality'() {
-    DetachedEntityVersion a = new DetachedEntityVersion('a')
-    assert a.equals(a)
-    assert a.equals(new DetachedEntityVersion('a'))
+  public void testDetachedEquality() {
+    DetachedEntityVersion a = new DetachedEntityVersion("a");
+    assertTrue(a.equals(a));
+    assertTrue(a.equals(new DetachedEntityVersion("a")));
 
-    DetachedEntityVersion b = new DetachedEntityVersion('b')
-    assert !a.equals(b)
+    DetachedEntityVersion b = new DetachedEntityVersion("b");
+    assertTrue(!a.equals(b));
   }
 }

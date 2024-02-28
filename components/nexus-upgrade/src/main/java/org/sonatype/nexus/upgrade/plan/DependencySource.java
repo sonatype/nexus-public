@@ -40,6 +40,6 @@ public interface DependencySource<T>
    */
   interface UnresolvedDependencyAware<T>
   {
-    void setUnresolvedDependencies(Collection<Dependency<T>> unresolved);
+    void setUnresolvedDependencies(Collection<Dependency<T>> unresolved) throws Exception;
   }
 }

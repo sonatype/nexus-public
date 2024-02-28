@@ -32,13 +32,13 @@ import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.amazonaws.services.s3.model.DeleteObjectsRequest
 import com.amazonaws.services.s3.model.DeleteObjectsResult
+import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject
 import com.amazonaws.services.s3.model.ListObjectsRequest
 import com.amazonaws.services.s3.model.ObjectListing
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.model.S3Object
 import com.amazonaws.services.s3.model.S3ObjectInputStream
 import com.amazonaws.services.s3.model.S3ObjectSummary
-import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -144,8 +144,8 @@ class S3BlobStoreTest
         listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: '/content/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.bytes', lastModified: new Date())
         listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.properties', lastModified: new Date())
         listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.bytes', lastModified: new Date())
-        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789def.properties', lastModified: new Date().minus(2))
-        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789def.bytes', lastModified: new Date().minus(2))
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789def.properties', lastModified: new Date(System.currentTimeMillis() - 2))
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: 'vol-01/chap-01/12345678-1234-1234-1234-123456789def.bytes', lastModified: new Date(System.currentTimeMillis() - 2))
         listing.truncated = false
 
         return listing

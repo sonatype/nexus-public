@@ -25,7 +25,7 @@ class NoEncrypterTest
   NoEncrypter noEncrypter = new NoEncrypter()
 
   @Unroll
-  def 'NoEncrypter does nothing to \'#request\''() {
+  def 'NoEncrypter does nothing to \'#requestType\''() {
     given: 'a request to s3'
       def request = Mock(requestType)
 

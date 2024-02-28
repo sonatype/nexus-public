@@ -38,6 +38,10 @@
       <artifactId>org.apache.karaf.shell.commands</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.aries.spifly</groupId>
+      <artifactId>org.apache.aries.spifly.dynamic.framework.extension</artifactId>
+    </dependency>
 
     <!--
     Optionally installed during startup
