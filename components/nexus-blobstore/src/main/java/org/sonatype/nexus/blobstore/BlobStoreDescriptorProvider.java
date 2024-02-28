@@ -10,27 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.quartz;
+package org.sonatype.nexus.blobstore;
 
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
-import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 
-/**
- * Descriptor for {@link SleeperTask}.
- */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
-public class SleeperTaskDescriptor
-    extends TaskDescriptorSupport
+public class BlobStoreDescriptorProvider
 {
-  static final String TYPE_ID = "sleeper";
+  private final Map<String, BlobStoreDescriptor> blobStoreDescriptors;
 
-  public SleeperTaskDescriptor()
+  private final DatabaseCheck databaseCheck;
+
+  @Inject
+  public BlobStoreDescriptorProvider(
+      final DatabaseCheck databaseCheck,
+      final Map<String, BlobStoreDescriptor> blobStoreDescriptors)
   {
-    super(TYPE_ID, SleeperTask.class, "Sleeper test", VISIBLE, EXPOSED);
+    this.databaseCheck = databaseCheck;
+    this.blobStoreDescriptors = blobStoreDescriptors;
+  }
+
+  public Map<String, BlobStoreDescriptor> get() {
+    return blobStoreDescriptors.entrySet().stream()
+        .filter(item -> databaseCheck.isAllowedByVersion(item.getValue().getClass()))
+        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
   }
 }

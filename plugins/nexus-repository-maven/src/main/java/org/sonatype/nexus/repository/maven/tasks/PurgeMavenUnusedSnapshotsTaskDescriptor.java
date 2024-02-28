@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.maven.tasks;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
@@ -30,6 +31,7 @@ import static org.sonatype.nexus.repository.maven.tasks.PurgeMavenUnusedSnapshot
  *
  * @since 3.0
  */
+@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class PurgeMavenUnusedSnapshotsTaskDescriptor

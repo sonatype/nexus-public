@@ -18,6 +18,7 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion
 import org.sonatype.nexus.content.maven.internal.index.MavenContentHostedIndexFacet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
@@ -36,6 +37,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
 /**
  * @since 3.25
  */
+@AvailabilityVersion(from = "1.0")
 @Named(Maven2HostedRecipe.NAME)
 @Singleton
 class MavenHostedRecipe

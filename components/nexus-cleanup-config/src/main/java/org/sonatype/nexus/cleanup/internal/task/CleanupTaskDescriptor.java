@@ -15,6 +15,7 @@ package org.sonatype.nexus.cleanup.internal.task;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
@@ -22,6 +23,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
  *
  * @since 3.14
  */
+@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class CleanupTaskDescriptor

@@ -21,6 +21,7 @@ import org.sonatype.nexus.formfields.FormField;
 
 /**
  * Describes a capability (its type).
+ * Note: Do not inject List<BlobStoreDescriptors> and instead opt to use DefaultCapabilityDescriptorProvider
  */
 public interface CapabilityDescriptor
 {

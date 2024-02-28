@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -25,6 +26,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
  *
  * @since 3.0
  */
+@AvailabilityVersion(from = "1.0")
 @Named(RebuildIndexTaskDescriptor.TYPE_ID)
 @Singleton
 public class RebuildIndexTaskDescriptor

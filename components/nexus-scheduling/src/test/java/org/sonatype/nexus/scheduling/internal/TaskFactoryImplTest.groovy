@@ -15,6 +15,7 @@ package org.sonatype.nexus.scheduling.internal
 import java.lang.annotation.Annotation
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.common.db.DatabaseCheck
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 
@@ -43,6 +44,9 @@ class TaskFactoryImplTest
   @Mock
   private TaskInfo taskInfo
 
+  @Mock
+  private DatabaseCheck databaseCheck
+
   private TaskFactoryImpl underTest
 
   @Before
@@ -51,7 +55,8 @@ class TaskFactoryImplTest
     when(simpleTaskBeanEntry.getImplementationClass()).thenReturn(SimpleTask)
     when(simpleTaskBeanEntry.getProvider()).thenReturn(Providers.of(new SimpleTask()))
     when(beanLocator.locate(any(Key))).thenReturn(Collections.singletonList(simpleTaskBeanEntry))
-    underTest = new TaskFactoryImpl(beanLocator)
+    when(databaseCheck.isAllowedByVersion(any())).thenReturn(true)
+    underTest = new TaskFactoryImpl(beanLocator, databaseCheck)
   }
 
   @Test
