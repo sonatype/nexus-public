@@ -36,9 +36,8 @@ public class ProNexusEdition
 
   @Override
   protected boolean doesApply(final Properties properties, final Path workDirPath) {
-    return properties.getProperty(NEXUS_FEATURES, "")
-        .contains(NexusEditionFeature.PRO_FEATURE.featureString) &&
-        !shouldSwitchToOss(workDirPath);
+    return !properties.getProperty(NEXUS_FEATURES, "").contains(NexusEditionFeature.OSS_FEATURE.featureString) &&
+           !shouldSwitchToOss(workDirPath);
   }
 
   @Override

@@ -36,14 +36,15 @@ public class ProStarterNexusEdition
 
   @Override
   protected boolean doesApply(final Properties properties, final Path workDirPath) {
-    return properties.getProperty(NEXUS_FEATURES, "")
-        .contains(NexusEditionFeature.PRO_STARTER_FEATURE.featureString) &&
-        !shouldSwitchToOss(workDirPath);
+    return !properties.getProperty(NEXUS_FEATURES, "").contains(NexusEditionFeature.OSS_FEATURE.featureString) &&
+           !shouldSwitchToOss(workDirPath);
   }
 
   @Override
   protected void doApply(final Properties properties, final Path workDirPath) {
     log.info("Loading Pro Starter Edition");
+    properties.setProperty(NEXUS_EDITION, getEdition().editionString);
+    properties.setProperty(NEXUS_FEATURES, getEditionFeature().featureString);
     createEditionMarker(workDirPath, getEdition());
   }
 
