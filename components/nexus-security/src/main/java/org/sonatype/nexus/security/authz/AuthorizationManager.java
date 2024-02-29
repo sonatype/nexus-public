@@ -41,6 +41,13 @@ public interface AuthorizationManager
   Set<Role> listRoles();
 
   /**
+   * Returns the roles from this AuthorizationManager that meet the query
+   * @param query query to search
+   * @return the set of matching roles
+   */
+  Set<Role> searchRoles(String query);
+
+  /**
    * Returns a Role base on an Id.
    */
   Role getRole(String roleId);

@@ -17,6 +17,7 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
@@ -39,6 +40,7 @@ import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.an
  *
  * @since 3.24
  */
+@AvailabilityVersion(from = "1.0")
 @Named(RawHostedRecipe.NAME)
 @Singleton
 class RawHostedRecipe

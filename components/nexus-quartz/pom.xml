@@ -102,6 +102,13 @@
       <artifactId>nexus-upgrade</artifactId>
       <scope>provided</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.objenesis</groupId>
+      <artifactId>objenesis</artifactId>
+      <version>3.2</version>
+    </dependency>
+
   </dependencies>
 
   <build>

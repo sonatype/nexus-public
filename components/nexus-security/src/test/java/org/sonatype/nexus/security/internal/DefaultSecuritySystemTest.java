@@ -201,6 +201,15 @@ public class DefaultSecuritySystemTest
   }
 
   @Test
+  public void testSearchRoles() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    Set<Role> roles = securitySystem.searchRoles("sourceB", "query");
+    // Search is equal to listRoles for not LDAP sources
+    Assert.assertEquals(securitySystem.listRoles(), roles);
+  }
+
+  @Test
   public void testAddUser() throws Exception {
     SecuritySystem securitySystem = this.getSecuritySystem();
 

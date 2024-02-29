@@ -10,25 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity
+package org.sonatype.nexus.common.app;
 
-import org.sonatype.goodies.testsupport.TestSupport
+import java.util.Map;
 
-import org.junit.Test
+import org.sonatype.nexus.common.atlas.SystemInformationGenerator;
 
 /**
- * Tests for {@link DetachedEntityVersion}
+ * Helper interface to populate system information {@link SystemInformationGenerator}
+ *
  */
-class DetachedEntityVersionTest
-    extends TestSupport
+public interface SystemInformationHelper
 {
-  @Test
-  void 'detached equality'() {
-    DetachedEntityVersion a = new DetachedEntityVersion('a')
-    assert a.equals(a)
-    assert a.equals(new DetachedEntityVersion('a'))
-
-    DetachedEntityVersion b = new DetachedEntityVersion('b')
-    assert !a.equals(b)
-  }
+  Map<String, Object> getValue();
 }

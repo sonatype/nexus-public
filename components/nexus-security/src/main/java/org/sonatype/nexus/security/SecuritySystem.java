@@ -96,6 +96,15 @@ public interface SecuritySystem
    */
   Set<Role> listRoles(String sourceId) throws NoSuchAuthorizationManagerException;
 
+  /**
+   * Searches the roles that meet the query under the specified auth source
+   *
+   * @param sourceId The identifier of an {@link AuthorizationManager}.
+   * @param query Query to match
+   * @return All the roles that meet the query returned by an {@link AuthorizationManager}.
+   */
+  Set<Role> searchRoles(String sourceId, String query) throws NoSuchAuthorizationManagerException;
+
   // *********************
   // * user management
   // *********************

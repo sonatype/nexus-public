@@ -200,6 +200,11 @@ public class AuthorizationManagerImpl
   }
 
   @Override
+  public Set<Role> searchRoles(final String query) {
+    return listRoles();
+  }
+
+  @Override
   public Role addRole(final Role role) {
     // the roleId of the secRole might change, so we need to keep the reference
     CRole secRole = this.convert(role);

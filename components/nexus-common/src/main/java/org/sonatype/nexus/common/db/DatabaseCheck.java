@@ -10,29 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package com.sonatype.nexus.ssl.plugin.internal.ui
+package org.sonatype.nexus.common.db;
 
-import groovy.transform.ToString
-
-/**
- * Certificate exchange object.
- *
- * @since 3.0
- */
-@ToString(includePackage = false, includeNames = true)
-public class CertificateXO
+public interface DatabaseCheck
 {
-  String id
-  String fingerprint
-  String pem
-  String serialNumber
-  String subjectCommonName
-  String subjectOrganization
-  String subjectOrganizationalUnit
-  String issuerCommonName
-  String issuerOrganization
-  String issuerOrganizationalUnit
-  long issuedOn
-  long expiresOn
-  boolean inTrustStore
+  public static final String POSTGRE_SQL = "PostgreSQL";
+
+  boolean isPostgresql();
+
+  /**
+   * To be used during startup to determine if minimum schema versions >= currently running schema
+   * @param annotatedClass class to check for <code>@AvailabilityVersion(from = "1.0")</code>
+   * @return true if the class is allowed to start based on current database schema
+   */
+  boolean isAllowedByVersion(Class<?> annotatedClass);
 }

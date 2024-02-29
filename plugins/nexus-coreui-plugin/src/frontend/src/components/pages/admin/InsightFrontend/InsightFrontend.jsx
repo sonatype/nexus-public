@@ -162,7 +162,9 @@ export default function InsightFrontend() {
                     </p>
                     <div className="overview-content-section">
                       <div className="overview-content-section-img">
-                        <img width="300" src="/static/rapture/resources/images/firewall_illustration_final.png"/>
+                        <img width="300" src="/static/rapture/resources/images/firewall_illustration_final.png"
+                          alt="Robotic arm sorting gold and cracked blue colored hexagons on a conveyor belt. There is a scanner that is only
+                          letting gold ones pass on the conveyor, and a robotic arm that is putting the blue ones in the trash bin next to it."/>
                       </div>
                       <div>
                         <h2>Reduce Risk and Keep Innovating</h2>

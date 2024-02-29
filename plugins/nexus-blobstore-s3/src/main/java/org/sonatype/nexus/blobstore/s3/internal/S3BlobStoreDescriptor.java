@@ -39,6 +39,7 @@ import org.sonatype.nexus.blobstore.s3.internal.encryption.NoEncrypter;
 import org.sonatype.nexus.blobstore.s3.internal.encryption.S3ManagedEncrypter;
 import org.sonatype.nexus.blobstore.s3.internal.ui.S3Component;
 import org.sonatype.nexus.blobstore.s3.internal.ui.S3RegionXO;
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 
 import com.amazonaws.services.s3.model.Region;
@@ -60,6 +61,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
  *
  * @since 3.6.1
  */
+@AvailabilityVersion(from = "1.0")
 @Named(S3BlobStoreDescriptor.TYPE)
 public class S3BlobStoreDescriptor
     extends BlobStoreDescriptorSupport

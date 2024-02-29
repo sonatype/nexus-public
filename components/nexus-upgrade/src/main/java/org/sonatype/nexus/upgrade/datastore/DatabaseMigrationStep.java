@@ -16,10 +16,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Optional;
-
-import javax.annotation.Nullable;
 
 /**
  * @since 3.29
@@ -112,21 +109,14 @@ public interface DatabaseMigrationStep
       throws SQLException
   {
     if (isPostgresql(conn)) {
-      String[] schemas = schema(conn);
-      StringBuilder sql = new StringBuilder("SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS" +
+      String currentSchema = currentSchema(conn);
+      String sql = "SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS" +
           " WHERE UPPER(constraint_name) = ?" +
-          "   AND constraint_schema IN (");
+          "   AND UPPER(constraint_schema) = ?";
 
-      sql.append(String.join("", Collections.nCopies(schemas.length, "?,")));
-      sql.deleteCharAt(sql.length() - 1);
-
-      sql.append(")");
-
-      try (PreparedStatement statement = conn.prepareStatement(sql.toString())) {
+      try (PreparedStatement statement = conn.prepareStatement(sql)) {
         statement.setString(1, indexName.toUpperCase());
-        for (int i=0; i<schemas.length; i++) {
-          statement.setString(i + 2, schemas[i].trim());
-        }
+        statement.setString(2, currentSchema.toUpperCase());
         try (ResultSet results = statement.executeQuery()) {
           return results.next();
         }
@@ -145,18 +135,17 @@ public interface DatabaseMigrationStep
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
-  default String[] schema(final Connection conn)
+  default String currentSchema(final Connection conn)
       throws SQLException
   {
-    String sql = "show search_path";
+    String sql = "select current_schema()";
     try (PreparedStatement statement = conn.prepareStatement(sql)) {
       try (ResultSet results = statement.executeQuery()) {
         if (results.next()) {
-          return results.getString(1).split(",");
+          return results.getString(1);
         }
       }
     }
-    throw new IllegalStateException("Unable to determine database schema");
+    throw new IllegalStateException("Unable to determine current database schema");
   }
 }

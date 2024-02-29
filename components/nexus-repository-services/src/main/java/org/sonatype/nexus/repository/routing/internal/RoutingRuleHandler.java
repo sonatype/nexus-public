@@ -58,7 +58,7 @@ public class RoutingRuleHandler
       String repositoryType = repository.getType().getValue();
       String repositoryName = repository.getName();
 
-      log.info("Routing rules block the requested item for Repository{name='{}', type={}}",
+      log.debug("Routing rules block the requested item for Repository{name='{}', type={}}",
           repositoryName,
           repositoryType);
 

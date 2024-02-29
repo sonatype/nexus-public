@@ -17,6 +17,7 @@ import org.sonatype.nexus.pax.exam.TestDatabase;
 import org.ops4j.pax.exam.Option;
 
 import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
 import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
@@ -58,6 +59,13 @@ public class BaseNexusTestDistribution
         // Feature for NexusTestSystem
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.base", "true"),
 
+        mavenBundle("org.apache.aries.spifly", "org.apache.aries.spifly.dynamic.bundle").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-ant").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-json").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-jsr223").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-xml").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-cli-commons").versionAsInProject(),
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-content-testsupport"),
 

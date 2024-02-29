@@ -15,9 +15,11 @@ package org.sonatype.nexus.quartz.internal.orient;
 import java.lang.reflect.Constructor;
 
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
+import org.objenesis.Objenesis;
+import org.objenesis.ObjenesisStd;
+import org.objenesis.instantiator.ObjectInstantiator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.ReflectionFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -103,24 +105,21 @@ class InstanceCreator
       //  // ignore
       //}
 
-      // try sun.reflect.ReflectionFactory
       try {
-        final ReflectionFactory rf = ReflectionFactory.getReflectionFactory();
-
-        return new UnsafeStrategy("sun.reflect.ReflectionFactory")
+        Objenesis objenesis = new ObjenesisStd();
+        return new UnsafeStrategy("org.objenesis.Objenesis")
         {
           @Override
           public <T> T newInstance(final Class<T> type) throws Exception {
             log.trace("New instance: {}", type);
-            Constructor ctor = rf.newConstructorForSerialization(type, Object.class.getDeclaredConstructor());
-            ctor.setAccessible(true);
-            Object instance = ctor.newInstance();
+            ObjectInstantiator<T> instantiator = objenesis.getInstantiatorOf(type);
+            Object instance = instantiator.newInstance();
             return type.cast(instance);
           }
         };
       }
       catch (Exception e) {
-        log.trace("Failed to resolve ReflectionFactory", e);
+        log.trace("Failed to resolve Objenesis", e);
       }
 
       // unsupported

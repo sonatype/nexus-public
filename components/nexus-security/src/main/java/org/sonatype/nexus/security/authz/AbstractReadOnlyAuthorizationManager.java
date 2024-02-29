@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security.authz;
 
+import java.util.Set;
+
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
@@ -41,6 +43,11 @@ public abstract class AbstractReadOnlyAuthorizationManager
   @Override
   public Role addRole(final Role role) {
     throw unsupported();
+  }
+
+  @Override
+  public Set<Role> searchRoles(final String query) {
+    return listRoles();
   }
 
   @Override

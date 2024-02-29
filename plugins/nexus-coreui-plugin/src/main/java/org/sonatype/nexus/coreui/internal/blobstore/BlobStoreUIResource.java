@@ -24,7 +24,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
@@ -57,7 +57,7 @@ public class BlobStoreUIResource
 
   private final BlobStoreConfigurationStore store;
 
-  private final Map<String, BlobStoreDescriptor> blobStoreDescriptors;
+  private final BlobStoreDescriptorProvider blobStoreDescriptorProvider;
 
   private final List<BlobStoreQuotaTypesUIResponse> blobStoreQuotaTypes;
 
@@ -67,13 +67,13 @@ public class BlobStoreUIResource
   public BlobStoreUIResource(
       final BlobStoreManager blobStoreManager,
       final BlobStoreConfigurationStore store,
-      final Map<String, BlobStoreDescriptor> blobStoreDescriptors,
+      final BlobStoreDescriptorProvider blobStoreDescriptorProvider,
       final Map<String, BlobStoreQuota> quotaFactories,
       final RepositoryManager repositoryManager)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.store = checkNotNull(store);
-    this.blobStoreDescriptors = checkNotNull(blobStoreDescriptors);
+    this.blobStoreDescriptorProvider = checkNotNull(blobStoreDescriptorProvider);
     this.blobStoreQuotaTypes = quotaFactories.entrySet().stream()
         .map(BlobStoreQuotaTypesUIResponse::new).collect(toList());
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -86,7 +86,7 @@ public class BlobStoreUIResource
 
     return store.list().stream()
         .map(configuration -> {
-            final String typeId = blobStoreDescriptors.get(configuration.getType()).getId();
+            final String typeId = blobStoreDescriptorProvider.get().get(configuration.getType()).getId();
             BlobStoreMetrics metrics = Optional.ofNullable(blobStoreManager.get(configuration.getName()))
                 .map(BlobStoreUIResource::getBlobStoreMetrics)
                 .orElse(null);
@@ -113,7 +113,7 @@ public class BlobStoreUIResource
   @GET
   @Path("/types")
   public List<BlobStoreTypesUIResponse> listBlobStoreTypes() {
-    return blobStoreDescriptors.entrySet().stream().filter(entry -> entry.getValue().isEnabled())
+    return blobStoreDescriptorProvider.get().entrySet().stream().filter(entry -> entry.getValue().isEnabled())
         .map(BlobStoreTypesUIResponse::new).collect(toList());
   }
 

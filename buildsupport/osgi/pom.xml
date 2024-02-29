@@ -26,6 +26,10 @@
   <artifactId>nexus-buildsupport-osgi</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
+  
+  <properties>
+    <spifly.version>1.3.6</spifly.version>
+  </properties>
 
   <dependencyManagement>
     <dependencies>
@@ -168,6 +172,20 @@
             <artifactId>sshd-osgi</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <dependency>
+        <!--
+          Provides support for Require-Capability such as osgi.serviceloader.processor and osgi.serviceloader.registrar
+         -->
+        <groupId>org.apache.aries.spifly</groupId>
+        <artifactId>org.apache.aries.spifly.dynamic.framework.extension</artifactId>
+        <version>${spifly.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.aries.spifly</groupId>
+        <artifactId>org.apache.aries.spifly.dynamic.bundle</artifactId>
+        <version>1.2.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -177,6 +177,12 @@ public class DefaultSecuritySystem
   }
 
   @Override
+  public Set<Role> searchRoles(String sourceId, String query) throws NoSuchAuthorizationManagerException {
+    AuthorizationManager authzManager = getAuthorizationManager(sourceId);
+    return authzManager.searchRoles(query);
+  }
+
+  @Override
   public Set<Privilege> listPrivileges() {
     Set<Privilege> result = new HashSet<>();
     for (AuthorizationManager authzManager : authorizationManagers.values()) {

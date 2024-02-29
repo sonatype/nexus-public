@@ -18,6 +18,7 @@ import org.sonatype.nexus.pax.exam.TestDatabase;
 import org.ops4j.pax.exam.Option;
 
 import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
 import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
@@ -28,9 +29,11 @@ import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.nexusFeature;
 
 public interface NexusTestDistribution
 {
+  static final String GROOVY_GROUP_ID = "org.codehaus.groovy";
+
   public static enum Distribution
   {
-    BASE, OSS, PRO
+    BASE, OSS, PRO, PRO_STARTER
   }
 
   int priority(TestDatabase database, Distribution dist);
@@ -44,7 +47,13 @@ public interface NexusTestDistribution
         editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.search.event.handler.flushOnCount", "1"),
-
+        mavenBundle("org.apache.aries.spifly", "org.apache.aries.spifly.dynamic.bundle").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-ant").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-json").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-jsr223").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-xml").versionAsInProject(),
+        mavenBundle(GROOVY_GROUP_ID, "groovy-cli-commons").versionAsInProject(),
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
         wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*"),

@@ -14,7 +14,7 @@ import React from 'react';
 import PropTypes from "prop-types";
 import {faKey} from "@fortawesome/free-solid-svg-icons";
 import {FieldWrapper, Textfield, Utils} from '@sonatype/nexus-ui-plugin';
-import {NxButton, NxFontAwesomeIcon, NxFormSelect, NxLoadWrapper} from '@sonatype/react-shared-components';
+import {NxButton, NxFontAwesomeIcon, NxFormSelect, NxLoadWrapper, NxModal} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {useMachine} from "@xstate/react";
@@ -61,70 +61,73 @@ export default function AnalyzeApplicationModal(props) {
     send('RETRY');
   }
 
-  return <NxLoadWrapper loading={isLoading} retryHandler={retry}>
-      <header className="nx-modal-header">
-        <h2 className="nx-h2">
-          <NxFontAwesomeIcon icon={faKey} fixedWidth/>
-          <span>{UIStrings.ANALYZE_APPLICATION.HEADER}</span>
-        </h2>
-      </header>
+  return <NxModal onCancel={handleCancel}>
+      <NxLoadWrapper loading={isLoading} retryHandler={retry}>
+        <header className="nx-modal-header">
+          <h2 className="nx-h2">
+            <NxFontAwesomeIcon icon={faKey} fixedWidth/>
+            <span>{UIStrings.ANALYZE_APPLICATION.HEADER}</span>
+          </h2>
+        </header>
 
-      <div className="nx-modal-content">
-        <p dangerouslySetInnerHTML={{__html: UIStrings.ANALYZE_APPLICATION.MAIN}}></p>
-        <div className="nx-form-row">
-          <FieldWrapper
-              labelText={UIStrings.ANALYZE_APPLICATION.EMAIL.LABEL}
-              descriptionText={UIStrings.ANALYZE_APPLICATION.EMAIL.DESCRIPTION}>
-            <Textfield {...Utils.fieldProps('emailAddress', state)} onChange={handleUpdate}/>
-          </FieldWrapper>
-          <FieldWrapper
-              labelText={UIStrings.ANALYZE_APPLICATION.PASSWORD.LABEL}
-              descriptionText={UIStrings.ANALYZE_APPLICATION.PASSWORD.DESCRIPTION}>
-            <Textfield {...Utils.fieldProps('password', state)} type='password' onChange={handleUpdate}/>
-          </FieldWrapper>
+        <div className="nx-modal-content">
+          <p dangerouslySetInnerHTML={{__html: UIStrings.ANALYZE_APPLICATION.MAIN}}></p>
+          <div className="nx-form-row">
+            <FieldWrapper
+                labelText={UIStrings.ANALYZE_APPLICATION.EMAIL.LABEL}
+                descriptionText={UIStrings.ANALYZE_APPLICATION.EMAIL.DESCRIPTION}>
+              <Textfield {...Utils.fieldProps('emailAddress', state)} onChange={handleUpdate}/>
+            </FieldWrapper>
+            <FieldWrapper
+                labelText={UIStrings.ANALYZE_APPLICATION.PASSWORD.LABEL}
+                descriptionText={UIStrings.ANALYZE_APPLICATION.PASSWORD.DESCRIPTION}>
+              <Textfield {...Utils.fieldProps('password', state)} type='password' onChange={handleUpdate}/>
+            </FieldWrapper>
+          </div>
+
+          <div className='nx-form-row'>
+            <FieldWrapper
+                labelText={UIStrings.ANALYZE_APPLICATION.PACKAGES.LABEL}
+                descriptionText={UIStrings.ANALYZE_APPLICATION.PACKAGES.DESCRIPTION}
+                isOptional>
+              <Textfield {...Utils.fieldProps('packages', state)} onChange={handleUpdate}
+                        className='nxrm-analyze-app-pkg-input'/>
+            </FieldWrapper>
+          </div>
+
+          {assetMap &&
+          <div className='nx-form-row'>
+            <FieldWrapper
+                labelText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.LABEL}
+                descriptionText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.DESCRIPTION}>
+              <NxFormSelect {...Utils.fieldProps('selectedAsset', state)} disabled={!enableAssetSelection}
+                      onChange={handleAssetChange}>
+                {Object.entries(assetMap).map(([key, value]) =>
+                    <option key={key} value={key}>{value}</option>
+                )}
+              </NxFormSelect>
+            </FieldWrapper>
+            <FieldWrapper
+                labelText={UIStrings.ANALYZE_APPLICATION.REPORT.LABEL}
+                descriptionText={UIStrings.ANALYZE_APPLICATION.REPORT.DESCRIPTION}>
+              <Textfield {...Utils.fieldProps('reportLabel', state)} onChange={handleUpdate}/>
+            </FieldWrapper>
+          </div>
+          }
         </div>
-
-        <div className='nx-form-row'>
-          <FieldWrapper
-              labelText={UIStrings.ANALYZE_APPLICATION.PACKAGES.LABEL}
-              descriptionText={UIStrings.ANALYZE_APPLICATION.PACKAGES.DESCRIPTION}
-              isOptional>
-            <Textfield {...Utils.fieldProps('packages', state)} onChange={handleUpdate}
-                       className='nxrm-analyze-app-pkg-input'/>
-          </FieldWrapper>
-        </div>
-
-        {assetMap &&
-        <div className='nx-form-row'>
-          <FieldWrapper
-              labelText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.LABEL}
-              descriptionText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.DESCRIPTION}>
-            <NxFormSelect {...Utils.fieldProps('selectedAsset', state)} disabled={!enableAssetSelection}
-                    onChange={handleAssetChange}>
-              {Object.entries(assetMap).map(([key, value]) =>
-                  <option key={key} value={key}>{value}</option>
-              )}
-            </NxFormSelect>
-          </FieldWrapper>
-          <FieldWrapper
-              labelText={UIStrings.ANALYZE_APPLICATION.REPORT.LABEL}
-              descriptionText={UIStrings.ANALYZE_APPLICATION.REPORT.DESCRIPTION}>
-            <Textfield {...Utils.fieldProps('reportLabel', state)} onChange={handleUpdate}/>
-          </FieldWrapper>
-        </div>
-        }
-      </div>
-      <footer className="nx-footer">
-        <NxButton variant="primary" className={Utils.isInvalid(validationErrors) && 'disabled'}
-                  onClick={handleAnalyze}>
-          {UIStrings.ANALYZE_APPLICATION.BUTTONS.ANALYZE}
-        </NxButton>
-        <NxButton onClick={handleCancel}>
-          {UIStrings.ANALYZE_APPLICATION.BUTTONS.CANCEL}
-        </NxButton>
-      </footer>
-
-    </NxLoadWrapper>
+        <footer className="nx-footer">
+          <div className="nx-btn-bar">
+            <NxButton variant="primary" className={Utils.isInvalid(validationErrors) && 'disabled'}
+                      onClick={handleAnalyze}>
+              {UIStrings.ANALYZE_APPLICATION.BUTTONS.ANALYZE}
+            </NxButton>
+            <NxButton onClick={handleCancel}>
+              {UIStrings.ANALYZE_APPLICATION.BUTTONS.CANCEL}
+            </NxButton>
+          </div>
+        </footer>
+      </NxLoadWrapper>
+    </NxModal>
 }
 
 AnalyzeApplicationModal.propTypes = {

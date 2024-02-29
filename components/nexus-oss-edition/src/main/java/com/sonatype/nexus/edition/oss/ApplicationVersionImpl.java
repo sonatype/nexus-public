@@ -28,8 +28,10 @@ import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 public class ApplicationVersionImpl
     extends ApplicationVersionSupport
 {
+
   @Override
   public String getEdition() {
     return "OSS";
   }
+
 }
