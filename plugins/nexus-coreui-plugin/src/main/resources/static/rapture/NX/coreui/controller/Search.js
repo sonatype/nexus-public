@@ -315,20 +315,10 @@ Ext.define('NX.coreui.controller.Search', {
    */
   setResponseMessage: function() {
     var rawData = this.getSearchResultStore().proxy.reader.rawData,
-        searchRequestTimeoutInSeconds = NX.State.getValue('uiSettings', {})['searchRequestTimeout'] ||
-            NX.State.getValue('uiSettings', {})['requestTimeout'] - 5,
-        timedOut = rawData && rawData.timedOut,
         limited = rawData && rawData.limited,
-        format = Ext.util.Format.numberRenderer('0,000'),
-        learnMore = '<a target="_blank" rel="noopener" href="' + NX.controller.Help.getDocsUrl() + '/Searching+for+Components">' +
-            NX.I18n.get('Search_Results_TimedOut_LearnMore') + ' <i class="fa fa-external-link" /></a>';
+        format = Ext.util.Format.numberRenderer('0,000');
 
-    if (timedOut) {
-      this.timedOutMessage = NX.I18n.format('Search_Results_TimedOut_Message', searchRequestTimeoutInSeconds, learnMore);
-    }
-    else {
-      this.timedOutMessage = null;
-    }
+    this.timedOutMessage = null;
 
     if (limited) {
       this.limitMessage = NX.I18n.format('Search_Results_Limit_Message', format(rawData.total), format(rawData.unlimitedTotal));

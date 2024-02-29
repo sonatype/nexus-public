@@ -38,8 +38,6 @@ public class RaptureSettings
 
   public static final int DEFAULT_LONG_REQUEST_TIMEOUT = 3 * 60; // seconds
 
-  public static final int DEFAULT_SEARCH_REQUEST_TIMEOUT = 0; // seconds
-
   public static final int MIN_SEARCH_REQUEST_TIMEOUT = 0; // seconds
 
   private boolean debugAllowed = DEFAULT_DEBUG_ALLOWED;
@@ -58,9 +56,6 @@ public class RaptureSettings
 
   @Min(DEFAULT_LONG_REQUEST_TIMEOUT)
   private int longRequestTimeout = DEFAULT_LONG_REQUEST_TIMEOUT;
-
-  @Min(MIN_SEARCH_REQUEST_TIMEOUT)
-  private int searchRequestTimeout = DEFAULT_SEARCH_REQUEST_TIMEOUT;
 
   @NotBlank
   private String title;
@@ -111,14 +106,6 @@ public class RaptureSettings
 
   public void setLongRequestTimeout(final int longRequestTimeout) {
     this.longRequestTimeout = longRequestTimeout;
-  }
-
-  public int getSearchRequestTimeout() {
-    return searchRequestTimeout;
-  }
-
-  public void setSearchRequestTimeout(final int searchRequestTimeout) {
-    this.searchRequestTimeout = searchRequestTimeout;
   }
 
   public String getTitle() {
