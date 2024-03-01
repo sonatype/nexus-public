@@ -30,7 +30,6 @@ import org.sonatype.nexus.extdirect.model.LimitedPagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Sort;
-import org.sonatype.nexus.rapture.UiSettingsManager;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
@@ -67,8 +66,6 @@ public class SearchComponent
 {
   private final SearchService searchService;
 
-  private final UiSettingsManager uiSettingsManager;
-
   private final EventManager eventManager;
 
   private final SearchResultsGenerator searchResultsGenerator;
@@ -79,13 +76,11 @@ public class SearchComponent
   public SearchComponent(
       final SearchService searchService,
       @Named("${nexus.searchResultsLimit:-1000}") final int searchResultsLimit,
-      final UiSettingsManager uiSettingsManager,
       final SearchResultsGenerator searchResultsGenerator,
       final EventManager eventManager)
   {
     this.searchService = checkNotNull(searchService);
     this.searchResultsLimit = searchResultsLimit;
-    this.uiSettingsManager = checkNotNull(uiSettingsManager);
     this.searchResultsGenerator = checkNotNull(searchResultsGenerator);
     this.eventManager = checkNotNull(eventManager);
   }
@@ -117,8 +112,7 @@ public class SearchComponent
     fireSearchEvent(searchFilters);
 
     try {
-      int timeout = uiSettingsManager.getSettings().getSearchRequestTimeout();
-      return componentSearch(parameters.getLimit(), parameters.getPage(), orEmpty(parameters.getSort()), timeout,
+      return componentSearch(parameters.getLimit(), parameters.getPage(), orEmpty(parameters.getSort()),
           searchFilters);
     }
     catch (IllegalArgumentException e) {
@@ -138,7 +132,6 @@ public class SearchComponent
       final Integer limit,
       final Integer page,
       final List<Sort> sort,
-      final Integer seconds,
       final List<SearchFilter> filters)
   {
     String sortField = sort.stream().findFirst().map(Sort::getProperty).orElse(null);
