@@ -118,6 +118,27 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  List<BlobStoreXO> ReadNoneGroupEntriesIncludingEntryForAll() {
+    repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
+        singletonList(new ApplicationPermission('blobstores', READ)),
+        READ,
+        repositoryManager.browse()
+    )
+
+    def blobStores = store.list()
+        .stream()
+        .filter { (it.getType() != BlobStoreGroup.TYPE) }
+        .collect { asBlobStoreXO(it) };
+
+    def allXO = new BlobStoreXO(name: '(All Blob Stores)')
+    blobStores.add(allXO);
+
+    return blobStores;
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
   List<BlobStoreXO> readNames() {
     repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
         singletonList(new ApplicationPermission('blobstores', READ)),

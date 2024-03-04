@@ -38,6 +38,12 @@ public interface BlobStoreMetricsStore
   void clearOperationMetrics(String blobStoreName);
 
   /**
+   * Clear the summary metrics for the given blob store name.
+   * (total size , blob count)
+   */
+  void clearCountMetrics(String blobStoreName);
+
+  /**
    * Initialize the metrics for the given blobstore.
    */
   void initializeMetrics(String blobStoreName);

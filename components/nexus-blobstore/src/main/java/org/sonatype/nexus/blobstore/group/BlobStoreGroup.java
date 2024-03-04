@@ -48,6 +48,7 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.UnimplementedRawObjectAccess;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupMetrics;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
@@ -275,6 +276,12 @@ public class BlobStoreGroup
     else {
       return false;
     }
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public BlobStoreMetricsService getMetricsService() {
+    throw new UnsupportedOperationException("metrics service is not available at a group level");
   }
 
   @Override

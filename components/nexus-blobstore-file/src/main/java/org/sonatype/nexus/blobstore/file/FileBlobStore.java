@@ -61,6 +61,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
@@ -165,7 +166,7 @@ public class FileBlobStore
 
   private Path basedir;
 
-  private FileBlobStoreMetricsService metricsStore;
+  private FileBlobStoreMetricsService metricsService;
 
   private LoadingCache<BlobId, FileBlob> liveBlobs;
 
@@ -190,7 +191,7 @@ public class FileBlobStore
       final BlobIdLocationResolver blobIdLocationResolver,
       final FileOperations fileOperations,
       final ApplicationDirectories applicationDirectories,
-      final FileBlobStoreMetricsService metricsStore,
+      final FileBlobStoreMetricsService metricsService,
       final NodeAccess nodeAccess,
       final DryRunPrefix dryRunPrefix,
       final BlobStoreReconciliationLogger reconciliationLogger,
@@ -201,7 +202,7 @@ public class FileBlobStore
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
     this.applicationDirectories = checkNotNull(applicationDirectories);
-    this.metricsStore = checkNotNull(metricsStore);
+    this.metricsService = checkNotNull(metricsService);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.supportsHardLinkCopy = true;
     this.supportsAtomicMove = true;
@@ -216,7 +217,7 @@ public class FileBlobStore
       final Path contentDir, //NOSONAR
       final BlobIdLocationResolver blobIdLocationResolver,
       final FileOperations fileOperations,
-      final FileBlobStoreMetricsService metricsStore,
+      final FileBlobStoreMetricsService metricsService,
       final BlobStoreConfiguration configuration,
       final ApplicationDirectories directories,
       final NodeAccess nodeAccess,
@@ -227,7 +228,7 @@ public class FileBlobStore
       final FileBlobDeletionIndex blobDeletionIndex)
 
   {
-    this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix,
+    this(blobIdLocationResolver, fileOperations, directories, metricsService, nodeAccess, dryRunPrefix,
         reconciliationLogger, pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker, blobDeletionIndex);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
@@ -251,9 +252,9 @@ public class FileBlobStore
     }
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(FileBlob::new));
     blobDeletionIndex.initIndex(metadata, this);
-    metricsStore.setStorageDir(storageDir);
-    metricsStore.setBlobStore(this);
-    metricsStore.start();
+    metricsService.setStorageDir(storageDir);
+    metricsService.setBlobStore(this);
+    metricsService.start();
 
     blobStoreQuotaUsageChecker.setBlobStore(this);
     blobStoreQuotaUsageChecker.start();
@@ -306,7 +307,7 @@ public class FileBlobStore
       blobDeletionIndex.stopIndex();
     }
     finally {
-      metricsStore.stop();
+      metricsService.stop();
       blobStoreQuotaUsageChecker.stop();
     }
   }
@@ -425,14 +426,14 @@ public class FileBlobStore
         if (existingSize != null) {
           overwrite(temporaryBlobPath, blobPath);
           overwrite(temporaryAttributePath, attributePath);
-          metricsStore.recordDeletion(existingSize);
+          metricsService.recordDeletion(existingSize);
         }
         else {
           move(temporaryBlobPath, blobPath);
           move(temporaryAttributePath, attributePath);
         }
 
-        metricsStore.recordAddition(blobAttributes.getMetrics().getContentSize());
+        metricsService.recordAddition(blobAttributes.getMetrics().getContentSize());
 
         return blob;
       }
@@ -582,7 +583,7 @@ public class FileBlobStore
       delete(attributePath);
 
       if (blobDeleted && contentSize != null) {
-        metricsStore.recordDeletion(contentSize);
+        metricsService.recordDeletion(contentSize);
       }
 
       return blobDeleted;
@@ -606,23 +607,29 @@ public class FileBlobStore
 
   @Override
   @Guarded(by = STARTED)
+  public BlobStoreMetricsService getMetricsService() {
+    return metricsService;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
-    return metricsStore.getMetrics();
+    return metricsService.getMetrics();
   }
 
   @Override
   public Map<OperationType, OperationMetrics> getOperationMetricsByType() {
-    return metricsStore.getOperationMetrics();
+    return metricsService.getOperationMetrics();
   }
 
   @Override
   public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
-    return metricsStore.getOperationMetricsDelta();
+    return metricsService.getOperationMetricsDelta();
   }
 
   @Override
   public void clearOperationMetrics() {
-    metricsStore.clearOperationMetrics();
+    metricsService.clearOperationMetrics();
   }
 
   @Override
@@ -824,7 +831,7 @@ public class FileBlobStore
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     try {
-      metricsStore.remove();
+      metricsService.remove();
 
       Path blobDir = getAbsoluteBlobDir();
       FileUtils.deleteDirectory(reconciliationLogDir.toFile());
@@ -1195,6 +1202,6 @@ public class FileBlobStore
   @Override
   @VisibleForTesting
   public void flushMetrics() throws IOException {
-    metricsStore.flush();
+    metricsService.flush();
   }
 }

@@ -38,7 +38,7 @@ public interface BlobStoreMetricsService
   void setBlobStore(BlobStore blobStore);
 
   /**
-   * Record a new blob being added to the blobstore.
+   * Record a new blob being added to the blob store.
    *
    * @param size Size of the newly added blob in bytes.
    */
@@ -60,6 +60,11 @@ public interface BlobStoreMetricsService
    * Get the current delta set of operation metrics. This used to track operation metric data to be flushed.
    */
   Map<OperationType, OperationMetrics> getOperationMetricsDelta();
+
+  /**
+   * Reset the total metrics (blob count / size)
+   */
+  void clearCountMetrics();
 
   /**
    * Reset the operational metrics.

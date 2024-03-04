@@ -45,4 +45,9 @@ public interface BlobStoreMetricsDAO
    * Clears the operational metrics associated with the blob store
    */
   void clearOperationMetrics(String blobStoreName);
+
+  /**
+   * Clears the summary metrics associated to the given blob store (total size , blob count).
+   */
+  void clearCountMetrics(String blobStoreName);
 }
