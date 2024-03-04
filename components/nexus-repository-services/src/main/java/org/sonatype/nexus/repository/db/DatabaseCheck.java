@@ -10,22 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.upgrade;
+package org.sonatype.nexus.repository.db;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- * Marks a class as available from a specified database schema version onwards
- * 
- */
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface AvailabilityVersion
+public interface DatabaseCheck
 {
-  String from();
+  public static final String POSTGRE_SQL = "PostgreSQL";
+
+  boolean isPostgresql();
 }

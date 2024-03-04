@@ -21,7 +21,6 @@ import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilityDescriptorSupport;
 import org.sonatype.nexus.capability.CapabilityType;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 
@@ -34,7 +33,6 @@ import static org.sonatype.nexus.plugins.defaultrole.internal.DefaultRoleCapabil
  *
  * @since 3.22
  */
-@AvailabilityVersion(from = "1.0")
 @Named(DefaultRoleCapabilityDescriptor.TYPE_ID)
 @Singleton
 public class DefaultRoleCapabilityDescriptor
