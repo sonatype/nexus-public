@@ -30,28 +30,31 @@ public interface FreezeResourceDoc
   @ApiOperation("Get read-only state")
   ReadOnlyState get();
 
-  @ApiOperation("Enable read-only")
+  @ApiOperation("Prevent changes to embedded OrientDB",
+    notes = "For low-level system maintenance purposes only; do not use if you want users to still be able to download components."
+    )
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "System is now read-only"),
+      @ApiResponse(code = 204, message = "Database is now read-only"),
       @ApiResponse(code = 403, message = "Authentication required"),
       @ApiResponse(code = 404, message = "No change to read-only state")
   })
   void freeze();
 
-  @ApiOperation(value = "Release read-only",
-    notes = "Release administrator initiated read-only status. Will not release read-only caused by system tasks."
+  @ApiOperation(value = "Release read-only and allow changes to embedded OrientDB",
+    notes = "Releases administrator-initiated read-only status. Will not release read-only status caused by system tasks."
   )
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "System is no longer read-only"),
+      @ApiResponse(code = 204, message = "Database is no longer read-only"),
       @ApiResponse(code = 403, message = "Authentication required"),
       @ApiResponse(code = 404, message = "No change to read-only state")
   })
   void release();
 
-  @ApiOperation(value = "Forcibly release read-only",
-    notes = "Forcibly release read-only status, including System initiated tasks. Warning: may result in data loss.")
+  @ApiOperation(value = "Forcibly release read-only and allow changes to embedded OrientDB",
+    notes = "Forcibly release read-only status, including if caused by system tasks. Warning: may result in data loss."
+  )
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "System is no longer read-only"),
+      @ApiResponse(code = 204, message = "Database is no longer read-only"),
       @ApiResponse(code = 403, message = "Authentication required"),
       @ApiResponse(code = 404, message = "No change to read-only state")
   })
