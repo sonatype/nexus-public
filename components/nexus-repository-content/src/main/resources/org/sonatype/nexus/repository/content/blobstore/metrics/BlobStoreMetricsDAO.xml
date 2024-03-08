@@ -74,6 +74,13 @@
      WHERE blob_store_name = #{blobStoreName};
   </update>
 
+  <update id="clearCountMetrics">
+    UPDATE blob_store_metrics
+       SET total_size = 0,
+           blob_count = 0
+    WHERE blob_store_name = #{blobStoreName};
+  </update>
+
   <select id="get" resultType="org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity">
     SELECT *
     FROM blob_store_metrics

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security.authc;
 
+import java.util.Arrays;
+import java.util.Collections;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.HttpMethod;
@@ -54,7 +56,8 @@ public class AntiCsrfHelperTest
 
   @Before
   public void setup() {
-    underTest = new AntiCsrfHelper(true);
+    underTest = new AntiCsrfHelper(true, Collections.EMPTY_LIST);
+    when(httpServletRequest.getServletPath()).thenReturn("/somepath");
 
     ThreadContext.bind(securityManager);
     ThreadContext.bind(subject);
@@ -71,7 +74,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testRequireValidToken_Disabled() {
-    underTest = new AntiCsrfHelper(false);
+    underTest = new AntiCsrfHelper(false, Collections.EMPTY_LIST);
     underTest.requireValidToken(httpServletRequest, "a-token");
     verifyNoInteractions(httpServletRequest);
   }
@@ -133,7 +136,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_Disabled() {
-    underTest = new AntiCsrfHelper(false);
+    underTest = new AntiCsrfHelper(false, Collections.EMPTY_LIST);
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
     verifyNoInteractions(httpServletRequest);
   }
@@ -197,7 +200,7 @@ public class AntiCsrfHelperTest
   @Test
   public void shouldAllowAccessWhenMissingSubject() {
     ThreadContext.unbindSubject();
-    underTest = new AntiCsrfHelper(true);
+    underTest = new AntiCsrfHelper(true, Collections.EMPTY_LIST);
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
   }
@@ -265,6 +268,35 @@ public class AntiCsrfHelperTest
 
     // simple validation, we expect the code to access the cookies once
     verify(httpServletRequest, times(1)).getCookies();
+  }
+
+  /*
+   * Test that a request missing a CSRF cookie but with exempt path is allowed
+   */
+  @Test
+  public void testIsAccessAllowed_MissingCsrfCookie_ExamptPath() {
+    underTest = new AntiCsrfHelper(true, Collections.singletonList(() -> "/some-service/config"));
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    setupBrowserSubject();
+    when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
+    when(httpServletRequest.getServletPath()).thenReturn("/v1/rest/some-service/config?s=a");
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+  }
+
+  /*
+   * Test that a request missing a CSRF header but with exempt path is allowed
+   */
+  @Test
+  public void testIsAccessAllowed_MissingCsrfHeader_ExemptPath() {
+    underTest = new AntiCsrfHelper(true, Collections.singletonList(() -> "/some-service/config"));
+    setupBrowserSubject();
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    // NX-ANTI-CSRF-TOKEN header not set
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue") });
+    when(httpServletRequest.getServletPath()).thenReturn("/v1/rest/some-service/config?s=a");
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
   }
 
   private void setupBrowserSubject() {

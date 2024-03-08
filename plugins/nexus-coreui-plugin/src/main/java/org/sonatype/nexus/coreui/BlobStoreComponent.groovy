@@ -22,7 +22,7 @@ import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
-import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider
+import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
@@ -75,7 +75,7 @@ class BlobStoreComponent
   BlobStoreConfigurationStore store;
 
   @Inject
-  BlobStoreDescriptorProvider blobStoreDescriptorProvider;
+  Map<String, BlobStoreDescriptor> blobStoreDescriptors
 
   @Inject
   Map<String, BlobStoreQuota> quotaFactories
@@ -113,6 +113,27 @@ class BlobStoreComponent
         collect { it as BlobStoreGroup }
 
     store.list().collect { asBlobStoreXO(it, blobStoreGroups) }
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  List<BlobStoreXO> ReadNoneGroupEntriesIncludingEntryForAll() {
+    repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
+        singletonList(new ApplicationPermission('blobstores', READ)),
+        READ,
+        repositoryManager.browse()
+    )
+
+    def blobStores = store.list()
+        .stream()
+        .filter { (it.getType() != BlobStoreGroup.TYPE) }
+        .collect { asBlobStoreXO(it) };
+
+    def allXO = new BlobStoreXO(name: '(All Blob Stores)')
+    blobStores.add(allXO);
+
+    return blobStores;
   }
 
   @DirectMethod
@@ -162,7 +183,7 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreTypeXO> readTypes() {
-    List<BlobStoreTypeXO> readTypes = blobStoreDescriptorProvider.get().collect { key, descriptor ->
+    List<BlobStoreTypeXO> readTypes = blobStoreDescriptors.collect { key, descriptor ->
       new BlobStoreTypeXO(
           id: key,
           name: descriptor.name,

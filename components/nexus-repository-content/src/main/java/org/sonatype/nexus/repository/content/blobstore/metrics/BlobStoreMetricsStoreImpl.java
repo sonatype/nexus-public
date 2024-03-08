@@ -62,6 +62,12 @@ public class BlobStoreMetricsStoreImpl
 
   @Override
   @Transactional
+  public void clearCountMetrics(final String blobStoreName) {
+    dao().clearCountMetrics(blobStoreName);
+  }
+
+  @Override
+  @Transactional
   public void initializeMetrics(String blobStoreName) {
     try {
       if (dao().get(blobStoreName) == null) {

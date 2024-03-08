@@ -288,6 +288,12 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
   }
 
   @Override
+  public void clearCountMetrics() {
+    totalSize.set(0L);
+    blobCount.set(0L);
+  }
+
+  @Override
   public void clearOperationMetrics() {
     getOperationMetricsDelta().values().forEach(OperationMetrics::clear);
     getOperationMetrics().values().forEach(OperationMetrics::clear);

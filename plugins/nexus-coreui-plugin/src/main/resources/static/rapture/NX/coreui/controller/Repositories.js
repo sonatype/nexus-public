@@ -358,7 +358,7 @@ Ext.define('NX.coreui.controller.Repositories', {
       var format = model.getId().split('-')[0];
       me.loadCleanupPolicies(format, function() {
         me.loadCreateWizard(2, {xtype: 'nx-coreui-repository-add', recipe: model});
-        if (model.getId() === 'maven2-proxy') {
+        if (model.getId() === 'maven2-proxy' || model.getId() === 'npm-proxy') {
           me.cleanUpdateProxyFacetContentMaxAge(-1);
         }
 

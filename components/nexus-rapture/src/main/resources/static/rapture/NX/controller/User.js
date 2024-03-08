@@ -116,13 +116,16 @@ Ext.define('NX.controller.User', {
     if (user && !oldUser) {
       NX.Messages.info(NX.I18n.format('User_SignedIn_Message', user.id));
       me.fireEvent('signin', user);
-      if (window.initializeTelemetry) {
+      if (typeof window.initializeTelemetry == 'function') {
         window.initializeTelemetry();
       }
     }
     else if (!user && oldUser) {
       NX.Messages.info(NX.I18n.get('User_SignedOut_Message'));
       me.fireEvent('signout');
+      if (typeof window.initializeTelemetry == 'function') {
+        window.initializeTelemetry();
+      }
     }
 
     if (!user) {

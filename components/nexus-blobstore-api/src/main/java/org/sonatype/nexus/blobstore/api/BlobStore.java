@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -197,6 +198,15 @@ public interface BlobStore
   boolean deleteHard(BlobId blobId);
 
   /**
+   * Provides access to the blob store's metrics service instance
+   * <p>
+   * Note: this method may not be available for all the blob store implementations
+   * and, if not supported, expect a {@link UnsupportedOperationException}
+   * </p>
+   */
+  BlobStoreMetricsService getMetricsService();
+
+  /**
    * Provides an immutable snapshot of metrics about the BlobStore's usage.
    */
   BlobStoreMetrics getMetrics();
@@ -264,6 +274,7 @@ public interface BlobStore
   /**
    * Get {@link BlobAttributes} for the {@link BlobId} provided.
    */
+  @Nullable
   BlobAttributes getBlobAttributes(BlobId blobId);
 
   /**

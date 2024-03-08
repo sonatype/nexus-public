@@ -16,12 +16,10 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 
 /**
  * @since 3.4
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class OrientRestoreMetadataTaskDescriptor

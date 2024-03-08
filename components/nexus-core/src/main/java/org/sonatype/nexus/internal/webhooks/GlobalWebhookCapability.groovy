@@ -27,7 +27,6 @@ import org.sonatype.nexus.capability.CapabilityType
 import org.sonatype.nexus.capability.Condition
 import org.sonatype.nexus.capability.Tag
 import org.sonatype.nexus.capability.Taggable
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion
 import org.sonatype.nexus.formfields.FormField
 import org.sonatype.nexus.formfields.ItemselectFormField
 import org.sonatype.nexus.formfields.PasswordFormField
@@ -173,7 +172,6 @@ class GlobalWebhookCapability
   // Descriptor
   //
 
-  @AvailabilityVersion(from = "1.0")
   @Named(GlobalWebhookCapability.TYPE_ID)
   @Singleton
   static public class Descriptor

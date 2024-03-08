@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.purge;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
@@ -29,7 +28,6 @@ import static org.sonatype.nexus.repository.purge.PurgeUnusedTask.REPOSITORY_NAM
  *
  * @since 3.0
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class PurgeUnusedTaskDescriptor

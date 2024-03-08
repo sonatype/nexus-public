@@ -159,6 +159,11 @@ public abstract class DatastoreBlobStoreMetricsServiceSupport
   }
 
   @Override
+  public void clearCountMetrics() {
+    blobStoreMetricsStore.clearCountMetrics(blobStore.getBlobStoreConfiguration().getName());
+  }
+
+  @Override
   public void clearOperationMetrics() {
     datastoreBlobStoreMetricsContainer.getOperationMetricsDelta().values().forEach(OperationMetrics::clear);
     blobStoreMetricsStore.clearOperationMetrics(blobStore.getBlobStoreConfiguration().getName());

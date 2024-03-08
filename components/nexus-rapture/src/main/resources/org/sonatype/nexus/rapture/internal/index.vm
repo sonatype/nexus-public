@@ -64,40 +64,28 @@
         return window.location.origin + window.location.pathname + service;
       }
 
-      async function createWrapperScript() {
-        try {
-          const telemetryService = 'service/rest/v1/user-telemetry/javascript';
-          const response = await fetch(servicePath(telemetryService));
-          const jsContent = await response.text();
-          if (jsContent.length > 0) {
-            log('Creating wrapper script');
-            const scriptElement = document.createElement('script');
-            scriptElement.type = 'text/javascript';
-            scriptElement.text = jsContent;
-            scriptElement.style.display = 'none';
-            document.head.appendChild(scriptElement);
-          }
-          else {
-            log('Invalid wrapper script');
-          }
-        } catch (error) {
-          console.error('Error fetching or executing script:', error);
-        }
-      }
+      (function () {
+        const telemetryService = servicePath('service/rest/v1/user-telemetry/javascript');
+        log('Creating wrapper script');
+        const scriptElement = document.createElement('script');
+        scriptElement.type = 'text/javascript';
+        scriptElement.src = telemetryService;
+        scriptElement.async = true;
+        scriptElement.style.display = 'none';
+        document.head.appendChild(scriptElement);
+      })();
+
       async function getTelemetryConfig() {
         try {
           const telemetryService = 'service/rest/v1/user-telemetry/config';
           const response = await fetch(servicePath(telemetryService));
           return await response.json();
         } catch (error) {
-          console.error('Error fetching config:', error);
+          console.error('Error fetching telemetry config:', error);
         }
       }
 
-      async function initializeTelemetry(createWrapper = false) {
-        if (createWrapper) {
-          await createWrapperScript();
-        }
+      async function initializeTelemetry() {
         if (window.userTelemetry) {
           log('Initializing telemetry');
           const telemetryService = 'service/rest/v1/user-telemetry/events';
@@ -106,10 +94,14 @@
           config.dataHost = config.contentHost;
           config.sanitizeUrl = sanitizeUrl;
           config.filterUrls = ['*/#admin*'];
+          config.usePOST = true;
           window.userTelemetry.initialize(config);
+          if (typeof window.initializeTelemetry != 'function') {
+            window.initializeTelemetry = initializeTelemetry;
+          }
         }
         else {
-          console.error('Error during telemetry initialization');
+          log('Could not initialize telemetry');
         }
       }
 
@@ -118,13 +110,13 @@
           const urlObject = new URL(url);
           return `${urlObject.pathname}${urlObject.hash}`;
         } catch (error) {
-          console.error("Invalid URL");
+          log("Invalid URL");
           return '';
         }
       }
 
-      initializeTelemetry(true);
-      window.initializeTelemetry = initializeTelemetry;
+      setTimeout(initializeTelemetry, 1000);
+
     </script>
   #end
   #macro(message $text)

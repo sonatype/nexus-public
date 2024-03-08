@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.security.authc;
 
+import java.util.List;
 import java.util.Optional;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -45,11 +45,15 @@ public class AntiCsrfHelper extends ComponentSupport
 
   private final boolean enabled;
 
+  private final List<CsrfExemption> csrfExemptPaths;
+
   @Inject
   public AntiCsrfHelper(
-      @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled)
+      @Named("${" + ENABLED + ":-true}") final boolean enabled,
+      final List<CsrfExemption> csrfExemptPaths)
   {
     this.enabled = enabled;
+    this.csrfExemptPaths = csrfExemptPaths;
   }
 
   /**
@@ -68,6 +72,7 @@ public class AntiCsrfHelper extends ComponentSupport
                                                 // and is validated in the directnjine code so we just needed
                                                 // to create the cookie above
         || !isSessionAuthentication() // non-session auth
+        || isExemptRequest(httpRequest)
         || isAntiCsrfTokenValid(httpRequest, Optional.ofNullable(httpRequest.getHeader(ANTI_CSRF_TOKEN_NAME)));
   }
 
@@ -122,6 +127,13 @@ public class AntiCsrfHelper extends ComponentSupport
     Optional<String> cookie = getAntiCsrfTokenCookie(request);
 
     return token.isPresent() && token.equals(cookie);
+  }
+
+  private boolean isExemptRequest(final HttpServletRequest request) {
+    String requestPath = request.getServletPath();
+    return csrfExemptPaths.stream()
+        .map(CsrfExemption::getPath)
+        .anyMatch(requestPath::contains);
   }
 
   /**

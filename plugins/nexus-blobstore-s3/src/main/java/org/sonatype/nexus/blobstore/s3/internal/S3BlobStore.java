@@ -45,6 +45,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -170,7 +171,7 @@ public class S3BlobStore
 
   private boolean preferAsyncCleanup;
 
-  private S3BlobStoreMetricsService storeMetrics;
+  private S3BlobStoreMetricsService metricsService;
 
   private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
@@ -199,7 +200,7 @@ public class S3BlobStore
       @Named("${nexus.s3.preferExpire:-false}") final boolean preferExpire,
       @Named("${nexus.s3.forceHardDelete:-false}") final boolean forceHardDelete,
       @Named("${nexus.s3.preferAsyncCleanup:-true}") final boolean preferAsyncCleanup,
-      final S3BlobStoreMetricsService storeMetrics,
+      final S3BlobStoreMetricsService metricsService,
       final DryRunPrefix dryRunPrefix,
       final BucketManager bucketManager,
       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
@@ -208,7 +209,7 @@ public class S3BlobStore
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
     this.copier = checkNotNull(copier);
     this.uploader = checkNotNull(uploader);
-    this.storeMetrics = checkNotNull(storeMetrics);
+    this.metricsService = checkNotNull(metricsService);
     this.blobStoreQuotaUsageChecker = checkNotNull(blobStoreQuotaUsageChecker);
     this.bucketManager = checkNotNull(bucketManager);
     this.preferExpire = preferExpire;
@@ -239,11 +240,11 @@ public class S3BlobStore
       metadata.store();
     }
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(S3Blob::new));
-    storeMetrics.setBucket(getConfiguredBucket());
-    storeMetrics.setBucketPrefix(getBucketPrefix());
-    storeMetrics.setS3(s3);
-    storeMetrics.setBlobStore(this);
-    storeMetrics.start();
+    metricsService.setBucket(getConfiguredBucket());
+    metricsService.setBucketPrefix(getBucketPrefix());
+    metricsService.setS3(s3);
+    metricsService.setBlobStore(this);
+    metricsService.start();
 
     blobStoreQuotaUsageChecker.setBlobStore(this);
     blobStoreQuotaUsageChecker.start();
@@ -261,7 +262,7 @@ public class S3BlobStore
       executorService.shutdown();
       executorService = null;
     }
-    storeMetrics.stop();
+    metricsService.stop();
     blobStoreQuotaUsageChecker.stop();
   }
 
@@ -348,9 +349,9 @@ public class S3BlobStore
       blob.refresh(headers, metrics);
       S3BlobAttributes blobAttributes = writeBlobAttributes(headers, attributePath, metrics);
       if (isDirectPath && existingSize != null) {
-        storeMetrics.recordDeletion(existingSize);
+        metricsService.recordDeletion(existingSize);
       }
-      storeMetrics.recordAddition(blobAttributes.getMetrics().getContentSize());
+      metricsService.recordAddition(blobAttributes.getMetrics().getContentSize());
 
       return blob;
     }
@@ -516,7 +517,7 @@ public class S3BlobStore
 
       Long contentSize = getContentSizeForDeletion(blobAttributes);
       if (contentSize != null) {
-        storeMetrics.recordDeletion(contentSize);
+        metricsService.recordDeletion(contentSize);
       }
 
       return true;
@@ -573,7 +574,7 @@ public class S3BlobStore
       boolean blobDeleted = batchDelete(blobPath, attributePath);
 
       if (blobDeleted && contentSize != null) {
-        storeMetrics.recordDeletion(contentSize);
+        metricsService.recordDeletion(contentSize);
       }
 
       return blobDeleted;
@@ -599,24 +600,30 @@ public class S3BlobStore
 
   @Override
   @Guarded(by = STARTED)
+  public BlobStoreMetricsService getMetricsService() {
+    return metricsService;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   @Timed
   public BlobStoreMetrics getMetrics() {
-    return storeMetrics.getMetrics();
+    return metricsService.getMetrics();
   }
 
   @Override
   public Map<OperationType, OperationMetrics> getOperationMetricsByType() {
-    return storeMetrics.getOperationMetrics();
+    return metricsService.getOperationMetrics();
   }
 
   @Override
   public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
-    return storeMetrics.getOperationMetricsDelta();
+    return metricsService.getOperationMetricsDelta();
   }
 
   @Override
   public void clearOperationMetrics() {
-    storeMetrics.clearOperationMetrics();
+    metricsService.clearOperationMetrics();
   }
 
   @Override
@@ -675,7 +682,7 @@ public class S3BlobStore
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     try {
-      storeMetrics.remove();
+      metricsService.remove();
 
       boolean contentEmpty = s3.listObjects(getConfiguredBucket(), getContentPrefix()).getObjectSummaries().isEmpty();
       if (contentEmpty) {
@@ -821,7 +828,7 @@ public class S3BlobStore
   protected void doUndelete(final BlobId blobId, final BlobAttributes attributes) {
     s3.setObjectTagging(untagAsDeleted(contentPath(blobId)));
     s3.setObjectTagging(untagAsDeleted(attributePath(blobId)));
-    storeMetrics.recordAddition(attributes.getMetrics().getContentSize());
+    metricsService.recordAddition(attributes.getMetrics().getContentSize());
   }
 
   @Override
@@ -896,7 +903,7 @@ public class S3BlobStore
   @Override
   @VisibleForTesting
   public void flushMetrics() throws IOException {
-    storeMetrics.flush();
+    metricsService.flush();
   }
 
   private S3BlobAttributes writeBlobAttributes(

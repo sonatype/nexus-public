@@ -10,36 +10,43 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.datastore.task;
+package org.sonatype.nexus.blobstore.metrics.reconcile;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.formfields.StringTextFormField;
-import org.sonatype.nexus.scheduling.TaskDescriptor;
+import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 
 /**
- * A {@link TaskDescriptor} for backing up an embedded H2 datastore.
- *
- * @since 3.21
+ * Task descriptor for  {@link RecalculateBlobStoreSizeTask}
  */
 @Named
 @Singleton
-public class H2BackupTaskDescriptor
+public class RecalculateBlobStoreSizeTaskDescriptor
     extends TaskDescriptorSupport
 {
-  static final String TYPE_ID = "h2.backup.task";
+  public static final String TYPE_ID = "blobstore.metrics.reconcile";
 
-  static final String LOCATION = "location";
+  public static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
 
-  public H2BackupTaskDescriptor()
-  {
-    super(TYPE_ID, H2BackupTask.class, "Admin - Backup H2 Database", VISIBLE, EXPOSED,
-        new StringTextFormField(LOCATION, "Location",
-            "Specify a directory for the database backup",
-            MANDATORY));
+  @Inject
+  public RecalculateBlobStoreSizeTaskDescriptor() {
+    super(TYPE_ID,
+        RecalculateBlobStoreSizeTask.class,
+        "Admin - Recalculate blob store storage",
+        VISIBLE,
+        EXPOSED,
+        new ComboboxFormField<String>(
+            BLOB_STORE_NAME_FIELD_ID,
+            "Blob store",
+            "Select the blob store(s) to recalculate",
+            MANDATORY
+        ).withStoreApi("coreui_Blobstore.ReadNoneGroupEntriesIncludingEntryForAll")
+            .withIdMapping("name")
+    );
   }
 }
