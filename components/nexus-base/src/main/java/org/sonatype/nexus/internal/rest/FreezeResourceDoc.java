@@ -30,7 +30,7 @@ public interface FreezeResourceDoc
   @ApiOperation("Get read-only state")
   ReadOnlyState get();
 
-  @ApiOperation("Prevent changes to embedded OrientDB",
+  @ApiOperation(value = "Prevent changes to embedded OrientDB",
     notes = "For low-level system maintenance purposes only; do not use if you want users to still be able to download components."
     )
   @ApiResponses(value = {
