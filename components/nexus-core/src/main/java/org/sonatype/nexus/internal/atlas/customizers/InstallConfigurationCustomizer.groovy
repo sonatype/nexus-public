@@ -67,6 +67,9 @@ class InstallConfigurationCustomizer
         else if (file.name.contains('store.properties')) {
           supportBundle << new SanitizedDataStoreFileSource(CONFIG, "$prefix/${file.name}", file, priority)
         }
+        else if (file.name.contains('nexus.properties')) {
+          supportBundle << new SanitizedNexusFileSource(CONFIG, "$prefix/${file.name}", file, priority)
+        }
         else {
           supportBundle << new FileContentSourceSupport(CONFIG, "$prefix/${file.name}", file, priority)
         }
@@ -187,6 +190,38 @@ class InstallConfigurationCustomizer
 
     SanitizedHazelcastFileSource(final Type type, final String path, final File file, final Priority priority) {
       super(type, path, file, priority, STYLESHEET)
+    }
+  }
+
+  /**
+   * Removes JDBC credentials from nexus.properties, if present.
+   */
+  static class SanitizedNexusFileSource
+      extends FileContentSourceSupport
+  {
+
+    SanitizedNexusFileSource(final Type type, final String path, final File file, final Priority priority) {
+      super(CONFIG, path, file, priority)
+    }
+
+    @Override
+    InputStream getContent() throws Exception {
+      def dataStoreConfiguration = new PropertiesFile(file)
+      dataStoreConfiguration.load()
+      dataStoreConfiguration.each { key, value ->
+        if (SENSITIVE_FIELD_NAMES.contains(key)) {
+          dataStoreConfiguration.replace(key, REPLACEMENT)
+        }
+      }
+      dataStoreConfiguration.computeIfPresent('nexus.datastore.nexus.jdbcUrl', { k, v -> redactPassword(v as String) })
+      def outputStream = new ByteArrayOutputStream()
+      dataStoreConfiguration.store(outputStream, null)
+      return new ByteArrayInputStream(outputStream.toByteArray())
+    }
+
+    @Override
+    void cleanup() throws Exception {
+      super.cleanup()
     }
   }
 

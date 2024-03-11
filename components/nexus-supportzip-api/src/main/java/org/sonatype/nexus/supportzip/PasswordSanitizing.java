@@ -54,7 +54,8 @@ public class PasswordSanitizing<T extends Map<String, ?>>
       "accountKey",
       "destinationInstancePassword",
       "NEXUS_DATASTORE_NEXUS_PASSWORD",
-      "NEXUS_SECURITY_INITIAL_PASSWORD");
+      "NEXUS_SECURITY_INITIAL_PASSWORD",
+      "nexus.datastore.nexus.password");
 
   public static final String REPLACEMENT = "**REDACTED**";
 
