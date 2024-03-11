@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 
 /**
@@ -34,12 +35,14 @@ public class RecalculateBlobStoreSizeTaskDescriptor
   public static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
 
   @Inject
-  public RecalculateBlobStoreSizeTaskDescriptor() {
+  public RecalculateBlobStoreSizeTaskDescriptor(
+      @Named(RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED) final boolean taskEnabled)
+  {
     super(TYPE_ID,
         RecalculateBlobStoreSizeTask.class,
         "Admin - Recalculate blob store storage",
         VISIBLE,
-        EXPOSED,
+        taskEnabled,
         new ComboboxFormField<String>(
             BLOB_STORE_NAME_FIELD_ID,
             "Blob store",
