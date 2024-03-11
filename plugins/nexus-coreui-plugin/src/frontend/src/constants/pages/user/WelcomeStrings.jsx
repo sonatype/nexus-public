@@ -137,6 +137,31 @@ export default {
       CARD_LINK_PRO: {
         TEXT: 'Understand your usage',
         URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-pro'
+      },
+      ALERTS: {
+        HARD_LIMITS: {
+          REQUESTS_PER_DAY: {
+            PREFIX: 'Users can not currently upload to this repository. This repository has hit the maximum of 200,000 peak requests in the past 30 days. ',
+            MID: ' and consider '
+          },
+          TOTAL_COMPONENTS: {
+            PREFIX: 'Users can not currently upload to this repository. This repository contains the maximum of 120,000 components. ',
+            MID: ' and consider removing unused components or '
+          }
+        },
+        SUFFIX: ' for unlimited usage.',
+        LEARN_ABOUT_PRO: {
+          TEXT: 'Learn about Pro',
+          URL: 'https://links.sonatype.com/products/nxrm3/docs/learn-about-pro'
+        },
+        REVIEW_YOUR_USAGE: {
+          TEXT: 'Review your usage ',
+          URL: 'https://links.sonatype.com/products/nxrm3/docs/review-usage'
+        },
+        UPGRADING_PRO: {
+          TEXT: 'upgrading to Pro ',
+          URL: 'https://links.sonatyep.com/products/nxrm3/docs/upgrade-to-pro'
+        }
       }
     }
   }

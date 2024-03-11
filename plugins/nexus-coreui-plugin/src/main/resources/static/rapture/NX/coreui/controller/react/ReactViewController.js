@@ -25,7 +25,8 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
   extend: 'NX.app.Controller',
 
   views: [
-    'react.MainContainer'
+    'react.MainContainer',
+    'react.FooterContainer'
   ],
 
   refs: [
@@ -36,6 +37,10 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
     {
       ref: 'breadcrumb',
       selector: 'nx-breadcrumb'
+    },
+    {
+      ref: 'reactFooterContainer',
+      selector: 'nx-coreui-react-footer-container'
     }
   ],
 
@@ -52,6 +57,12 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
           if (Ext.dom.Query.select('div.nxrm-metrics-section')[0]) {
             this.refresh();
           }
+          this.getReactFooterContainer().refresh();
+        }
+      },
+      '#Permissions': {
+        changed: function() {
+          this.getReactFooterContainer().refresh();
         }
       }
     },
@@ -70,6 +81,9 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
   refresh: function() {
     if (this.getReactMainContainer()) {
       this.getReactMainContainer().refresh();
+    }
+    if (this.getReactFooterContainer()) {
+      this.getReactFooterContainer().refresh();
     }
   }
 });
