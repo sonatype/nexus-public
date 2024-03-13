@@ -157,3 +157,60 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL = [
     "aggregates": []
   }
 ];
+
+export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
+  {
+    "metricName": "peak_requests_per_day",
+    "metricValue": 5800,
+    "limits": [
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 20000
+      }
+    ],
+    "limitLevel": "FREE_TIER",
+    "aggregates": [
+      {
+        "name": "content_request_count",
+        "value": 12500,
+        "period": "peak_recorded_count_30d"
+      }
+    ]
+  },
+  {
+    "metricName": "component_total_count",
+    "metricValue": 150000,
+    "limits": [
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 100000
+      }
+    ],
+    "limitLevel": "FREE_TIER",
+    "aggregates": [
+      {
+        "name": "component_total_count",
+        "value": 27865,
+        "period": "peak_recorded_count_30d"
+      }
+    ]
+  },
+  {
+    "metricName": "successful_last_24h",
+    "metricValue": 99,
+    "limits": [
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 100
+      }
+    ],
+    "limitLevel": "FREE_TIER",
+    "aggregates": [
+      {
+        "name": "unique_user_count",
+        "value": 88,
+        "period": "peak_recorded_count_30d"
+      }
+    ]
+  }
+];

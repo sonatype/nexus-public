@@ -49,7 +49,7 @@ export default function UsageMetrics() {
     send('RETRY');
   };
 
-  return !isHa && <div className={`nxrm-usage-metrics${isCircuitBreakerEnabled ? '-circuit-breaker' : ''} nxrm-metrics-section`}>
+  return !isHa && <div className={`nxrm-usage-metrics${showMetricsWithMeter ? '-circuit-breaker' : ''} nxrm-metrics-section`}>
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       {() =>
         <>

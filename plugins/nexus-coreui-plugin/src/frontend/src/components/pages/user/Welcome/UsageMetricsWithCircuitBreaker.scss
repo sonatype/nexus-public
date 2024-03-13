@@ -90,6 +90,14 @@ $card-width: 1016px;
       &::-moz-meter-bar {
         background: var(--nx-swatch-orange-50);
       }
+
+      &.pro-starter-edition::-webkit-meter-optimum-value {
+        background: var(--nx-swatch-red-40);
+      }
+
+      &.pro-starter-edition::-moz-meter-bar {
+        background: var(--nx-swatch-red-40);
+      }
     }
   }
 
@@ -142,6 +150,10 @@ $card-width: 1016px;
 
     .recorded-count-with-error-icon {
       color: var(--nx-swatch-orange-45);
+
+      &.pro-starter-edition {
+        color: var(--nx-swatch-red-40);
+      }
     }
   }
 

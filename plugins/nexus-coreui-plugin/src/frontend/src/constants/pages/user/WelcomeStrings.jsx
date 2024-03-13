@@ -88,12 +88,15 @@ export default {
           TITLE: 'Total Components',
           SUB_TITLE: 'Current',
           THRESHOLD: 'Threshold',
+          HARD_LIMIT_VALUE: 120_000,
           HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
           METRIC_NAME: 'component_total_count',
           METRIC_NAME_PRO_POSTGRESQL: 'component_total_count',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
           TOOLTIP: 'Sonatype Nexus Repository OSS performs best when your total component counts remain under the threshold.',
-          TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.'
+          TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.',
+          TOOLTIP_PRO_STARTER: 'Sonatype Nexus Repository\'s Pro Starter version only supports up to 120,000 components. Upgrade to Pro with a PostgreSQL database for unlimited component support.'
+
         },
         UNIQUE_LOGINS: {
           TITLE: 'Unique Logins',
@@ -101,7 +104,8 @@ export default {
           HIGHEST_RECORDED_COUNT: 'Last 30 days',
           METRIC_NAME: 'successful_last_24h',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
-          TOOLTIP: 'Measures unique users who login over a period of time.'
+          TOOLTIP: 'Measures unique users who login over a period of time.',
+          TOOLTIP_PRO_STARTER: 'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.'
         },
         REQUESTS_PER_MINUTE: {
           TITLE: 'Requests Per Minute',
@@ -121,12 +125,14 @@ export default {
           SUB_TITLE: 'Last 24 hours',
           SUB_TITLE_PRO_POSTGRESQL: 'Past 30 days',
           THRESHOLD: 'Threshold',
+          HARD_LIMIT_VALUE: 200_000,
           HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
           METRIC_NAME: 'peak_requests_per_day',
           METRIC_NAME_PRO_POSTGRESQL: 'peak_requests_per_day_30d',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
           TOOLTIP: 'Sonatype Nexus Repository OSS performs best when requests per day remain under the threshold.',
           TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.',
+          TOOLTIP_PRO_STARTER: 'Sonatype Nexus Repository\'s Pro Starter version only supports up to 200,000 requests per day to repository endpoints for all repositories. Upgrade to Pro with a PostgreSQL database for unlimited requests.'
         },
         PERCENTAGE: 0.75
       },
@@ -137,6 +143,10 @@ export default {
       CARD_LINK_PRO: {
         TEXT: 'Understand your usage',
         URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-pro'
+      },
+      CARD_LINK_PRO_STARTER: {
+        TEXT: 'Understand your usage',
+        URL: 'https://links.sonatype.com/products/nxrm3/docs/review-usage'
       },
       ALERTS: {
         HARD_LIMITS: {

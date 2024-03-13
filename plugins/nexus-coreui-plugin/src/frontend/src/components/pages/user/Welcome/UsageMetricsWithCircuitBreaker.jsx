@@ -31,7 +31,8 @@ const {
     USAGE: {
       CIRCUIT_BREAKER,
       CARD_LINK_OSS,
-      CARD_LINK_PRO}}} = UIStrings;
+      CARD_LINK_PRO,
+      CARD_LINK_PRO_STARTER}}} = UIStrings;
 
 const {
   TOTAL_COMPONENTS,
@@ -74,7 +75,10 @@ function CardWithThreshold({card, usage, link, tooltip}) {
   const meterClassNames = classNames({
     'nxrm-meter-warning' : exceedsWarningLimit && !exceedsDangerLimit,
     'nxrm-meter-danger' : exceedsDangerLimit
-  })
+  });
+  const errorIconClassNames = classNames({
+    'recorded-count-with-error-icon': showErrorIcon
+  });
 
   return <NxCard aria-label={TITLE}>
     <NxCard.Header>
@@ -105,10 +109,66 @@ function CardWithThreshold({card, usage, link, tooltip}) {
         </div>
       </NxCard.Text>
       <NxCard.Text className="nxrm-highest-records">
-            <span className={`recorded-count${showErrorIcon ? '-with-error-icon' : ''}`}>
-              {showErrorIcon && <NxFontAwesomeIcon icon={faExclamationCircle}/>}
-              {highestRecordedCount.toLocaleString()}
-            </span>
+        <span className={errorIconClassNames}>
+          {showErrorIcon && <NxFontAwesomeIcon icon={faExclamationCircle}/>}
+          {highestRecordedCount.toLocaleString()}
+        </span>
+        <span>{HIGHEST_RECORDED_COUNT}</span>
+        {exceedsWarningLimit && <NxTextLink external href={link.URL}>{link.TEXT}</NxTextLink>}
+      </NxCard.Text>
+    </NxCard.Content>
+  </NxCard>
+};
+
+function CardWithHardLimitThreshold({card, usage, link, tooltip}) {
+  const {AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, THRESHOLD, METRIC_NAME, SUB_TITLE, TITLE} = card;
+  const cardData = usage.find(m => m.metricName === METRIC_NAME);
+  const {aggregates, metricValue} = cardData;
+  const exceedsWarningLimit = metricValue >= card.HARD_LIMIT_VALUE * PERCENTAGE;
+  const exceedsDangerLimit = metricValue >= card.HARD_LIMIT_VALUE;
+  const highestRecordedCount = pathOr(0, [AGGREGATE_PERIOD_30_D, 'value'], indexBy(prop('period'), aggregates));
+  const showErrorIcon = highestRecordedCount >= card.HARD_LIMIT_VALUE;
+  const meterClassNames = classNames('pro-starter-edition', {
+    'nxrm-meter-warning' : exceedsWarningLimit && !exceedsDangerLimit,
+    'nxrm-meter-danger' : exceedsDangerLimit
+  });
+  const errorIconClassNames = classNames( 'pro-starter-edition', {
+    'recorded-count-with-error-icon': showErrorIcon
+  });
+
+  return <NxCard aria-label={TITLE}>
+    <NxCard.Header>
+      <NxH3>
+        {TITLE}
+        <NxTooltip title={tooltip}>
+          <NxFontAwesomeIcon icon={faInfoCircle}/>
+        </NxTooltip>
+      </NxH3>
+    </NxCard.Header>
+    <NxCard.Content>
+      <NxCard.Text>
+        <NxMeter className={meterClassNames}
+                 data-testid="meter"
+                 value={metricValue}
+                 max={card.HARD_LIMIT_VALUE}>
+          {`${metricValue.toLocaleString()} out of ${card.HARD_LIMIT_VALUE.toLocaleString()}`}
+        </NxMeter>
+        <div className="nxrm-label-container">
+          <div className="nxrm-label start">
+            <span>{metricValue.toLocaleString()}</span>
+            <span>{SUB_TITLE}</span>
+          </div>
+          <div className="nxrm-label end">
+            <span>{card.HARD_LIMIT_VALUE.toLocaleString()}</span>
+            <span>{THRESHOLD}</span>
+          </div>
+        </div>
+      </NxCard.Text>
+      <NxCard.Text className="nxrm-highest-records">
+        <span className={errorIconClassNames}>
+          {showErrorIcon && <NxFontAwesomeIcon icon={faExclamationCircle}/>}
+          {highestRecordedCount.toLocaleString()}
+        </span>
         <span>{HIGHEST_RECORDED_COUNT}</span>
         {exceedsWarningLimit && <NxTextLink external href={link.URL}>{link.TEXT}</NxTextLink>}
       </NxCard.Text>
@@ -152,6 +212,7 @@ function CardWithoutThreshold({card, usage, tooltip}) {
 
 export default function UsageMetricsWithCircuitBreaker() {
   const isProEdition = ExtJS.isProEdition();
+  const isProStarterEdition = ExtJS.isProStarterEdition();
   const isPostgresql = ExtJS.state().getValue('datastore.isPostgresql');
   const usage = ExtJS.state().getValue('contentUsageEvaluationResult');
 
@@ -166,6 +227,12 @@ export default function UsageMetricsWithCircuitBreaker() {
       <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO} tooltip={TOTAL_COMPONENTS.TOOLTIP_PRO}/>
       <CardWithoutThreshold key={REQUESTS_PER_MINUTE.TITLE} card={REQUESTS_PER_MINUTE} usage={usage} tooltip={REQUESTS_PER_MINUTE.TOOLTIP_PRO}/>
       <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO} tooltip={REQUESTS_PER_DAY.TOOLTIP_PRO}/>
+    </>
+  } else if (isProStarterEdition) {
+    return <>
+      <CardWithHardLimitThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={TOTAL_COMPONENTS.TOOLTIP_PRO_STARTER}/>
+      <CardWithoutThreshold key={UNIQUE_LOGINS.TITLE} card={UNIQUE_LOGINS} usage={usage} tooltip={UNIQUE_LOGINS.TOOLTIP_PRO_STARTER}/>
+      <CardWithHardLimitThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={REQUESTS_PER_DAY.TOOLTIP_PRO_STARTER}/>
     </>
   } else {
     return <>

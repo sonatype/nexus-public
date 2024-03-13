@@ -23,7 +23,8 @@ import {
   METRICS_CONTENT,
   METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS,
   METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO,
-  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL} from './UsageMetrics.testdata';
+  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL,
+  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER} from './UsageMetrics.testdata';
 
 const {USAGE_METRICS} = APIConstants.REST.INTERNAL;
 
@@ -36,6 +37,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     isProEdition: jest.fn().mockReturnValue(false),
+    isProStarterEdition: jest.fn().mockReturnValue(false),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
       getUser: jest.fn().mockReturnValue({ administrator: true }),
@@ -389,6 +391,103 @@ describe('Usage Metrics', () => {
       infoIcon = selectors.getCardInfoIcon(reqsPerDayCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
           'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.');
+    });
+
+    it('renders data correctly when PRO STARTER edition', async () => {
+      ExtJS.isProStarterEdition.mockReturnValue(true);
+      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER);
+
+      expect(selectors.getHeading('Usage')).toBeInTheDocument();
+      expect(selectors.getAllCards().length).toBe(3);
+
+      // card 1 of total components
+      const card1 = selectors.getCard('Total Components'),
+          card1Header = selectors.getCardHeader(card1, 'Total Components'),
+          card1SubTitle = selectors.getCardContent(card1,'Current'),
+          card1LimitTitle = selectors.getCardContent(card1,'Threshold'),
+          card1Meter = selectors.getCardMeter(card1),
+          card1TextLink = selectors.getCardTextLink(card1),
+          totalComponents = selectors.getCardContent(card1, '150,000'),
+          componentsLimit = selectors.getCardContent(card1, '120,000'),
+          card1HighestRecordedCountTitle = selectors.getCardContent(card1, 'Highest Recorded Count (30 days)'),
+          componentsHighestRecordedCount = selectors.getCardContent(card1, '27,865');
+
+      expectCardToRender(
+          card1,
+          card1Header,
+          card1SubTitle,
+          card1LimitTitle,
+          card1Meter,
+          card1TextLink,
+          totalComponents,
+          componentsLimit,
+          card1HighestRecordedCountTitle,
+          componentsHighestRecordedCount
+      );
+
+      // card 2 of unique logins - no meter and threshold
+      const card2 = selectors.getCard('Unique Logins'),
+          card2Header = selectors.getCardHeader(card2,'Unique Logins'),
+          card2SubTitle = selectors.getCardContent(card2,'Last 24 hours'),
+          uniqueLogins24H = selectors.getCardContent(card2, '99'),
+          uniqueLogins30DTitle = selectors.getCardContent(card2, 'Last 30 days'),
+          uniqueLogins30D = selectors.getCardContent(card2, '88');
+
+      expectCardToRender(
+          card2,
+          card2Header,
+          card2SubTitle,
+          uniqueLogins24H,
+          uniqueLogins30DTitle,
+          uniqueLogins30D
+      );
+
+      // card 3 of requests per day
+      const card3 = selectors.getCard('Requests Per Day'),
+          card3Header = selectors.getCardHeader(card3, 'Requests Per Day'),
+          card3SubTitle = selectors.getCardContent(card3, 'Last 24 hours'),
+          card3LimitTitle = selectors.getCardContent(card3,'Threshold'),
+          card3Meter = selectors.getCardMeter(card3),
+          card3TextLink = selectors.getCardTextLink(card3),
+          reqsPerDay = selectors.getCardContent(card3, '5,800'),
+          reqsLimit = selectors.getCardContent(card3, '200,000'),
+          card3HighestRecordedCountTitle = selectors.getCardContent(card3, 'Highest Recorded Count (30 days)'),
+          reqsHighestRecordedCount = selectors.getCardContent(card3, '12,500');
+
+      expectCardToRender(
+          card3,
+          card3Header,
+          card3SubTitle,
+          card3LimitTitle,
+          card3Meter,
+          reqsPerDay,
+          reqsLimit,
+          card3HighestRecordedCountTitle,
+          reqsHighestRecordedCount
+      );
+      // only render link when reaching 75% or more of threshold
+      expect(card3TextLink).not.toBeInTheDocument();
+    });
+
+    it('renders tooltips when hovering on the info icon when PRO STARTER edition', async () => {
+      ExtJS.isProStarterEdition.mockReturnValue(true);
+      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER);
+
+      const totalComponentsCard = selectors.getCard('Total Components'),
+          uniqueLoginsCard = selectors.getCard('Unique Logins'),
+          reqsPerDayCard = selectors.getCard('Requests Per Day');
+
+      let infoIcon = selectors.getCardInfoIcon(totalComponentsCard);
+      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
+          'Sonatype Nexus Repository\'s Pro Starter version only supports up to 120,000 components. Upgrade to Pro with a PostgreSQL database for unlimited component support.');
+
+      infoIcon = selectors.getCardInfoIcon(uniqueLoginsCard);
+      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
+          'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.');
+
+      infoIcon = selectors.getCardInfoIcon(reqsPerDayCard);
+      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
+          'Sonatype Nexus Repository\'s Pro Starter version only supports up to 200,000 requests per day to repository endpoints for all repositories. Upgrade to Pro with a PostgreSQL database for unlimited requests.');
     });
   });
 });
