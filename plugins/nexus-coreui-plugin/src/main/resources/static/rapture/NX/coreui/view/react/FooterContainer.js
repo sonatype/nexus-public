@@ -58,12 +58,13 @@ Ext.define('NX.coreui.view.react.FooterContainer', {
   },
 
   maybeSetVisible: function() {
-    const canViewMetrics = NX.Permissions.check('nexus:metrics:read');
+    const user = NX.State.getUser();
+    const isAdmin = user ? user.administrator : false;
     const isHa = NX.State.getValue('nexus.datastore.clustered.enabled');
     const isProStarter = NX.State.getEdition() === 'PRO-STARTER';
     const metrics = NX.State.getValue('contentUsageEvaluationResult');
 
-    this.setVisible(canViewMetrics && !isHa && isProStarter && (metrics.length > 0));
+    this.setVisible(isAdmin && !isHa && isProStarter && (metrics.length > 0));
     this.updateLayout();
   }
 });

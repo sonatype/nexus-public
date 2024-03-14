@@ -170,7 +170,7 @@ export default {
         },
         UPGRADING_PRO: {
           TEXT: 'upgrading to Pro ',
-          URL: 'https://links.sonatyep.com/products/nxrm3/docs/upgrade-to-pro'
+          URL: 'https://links.sonatype.com/products/nxrm3/docs/upgrade-to-pro'
         }
       }
     }
