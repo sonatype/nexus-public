@@ -16,11 +16,12 @@ import {render, screen, waitFor, within, waitForElementToBeRemoved} from '@testi
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 
-import {ExtJS, Permissions} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtJS, Permissions} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import Welcome from './Welcome.jsx';
 import * as testData from './Welcome.testdata.js';
+import {METRICS_CONTENT} from './UsageMetrics.testdata';
 
 const {WELCOME: {
   ACTIONS: {
@@ -36,6 +37,8 @@ const {WELCOME: {
   CONNECT_MODAL,
 }} = UIStrings;
 
+const {USAGE_METRICS} = APIConstants.REST.INTERNAL;
+
 // Creates a selector function that uses getByRole by default but which can be customized per-use to use
 // queryByRole, findByRole, etc instead
 const selectorQuery = (...queryParams) => queryType => screen[`${queryType ?? 'get'}ByRole`].apply(screen, queryParams);
@@ -50,6 +53,7 @@ const selectors = {
   quickAction: (name) => screen.queryByRole('button', {name: new RegExp(`${name}`)}),
   connectModal: () => screen.queryByRole('dialog', {name: CONNECT_MODAL.TITLE}),
   connectModalCloseButton: () => within(selectors.connectModal()).getByRole('button', {name: UIStrings.CLOSE}),
+  queryAllCards: () => screen.queryAllByRole('region'),
 };
 
 const browseableFormats = [{id: 'test'}];
@@ -62,7 +66,8 @@ describe('Welcome', function() {
     user = null;
     status = {edition: 'OSS'};
 
-    jest.spyOn(axios, 'post').mockResolvedValue(testData.simpleSuccessResponse)
+    jest.spyOn(axios, 'post').mockResolvedValue(testData.simpleSuccessResponse);
+    jest.spyOn(axios, 'get').mockReturnValue(jest.fn());
     jest.spyOn(ExtJS, 'useStatus').mockReturnValue(status);
     jest.spyOn(ExtJS, 'useLicense').mockReturnValue({});
     jest.spyOn(ExtJS, 'checkPermission').mockReturnValue({});
@@ -379,6 +384,32 @@ describe('Welcome', function() {
       await waitForElementToBeRemoved(loadingStatus());
 
       expect(quickAction(CONNECT.subTitle)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('usage section', function() {
+    it("renders metrics cards when an administrator", async () => {
+      user = {administrator: true};
+
+      when(axios.get)
+          .calledWith(USAGE_METRICS).mockResolvedValue({data: METRICS_CONTENT});
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(selectors.loadingStatus());
+
+      expect(selectors.queryAllCards().length).toBe(3);
+    });
+
+    it("does not render any card when not an administrator", async () => {
+      user = {administrator: false};
+
+      when(axios.get)
+          .calledWith(USAGE_METRICS).mockResolvedValue({data: METRICS_CONTENT});
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(selectors.loadingStatus());
+
+      expect(selectors.queryAllCards().length).toBe(0);
     });
   });
 });
