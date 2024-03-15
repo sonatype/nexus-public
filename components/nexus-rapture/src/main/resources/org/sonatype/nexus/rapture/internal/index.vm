@@ -72,6 +72,7 @@
         scriptElement.src = telemetryService;
         scriptElement.async = true;
         scriptElement.style.display = 'none';
+        scriptElement.onload = () => initializeTelemetry();
         document.head.appendChild(scriptElement);
       })();
 
@@ -114,8 +115,6 @@
           return '';
         }
       }
-
-      setTimeout(initializeTelemetry, 1000);
 
     </script>
   #end

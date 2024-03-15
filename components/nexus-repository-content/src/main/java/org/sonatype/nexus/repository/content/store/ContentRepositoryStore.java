@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -145,5 +147,30 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
     return dao().readContentRepository(configRepositoryId)
         .map(this::deleteContentRepository)
         .orElse(false);
+  }
+
+  /**
+   * Retrieves the repository name and content repository id for the given name.
+   *
+   * @param repositoryFormat the format to retrieve
+   * @return repository attributes if found
+   */
+  @Transactional
+  public Optional<Map<String, Object>> readContentRepositoryId(
+      final String repositoryFormat,
+      final String repositoryName)
+  {
+    return dao().readContentRepositoryId(repositoryFormat, repositoryName);
+  }
+
+  /**
+   * Retrieves the repository names and content repository ids.
+   *
+   * @param repositoryFormats the list formats to retrieve
+   * @return repository attributes if found
+   */
+  @Transactional
+  public List<Map<String, Object>> readAllContentRepositoryIds(final List<String> repositoryFormats){
+    return dao().readAllContentRepositoryIds(repositoryFormats);
   }
 }

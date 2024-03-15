@@ -31,6 +31,7 @@
       attributes      ${JSON_TYPE} NOT NULL,
       created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
       last_updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      asset_blob_size BIGINT,
 
       CONSTRAINT pk_${format}_asset_id PRIMARY KEY (asset_id),
       CONSTRAINT uk_${format}_asset_repository_path UNIQUE (repository_id, path),
@@ -50,6 +51,9 @@
     <!-- Performance optimisation for cleanup -->
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_last_downloaded ON ${format}_asset (last_downloaded);
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_path ON ${format}_asset (path);
+
+    ALTER TABLE ${format}_asset ADD COLUMN IF NOT EXISTS asset_blob_size BIGINT;
+
     --
   </insert>
 
@@ -215,9 +219,9 @@
     </selectKey>
 
     INSERT INTO ${format}_asset (asset_id, repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
-        attributes)
+        attributes, asset_blob_size)
     VALUES (#{asset.assetId}, #{asset.repositoryId}, #{asset.path}, #{asset.kind}, #{asset.componentId}, #{asset.assetBlobId},
-      #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes});
+      #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes}, #{asset.assetBlob.blobSize});
 
     <if test="updateComponentEntityVersion and asset.componentId != null">
         <include refid="componentEntityVersionIncrement"/> WHERE component_id = #{asset.componentId};
@@ -311,7 +315,7 @@
                                  WHERE <include refid="assetMatch"/> AND asset_blob_id IS DISTINCT FROM #{assetBlobId});
     </if>
 
-    UPDATE ${format}_asset SET asset_blob_id = #{assetBlobId}, last_updated = CURRENT_TIMESTAMP
+    UPDATE ${format}_asset SET asset_blob_id = #{assetBlobId}, last_updated = CURRENT_TIMESTAMP, asset_blob_size = #{asset.assetBlob.blobSize}
         WHERE <include refid="assetMatch"/> AND asset_blob_id IS DISTINCT FROM #{assetBlobId};
   </update>
 

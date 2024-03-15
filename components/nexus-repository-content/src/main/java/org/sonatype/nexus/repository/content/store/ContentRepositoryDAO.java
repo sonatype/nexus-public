@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -74,4 +76,22 @@ public interface ContentRepositoryDAO
    * @return {@code true} if the content repository was deleted
    */
   boolean deleteContentRepository(ContentRepository contentRepository);
+
+  /**
+   * Retrieves the repository name and content repository id for the given name.
+   *
+   * @param repositoryFormat the format to retrieve
+   * @return repository attributes if found
+   */
+  Optional<Map<String, Object>> readContentRepositoryId(
+      @Param("repositoryFormat") String repositoryFormat,
+      @Param("repositoryName") String repositoryName);
+
+  /**
+   * Retrieves the repository names and content repository ids.
+   *
+   * @param repositoryFormats the list formats to retrieve
+   * @return repository attributes if found
+   */
+  List<Map<String, Object>> readAllContentRepositoryIds(@Param("repositoryFormats") List<String> repositoryFormats);
 }

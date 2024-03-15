@@ -95,6 +95,13 @@ public interface FeatureFlags
 
   String CHANGE_REPO_BLOBSTORE_TASK_ENABLED_NAMED = "${nexus.change.repo.blobstore.task.enabled:-false}";
 
+  /**
+   * Feature flag to enable/disable RecalculateBlobStoreSizeTask
+   */
+  String RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED = "nexus.recalculate.blobstore.size.task.enabled";
+
+  String RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED = "${" + RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED + ":-false}";
+
   String FIREWALL_ONBOARDING_ENABLED = "nexus.firewall.onboarding.enabled";
 
   String CLEANUP_PREVIEW_ENABLED = "nexus.cleanup.preview.enabled";

@@ -69,4 +69,17 @@
     DELETE FROM ${format}_content_repository WHERE <include refid="repositoryMatch"/>;
   </delete>
 
+  <select id="readAllContentRepositoryIds" resultType="java.util.HashMap" databaseId="PostgreSQL">
+    <foreach item="repositoryFormat" index="index" collection="repositoryFormats" separator=" UNION ">
+      SELECT r.name, cr.repository_id FROM repository r
+      INNER JOIN ${repositoryFormat}_content_repository cr ON r.id = cr.config_repository_id
+    </foreach>
+  </select>
+
+  <select id="readContentRepositoryId" resultType="java.util.HashMap" databaseId="PostgreSQL">
+      SELECT r.name, cr.repository_id FROM repository r
+      INNER JOIN ${repositoryFormat}_content_repository cr ON r.id = cr.config_repository_id
+      WHERE r.name = '${repositoryName}'
+  </select>
+
 </mapper>

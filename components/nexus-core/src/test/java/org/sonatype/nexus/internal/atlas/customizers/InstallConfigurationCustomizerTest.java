@@ -25,6 +25,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedDataStoreFileSource;
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedHazelcastFileSource;
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedJettyFileSource;
+import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedNexusFileSource;
 
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -247,6 +248,30 @@ public class InstallConfigurationCustomizerTest
     final List<String> expected = Arrays.asList("password=**REDACTED**", "name=config", "type=jdbc",
         "jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password\\=**REDACTED**&password\\=**REDACTED**",
         "username=postgres");
+
+    // Skip the timestamp line at the top of the file
+    List<String> actual;
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(source.getContent()))) {
+      actual = reader.lines().skip(1).collect(Collectors.toList());
+    }
+
+    assertThat(actual, containsInAnyOrder(expected.toArray()));
+  }
+
+  @Test
+  public void SanitizedNexusFileSource() throws Exception {
+    File temp = tempFolder.newFile("nexus.properties");
+
+    Files.write(temp.toPath(), Collections.singleton("nexus.datastore.nexus.password=secret\n" +
+        "nexus.datastore.nexus.jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password=secret&password=secret&pass\n" +
+        "nexus.datastore.nexus.username=postgres"));
+
+    SanitizedNexusFileSource source = new SanitizedNexusFileSource(CONFIG, "test/file", temp, DEFAULT);
+    source.prepare();
+
+    final List<String> expected = Arrays.asList("nexus.datastore.nexus.password=**REDACTED**",
+        "nexus.datastore.nexus.jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password\\=**REDACTED**&password\\=**REDACTED**",
+        "nexus.datastore.nexus.username=postgres");
 
     // Skip the timestamp line at the top of the file
     List<String> actual;
