@@ -183,7 +183,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
       name: 'attributes.docker.' + type + 'Port',
       itemId: type + 'Port',
       minValue: 1,
-      maxValue: 65536,
+      maxValue: 65535,
       allowDecimals: false,
       allowExponential: false,
       allowBlank: false,
