@@ -181,9 +181,10 @@ public class GpgUtils
 
         boolean firstLine = true;
         for (String line : lines) {
-          String sigLine = (firstLine ? "" : "\r\n") + line.replaceAll("\\s*$", "");
+          String normalizedLine = line.replaceAll("\\s*$", "");
+          String sigLine = (firstLine ? "" : "\r\n") + normalizedLine;
           sigGenerator.update(sigLine.getBytes(UTF_8));
-          aOut.write((line + "\n").getBytes(UTF_8));
+          aOut.write((normalizedLine + "\n").getBytes(UTF_8));
           firstLine = false;
         }
         aOut.endClearText();
