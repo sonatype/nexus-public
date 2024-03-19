@@ -41,7 +41,11 @@ Ext.define('NX.coreui.view.react.FooterContainer', {
   },
 
   initReactView: function() {
-    const reactElement = react.createElement(this.reactView, this.reactViewProps, null);
+    const reactElement = react.createElement(this.reactView, {
+      onClose: function() {
+        this.dismissAlert()
+      }.bind(this)
+    }, null);
     ReactDOM.render(reactElement, this.getEl().dom);
   },
 
@@ -65,6 +69,11 @@ Ext.define('NX.coreui.view.react.FooterContainer', {
     const metrics = NX.State.getValue('contentUsageEvaluationResult');
 
     this.setVisible(isAdmin && !isHa && isProStarter && (metrics.length > 0));
+    this.updateLayout();
+  },
+
+  dismissAlert: function() {
+    this.setVisible(false);
     this.updateLayout();
   }
 });

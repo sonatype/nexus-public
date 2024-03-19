@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {NxButtonBar, NxErrorAlert, NxTextLink} from '@sonatype/react-shared-components';
+import {NxButtonBar, NxErrorAlert, NxTextLink, NxWarningAlert} from '@sonatype/react-shared-components';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {isEmpty} from 'ramda';
 
@@ -22,8 +22,12 @@ import './UsageMetricsAlert.scss';
 const {
   WELCOME: {
     USAGE: {
+      CIRCUIT_BREAKER: {
+        PERCENTAGE
+      },
       ALERTS: {
         HARD_LIMITS,
+        WARNING_LIMITS,
         LEARN_ABOUT_PRO,
         REVIEW_YOUR_USAGE,
         UPGRADING_PRO,
@@ -34,9 +38,9 @@ const COMPONENT_TOTAL_COUNT = 'component_total_count';
 const REQUESTS_PER_DAY_HARD_LIMIT = 200_000;
 const COMPONENT_COUNT_HARD_LIMIT = 120_000;
 
-const MessageContent = function({metricMessage}){
+const MessageContent = function({metricMessage, limit}){
   return <p>
-    {metricMessage.PREFIX}
+    {metricMessage.PREFIX(limit)}
     <NxTextLink external href={REVIEW_YOUR_USAGE.URL}>{REVIEW_YOUR_USAGE.TEXT}</NxTextLink>
     {metricMessage.MID}
     <NxTextLink external href={UPGRADING_PRO.URL}>{UPGRADING_PRO.TEXT}</NxTextLink>
@@ -46,16 +50,25 @@ const MessageContent = function({metricMessage}){
 
 const AlertContent = function({metric, content}) {
   return <>
-    {metric.metricName === PEAK_REQUESTS_PER_DAY && <MessageContent metricMessage={content.REQUESTS_PER_DAY}/>}
-    {metric.metricName === COMPONENT_TOTAL_COUNT && <MessageContent metricMessage={content.TOTAL_COMPONENTS}/>}
+    {metric.metricName === PEAK_REQUESTS_PER_DAY && <MessageContent metricMessage={content.REQUESTS_PER_DAY}
+                                                                    limit={REQUESTS_PER_DAY_HARD_LIMIT.toLocaleString()}/>}
+    {metric.metricName === COMPONENT_TOTAL_COUNT && <MessageContent metricMessage={content.TOTAL_COMPONENTS}
+                                                                    limit={COMPONENT_COUNT_HARD_LIMIT.toLocaleString()}/>}
   </>
 };
 
-export default function UsageMetricsAlert() {
+export default function UsageMetricsAlert({onClose}) {
   const metrics = ExtJS.state().getValue('contentUsageEvaluationResult');
-  const hardLimitMetrics = metrics.filter(
-      m => (m.metricName === PEAK_REQUESTS_PER_DAY && m.metricValue >= REQUESTS_PER_DAY_HARD_LIMIT) ||
-          (m.metricName === COMPONENT_TOTAL_COUNT && m.metricValue >= COMPONENT_COUNT_HARD_LIMIT));
+  const hardLimitMetrics = metrics.filter(m =>
+    (m.metricName === PEAK_REQUESTS_PER_DAY && m.metricValue >= REQUESTS_PER_DAY_HARD_LIMIT) ||
+    (m.metricName === COMPONENT_TOTAL_COUNT && m.metricValue >= COMPONENT_COUNT_HARD_LIMIT)
+  );
+  const warningLimitMetrics = metrics.filter(m =>
+    (m.metricName === PEAK_REQUESTS_PER_DAY && m.metricValue >= REQUESTS_PER_DAY_HARD_LIMIT * PERCENTAGE) ||
+    (m.metricName === COMPONENT_TOTAL_COUNT && m.metricValue >= COMPONENT_COUNT_HARD_LIMIT * PERCENTAGE)
+  );
+  const showWarningAlert = isEmpty(hardLimitMetrics) && !isEmpty(warningLimitMetrics);
+
   return <>
     {!isEmpty(hardLimitMetrics) && <NxErrorAlert>
       <div>
@@ -69,5 +82,10 @@ export default function UsageMetricsAlert() {
         </a>
       </NxButtonBar>
     </NxErrorAlert>}
+    {showWarningAlert && <NxWarningAlert onClose={onClose} role="alert">
+      <div>
+        {warningLimitMetrics.map(m => <AlertContent key={m.metricName} metric={m} content={WARNING_LIMITS}/>)}
+      </div>
+    </NxWarningAlert>}
   </>
 };

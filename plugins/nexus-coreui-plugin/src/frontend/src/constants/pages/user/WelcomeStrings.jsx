@@ -162,11 +162,21 @@ export default {
       ALERTS: {
         HARD_LIMITS: {
           REQUESTS_PER_DAY: {
-            PREFIX: 'Users can not currently upload to this repository. This repository has hit the maximum of 200,000 peak requests in the past 30 days. ',
+            PREFIX: (limit) => `Users can not currently upload to this repository. This repository has hit the maximum of ${limit} peak requests in the past 30 days. `,
             MID: ' and consider '
           },
           TOTAL_COMPONENTS: {
-            PREFIX: 'Users can not currently upload to this repository. This repository contains the maximum of 120,000 components. ',
+            PREFIX: (limit) => `Users can not currently upload to this repository. This repository contains the maximum of ${limit} components. `,
+            MID: ' and consider removing unused components or '
+          }
+        },
+        WARNING_LIMITS: {
+          REQUESTS_PER_DAY: {
+            PREFIX: (limit) => `This repository is approaching the maximum of ${limit} peak requests in the past 30 days. Users will not be able to upload to this repository after reaching this limit. `,
+            MID: ' and consider '
+          },
+          TOTAL_COMPONENTS: {
+            PREFIX: (limit) => `This repository is approaching the maximum of ${limit} components. Users will not be able to upload to this repository after reaching this limit. `,
             MID: ' and consider removing unused components or '
           }
         },
@@ -176,11 +186,11 @@ export default {
           URL: 'https://links.sonatype.com/products/nxrm3/docs/learn-about-pro'
         },
         REVIEW_YOUR_USAGE: {
-          TEXT: 'Review your usage ',
+          TEXT: 'Review your usage',
           URL: 'https://links.sonatype.com/products/nxrm3/docs/review-usage'
         },
         UPGRADING_PRO: {
-          TEXT: 'upgrading to Pro ',
+          TEXT: 'upgrading to Pro',
           URL: 'https://links.sonatype.com/products/nxrm3/docs/upgrade-to-pro'
         }
       }

@@ -12,12 +12,13 @@
  */
 import React from 'react';
 import {render, screen} from '@testing-library/react';
+import userEvent from "@testing-library/user-event";
 import {when} from "jest-when";
 
 import UsageMetricsAlert from './UsageMetricsAlert';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import {HARD_LIMIT_REACHED} from './UsageMetricsAlert.testdata';
+import {HARD_LIMIT_REACHED, WARNING_LIMIT_REACHED} from './UsageMetricsAlert.testdata';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -31,7 +32,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 const selectors = {
   ...TestUtils.selectors,
   getAlert: () => screen.getByRole('alert'),
-  getLearnAboutLink: () => screen.getByRole('link', {name: 'Learn about Pro'})
+  getCloseButton: () => screen.getByRole('button', {name: 'Close'}),
+  getLinks: (t) => screen.getAllByRole('link', {name: t})
 };
 
 describe('Usage Metrics Alert', () => {
@@ -53,10 +55,57 @@ describe('Usage Metrics Alert', () => {
     const requestsPerDayMessage = 'Users can not currently upload to this repository. This repository has hit ' +
         'the maximum of 200,000 peak requests in the past 30 days. Review your usage and consider upgrading to Pro ' +
         'for unlimited usage.';
-    const link = selectors.getLearnAboutLink();
+
     expect(alert).toBeInTheDocument();
     expect(alert).toHaveTextContent(componentCountMessage);
     expect(alert).toHaveTextContent(requestsPerDayMessage);
-    expect(link).toBeInTheDocument();
+    expectLinksToBeRendered('Learn about Pro', 'Review your usage', 'upgrading to Pro');
+  });
+
+  it('renders warning limit alert when warning limit value reached', async () => {
+    await renderView(WARNING_LIMIT_REACHED);
+
+    const alert = selectors.getAlert();
+    const componentCountMessage = 'This repository is approaching the maximum of 120,000 components. ' +
+        'Users will not be able to upload to this repository after reaching this limit. ' +
+        'Review your usage and consider removing unused components or upgrading to Pro for unlimited usage.';
+    const requestsPerDayMessage = 'This repository is approaching the maximum of 200,000 peak requests in the past 30 days. ' +
+        'Users will not be able to upload to this repository after reaching this limit. ' +
+        'Review your usage and consider upgrading to Pro for unlimited usage.';
+
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveTextContent(componentCountMessage);
+    expect(alert).toHaveTextContent(requestsPerDayMessage);
+    expectLinksToBeRendered('Review your usage', 'upgrading to Pro');
+  });
+
+  it("tests the close button in the alert", async () => {
+    const onClose = jest.fn();
+    await renderView(WARNING_LIMIT_REACHED, onClose);
+
+    const alert = selectors.getAlert();
+
+    expect(alert).toBeInTheDocument();
+    userEvent.click(selectors.getCloseButton());
+    expect(onClose).toBeCalled();
   });
 });
+
+function expectLinksToBeRendered(...links) {
+
+  for (let l of links) {
+    const links = selectors.getLinks(l);
+    if (l === 'Learn about Pro') {
+      expect(links.length).toBe(1);
+      expect(links[0]).toHaveAttribute('href', 'https://links.sonatype.com/products/nxrm3/docs/learn-about-pro');
+    } else if (l === 'Review your usage') {
+      expect(links.length).toBe(2);
+      expect(links[0]).toHaveAttribute('href', 'https://links.sonatype.com/products/nxrm3/docs/review-usage');
+      expect(links[1]).toHaveAttribute('href', 'https://links.sonatype.com/products/nxrm3/docs/review-usage');
+    } else {
+      expect(links.length).toBe(2);
+      expect(links[0]).toHaveAttribute('href', 'https://links.sonatype.com/products/nxrm3/docs/upgrade-to-pro');
+      expect(links[1]).toHaveAttribute('href', 'https://links.sonatype.com/products/nxrm3/docs/upgrade-to-pro');
+    }
+  }
+}
