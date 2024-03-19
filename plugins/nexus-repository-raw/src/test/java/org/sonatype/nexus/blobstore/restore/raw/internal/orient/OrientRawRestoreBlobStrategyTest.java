@@ -69,6 +69,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 public class OrientRawRestoreBlobStrategyTest
@@ -227,7 +229,7 @@ public class OrientRawRestoreBlobStrategyTest
   public void testRestoreCreatesAssetFromBlobWithExpectedHashes() throws Exception {
     ArgumentCaptor<AssetBlob> assetBlobCaptor = ArgumentCaptor.forClass(AssetBlob.class);
 
-    Map<HashAlgorithm, HashCode> expectedHashes = Stream.of(SHA1, MD5)
+    Map<HashAlgorithm, HashCode> expectedHashes = Stream.of(SHA1, MD5, SHA256, SHA512)
         .collect(toMap(identity(), algorithm -> algorithm.function().hashBytes(BLOB_BYTES)));
 
     underTest.restore(properties, blob, blobStore, !DRY_RUN);

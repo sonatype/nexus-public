@@ -37,6 +37,8 @@ import com.google.common.collect.ImmutableList;
 
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
@@ -61,7 +63,7 @@ public class OrientRawRestoreBlobStrategy
 
   @Override
   protected List<HashAlgorithm> getHashAlgorithms() {
-    return ImmutableList.of(SHA1, MD5);
+    return ImmutableList.of(SHA1, MD5, SHA256, SHA512);
   }
 
   @Override

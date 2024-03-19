@@ -54,6 +54,8 @@ import org.joda.time.DateTime;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
@@ -66,7 +68,10 @@ public class RawContentFacetImpl
     extends FacetSupport
     implements RawContentFacet
 {
-  public static final List<HashAlgorithm> HASH_ALGORITHMS = ImmutableList.of(MD5, SHA1);
+  /**
+   * Assets stored prior to version 3.68 may only have MD5 and SHA1 hashes stored.
+   */
+  public static final List<HashAlgorithm> HASH_ALGORITHMS = ImmutableList.of(MD5, SHA1, SHA256, SHA512);
 
   private final AssetEntityAdapter assetEntityAdapter;
 
