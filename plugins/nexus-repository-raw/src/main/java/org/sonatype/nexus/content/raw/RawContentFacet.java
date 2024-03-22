@@ -27,6 +27,8 @@ import com.google.common.collect.ImmutableList;
 
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 
 /**
  * Provides persistent content for the 'raw' format.
@@ -37,7 +39,10 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 public interface RawContentFacet
     extends ContentFacet
 {
-  public final Iterable<HashAlgorithm> HASHING = ImmutableList.of(MD5, SHA1);
+  /**
+   * Assets stored prior to version 3.68 may only have MD5 and SHA1 hashes stored.
+   */
+  public final Iterable<HashAlgorithm> HASHING = ImmutableList.of(MD5, SHA1, SHA256, SHA512);
 
   Optional<Content> get(String path) throws IOException;
 

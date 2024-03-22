@@ -690,9 +690,11 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.2.5</version>
           <configuration>
             <useSystemClassLoader>false</useSystemClassLoader>
             <forkCount>1</forkCount>
+            <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
             <reuseForks>true</reuseForks>
             <argLine>
               ${surefire.maxHeap}
@@ -716,10 +718,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.2.5</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
             <forkCount>1</forkCount>
             <reuseForks>false</reuseForks>
+            <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
             <argLine>
               -Xmx400M
               -XX:MaxDirectMemorySize=2G

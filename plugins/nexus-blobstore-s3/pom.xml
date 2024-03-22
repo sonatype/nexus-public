@@ -166,7 +166,6 @@
               aws-java-sdk-sts,
               aws-java-sdk-core,
               aws-java-sdk-kms,
-              ion-java,
               jmespath-java,
               aws-java-sdk-cloudwatch,
               aws-java-sdk-cloudwatchmetrics,

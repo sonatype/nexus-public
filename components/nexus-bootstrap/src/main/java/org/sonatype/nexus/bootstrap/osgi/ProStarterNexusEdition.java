@@ -45,6 +45,7 @@ public class ProStarterNexusEdition
     log.info("Loading Pro Starter Edition");
     properties.setProperty(NEXUS_EDITION, getEdition().editionString);
     properties.setProperty(NEXUS_FEATURES, getEditionFeature().featureString);
+    properties.setProperty("nexus.analytics.enabled", Boolean.TRUE.toString());
     createEditionMarker(workDirPath, getEdition());
   }
 

@@ -63,7 +63,7 @@ function Card({card, usage}) {
   </NxCard>
 };
 
-function CardWithThreshold({card, usage, link, tooltip}) {
+function CardWithThreshold({card, usage, link, tooltip, edition}) {
   const {AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, THRESHOLD, METRIC_NAME, SUB_TITLE, TITLE} = card;
   const cardData = usage.find(m => m.metricName === METRIC_NAME);
   const {aggregates, limits, metricValue} = cardData;
@@ -84,7 +84,7 @@ function CardWithThreshold({card, usage, link, tooltip}) {
     <NxCard.Header>
       <NxH3>
         {TITLE}
-        <NxTooltip title={tooltip}>
+        <NxTooltip title={tooltip(softLimitValue.toLocaleString(), edition)}>
           <NxFontAwesomeIcon icon={faInfoCircle}/>
         </NxTooltip>
       </NxH3>
@@ -120,7 +120,7 @@ function CardWithThreshold({card, usage, link, tooltip}) {
   </NxCard>
 };
 
-function CardWithHardLimitThreshold({card, usage, link, tooltip}) {
+function CardWithHardLimitThreshold({card, usage, link, tooltip, edition}) {
   const {AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, THRESHOLD, METRIC_NAME, SUB_TITLE, TITLE} = card;
   const cardData = usage.find(m => m.metricName === METRIC_NAME);
   const {aggregates, metricValue} = cardData;
@@ -140,7 +140,7 @@ function CardWithHardLimitThreshold({card, usage, link, tooltip}) {
     <NxCard.Header>
       <NxH3>
         {TITLE}
-        <NxTooltip title={tooltip}>
+        <NxTooltip title={tooltip(card.HARD_LIMIT_VALUE.toLocaleString(), edition)}>
           <NxFontAwesomeIcon icon={faInfoCircle}/>
         </NxTooltip>
       </NxH3>
@@ -224,21 +224,21 @@ export default function UsageMetricsWithCircuitBreaker() {
     </>
   } else if (isProEdition && !isPostgresql) {
     return <>
-      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO} tooltip={TOTAL_COMPONENTS.TOOLTIP_PRO}/>
+      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition="PRO"/>
       <CardWithoutThreshold key={REQUESTS_PER_MINUTE.TITLE} card={REQUESTS_PER_MINUTE} usage={usage} tooltip={REQUESTS_PER_MINUTE.TOOLTIP_PRO}/>
-      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO} tooltip={REQUESTS_PER_DAY.TOOLTIP_PRO}/>
+      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition="PRO"/>
     </>
   } else if (isProStarterEdition) {
     return <>
-      <CardWithHardLimitThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={TOTAL_COMPONENTS.TOOLTIP_PRO_STARTER}/>
+      <CardWithHardLimitThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition="PRO-STARTER"/>
       <CardWithoutThreshold key={UNIQUE_LOGINS.TITLE} card={UNIQUE_LOGINS} usage={usage} tooltip={UNIQUE_LOGINS.TOOLTIP_PRO_STARTER}/>
-      <CardWithHardLimitThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={REQUESTS_PER_DAY.TOOLTIP_PRO_STARTER}/>
+      <CardWithHardLimitThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition="PRO-STARTER"/>
     </>
   } else {
     return <>
-      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_OSS} tooltip={TOTAL_COMPONENTS.TOOLTIP}/>
+      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_OSS} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition="OSS"/>
       <CardWithoutThreshold key={UNIQUE_LOGINS.TITLE} card={UNIQUE_LOGINS} usage={usage} tooltip={UNIQUE_LOGINS.TOOLTIP}/>
-      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_OSS} tooltip={REQUESTS_PER_DAY.TOOLTIP}/>
+      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_OSS} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition="OSS"/>
     </>
   }
 };

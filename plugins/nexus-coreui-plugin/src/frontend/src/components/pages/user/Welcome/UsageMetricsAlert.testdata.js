@@ -49,3 +49,39 @@ export const HARD_LIMIT_REACHED = [
     "limitLevel": "FREE_TIER"
   }
 ];
+
+export const WARNING_LIMIT_REACHED = [
+  {
+    "metricName": "peak_requests_per_day",
+    "metricValue": 150000,
+    "limits": [
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 20000
+      }
+    ],
+    "limitLevel": "SOFT_LIMIT"
+  },
+  {
+    "metricName": "component_total_count",
+    "metricValue": 90000,
+    "limits": [
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 100000
+      }
+    ],
+    "limitLevel": "SOFT_LIMIT"
+  },
+  {
+    "metricName": "successful_last_24h",
+    "metricValue": 26,
+    "limits": [
+      {
+        "limitName": "SOFT_LIMIT",
+        "limitValue": 75
+      }
+    ],
+    "limitLevel": "FREE_TIER"
+  }
+];

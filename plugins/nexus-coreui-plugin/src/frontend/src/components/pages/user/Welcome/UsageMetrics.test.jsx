@@ -361,7 +361,7 @@ describe('Usage Metrics', () => {
 
       let infoIcon = selectors.getCardInfoIcon(totalComponentsCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'Sonatype Nexus Repository OSS performs best when your total component counts remain under the threshold.');
+          'Sonatype Nexus Repository OSS performs best when your total component counts remain under 100,000 components across all repositories in your instance.');
 
       infoIcon = selectors.getCardInfoIcon(uniqueLoginsCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
@@ -369,7 +369,7 @@ describe('Usage Metrics', () => {
 
       infoIcon = selectors.getCardInfoIcon(reqsPerDayCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'Sonatype Nexus Repository OSS performs best when requests per day remain under the threshold.');
+          'Sonatype Nexus Repository OSS performs best when requests per day remain under 20,000 requests per day to all repository endpoints across all repositories in your instance.');
     });
 
     it('renders tooltips when hovering on the info icon when PRO edition', async () => {
@@ -386,7 +386,7 @@ describe('Usage Metrics', () => {
 
       infoIcon = selectors.getCardInfoIcon(reqsPerMinuteCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'Measures requests per minute to your Sonatype Nexus Repository Pro instance.');
+          'Measures requests per minute to repository endpoints for all repositories in your Sonatype Nexus Repository Pro instance.');
 
       infoIcon = selectors.getCardInfoIcon(reqsPerDayCard);
       await TestUtils.expectToSeeTooltipOnHover(infoIcon,
