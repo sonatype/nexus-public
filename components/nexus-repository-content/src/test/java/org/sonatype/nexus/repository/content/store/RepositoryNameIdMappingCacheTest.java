@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store.internal;
+package org.sonatype.nexus.repository.content.store;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,8 +21,6 @@ import java.util.Optional;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
-import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 
@@ -35,6 +33,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -61,8 +60,10 @@ public class RepositoryNameIdMappingCacheTest
 
   @Test
   public void testGetRepositoryIds() {
-    List<Integer> repositoryIds = initializeCache();
-    assertThat(repositoryIds, contains(1, 2));
+    Map<Integer, String> repositoryIds = initializeCache();
+    assertThat(repositoryIds.keySet(), contains(1, 2));
+    assertThat(repositoryIds, hasEntry(1, "repo1"));
+    assertThat(repositoryIds, hasEntry(2, "repo2"));
   }
 
   @Test
@@ -74,8 +75,8 @@ public class RepositoryNameIdMappingCacheTest
 
     underTest.on(new RepositoryCreatedEvent(repository("repo3")));
 
-    List<Integer> repositoryIds = underTest.getRepositoryIds(Arrays.asList("repo3"), "raw");
-    assertThat(repositoryIds, contains(3));
+    Map<Integer, String> repositoryIds = underTest.getRepositoryNameIds(Arrays.asList("repo3"), "raw");
+    assertThat(repositoryIds, hasEntry(3, "repo3"));
   }
 
   @Test
@@ -84,11 +85,11 @@ public class RepositoryNameIdMappingCacheTest
 
     underTest.on(new RepositoryDeletedEvent(repository("repo1")));
 
-    List<Integer> repositoryIds = underTest.getRepositoryIds(Arrays.asList("repo1"), "raw");
-    assertThat(repositoryIds, not(hasItem(1)));
+    Map<Integer, String> repositoryIds = underTest.getRepositoryNameIds(Arrays.asList("repo1"), "raw");
+    assertThat(repositoryIds, not(hasEntry(2, "repo2")));
   }
 
-  private List<Integer> initializeCache() {
+  private Map<Integer, String> initializeCache() {
     List<String> repositoryNames = Arrays.asList("repo1", "repo2");
     Map<String, Object> nameIdOne = getRepositoryNameId("repo1", 1);
     Map<String, Object> nameIdTwo = getRepositoryNameId("repo2", 2);
@@ -96,7 +97,7 @@ public class RepositoryNameIdMappingCacheTest
 
     when(contentRepositoryStore.readAllContentRepositoryIds(any())).thenReturn(repositoryNameIds);
 
-    return underTest.getRepositoryIds(repositoryNames, "raw");
+    return underTest.getRepositoryNameIds(repositoryNames, "raw");
   }
 
   private Map<String, Object> getRepositoryNameId(String name, int id) {
