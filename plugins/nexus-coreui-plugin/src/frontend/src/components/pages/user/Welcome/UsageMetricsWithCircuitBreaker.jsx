@@ -42,6 +42,7 @@ const {
   PERCENTAGE} = CIRCUIT_BREAKER;
 
 const SOFT_LIMIT = 'SOFT_LIMIT';
+const STARTER_HARD_LIMIT = 'STARTER_HARD_LIMIT';
 
 function Card({card, usage}) {
   const {METRIC_NAME_PRO_POSTGRESQL, SUB_TITLE_PRO_POSTGRESQL, TITLE, TITLE_PRO_POSTGRESQL} = card;
@@ -123,11 +124,12 @@ function CardWithThreshold({card, usage, link, tooltip, edition}) {
 function CardWithHardLimitThreshold({card, usage, link, tooltip, edition}) {
   const {AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, THRESHOLD, METRIC_NAME, SUB_TITLE, TITLE} = card;
   const cardData = usage.find(m => m.metricName === METRIC_NAME);
-  const {aggregates, metricValue} = cardData;
-  const exceedsWarningLimit = metricValue >= card.HARD_LIMIT_VALUE * PERCENTAGE;
-  const exceedsDangerLimit = metricValue >= card.HARD_LIMIT_VALUE;
+  const {aggregates, metricValue, limits} = cardData;
+  const hardLimitValue = limits.find(l => l.limitName === STARTER_HARD_LIMIT).limitValue;
+  const exceedsWarningLimit = metricValue >= hardLimitValue * PERCENTAGE;
+  const exceedsDangerLimit = metricValue >= hardLimitValue;
   const highestRecordedCount = pathOr(0, [AGGREGATE_PERIOD_30_D, 'value'], indexBy(prop('period'), aggregates));
-  const showErrorIcon = highestRecordedCount >= card.HARD_LIMIT_VALUE;
+  const showErrorIcon = highestRecordedCount >= hardLimitValue;
   const meterClassNames = classNames('pro-starter-edition', {
     'nxrm-meter-warning' : exceedsWarningLimit && !exceedsDangerLimit,
     'nxrm-meter-danger' : exceedsDangerLimit
@@ -140,7 +142,7 @@ function CardWithHardLimitThreshold({card, usage, link, tooltip, edition}) {
     <NxCard.Header>
       <NxH3>
         {TITLE}
-        <NxTooltip title={tooltip(card.HARD_LIMIT_VALUE.toLocaleString(), edition)}>
+        <NxTooltip title={tooltip(hardLimitValue.toLocaleString(), edition)}>
           <NxFontAwesomeIcon icon={faInfoCircle}/>
         </NxTooltip>
       </NxH3>
@@ -150,8 +152,8 @@ function CardWithHardLimitThreshold({card, usage, link, tooltip, edition}) {
         <NxMeter className={meterClassNames}
                  data-testid="meter"
                  value={metricValue}
-                 max={card.HARD_LIMIT_VALUE}>
-          {`${metricValue.toLocaleString()} out of ${card.HARD_LIMIT_VALUE.toLocaleString()}`}
+                 max={hardLimitValue}>
+          {`${metricValue.toLocaleString()} out of ${hardLimitValue.toLocaleString()}`}
         </NxMeter>
         <div className="nxrm-label-container">
           <div className="nxrm-label start">
@@ -159,7 +161,7 @@ function CardWithHardLimitThreshold({card, usage, link, tooltip, edition}) {
             <span>{SUB_TITLE}</span>
           </div>
           <div className="nxrm-label end">
-            <span>{card.HARD_LIMIT_VALUE.toLocaleString()}</span>
+            <span>{hardLimitValue.toLocaleString()}</span>
             <span>{THRESHOLD}</span>
           </div>
         </div>

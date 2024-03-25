@@ -35,8 +35,7 @@ const {
 
 const PEAK_REQUESTS_PER_DAY = 'peak_requests_per_day';
 const COMPONENT_TOTAL_COUNT = 'component_total_count';
-const REQUESTS_PER_DAY_HARD_LIMIT = 200_000;
-const COMPONENT_COUNT_HARD_LIMIT = 120_000;
+const STARTER_HARD_LIMIT = 'STARTER_HARD_LIMIT';
 
 const MessageContent = function({metricMessage, limit}){
   return <p>
@@ -49,26 +48,30 @@ const MessageContent = function({metricMessage, limit}){
 }
 
 const AlertContent = function({metric, content}) {
+  const limit = metric?.limits.find(l => l.limitName === STARTER_HARD_LIMIT).limitValue;
   return <>
     {metric.metricName === PEAK_REQUESTS_PER_DAY && <MessageContent metricMessage={content.REQUESTS_PER_DAY}
-                                                                    limit={REQUESTS_PER_DAY_HARD_LIMIT.toLocaleString()}/>}
+                                                                    limit={limit.toLocaleString()}/>}
     {metric.metricName === COMPONENT_TOTAL_COUNT && <MessageContent metricMessage={content.TOTAL_COMPONENTS}
-                                                                    limit={COMPONENT_COUNT_HARD_LIMIT.toLocaleString()}/>}
+                                                                    limit={limit.toLocaleString()}/>}
   </>
 };
 
 export default function UsageMetricsAlert({onClose}) {
   const metrics = ExtJS.state().getValue('contentUsageEvaluationResult');
-  const hardLimitMetrics = metrics.filter(m =>
-    (m.metricName === PEAK_REQUESTS_PER_DAY && m.metricValue >= REQUESTS_PER_DAY_HARD_LIMIT) ||
-    (m.metricName === COMPONENT_TOTAL_COUNT && m.metricValue >= COMPONENT_COUNT_HARD_LIMIT)
-  );
-  const warningLimitMetrics = metrics.filter(m =>
-    (m.metricName === PEAK_REQUESTS_PER_DAY && m.metricValue >= REQUESTS_PER_DAY_HARD_LIMIT * PERCENTAGE) ||
-    (m.metricName === COMPONENT_TOTAL_COUNT && m.metricValue >= COMPONENT_COUNT_HARD_LIMIT * PERCENTAGE)
-  );
-  const showWarningAlert = isEmpty(hardLimitMetrics) && !isEmpty(warningLimitMetrics);
 
+  const warningLimitMetrics = metrics.filter(m => {
+    const limit = m.limits.filter(l => l.limitName === STARTER_HARD_LIMIT);
+    return (m.metricName === PEAK_REQUESTS_PER_DAY && m.metricValue >= limit[0].limitValue * PERCENTAGE) ||
+        (m.metricName === COMPONENT_TOTAL_COUNT && m.metricValue >= limit[0].limitValue * PERCENTAGE)
+  });
+
+  const hardLimitMetrics = metrics.filter(m =>
+      (m.metricName === PEAK_REQUESTS_PER_DAY && m.limitLevel === STARTER_HARD_LIMIT) ||
+      (m.metricName === COMPONENT_TOTAL_COUNT && m.limitLevel === STARTER_HARD_LIMIT)
+  );
+
+  const showWarningAlert = isEmpty(hardLimitMetrics) && !isEmpty(warningLimitMetrics);
   return <>
     {!isEmpty(hardLimitMetrics) && <NxErrorAlert>
       <div>
