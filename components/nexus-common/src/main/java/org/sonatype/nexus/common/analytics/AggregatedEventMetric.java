@@ -12,19 +12,9 @@
  */
 package org.sonatype.nexus.common.analytics;
 
-import java.util.Map;
-
-public interface ContentUsage
+public interface AggregatedEventMetric
 {
-  Map<String, Long> getMetrics();
+  int get();
 
-  boolean shouldBlock();
-
-  void recalculate();
-
-  void recalculate(boolean blockingStateEventCounterEnable);
-
-  int getBlockingStateEventCounter();
-
-  void clearBlockingStateEventCounter();
+  void reset();
 }
