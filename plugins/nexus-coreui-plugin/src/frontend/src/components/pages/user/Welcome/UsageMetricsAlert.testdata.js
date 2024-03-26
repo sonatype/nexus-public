@@ -22,13 +22,9 @@ export const HARD_LIMIT_REACHED = [
       {
         "limitName": "SOFT_LIMIT",
         "limitValue": 187500
-      },
-      {
-        "limitName": "STARTER_HARD_LIMIT",
-        "limitValue": 200000
       }
     ],
-    "limitLevel": "STARTER_HARD_LIMIT"
+    "limitLevel": "SOFT_LIMIT"
   },
   {
     "metricName": "component_total_count",
@@ -37,13 +33,9 @@ export const HARD_LIMIT_REACHED = [
       {
         "limitName": "SOFT_LIMIT",
         "limitValue": 56250
-      },
-      {
-        "limitName": "STARTER_HARD_LIMIT",
-        "limitValue": 120000
       }
     ],
-    "limitLevel": "STARTER_HARD_LIMIT"
+    "limitLevel": "SOFT_LIMIT"
   },
   {
     "metricName": "successful_last_24h",
@@ -66,10 +58,6 @@ export const WARNING_LIMIT_REACHED = [
       {
         "limitName": "SOFT_LIMIT",
         "limitValue": 20000
-      },
-      {
-        "limitName": "STARTER_HARD_LIMIT",
-        "limitValue": 200000
       }
     ],
     "limitLevel": "SOFT_LIMIT"
@@ -81,13 +69,9 @@ export const WARNING_LIMIT_REACHED = [
       {
         "limitName": "SOFT_LIMIT",
         "limitValue": 100000
-      },
-      {
-        "limitName": "STARTER_HARD_LIMIT",
-        "limitValue": 120000
       }
     ],
-    "limitLevel": "FREE_TIER"
+    "limitLevel": "SOFT_LIMIT"
   },
   {
     "metricName": "successful_last_24h",

@@ -269,7 +269,7 @@ class BlobStoreComponent
   }
 
   BlobStoreConfiguration asConfiguration(final BlobStoreXO blobStoreXO) {
-    if (checkBoxMapping(blobStoreXO.isQuotaEnabled)) {
+    if (blobStoreXO.isQuotaEnabled) {
       Map quotaAttributes = new HashMap<String, Object>()
       quotaAttributes.put(BlobStoreQuotaSupport.TYPE_KEY, blobStoreXO.quotaType)
       quotaAttributes.put(BlobStoreQuotaSupport.LIMIT_KEY, blobStoreXO.quotaLimit * MILLION)
@@ -283,30 +283,25 @@ class BlobStoreComponent
     return config
   }
 
-  private static boolean checkBoxMapping(final String value) {
-    return value != null && ('true'.equalsIgnoreCase(value) ||
-    'on'.equalsIgnoreCase(value)  || '1'.equalsIgnoreCase(value))
-  }
-
   BlobStoreXO asBlobStoreXO(
       final BlobStoreConfiguration blobStoreConfiguration,
       final Collection<BlobStoreGroup> blobStoreGroups = [])
   {
     NestedAttributesMap quotaAttributes = blobStoreConfiguration.attributes(BlobStoreQuotaSupport.ROOT_KEY)
-    def blobStoreXO = new BlobStoreXO(
-        name: blobStoreConfiguration.name,
-        type: blobStoreConfiguration.type,
-        attributes: filterAttributes(blobStoreConfiguration.attributes),
-        repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStoreConfiguration.name),
-        taskUseCount: blobStoreTaskService.countTasksInUseForBlobStore(blobStoreConfiguration.name),
-        blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStoreConfiguration.name),
-        inUse: repositoryManager.isBlobstoreUsed(blobStoreConfiguration.name),
-        convertable: blobStoreManager.isConvertable(blobStoreConfiguration.name),
-        isQuotaEnabled: !quotaAttributes.isEmpty(),
-        quotaType: quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY),
-        quotaLimit: quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Number.class)?.div(MILLION)?.toLong(),
-        groupName: blobStoreGroups.find { it.members.contains(blobStoreConfiguration) }?.blobStoreConfiguration?.name
-    )
+    def blobStoreXO = new BlobStoreXO()
+        .withName(blobStoreConfiguration.name)
+        .withType(blobStoreConfiguration.type)
+        .withAttributes(filterAttributes(blobStoreConfiguration.attributes))
+        .withRepositoryUseCount(repositoryManager.blobstoreUsageCount(blobStoreConfiguration.name))
+        .withTaskUseCount(blobStoreTaskService.countTasksInUseForBlobStore(blobStoreConfiguration.name))
+        .withBlobStoreUseCount(blobStoreManager.blobStoreUsageCount(blobStoreConfiguration.name))
+        .withInUse(repositoryManager.isBlobstoreUsed(blobStoreConfiguration.name))
+        .withConvertable(blobStoreManager.isConvertable(blobStoreConfiguration.name))
+        .withIsQuotaEnabled(!quotaAttributes.isEmpty())
+        .withQuotaType(quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY))
+        .withQuotaLimit(quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Number.class)?.div(MILLION)?.toLong())
+        .withGroupName(blobStoreGroups.find { it.members.contains(blobStoreConfiguration) }?.blobStoreConfiguration?.name)
+
     BlobStore blobStore = blobStoreManager.getByName().get(blobStoreConfiguration.getName())
     if (blobStore != null && blobStore.isStarted()) {
       def metrics = blobStore.metrics

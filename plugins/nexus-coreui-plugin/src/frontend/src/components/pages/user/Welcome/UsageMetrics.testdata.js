@@ -166,10 +166,6 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
       {
         "limitName": "SOFT_LIMIT",
         "limitValue": 20000
-      },
-      {
-        "limitName": "STARTER_HARD_LIMIT",
-        "limitValue": 200000
       }
     ],
     "limitLevel": "FREE_TIER",
@@ -188,13 +184,9 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
       {
         "limitName": "SOFT_LIMIT",
         "limitValue": 100000
-      },
-      {
-        "limitName": "STARTER_HARD_LIMIT",
-        "limitValue": 120000
       }
     ],
-    "limitLevel": "STARTER_HARD_LIMIT",
+    "limitLevel": "FREE_TIER",
     "aggregates": [
       {
         "name": "component_total_count",
