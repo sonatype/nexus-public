@@ -12,10 +12,12 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.system;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -69,6 +71,21 @@ public class TaskTestSystem
   public void on(final TaskEvent event) {
     log.debug("Recieved event: {}", event);
     events.add(event);
+  }
+
+  public void remove(final String taskId) {
+    List<TaskInfo> tasksToRemove = scheduler.listsTasks().stream()
+        .filter(task -> taskId.equals(task.getTypeId()))
+        .collect(Collectors.toList());
+    tasksToRemove.forEach(TaskInfo::remove);
+
+    List<TaskInfo> newState = tasks
+        .stream()
+        .filter(it -> !taskId.equals(it.getId()))
+        .collect(Collectors.toList());
+
+    tasks.clear();
+    tasks.addAll(newState);
   }
 
   /**
@@ -128,6 +145,10 @@ public class TaskTestSystem
     return events(TaskEventStoppedFailed.class, typeId)
         .filter(taskInfo -> taskInfo.getConfiguration().asMap().equals(configuration))
         .count();
+  }
+
+  public TaskInfo create(final String name, final String typeId) {
+    return create(name, typeId, Collections.emptyMap(), __ -> {});
   }
 
   public TaskInfo create(final String name, final String typeId, final Map<String, String> attributes) {

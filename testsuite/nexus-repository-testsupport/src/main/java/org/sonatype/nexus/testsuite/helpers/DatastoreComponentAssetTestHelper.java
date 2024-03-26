@@ -692,6 +692,17 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public void updateAggregateMetrics(final String metricName, final Long metricValue) {
+    String sql = "UPDATE AGGREGATED_METRICS "
+        + "SET metric_value = ? WHERE metric_name = ?";
+
+    update(sql, stmt -> {
+      stmt.setLong(1, metricValue);
+      stmt.setString(2, metricName);
+    });
+  }
+
+  @Override
   public CacheInfo getCacheInfo(final Repository repository, final String path) {
     return findAssetByPath(repository, path)
         .map(FluentAsset::attributes)

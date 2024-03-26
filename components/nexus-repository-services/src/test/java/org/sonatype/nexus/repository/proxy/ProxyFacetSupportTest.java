@@ -57,6 +57,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -65,7 +66,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
@@ -126,7 +129,13 @@ public class ProxyFacetSupportTest
   Context cachedContext;
 
   @Mock
+  AttributesMap cachedContextAttributesMap;
+
+  @Mock
   Context missingContext;
+
+  @Mock
+  AttributesMap missingContextAttributesMap;
 
   @Mock
   CacheControllerHolder cacheControllerHolder;
@@ -163,11 +172,56 @@ public class ProxyFacetSupportTest
     when(format.getValue()).thenReturn("raw");
     when(repository.getFormat()).thenReturn(format);
 
+    when(cachedContextAttributesMap.get("proxy.remote-fetch.skip")).thenReturn(false);
+    when(missingContextAttributesMap.get("proxy.remote-fetch.skip")).thenReturn(false);
+    when(cachedContext.getAttributes()).thenReturn(cachedContextAttributesMap);
+    when(missingContext.getAttributes()).thenReturn(missingContextAttributesMap);
+
     underTest.installDependencies(eventManager);
     underTest.attach(repository);
     underTest.configureCooperation(new DefaultCooperation2Factory(), false, Duration.ofSeconds(0),
         Duration.ofSeconds(60), 10);
     underTest.buildCooperation();
+  }
+
+  @Test
+  public void testGetRemoteFetchSkipNoContentHasFound() throws Exception {
+    doReturn(null).when(underTest).getCachedContent(cachedContext);
+    when(cachedContextAttributesMap.get("proxy.remote-fetch.skip"))
+        .thenReturn(true);
+
+    Content actual = underTest.get(cachedContext);
+    assertNull(actual);
+    verify(underTest, never()).fetch(any(), any(), any());
+    verify(underTest, never()).store(any(), any());
+  }
+
+  @Test
+  public void testGetRemoteFetchSkipContentHasFound() throws Exception {
+    when(cachedContextAttributesMap.get("proxy.remote-fetch.skip"))
+        .thenReturn(true);
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+
+    when(cacheController.isStale(cacheInfo)).thenReturn(false);
+
+    Content actual = underTest.get(cachedContext);
+    assertThat(actual, is(content));
+    verify(underTest, never()).fetch(any(), any(), any());
+    verify(underTest, never()).store(any(), any());
+  }
+
+  @Test
+  public void testGetRemoteFetchSkipContentHasFoundWithInvalidCache() throws Exception {
+    when(cachedContextAttributesMap.get("proxy.remote-fetch.skip"))
+        .thenReturn(true);
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+
+    when(cacheController.isStale(cacheInfo)).thenReturn(true);
+
+    Content actual = underTest.get(cachedContext);
+    assertThat(actual, is(content));
+    verify(underTest, never()).fetch(any(), any(), any());
+    verify(underTest, never()).store(any(), any());
   }
 
   @Test
