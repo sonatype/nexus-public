@@ -243,16 +243,19 @@ describe('SamlConfiguration', () => {
     expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     await TestUtils.changeField(idpMetadataField, '');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     await TestUtils.changeField(idpMetadataField, '<xml></xml>');
     expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     await TestUtils.changeField(entityIdUriField, '');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     await TestUtils.changeField(entityIdUriField, 'http://example.com');
     expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     await TestUtils.changeField(usernameField, '');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
   });
 

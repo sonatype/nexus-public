@@ -14,10 +14,10 @@ import classNames from 'classnames';
 import React, {Children, cloneElement, useState} from 'react';
 import PropTypes from 'prop-types';
 
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+
 import Master from './Master';
 import Detail from './Detail';
-
-import ExtJS from '../../../../interface/ExtJS';
 
 /**
  * @since 3.24

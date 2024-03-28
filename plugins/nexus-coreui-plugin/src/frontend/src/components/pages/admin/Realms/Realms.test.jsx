@@ -271,6 +271,7 @@ describe('Realms', () => {
       allActiveItems,
       availableList,
       queryFormError,
+      querySubmitButton
     } = selectors;
 
     await renderAndWaitForLoad();
@@ -286,6 +287,8 @@ describe('Realms', () => {
 
     const activesRealms = allActiveItems();
     expect(activesRealms).toHaveLength(0);
+
+    userEvent.click(querySubmitButton());
     expect(queryFormError(LABELS.MESSAGES.NO_REALMS_CONFIGURED)).toBeInTheDocument();
   });
 

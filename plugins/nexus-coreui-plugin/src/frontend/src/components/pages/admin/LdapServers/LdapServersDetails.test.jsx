@@ -375,54 +375,36 @@ describe('LdapServersDetails', () => {
 
       await TestUtils.changeField(name, '');
 
-      expect(
-        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
-      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(host, '');
 
-      expect(
-        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
-      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(port, '');
 
-      expect(
-        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
-      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(search, '');
 
-      expect(
-        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
-      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(username, '');
 
-      expect(
-        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
-      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
 
       await fillConnectionForm();
 
       await TestUtils.changeField(password, '');
 
-      expect(
-        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
-      ).toBeInTheDocument();
       expect(verifyConnectionButton()).toHaveClass('disabled');
     });
 
@@ -616,6 +598,7 @@ describe('LdapServersDetails', () => {
       await renderViewUserAndGroup();
 
       await TestUtils.changeField(userRelativeDN, userAndGroupData.userBaseDn);
+      userEvent.click(saveButton());
       expect(
         selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
       ).toBeInTheDocument();

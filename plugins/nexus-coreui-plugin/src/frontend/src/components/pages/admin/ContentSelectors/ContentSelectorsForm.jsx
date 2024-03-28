@@ -16,7 +16,6 @@ import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import {
   Section,
-  Textarea,
   FormUtils,
   ExtJS
 } from '@sonatype/nexus-ui-plugin';
@@ -43,10 +42,6 @@ export default function ContentSelectorsForm({service, onDone}) {
   const canDelete = ExtJS.checkPermission('nexus:selectors:delete');
   const isEdit = Boolean(pristineData.name);
 
-  function update(event) {
-    send('UPDATE', {data: {[event.target.name]: event.target.value}});
-  }
-
   function cancel() {
     onDone();
   }
@@ -59,13 +54,13 @@ export default function ContentSelectorsForm({service, onDone}) {
     <Section className="nxrm-content-selectors-form">
       <NxStatefulForm
           {...FormUtils.formProps(state, send)}
-        onCancel={cancel}
-        additionalFooterBtns={isEdit && canDelete &&
-          <NxButton variant="tertiary" onClick={confirmDelete}>
-            <NxFontAwesomeIcon icon={faTrash}/>
-            <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
-          </NxButton>
-        }
+          onCancel={cancel}
+          additionalFooterBtns={isEdit && canDelete &&
+              <NxButton type="button" variant="tertiary" onClick={confirmDelete}>
+                <NxFontAwesomeIcon icon={faTrash}/>
+                <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
+              </NxButton>
+          }
       >
         {hasData && !Boolean(pristineData.name) &&
             <NxFormGroup label={UIStrings.CONTENT_SELECTORS.NAME_LABEL} isRequired={!pristineData.name}>
@@ -87,12 +82,13 @@ export default function ContentSelectorsForm({service, onDone}) {
                 onChange={FormUtils.handleUpdate('description', send)}/>
           </NxFormGroup>
           <NxFormGroup label={UIStrings.CONTENT_SELECTORS.EXPRESSION_LABEL}
-                        sublable={UIStrings.CONTENT_SELECTORS.EXPRESSION_DESCRIPTION}
-                        isRequired>
-            <Textarea
+                       sublabel={UIStrings.CONTENT_SELECTORS.EXPRESSION_DESCRIPTION}
+                       isRequired>
+            <NxTextInput
+                type="textarea"
                 className="nx-text-input--long"
                 {...FormUtils.fieldProps('expression', state)}
-                onChange={update}
+                onChange={FormUtils.handleUpdate('expression', send)}
             />
           </NxFormGroup>
 

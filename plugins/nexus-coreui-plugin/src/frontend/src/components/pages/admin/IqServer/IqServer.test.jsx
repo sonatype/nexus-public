@@ -280,11 +280,11 @@ describe('IqServer', () => {
     userEvent.selectOptions(selectors.getAuthenticationMethodSelect(), 'PKI');
 
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '0');
-    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+    expect(selectors.getConnectionTimeoutInput()).toHaveErrorMessage('The minimum value for this field is 1');
 
     userEvent.clear(selectors.getConnectionTimeoutInput());
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '3601');
-    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
+    expect(selectors.getConnectionTimeoutInput()).toHaveErrorMessage('The maximum value for this field is 3600');
 
     userEvent.clear(selectors.getConnectionTimeoutInput());
     await TestUtils.changeField(selectors.getConnectionTimeoutInput, '1');

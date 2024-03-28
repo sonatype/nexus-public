@@ -59,6 +59,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.formSelectors,
+  querySubmitButton: () => screen.queryByRole('button', {name: 'Create Routing Rule'})
 };
 
 describe('RoutingRulesForm', function() {
@@ -109,7 +110,6 @@ describe('RoutingRulesForm', function() {
     expect(description()).toHaveValue('Allow all requests');
     expect(mode()).toHaveValue('ALLOW');
     expect(matcher(0)).toHaveValue('.*');
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders an error message', async function() {
@@ -154,20 +154,22 @@ describe('RoutingRulesForm', function() {
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(description, '');
     await TestUtils.changeField(() => matcher(0), '.*');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(description, '')
     await TestUtils.changeField(() => matcher(0), '');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(description, 'description');
     await TestUtils.changeField(() => matcher(0), '');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');

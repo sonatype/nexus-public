@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import Axios from 'axios';
-import {waitFor} from '@testing-library/react';
+import {screen, waitFor} from '@testing-library/react';
 import {act} from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 
@@ -41,6 +41,7 @@ jest.mock('axios', () => {
 
 const selectors = {
   ...TestUtils.formSelectors,
+  querySubmitButton: () => screen.queryByRole('button', {name: 'Change password'})
 };
 
 describe('PasswordChangeForm', () => {
@@ -60,7 +61,6 @@ describe('PasswordChangeForm', () => {
     expect(passwordCurrent()).toHaveValue('');
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
@@ -73,6 +73,7 @@ describe('PasswordChangeForm', () => {
 
     await TestUtils.changeField(passwordNewConfirm, 'foobar');
 
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).not.toHaveClass('disabled');
   });
@@ -86,6 +87,7 @@ describe('PasswordChangeForm', () => {
 
     await TestUtils.changeField(passwordNewConfirm, 'bazzl');
 
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).not.toHaveClass('disabled');
   });
@@ -115,7 +117,6 @@ describe('PasswordChangeForm', () => {
     expect(passwordCurrent()).toHaveValue('');
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 
@@ -161,7 +162,6 @@ describe('PasswordChangeForm', () => {
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
 
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 });

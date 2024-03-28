@@ -239,12 +239,14 @@ describe('CrowdSettings', () => {
     expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     await changeFieldAndAssertValue(applicationNameField, '');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await changeFieldAndAssertValue(applicationNameField, 'NXRM');
     expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     await changeFieldAndAssertValue(applicationPasswordField, '');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     await changeFieldAndAssertValue(applicationPasswordField, 'secret');
     expect(selectors.queryFormError()).not.toBeInTheDocument();
