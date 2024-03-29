@@ -10,8 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store.internal;
+package org.sonatype.nexus.repository.content.store;
 
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,8 +28,6 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
-import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 
@@ -78,12 +77,11 @@ public class RepositoryNameIdMappingCache
     }
   }
 
-  public List<Integer> getRepositoryIds(List<String> repositoryNames, String format) {
+  public Map<Integer, String> getRepositoryNameIds(List<String> repositoryNames, String format) {
     return repositoryNames.stream()
-        .map(repositoryName -> fetchRepositoryId(repositoryName, format))
-        .filter(OptionalInt::isPresent)
-        .map(OptionalInt::getAsInt)
-        .collect(Collectors.toList());
+        .map(name -> new AbstractMap.SimpleEntry<>(fetchRepositoryId(name, format), name))
+        .filter(entry -> entry.getKey().isPresent())
+        .collect(Collectors.toMap(entry -> entry.getKey().getAsInt(), AbstractMap.SimpleEntry::getValue));
   }
 
   private Map<String, Integer> getCache() {

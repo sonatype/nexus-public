@@ -14,7 +14,9 @@ import React from 'react';
 import {assign} from 'xstate';
 import {useInterpret} from '@xstate/react';
 import {pickBy} from 'ramda';
-import {APIConstants, ListMachineUtils, ExtAPIUtils, Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ListMachineUtils, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
+
+import {Detail, Master, MasterDetail} from '../../../layout/MasterDetail';
 
 import RepositoriesContextProvider from '../../admin/Repositories/RepositoriesContextProvider';
 import RepositoriesListMachine from '../../admin/Repositories/RepositoriesListMachine';

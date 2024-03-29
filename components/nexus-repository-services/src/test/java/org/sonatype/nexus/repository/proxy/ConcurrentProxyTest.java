@@ -195,6 +195,7 @@ public class ConcurrentProxyTest
     // this is the mock index used for indirect requests
     when(metaRequest.getPath()).thenReturn("index.json");
     when(metaContext.getRequest()).thenReturn(metaRequest);
+    when(metaContext.getAttributes()).thenReturn(new AttributesMap());
 
     when(attributesMap.get(CacheInfo.class)).thenReturn(cacheInfo);
 

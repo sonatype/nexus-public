@@ -226,9 +226,6 @@ describe('CleanupPoliciesForm', function () {
     );
     expect(getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
     expect(criteriaAssetRegex()).toHaveValue(EDITABLE_ITEM.criteriaAssetRegex);
-    expect(
-      selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)
-    ).toBeInTheDocument();
   });
 
   it('renders an error message', async function () {
@@ -245,11 +242,8 @@ describe('CleanupPoliciesForm', function () {
     const {name, format, criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
     await renderView();
 
-    expect(
-      selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)
-    ).toBeInTheDocument();
-
     await TestUtils.changeField(name, EDITABLE_ITEM.name);
+    userEvent.click(selectors.querySubmitButton());
     expect(
       selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
     ).toBeInTheDocument();
@@ -295,6 +289,7 @@ describe('CleanupPoliciesForm', function () {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     await TestUtils.changeField(criteriaLastBlobUpdated, '4.7');
+    userEvent.click(selectors.querySubmitButton());
     expect(
       selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
     ).toBeInTheDocument();
@@ -315,6 +310,7 @@ describe('CleanupPoliciesForm', function () {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     await TestUtils.changeField(criteriaLastDownloaded, '5.3');
+    userEvent.click(selectors.querySubmitButton());
     expect(
       selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
     ).toBeInTheDocument();
@@ -631,7 +627,7 @@ describe('CleanupPoliciesForm', function () {
 
     it('sets disabled on the button when no repository or criteria is selected', async function () {
       const {dryRunRepositories, dryRunCreateCSVButton, name, format,
-        criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
+        criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox, querySubmitButton} = selectors;
 
       await renderView();
 
@@ -648,6 +644,8 @@ describe('CleanupPoliciesForm', function () {
 
       expect(selectDropdown).toHaveValue('maven-central');
       expect(createButton).toHaveAttribute('aria-disabled', 'true');
+
+      userEvent.click(querySubmitButton());
 
       expect(
         selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
@@ -838,6 +836,7 @@ describe('CleanupPoliciesForm', function () {
         getCriteriaAssetRegexCheckbox,
         criteriaAssetRegex,
         criteriaVersion,
+        querySubmitButton
       } = selectors;
 
       await renderView(item.name);
@@ -855,6 +854,7 @@ describe('CleanupPoliciesForm', function () {
       );
       expect(getCriteriaAssetRegexCheckbox()).toHaveClass('tm-checked');
       expect(criteriaAssetRegex()).toHaveValue(item.criteriaAssetRegex);
+      userEvent.click(querySubmitButton());
       expect(
           selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)
       ).toBeInTheDocument();

@@ -12,7 +12,7 @@
  */
 import React from 'react';
 
-import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+import {Detail, Master, MasterDetail} from '../../../layout/MasterDetail';
 
 import ContentSelectorsList from './ContentSelectorsList';
 import ContentSelectorsDetails from './ContentSelectorsDetails';

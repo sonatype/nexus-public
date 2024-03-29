@@ -85,6 +85,9 @@ public abstract class ProxyFacetSupport
 
   public static final String BYPASS_HTTP_ERRORS_HEADER_VALUE = "true";
 
+  private static final String PROXY_REMOTE_FETCH_SKIP_MARKER =
+      "proxy.remote-fetch.skip";
+
   @VisibleForTesting
   static final String CONFIG_KEY = "proxy";
 
@@ -275,7 +278,17 @@ public abstract class ProxyFacetSupport
       getEventManager().post(new ProxyCacheHitEvent(format, isReplication));
       return content;
     }
+    boolean remoteFetchSkipMarker = isRemoteFetchSkipMarkerEnabled(context);
+    if (remoteFetchSkipMarker) {
+      return content;
+    }
     return get(context, content);
+  }
+
+  private boolean isRemoteFetchSkipMarkerEnabled(final Context context) {
+    Object marker = context.getAttributes()
+        .get(PROXY_REMOTE_FETCH_SKIP_MARKER);
+    return TRUE.equals(marker);
   }
 
   /**

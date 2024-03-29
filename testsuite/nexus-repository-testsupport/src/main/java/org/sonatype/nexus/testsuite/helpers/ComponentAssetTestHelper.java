@@ -303,6 +303,8 @@ public interface ComponentAssetTestHelper
    */
   void deleteAllComponents(final Repository repository);
 
+  void updateAggregateMetrics(String metricName, Long metricValue);
+
   /**
    * Do not implement this method, it is not correct to do so. Orient & SQL have different semantics for the lifecycle
    * of blobs:<br/>

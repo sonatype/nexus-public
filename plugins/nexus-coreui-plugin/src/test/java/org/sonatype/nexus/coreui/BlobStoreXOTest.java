@@ -25,9 +25,8 @@ import com.google.common.base.Strings;
 import org.junit.Before;
 import org.junit.Test;
 
-import static java.lang.String.format;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
 public class BlobStoreXOTest
 {
@@ -48,13 +47,13 @@ public class BlobStoreXOTest
     assertThat(NULL_VIOLATES_RULE, violationsAllNullValues, hasSize(3));
 
     BlobStoreXO blobStoreXOJustName = new BlobStoreXO();
-    blobStoreXOJustName.setName("someName");
+    blobStoreXOJustName.withName("someName");
     Set<ConstraintViolation<BlobStoreXO>> violationsJustName = validator.validate(blobStoreXOJustName);
     assertThat(NULL_VIOLATES_RULE, violationsJustName, hasSize(2));
 
     BlobStoreXO blobStoreXONoAttibutes = new BlobStoreXO();
-    blobStoreXONoAttibutes.setName("someName");
-    blobStoreXONoAttibutes.setType("someType");
+    blobStoreXONoAttibutes.withName("someName");
+    blobStoreXONoAttibutes.withType("someType");
     Set<ConstraintViolation<BlobStoreXO>> violationsNoAttributes = validator.validate(blobStoreXONoAttibutes);
     assertThat(NULL_VIOLATES_RULE, violationsNoAttributes, hasSize(1));
   }
@@ -86,9 +85,9 @@ public class BlobStoreXOTest
     attributes.put("attibute1", attribute);
 
     BlobStoreXO blobStore = new BlobStoreXO();
-    blobStore.setType("someType");
-    blobStore.setAttributes(attributes);
-    blobStore.setName(name);
+    blobStore.withType("someType");
+    blobStore.withAttributes(attributes);
+    blobStore.withName(name);
     return(blobStore);
   }
 }

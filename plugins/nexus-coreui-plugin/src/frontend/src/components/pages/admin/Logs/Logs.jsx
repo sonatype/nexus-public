@@ -12,7 +12,7 @@
  */
 import React from 'react';
 
-import {MasterDetail, Master, Detail} from '@sonatype/nexus-ui-plugin';
+import {Detail, Master, MasterDetail} from '../../../layout/MasterDetail';
 
 import LogsList from './LogsList';
 import LogViewer from './LogViewer';

@@ -90,7 +90,7 @@ export default class TestUtils {
     querySubmitButton: () => screen.queryByRole('button', {name: SAVE_BUTTON_LABEL}),
     queryDiscardButton: () => screen.queryByRole('button', {name: DISCARD_BUTTON_LABEL}),
     queryFormError: (message) => {
-      const options = {selector: '.nx-form__validation-errors .nx-alert__content'};
+      const options = {selector: '.nx-form--show-validation-errors.nx-form--has-validation-errors .nx-form__validation-errors .nx-alert__content'};
       if (message) {
         return screen.queryByText(`${TestUtils.THERE_WERE_ERRORS} ${message}`, options);
       }

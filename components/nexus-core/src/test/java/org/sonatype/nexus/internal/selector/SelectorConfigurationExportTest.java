@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.anyOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -53,9 +52,9 @@ public class SelectorConfigurationExportTest
 
   @Test
   public void testExportImportToJson() throws Exception {
-    List<SelectorConfiguration> selectorConfigurations = Arrays.asList(
-        createSelectorConfiguration("config_1"),
-        createSelectorConfiguration("config_2"));
+    SelectorConfiguration config1 = createSelectorConfiguration("config_1");
+    SelectorConfiguration config2 = createSelectorConfiguration("config_2");
+    List<SelectorConfiguration> selectorConfigurations = Arrays.asList(config1, config2);
 
     SelectorConfigurationStore store = mock(SelectorConfigurationStore.class);
     when(store.browse()).thenReturn(selectorConfigurations);
@@ -66,9 +65,10 @@ public class SelectorConfigurationExportTest
         jsonExporter.importFromJson(jsonFile, SelectorConfigurationData.class);
 
     assertThat(importedData.size(), is(2));
-    importedData.forEach(data -> assertThat(data, anyOf(
-        is(selectorConfigurations.get(0)),
-        is(selectorConfigurations.get(1)))));
+    SelectorConfigurationData importedData1 = importedData.get(0);
+    SelectorConfigurationData importedData2 = importedData.get(0);
+    assertThat(importedData1.equals(config1) || importedData1.equals(config2), is(true));
+    assertThat(importedData2.equals(config1) || importedData2.equals(config2), is(true));
   }
 
   private SelectorConfiguration createSelectorConfiguration(final String name) {

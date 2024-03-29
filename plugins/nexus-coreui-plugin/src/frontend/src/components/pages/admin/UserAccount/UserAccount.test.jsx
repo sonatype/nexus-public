@@ -102,7 +102,6 @@ describe('UserAccount', () => {
     expect(lastNameField()).toBeDisabled();
     expect(emailField()).toBeDisabled();
 
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 

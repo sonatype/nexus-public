@@ -168,6 +168,7 @@ describe('ContentSelectorsForm', function() {
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(expression, '');
+    userEvent.click(selectors.querySubmitButton());
 
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
@@ -260,6 +261,7 @@ describe('ContentSelectorsForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     userEvent.click(deleteButton());
 
+    expect(selectors.queryFormError()).not.toBeInTheDocument();
     await waitFor(() => expect(axios.delete).toBeCalledWith(`/service/rest/v1/security/content-selectors/${itemId}`));
     expect(onDone).toBeCalled();
   });

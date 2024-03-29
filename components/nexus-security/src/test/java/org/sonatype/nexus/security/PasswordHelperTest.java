@@ -26,7 +26,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -73,14 +72,18 @@ public class PasswordHelperTest
 
   @Test
   public void testEncrypt_EmptyInput() throws Exception {
-    assertEncrypt(legacyPasswordHelper, "", allOf(startsWith("{"), endsWith("}")));
-    assertEncrypt(customPasswordHelper, "", allOf(startsWith("~{"), endsWith("}~")));
+    assertEncrypt(legacyPasswordHelper, "", is(startsWith("{")));
+    assertEncrypt(legacyPasswordHelper, "", is(endsWith("}")));
+    assertEncrypt(customPasswordHelper, "", is(startsWith("~{")));
+    assertEncrypt(customPasswordHelper, "", is(endsWith("}~")));
   }
 
   @Test
   public void testEncrypt_PlainInput() throws Exception {
-    assertEncrypt(legacyPasswordHelper, "test", allOf(startsWith("{"), endsWith("}")));
-    assertEncrypt(customPasswordHelper, "test", allOf(startsWith("~{"), endsWith("}~")));
+    assertEncrypt(legacyPasswordHelper, "test", is(startsWith("{")));
+    assertEncrypt(legacyPasswordHelper, "test", is(endsWith("}")));
+    assertEncrypt(customPasswordHelper, "test", is(startsWith("~{")));
+    assertEncrypt(customPasswordHelper, "test", is(endsWith("}~")));
   }
 
   @Test
@@ -94,8 +97,13 @@ public class PasswordHelperTest
   @Test
   public void testEncrypt_StringIncludingShields() throws Exception {
     //check the resultant value is protected by braces and has been encrypted (not equal to the input string)
-    assertEncrypt(legacyPasswordHelper, "{test}", allOf(startsWith("{"), endsWith("}"), not("{test}")));
-    assertEncrypt(customPasswordHelper, "{test}", allOf(startsWith("~{"), endsWith("}~"), not("~{test}~")));
+    assertEncrypt(legacyPasswordHelper, "{test}", is(startsWith("{")));
+    assertEncrypt(legacyPasswordHelper, "{test}", is(endsWith("}")));
+    assertEncrypt(legacyPasswordHelper, "{test}", is(not("{test}")));
+
+    assertEncrypt(customPasswordHelper, "{test}", is(startsWith("~{")));
+    assertEncrypt(customPasswordHelper, "{test}", is(endsWith("}~")));
+    assertEncrypt(customPasswordHelper, "{test}", is(not("~{test}~")));
   }
 
   @Test

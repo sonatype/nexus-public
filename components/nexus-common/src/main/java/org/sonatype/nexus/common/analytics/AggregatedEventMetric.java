@@ -10,20 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+package org.sonatype.nexus.common.analytics;
 
-import {Detail, Master, MasterDetail} from '../../../layout/MasterDetail';
+public interface AggregatedEventMetric
+{
+  int get();
 
-import UploadList from './UploadList';
-import UploadDetails from './UploadDetails';
-
-export default function Upload() {
-  return <MasterDetail path="browse/upload">
-    <Master>
-      <UploadList />
-    </Master>
-    <Detail>
-      <UploadDetails />
-    </Detail>
-  </MasterDetail>;
+  void reset();
 }

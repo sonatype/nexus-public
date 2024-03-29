@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
+import {Detail, Master, MasterDetail} from '../../../layout/MasterDetail';
 
 import ReplicationList from './ReplicationList';
 import ReplicationForm from './ReplicationForm';

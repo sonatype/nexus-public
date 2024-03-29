@@ -18,11 +18,13 @@ import MasterDetail from './MasterDetail';
 import Master from './Master';
 import Detail from './Detail';
 
-import ExtJS from '../../../../interface/ExtJS';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
-jest.mock('../../../../interface/ExtJS', () => class {
-  static useHistory = jest.fn();
-});
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ExtJS: {
+    useHistory: jest.fn()
+  }
+}));
 
 describe('MasterDetail', () => {
   it('renders the master view when at the root', () => {

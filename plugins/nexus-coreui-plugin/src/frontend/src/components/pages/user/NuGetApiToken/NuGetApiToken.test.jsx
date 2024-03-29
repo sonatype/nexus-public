@@ -27,6 +27,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
+      showSuccessMessage: jest.fn(),
       requestAuthenticationToken: jest.fn(() => Promise.resolve(mockToken)),
       absolutePath: jest.fn(() => 'http://localhost:4242/repository/fakeUrl'),
       showSuccessMessage: jest.fn()

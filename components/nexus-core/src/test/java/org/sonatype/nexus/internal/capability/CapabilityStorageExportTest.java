@@ -32,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.stream.Collectors.toList;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
@@ -83,7 +82,8 @@ public class CapabilityStorageExportTest
         containsInAnyOrder("notes 1", "notes 2"));
     List<Map<String, String>> attributes =
         importedItems.stream().map(CapabilityStorageItem::getProperties).collect(toList());
-    assertThat(attributes.toString(), allOf(containsString("Capability"), containsString("Testing")));
+    assertThat(attributes.toString(), containsString("Capability"));
+    assertThat(attributes.toString(), containsString("Testing"));
     // make sure sensitive data is not serialized
     assertThat(attributes.toString(), not(containsString("admin123")));
   }

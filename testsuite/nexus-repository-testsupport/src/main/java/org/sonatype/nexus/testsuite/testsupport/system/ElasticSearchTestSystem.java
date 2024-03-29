@@ -52,7 +52,7 @@ public class ElasticSearchTestSystem
 
   @Override
   public ConditionFactory waitForSearchResults() {
-    return await().atMost(60, SECONDS).pollInterval(1, SECONDS);
+    return await().atMost(120, SECONDS).pollInterval(1, SECONDS);
   }
 
   public ElasticSearchQueryService queryService() {

@@ -311,7 +311,7 @@ describe('BlobStoresForm', function() {
       bucket,
       accessKeyId,
       secretAccessKey,
-      endpointURL
+      endpointURL,
     } = render();
 
     await waitForElementToBeRemoved(loadingMask);
@@ -334,6 +334,7 @@ describe('BlobStoresForm', function() {
 
     userEvent.type(accessKeyId(), 'someAccessKey');
     expect(accessKeyId()).toHaveValue('someAccessKey');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(secretAccessKey(), 'SomeSecretAccessKey');
@@ -342,6 +343,7 @@ describe('BlobStoresForm', function() {
 
     userEvent.type(endpointURL(), 'invalidURL');
     expect(endpointURL()).toHaveValue('invalidURL');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.clear(endpointURL());
@@ -411,7 +413,7 @@ describe('BlobStoresForm', function() {
     expect(selectors.queryFormError()).not.toBeInTheDocument();
 
     userEvent.click(selectors.getSoftQuota());
-
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.selectOptions(softQuotaType(), 'spaceRemainingQuota');
@@ -423,6 +425,7 @@ describe('BlobStoresForm', function() {
 
     userEvent.clear(softQuotaLimit());
     expect(softQuotaLimit()).toHaveValue('');
+    userEvent.click(selectors.querySubmitButton());
 
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
@@ -491,6 +494,7 @@ describe('BlobStoresForm', function() {
     userEvent.selectOptions(typeSelect(), 'S3');
     expect(typeSelect()).toHaveValue('s3');
     expect(expiration()).toHaveValue('3');
+    userEvent.click(selectors.querySubmitButton());
 
     expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
@@ -503,6 +507,7 @@ describe('BlobStoresForm', function() {
 
     userEvent.type(accessKeyId(), 'someAccessKey');
     expect(accessKeyId()).toHaveValue('someAccessKey');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.type(secretAccessKey(), 'SomeSecretAccessKey');
@@ -511,6 +516,7 @@ describe('BlobStoresForm', function() {
 
     userEvent.type(endpointURL(), 'invalidURL');
     expect(endpointURL()).toHaveValue('invalidURL');
+    userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     userEvent.clear(endpointURL());

@@ -90,6 +90,10 @@ public class OrientComponentAssetTestHelper
   public Provider<DatabaseInstance> databaseInstanceProvider;
 
   @Inject
+  @Named(DatabaseInstanceNames.ANALYTICS)
+  public Provider<DatabaseInstance> analyticsDatabaseInstanceProvider;
+
+  @Inject
   RepositoryManager repositoryManager;
 
   @Override
@@ -511,6 +515,14 @@ public class OrientComponentAssetTestHelper
   }
 
   private void execute(final String sql, final HashMap<String, Object> parameters) {
+    execute(databaseInstanceProvider, sql, parameters);
+  }
+
+  private void execute(
+      final Provider<DatabaseInstance> databaseInstanceProvider,
+      final String sql,
+      final Map<String, Object> parameters)
+  {
     ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire();
     tx.begin();
     tx.command(new OCommandSQL(sql)).execute(parameters);
@@ -629,6 +641,15 @@ public class OrientComponentAssetTestHelper
   public void deleteAllComponents(final Repository repository) {
     findComponents(repository).forEach(
         entity -> repository.facet(ComponentMaintenance.class).deleteComponent(entity.getEntityMetadata().getId()));
+  }
+
+  @Override
+  public void updateAggregateMetrics(final String metricName, final Long metricValue) {
+    String sql = "UPDATE aggregated_metric SET metric_value = :metric_value WHERE metric_name = :metric_name";
+    Map<String, Object> sqlParams = new HashMap<>();
+    sqlParams.put("metric_name", metricName);
+    sqlParams.put("metric_value", metricValue);
+    execute(analyticsDatabaseInstanceProvider, sql, sqlParams);
   }
 
   @Override

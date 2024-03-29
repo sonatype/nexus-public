@@ -95,7 +95,6 @@ describe('LoggingConfigurationForm', function() {
 
     expect(name()).toHaveValue('ROOT');
     expect(level()).toHaveValue('INFO');
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
   });
 
   it('renders an error message', async function() {
@@ -114,7 +113,6 @@ describe('LoggingConfigurationForm', function() {
     const {loadingMask, name, level, saveButton} = renderCreateView();
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(level()).toHaveValue('INFO');
 
     userEvent.click(saveButton())
@@ -122,7 +120,6 @@ describe('LoggingConfigurationForm', function() {
 
     await changeFieldAndAssertValue(name, 'name');
     expect(name()).not.toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).not.toBeInTheDocument();
   });
 
   it('fires onDone when cancelled', async function() {

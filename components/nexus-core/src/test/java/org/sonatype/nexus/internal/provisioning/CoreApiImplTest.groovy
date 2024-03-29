@@ -29,7 +29,6 @@ import org.sonatype.nexus.internal.app.BaseUrlCapabilityDescriptor
 import org.sonatype.nexus.internal.capability.DefaultCapabilityReference
 import org.sonatype.nexus.internal.httpclient.TestHttpClientConfiguration
 
-import org.junit.Test
 import spock.lang.Specification
 
 /**
@@ -56,8 +55,7 @@ class CoreApiImplTest
   private static final ProxyConfiguration EXISTING_HTTP = new ProxyConfiguration(
       http: new ProxyServerConfiguration(enabled: true, host: 'http', port: 1))
 
-  @Test
-  public void 'Can set base url without an existing capability'() {
+  def 'Can set base url without an existing capability'() {
     given:
       List existingCapabilities = [reference]
 
@@ -70,11 +68,9 @@ class CoreApiImplTest
       1 * context.descriptor() >> descriptor
       1 * descriptor.type() >> new CapabilityType('not baseurl')
       1 * capabilityRegistry.add(BaseUrlCapabilityDescriptor.TYPE, true, _, [url: 'foo'])
-
   }
 
-  @Test
-  public void 'Can set base url with an existing capability'() {
+  def 'Can set base url with an existing capability'() {
     given:
       List existingCapabilities = [reference]
 
@@ -91,9 +87,8 @@ class CoreApiImplTest
       1 * reference.notes() >> 'whatever'
       1 * capabilityRegistry.update(identity, true, 'whatever', [url: 'bar'])
   }
-  
-  @Test
-  public void 'Can delete an existing base url capability'() {
+
+  def 'Can delete an existing base url capability'() {
     given:
       List existingCapabilities = [reference]
 
@@ -109,8 +104,7 @@ class CoreApiImplTest
       1 * capabilityRegistry.remove(identity)  
   }
 
-  @Test
-  public void 'Can delete when base url capability is not configured'() {
+  def 'Can delete when base url capability is not configured'() {
     given:
       List existingCapabilities = []
 
@@ -122,8 +116,7 @@ class CoreApiImplTest
       0 * capabilityRegistry.remove(identity)
   }
 
-  @Test
-  public void 'Can set http proxy settings without auth'() {
+  def 'Can set http proxy settings without auth'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 
@@ -143,8 +136,7 @@ class CoreApiImplTest
       }
   }
 
-  @Test
-  public void 'Can set http proxy settings with basic auth'() {
+  def 'Can set http proxy settings with basic auth'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 
@@ -167,8 +159,7 @@ class CoreApiImplTest
       }
   }
 
-  @Test
-  public void 'Can set http proxy settings with NTLM auth'() {
+  def 'Can set http proxy settings with NTLM auth'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 
@@ -193,8 +184,7 @@ class CoreApiImplTest
       }
   }
 
-  @Test
-  public void 'Can remove http proxy configuration'() {
+  def 'Can remove http proxy configuration'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration(proxy: EXISTING_HTTP)
 
@@ -207,8 +197,7 @@ class CoreApiImplTest
       !configuration.proxy
   }
 
-  @Test
-  public void 'Cannot set https proxy without http proxy'() {
+  def 'Cannot set https proxy without http proxy'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 
@@ -222,8 +211,7 @@ class CoreApiImplTest
       0 * httpClientManager.setConfiguration(_)
   }
 
-  @Test
-  public void 'Can set https proxy settings without auth'() {
+  def 'Can set https proxy settings without auth'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration(proxy: EXISTING_HTTP)
 
@@ -243,8 +231,7 @@ class CoreApiImplTest
       }
   }
 
-  @Test
-  public void 'Can set https proxy settings with basic auth'() {
+  def 'Can set https proxy settings with basic auth'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration(proxy: EXISTING_HTTP)
 
@@ -267,8 +254,7 @@ class CoreApiImplTest
       }
   }
 
-  @Test
-  public void 'Can set https proxy settings with NTLM auth'() {
+  def 'Can set https proxy settings with NTLM auth'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration(proxy: EXISTING_HTTP)
 
@@ -293,8 +279,7 @@ class CoreApiImplTest
       }
   }
 
-  @Test
-  public void 'Can remove https proxy configuration'() {
+  def 'Can remove https proxy configuration'() {
     given:
       ProxyConfiguration proxies = EXISTING_HTTP.copy()
       proxies.https = new ProxyServerConfiguration(enabled: true, host:'https', port: 2)
@@ -311,8 +296,7 @@ class CoreApiImplTest
       !configuration.proxy.https
   }
 
-  @Test
-  public void 'Can configure connection timeout'() {
+  def 'Can configure connection timeout'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 
@@ -325,8 +309,7 @@ class CoreApiImplTest
       configuration.connection.timeout == Time.seconds(5)
   }
 
-  @Test
-  public void 'Configure connection timeout fails when values are out of bounds'() {
+  def 'Configure connection timeout fails when values are out of bounds'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 
@@ -342,8 +325,7 @@ class CoreApiImplTest
       value << [-1, 3601]
   }
 
-  @Test
-  public void 'Can configure connection retries'() {
+  def 'Can configure connection retries'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 
@@ -356,8 +338,7 @@ class CoreApiImplTest
       configuration.connection.retries == 5
   }
 
-  @Test
-  public void 'Configure connection retries fails when values are out of bounds'() {
+  def 'Configure connection retries fails when values are out of bounds'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 
@@ -373,8 +354,7 @@ class CoreApiImplTest
       value << [-1, 11]
   }
 
-  @Test
-  public void 'Can customize user agent'() {
+  def 'Can customize user agent'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
     
@@ -387,8 +367,7 @@ class CoreApiImplTest
       configuration.connection.userAgentSuffix == 'foo'
   }
 
-  @Test
-  public void 'Can set and unset non-proxy hosts'() {
+  def 'Can set and unset non-proxy hosts'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration(proxy: EXISTING_HTTP)
 
@@ -409,8 +388,7 @@ class CoreApiImplTest
       !configuration.proxy.nonProxyHosts
   }
 
-  @Test
-  public void 'Cannot non-proxy hosts without a proxy configured'() {
+  def 'Cannot non-proxy hosts without a proxy configured'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
 

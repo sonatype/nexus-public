@@ -96,7 +96,7 @@ describe('AnonymousSettings', () => {
 
   it('fetches the values of fields from the API and updates them as expected', async () => {
     let {
-      enabledField, userIdField, realmField, discardButton
+      enabledField, userIdField, realmField, discardButton, saveButton
     } = selectors;
 
     await renderView();
@@ -105,6 +105,8 @@ describe('AnonymousSettings', () => {
     expect(enabledField()).toBeChecked();
     expect(userIdField()).toHaveValue('testUser');
     expect(realmField()).toHaveValue('r2');
+
+    userEvent.click(saveButton());
     expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
@@ -143,6 +145,7 @@ describe('AnonymousSettings', () => {
         }
     );
 
+    userEvent.click(saveButton());
     expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
@@ -157,12 +160,10 @@ describe('AnonymousSettings', () => {
     fireEvent.change(userIdField(), {target: {value: ''}})
     await waitFor(() => expect(userIdField()).toHaveValue(''));
     expect(userIdField()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
-    expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toBeEnabled();
 
     userEvent.click(discardButton());
     expect(userIdField()).toHaveValue('testUser');
-    expect(selectors.queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 

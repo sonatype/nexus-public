@@ -240,7 +240,6 @@ describe('EmailServer', () => {
 
     formShouldBeEmpty();
 
-    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
     expect(discardButton()).toHaveClass('disabled');
   });
 

@@ -137,7 +137,7 @@ class BlobStoreComponentTest
       def blobStoreXO = blobStoreComponent.asBlobStoreXO(config)
 
     then: 'proper object created'
-      blobStoreXO.isQuotaEnabled == 'true'
+      blobStoreXO.isQuotaEnabled == true
       blobStoreXO.quotaType == 'spaceUsedQuota'
       blobStoreXO.quotaLimit == expectedQuotaLimit
 

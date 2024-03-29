@@ -134,7 +134,6 @@ describe('ProprietaryRepositories', () => {
     });
 
     await waitFor(() => expect(Axios.post).toHaveBeenCalledTimes(1));
-    expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
     userEvent.click(screen.getByText('maven-releases'));
     userEvent.click(screen.getByText('nuget-hosted'));
