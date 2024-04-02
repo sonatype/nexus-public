@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.onboarding.OnboardingItem;
+import org.sonatype.nexus.onboarding.OnboardingItemPriority;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -45,7 +46,7 @@ public class ConfigureAnonymousAccessItem
 
   @Override
   public int getPriority() {
-    return 32;
+    return OnboardingItemPriority.CONFIGURE_ANONYMOUS_ACCESS;
   }
 
   @Override
