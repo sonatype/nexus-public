@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.onboarding;
 
-import javax.inject.Singleton;
-
-@Singleton
-public class OnboardingItemPriority
+public interface OnboardingItemPriority
 {
-  public static final Integer CHANGE_ADMIN_PASSWORD_ONBOARDING = 0;
-  public static final Integer CONFIGURE_ANONYMOUS_ACCESS = 1;
-  public static final Integer SELECT_LICENSE = CONFIGURE_ANONYMOUS_ACCESS + 1;
-  public static final Integer UPLOAD_LICENSE = SELECT_LICENSE + 1;
+  Integer CHANGE_ADMIN_PASSWORD_ONBOARDING = 0;
+
+  Integer CONFIGURE_ANONYMOUS_ACCESS = 1;
+
+  Integer SELECT_LICENSE = 2;
+
+  Integer UPLOAD_LICENSE = 3;
 }
