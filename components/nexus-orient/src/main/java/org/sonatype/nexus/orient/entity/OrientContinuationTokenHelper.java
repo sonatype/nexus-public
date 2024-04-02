@@ -40,12 +40,12 @@ public abstract class OrientContinuationTokenHelper
   @Override
   public String getIdFromToken(final String continuationToken) {
     try {
-      return continuationToken != null ?
+      return continuationToken != null && !continuationToken.isEmpty() ?
           entityAdapter.recordIdentity(new DetachedEntityId(continuationToken)).toString() : null;
     }
     catch (IllegalArgumentException e) {
       throw new ContinuationTokenException(
-          format("Caught exception parsing id from continuation token '%s'", continuationToken), e);
+          format("Invalid token '%s'", continuationToken), e);
     }
   }
 
