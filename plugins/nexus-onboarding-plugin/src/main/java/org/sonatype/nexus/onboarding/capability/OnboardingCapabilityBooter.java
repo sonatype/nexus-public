@@ -17,11 +17,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.capability.CapabilityBooterSupport;
 import org.sonatype.nexus.capability.CapabilityRegistry;
-import org.sonatype.nexus.common.app.ManagedLifecycle;
 
 import com.google.common.collect.ImmutableMap;
 
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.onboarding.capability.OnboardingCapabilityConfiguration.DEFAULT_PRO_STARTER_INFO_PAGE_COMPLETED;
 import static org.sonatype.nexus.onboarding.capability.OnboardingCapabilityConfiguration.DEFAULT_REGISTRATION_COMPLETED;
 import static org.sonatype.nexus.onboarding.capability.OnboardingCapabilityConfiguration.DEFAULT_REGISTRATION_STARTED;
@@ -31,7 +29,6 @@ import static org.sonatype.nexus.onboarding.capability.OnboardingCapabilityConfi
 
 @Named
 @Singleton
-@ManagedLifecycle(phase = SERVICES)
 public class OnboardingCapabilityBooter
     extends CapabilityBooterSupport
 {
