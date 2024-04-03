@@ -12,20 +12,43 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+
+import org.sonatype.nexus.onboarding.capability.OnboardingCapability;
+import org.sonatype.nexus.onboarding.capability.OnboardingCapabilityHelper;
+import org.sonatype.nexus.security.anonymous.AnonymousManager;
+
+import static java.util.Objects.requireNonNull;
 
 @Named
 @Singleton
 public class InstanceStatus
 {
-  public boolean isNew() {
+  private final AnonymousManager anonymousManager;
 
-    return true;
+  private final OnboardingCapabilityHelper onboardingCapabilityHelper;
+
+  @Inject
+  public InstanceStatus(
+      final AnonymousManager anonymousManager,
+      final OnboardingCapabilityHelper onboardingCapabilityHelper)
+  {
+    this.anonymousManager = requireNonNull(anonymousManager);
+    this.onboardingCapabilityHelper = requireNonNull(onboardingCapabilityHelper);
+  }
+
+  public boolean isNew() {
+    if (!anonymousManager.isConfigured()) {
+      return true;
+    }
+    OnboardingCapability onboardingCapability = onboardingCapabilityHelper.getOnboardingCapability();
+    return onboardingCapability.isRegistrationStarted() && !onboardingCapability.isRegistrationCompleted();
   }
 
   public boolean isUpgraded() {
-
-    return true;
+    OnboardingCapability onboardingCapability = onboardingCapabilityHelper.getOnboardingCapability();
+    return anonymousManager.isConfigured() && !onboardingCapability.isRegistrationStarted();
   }
 }
