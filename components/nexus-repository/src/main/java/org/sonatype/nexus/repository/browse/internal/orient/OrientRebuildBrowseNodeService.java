@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.browse.internal.orient;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -125,9 +127,10 @@ public class OrientRebuildBrowseNodeService
           long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
           progressLogger.info("Rebuilt browse nodes for {} / {} assets in {} ms", processed, total, elapsed);
           if (progressUpdater != null) {
+            long percentageComplete = BigDecimal.valueOf(processed).divide(BigDecimal.valueOf(total),
+                2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).longValue();
             progressUpdater.accept(
-                String.format("processing repository %s %d/%d assets completed", repository.getName(), processed,
-                    total));
+                String.format("%d%% Complete", percentageComplete));
           }
 
           nextPage = assetStore.getNextPage(cursor, rebuildPageSize);
