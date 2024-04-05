@@ -15,7 +15,6 @@ package org.sonatype.nexus.onboarding.internal;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.onboarding.capability.OnboardingCapability;
 import org.sonatype.nexus.onboarding.capability.OnboardingCapabilityHelper;
-import org.sonatype.nexus.security.anonymous.AnonymousManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -25,13 +24,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
-public class InstanceStatusTest
+public class ProStarterInformationPageOnboardingItemTest
     extends TestSupport
 {
-  private InstanceStatus underTest;
-
   @Mock
-  private AnonymousManager anonymousManager;
+  private InstanceStatus instanceStatus;
 
   @Mock
   private OnboardingCapabilityHelper onboardingCapabilityHelper;
@@ -39,36 +36,53 @@ public class InstanceStatusTest
   @Mock
   private OnboardingCapability onboardingCapability;
 
+  private ProStarterInformationPageOnboardingItem underTest;
+
   @Before
   public void setup() {
-    underTest = new InstanceStatus(anonymousManager, onboardingCapabilityHelper);
     when(onboardingCapabilityHelper.getOnboardingCapability()).thenReturn(onboardingCapability);
+    underTest = new ProStarterInformationPageOnboardingItem(instanceStatus, onboardingCapabilityHelper);
   }
 
   @Test
-  public void test_instanceIsNew_whenAnonymousNotConfigured() {
-    when(anonymousManager.isConfigured()).thenReturn(false);
+  public void testAppliesForUpgradedInstanceAndProStarterCompleted() {
+    when(instanceStatus.isUpgraded()).thenReturn(true);
+    when(onboardingCapability.isProStarterInfoPageCompleted()).thenReturn(true);
 
-    assertThat(underTest.isNew(), is(true));
-    assertThat(underTest.isUpgraded(), is(false));
+    assertThat(underTest.applies(), is(false));
   }
 
   @Test
-  public void test_instanceIsUpgraded_whenAnonymousConfiguredButRegistrationNotStarted() {
-    when(anonymousManager.isConfigured()).thenReturn(true);
-    when(onboardingCapability.isRegistrationStarted()).thenReturn(false);
+  public void testAppliesForUpgradedInstanceAndProStarterNotCompleted() {
+    when(instanceStatus.isUpgraded()).thenReturn(true);
+    when(onboardingCapability.isProStarterInfoPageCompleted()).thenReturn(false);
 
-    assertThat(underTest.isNew(), is(false));
-    assertThat(underTest.isUpgraded(), is(true));
+    assertThat(underTest.applies(), is(true));
   }
 
   @Test
-  public void test_instanceIsNew_whenAnonymousConfiguredAndRegistrationStartedButNotCompleted() {
-    when(anonymousManager.isConfigured()).thenReturn(true);
-    when(onboardingCapability.isRegistrationStarted()).thenReturn(true);
-    when(onboardingCapability.isRegistrationCompleted()).thenReturn(false);
+  public void testAppliesForNotUpgradedInstanceAndProStarterCompleted() {
+    when(instanceStatus.isUpgraded()).thenReturn(false);
+    when(onboardingCapability.isProStarterInfoPageCompleted()).thenReturn(true);
 
-    assertThat(underTest.isNew(), is(true));
-    assertThat(underTest.isUpgraded(), is(false));
+    assertThat(underTest.applies(), is(false));
+  }
+
+  @Test
+  public void testAppliesForNotUpgradedInstanceAndProStarterNotCompleted() {
+    when(instanceStatus.isUpgraded()).thenReturn(false);
+    when(onboardingCapability.isProStarterInfoPageCompleted()).thenReturn(false);
+
+    assertThat(underTest.applies(), is(false));
+  }
+
+  @Test
+  public void testGetType() {
+    assertThat(underTest.getType(), is("ProStarterInformationPage"));
+  }
+
+  @Test
+  public void testGetPriority() {
+    assertThat(underTest.getPriority(), is(0));
   }
 }

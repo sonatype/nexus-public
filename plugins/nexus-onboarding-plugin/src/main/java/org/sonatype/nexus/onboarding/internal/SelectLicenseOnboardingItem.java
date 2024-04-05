@@ -12,43 +12,47 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-
-import org.sonatype.nexus.onboarding.capability.OnboardingCapability;
+import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.onboarding.OnboardingItem;
+import org.sonatype.nexus.onboarding.OnboardingItemPriority;
 import org.sonatype.nexus.onboarding.capability.OnboardingCapabilityHelper;
-import org.sonatype.nexus.security.anonymous.AnonymousManager;
-
-import static java.util.Objects.requireNonNull;
 
 @Named
 @Singleton
-public class InstanceStatus
+@FeatureFlag(name = "nexus.onboarding.license.enabled")
+public class SelectLicenseOnboardingItem
+  implements OnboardingItem
 {
-  private final AnonymousManager anonymousManager;
-
+  private final InstanceStatus instanceStatus;
   private final OnboardingCapabilityHelper onboardingCapabilityHelper;
 
   @Inject
-  public InstanceStatus(
-      final AnonymousManager anonymousManager,
-      final OnboardingCapabilityHelper onboardingCapabilityHelper)
-  {
-    this.anonymousManager = requireNonNull(anonymousManager);
-    this.onboardingCapabilityHelper = requireNonNull(onboardingCapabilityHelper);
+  public SelectLicenseOnboardingItem(
+      final InstanceStatus instanceStatus,
+      final OnboardingCapabilityHelper onboardingCapabilityHelper
+  ) {
+    this.instanceStatus = checkNotNull(instanceStatus);
+    this.onboardingCapabilityHelper = checkNotNull(onboardingCapabilityHelper);
   }
 
-  public boolean isNew() {
-    if (!anonymousManager.isConfigured()) {
-      return true;
-    }
-    OnboardingCapability onboardingCapability = onboardingCapabilityHelper.getOnboardingCapability();
-    return onboardingCapability.isRegistrationStarted() && !onboardingCapability.isRegistrationCompleted();
+  @Override
+  public String getType() {
+    return "SelectLicense";
   }
 
-  public boolean isUpgraded() {
-    OnboardingCapability onboardingCapability = onboardingCapabilityHelper.getOnboardingCapability();
-    return anonymousManager.isConfigured() && !onboardingCapability.isRegistrationStarted();
+  @Override
+  public int getPriority() {
+    return OnboardingItemPriority.SELECT_LICENSE;
+  }
+
+  @Override
+  public boolean applies() {
+    return instanceStatus.isNew() && !onboardingCapabilityHelper.getOnboardingCapability()
+        .isRegistrationCompleted();
   }
 }

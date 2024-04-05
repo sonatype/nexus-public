@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.onboarding.OnboardingItem;
+import org.sonatype.nexus.onboarding.OnboardingItemPriority;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.internal.UserManagerImpl;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
@@ -50,7 +51,7 @@ public class ChangeAdminPasswordOnboardingItem
 
   @Override
   public int getPriority() {
-    return 0;
+    return OnboardingItemPriority.CHANGE_ADMIN_PASSWORD_ONBOARDING;
   }
 
   @Override

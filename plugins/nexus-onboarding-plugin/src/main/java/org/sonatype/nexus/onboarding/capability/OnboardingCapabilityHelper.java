@@ -10,47 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.onboarding.internal;
+package org.sonatype.nexus.onboarding.capability;
 
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.onboarding.OnboardingItem;
-import org.sonatype.nexus.onboarding.OnboardingItemPriority;
-import org.sonatype.nexus.security.anonymous.AnonymousManager;
+import org.sonatype.nexus.capability.CapabilityReference;
+import org.sonatype.nexus.capability.CapabilityRegistry;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * @since 3.17
- */
 @Named
 @Singleton
-public class ConfigureAnonymousAccessItem
-  extends ComponentSupport
-  implements OnboardingItem
+public class OnboardingCapabilityHelper
 {
-  private final AnonymousManager anonymousManager;
+  private final CapabilityRegistry capabilityRegistry;
 
   @Inject
-  public ConfigureAnonymousAccessItem(final AnonymousManager anonymousManager) {
-    this.anonymousManager = checkNotNull(anonymousManager);
+  public OnboardingCapabilityHelper(final CapabilityRegistry capabilityRegistry) {
+    this.capabilityRegistry = checkNotNull(capabilityRegistry);
   }
 
-  @Override
-  public String getType() {
-    return "ConfigureAnonymousAccess";
-  }
-
-  @Override
-  public int getPriority() {
-    return OnboardingItemPriority.CONFIGURE_ANONYMOUS_ACCESS;
-  }
-
-  @Override
-  public boolean applies() {
-    return !anonymousManager.isConfigured();
+  public OnboardingCapability getOnboardingCapability() {
+    Optional<? extends CapabilityReference> optionalCapabilityReference = capabilityRegistry.getAll().stream()
+        .filter(reference -> reference.context().type().toString().equals(OnboardingCapability.TYPE_ID)).findFirst();
+    return (OnboardingCapability) optionalCapabilityReference
+        .orElseThrow(() -> new IllegalStateException("OnboardingCapability not found"));
   }
 }
