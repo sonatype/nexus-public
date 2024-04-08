@@ -41,6 +41,7 @@ import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -147,13 +148,15 @@ class QuartzSchedulerSPITest
   }
 
   @Test
+  @Ignore("NEXUS-39956: DistributedQuartzEventInspector was removed as part of HA-C removal, so this test must be rewritten")
   void 'Exercise job events'() {
     def jobDetailEntity = mockJobDetailEntity()
 
     def schedulerListener = mock(SchedulerListener)
     underTest.scheduler.getListenerManager().addSchedulerListener(schedulerListener)
 
-    eventManager.register(new DistributedQuartzEventInspector(underTest))
+    //
+    // eventManager.register(new DistributedQuartzEventInspector(underTest))
 
     // on(JobCreatedEvent)
 
@@ -226,6 +229,7 @@ class QuartzSchedulerSPITest
   }
 
   @Test
+  @Ignore("NEXUS-39956: DistributedQuartzEventInspector was removed as part of HA-C removal, so this test must be rewritten")
   void 'Exercise scheduled trigger events'() {
     def jobDetailEntity = mockJobDetailEntity()
     def jobKey = jobDetailEntity.value.key
@@ -235,7 +239,7 @@ class QuartzSchedulerSPITest
     def schedulerListener = mock(SchedulerListener)
     underTest.scheduler.getListenerManager().addSchedulerListener(schedulerListener)
 
-    eventManager.register(new DistributedQuartzEventInspector(underTest))
+    // eventManager.register(new DistributedQuartzEventInspector(underTest))
 
     // on(TriggerCreatedEvent)
 

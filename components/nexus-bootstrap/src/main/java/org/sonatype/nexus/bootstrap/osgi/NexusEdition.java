@@ -77,10 +77,6 @@ public abstract class NexusEdition
         .contains(feature);
   }
 
-  protected boolean isNexusClustered() {
-    return Boolean.getBoolean("nexus.clustered");
-  }
-
   protected boolean isNullNexusLicenseFile() {
     return System.getProperty("nexus.licenseFile") == null && System.getenv("NEXUS_LICENSE_FILE") == null;
   }

@@ -56,9 +56,6 @@ public class ProNexusEdition
     else if (proEditionMarker.exists()) {
       switchToOss = false;
     }
-    else if (isNexusClustered()) {
-      switchToOss = false; // avoid switching the edition when clustered
-    }
     else {
       switchToOss = isNullNexusLicenseFile() && isNullJavaPrefLicensePath(PRO_LICENSE_LOCATION);
     }
