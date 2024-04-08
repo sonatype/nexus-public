@@ -13,7 +13,9 @@
 package org.sonatype.nexus.extender;
 
 import java.lang.annotation.Annotation;
-
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -37,6 +39,7 @@ import org.osgi.framework.BundleContext;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.reverse;
 import static java.lang.Math.max;
+import static org.sonatype.nexus.common.app.FeatureFlags.STARTUP_TASKS_DELAY_SECONDS;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
@@ -65,6 +68,10 @@ public class NexusLifecycleManager
   private ListMultimap<Phase, BeanEntry<Named, Lifecycle>> cachedIndex = ArrayListMultimap.create();
 
   private volatile Phase currentPhase = OFF;
+
+  @Inject
+  @Named(STARTUP_TASKS_DELAY_SECONDS)
+  protected int timeToDelay;
 
   @Inject
   public NexusLifecycleManager(final BeanLocator locator, @Named("system") final Bundle systemBundle) {
@@ -108,7 +115,11 @@ public class NexusLifecycleManager
         log.info("Start {}", nextPhase);
         boolean propagateNonTaskErrors = !TASKS.equals(nextPhase);
         for (BeanEntry<Named, Lifecycle> entry : cachedIndex.get(nextPhase)) {
-          startComponent(nextPhase, entry.getValue(), propagateNonTaskErrors);
+          if (nextPhase.equals(TASKS) && timeToDelay > 0) {
+            delayStartUpTask(nextPhase, entry.getValue(), propagateNonTaskErrors);
+          } else {
+            startComponent(nextPhase, entry.getValue(), propagateNonTaskErrors);
+          }
         }
         currentPhase = nextPhase;
       }
@@ -225,6 +236,18 @@ public class NexusLifecycleManager
       }
       log.warn("Problem stopping {}: {}", phase, lifecycle, e);
     }
+  }
+
+  private void delayStartUpTask(final Phase phase, final Lifecycle lifecycle, final boolean propagateErrors) {
+    final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+      scheduledExecutorService.schedule(() -> {
+        try {
+          startComponent(phase, lifecycle, propagateErrors);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }, timeToDelay, TimeUnit.SECONDS);
   }
 
   /**

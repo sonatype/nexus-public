@@ -144,4 +144,6 @@ public interface FeatureFlags
   String REACT_ROLES_MODAL_NAMED = "${nexus.react.roles.modal.enabled:-true}";
 
   String BLOBSTORE_OWNERSHIP_CHECK_DISABLED_NAMED = "${nexus.blobstore.s3.ownership.check.disabled:-false}";
+
+  String STARTUP_TASKS_DELAY_SECONDS = "${nexus.startup.task.delay.seconds:-0}";
 }
