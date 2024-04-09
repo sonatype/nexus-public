@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -144,7 +143,7 @@ public class ComponentsResource
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
-    //must explicitly order by id or the generate sql will automatically order on group/name/version. (see BrowseComponentsSqlBuider)
+    //must explicitly order by id or the generate sql will automatically order on group/name/version. (see BrowseComponentsSqlBuilder)
     PageResult<Component> componentBrowseResult = browseService
         .browseComponents(repository,
             new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));

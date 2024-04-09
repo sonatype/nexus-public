@@ -22,8 +22,8 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
-import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
 import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
+import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.content.store.ComponentData;
@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 
@@ -176,6 +177,7 @@ public class ComponentsResourceSupportTest
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository.getUrl()).thenReturn(REPOSITORY_URL);
     when(repository.getFormat()).thenReturn(aFormat);
+    when(repository.getType()).thenReturn(new HostedType());
     when(aFormat.getValue()).thenReturn(A_FORMAT);
   }
 

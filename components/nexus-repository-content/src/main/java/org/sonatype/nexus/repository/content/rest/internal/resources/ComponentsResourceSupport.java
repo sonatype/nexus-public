@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
+import org.sonatype.nexus.repository.types.GroupType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -70,6 +71,10 @@ abstract class ComponentsResourceSupport
   }
 
   private Continuation<FluentComponent> getComponents(Repository repository, final String continuationToken) {
+    if(GroupType.NAME.equals(repository.getType().getValue())) {
+      return repository.facet(ContentFacet.class).components().withOnlyGroupMemberContent()
+          .browse(LIMIT, continuationToken);
+    }
     return repository.facet(ContentFacet.class).components().browse(LIMIT, continuationToken);
   }
 

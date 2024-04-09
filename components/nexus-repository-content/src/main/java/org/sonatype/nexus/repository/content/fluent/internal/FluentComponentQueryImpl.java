@@ -12,14 +12,17 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
+import org.sonatype.nexus.repository.content.fluent.constraints.FluentQueryConstraint;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
 
 /**
  * {@link FluentQuery} implementation for {@link FluentComponent}s.
@@ -37,11 +40,22 @@ public class FluentComponentQueryImpl
 
   private final Map<String, Object> filterParams;
 
+  private final List<FluentQueryConstraint> constraints;
+
+  FluentComponentQueryImpl(final FluentComponentsImpl components, final List<FluentQueryConstraint> constraints) {
+    this.components = checkNotNull(components);
+    this.constraints = checkNotNull(constraints);
+    this.filter = null;
+    this.filterParams = null;
+    this.kind = null;
+  }
+
   FluentComponentQueryImpl(final FluentComponentsImpl components, final String kind) {
     this.components = checkNotNull(components);
     this.kind = checkNotNull(kind);
     this.filter = null;
     this.filterParams = null;
+    this.constraints = emptyList();
   }
 
   FluentComponentQueryImpl(final FluentComponentsImpl components,
@@ -52,6 +66,7 @@ public class FluentComponentQueryImpl
     this.kind = null;
     this.filter = checkNotNull(filter);
     this.filterParams = checkNotNull(filterParams);
+    this.constraints = emptyList();
   }
 
   @Override
@@ -61,7 +76,7 @@ public class FluentComponentQueryImpl
 
   @Override
   public Continuation<FluentComponent> browse(final int limit, final String continuationToken) {
-    return components.doBrowse(limit, continuationToken, kind, filter, filterParams);
+    return components.doBrowse(limit, continuationToken, kind, filter, filterParams, constraints);
   }
 
   @Override
