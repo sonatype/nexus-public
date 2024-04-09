@@ -40,7 +40,7 @@ public class RecalculateBlobStoreSizeTaskDescriptor
   {
     super(TYPE_ID,
         RecalculateBlobStoreSizeTask.class,
-        "Admin - Recalculate blob store storage",
+        "Repair - Recalculate blob store storage",
         VISIBLE,
         taskEnabled,
         new ComboboxFormField<String>(
