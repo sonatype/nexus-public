@@ -32,6 +32,7 @@ public interface MetadataRebuilder
    *                         ones.
    * @param rebuildChecksums whether or not checksums should be checked and corrected if found
    *                         missing or incorrect
+   * @param cascadeUpdate    should we rebuild nested levels if groupId/artifactId/baseVersion not present (empty)
    * @param groupId          scope the work to given groupId.
    * @param artifactId       scope the work to given artifactId (groupId must be given).
    * @param baseVersion      scope the work to given baseVersion (groupId and artifactId must ge given).
@@ -41,6 +42,7 @@ public interface MetadataRebuilder
       Repository repository,
       boolean update,
       boolean rebuildChecksums,
+      boolean cascadeUpdate,
       @Nullable String groupId,
       @Nullable String artifactId,
       @Nullable String baseVersion);
@@ -57,6 +59,7 @@ public interface MetadataRebuilder
       Repository repository,
       boolean update,
       boolean rebuildChecksums,
+      boolean cascadeUpdate,
       @Nullable String groupId,
       @Nullable String artifactId,
       @Nullable String baseVersion);

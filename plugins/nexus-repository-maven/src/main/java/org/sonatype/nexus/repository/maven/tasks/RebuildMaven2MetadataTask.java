@@ -27,6 +27,7 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.ARTIFACTID_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.BASEVERSION_FIELD_ID;
+import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.CASCADE_REBUILD;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.GROUPID_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.REBUILD_CHECKSUMS;
 
@@ -62,6 +63,7 @@ public class RebuildMaven2MetadataTask
         getConfiguration().getString(ARTIFACTID_FIELD_ID),
         getConfiguration().getString(BASEVERSION_FIELD_ID),
         getConfiguration().getBoolean(REBUILD_CHECKSUMS, false),
+        getConfiguration().getBoolean(CASCADE_REBUILD, true),
         false
     );
   }

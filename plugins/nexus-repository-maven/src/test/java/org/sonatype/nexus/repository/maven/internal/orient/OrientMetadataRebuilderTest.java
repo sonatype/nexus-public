@@ -139,7 +139,7 @@ public class OrientMetadataRebuilderTest
             timeoutSecondsCaptor.capture()))
         .thenReturn(emptyList());
 
-    new OrientMetadataRebuilder(10, 20).rebuild(repository, true, false, null, null, null);
+    new OrientMetadataRebuilder(10, 20).rebuild(repository, true, false, true, null, null, null);
 
     assertThat(bufferSizeCaptor.getValue(), equalTo(10));
     assertThat(timeoutSecondsCaptor.getValue(), equalTo(20L));
@@ -167,7 +167,7 @@ public class OrientMetadataRebuilderTest
     Thread taskThread = new Thread(() -> {
       CancelableHelper.set(canceled);
 
-      new OrientMetadataRebuilder(10, 20).rebuild(repository, true, false, "group", "artifact", "version");
+      new OrientMetadataRebuilder(10, 20).rebuild(repository, true, false, true, "group", "artifact", "version");
     });
     taskThread.setUncaughtExceptionHandler((t, e) -> {
       if (e instanceof TaskInterruptedException) {
@@ -238,7 +238,7 @@ public class OrientMetadataRebuilderTest
     // stage error on first artifact
     when(content.openInputStream()).thenThrow(new IOException()).thenReturn(mock(InputStream.class));
 
-    new OrientMetadataRebuilder(10, 20).rebuild(repository, true, false, null, null, null);
+    new OrientMetadataRebuilder(10, 20).rebuild(repository, true, false, true, null, null, null);
 
     // ensure second metadata read occurs
     verify(content, times(4)).openInputStream();

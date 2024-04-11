@@ -113,9 +113,17 @@ public class MavenHostedFacetImpl
   public void rebuildMetadata(@Nullable final String groupId, @Nullable final String artifactId,
                               @Nullable final String baseVersion, final boolean rebuildChecksums, final boolean update)
   {
-    log.debug("Rebuilding Maven2 hosted repository metadata: repository={}, update={}, group={}, artifact={}, baseVersion={}",
-        getRepository().getName(), update, groupId, artifactId, baseVersion);
-    metadataRebuilder.rebuild(getRepository(), update, rebuildChecksums, groupId, artifactId, baseVersion);
+    rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, false, update);
+  }
+
+  @Override
+  public void rebuildMetadata(@Nullable final String groupId, @Nullable final String artifactId,
+                              @Nullable final String baseVersion, final boolean rebuildChecksums,
+                              final boolean cascadeUpdate, final boolean update)
+  {
+    log.debug("Rebuilding Maven2 hosted repository metadata: repository={}, cascadeUpdate={}, update={}, group={}, artifact={}, baseVersion={}",
+        getRepository().getName(), cascadeUpdate, update, groupId, artifactId, baseVersion);
+    metadataRebuilder.rebuild(getRepository(), update, rebuildChecksums, cascadeUpdate, groupId, artifactId, baseVersion);
   }
 
   @Override

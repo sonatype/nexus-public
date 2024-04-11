@@ -117,11 +117,24 @@ public class MavenMetadataRebuildFacetImpl
       final boolean rebuildChecksums,
       final boolean update)
   {
+    // cascadeUpdate "true" by default to preserve old behaviour when we rebuild all nested metadata
+    rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, true, update);
+  }
+
+  @Override
+  public void rebuildMetadata(
+      final String groupId,
+      final String artifactId,
+      final String baseVersion,
+      final boolean rebuildChecksums,
+      final boolean cascadeUpdate,
+      final boolean update)
+  {
     // avoid triggering nested rebuilds as the rebuilder will already do that if necessary
     rebuilding.set(TRUE);
     try {
       metadataRebuilder
-          .rebuildInTransaction(getRepository(), update, rebuildChecksums, groupId, artifactId, baseVersion);
+          .rebuildInTransaction(getRepository(), update, rebuildChecksums, cascadeUpdate, groupId, artifactId, baseVersion);
     }
     finally {
       rebuilding.remove();

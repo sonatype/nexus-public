@@ -46,6 +46,8 @@ public class RebuildMaven2MetadataTaskDescriptor
   
   public static final String REBUILD_CHECKSUMS = "rebuildChecksums";
 
+  public static final String CASCADE_REBUILD = "cascadeRebuild";
+
   public RebuildMaven2MetadataTaskDescriptor() {
     super(TYPE_ID,
         RebuildMaven2MetadataTask.class,
@@ -84,7 +86,14 @@ public class RebuildMaven2MetadataTaskDescriptor
             "Compare maven checksum files with recorded metadata, creating files if they are missing and updating " +
                 "them if they are incorrect. This can significantly increase the time needed for this task.",
             OPTIONAL
-        ).withInitialValue(false)
+        ).withInitialValue(false),
+        new CheckboxFormField(
+            CASCADE_REBUILD,
+            "Cascade rebuild",
+            "If you do not specify groupId and/or artifactId and/or base version, all nested components will be rebuilt. " +
+                "If there is no groupId - all repository components will be rebuilt; no artifactId - all artifacts related to groupId will be rebuilt etc.",
+            OPTIONAL
+        ).withInitialValue(true)
     );
   }
 }
