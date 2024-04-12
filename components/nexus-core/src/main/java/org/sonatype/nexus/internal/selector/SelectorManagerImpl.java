@@ -23,11 +23,15 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
+import javax.cache.Cache;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
@@ -66,6 +70,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.subject.Subject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -87,7 +92,10 @@ public class SelectorManagerImpl
     extends StateGuardLifecycleSupport
     implements SelectorManager, EventAware
 {
+
   private static final SoftReference<List<SelectorConfiguration>> EMPTY_CACHE = new SoftReference<>(null);
+
+  private static final String USER_CACHE_KEY = "SelectorManager";
 
   private final SelectorConfigurationStore store;
 
@@ -95,17 +103,27 @@ public class SelectorManagerImpl
 
   private final LoadingCache<SelectorConfiguration, Selector> selectorCache;
 
+  private final CacheHelper cacheHelper;
+
+  private final Duration userCacheTimeout;
+
   private volatile SoftReference<List<SelectorConfiguration>> cachedBrowseResult = EMPTY_CACHE;
 
   private Map<String, Role> rolesCache = Collections.emptyMap();
 
+  private Cache<String, User> userCache;
+
   @Inject
   public SelectorManagerImpl(final SelectorConfigurationStore store,
                              final SecuritySystem securitySystem,
-                             final SelectorFactory selectorFactory)
+                             final SelectorFactory selectorFactory,
+                             final CacheHelper cacheHelper,
+                             @Named("${nexus.shiro.cache.defaultTimeToLive:-2m}") final Time userCacheTimeout)
   {
     this.store = checkNotNull(store);
     this.securitySystem = checkNotNull(securitySystem);
+    this.cacheHelper = cacheHelper;
+    this.userCacheTimeout = new Duration(userCacheTimeout.getUnit(), userCacheTimeout.getValue());
 
     checkNotNull(selectorFactory);
     selectorCache = CacheBuilder.newBuilder().softValues().build(CacheLoader.from(config -> {
@@ -292,7 +310,7 @@ public class SelectorManagerImpl
 
     try {
       authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE);
-      currentUser = securitySystem.currentUser();
+      currentUser = getCurrentUser();
     }
     catch (NoSuchAuthorizationManagerException | UserNotFoundException e) {
       log.warn("Unable to load active content selectors", e);
@@ -338,6 +356,30 @@ public class SelectorManagerImpl
     selectorConfiguration.setDescription(description);
     selectorConfiguration.setAttributes(attributes);
     return selectorConfiguration;
+  }
+
+  private User getCurrentUser() throws UserNotFoundException {
+    Subject subject = securitySystem.getSubject();
+    if (subject.isAuthenticated()) {
+      Cache<String, User> cache = getUserCache();
+      String userKey = subject.getPrincipal().toString() + subject.getPrincipals().getRealmNames().toString();
+      User currentUser = cache.get(userKey);
+      if (currentUser == null) {
+        currentUser = securitySystem.currentUser();
+        if (currentUser != null) {
+          cache.put(userKey, currentUser);
+        }
+      }
+      return currentUser;
+    }
+    return null;
+  }
+
+  private Cache<String, User> getUserCache() {
+    if (userCache == null) {
+      userCache = cacheHelper.maybeCreateCache(USER_CACHE_KEY, CreatedExpiryPolicy.factoryOf(userCacheTimeout));
+    }
+    return userCache;
   }
 
   private boolean matchesFormatOrRepository(final Collection<String> repositoryNames,
