@@ -29,4 +29,9 @@ public interface RepositoryMetricsService
      * Retrieve metrics for all repositories.
      */
     List<RepositoryMetricsDTO> list();
+
+    /**
+     * Runs the repo sizes update.
+     */
+    void runUpdate();
 }
