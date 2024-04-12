@@ -29,8 +29,6 @@
 
   <properties>
     <orientdb.version>2.2.37</orientdb.version>
-    <hazelcast.version>3.12.13</hazelcast.version>
-    <hazelcast-aws.version>2.4</hazelcast-aws.version>
   </properties>
 
   <dependencyManagement>
@@ -132,25 +130,6 @@
             <artifactId>orientdb-graphdb</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hazelcast</groupId>
-        <artifactId>hazelcast</artifactId>
-        <version>${hazelcast.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hazelcast</groupId>
-        <artifactId>hazelcast</artifactId>
-        <version>${hazelcast.version}</version>
-        <classifier>tests</classifier>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hazelcast</groupId>
-        <artifactId>hazelcast-aws</artifactId>
-        <version>${hazelcast-aws.version}</version>
       </dependency>
 
       <dependency>

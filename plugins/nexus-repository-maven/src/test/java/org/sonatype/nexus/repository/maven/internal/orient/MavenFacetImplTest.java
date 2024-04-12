@@ -185,7 +185,7 @@ public class MavenFacetImplTest
     assertThat(content.getContentType(), is(TEXT_XML));
     verify(storageTx, never()).deleteAsset(any());
     verify(metadataRebuilder, never())
-        .rebuildInTransaction(any(), eq(false), eq(false), eq("org.sonatype.nexus"), eq("nexus-base"),
+        .rebuildInTransaction(any(), eq(false), eq(false), eq(true), eq("org.sonatype.nexus"), eq("nexus-base"),
             eq("3.19.0-SNAPSHOT"));
   }
 

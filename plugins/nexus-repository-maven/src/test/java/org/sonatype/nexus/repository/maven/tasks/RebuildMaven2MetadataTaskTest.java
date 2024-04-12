@@ -31,7 +31,9 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.ARTIFACTID_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.BASEVERSION_FIELD_ID;
+import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.CASCADE_REBUILD;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.GROUPID_FIELD_ID;
+import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.REBUILD_CHECKSUMS;
 
 public class RebuildMaven2MetadataTaskTest
     extends TestSupport
@@ -45,6 +47,10 @@ public class RebuildMaven2MetadataTaskTest
   private static final String ARTIFACT_ID_VALUE = "artifact id";
 
   private static final String BASE_VERSION_VALUE = "base version";
+
+  private static final String REBUILD_CHECKSUMS_VALUE = "false";
+
+  private static final String CASCADE_REBUILD_VALUE = "true";
 
   @Mock
   private Repository repository;
@@ -62,6 +68,8 @@ public class RebuildMaven2MetadataTaskTest
     configuration.setString(GROUPID_FIELD_ID, GROUP_ID_VALUE);
     configuration.setString(ARTIFACTID_FIELD_ID, ARTIFACT_ID_VALUE);
     configuration.setString(BASEVERSION_FIELD_ID, BASE_VERSION_VALUE);
+    configuration.setString(REBUILD_CHECKSUMS, REBUILD_CHECKSUMS_VALUE);
+    configuration.setString(CASCADE_REBUILD, CASCADE_REBUILD_VALUE);
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, ALL_REPOSITORIES);
 
     when(repository.facet(MavenMetadataRebuildFacet.class)).thenReturn(rebuildFacet);
@@ -73,6 +81,6 @@ public class RebuildMaven2MetadataTaskTest
   @Test
   public void testTask() {
     underTest.execute(repository);
-    verify(rebuildFacet).rebuildMetadata(GROUP_ID_VALUE, ARTIFACT_ID_VALUE, BASE_VERSION_VALUE, false, false);
+    verify(rebuildFacet).rebuildMetadata(GROUP_ID_VALUE, ARTIFACT_ID_VALUE, BASE_VERSION_VALUE, false, true,false);
   }
 }

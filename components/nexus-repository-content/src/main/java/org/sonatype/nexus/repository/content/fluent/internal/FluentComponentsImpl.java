@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -35,6 +35,8 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.FluentContinuation;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
+import org.sonatype.nexus.repository.content.fluent.constraints.FluentQueryConstraint;
+import org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentSetData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
@@ -43,7 +45,12 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
+import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.BOTH;
+import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.LOCAL;
+import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.MEMBERS;
 import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getRepositoryIds;
+import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.isGroupRepository;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
 
@@ -108,7 +115,11 @@ public class FluentComponentsImpl
 
   @Override
   public Continuation<FluentComponent> browse(final int limit, final String continuationToken) {
-    return doBrowse(limit, continuationToken, null, null, null);
+    List<FluentQueryConstraint> constraints = new ArrayList<>();
+    if (isGroupRepository(facet.repository())) {
+      constraints.add(new GroupRepositoryConstraint(LOCAL));
+    }
+    return doBrowse(limit, continuationToken, null, null, null, constraints);
   }
 
   @Override
@@ -144,9 +155,10 @@ public class FluentComponentsImpl
       @Nullable final String continuationToken,
       @Nullable final String kind,
       @Nullable final String filter,
-      @Nullable final Map<String, Object> filterParams)
+      @Nullable final Map<String, Object> filterParams,
+      @Nullable final List<FluentQueryConstraint> constraints)
   {
-    Set<Integer> repositoryIds = getRepositoryIds(null, facet, facet.repository());
+    Set<Integer> repositoryIds = getRepositoryIds(constraints, facet, facet.repository());
 
     if (repositoryIds.size() > 1) {
       // with more than 1 repository, the kind/filter/filterParams all get ignored
@@ -155,6 +167,16 @@ public class FluentComponentsImpl
     }
     return new FluentContinuation<>(componentStore.browseComponents(repositoryIds.iterator().next(),
         limit, continuationToken, kind, filter, filterParams), this::with);
+  }
+
+  @Override
+  public FluentQuery<FluentComponent> withGroupMemberContent() {
+    return new FluentComponentQueryImpl(this, singletonList(new GroupRepositoryConstraint(BOTH)));
+  }
+
+  @Override
+  public FluentQuery<FluentComponent> withOnlyGroupMemberContent() {
+    return new FluentComponentQueryImpl(this, singletonList(new GroupRepositoryConstraint(MEMBERS)));
   }
 
   @Override

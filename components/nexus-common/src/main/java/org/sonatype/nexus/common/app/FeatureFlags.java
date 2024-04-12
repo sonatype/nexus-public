@@ -100,7 +100,7 @@ public interface FeatureFlags
    */
   String RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED = "nexus.recalculate.blobstore.size.task.enabled";
 
-  String RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED = "${" + RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED + ":-false}";
+  String RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED = "${" + RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED + ":-true}";
 
   String FIREWALL_ONBOARDING_ENABLED = "nexus.firewall.onboarding.enabled";
 
@@ -144,4 +144,6 @@ public interface FeatureFlags
   String REACT_ROLES_MODAL_NAMED = "${nexus.react.roles.modal.enabled:-true}";
 
   String BLOBSTORE_OWNERSHIP_CHECK_DISABLED_NAMED = "${nexus.blobstore.s3.ownership.check.disabled:-false}";
+
+  String STARTUP_TASKS_DELAY_SECONDS = "${nexus.startup.task.delay.seconds:-0}";
 }

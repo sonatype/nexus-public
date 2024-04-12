@@ -13,9 +13,12 @@
 package org.sonatype.nexus.repository.maven.internal.content;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -29,6 +32,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
@@ -40,14 +44,21 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runners.model.MultipleFailureException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
@@ -81,6 +92,7 @@ public class MavenMetadataRebuilderTest
     when(mavenContentFacet.assets()).thenReturn(assets);
     when(mavenContentFacet.components()).thenReturn(components);
 
+
     Logger logger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
     logger.addAppender(mockAppender);
   }
@@ -103,7 +115,7 @@ public class MavenMetadataRebuilderTest
     Thread taskThread = new Thread(() -> {
       CancelableHelper.set(canceled);
 
-      new MavenMetadataRebuilder(20).rebuild(repository, true, false, null, null, null);
+      new MavenMetadataRebuilder(20, 10).rebuild(repository, true, false, true,null, null, null);
     });
     taskThread.setUncaughtExceptionHandler((t, e) -> {
       if (e instanceof TaskInterruptedException) {
@@ -127,6 +139,75 @@ public class MavenMetadataRebuilderTest
     }
   }
 
+  @Test
+  public void rebuildIsCancelable_CascadeDisabled() throws Exception {
+    Component component = mock(Component.class);
+    Asset asset = mock(Asset.class);
+    doReturn(infiniteContinuation(component)).when(components).browse(anyInt(), anyString());
+    doReturn(infiniteContinuation(asset)).when(assets).browse(anyInt(), anyString());
+
+    final AtomicBoolean canceled = new AtomicBoolean(false);
+    final List<Throwable> uncaught = new ArrayList<>();
+    Thread taskThread = new Thread(() -> {
+      //CancelableHelper.set(canceled);
+
+      new MavenMetadataRebuilder(20, 10).rebuild(repository, true, false, false,"test_GroupId", "test_ArtifactId", null);
+    });
+    taskThread.setUncaughtExceptionHandler((t, e) -> {
+      if (e instanceof TaskInterruptedException) {
+        return;
+      }
+
+      uncaught.add(e);
+    });
+    taskThread.start();
+
+    sleep((long) (Math.random() * 1000)); // sleep for up to a second (emulate task running)
+    canceled.set(true); // cancel the task
+    taskThread.join(5000); // ensure task thread ends
+
+    if (taskThread.isAlive()) {
+      fail("Task did not cancel");
+    }
+
+    if (uncaught.size() > 0) {
+      throw new MultipleFailureException(uncaught);
+    }
+  }
+
+  @Test
+  public void rebuild_GA_Flow() throws Exception {
+    int bufferSize = 20;
+    int maxThreads = 1;
+    final String group1 = "group1";
+    final String artifact1 = "artifact1";
+    final String version1 = "1.0-SNAPSHOT";
+    List<String> baseVersions = Collections.singletonList(version1);
+
+    Content content = mock(Content.class);
+    when(mavenContentFacet.get(nullable(MavenPath.class))).thenReturn(Optional.of(content));
+    when(mavenContentFacet.getBaseVersions(group1, artifact1)).thenReturn(baseVersions);
+
+    MavenMetadataRebuilder mavenMetadataRebuilder = new MavenMetadataRebuilder(bufferSize, maxThreads);
+
+    DatastoreMetadataUpdater metadataUpdaterSpy = Mockito.spy(new DatastoreMetadataUpdater(true, repository));
+    MetadataRebuildWorker worker = new MetadataRebuildWorker(repository, true, group1, artifact1, null, bufferSize);
+    worker.setMetadataUpdater(metadataUpdaterSpy);
+    MetadataRebuildWorker workerSpy = Mockito.spy(worker);
+
+    doNothing().when(workerSpy).rebuildGroupMetadata(group1);
+    doNothing().when(metadataUpdaterSpy).write(any(), any());
+
+    mavenMetadataRebuilder.rebuildWithWorker(workerSpy, false, true, group1, artifact1, null);
+
+    Thread.sleep(1000);
+
+    verify(workerSpy, times(1)).rebuildGA(group1, artifact1);
+    verify(workerSpy, times(1)).rebuildBaseVersionsAndChecksums(group1, artifact1, baseVersions, false);
+    verify(workerSpy, times(1)).rebuildVersionsMetadata(group1, artifact1, baseVersions);
+    verify(workerSpy, times(1)).rebuildArtifactMetadata(repository, group1, artifact1);
+  }
+
   private Continuation infiniteContinuation(final Object returnItem) {
     Continuation continuation = mock(Continuation.class);
     Iterator iterator = mock(Iterator.class);
@@ -138,5 +219,20 @@ public class MavenMetadataRebuilderTest
     when(iterator.next()).thenReturn(returnItem);
 
     return continuation;
+  }
+
+  private Iterable iteratorWithItems(final Object... returnItems) {
+    int numItems = returnItems.length;
+    Iterable iterable = mock(Iterable.class);
+    Iterator iterator = mock(Iterator.class);
+    Spliterator spliterator = Spliterators.spliterator(returnItems, 0);
+
+    final int[] iteratorCounter = {0};
+    when(iterable.spliterator()).thenReturn(spliterator);
+    when(iterable.iterator()).thenReturn(iterator);
+    when(iterator.hasNext()).thenAnswer((Answer<Boolean>) invocation -> iteratorCounter[0] < numItems);
+    when(iterator.next()).thenAnswer((Answer<?>) invocation -> returnItems[iteratorCounter[0]++]);
+
+    return iterable;
   }
 }

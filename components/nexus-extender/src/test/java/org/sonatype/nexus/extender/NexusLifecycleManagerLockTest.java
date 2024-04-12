@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
@@ -64,6 +65,7 @@ public class NexusLifecycleManagerLockTest
       binder.bind(Bundle.class).annotatedWith(named("system")).toInstance(systemBundle);
       binder.bind(Lifecycle.class).annotatedWith(named("trigger")).to(Trigger.class);
       binder.bind(CountDownLatch.class).toInstance(new CountDownLatch(1));
+      binder.bind(Integer.class).annotatedWith(Names.named("${nexus.startup.task.delay.seconds:-0}")).toInstance(0);
     });
 
     MutableBeanLocator locator = injector.getInstance(MutableBeanLocator.class);

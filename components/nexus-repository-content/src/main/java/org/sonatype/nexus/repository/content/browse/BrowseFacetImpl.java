@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -181,8 +183,10 @@ public class BrowseFacetImpl
           progressLogger.info("Processed {} / {} {} assets in {} ms",
               processed, total, repositoryName, elapsed);
           if (progressUpdater != null) {
+            long percentageComplete = BigDecimal.valueOf(processed).divide(BigDecimal.valueOf(total),
+                2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).longValue();
             progressUpdater.accept(
-                String.format("processing repository %s %d/%d assets completed", repositoryName, processed, total));
+                String.format("%d%% Complete", percentageComplete));
           }
 
           checkCancellation();

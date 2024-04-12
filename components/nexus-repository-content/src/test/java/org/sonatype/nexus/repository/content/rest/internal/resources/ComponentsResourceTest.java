@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
@@ -104,6 +105,7 @@ public class ComponentsResourceTest
     when(repositoryManagerRESTAdapter.getRepository(name)).thenReturn(repository);
     when(repository.getUrl()).thenReturn(url);
     when(repository.getName()).thenReturn(name);
+    when(repository.getType()).thenReturn(new HostedType());
     when(repository.getFormat()).thenReturn(format);
   }
 

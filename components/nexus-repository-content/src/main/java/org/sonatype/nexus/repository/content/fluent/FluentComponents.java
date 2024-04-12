@@ -50,6 +50,18 @@ public interface FluentComponents
   FluentComponent with(Component component, @Nullable Collection<Asset> assets);
 
   /**
+   * To include only group member content, ignoring components in the group repository itself. By defauly, only group
+   * repository content is returned.
+   */
+  FluentQuery<FluentComponent> withOnlyGroupMemberContent();
+
+  /**
+   * To include both group content and group member content in the query. By default, only group
+   * repository content is returned.
+   */
+  FluentQuery<FluentComponent> withGroupMemberContent();
+
+  /**
    * Query components that have the given kind.
    */
   FluentQuery<FluentComponent> byKind(String kind);

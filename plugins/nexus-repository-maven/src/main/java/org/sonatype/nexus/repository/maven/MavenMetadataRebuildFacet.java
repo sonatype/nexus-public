@@ -64,6 +64,26 @@ public interface MavenMetadataRebuildFacet
                        boolean update);
 
   /**
+   * Rebuilds/updates Maven metadata. The parameters depend each on previous, and if any of those are set (ie. G, GA or
+   * GAV), the metadata will be updated. Rebuild is possible only against repository as whole, not a sub-part of it.
+   *
+   * @param groupId     scope the work to given groupId.
+   * @param artifactId  scope the work to given artifactId (groupId must be given).
+   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must be given).
+   * @param rebuildChecksums  whether or not checksums should be checked and corrected if found
+   *                           missing or incorrect
+   * @param cascadeUpdate should we rebuild nested levels if groupId/artifactId/baseVersion not present (empty)
+   * @param update      whether to update or replace metadata
+   *
+   */
+  void rebuildMetadata(@Nullable String groupId,
+                       @Nullable String artifactId,
+                       @Nullable String baseVersion,
+                       boolean rebuildChecksums,
+                       boolean cascadeUpdate,
+                       boolean update);
+
+  /**
    * Rebuilds/updates Maven metadata if an asset is available at {@code path} which has an associated
    * blob.
    *

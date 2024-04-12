@@ -104,6 +104,7 @@ public class OrientMetadataRebuilder
       final Repository repository,
       final boolean update,
       final boolean rebuildChecksums,
+      final boolean cascadeUpdate,
       @Nullable final String groupId,
       @Nullable final String artifactId,
       @Nullable final String baseVersion)
@@ -112,7 +113,7 @@ public class OrientMetadataRebuilder
     final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
     UnitOfWork.beginBatch(tx);
     try {
-      return rebuildInTransaction(repository, update, rebuildChecksums, groupId, artifactId, baseVersion);
+      return rebuildInTransaction(repository, update, rebuildChecksums, cascadeUpdate, groupId, artifactId, baseVersion);
     }
     finally {
       UnitOfWork.end();
@@ -124,6 +125,7 @@ public class OrientMetadataRebuilder
       final Repository repository,
       final boolean update,
       final boolean rebuildChecksums,
+      final boolean cascadeUpdate,
       @Nullable final String groupId,
       @Nullable final String artifactId,
       @Nullable final String baseVersion)
