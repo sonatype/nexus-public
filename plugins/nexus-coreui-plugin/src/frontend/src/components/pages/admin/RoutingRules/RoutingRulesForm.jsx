@@ -40,7 +40,8 @@ import RoutingRuleFormMachine from './RoutingRulesFormMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {faPlus, faTrash} from '@fortawesome/free-solid-svg-icons';
-import RoutingRulesPreview from "./RoutingRulesFormPreview";
+import RoutingRulesPreview from './RoutingRulesFormPreview';
+import RoutingRuleMatcherRow from './RoutingRuleMatcherRow';
 
 const {ROUTING_RULES, SETTINGS} = UIStrings;
 
@@ -155,33 +156,17 @@ export default function RoutingRulesForm({itemId, onDone}) {
               <div className="nx-sub-label">{ROUTING_RULES.FORM.MATCHERS_DESCRIPTION}</div>
 
               {data.matchers?.map((value, index) =>
-                  <div className="nx-form-row" key={`matcher-${index}`}>
-                    <div className="nx-form-group">
-                      {/*This nx-label is required to ensure the button is at the correct height*/}
-                      <label className="nx-label">
-                        <NxTextInput
-                            aria-label={ROUTING_RULES.FORM.MATCHER_LABEL(index)}
-                            aria-describedby="matchers-description"
-                            className="nx-text-input--long"
-                            {...FormUtils.fieldProps(`matchers[${index}]`, current)}
-                            value={value}
-                            onChange={(value) => updateMatcher(value, index)}/>
-                      </label>
-                    </div>
-                    {data.matchers.length > 1 &&
-                    <div className="nx-btn-bar">
-                      <NxButton
-                          type="button"
-                          title={ROUTING_RULES.FORM.DELETE_MATCHER_BUTTON}
-                          onClick={() => removeMatcher(index)}
-                      >
-                        <NxFontAwesomeIcon icon={faTrash}/>
-                      </NxButton>
-                    </div>}
-                  </div>)
+                  <RoutingRuleMatcherRow
+                      key={`matcher-${index}`}
+                      label={ROUTING_RULES.FORM.MATCHER_LABEL(index)}
+                      {...FormUtils.fieldProps(`matchers[${index}]`, current)}
+                      value={value}
+                      onChange={(value) => updateMatcher(value, index)}
+                      showRemoveButton={data.matchers.length > 1}
+                      onRemove={() => removeMatcher(index)}/>)
               }
               <div className="add-matcher">
-                <NxButton variant="tertiary" onClick={addMatcher}>
+                <NxButton type="button" variant="tertiary" onClick={addMatcher}>
                   <NxFontAwesomeIcon icon={faPlus}/>
                   <span>{ROUTING_RULES.FORM.ADD_MATCHER_BUTTON}</span>
                 </NxButton>

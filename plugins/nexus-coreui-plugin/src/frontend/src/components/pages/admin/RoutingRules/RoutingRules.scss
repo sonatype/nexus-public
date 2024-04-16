@@ -29,6 +29,10 @@
     color: var(--nx-color-validation-invalid);
   }
 
+  .routing-rule-matcher label {
+    display: none;
+  }
+
   .nxrm-path {
     &::before {
       content: "/";
