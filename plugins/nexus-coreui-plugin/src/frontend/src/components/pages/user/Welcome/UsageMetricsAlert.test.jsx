@@ -16,9 +16,16 @@ import userEvent from "@testing-library/user-event";
 import {when} from "jest-when";
 
 import UsageMetricsAlert from './UsageMetricsAlert';
-import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import {HARD_LIMIT_REACHED, WARNING_LIMIT_REACHED} from './UsageMetricsAlert.testdata';
+import {
+  INVALID_THRESHOLD_VALUE_DATA,
+  NO_THRESHOLD_NAME_DATA,
+  NO_THRESHOLD_VALUE_DATA,
+  NO_THRESHOLDS_DATA,
+  STARTER_THRESHOLD_REACHED,
+  SOFT_THRESHOLD_REACHED,
+  NO_USAGE_LEVEL_DATA
+} from './UsageMetricsAlert.testdata';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -26,12 +33,13 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
     }),
+    isProStarterEdition: jest.fn().mockReturnValue(true),
   }
 }));
 
 const selectors = {
-  ...TestUtils.selectors,
   getAlert: () => screen.getByRole('alert'),
+  queryAlert: () => screen.queryByRole('alert'),
   getCloseButton: () => screen.getByRole('button', {name: 'Close'}),
   getLinks: (t) => screen.getAllByRole('link', {name: t})
 };
@@ -39,56 +47,89 @@ const selectors = {
 describe('Usage Metrics Alert', () => {
   async function renderView(usage, onClose = null) {
     when(ExtJS.state().getValue)
-        .calledWith('contentUsageEvaluationResult')
+        .calledWith('contentUsageEvaluationResult', [])
         .mockReturnValue(usage);
 
     render(<UsageMetricsAlert onClose={onClose}/>);
   }
 
-  it('renders hard limit alert when hard limit value reached', async () => {
-    await renderView(HARD_LIMIT_REACHED);
+  beforeEach(function() {
+    global.NX = {
+      I18n: {get: jest.fn().mockReturnValue('')},
+    };
+  })
+
+  it('renders error alert when starter threshold value reached', async () => {
+    await renderView(STARTER_THRESHOLD_REACHED);
 
     const alert = selectors.getAlert();
-    const componentCountMessage = 'Users can not currently upload to this repository. This repository contains the ' +
-        'maximum of 120,000 components. Review your usage and consider removing unused components or ' +
-        'upgrading to Pro for unlimited usage.';
-    const requestsPerDayMessage = 'Users can not currently upload to this repository. This repository has hit ' +
-        'the maximum of 200,000 peak requests in the past 30 days. Review your usage and consider upgrading to Pro ' +
-        'for unlimited usage.';
 
     expect(alert).toBeInTheDocument();
-    expect(alert).toHaveTextContent(componentCountMessage);
-    expect(alert).toHaveTextContent(requestsPerDayMessage);
     expectLinksToBeRendered('Learn about Pro', 'Review your usage', 'upgrading to Pro');
   });
 
-  it('renders warning limit alert when warning limit value reached', async () => {
-    await renderView(WARNING_LIMIT_REACHED);
+  it('renders warning alert when soft threshold value reached', async () => {
+    await renderView(SOFT_THRESHOLD_REACHED);
 
     const alert = selectors.getAlert();
-    const componentCountMessage = 'This repository is approaching the maximum of 120,000 components. ' +
-        'Users will not be able to upload to this repository after reaching this limit. ' +
-        'Review your usage and consider removing unused components or upgrading to Pro for unlimited usage.';
-    const requestsPerDayMessage = 'This repository is approaching the maximum of 200,000 peak requests in the past 30 days. ' +
-        'Users will not be able to upload to this repository after reaching this limit. ' +
-        'Review your usage and consider upgrading to Pro for unlimited usage.';
 
     expect(alert).toBeInTheDocument();
-    expect(alert).toHaveTextContent(componentCountMessage);
-    expect(alert).toHaveTextContent(requestsPerDayMessage);
     expectLinksToBeRendered('Review your usage', 'upgrading to Pro');
   });
 
   it("tests the close button in the alert", async () => {
     const onClose = jest.fn();
-    await renderView(WARNING_LIMIT_REACHED, onClose);
+    await renderView(SOFT_THRESHOLD_REACHED, onClose);
 
     const alert = selectors.getAlert();
-
     expect(alert).toBeInTheDocument();
     userEvent.click(selectors.getCloseButton());
     expect(onClose).toBeCalled();
   });
+
+  it('should not render alert when there is no metrics', async () => {
+    await renderView([]);
+    const alert = selectors.queryAlert();
+    expect(alert).not.toBeInTheDocument();
+  });
+
+  it('should not render alert when there is no usage level', async () => {
+    await renderView(NO_USAGE_LEVEL_DATA);
+    const alert = selectors.queryAlert();
+    expect(alert).not.toBeInTheDocument();
+  });
+
+  it('should not render alert when there is no thresholds in metrics', async () => {
+    await renderView(NO_THRESHOLDS_DATA);
+    const alert = selectors.queryAlert();
+    expect(alert).not.toBeInTheDocument();
+  });
+
+  it('should not render alert when there is no threshold value in thresholds', async () => {
+    await renderView(NO_THRESHOLD_NAME_DATA);
+    const alert = selectors.queryAlert();
+    expect(alert).not.toBeInTheDocument();
+  });
+
+  it('should not render alert when there is no threshold name in thresholds', async () => {
+    await renderView(NO_THRESHOLD_VALUE_DATA);
+    const alert = selectors.queryAlert();
+    expect(alert).not.toBeInTheDocument();
+  });
+
+  it('should not render alert when invalid threshold value in thresholds', async () => {
+    await renderView(INVALID_THRESHOLD_VALUE_DATA);
+    const alert = selectors.queryAlert();
+    expect(alert).not.toBeInTheDocument();
+  });
+
+  it('should not render alert when edition is not pro-starter', async () => {
+    ExtJS.isProStarterEdition.mockReturnValue(false);
+    await renderView(SOFT_THRESHOLD_REACHED);
+    const alert = selectors.queryAlert();
+    expect(alert).not.toBeInTheDocument();
+  });
+
 });
 
 function expectLinksToBeRendered(...links) {

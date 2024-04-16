@@ -87,19 +87,17 @@ export default {
         TOTAL_COMPONENTS: {
           TITLE: 'Total Components',
           SUB_TITLE: 'Current',
-          THRESHOLD: 'Threshold',
-          HARD_LIMIT_VALUE: 120_000,
           HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
           METRIC_NAME: 'component_total_count',
           METRIC_NAME_PRO_POSTGRESQL: 'component_total_count',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
-          TOOLTIP: (limit, edition) => {
+          TOOLTIP: (threshold, edition) => {
             if (edition === 'PRO-STARTER') {
-              return `Sonatype Nexus Repository\'s Pro Starter version only supports up to ${limit} components. Upgrade to Pro with a PostgreSQL database for unlimited component support.`
+              return `Sonatype Nexus Repository\'s Pro Starter version only supports up to ${threshold} components. Upgrade to Pro with a PostgreSQL database for unlimited component support.`
             } else if (edition === 'PRO') {
               return 'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.'
             } else {
-              return `Sonatype Nexus Repository OSS performs best when your total component counts remain under ${limit} components across all repositories in your instance.`
+              return `Sonatype Nexus Repository OSS performs best when your total component counts remain under ${threshold} components across all repositories in your instance.`
             }
           }
         },
@@ -129,23 +127,33 @@ export default {
           TITLE_PRO_POSTGRESQL: 'Peak Requests Per Day',
           SUB_TITLE: 'Last 24 hours',
           SUB_TITLE_PRO_POSTGRESQL: 'Past 30 days',
-          THRESHOLD: 'Threshold',
-          HARD_LIMIT_VALUE: 200_000,
           HIGHEST_RECORDED_COUNT: 'Highest Recorded Count (30 days)',
           METRIC_NAME: 'peak_requests_per_day',
           METRIC_NAME_PRO_POSTGRESQL: 'peak_requests_per_day_30d',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
-          TOOLTIP: (limit, edition) => {
+          TOOLTIP: (threshold, edition) => {
             if (edition === 'PRO-STARTER') {
-              return `Sonatype Nexus Repository\'s Pro Starter version only supports up to ${limit} requests per day to repository endpoints for all repositories. Upgrade to Pro with a PostgreSQL database for unlimited requests.`
+              return `Sonatype Nexus Repository\'s Pro Starter version only supports up to ${threshold} requests per day to repository endpoints for all repositories. Upgrade to Pro with a PostgreSQL database for unlimited requests.`
             } else if (edition === 'PRO') {
               return 'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.'
             } else {
-              return `Sonatype Nexus Repository OSS performs best when requests per day remain under ${limit} requests per day to all repository endpoints across all repositories in your instance.`
+              return `Sonatype Nexus Repository OSS performs best when requests per day remain under ${threshold} requests per day to all repository endpoints across all repositories in your instance.`
             }
           }
         },
-        PERCENTAGE: 0.75
+        CARD_SHARED_LABELS: {
+          THRESHOLD: 'Threshold',
+          THRESHOLD_NAME: 'thresholdName',
+          THRESHOLD_VALUE: 'thresholdValue',
+          PERIOD: 'period',
+          VALUE: 'value',
+        },
+        PERCENTAGE: 0.75,
+        SOFT_THRESHOLD: 'SOFT_THRESHOLD',
+        STARTER_THRESHOLD: 'STARTER_THRESHOLD',
+        PRO: 'PRO',
+        OSS: 'OSS',
+        PRO_STARTER: 'PRO-STARTER'
       },
       CARD_LINK_OSS: {
         TEXT: 'Understand your usage',
@@ -160,27 +168,27 @@ export default {
         URL: 'https://links.sonatype.com/products/nxrm3/docs/review-usage'
       },
       ALERTS: {
-        HARD_LIMITS: {
+        EXCEEDING_THRESHOLDS: {
           REQUESTS_PER_DAY: {
-            PREFIX: (limit) => `Users can not currently upload to this repository. This repository has hit the maximum of ${limit} peak requests in the past 30 days. `,
-            MID: ' and consider '
+            PREFIX: 'Exceeding_Threshold_Requests_Per_Day_Prefix',
+            MID: 'Exceeding_Threshold_Requests_Per_Day_Mid'
           },
           TOTAL_COMPONENTS: {
-            PREFIX: (limit) => `Users can not currently upload to this repository. This repository contains the maximum of ${limit} components. `,
-            MID: ' and consider removing unused components or '
+            PREFIX: 'Exceeding_Threshold_Total_Components_Prefix',
+            MID: 'Exceeding_Threshold_Total_Components_Mid'
           }
         },
-        WARNING_LIMITS: {
+        APPROACHING_THRESHOLDS: {
           REQUESTS_PER_DAY: {
-            PREFIX: (limit) => `This repository is approaching the maximum of ${limit} peak requests in the past 30 days. Users will not be able to upload to this repository after reaching this limit. `,
-            MID: ' and consider '
+            PREFIX: 'Approaching_Threshold_Requests_Per_Day_Prefix',
+            MID: 'Approaching_Threshold_Requests_Per_Day_Mid'
           },
           TOTAL_COMPONENTS: {
-            PREFIX: (limit) => `This repository is approaching the maximum of ${limit} components. Users will not be able to upload to this repository after reaching this limit. `,
-            MID: ' and consider removing unused components or '
+            PREFIX: 'Approaching_Threshold_Total_Components_Prefix',
+            MID: 'Approaching_Threshold_Total_Components_Mid'
           }
         },
-        SUFFIX: ' for unlimited usage.',
+        SUFFIX: 'Suffix',
         LEARN_ABOUT_PRO: {
           TEXT: 'Learn about Pro',
           URL: 'https://links.sonatype.com/products/nxrm3/docs/learn-about-pro'

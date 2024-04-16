@@ -66,7 +66,7 @@ describe('Usage Metrics', () => {
         .calledWith(USAGE_METRICS).mockResolvedValue({data: usage});
 
     when(ExtJS.state().getValue)
-        .calledWith('contentUsageEvaluationResult')
+        .calledWith('contentUsageEvaluationResult', [])
         .mockReturnValue(usageWithCircuitBreaker);
 
     render(<UsageMetrics />);
@@ -163,11 +163,11 @@ describe('Usage Metrics', () => {
       const card1 = selectors.getCard('Total Components'),
           card1Header = selectors.getCardHeader(card1, 'Total Components'),
           card1SubTitle = selectors.getCardContent(card1,'Current'),
-          card1LimitTitle = selectors.getCardContent(card1,'Threshold'),
+          card1ThresholdTitle = selectors.getCardContent(card1,'Threshold'),
           card1Meter = selectors.getCardMeter(card1),
           card1TextLink = selectors.getCardTextLink(card1),
           totalComponents = selectors.getCardContent(card1, '85,000'),
-          componentsLimit = selectors.getCardContent(card1, '100,000'),
+          componentsThreshold = selectors.getCardContent(card1, '100,000'),
           card1HighestRecordedCountTitle = selectors.getCardContent(card1, 'Highest Recorded Count (30 days)'),
           componentsHighestRecordedCount = selectors.getCardContent(card1, '12,500');
 
@@ -175,11 +175,11 @@ describe('Usage Metrics', () => {
           card1,
           card1Header,
           card1SubTitle,
-          card1LimitTitle,
+          card1ThresholdTitle,
           card1Meter,
           card1TextLink,
           totalComponents,
-          componentsLimit,
+          componentsThreshold,
           card1HighestRecordedCountTitle,
           componentsHighestRecordedCount
       );
@@ -205,11 +205,11 @@ describe('Usage Metrics', () => {
       const card3 = selectors.getCard('Requests Per Day'),
           card3Header = selectors.getCardHeader(card3, 'Requests Per Day'),
           card3SubTitle = selectors.getCardContent(card3, 'Last 24 hours'),
-          card3LimitTitle = selectors.getCardContent(card3,'Threshold'),
+          card3ThresholdTitle = selectors.getCardContent(card3,'Threshold'),
           card3Meter = selectors.getCardMeter(card3),
           card3TextLink = selectors.getCardTextLink(card3),
           reqsPerDay = selectors.getCardContent(card3, '3,300'),
-          reqsLimit = selectors.getCardContent(card3, '20,000'),
+          reqsThreshold = selectors.getCardContent(card3, '20,000'),
           card3HighestRecordedCountTitle = selectors.getCardContent(card3, 'Highest Recorded Count (30 days)'),
           reqsHighestRecordedCount = selectors.getCardContent(card3, '75,000');
 
@@ -217,10 +217,10 @@ describe('Usage Metrics', () => {
           card3,
           card3Header,
           card3SubTitle,
-          card3LimitTitle,
+          card3ThresholdTitle,
           card3Meter,
           reqsPerDay,
-          reqsLimit,
+          reqsThreshold,
           card3HighestRecordedCountTitle,
           reqsHighestRecordedCount
       );
@@ -239,11 +239,11 @@ describe('Usage Metrics', () => {
       const card1 = selectors.getCard('Total Components'),
           card1Header = selectors.getCardHeader(card1, 'Total Components'),
           card1SubTitle = selectors.getCardContent(card1,'Current'),
-          card1LimitTitle = selectors.getCardContent(card1,'Threshold'),
+          card1ThresholdTitle = selectors.getCardContent(card1,'Threshold'),
           card1Meter = selectors.getCardMeter(card1),
           card1TextLink = selectors.getCardTextLink(card1),
           totalComponents = selectors.getCardContent(card1, '75,000'),
-          componentsLimit = selectors.getCardContent(card1, '100,000'),
+          componentsThreshold = selectors.getCardContent(card1, '100,000'),
           card1HighestRecordedCountTitle = selectors.getCardContent(card1, 'Highest Recorded Count (30 days)'),
           componentsHighestRecordedCount = selectors.getCardContent(card1, '66,666');
 
@@ -251,11 +251,11 @@ describe('Usage Metrics', () => {
           card1,
           card1Header,
           card1SubTitle,
-          card1LimitTitle,
+          card1ThresholdTitle,
           card1Meter,
           card1TextLink,
           totalComponents,
-          componentsLimit,
+          componentsThreshold,
           card1HighestRecordedCountTitle,
           componentsHighestRecordedCount
       );
@@ -281,11 +281,11 @@ describe('Usage Metrics', () => {
       const card3 = selectors.getCard('Requests Per Day'),
           card3Header = selectors.getCardHeader(card3, 'Requests Per Day'),
           card3SubTitle = selectors.getCardContent(card3, 'Last 24 hours'),
-          card3LimitTitle = selectors.getCardContent(card3,'Threshold'),
+          card3ThresholdTitle = selectors.getCardContent(card3,'Threshold'),
           card3Meter = selectors.getCardMeter(card3),
           card3TextLink = selectors.getCardTextLink(card3),
           reqsPerDay = selectors.getCardContent(card3, '12,500'),
-          reqsLimit = selectors.getCardContent(card3, '20,000'),
+          reqsThreshold = selectors.getCardContent(card3, '20,000'),
           card3HighestRecordedCountTitle = selectors.getCardContent(card3, 'Highest Recorded Count (30 days)'),
           reqsHighestRecordedCount = selectors.getCardContent(card3, '95,000');
 
@@ -293,10 +293,10 @@ describe('Usage Metrics', () => {
           card3,
           card3Header,
           card3SubTitle,
-          card3LimitTitle,
+          card3ThresholdTitle,
           card3Meter,
           reqsPerDay,
-          reqsLimit,
+          reqsThreshold,
           card3HighestRecordedCountTitle,
           reqsHighestRecordedCount
       );
@@ -404,11 +404,11 @@ describe('Usage Metrics', () => {
       const card1 = selectors.getCard('Total Components'),
           card1Header = selectors.getCardHeader(card1, 'Total Components'),
           card1SubTitle = selectors.getCardContent(card1,'Current'),
-          card1LimitTitle = selectors.getCardContent(card1,'Threshold'),
+          card1ThresholdTitle = selectors.getCardContent(card1,'Threshold'),
           card1Meter = selectors.getCardMeter(card1),
           card1TextLink = selectors.getCardTextLink(card1),
           totalComponents = selectors.getCardContent(card1, '150,000'),
-          componentsLimit = selectors.getCardContent(card1, '120,000'),
+          componentsThreshold = selectors.getCardContent(card1, '120,000'),
           card1HighestRecordedCountTitle = selectors.getCardContent(card1, 'Highest Recorded Count (30 days)'),
           componentsHighestRecordedCount = selectors.getCardContent(card1, '27,865');
 
@@ -416,11 +416,11 @@ describe('Usage Metrics', () => {
           card1,
           card1Header,
           card1SubTitle,
-          card1LimitTitle,
+          card1ThresholdTitle,
           card1Meter,
           card1TextLink,
           totalComponents,
-          componentsLimit,
+          componentsThreshold,
           card1HighestRecordedCountTitle,
           componentsHighestRecordedCount
       );
@@ -446,11 +446,11 @@ describe('Usage Metrics', () => {
       const card3 = selectors.getCard('Requests Per Day'),
           card3Header = selectors.getCardHeader(card3, 'Requests Per Day'),
           card3SubTitle = selectors.getCardContent(card3, 'Last 24 hours'),
-          card3LimitTitle = selectors.getCardContent(card3,'Threshold'),
+          card3ThresholdTitle = selectors.getCardContent(card3,'Threshold'),
           card3Meter = selectors.getCardMeter(card3),
           card3TextLink = selectors.getCardTextLink(card3),
           reqsPerDay = selectors.getCardContent(card3, '5,800'),
-          reqsLimit = selectors.getCardContent(card3, '200,000'),
+          reqsThreshold = selectors.getCardContent(card3, '200,000'),
           card3HighestRecordedCountTitle = selectors.getCardContent(card3, 'Highest Recorded Count (30 days)'),
           reqsHighestRecordedCount = selectors.getCardContent(card3, '12,500');
 
@@ -458,10 +458,10 @@ describe('Usage Metrics', () => {
           card3,
           card3Header,
           card3SubTitle,
-          card3LimitTitle,
+          card3ThresholdTitle,
           card3Meter,
           reqsPerDay,
-          reqsLimit,
+          reqsThreshold,
           card3HighestRecordedCountTitle,
           reqsHighestRecordedCount
       );
