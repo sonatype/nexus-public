@@ -28,12 +28,14 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.REPOSITORY_SIZE_ENABLED;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
@@ -42,7 +44,8 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
  */
 @Named
 @Singleton
-@FeatureFlag(name = REPOSITORY_SIZE_ENABLED)
+@FeatureFlag(name = DATASTORE_ENABLED)
+@FeatureFlag(name = REPOSITORY_SIZE_ENABLED, enabledByDefault = true)
 public class RepositoryNameIdMappingCache
     extends ComponentSupport
     implements EventAware
@@ -53,17 +56,24 @@ public class RepositoryNameIdMappingCache
 
   private final List<String> formatNames;
 
+  private boolean isAvailable;
+
   @Inject
   public RepositoryNameIdMappingCache(
       FormatStoreManager formatStoreManager,
-      final List<Format> formats)
+      final List<Format> formats,
+      final DatabaseCheck databaseCheck)
   {
     this.contentRepositoryStore = checkNotNull(formatStoreManager).contentRepositoryStore(DEFAULT_DATASTORE_NAME);
     this.formatNames = checkNotNull(formats).stream().map(Format::getValue).collect(Collectors.toList());
+    this.isAvailable = checkNotNull(databaseCheck).isPostgresql();
   }
 
   @Subscribe
   public void on(final RepositoryCreatedEvent event) {
+    if(!isAvailable){
+      return;
+    }
     Repository repository = event.getRepository();
     log.debug("Handling repository create event for {}", repository.getName());
     fetchRepositoryId(repository.getName(), repository.getFormat().getValue());
@@ -71,6 +81,9 @@ public class RepositoryNameIdMappingCache
 
   @Subscribe
   public void on(final RepositoryDeletedEvent event) {
+    if(!isAvailable){
+      return;
+    }
     log.debug("Handling repository deleted event for {}", event.getRepository().getName());
     if (nameRepositoryIdMap != null) {
       nameRepositoryIdMap.remove(event.getRepository().getName());
