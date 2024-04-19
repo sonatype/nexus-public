@@ -65,7 +65,7 @@ public class JwtFilter
         if (!Strings2.isEmpty(jwt)) {
           Cookie refreshedToken;
           try {
-            refreshedToken = jwtHelper.verifyAndRefreshJwtCookie(jwt);
+            refreshedToken = jwtHelper.verifyAndRefreshJwtCookie(jwt, request.isSecure());
           }
           catch (JwtVerificationException e) {
             // expire the cookie in case of any issues while JWT verification

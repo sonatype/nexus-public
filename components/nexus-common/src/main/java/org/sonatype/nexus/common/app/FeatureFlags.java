@@ -146,4 +146,13 @@ public interface FeatureFlags
   String BLOBSTORE_OWNERSHIP_CHECK_DISABLED_NAMED = "${nexus.blobstore.s3.ownership.check.disabled:-false}";
 
   String STARTUP_TASKS_DELAY_SECONDS = "${nexus.startup.task.delay.seconds:-0}";
+  
+  /**
+   * When true (default), the Secure attribute will be set on the NXSESSIONID Cookie when delivered over https.
+   * In deployments with HTTP-only listeners, this setting will typically have no effect.
+   * Setting false for this property in HTTPS only environments is not recommended.
+   *
+   * See https://owasp.org/www-community/controls/SecureCookieAttribute
+   */
+  String NXSESSIONID_SECURE_COOKIE_NAMED = "${nexus.session.secureCookie:-true}";
 }

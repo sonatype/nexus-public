@@ -40,6 +40,7 @@ import org.apache.shiro.subject.Subject;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.NXSESSIONID_SECURE_COOKIE_NAMED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 
 /**
@@ -71,18 +72,26 @@ public class JwtHelper
 
   private final Provider<SecretStore> secretStoreProvider;
 
+  private final boolean cookieSecure;
+
   private JwtVerifier verifier;
+
+  public JwtHelper(final int expirySeconds, final String contextPath, final Provider<SecretStore> secretStoreProvider) {
+    this(expirySeconds, contextPath, secretStoreProvider, true);
+  }
 
   @Inject
   public JwtHelper(
       @Named("${nexus.jwt.expiry:-1800}") final int expirySeconds,
       @Named("${nexus-context-path}") final String contextPath,
-      final Provider<SecretStore> secretStoreProvider)
+      final Provider<SecretStore> secretStoreProvider,
+      @Named(NXSESSIONID_SECURE_COOKIE_NAMED) final boolean cookieSecure)
   {
     checkState(expirySeconds >= 0, "JWT expiration period should be positive");
     this.expirySeconds = expirySeconds;
     this.contextPath = checkNotNull(contextPath);
     this.secretStoreProvider = checkNotNull(secretStoreProvider);
+    this.cookieSecure = cookieSecure;
   }
 
   @Override
@@ -97,28 +106,39 @@ public class JwtHelper
   }
 
   /**
-   * Generates a new JWT and makes cookie to store it
+   * Generates a new JWT and makes cookie to store it.
+   * The returned Cookie will have a value for {@link Cookie#getSecure()} dependent on two conditions:
+   *
+   * 1. the value of the second argument, which indicates if this request originated from an HTTPS request
+   * 2. the value of the nexus.session.secureCookie property.
+   *
+   * nexus.session.secureCookie is true by default, however if a JWT cookie is being sent on an HTTP only 
+   * request it cannot have true for {@link Cookie#getSecure()}.
+   *
+   * @param subject the target subject
+   * @param secureRequest true if the cookie is associated with a Secure request.
    */
-  public Cookie createJwtCookie(final Subject subject) {
+  public Cookie createJwtCookie(final Subject subject, final boolean secureRequest) {
     checkNotNull(subject);
 
     String username = subject.getPrincipal().toString();
     Optional<String> realm = subject.getPrincipals().getRealmNames().stream().findFirst();
 
-    return createJwtCookie(username, realm.orElse(null));
+    return createJwtCookie(username, realm.orElse(null), secureRequest);
   }
 
   /**
    * Verify jwt, refresh if it's valid and make new cookie
    */
-  public Cookie verifyAndRefreshJwtCookie(final String jwt) throws JwtVerificationException {
+  public Cookie verifyAndRefreshJwtCookie(final String jwt, final boolean secureRequest) throws JwtVerificationException {
     checkNotNull(jwt);
 
     DecodedJWT decoded = verifyJwt(jwt);
 
     return createJwtCookie(decoded.getClaim(USER).asString(),
         decoded.getClaim(REALM).asString(),
-        decoded.getClaim(USER_SESSION_ID).asString());
+        decoded.getClaim(USER_SESSION_ID).asString(),
+        secureRequest);
   }
 
   /**
@@ -146,14 +166,15 @@ public class JwtHelper
     verifier = new JwtVerifier(loadSecret());
   }
 
-  private Cookie createJwtCookie(final String user, final String realm) {
+  private Cookie createJwtCookie(final String user, final String realm, final boolean secureRequest) {
     String userSessionId = UUID.randomUUID().toString();
-    return createJwtCookie(user, realm, userSessionId);
+    return createJwtCookie(user, realm, userSessionId, secureRequest);
   }
 
-  private Cookie createJwtCookie(final String user, final String realm, final String userSessionId) {
+  private Cookie createJwtCookie(final String user, final String realm, final String userSessionId,
+                                 final boolean secureRequest) {
     String jwt = createToken(user, realm, userSessionId);
-    return createCookie(jwt);
+    return createCookie(jwt, secureRequest);
   }
 
   private String createToken(final String user, final String realm, final String userSessionId) {
@@ -169,11 +190,12 @@ public class JwtHelper
         .sign(verifier.getAlgorithm());
   }
 
-  private Cookie createCookie(final String jwt) {
+  private Cookie createCookie(final String jwt, final boolean secureRequest) {
     Cookie cookie = new Cookie(JWT_COOKIE_NAME, jwt);
     cookie.setMaxAge(this.expirySeconds);
     cookie.setPath(contextPath);
     cookie.setHttpOnly(true);
+    cookie.setSecure(cookieSecure && secureRequest);
 
     return cookie;
   }
