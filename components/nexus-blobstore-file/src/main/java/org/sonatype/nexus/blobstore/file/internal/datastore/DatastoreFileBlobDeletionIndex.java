@@ -16,14 +16,11 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,9 +41,6 @@ import com.squareup.tape.QueueFile;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Comparator.comparing;
-import static java.util.Comparator.naturalOrder;
-import static java.util.Comparator.nullsLast;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY;
 
 @Named
@@ -66,7 +60,7 @@ public class DatastoreFileBlobDeletionIndex
 
   private String blobStoreName;
 
-  private Queue<String> deletedRecordsCache;
+  private Deque<String> deletedRecordsCache;
 
   @Inject
   public DatastoreFileBlobDeletionIndex(
@@ -86,7 +80,6 @@ public class DatastoreFileBlobDeletionIndex
     this.blobStoreName = blobStore.getBlobStoreConfiguration().getName();
     scheduleMigrateIndex(metadata);
     deletedRecordsCache = new ArrayDeque<>();
-
   }
 
   @Override
@@ -99,21 +92,8 @@ public class DatastoreFileBlobDeletionIndex
     softDeletedBlobsStore.createRecord(blobId, blobStoreName);
   }
 
-  /**
-   * Reads all records from the corresponding table and save they in a local variable for a future usage
-   */
   private void populateInternalCache() {
-    List<SoftDeletedBlobsData> response = new ArrayList<>();
-    Continuation<SoftDeletedBlobsData> page = softDeletedBlobsStore.readRecords(null, blobStoreName);
-    while (!page.isEmpty()) {
-      response.addAll(page);
-      page = softDeletedBlobsStore.readRecords(page.nextContinuationToken(), blobStoreName);
-    }
-
-    deletedRecordsCache.addAll(response.stream()
-        .sorted(comparing(SoftDeletedBlobsData::getDeletedDate, nullsLast(naturalOrder())))
-        .map(SoftDeletedBlobsData::getBlobId)
-        .collect(Collectors.toList()));
+    deletedRecordsCache.addAll(softDeletedBlobsStore.readOldestRecords(blobStoreName));
   }
 
   @Override
@@ -121,12 +101,12 @@ public class DatastoreFileBlobDeletionIndex
     if (deletedRecordsCache.isEmpty()) {
       populateInternalCache();
     }
-    return deletedRecordsCache.peek();
+    return deletedRecordsCache.pollFirst();
   }
 
   @Override
   public final void deleteRecord(final BlobId blobId) {
-    deletedRecordsCache.remove();
+    deletedRecordsCache.remove(blobId.asUniqueString());
     softDeletedBlobsStore.deleteRecord(blobStoreName, blobId);
   }
 

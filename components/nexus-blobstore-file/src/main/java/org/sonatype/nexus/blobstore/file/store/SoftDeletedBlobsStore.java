@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.blobstore.file.store;
 
+import java.util.List;
+
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.entity.Continuation;
-
-import org.apache.ibatis.annotations.Param;
 
 /**
  * Store for accessing the soft deleted blob ID's
@@ -61,4 +61,12 @@ public interface SoftDeletedBlobsStore
    * @return amount of soft deleted blobs
    */
   int count(String sourceBlobStoreName);
+
+  /**
+   * Returns a list of the oldest 20 blob_ids in the soft_deleted_blobs table related to the provided blobstore.
+   *
+   * @param sourceBlobStoreName the blobstore name these records are related to
+   * @return oldest 20 blob_id strings
+   */
+  List<String> readOldestRecords(String sourceBlobStoreName);
 }

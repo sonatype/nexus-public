@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -75,5 +76,11 @@ public class SoftDeletedBlobsStoreImpl
   @Override
   public int count(final String sourceBlobStoreName) {
     return dao().count(sourceBlobStoreName);
+  }
+
+  @Transactional
+  @Override
+  public List<String> readOldestRecords(final String sourceBlobStoreName) {
+    return dao().readOldestRecords(sourceBlobStoreName);
   }
 }
