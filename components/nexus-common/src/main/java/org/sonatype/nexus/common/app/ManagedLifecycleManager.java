@@ -68,4 +68,16 @@ public abstract class ManagedLifecycleManager
     log.info("Shutting down");
     shuttingDown = true;
   }
+
+  /**
+   * Shutdown Nexus, and provide a custom exit code to the calling system/process. This should ensure that all services
+   * and phases are stopped and safe before ending.
+   * @param exitCode the exit code to provide to the calling system/process
+   * @throws Exception the lifecycle manager may propagate exceptions if the change is not possible
+   */
+  public void shutdownWithExitCode(final int exitCode) throws Exception {
+    System.setProperty("nexus.overrideExitCode", Integer.toString(exitCode));
+    log.info("Shutdown requested with an exit code of " + exitCode);
+    this.to(Phase.OFF);
+  }
 }

@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.contrib.java.lang.system.SystemErrRule;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
@@ -89,6 +91,27 @@ public class NexusMainTest
   public void logInvalidVersionErrorWhenVmCheckDisabledAndInvalidVersion() throws Exception {
     runDisabledVmCheckWithVersion(INVALID);
     assertThat(systemErrRule.getLog(), containsString("invalid version \"X.X-internal\": non-numeric \"X\""));
+  }
+
+  @Test
+  public void logExpectedExitWithNoOverriddenExitCode() throws Exception {
+    try (MockedConstruction<NexusMain> ignored =
+             Mockito.mockConstruction(NexusMain.class)) {
+      exit.expectSystemExitWithStatus(0);
+      NexusMain.main(new String[0]);
+    }
+  }
+
+  @Test
+  public void logExpectedExitWithOverriddenExitCode() throws Exception {
+    try (MockedConstruction<NexusMain> ignored =
+             Mockito.mockConstruction(NexusMain.class)) {
+      System.setProperty("nexus.overrideExitCode", "-42");
+      exit.expectSystemExitWithStatus(-42);
+      NexusMain.main(new String[0]);
+      assertThat(systemErrRule.getLog(), containsString("Exited with code: -42"));
+      assertThat(systemErrRule.getLog(), containsString("Please check the previous log messages"));
+    }
   }
 
   private void runDisabledVmCheckWithVersion(final String version) {

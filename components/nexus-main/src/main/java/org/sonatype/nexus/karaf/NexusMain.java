@@ -27,7 +27,7 @@ import org.osgi.framework.Version;
 public class NexusMain
     extends org.apache.karaf.main.Main
 {
-  //Visibile for testing
+  //Visible for testing
   static final Version MINIMUM_JAVA_VERSION = new Version(1, 8, 0);
 
   Logger log = Logger.getLogger(this.getClass().getName());
@@ -85,6 +85,13 @@ public class NexusMain
           System.exit(10);
         }
         else if (!restart) {
+
+          int overriddenExitCode = Integer.getInteger("nexus.overrideExitCode", 0);
+          if (overriddenExitCode!=0) {
+            System.err.println("Exited with code: " + overriddenExitCode );
+            System.err.println("Please check the previous log messages to identify why shutdown was initiated.");
+            System.exit(overriddenExitCode);
+          }
           System.exit(main.getExitCode());
         }
         else {
