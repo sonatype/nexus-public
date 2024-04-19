@@ -29,13 +29,13 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 3300,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 20000
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 20000
       }
     ],
-    "limitLevel": "FREE_TIER",
+    "usageLevel": "FREE_TIER",
     "aggregates": [
       {
         "name": "content_request_count",
@@ -47,13 +47,13 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
   {
     "metricName": "component_total_count",
     "metricValue": 85000,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 100000
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 100000
       }
     ],
-    "limitLevel": "FREE_TIER",
+    "usageLevel": "FREE_TIER",
     "aggregates": [
       {
         "name": "component_total_count",
@@ -65,13 +65,13 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
   {
     "metricName": "successful_last_24h",
     "metricValue": 26,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 100
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 100
       }
     ],
-    "limitLevel": "FREE_TIER",
+    "usageLevel": "FREE_TIER",
     "aggregates": [
       {
         "name": "unique_user_count",
@@ -86,13 +86,13 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 12500,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 20000
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 20000
       }
     ],
-    "limitLevel": "FREE_TIER",
+    "usageLevel": "FREE_TIER",
     "aggregates": [
       {
         "name": "content_request_count",
@@ -119,13 +119,13 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO = [
   {
     "metricName": "component_total_count",
     "metricValue": 75000,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 100000
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 100000
       }
     ],
-    "limitLevel": "FREE_TIER",
+    "usageLevel": "FREE_TIER",
     "aggregates": [
       {
         "name": "component_total_count",
@@ -140,8 +140,8 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL = [
   {
     "metricName": "peak_requests_per_day_30d",
     "metricValue": 145302,
-    "limits": [],
-    "limitLevel": "UNLIMITED",
+    "thresholds": [],
+    "usageLevel": "UNLIMITED",
     "aggregates": []
   },
   {
@@ -152,8 +152,8 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL = [
   {
     "metricName": "component_total_count",
     "metricValue": 4758,
-    "limits": [],
-    "limitLevel": "UNLIMITED",
+    "thresholds": [],
+    "usageLevel": "UNLIMITED",
     "aggregates": []
   }
 ];
@@ -162,13 +162,17 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 5800,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 20000
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 20000
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+        "thresholdValue": 200000
       }
     ],
-    "limitLevel": "FREE_TIER",
+    "usageLevel": "FREE_TIER",
     "aggregates": [
       {
         "name": "content_request_count",
@@ -180,13 +184,17 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
   {
     "metricName": "component_total_count",
     "metricValue": 150000,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 100000
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 100000
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+        "thresholdValue": 120000
       }
     ],
-    "limitLevel": "FREE_TIER",
+    "usageLevel": "STARTER_THRESHOLD",
     "aggregates": [
       {
         "name": "component_total_count",
@@ -198,13 +206,13 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
   {
     "metricName": "successful_last_24h",
     "metricValue": 99,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 100
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 100
       }
     ],
-    "limitLevel": "FREE_TIER",
+    "usageLevel": "FREE_TIER",
     "aggregates": [
       {
         "name": "unique_user_count",

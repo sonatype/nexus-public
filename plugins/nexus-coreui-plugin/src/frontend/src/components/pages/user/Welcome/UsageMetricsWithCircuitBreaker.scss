@@ -72,7 +72,7 @@ $card-width: 1016px;
       background: #2AB472;
     }
 
-    &.nxrm-meter-warning {
+    &.nxrm-meter-approaching {
       &::-webkit-meter-optimum-value {
         background: var(--nx-swatch-yellow-50);
       }
@@ -82,7 +82,7 @@ $card-width: 1016px;
       }
     }
 
-    &.nxrm-meter-danger {
+    &.nxrm-meter-exceeding {
       &::-webkit-meter-optimum-value {
         background: var(--nx-swatch-orange-50);
       }

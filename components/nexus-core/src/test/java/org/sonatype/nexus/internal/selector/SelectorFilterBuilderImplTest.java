@@ -15,7 +15,9 @@ package org.sonatype.nexus.internal.selector;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
@@ -49,13 +51,21 @@ public class SelectorFilterBuilderImplTest
   @Mock
   private ConstraintViolationFactory constraintViolationFactory;
 
+  @Mock
+  private CacheHelper cacheHelper;
+
+  @Mock
+  private Time userCacheTimeout;
+
   private SelectorFilterBuilder underTest;
 
   @Before
   public void setup() {
     SelectorFactory selectorFactory = new SelectorFactory(constraintViolationFactory, new DatastoreCselToSql(), false);
     SelectorManager
-        selectorManager = new SelectorManagerImpl(selectorConfigurationStore, securitySystem, selectorFactory);
+        selectorManager =
+        new SelectorManagerImpl(selectorConfigurationStore, securitySystem, selectorFactory, cacheHelper,
+            userCacheTimeout);
     underTest = new SelectorFilterBuilderImpl(selectorManager);
   }
 

@@ -15,7 +15,6 @@ package org.sonatype.nexus.security.authc.apikey;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Optional;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -42,7 +41,7 @@ public interface ApiKeyStore
    */
   default void persistApiKey(final String domain, final PrincipalCollection principals, final char[] apiKey) {
     persistApiKey(domain, principals, apiKey, null);
-  };
+  }
 
   /**
    * Persists an API-Key with a predetermined value.
@@ -105,4 +104,8 @@ public interface ApiKeyStore
    */
   void purgeApiKeys();
 
+  /**
+   * Remove all expired API-Keys
+   */
+  void deleteApiKeys(OffsetDateTime expiration);
 }

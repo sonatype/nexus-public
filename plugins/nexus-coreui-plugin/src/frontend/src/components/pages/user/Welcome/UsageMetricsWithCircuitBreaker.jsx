@@ -39,14 +39,23 @@ const {
   UNIQUE_LOGINS,
   REQUESTS_PER_MINUTE,
   REQUESTS_PER_DAY,
-  PERCENTAGE} = CIRCUIT_BREAKER;
-
-const SOFT_LIMIT = 'SOFT_LIMIT';
+  PERCENTAGE,
+  SOFT_THRESHOLD,
+  STARTER_THRESHOLD,
+  PRO,
+  PRO_STARTER,
+  OSS,
+  CARD_SHARED_LABELS: {
+    THRESHOLD,
+    THRESHOLD_NAME,
+    THRESHOLD_VALUE,
+    PERIOD,
+    VALUE}} = CIRCUIT_BREAKER;
 
 function Card({card, usage}) {
   const {METRIC_NAME_PRO_POSTGRESQL, SUB_TITLE_PRO_POSTGRESQL, TITLE, TITLE_PRO_POSTGRESQL} = card;
-  const cardData = usage.find(m => m.metricName === METRIC_NAME_PRO_POSTGRESQL);
-  const {metricValue} = cardData;
+  const cardData = usage.find(m => m.metricName === METRIC_NAME_PRO_POSTGRESQL) ?? [];
+  const {metricValue = 0} = cardData;
 
   return <NxCard aria-label={TITLE_PRO_POSTGRESQL ?? TITLE}>
     <NxCard.Header>
@@ -61,22 +70,25 @@ function Card({card, usage}) {
       </NxCard.Text>
     </NxCard.Content>
   </NxCard>
-};
+}
 
 function CardWithThreshold({card, usage, link, tooltip, edition}) {
-  const {AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, THRESHOLD, METRIC_NAME, SUB_TITLE, TITLE} = card;
-  const cardData = usage.find(m => m.metricName === METRIC_NAME);
-  const {aggregates, limits, metricValue} = cardData;
-  const softLimitValue = pathOr(0, [SOFT_LIMIT, 'limitValue'], indexBy(prop('limitName'), limits));
-  const exceedsWarningLimit = metricValue >= softLimitValue * PERCENTAGE;
-  const exceedsDangerLimit = metricValue >= softLimitValue;
-  const highestRecordedCount = pathOr(0, [AGGREGATE_PERIOD_30_D, 'value'], indexBy(prop('period'), aggregates));
-  const showErrorIcon = highestRecordedCount >= softLimitValue;
+  const {AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, METRIC_NAME, SUB_TITLE, TITLE} = card;
+  const cardData = usage.find(m => m.metricName === METRIC_NAME) ?? [];
+  const {aggregates = [], thresholds = [], metricValue = 0} = cardData;
+  const thresholdType = edition === PRO_STARTER ? STARTER_THRESHOLD : SOFT_THRESHOLD;
+  const thresholdValue = pathOr(0, [thresholdType, THRESHOLD_VALUE], indexBy(prop(THRESHOLD_NAME), thresholds));
+  const approachingThreshold = metricValue >= thresholdValue * PERCENTAGE;
+  const exceedingThreshold = metricValue >= thresholdValue;
+  const highestRecordedCount = pathOr(0, [AGGREGATE_PERIOD_30_D, VALUE], indexBy(prop(PERIOD), aggregates));
+  const showErrorIcon = highestRecordedCount >= thresholdValue;
   const meterClassNames = classNames({
-    'nxrm-meter-warning' : exceedsWarningLimit && !exceedsDangerLimit,
-    'nxrm-meter-danger' : exceedsDangerLimit
+    'pro-starter-edition': edition === PRO_STARTER,
+    'nxrm-meter-approaching' : approachingThreshold && !exceedingThreshold,
+    'nxrm-meter-exceeding' : exceedingThreshold
   });
   const errorIconClassNames = classNames({
+    'pro-starter-edition': edition === PRO_STARTER,
     'recorded-count-with-error-icon': showErrorIcon
   });
 
@@ -84,7 +96,7 @@ function CardWithThreshold({card, usage, link, tooltip, edition}) {
     <NxCard.Header>
       <NxH3>
         {TITLE}
-        <NxTooltip title={tooltip(softLimitValue.toLocaleString(), edition)}>
+        <NxTooltip title={tooltip(thresholdValue.toLocaleString(), edition)}>
           <NxFontAwesomeIcon icon={faInfoCircle}/>
         </NxTooltip>
       </NxH3>
@@ -94,8 +106,8 @@ function CardWithThreshold({card, usage, link, tooltip, edition}) {
         <NxMeter className={meterClassNames}
                  data-testid="meter"
                  value={metricValue}
-                 max={softLimitValue}>
-          {`${metricValue.toLocaleString()} out of ${softLimitValue.toLocaleString()}`}
+                 max={thresholdValue}>
+          {`${metricValue.toLocaleString()} out of ${thresholdValue.toLocaleString()}`}
         </NxMeter>
         <div className="nxrm-label-container">
           <div className="nxrm-label start">
@@ -103,7 +115,7 @@ function CardWithThreshold({card, usage, link, tooltip, edition}) {
             <span>{SUB_TITLE}</span>
           </div>
           <div className="nxrm-label end">
-            <span>{softLimitValue.toLocaleString()}</span>
+            <span>{thresholdValue.toLocaleString()}</span>
             <span>{THRESHOLD}</span>
           </div>
         </div>
@@ -114,75 +126,18 @@ function CardWithThreshold({card, usage, link, tooltip, edition}) {
           {highestRecordedCount.toLocaleString()}
         </span>
         <span>{HIGHEST_RECORDED_COUNT}</span>
-        {exceedsWarningLimit && <NxTextLink external href={link.URL}>{link.TEXT}</NxTextLink>}
+        {approachingThreshold && <NxTextLink external href={link.URL}>{link.TEXT}</NxTextLink>}
       </NxCard.Text>
     </NxCard.Content>
   </NxCard>
-};
-
-function CardWithHardLimitThreshold({card, usage, link, tooltip, edition}) {
-  const {AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, THRESHOLD, METRIC_NAME, SUB_TITLE, TITLE} = card;
-  const cardData = usage.find(m => m.metricName === METRIC_NAME);
-  const {aggregates, metricValue} = cardData;
-  const exceedsWarningLimit = metricValue >= card.HARD_LIMIT_VALUE * PERCENTAGE;
-  const exceedsDangerLimit = metricValue >= card.HARD_LIMIT_VALUE;
-  const highestRecordedCount = pathOr(0, [AGGREGATE_PERIOD_30_D, 'value'], indexBy(prop('period'), aggregates));
-  const showErrorIcon = highestRecordedCount >= card.HARD_LIMIT_VALUE;
-  const meterClassNames = classNames('pro-starter-edition', {
-    'nxrm-meter-warning' : exceedsWarningLimit && !exceedsDangerLimit,
-    'nxrm-meter-danger' : exceedsDangerLimit
-  });
-  const errorIconClassNames = classNames( 'pro-starter-edition', {
-    'recorded-count-with-error-icon': showErrorIcon
-  });
-
-  return <NxCard aria-label={TITLE}>
-    <NxCard.Header>
-      <NxH3>
-        {TITLE}
-        <NxTooltip title={tooltip(card.HARD_LIMIT_VALUE.toLocaleString(), edition)}>
-          <NxFontAwesomeIcon icon={faInfoCircle}/>
-        </NxTooltip>
-      </NxH3>
-    </NxCard.Header>
-    <NxCard.Content>
-      <NxCard.Text>
-        <NxMeter className={meterClassNames}
-                 data-testid="meter"
-                 value={metricValue}
-                 max={card.HARD_LIMIT_VALUE}>
-          {`${metricValue.toLocaleString()} out of ${card.HARD_LIMIT_VALUE.toLocaleString()}`}
-        </NxMeter>
-        <div className="nxrm-label-container">
-          <div className="nxrm-label start">
-            <span>{metricValue.toLocaleString()}</span>
-            <span>{SUB_TITLE}</span>
-          </div>
-          <div className="nxrm-label end">
-            <span>{card.HARD_LIMIT_VALUE.toLocaleString()}</span>
-            <span>{THRESHOLD}</span>
-          </div>
-        </div>
-      </NxCard.Text>
-      <NxCard.Text className="nxrm-highest-records">
-        <span className={errorIconClassNames}>
-          {showErrorIcon && <NxFontAwesomeIcon icon={faExclamationCircle}/>}
-          {highestRecordedCount.toLocaleString()}
-        </span>
-        <span>{HIGHEST_RECORDED_COUNT}</span>
-        {exceedsWarningLimit && <NxTextLink external href={link.URL}>{link.TEXT}</NxTextLink>}
-      </NxCard.Text>
-    </NxCard.Content>
-  </NxCard>
-};
+}
 
 function CardWithoutThreshold({card, usage, tooltip}) {
   const {AGGREGATE_PERIOD_24_H, AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, METRIC_NAME, SUB_TITLE, TITLE} = card;
-  const cardData = usage.find(m => m.metricName === METRIC_NAME);
-  const {aggregates} = cardData;
-  const metricValue = pathOr(0, ['metricValue'], cardData);
-  const peakRequestsLast24H = pathOr(0, [AGGREGATE_PERIOD_24_H, 'value'], indexBy(prop('period'), aggregates));
-  const highestRecordedCount = pathOr(0, [AGGREGATE_PERIOD_30_D, 'value'], indexBy(prop('period'), aggregates));
+  const cardData = usage.find(m => m.metricName === METRIC_NAME) ?? [];
+  const {aggregates = [], metricValue = 0} = cardData;
+  const peakRequestsLast24H = pathOr(0, [AGGREGATE_PERIOD_24_H, VALUE], indexBy(prop(PERIOD), aggregates));
+  const highestRecordedCount = pathOr(0, [AGGREGATE_PERIOD_30_D, VALUE], indexBy(prop(PERIOD), aggregates));
 
   return <NxCard aria-label={TITLE}>
     <NxCard.Header>
@@ -208,13 +163,13 @@ function CardWithoutThreshold({card, usage, tooltip}) {
       </NxCard.Text>
     </NxCard.Content>
   </NxCard>
-};
+}
 
 export default function UsageMetricsWithCircuitBreaker() {
   const isProEdition = ExtJS.isProEdition();
   const isProStarterEdition = ExtJS.isProStarterEdition();
   const isPostgresql = ExtJS.state().getValue('datastore.isPostgresql');
-  const usage = ExtJS.state().getValue('contentUsageEvaluationResult');
+  const usage = ExtJS.state().getValue('contentUsageEvaluationResult', []);
 
   if (isProEdition && isPostgresql) {
     return <>
@@ -224,21 +179,21 @@ export default function UsageMetricsWithCircuitBreaker() {
     </>
   } else if (isProEdition && !isPostgresql) {
     return <>
-      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition="PRO"/>
+      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition={PRO}/>
       <CardWithoutThreshold key={REQUESTS_PER_MINUTE.TITLE} card={REQUESTS_PER_MINUTE} usage={usage} tooltip={REQUESTS_PER_MINUTE.TOOLTIP_PRO}/>
-      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition="PRO"/>
+      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition={PRO}/>
     </>
   } else if (isProStarterEdition) {
     return <>
-      <CardWithHardLimitThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition="PRO-STARTER"/>
+      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition={PRO_STARTER}/>
       <CardWithoutThreshold key={UNIQUE_LOGINS.TITLE} card={UNIQUE_LOGINS} usage={usage} tooltip={UNIQUE_LOGINS.TOOLTIP_PRO_STARTER}/>
-      <CardWithHardLimitThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition="PRO-STARTER"/>
+      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition={PRO_STARTER}/>
     </>
   } else {
     return <>
-      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_OSS} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition="OSS"/>
+      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_OSS} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition={OSS}/>
       <CardWithoutThreshold key={UNIQUE_LOGINS.TITLE} card={UNIQUE_LOGINS} usage={usage} tooltip={UNIQUE_LOGINS.TOOLTIP}/>
-      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_OSS} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition="OSS"/>
+      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_OSS} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition={OSS}/>
     </>
   }
 };

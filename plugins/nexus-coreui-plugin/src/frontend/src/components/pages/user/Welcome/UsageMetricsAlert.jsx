@@ -13,7 +13,7 @@
 import React from 'react';
 import {NxButtonBar, NxErrorAlert, NxTextLink, NxWarningAlert} from '@sonatype/react-shared-components';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import {isEmpty} from 'ramda';
+import {isEmpty, replace} from 'ramda';
 
 import UIStrings from '../../../../constants/UIStrings';
 
@@ -23,56 +23,71 @@ const {
   WELCOME: {
     USAGE: {
       CIRCUIT_BREAKER: {
-        PERCENTAGE
+        PERCENTAGE,
+        TOTAL_COMPONENTS,
+        REQUESTS_PER_DAY,
+        STARTER_THRESHOLD
       },
       ALERTS: {
-        HARD_LIMITS,
-        WARNING_LIMITS,
+        EXCEEDING_THRESHOLDS,
+        APPROACHING_THRESHOLDS,
         LEARN_ABOUT_PRO,
         REVIEW_YOUR_USAGE,
         UPGRADING_PRO,
         SUFFIX}}}} = UIStrings;
 
-const PEAK_REQUESTS_PER_DAY = 'peak_requests_per_day';
-const COMPONENT_TOTAL_COUNT = 'component_total_count';
-const REQUESTS_PER_DAY_HARD_LIMIT = 200_000;
-const COMPONENT_COUNT_HARD_LIMIT = 120_000;
+const MessageContent = function({metricMessage, threshold}){
+  const prefix = NX.I18n.get(metricMessage.PREFIX);
+  const mid = NX.I18n.get(metricMessage.MID);
+  const suffix = NX.I18n.get(SUFFIX);
 
-const MessageContent = function({metricMessage, limit}){
   return <p>
-    {metricMessage.PREFIX(limit)}
+    {replace('{}', threshold, prefix)}
     <NxTextLink external href={REVIEW_YOUR_USAGE.URL}>{REVIEW_YOUR_USAGE.TEXT}</NxTextLink>
-    {metricMessage.MID}
+    {mid}
     <NxTextLink external href={UPGRADING_PRO.URL}>{UPGRADING_PRO.TEXT}</NxTextLink>
-    {SUFFIX}
+    {suffix}
   </p>
 }
 
 const AlertContent = function({metric, content}) {
+  const threshold = metric.thresholds.find(l => l.thresholdName === STARTER_THRESHOLD).thresholdValue;
   return <>
-    {metric.metricName === PEAK_REQUESTS_PER_DAY && <MessageContent metricMessage={content.REQUESTS_PER_DAY}
-                                                                    limit={REQUESTS_PER_DAY_HARD_LIMIT.toLocaleString()}/>}
-    {metric.metricName === COMPONENT_TOTAL_COUNT && <MessageContent metricMessage={content.TOTAL_COMPONENTS}
-                                                                    limit={COMPONENT_COUNT_HARD_LIMIT.toLocaleString()}/>}
+    {metric.metricName === REQUESTS_PER_DAY.METRIC_NAME && <MessageContent metricMessage={content.REQUESTS_PER_DAY}
+                                                                           threshold={threshold.toLocaleString()}/>}
+    {metric.metricName === TOTAL_COMPONENTS.METRIC_NAME && <MessageContent metricMessage={content.TOTAL_COMPONENTS}
+                                                                           threshold={threshold.toLocaleString()}/>}
   </>
 };
 
 export default function UsageMetricsAlert({onClose}) {
-  const metrics = ExtJS.state().getValue('contentUsageEvaluationResult');
-  const hardLimitMetrics = metrics.filter(m =>
-    (m.metricName === PEAK_REQUESTS_PER_DAY && m.metricValue >= REQUESTS_PER_DAY_HARD_LIMIT) ||
-    (m.metricName === COMPONENT_TOTAL_COUNT && m.metricValue >= COMPONENT_COUNT_HARD_LIMIT)
-  );
-  const warningLimitMetrics = metrics.filter(m =>
-    (m.metricName === PEAK_REQUESTS_PER_DAY && m.metricValue >= REQUESTS_PER_DAY_HARD_LIMIT * PERCENTAGE) ||
-    (m.metricName === COMPONENT_TOTAL_COUNT && m.metricValue >= COMPONENT_COUNT_HARD_LIMIT * PERCENTAGE)
-  );
-  const showWarningAlert = isEmpty(hardLimitMetrics) && !isEmpty(warningLimitMetrics);
+  const metrics = ExtJS.state().getValue('contentUsageEvaluationResult', []);
+  const isProStarterEdition = ExtJS.isProStarterEdition();
 
-  return <>
-    {!isEmpty(hardLimitMetrics) && <NxErrorAlert>
+  const approachingThresholdMetrics = metrics.filter(m => {
+    const thresholds = m.thresholds ?? [];
+    const threshold = thresholds.find(l => l.thresholdName === STARTER_THRESHOLD);
+    if (threshold && threshold.thresholdValue && m.metricName && m.metricValue && !isNaN(threshold.thresholdValue)) {
+      return (m.metricName === REQUESTS_PER_DAY.METRIC_NAME && m.metricValue >= threshold.thresholdValue * PERCENTAGE) ||
+          (m.metricName === TOTAL_COMPONENTS.METRIC_NAME && m.metricValue >= threshold.thresholdValue * PERCENTAGE)
+    }
+  });
+
+  const exceedingThresholdMetrics = metrics.filter(m => {
+    const thresholds = m.thresholds ?? [];
+    const threshold = thresholds.find(l => l.thresholdName === STARTER_THRESHOLD);
+    if (m.metricName && m.usageLevel && threshold && threshold.thresholdValue && !isNaN(threshold.thresholdValue)) {
+      return (m.metricName === REQUESTS_PER_DAY.METRIC_NAME && m.usageLevel === STARTER_THRESHOLD) ||
+          (m.metricName === TOTAL_COMPONENTS.METRIC_NAME && m.usageLevel === STARTER_THRESHOLD)
+    }
+  });
+
+  const showApproachingThresholdAlert = isEmpty(exceedingThresholdMetrics) && !isEmpty(approachingThresholdMetrics);
+
+  return isProStarterEdition && <>
+    {!isEmpty(exceedingThresholdMetrics) && <NxErrorAlert className="nxrm-exceeding-threshold-alert">
       <div>
-        {hardLimitMetrics.map(m => <AlertContent key={m.metricName} metric={m} content={HARD_LIMITS}/>)}
+        {exceedingThresholdMetrics.map(m => <AlertContent key={m.metricName} metric={m} content={EXCEEDING_THRESHOLDS}/>)}
       </div>
       <NxButtonBar>
         <a className="nxrm-learn-about-link"
@@ -82,9 +97,9 @@ export default function UsageMetricsAlert({onClose}) {
         </a>
       </NxButtonBar>
     </NxErrorAlert>}
-    {showWarningAlert && <NxWarningAlert onClose={onClose} role="alert">
+    {showApproachingThresholdAlert && <NxWarningAlert className="nxrm-approaching-threshold-alert" onClose={onClose} role="alert">
       <div>
-        {warningLimitMetrics.map(m => <AlertContent key={m.metricName} metric={m} content={WARNING_LIMITS}/>)}
+        {approachingThresholdMetrics.map(m => <AlertContent key={m.metricName} metric={m} content={APPROACHING_THRESHOLDS}/>)}
       </div>
     </NxWarningAlert>}
   </>

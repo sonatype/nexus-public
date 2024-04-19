@@ -21,6 +21,7 @@ import java.util.Optional;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 
@@ -52,10 +53,14 @@ public class RepositoryNameIdMappingCacheTest
 
   private RepositoryNameIdMappingCache underTest;
 
+  @Mock
+  private DatabaseCheck databaseCheck;
+
   @Before
   public void setup() {
     when(formatStoreManager.contentRepositoryStore(any())).thenReturn(contentRepositoryStore);
-    underTest = new RepositoryNameIdMappingCache(formatStoreManager, formatNames);
+    when(databaseCheck.isPostgresql()).thenReturn(true);
+    underTest = new RepositoryNameIdMappingCache(formatStoreManager, formatNames, databaseCheck);
   }
 
   @Test

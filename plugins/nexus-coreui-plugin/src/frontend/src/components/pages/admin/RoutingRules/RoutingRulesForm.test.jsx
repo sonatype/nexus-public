@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {act} from 'react-dom/test-utils';
-import {waitFor, waitForElementToBeRemoved, within, screen} from '@testing-library/react';
+import {waitFor, waitForElementToBeRemoved, within, screen, queryByLabelText} from '@testing-library/react';
 import {when} from 'jest-when';
 import userEvent from '@testing-library/user-event';
 
@@ -59,6 +59,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.formSelectors,
+  matcher: (index) => screen.queryByRole('textbox', { name: UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)}),
   querySubmitButton: () => screen.queryByRole('button', {name: 'Create Routing Rule'})
 };
 
@@ -81,7 +82,6 @@ describe('RoutingRulesForm', function() {
       description: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.DESCRIPTION_LABEL),
       mode: () => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MODE_LABEL),
       emptyMatcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)),
-      matcher: (index) => queryByLabelText(UIStrings.ROUTING_RULES.FORM.MATCHER_LABEL(index)).querySelector('input'),
       matcherButton: (index) => within(screen.getByText('Matchers').closest('.nx-form-group')).getAllByRole('button')[index],
       createButton: () => queryByText(UIStrings.ROUTING_RULES.FORM.CREATE_BUTTON, {selector: '.nx-btn'}),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
@@ -102,14 +102,14 @@ describe('RoutingRulesForm', function() {
       }
     });
 
-    const {loadingMask, name, description, mode, matcher} = renderEditView(itemId);
+    const {loadingMask, name, description, mode} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
     expect(name()).toHaveValue('allow-all');
     expect(description()).toHaveValue('Allow all requests');
     expect(mode()).toHaveValue('ALLOW');
-    expect(matcher(0)).toHaveValue('.*');
+    expect(selectors.matcher(0)).toHaveValue('.*');
   });
 
   it('renders an error message', async function() {
@@ -123,12 +123,12 @@ describe('RoutingRulesForm', function() {
   });
 
   it('renders an error message when saving an invalid field', async function() {
-    const {name, matcher, createButton, getByText} = renderCreateView();
+    const {name, createButton, getByText} = renderCreateView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await TestUtils.changeField(name, 'newValue');
-    await TestUtils.changeField(() => matcher(0), '.*');
+    await TestUtils.changeField(() => selectors.matcher(0), '.*');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     when(axios.post).calledWith('/service/rest/internal/ui/routing-rules/', expect.any(Object)).mockRejectedValue({
@@ -150,31 +150,31 @@ describe('RoutingRulesForm', function() {
   it('requires the name, description, and at least one matcher', async function() {
     axios.get.mockResolvedValue({data: []});
 
-    const {name, description, matcher} = renderCreateView();
+    const {name, description} = renderCreateView();
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(description, '');
-    await TestUtils.changeField(() => matcher(0), '.*');
+    await TestUtils.changeField(() => selectors.matcher(0), '.*');
     userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(description, '')
-    await TestUtils.changeField(() => matcher(0), '');
+    await TestUtils.changeField(() => selectors.matcher(0), '');
     userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, '');
     await TestUtils.changeField(description, 'description');
-    await TestUtils.changeField(() => matcher(0), '');
+    await TestUtils.changeField(() => selectors.matcher(0), '');
     userEvent.click(selectors.querySubmitButton());
     expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
     await TestUtils.changeField(name, 'name');
     await TestUtils.changeField(description, 'description');
-    await TestUtils.changeField(() => matcher(0), '.*');
+    await TestUtils.changeField(() => selectors.matcher(0), '.*');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -218,7 +218,7 @@ describe('RoutingRulesForm', function() {
     axios.get.mockResolvedValue({data: []});
     axios.post.mockResolvedValue(null);
 
-    const {loadingMask, name, description, mode, matcher, createButton} = renderCreateView();
+    const {loadingMask, name, description, mode, createButton} = renderCreateView();
 
     await waitForElementToBeRemoved(loadingMask);
 
@@ -227,7 +227,7 @@ describe('RoutingRulesForm', function() {
     await TestUtils.changeField(name, 'block-all');
     await TestUtils.changeField(description, 'Block all requests');
     await TestUtils.changeField(mode, 'BLOCK');
-    await TestUtils.changeField(() => matcher(0), '.*');
+    await TestUtils.changeField(() => selectors.matcher(0), '.*');
 
     await waitFor(() => expect(window.dirty).toEqual(['RoutingRulesFormMachine']));
 
@@ -253,13 +253,13 @@ describe('RoutingRulesForm', function() {
       }
     });
 
-    const {loadingMask, matcher, saveButton, matcherButton, emptyMatcher} = renderEditView(itemId);
+    const {loadingMask, saveButton, matcherButton, emptyMatcher} = renderEditView(itemId);
 
     await waitForElementToBeRemoved(loadingMask);
 
-    expect(matcher(0)).toHaveValue('a');
-    expect(matcher(1)).toHaveValue('b');
-    expect(matcher(2)).toHaveValue('c');
+    expect(selectors.matcher(0)).toHaveValue('a');
+    expect(selectors.matcher(1)).toHaveValue('b');
+    expect(selectors.matcher(2)).toHaveValue('c');
 
     expect(matcherButton(0)).toBeInTheDocument();
     expect(matcherButton(1)).toBeInTheDocument();

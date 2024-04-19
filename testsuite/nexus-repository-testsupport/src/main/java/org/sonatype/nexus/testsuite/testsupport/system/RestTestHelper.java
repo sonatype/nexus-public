@@ -352,6 +352,15 @@ public class RestTestHelper
   public Response get(
       final String path,
       @Nullable final String username,
+      @Nullable final String password,
+      final Map<String, String> headers)
+  {
+    return execute(new HttpGet(), path, headers, Collections.emptyMap(), username, password);
+  }
+
+  public Response get(
+      final String path,
+      @Nullable final String username,
       @Nullable final String password)
   {
     return execute(new HttpGet(), path, Collections.emptyMap(), username, password);
@@ -406,9 +415,20 @@ public class RestTestHelper
     }
   }
 
+  public Response execute(
+      final HttpRequestBase request,
+      final String path,
+      final Map<String, String> queryParams,
+      @Nullable final String username,
+      @Nullable final String password)
+  {
+    return execute(request, path, Collections.emptyMap(), queryParams, username, password);
+  }
+
   private Response execute(
       final HttpRequestBase request,
       final String path,
+      final Map<String, String> headers,
       final Map<String, String> queryParams,
       @Nullable final String username,
       @Nullable final String password)
@@ -422,6 +442,8 @@ public class RestTestHelper
       request.setHeader(HttpHeaders.AUTHORIZATION,
           "Basic " + new String(Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8))));
     }
+
+    headers.forEach((key, value) -> request.setHeader(key, value));
 
     try (CloseableHttpClient client = username == null ? client() : client(username, password)) {
       try (CloseableHttpResponse response = client.execute(request)) {

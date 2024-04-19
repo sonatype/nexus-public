@@ -19,8 +19,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.cache.Cache;
+import javax.cache.configuration.Factory;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
@@ -29,6 +33,7 @@ import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
+import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.OrientSelectorConfiguration;
@@ -40,6 +45,8 @@ import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.subject.Subject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,7 +59,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -82,6 +94,18 @@ public class SelectorManagerImplTest
   @Mock
   private VariableSource variableSource;
 
+  @Mock
+  private CacheHelper cacheHelper;
+
+  @Mock
+  private Time userCacheTimeout;
+
+  @Mock
+  private Subject subject;
+
+  @Mock
+  private Cache<Object, Object> userCache;
+
   private SelectorManagerImpl manager;
 
   private List<SelectorConfiguration> selectorConfigurations;
@@ -93,11 +117,19 @@ public class SelectorManagerImplTest
 
   @Before
   public void setUp() throws Exception {
-    this.manager = new SelectorManagerImpl(store, securitySystem, selectorFactory);
+    this.manager = new SelectorManagerImpl(store, securitySystem, selectorFactory, cacheHelper, userCacheTimeout);
 
     when(securitySystem.getAuthorizationManager(DEFAULT_SOURCE)).thenReturn(authorizationManager);
-    when(securitySystem.currentUser()).thenReturn(user);
     when(securitySystem.listRoles(UserManager.DEFAULT_SOURCE)).thenReturn(new HashSet<>());
+    when(securitySystem.getSubject()).thenReturn(subject);
+
+    when(subject.isAuthenticated()).thenReturn(true);
+    when(subject.getPrincipal()).thenReturn("user");
+    when(subject.getPrincipals()).thenReturn(new SimplePrincipalCollection("user", "default"));
+
+    when(cacheHelper.maybeCreateCache(anyString(), any(Factory.class))).thenReturn(userCache);
+
+    when(userCache.get(any())).thenReturn(user);
 
     selectorConfigurations = new ArrayList<>();
 
@@ -258,6 +290,25 @@ public class SelectorManagerImplTest
     Optional<SelectorConfiguration> configuration = manager.findByName(expectedSelector.getName());
 
     assertThat(configuration.get(), is(expectedSelector));
+  }
+
+  @Test
+  public void testUserIsTakenFromCache() throws UserNotFoundException {
+    manager.browseActive(null, null);
+
+    verify(userCache, atLeastOnce()).get(any());
+    verify(securitySystem, never()).currentUser();
+  }
+
+  @Test
+  public void testUserIsTakenFromSystemIfNoValueInCache() throws UserNotFoundException {
+    when(userCache.get(any())).thenReturn(null);
+    when(securitySystem.currentUser()).thenReturn(user);
+
+    manager.browseActive(null, null);
+
+    verify(securitySystem, atMostOnce()).currentUser();
+    verify(userCache, atLeastOnce()).put(any(), any());
   }
 
   private SelectorConfiguration getSelectorConfiguration(final String type, final String expression) {

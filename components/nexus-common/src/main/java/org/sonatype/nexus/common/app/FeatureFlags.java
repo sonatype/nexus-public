@@ -135,7 +135,7 @@ public interface FeatureFlags
    */
   String REPOSITORY_SIZE_ENABLED = "nexus.repository.size";
 
-  String REPOSITORY_SIZE_ENABLED_NAMED = "${nexus.repository.size:-false}";
+  String REPOSITORY_SIZE_ENABLED_NAMED = "${nexus.repository.size:-true}";
 
   String CONTENT_USAGE_ENABLED_NAMED = "${nexus.contentUsageMetrics.enabled:-true}";
 

@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -66,10 +65,11 @@ public class ApiKeyStoreImpl
   private final DefaultApiKeyFactory defaultApiKeyFactory;
 
   @Inject
-  public ApiKeyStoreImpl(final DataSessionSupplier sessionSupplier,
-                         final UserPrincipalsHelper principalsHelper,
-                         final Map<String, ApiKeyFactory> apiKeyFactories,
-                         final DefaultApiKeyFactory defaultApiKeyFactory)
+  public ApiKeyStoreImpl(
+      final DataSessionSupplier sessionSupplier,
+      final UserPrincipalsHelper principalsHelper,
+      final Map<String, ApiKeyFactory> apiKeyFactories,
+      final DefaultApiKeyFactory defaultApiKeyFactory)
   {
     super(sessionSupplier);
 
@@ -148,7 +148,7 @@ public class ApiKeyStoreImpl
   public void purgeApiKeys() {
     checkCancellation();
     List<PrincipalCollection> candidates = newArrayList(doBrowsePrincipals());
-    for (Iterator<PrincipalCollection> itr = candidates.iterator(); itr.hasNext();) {
+    for (Iterator<PrincipalCollection> itr = candidates.iterator(); itr.hasNext(); ) {
       checkCancellation();
       if (userExists(itr.next())) {
         itr.remove(); // don't purge keys belonging to existing users
@@ -210,6 +210,12 @@ public class ApiKeyStoreImpl
   @Override
   public void deleteApiKeys(final String domain) {
     dao().deleteApiKeysByDomain(domain);
+  }
+
+  @Transactional
+  @Override
+  public void deleteApiKeys(final OffsetDateTime expiration) {
+    dao().deleteApiKeyByExpirationDate(expiration);
   }
 
   /*

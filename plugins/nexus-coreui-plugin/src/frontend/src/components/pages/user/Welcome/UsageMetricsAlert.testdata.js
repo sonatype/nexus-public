@@ -14,74 +14,167 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-export const HARD_LIMIT_REACHED = [
+export const STARTER_THRESHOLD_REACHED = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 200000,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 187500
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 187500
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+        "thresholdValue": 200000
       }
     ],
-    "limitLevel": "SOFT_LIMIT"
+    "usageLevel": "STARTER_THRESHOLD"
   },
   {
     "metricName": "component_total_count",
     "metricValue": 120000,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 56250
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 56250
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+        "thresholdValue": 120000
       }
     ],
-    "limitLevel": "SOFT_LIMIT"
+    "usageLevel": "STARTER_THRESHOLD"
   },
   {
     "metricName": "successful_last_24h",
     "metricValue": 26,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 75
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 75
       }
     ],
-    "limitLevel": "FREE_TIER"
+    "usageLevel": "FREE_TIER"
   }
 ];
 
-export const WARNING_LIMIT_REACHED = [
+export const SOFT_THRESHOLD_REACHED = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 150000,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 20000
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 20000
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+        "thresholdValue": 200000
       }
     ],
-    "limitLevel": "SOFT_LIMIT"
+    "usageLevel": "SOFT_THRESHOLD"
   },
   {
     "metricName": "component_total_count",
     "metricValue": 90000,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 100000
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 100000
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+        "thresholdValue": 120000
       }
     ],
-    "limitLevel": "SOFT_LIMIT"
+    "usageLevel": "FREE_TIER"
   },
   {
     "metricName": "successful_last_24h",
     "metricValue": 26,
-    "limits": [
+    "thresholds": [
       {
-        "limitName": "SOFT_LIMIT",
-        "limitValue": 75
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 75
       }
     ],
-    "limitLevel": "FREE_TIER"
+    "usageLevel": "FREE_TIER"
   }
 ];
+
+export const NO_THRESHOLDS_DATA = [
+  {
+    "metricName": "component_total_count",
+    "metricValue": 90000,
+    "usageLevel": "FREE_TIER"
+  },
+]
+
+export const NO_THRESHOLD_VALUE_DATA = [
+  {
+    "metricName": "peak_requests_per_day",
+    "metricValue": 200000,
+    "thresholds": [
+      {
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 187500
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+      }
+    ],
+    "usageLevel": "STARTER_THRESHOLD"
+  }
+]
+
+export const NO_THRESHOLD_NAME_DATA = [
+  {
+    "metricName": "peak_requests_per_day",
+    "metricValue": 200000,
+    "thresholds": [
+      {
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 187500
+      },
+      {
+        "thresholdValue": 187500
+      }
+    ],
+    "usageLevel": "STARTER_THRESHOLD"
+  }
+]
+
+export const INVALID_THRESHOLD_VALUE_DATA = [
+  {
+    "metricName": "peak_requests_per_day",
+    "metricValue": 200000,
+    "thresholds": [
+      {
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 187500
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+        "thresholdValue": "XYZ"
+      }
+    ],
+    "usageLevel": "STARTER_THRESHOLD"
+  }
+]
+
+export const NO_USAGE_LEVEL_DATA = [
+  {
+    "metricName": "peak_requests_per_day",
+    "metricValue": 200000,
+    "thresholds": [
+      {
+        "thresholdName": "SOFT_THRESHOLD",
+        "thresholdValue": 187500
+      },
+      {
+        "thresholdName": "STARTER_THRESHOLD",
+        "thresholdValue": "XYZ"
+      }
+    ],
+  }
+]
