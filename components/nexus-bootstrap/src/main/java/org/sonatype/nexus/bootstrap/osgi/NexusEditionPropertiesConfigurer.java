@@ -20,6 +20,8 @@ import java.util.Properties;
 
 import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import static java.lang.Boolean.parseBoolean;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
 
@@ -55,7 +57,7 @@ public class NexusEditionPropertiesConfigurer
 
     requireProperty(properties, NEXUS_EDITION);
     requireProperty(properties, NEXUS_DB_FEATURE);
-
+    ensureHACIsDisabled();
     return properties;
   }
 
@@ -146,6 +148,14 @@ public class NexusEditionPropertiesConfigurer
   private void requireProperty(final Properties properties, final String name) {
     if (!properties.containsKey(name)) {
       throw new IllegalStateException("Missing required property: " + name);
+    }
+  }
+
+  @VisibleForTesting
+  void ensureHACIsDisabled() {
+    if (Boolean.getBoolean("nexus.clustered") || parseBoolean(System.getenv("NEXUS_CLUSTERED"))) {
+      throw new IllegalStateException(
+          "High Availability Clustering (HA-C) is a legacy feature and is no longer supported");
     }
   }
 }
