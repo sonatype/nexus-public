@@ -29,6 +29,7 @@ import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.AUDITLOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SYSINFO
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG
 
 /**
@@ -42,12 +43,14 @@ class SupportZipGeneratorImplTest
   def mockTaskLogCustomizer = Mock(SupportBundleCustomizer)
   def mockAuditLogCustomizer = Mock(SupportBundleCustomizer)
   def mockJmxCustomizer = Mock(SupportBundleCustomizer)
+  def mockSysInfoCustomizer = Mock(SupportBundleCustomizer)
   def throwExceptionCustomizer = Mock(SupportBundleCustomizer)
   def throwExceptionInMiddleCustomizer = Mock(SupportBundleCustomizer)
   def logContentSource = new TestGeneratedContentSourceSupport(LOG, 'log/nexus.log', OPTIONAL)
   def taskLogContentSource = new TestGeneratedContentSourceSupport(TASKLOG, 'log/tasks/task.log', OPTIONAL)
   def auditLogContentSource = new TestGeneratedContentSourceSupport(AUDITLOG, 'log/audit.log', OPTIONAL)
   def jmxContentSource = new TestGeneratedContentSourceSupport(JMX, 'info/jmx.json', OPTIONAL)
+  def sysInfoContentSource = new TestGeneratedContentSourceSupport(SYSINFO, 'info/sysinfo.json', OPTIONAL)
   def throwExceptionSource = new GeneratedContentSourceSupport(JMX, 'info/jmx.json', OPTIONAL) {
     @Override
     protected void generate(final File file) throws Exception {
@@ -62,18 +65,19 @@ class SupportZipGeneratorImplTest
   }
 
   def setup() {
-      mockLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << logContentSource }
-      mockTaskLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << taskLogContentSource }
-      mockAuditLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << auditLogContentSource }
-      mockJmxCustomizer.customize(_) >> { SupportBundle bundle -> bundle << jmxContentSource }
-      throwExceptionCustomizer.customize(_) >> { SupportBundle bundle -> bundle << throwExceptionSource }
-      throwExceptionInMiddleCustomizer.customize(_) >> { SupportBundle bundle ->
-        bundle.add(logContentSource)
-        bundle.add(throwExceptionGetContentSource)
-        bundle.add(taskLogContentSource)
+    mockLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << logContentSource }
+    mockTaskLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << taskLogContentSource }
+    mockAuditLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << auditLogContentSource }
+    mockJmxCustomizer.customize(_) >> { SupportBundle bundle -> bundle << jmxContentSource }
+    mockSysInfoCustomizer.customize(_) >> { SupportBundle bundle -> bundle << sysInfoContentSource }
+    throwExceptionCustomizer.customize(_) >> { SupportBundle bundle -> bundle << throwExceptionSource }
+    throwExceptionInMiddleCustomizer.customize(_) >> { SupportBundle bundle ->
+      bundle.add(logContentSource)
+      bundle.add(throwExceptionGetContentSource)
+      bundle.add(taskLogContentSource)
 
-        return bundle
-      }
+      return bundle
+    }
   }
 
   def "Support zip is generated from requested sources"() {
@@ -156,7 +160,7 @@ class SupportZipGeneratorImplTest
     when:
       generator.generate(req, 'prefix', out)
       def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
-      List<ZipEntry> entries = []
+      def entries = []
       for (def entry = zip.getNextEntry(); entry; entry = zip.getNextEntry()) {
         entries << entry
       }
@@ -174,7 +178,7 @@ class SupportZipGeneratorImplTest
     when:
       generator.generate(req, 'prefix', out)
       def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
-      List<ZipEntry> entries = []
+      def entries = []
       for (def entry = zip.getNextEntry(); entry; entry = zip.getNextEntry()) {
         entries << entry
       }
@@ -182,6 +186,81 @@ class SupportZipGeneratorImplTest
       entries.find { it.name == 'prefix/log/tasks/task.log' } != null
       entries.find { it.name == 'prefix/info/jmx.json' } != null
       entries.find { it.name == 'prefix/log/nexus.log' } != null
+  }
+
+  def "Non-log files are not truncated regardless of size"() {
+    given:
+      def sysInfoContentSource = new TestGeneratedContentSourceSupport(SYSINFO, 'sys/sysinfo.json', OPTIONAL)
+      sysInfoContentSource.contentSize = 50000
+      def req = new SupportZipGeneratorRequest(systemInformation: true, limitFileSizes: true)
+      def out = new ByteArrayOutputStream()
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockSysInfoCustomizer],
+          ByteSize.bytes(30000), ByteSize.bytes(50000))
+
+    when:
+      generator.generate(req, 'prefix', out)
+      def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
+      def entries = []
+      for (def entry = zip.getNextEntry(); entry; entry = zip.getNextEntry()) {
+        entries << entry
+      }
+
+    then:
+      entries.find { it.name == 'prefix/info/sysinfo.json' } != null
+      entries.find { it.name == 'prefix/truncated' } == null
+  }
+
+  def "Log files are truncated if they exceed maximum file size"() {
+    given:
+      logContentSource.contentSize = 40000
+      def req = new SupportZipGeneratorRequest(log: true, limitFileSizes: true)
+      def out = new ByteArrayOutputStream()
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer],
+          ByteSize.bytes(30000), ByteSize.bytes(50000))  // 30 MB max file size, 50 MB max zip size
+
+    when:
+      generator.generate(req, 'prefix', out)
+      def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
+      def entries = []
+      for (def entry = zip.getNextEntry(); entry; entry = zip.getNextEntry()) {
+        entries << entry
+      }
+
+    then:
+      entries.find { it.name == 'prefix/log/nexus.log' } != null
+      entries.find { it.name == 'prefix/truncated' } != null
+  }
+
+  def "Validate log truncation and inclusion of other files without truncation"() {
+    given:
+      logContentSource.contentSize = 40000  // Expected to be truncated
+      taskLogContentSource.contentSize = 15000  // Expected not to be truncated
+      auditLogContentSource.contentSize = 80000  // Expected to be truncated
+      jmxContentSource.contentSize = 50000  // Expected not to be truncated
+      sysInfoContentSource.contentSize = 60000  // Expected not to be truncated
+
+      def req = new SupportZipGeneratorRequest(systemInformation: true, jmx: true, log: true, taskLog: true, auditLog: true, limitFileSizes: true, limitZipSize: true)
+      def out = new ByteArrayOutputStream()
+
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer, mockSysInfoCustomizer],
+          ByteSize.bytes(30000), ByteSize.bytes(50000))
+
+    when:
+      generator.generate(req, 'prefix', out)
+      def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
+      def entries = []
+      ZipEntry entry
+      while ((entry = zip.getNextEntry()) != null) {
+        entries << entry
+      }
+
+    then:
+      entries.find { it.name == 'prefix/log/nexus.log' && it.size < 40000 } != null
+      entries.find { it.name == 'prefix/log/tasks/task.log' && it.size == 15000 } != null
+      entries.find { it.name == 'prefix/log/audit.log' && it.size < 80000 } != null
+      entries.find { it.name == 'prefix/info/jmx.json' && it.size == 50000 } != null
+      entries.find { it.name == 'prefix/info/sysinfo.json' && it.size == 60000 } != null
+      entries.find { it.name == 'prefix/truncated' } != null
   }
 
   @InheritConstructors
