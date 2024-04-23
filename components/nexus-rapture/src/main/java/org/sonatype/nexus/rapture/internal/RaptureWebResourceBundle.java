@@ -69,6 +69,8 @@ public class RaptureWebResourceBundle
     extends ComponentSupport
     implements WebResourceBundle
 {
+  public static final String PRO_STARTER = "PRO-STARTER";
+
   private final ApplicationVersion applicationVersion;
 
   private final Provider<HttpServletRequest> servletRequestProvider;
@@ -85,7 +87,7 @@ public class RaptureWebResourceBundle
 
   private final String cacheBuster;
 
-  private final boolean designInput;
+  private final boolean analyticsEnabled;
 
   public final static String PROPERTY_WEBRESOURCES_CACHEBUSTER = "nexus.webresources.cachebuster";
 
@@ -97,7 +99,7 @@ public class RaptureWebResourceBundle
                                   final List<UiPluginDescriptor> pluginDescriptors,
                                   final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors,
                                   @Nullable @Named("${" + PROPERTY_WEBRESOURCES_CACHEBUSTER + "}") final String cacheBuster,
-                                  @Named("${nexus.design.input:-false}") final boolean designInput)
+                                  @Named("${nexus.analytics.enabled:-true}") final boolean analyticsEnabled)
   {
     this.applicationVersion = checkNotNull(applicationVersion);
     this.servletRequestProvider = checkNotNull(servletRequestProvider);
@@ -105,7 +107,7 @@ public class RaptureWebResourceBundle
     this.templateHelper = checkNotNull(templateHelper);
     this.pluginDescriptors = checkNotNull(pluginDescriptors);
     this.extJsPluginDescriptors = checkNotNull(extJsPluginDescriptors);
-    this.designInput = designInput;
+    this.analyticsEnabled = analyticsEnabled;
     if (cacheBuster == null) {
       this.cacheBuster = applicationVersion.getBuildTimestamp();
     } else {
@@ -189,7 +191,7 @@ public class RaptureWebResourceBundle
                 .set("styles", getStyles())
                 .set("scripts", getScripts())
                 .set("util", new TemplateUtil())
-                .set("designInput", designInput)
+                .set("analyticsEnabled", (applicationVersion.getEdition().equals(PRO_STARTER) || analyticsEnabled))
         );
       }
     };
