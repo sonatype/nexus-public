@@ -33,6 +33,9 @@ import { useMachine } from '@xstate/react';
 import { createPortal } from 'react-dom';
 import { ListMachineUtils } from '@sonatype/nexus-ui-plugin';
 import classNames from 'classnames';
+import UIStrings from '../../../../constants/UIStrings';
+
+const {ROLES: {SELECTION_MODAL}} = UIStrings;
 
 export default function PrivilegesSelectionModal({
     title,
@@ -98,12 +101,13 @@ export default function PrivilegesSelectionModal({
         <header className="nx-modal-header">
           <NxH2 className="nx-h2" id="modal-header-text">{title} Selection</NxH2>
         </header>
-        <div>
+        <div className="nx-modal__filter-box">
           <NxFilterInput className="nx-modal__filter"
             placeholder="Filter"
             value={filterText}
             onChange={filter} 
             id= "modalFilter"/>
+          {SELECTION_MODAL.WILDCARD_TEXT}
         </div>
         <div className="nx-modal-content">
           <NxTable className="modal-table">

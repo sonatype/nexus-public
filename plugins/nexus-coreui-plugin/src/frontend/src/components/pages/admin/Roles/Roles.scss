@@ -27,6 +27,12 @@
 .nx-modal__filter {
     float: right;
     margin-top: 24px;
+    margin-bottom: 6px;
+}
+
+.nx-modal__filter-box {
+  display: grid;
+  justify-content: end;
 }
 
 .modal-selection-section {

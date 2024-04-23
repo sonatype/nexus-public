@@ -66,12 +66,16 @@ const RoleSelectionMachine = ListMachineUtils.buildListMachine({
     }),
 
     filterData: assign({
-      filteredData: ({ filter, data }, _) =>
-        data.filter(({ name, description }) => ListMachineUtils.hasAnyMatches([name, description], filter)),
-      numberOfRoles: ({ filter, data }, _) =>
-        (data.filter(({ name, description }) => ListMachineUtils.hasAnyMatches([name, description], filter))).length,
+      filteredData: ({ filter, data }, _) => {
+        const regExp = new RegExp('[-]?' + filter.toLowerCase().replace(/\*/g, '.*')) ;
+        return data.filter(({ name, description }) => regExp.test(name.toLowerCase()) || regExp.test(description.toLowerCase()));
+      },
+      numberOfRoles: ({ filter, data }, _) => {
+        const regExp = new RegExp('[-]?' + filter.toLowerCase().replace(/\*/g, '.*'));
+        return data.filter(({ name, description }) => regExp.test(name.toLowerCase()) ||
+          regExp.test(description.toLowerCase())).length;
+      }
     }),
-
     sortData: assign({
       filteredData: ({ sortField, sortDirection, filteredData }) => {
         if (sortField === 'select') {
