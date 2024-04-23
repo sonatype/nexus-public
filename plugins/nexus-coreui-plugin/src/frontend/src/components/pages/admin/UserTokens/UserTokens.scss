@@ -10,12 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
- /*
-  TODO: Remove this custom css once the NxTransferListHalf unlock the ability to turn this icon off officially.
-  https://issues.sonatype.org/browse/RSC-1254
-*/
-.nxrm-user-tokens {
-  .nx-modal-content {
-    padding-bottom: 0;
+.nxrm-user-tokens-expiry-field {
+  .nx-field-validation-message {
+    white-space: nowrap;
   }
 }
