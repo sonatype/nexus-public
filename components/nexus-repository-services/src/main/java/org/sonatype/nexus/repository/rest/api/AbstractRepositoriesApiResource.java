@@ -33,6 +33,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -56,6 +57,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.sonatype.nexus.rest.ApiDocConstants.BLOBSTORE_CHANGE_NOT_ALLOWED;
+import static org.sonatype.nexus.rest.ApiDocConstants.BLOBSTORE_NOT_FOUND;
 
 /**
  * @since 3.20
@@ -69,6 +71,8 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   private AuthorizingRepositoryManager authorizingRepositoryManager;
 
   protected RepositoryManager repositoryManager;
+
+  protected BlobStoreManager blobStoreManager;
 
   private AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter;
 
@@ -94,6 +98,11 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   }
 
   @Inject
+  public void setBlobStoreManager(final BlobStoreManager blobStoreManager) {
+    this.blobStoreManager = blobStoreManager;
+  }
+
+  @Inject
   public void setConfigurationAdapter(final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter) {
     this.configurationAdapter = checkNotNull(configurationAdapter);
   }
@@ -114,6 +123,8 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   public Response createRepository(@NotNull @Valid final T request) {
     verifyAPIEnabled(request.getFormat());
     try {
+      Configuration configuration = configurationAdapter.convert(request);
+      validateRequest(configuration, configuration.getRepositoryName());
       authorizingRepositoryManager.create(configurationAdapter.convert(request));
       return Response.status(Status.CREATED).build();
     }
@@ -187,18 +198,23 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     return true;
   }
 
-  private void validateRequest(final Configuration newConfig, String repositoryName) {
+  private void validateRequest(final Configuration newConfig, final String repositoryName) {
     ensureRepositoryNameMatches(newConfig, repositoryName);
-    ensureBlobStoreNameMatches(newConfig, repositoryName);
+    validateBlobStoreName(newConfig, repositoryName);
   }
 
-  private void ensureRepositoryNameMatches(Configuration newConfig, final String repositoryName) {
+  private void ensureRepositoryNameMatches(final Configuration newConfig, final String repositoryName) {
     if (!repositoryName.equals(newConfig.getRepositoryName())) {
       throw new ValidationErrorsException("name", "Renaming a repository is not supported");
     }
   }
 
-  private void ensureBlobStoreNameMatches(Configuration newConfiguration, String repositoryName) {
+  private void validateBlobStoreName(final Configuration newConfiguration, final String repositoryName) {
+    String blobStoreName = (String) newConfiguration.getAttributes().get("storage").get("blobStoreName");
+    if(!blobStoreManager.exists(blobStoreName)) {
+      throw new ValidationErrorsException("BlobStoreName", BLOBSTORE_NOT_FOUND);
+    }
+
     Repository repository = repositoryManager.get(repositoryName);
     if (repository == null) {
       return;
