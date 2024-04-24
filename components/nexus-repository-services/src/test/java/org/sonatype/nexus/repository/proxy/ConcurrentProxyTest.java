@@ -310,7 +310,8 @@ public class ConcurrentProxyTest
   public void noDownloadCooperation() throws Exception {
     int iterations = 3;
 
-    underTest.configureCooperation(cooperationFactory, false, Duration.ofSeconds(0), Duration.ofSeconds(0), 0);
+    underTest.configureCooperation(cooperationFactory, cooperationFactory, false, false, false, Duration.ofSeconds(0),
+        Duration.ofSeconds(0), 0);
     underTest.buildCooperation();
 
     // indirect paths will trigger a request for the index to resolve the final URL
@@ -370,7 +371,8 @@ public class ConcurrentProxyTest
   public void downloadCooperation() throws Exception {
     int iterations = 3;
 
-    underTest.configureCooperation(cooperationFactory, true, Duration.ofSeconds(60), Duration.ofSeconds(10),
+    underTest.configureCooperation(cooperationFactory, cooperationFactory, true, false, true, Duration.ofSeconds(60),
+        Duration.ofSeconds(10),
         NUM_CLIENTS);
     underTest.buildCooperation();
 
@@ -459,7 +461,8 @@ public class ConcurrentProxyTest
   public void limitCooperatingThreads() throws Exception {
     int threadLimit = 10;
 
-    underTest.configureCooperation(cooperationFactory, true, Duration.ofSeconds(60), Duration.ofSeconds(10),
+    underTest.configureCooperation(cooperationFactory, cooperationFactory, false, false, true, Duration.ofSeconds(60),
+        Duration.ofSeconds(10),
         threadLimit);
     underTest.buildCooperation();
 
