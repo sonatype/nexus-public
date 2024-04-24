@@ -138,8 +138,7 @@ public class RaptureWebResourceBundle
         index_html(),
         bootstrap_js(),
         baseapp_css(),
-        app_js(),
-        copyright_html()
+        app_js()
     );
   }
 
@@ -248,33 +247,6 @@ public class RaptureWebResourceBundle
         return render("baseapp_css.vm", new TemplateParameters()
             .set("debug", isDebug())
             .set("urlSuffix", generateUrlSuffix())
-        );
-      }
-    };
-  }
-
-  /**
-   * The baseapp css file.
-   */
-  private WebResource copyright_html() {
-    return new TemplateWebResource()
-    {
-      @Override
-      public String getPath() {
-        return "/COPYRIGHT.html";
-      }
-
-      @Override
-      public String getContentType() {
-        return HTML;
-      }
-
-      @Override
-      protected byte[] generate() throws IOException {
-        String edition = "OSS".equals(applicationVersion.getEdition()) ? "oss" : "pro";
-
-        return render("COPYRIGHT.vm", new TemplateParameters()
-            .set("edition",  edition)
         );
       }
     };

@@ -75,6 +75,8 @@ public class OrientApiKeyEntityAdapter
 
   private static final String P_CREATED = "created";
 
+  private static final String P_EXPIRED_TIME = "expired";
+
   private static final String I_APIKEY = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_DOMAIN)
@@ -99,6 +101,10 @@ public class OrientApiKeyEntityAdapter
 
   private static final String COUNT_DOMAIN_QUERY_STRING =
       format("SELECT count(*) as count FROM %s WHERE %s = :domain", DB_CLASS, P_DOMAIN);
+
+  private static final String
+      EXPIRED_QUERY_STRING = format(
+      "SELECT FROM %s WHERE %s < :expired", DB_CLASS, P_CREATED);
 
   private final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
 
@@ -269,5 +275,14 @@ public class OrientApiKeyEntityAdapter
     checkNotNull(domain);
     checkNotNull(apiKey);
     return findByApiKey.execute(db, domain, String.valueOf(apiKey));
+  }
+
+  public Iterable<OrientApiKey> browseByExpiration(
+      final ODatabaseDocumentTx db,
+      final OffsetDateTime expiration)
+  {
+    Map<String, Object> params = ImmutableMap.of(P_EXPIRED_TIME, expiration.toInstant().toEpochMilli());
+
+    return query(db, EXPIRED_QUERY_STRING, params);
   }
 }

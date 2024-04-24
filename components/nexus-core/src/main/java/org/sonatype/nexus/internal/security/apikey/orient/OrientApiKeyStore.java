@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -231,8 +230,9 @@ public class OrientApiKeyStore
     }
   }
 
-  private Iterable<OrientApiKey> findByPrimaryPrincipal(final ODatabaseDocumentTx db,
-                                                        final PrincipalCollection principals)
+  private Iterable<OrientApiKey> findByPrimaryPrincipal(
+      final ODatabaseDocumentTx db,
+      final PrincipalCollection principals)
   {
     final String primaryPrincipal = checkNotNull(principals).getPrimaryPrincipal().toString();
     return entityAdapter.browseByPrimaryPrincipal(db, primaryPrincipal);
@@ -264,7 +264,6 @@ public class OrientApiKeyStore
     return convert(keys);
   }
 
-
   @Override
   public int count(final String domain) {
     return inTx(databaseInstance)
@@ -282,6 +281,16 @@ public class OrientApiKeyStore
     });
   }
 
+  @Override
+  public void deleteApiKeys(final OffsetDateTime expiration) {
+    inTxRetry(databaseInstance).run(db -> {
+      for (OrientApiKey entity : entityAdapter.browseByExpiration(db, expiration)) {
+        checkCancellation();
+        entityAdapter.deleteEntity(db, entity);
+      }
+    });
+  }
+
   private static Collection<ApiKey> convert(final Iterable<OrientApiKey> keys) {
     return StreamSupport.stream(keys.spliterator(), false)
         .map(ApiKey.class::cast)
@@ -289,7 +298,7 @@ public class OrientApiKeyStore
   }
 
   private boolean principalsEqual(final PrincipalCollection a, final PrincipalCollection b) {
-   return Objects.equals(a.getPrimaryPrincipal(), b.getPrimaryPrincipal()) &&
-       Objects.equals(a.getRealmNames(), b.getRealmNames());
+    return Objects.equals(a.getPrimaryPrincipal(), b.getPrimaryPrincipal()) &&
+        Objects.equals(a.getRealmNames(), b.getRealmNames());
   }
 }
