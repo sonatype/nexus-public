@@ -680,4 +680,20 @@ public abstract class ProxyFacetSupport
   Map<String, Integer> getThreadCooperationPerRequest() {
     return proxyCooperation.getThreadCountPerKey();
   }
+
+  /**
+   * Internal exception thrown when resolving of tarball name to package version using package metadata fails.
+   *
+   * @see #getUrl(Context)
+   * @see #fetch(Context, Content)
+   */
+  protected static class NonResolvablePackageException
+      extends RuntimeException
+  {
+    private static final long serialVersionUID = 4744330472156130441L;
+
+    public NonResolvablePackageException(final String message) {
+      super(message);
+    }
+  }
 }
