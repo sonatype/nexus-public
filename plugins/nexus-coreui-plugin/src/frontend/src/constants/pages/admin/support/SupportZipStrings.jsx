@@ -35,7 +35,7 @@ export default {
     JMX_LABEL: 'JMX information',
     REPLICATION_LABEL: 'Replication log files',
     LIMITFILESIZES_LABEL: 'Limit files in the ZIP archive to 30 MB apiece',
-    LIMITZIPSIZE_LABEL: 'Limit the ZIP archive to 20 MB',
+    LIMITZIPSIZE_LABEL: 'Limit the ZIP archive to 50 MB',
     CREATED_TITLE: 'Support ZIP Created',
     CREATED_DESCRIPTION: 'Support ZIP has been created.<br/>You can reference this file on the filesystem or download the file from your browser.',
     CREATED_NODEID_LABEL: 'Node:',
