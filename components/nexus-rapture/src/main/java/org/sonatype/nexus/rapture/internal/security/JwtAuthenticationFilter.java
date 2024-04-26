@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter
       throws Exception
   {
     log.debug("Success: token={}, subject={}", token, subject);
-    Cookie cookie = jwtHelper.createJwtCookie(subject);
+    Cookie cookie = jwtHelper.createJwtCookie(subject, request.isSecure());
     ((HttpServletResponse)response).addCookie(cookie);
     return true;
   }

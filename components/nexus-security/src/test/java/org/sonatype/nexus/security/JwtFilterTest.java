@@ -60,7 +60,7 @@ public class JwtFilterTest
     Cookie newCookie = makeCookie(NEW_JWT);
     Cookie[] cookies = new Cookie[] {oldCookie};
 
-    when(jwtHelper.verifyAndRefreshJwtCookie(OLD_JWT)).thenReturn(newCookie);
+    when(jwtHelper.verifyAndRefreshJwtCookie(OLD_JWT, false)).thenReturn(newCookie);
     when(request.getCookies()).thenReturn(cookies);
 
     jwtFilter.preHandle(request, response);
@@ -73,7 +73,7 @@ public class JwtFilterTest
     Cookie oldCookie = makeCookie(OLD_JWT);
     Cookie[] cookies = new Cookie[] {oldCookie};
 
-    when(jwtHelper.verifyAndRefreshJwtCookie(OLD_JWT)).thenThrow(new JwtVerificationException("Invalid JWT"));
+    when(jwtHelper.verifyAndRefreshJwtCookie(OLD_JWT, false)).thenThrow(new JwtVerificationException("Invalid JWT"));
     when(request.getCookies()).thenReturn(cookies);
 
     jwtFilter.preHandle(request, response);

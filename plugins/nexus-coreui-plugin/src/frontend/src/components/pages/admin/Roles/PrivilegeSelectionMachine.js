@@ -67,10 +67,15 @@ const PrivilegeSelectionMachine = ListMachineUtils.buildListMachine({
     }),
 
     filterData: assign({
-      filteredData: ({ filter, data }, _) =>
-        data.filter(({ name, description }) => ListMachineUtils.hasAnyMatches([name, description], filter)),
-      numberOfPrivileges: ({ filter, data }, _) =>
-        (data.filter(({ name, description }) => ListMachineUtils.hasAnyMatches([name, description], filter))).length,
+      filteredData: ({ filter, data }, _) => {
+        const regExp = new RegExp('[-]?' + filter.toLowerCase().replace(/\*/g, '.*')) ;
+        return data.filter(({ name, description }) => regExp.test(name.toLowerCase()) || regExp.test(description.toLowerCase()));
+      },
+      numberOfPrivileges: ({ filter, data }, _) => {
+        const regExp = new RegExp('[-]?' + filter.toLowerCase().replace(/\*/g, '.*'));
+        return data.filter(({ name, description }) => regExp.test(name.toLowerCase()) ||
+          regExp.test(description.toLowerCase())).length;
+      }
     }),
 
     sortData: assign({

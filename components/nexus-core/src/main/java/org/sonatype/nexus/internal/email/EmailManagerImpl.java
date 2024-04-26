@@ -194,7 +194,7 @@ public class EmailManagerImpl
     EmailConfiguration model = getConfigurationInternal();
     if (model.isEnabled()) {
       Email prepared = apply(model, mail);
-      prepared.send();
+      sendMail(prepared);
     }
     else {
       log.warn("No email enabled but asked to send anyway.");
@@ -211,7 +211,7 @@ public class EmailManagerImpl
     mail.addTo(address);
     mail.setMsg("Verification successful");
     mail = apply(configuration, mail);
-    mail.send();
+    sendMail(mail);
   }
 
   @Override
@@ -236,4 +236,17 @@ public class EmailManagerImpl
       }
     }
   }
+
+  private void sendMail(final Email mail) throws EmailException {
+    ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      // make sure javax.mail loaded, required for java 11+
+      Thread.currentThread().setContextClassLoader(javax.mail.Session.class.getClassLoader());
+      mail.send();
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(currentClassLoader);
+    }
+  }
+
 }

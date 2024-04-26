@@ -82,7 +82,7 @@ public class SupportZipGeneratorImpl
       final DownloadService downloadService,
       final List<SupportBundleCustomizer> bundleCustomizers,
       final @Named("${atlas.supportZipGenerator.maxFileSize:-30mb}") ByteSize maxFileSize,
-      final @Named("${atlas.supportZipGenerator.maxZipFileSize:-20mb}") ByteSize maxZipFileSize)
+      final @Named("${atlas.supportZipGenerator.maxZipFileSize:-50mb}") ByteSize maxZipFileSize)
   {
     this.bundleCustomizers = checkNotNull(bundleCustomizers);
     this.downloadService = checkNotNull(downloadService);
@@ -310,30 +310,30 @@ public class SupportZipGeneratorImpl
           ZipEntry entry = addEntry(zip, source.getPath());
 
           try (InputStream input = source.getContent()) {
-              // truncate content which is larger than maximum file size
-              if (limitFileSizes && source.getSize() > maxContentSize) {
-                log.warn( "Truncating source contents; exceeds maximum included file size: {}", source.getPath());
+            // determine if the current file is a log file
+            boolean isLogFile = source.getType() == LOG || source.getType() == TASKLOG || source.getType() == AUDITLOG;
+            // only apply truncation logic to log files
+            if (isLogFile && limitFileSizes && source.getSize() > maxContentSize) {
+              log.warn( "Truncating source contents; exceeds maximum included file size: {}", source.getPath());
+              zip.write(TRUNCATED_TOKEN.getBytes());
+              truncated.set(true);
+              return;
+            }
+
+            // write source content to the zip stream in chunks
+            byte[] buff = new byte[chunkSize];
+            int len;
+            while ((len = input.read(buff)) != -1) {
+              // truncate content if max ZIP size reached
+              if (isLogFile && limitZipSize && stream.getCount() + len > maxZipSize) {
+                log.warn("Truncating source contents; max ZIP size reached: {}", source.getPath());
                 zip.write(TRUNCATED_TOKEN.getBytes());
                 truncated.set(true);
-                input.skip(source.getSize() - maxContentSize);
+                break;
               }
-
-              // write source content to the zip stream in chunks
-              byte[] buff = new byte[chunkSize];
-              int len;
-              while ((len = input.read(buff)) != -1) {
-                // truncate content if max ZIP size reached
-                if (limitZipSize && stream.getCount() + len > maxZipSize) {
-                  log.warn( "Truncating source contents; max ZIP size reached: {}", source.getPath());
-                  zip.write(TRUNCATED_TOKEN.getBytes());
-                  truncated.set(true);
-                  break;
-                }
-
-                zip.write(buff, 0, len);
-
-                // flush so we can detect compressed size for partially written files
-                zip.flush();
+              zip.write(buff, 0, len);
+              // flush so we can detect compressed size for partially written files
+              zip.flush();
               }
           }
           catch (Exception e) { //NOSONAR - catching all exceptions so that a bad file of any sort won't cause us to stop

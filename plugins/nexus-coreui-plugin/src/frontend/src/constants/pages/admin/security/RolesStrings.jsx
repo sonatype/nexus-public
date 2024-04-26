@@ -110,6 +110,9 @@ export default {
         NO: 'Cancel'
       },
       DELETE_SUCCESS: (name) => `Role deleted: ${name}`,
+    },
+    SELECTION_MODAL: {
+      WILDCARD_TEXT: <i>Use * as a wildcard</i>
     }
   }
 };

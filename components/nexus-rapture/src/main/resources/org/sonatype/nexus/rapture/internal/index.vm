@@ -58,7 +58,7 @@
       document.getElementById('loading-msg').innerHTML=msg;
     }
   </script>
-  #if ( $designInput )
+  #if ( $analyticsEnabled )
     <script type="text/javascript">
       function servicePath(service) {
         return window.location.origin + window.location.pathname + service;

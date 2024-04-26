@@ -49,7 +49,7 @@ Ext.define('NX.coreui.view.task.TaskList', {
         },
         { header: NX.I18n.get('Task_TaskList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1, renderer: Ext.htmlEncode },
         { header: NX.I18n.get('Task_TaskList_Type_Header'), dataIndex: 'typeName', stateId: 'typeName', flex: 1, renderer: Ext.htmlEncode },
-        { header: NX.I18n.get('Task_TaskList_Status_Header'), dataIndex: 'statusDescription', stateId: 'statusDescription', renderer: Ext.htmlEncode },
+        { header: NX.I18n.get('Task_TaskList_Status_Header'), dataIndex: 'statusProgress', stateId: 'statusDescription', renderer: Ext.htmlEncode },
         { header: NX.I18n.get('Task_TaskList_Schedule_Header'), dataIndex: 'schedule', stateId: 'schedule', renderer: Ext.htmlEncode },
         { header: NX.I18n.get('Task_TaskList_NextRun_Header'), dataIndex: 'nextRun', stateId: 'nextRun', flex: 1, renderer: Ext.htmlEncode },
         { header: NX.I18n.get('Task_TaskList_LastRun_Header'), dataIndex: 'lastRun', stateId: 'lastRun', flex: 1, renderer: Ext.htmlEncode },

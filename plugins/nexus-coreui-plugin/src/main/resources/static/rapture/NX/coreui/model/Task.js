@@ -40,6 +40,13 @@ Ext.define('NX.coreui.model.Task', {
     {name: 'alertEmail', type: 'string'},
     {name: 'notificationCondition', type: 'string', defaultValue: 'FAILURE' },
     {name: 'properties', type: 'auto' /*object*/, defaultValue: null },
+    {
+      name: 'statusProgress',
+      type: 'string',
+      calculate: function (data) {
+        return (data.properties && data.properties['.progress']) || data.statusDescription;
+      },
+    },
     {name: 'startDate', type: 'date', dateFormat: 'c' },
     {name: 'recurringDays', type: 'auto' /*array*/},
     {name: 'cronExpression', type: 'string'}
