@@ -68,7 +68,7 @@ public class ApplicationPrivilegeDescriptor
     String actions();
 
     @DefaultMessage("A comma-delimited list (without whitespace) of actions allowed with this privilege; " +
-        "options include create, read, update, delete, and a wildcard (*) " +
+        "options include create, read, update, delete, start, stop, associate, disassociate, and a wildcard (*) " +
         "<a href='https://links.sonatype.com/products/nxrm3/docs/privileges' target='_blank'>Help</a>")
     String actionsHelp();
 
@@ -98,13 +98,14 @@ public class ApplicationPrivilegeDescriptor
             messages.actions(),
             messages.actionsCheckboxesHelp(),
             FormField.MANDATORY
-        ).withAttribute(P_OPTIONS, PrivilegeAction.getCrudActionStrings()) :
+        ).withAttribute(P_OPTIONS, PrivilegeAction.getCrudTaskActionStrings()) :
         new StringTextFormField(
             P_ACTIONS,
             messages.actions(),
             messages.actionsHelp(),
             FormField.MANDATORY,
-            "(^(create|read|update|delete)(,(create|read|update|delete)){0,3}$)|(^\\*$)"
+            "(^(create|read|update|delete|start|stop|associate|disassociate)" + 
+              "(,(create|read|update|delete|start|stop|associate|disassociate)){0,3}$)|(^\\*$)"
         )
     );
   }

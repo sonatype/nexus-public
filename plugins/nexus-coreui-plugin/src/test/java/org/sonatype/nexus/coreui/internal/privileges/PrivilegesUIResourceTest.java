@@ -32,7 +32,6 @@ import org.sonatype.nexus.script.ScriptManager;
 import org.sonatype.nexus.script.plugin.internal.security.ScriptPrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.ApplicationPrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
-import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
@@ -57,11 +56,12 @@ public class PrivilegesUIResourceTest
 
   public static final String ACTIONS_KEY = "options";
 
-  public static final List<String> CRUD_ACTION_STRINGS = PrivilegeAction.getCrudActionStrings();
+  public static final List<String> CRUD_ACTION_STRINGS = Arrays.asList(
+    "create", "read", "update", "delete", "start", "stop", "associate", "disassociate");
 
-  public static final List<String> BREAD_ACTION_STRINGS = PrivilegeAction.getBreadActionStrings();
+  public static final List<String> BREAD_ACTION_STRINGS = Arrays.asList("browse", "read", "edit", "add", "delete");
 
-  public static final List<String> BREAD_RUN_ACTION_STRINGS = PrivilegeAction.getBreadRunActionStrings();
+  public static final List<String> BREAD_RUN_ACTION_STRINGS = Arrays.asList("browse", "read", "edit", "add", "delete", "run");
 
   @Mock
   private RepositoryManager repositoryManager;

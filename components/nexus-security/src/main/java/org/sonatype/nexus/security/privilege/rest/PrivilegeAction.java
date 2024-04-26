@@ -23,9 +23,13 @@ import javax.annotation.Nullable;
 public enum PrivilegeAction
 {
   //the names/actions of these are very important, do not change without great consideration
-  READ("read"), BROWSE("browse"), EDIT("edit"), ADD("add"), DELETE("delete"), RUN("run"), ASSOCIATE("associate"), DISASSOCIATE("disassociate"), ALL("*");
+  READ("read"), BROWSE("browse"), EDIT("edit"), ADD("add"), DELETE("delete"), RUN("run"), START("start"), STOP("stop"), ASSOCIATE("associate"), DISASSOCIATE("disassociate"), ALL("*");
 
   private final String action;
+
+  private static final String CREATE = "create";
+
+  private static final String UPDATE = "update";
 
   PrivilegeAction(String action) {
     this.action = action;
@@ -66,9 +70,9 @@ public enum PrivilegeAction
   public String getCrudAction() {
     switch (this) {
       case ADD:
-        return "create";
+        return CREATE;
       case EDIT:
-        return "update";
+        return UPDATE;
       case ASSOCIATE:
       case DISASSOCIATE:
       case READ:
@@ -80,13 +84,33 @@ public enum PrivilegeAction
     }
   }
 
+    @Nullable
+  public String getCrudTaskActions() {
+    switch (this) {
+      case ADD:
+        return CREATE;
+      case EDIT:
+        return UPDATE;
+      case ASSOCIATE:
+      case DISASSOCIATE:
+      case READ:
+      case DELETE:
+      case START:
+      case STOP:
+      case ALL:
+        return action;
+      default:
+        return null;
+    }
+  }
+
   @Nullable
   public static PrivilegeAction fromAction(final String action) {
     String trimmed = action.trim();
     switch (trimmed) {
-      case "create":
+      case CREATE:
         return PrivilegeAction.ADD;
-      case "update":
+      case UPDATE:
         return PrivilegeAction.EDIT;
       default:
         return Arrays.stream(PrivilegeAction.values()).filter(a -> a.action.equals(action)).findFirst().orElse(null);
@@ -119,10 +143,10 @@ public enum PrivilegeAction
         .collect(Collectors.toList());
   }
 
-  public static List<String> getCrudActionStrings() {
-    return Arrays.asList(ADD, READ, EDIT, DELETE)
+  public static List<String> getCrudTaskActionStrings() {
+    return Arrays.asList(ADD, READ, EDIT, DELETE, START, STOP, ASSOCIATE, DISASSOCIATE)
         .stream()
-        .map(PrivilegeAction::getCrudAction)
+        .map(PrivilegeAction::getCrudTaskActions)
         .collect(Collectors.toList());
   }
 }
