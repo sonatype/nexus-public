@@ -181,13 +181,6 @@ export default class {
   }
 
   /**
-   * @returns {boolean} true if the edition is PRO-STARTER
-   */
-  static isProStarterEdition() {
-    return this.state().getEdition() === 'PRO-STARTER';
-  }
-
-  /**
    * @param permission {string}
    * @returns {boolean} true if the user has the requested permission
    */

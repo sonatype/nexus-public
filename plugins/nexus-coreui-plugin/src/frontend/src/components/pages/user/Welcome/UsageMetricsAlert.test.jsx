@@ -24,7 +24,7 @@ import {
   NO_THRESHOLDS_DATA,
   STARTER_THRESHOLD_REACHED,
   SOFT_THRESHOLD_REACHED,
-  NO_USAGE_LEVEL_DATA
+  NO_UTILIZATION_DATA
 } from './UsageMetricsAlert.testdata';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
@@ -32,8 +32,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ExtJS: {
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
+      getEdition: jest.fn().mockReturnValue('starter')
     }),
-    isProStarterEdition: jest.fn().mockReturnValue(true),
   }
 }));
 
@@ -55,7 +55,7 @@ describe('Usage Metrics Alert', () => {
 
   beforeEach(function() {
     global.NX = {
-      I18n: {get: jest.fn().mockReturnValue('')},
+      I18n: {get: jest.fn().mockReturnValue('starter')},
     };
   })
 
@@ -93,8 +93,8 @@ describe('Usage Metrics Alert', () => {
     expect(alert).not.toBeInTheDocument();
   });
 
-  it('should not render alert when there is no usage level', async () => {
-    await renderView(NO_USAGE_LEVEL_DATA);
+  it('should not render alert when there is no utilization', async () => {
+    await renderView(NO_UTILIZATION_DATA);
     const alert = selectors.queryAlert();
     expect(alert).not.toBeInTheDocument();
   });
@@ -123,8 +123,8 @@ describe('Usage Metrics Alert', () => {
     expect(alert).not.toBeInTheDocument();
   });
 
-  it('should not render alert when edition is not pro-starter', async () => {
-    ExtJS.isProStarterEdition.mockReturnValue(false);
+  it('should not render alert when edition is not starter', async () => {
+    ExtJS.state().getEdition.mockReturnValue('pro');
     await renderView(SOFT_THRESHOLD_REACHED);
     const alert = selectors.queryAlert();
     expect(alert).not.toBeInTheDocument();

@@ -20,19 +20,19 @@ import {
   NxTextLink,
   NxTooltip} from '@sonatype/react-shared-components';
 import {faExclamationCircle, faInfoCircle} from '@fortawesome/free-solid-svg-icons';
-import {indexBy, pathOr, prop} from 'ramda';
+import {indexBy, pathOr, prop, replace} from 'ramda';
 import classNames from 'classnames';
 
 import UIStrings from '../../../../constants/UIStrings';
-import './UsageMetricsWithCircuitBreaker.scss';
+import './UsageMetricsWithCircuitB.scss';
 
 const {
   WELCOME: {
     USAGE: {
-      CIRCUIT_BREAKER,
+      CIRCUIT_B,
       CARD_LINK_OSS,
       CARD_LINK_PRO,
-      CARD_LINK_PRO_STARTER}}} = UIStrings;
+      CARD_LINK_STARTER}}} = UIStrings;
 
 const {
   TOTAL_COMPONENTS,
@@ -43,14 +43,14 @@ const {
   SOFT_THRESHOLD,
   STARTER_THRESHOLD,
   PRO,
-  PRO_STARTER,
   OSS,
+  STARTER,
   CARD_SHARED_LABELS: {
     THRESHOLD,
     THRESHOLD_NAME,
     THRESHOLD_VALUE,
     PERIOD,
-    VALUE}} = CIRCUIT_BREAKER;
+    VALUE}} = CIRCUIT_B;
 
 function Card({card, usage}) {
   const {METRIC_NAME_PRO_POSTGRESQL, SUB_TITLE_PRO_POSTGRESQL, TITLE, TITLE_PRO_POSTGRESQL} = card;
@@ -76,19 +76,19 @@ function CardWithThreshold({card, usage, link, tooltip, edition}) {
   const {AGGREGATE_PERIOD_30_D, HIGHEST_RECORDED_COUNT, METRIC_NAME, SUB_TITLE, TITLE} = card;
   const cardData = usage.find(m => m.metricName === METRIC_NAME) ?? [];
   const {aggregates = [], thresholds = [], metricValue = 0} = cardData;
-  const thresholdType = edition === PRO_STARTER ? STARTER_THRESHOLD : SOFT_THRESHOLD;
+  const thresholdType = edition === STARTER ? STARTER_THRESHOLD : SOFT_THRESHOLD;
   const thresholdValue = pathOr(0, [thresholdType, THRESHOLD_VALUE], indexBy(prop(THRESHOLD_NAME), thresholds));
   const approachingThreshold = metricValue >= thresholdValue * PERCENTAGE;
   const exceedingThreshold = metricValue >= thresholdValue;
   const highestRecordedCount = pathOr(0, [AGGREGATE_PERIOD_30_D, VALUE], indexBy(prop(PERIOD), aggregates));
   const showErrorIcon = highestRecordedCount >= thresholdValue;
   const meterClassNames = classNames({
-    'pro-starter-edition': edition === PRO_STARTER,
+    'starter-edition': edition === STARTER,
     'nxrm-meter-approaching' : approachingThreshold && !exceedingThreshold,
     'nxrm-meter-exceeding' : exceedingThreshold
   });
   const errorIconClassNames = classNames({
-    'pro-starter-edition': edition === PRO_STARTER,
+    'starter-edition': edition === STARTER,
     'recorded-count-with-error-icon': showErrorIcon
   });
 
@@ -96,7 +96,7 @@ function CardWithThreshold({card, usage, link, tooltip, edition}) {
     <NxCard.Header>
       <NxH3>
         {TITLE}
-        <NxTooltip title={tooltip(thresholdValue.toLocaleString(), edition)}>
+        <NxTooltip title={replace('{}', thresholdValue.toLocaleString(), tooltip(edition) || '')}>
           <NxFontAwesomeIcon icon={faInfoCircle}/>
         </NxTooltip>
       </NxH3>
@@ -165,9 +165,9 @@ function CardWithoutThreshold({card, usage, tooltip}) {
   </NxCard>
 }
 
-export default function UsageMetricsWithCircuitBreaker() {
+export default function UsageMetricsWithCircuitB() {
   const isProEdition = ExtJS.isProEdition();
-  const isProStarterEdition = ExtJS.isProStarterEdition();
+  const isStarterEdition = ExtJS.state().getEdition() === NX.I18n.get(STARTER);
   const isPostgresql = ExtJS.state().getValue('datastore.isPostgresql');
   const usage = ExtJS.state().getValue('contentUsageEvaluationResult', []);
 
@@ -183,11 +183,11 @@ export default function UsageMetricsWithCircuitBreaker() {
       <CardWithoutThreshold key={REQUESTS_PER_MINUTE.TITLE} card={REQUESTS_PER_MINUTE} usage={usage} tooltip={REQUESTS_PER_MINUTE.TOOLTIP_PRO}/>
       <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition={PRO}/>
     </>
-  } else if (isProStarterEdition) {
+  } else if (isStarterEdition) {
     return <>
-      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition={PRO_STARTER}/>
-      <CardWithoutThreshold key={UNIQUE_LOGINS.TITLE} card={UNIQUE_LOGINS} usage={usage} tooltip={UNIQUE_LOGINS.TOOLTIP_PRO_STARTER}/>
-      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_PRO_STARTER} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition={PRO_STARTER}/>
+      <CardWithThreshold key={TOTAL_COMPONENTS.TITLE} card={TOTAL_COMPONENTS} usage={usage} link={CARD_LINK_STARTER} tooltip={TOTAL_COMPONENTS.TOOLTIP} edition={STARTER}/>
+      <CardWithoutThreshold key={UNIQUE_LOGINS.TITLE} card={UNIQUE_LOGINS} usage={usage} tooltip={UNIQUE_LOGINS.TOOLTIP_STARTER}/>
+      <CardWithThreshold key={REQUESTS_PER_DAY.TITLE} card={REQUESTS_PER_DAY} usage={usage} link={CARD_LINK_STARTER} tooltip={REQUESTS_PER_DAY.TOOLTIP} edition={STARTER}/>
     </>
   } else {
     return <>

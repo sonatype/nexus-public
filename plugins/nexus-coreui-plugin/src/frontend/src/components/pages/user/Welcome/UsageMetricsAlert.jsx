@@ -22,11 +22,12 @@ import './UsageMetricsAlert.scss';
 const {
   WELCOME: {
     USAGE: {
-      CIRCUIT_BREAKER: {
+      CIRCUIT_B: {
         PERCENTAGE,
         TOTAL_COMPONENTS,
         REQUESTS_PER_DAY,
-        STARTER_THRESHOLD
+        STARTER_THRESHOLD,
+          STARTER
       },
       ALERTS: {
         EXCEEDING_THRESHOLDS,
@@ -42,7 +43,7 @@ const MessageContent = function({metricMessage, threshold}){
   const suffix = NX.I18n.get(SUFFIX);
 
   return <p>
-    {replace('{}', threshold, prefix)}
+    {replace('{}', threshold, prefix || '')}
     <NxTextLink external href={REVIEW_YOUR_USAGE.URL}>{REVIEW_YOUR_USAGE.TEXT}</NxTextLink>
     {mid}
     <NxTextLink external href={UPGRADING_PRO.URL}>{UPGRADING_PRO.TEXT}</NxTextLink>
@@ -62,7 +63,7 @@ const AlertContent = function({metric, content}) {
 
 export default function UsageMetricsAlert({onClose}) {
   const metrics = ExtJS.state().getValue('contentUsageEvaluationResult', []);
-  const isProStarterEdition = ExtJS.isProStarterEdition();
+  const isStarterEdition = ExtJS.state().getEdition() === NX.I18n.get(STARTER);
 
   const approachingThresholdMetrics = metrics.filter(m => {
     const thresholds = m.thresholds ?? [];
@@ -76,15 +77,15 @@ export default function UsageMetricsAlert({onClose}) {
   const exceedingThresholdMetrics = metrics.filter(m => {
     const thresholds = m.thresholds ?? [];
     const threshold = thresholds.find(l => l.thresholdName === STARTER_THRESHOLD);
-    if (m.metricName && m.usageLevel && threshold && threshold.thresholdValue && !isNaN(threshold.thresholdValue)) {
-      return (m.metricName === REQUESTS_PER_DAY.METRIC_NAME && m.usageLevel === STARTER_THRESHOLD) ||
-          (m.metricName === TOTAL_COMPONENTS.METRIC_NAME && m.usageLevel === STARTER_THRESHOLD)
+    if (m.metricName && m.utilization && threshold && threshold.thresholdValue && !isNaN(threshold.thresholdValue)) {
+      return (m.metricName === REQUESTS_PER_DAY.METRIC_NAME && m.utilization === STARTER_THRESHOLD) ||
+          (m.metricName === TOTAL_COMPONENTS.METRIC_NAME && m.utilization === STARTER_THRESHOLD)
     }
   });
 
   const showApproachingThresholdAlert = isEmpty(exceedingThresholdMetrics) && !isEmpty(approachingThresholdMetrics);
 
-  return isProStarterEdition && <>
+  return isStarterEdition && <>
     {!isEmpty(exceedingThresholdMetrics) && <NxErrorAlert className="nxrm-exceeding-threshold-alert">
       <div>
         {exceedingThresholdMetrics.map(m => <AlertContent key={m.metricName} metric={m} content={EXCEEDING_THRESHOLDS}/>)}

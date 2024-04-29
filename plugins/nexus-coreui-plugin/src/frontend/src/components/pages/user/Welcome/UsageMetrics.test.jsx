@@ -19,14 +19,16 @@ import UsageMetrics from './UsageMetrics';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
 import {act} from 'react-dom/test-utils';
+import UIStrings from '../../../../constants/UIStrings';
 import {
   METRICS_CONTENT,
-  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS,
-  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO,
-  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL,
-  METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER} from './UsageMetrics.testdata';
+  METRICS_CONTENT_WITH_CIRCUIT_B_OSS,
+  METRICS_CONTENT_WITH_CIRCUIT_B_PRO,
+  METRICS_CONTENT_WITH_CIRCUIT_B_PRO_POSTGRESQL,
+  METRICS_CONTENT_WITH_CIRCUIT_B_STARTER} from './UsageMetrics.testdata';
 
 const {USAGE_METRICS} = APIConstants.REST.INTERNAL;
+const {WELCOME: {USAGE: {CIRCUIT_B: {STARTER}}}} = UIStrings;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -37,10 +39,10 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     isProEdition: jest.fn().mockReturnValue(false),
-    isProStarterEdition: jest.fn().mockReturnValue(false),
     state: jest.fn().mockReturnValue({
       getValue: jest.fn(),
       getUser: jest.fn().mockReturnValue({ administrator: true }),
+      getEdition: jest.fn().mockReturnValue('OSS')
     }),
   },
 }));
@@ -60,18 +62,24 @@ const selectors = {
 
 describe('Usage Metrics', () => {
   async function renderView(usage = METRICS_CONTENT,
-      usageWithCircuitBreaker = METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS)
+      usageWithCircuitB = METRICS_CONTENT_WITH_CIRCUIT_B_OSS)
   {
     when(axios.get)
         .calledWith(USAGE_METRICS).mockResolvedValue({data: usage});
 
     when(ExtJS.state().getValue)
         .calledWith('contentUsageEvaluationResult', [])
-        .mockReturnValue(usageWithCircuitBreaker);
+        .mockReturnValue(usageWithCircuitB);
 
     render(<UsageMetrics />);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
-  };
+  }
+
+  beforeEach(function() {
+    global.NX = {
+      I18n: {get: jest.fn()},
+    };
+  })
 
   it('renders data correctly', async () => {
     await renderView();
@@ -136,7 +144,7 @@ describe('Usage Metrics', () => {
     expect(selectors.queryAllCards().length).toBe(0);
   });
 
-  describe('Metrics with Circuit Breaker', () => {
+  describe('Metrics with Circuit B', () => {
     beforeEach( () => {
       when(ExtJS.state().getValue)
           .calledWith('nexus.circuitb.enabled')
@@ -230,7 +238,7 @@ describe('Usage Metrics', () => {
 
     it('renders data correctly when PRO edition', async () => {
       ExtJS.isProEdition.mockReturnValue(true);
-      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO);
+      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_B_PRO);
 
       expect(selectors.getHeading('Usage')).toBeInTheDocument();
       expect(selectors.getAllCards().length).toBe(3);
@@ -309,7 +317,7 @@ describe('Usage Metrics', () => {
       when(ExtJS.state().getValue)
           .calledWith('datastore.isPostgresql')
           .mockReturnValue(true);
-      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL);
+      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_B_PRO_POSTGRESQL);
 
       expect(selectors.getHeading('Usage')).toBeInTheDocument();
       expect(selectors.getAllCards().length).toBe(3);
@@ -374,7 +382,7 @@ describe('Usage Metrics', () => {
 
     it('renders tooltips when hovering on the info icon when PRO edition', async () => {
       ExtJS.isProEdition.mockReturnValue(true);
-      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO);
+      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_B_PRO);
 
       const totalComponentsCard = selectors.getCard('Total Components'),
           reqsPerMinuteCard = selectors.getCard('Requests Per Minute'),
@@ -393,9 +401,10 @@ describe('Usage Metrics', () => {
           'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.');
     });
 
-    it('renders data correctly when PRO STARTER edition', async () => {
-      ExtJS.isProStarterEdition.mockReturnValue(true);
-      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER);
+    it('renders data correctly when STARTER edition', async () => {
+      when(NX.I18n.get).calledWith(STARTER).mockReturnValue('starter');
+      ExtJS.state().getEdition.mockReturnValue('starter');
+      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_B_STARTER);
 
       expect(selectors.getHeading('Usage')).toBeInTheDocument();
       expect(selectors.getAllCards().length).toBe(3);
@@ -467,27 +476,6 @@ describe('Usage Metrics', () => {
       );
       // only render link when reaching 75% or more of threshold
       expect(card3TextLink).not.toBeInTheDocument();
-    });
-
-    it('renders tooltips when hovering on the info icon when PRO STARTER edition', async () => {
-      ExtJS.isProStarterEdition.mockReturnValue(true);
-      await renderView(METRICS_CONTENT, METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER);
-
-      const totalComponentsCard = selectors.getCard('Total Components'),
-          uniqueLoginsCard = selectors.getCard('Unique Logins'),
-          reqsPerDayCard = selectors.getCard('Requests Per Day');
-
-      let infoIcon = selectors.getCardInfoIcon(totalComponentsCard);
-      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'Sonatype Nexus Repository\'s Pro Starter version only supports up to 120,000 components. Upgrade to Pro with a PostgreSQL database for unlimited component support.');
-
-      infoIcon = selectors.getCardInfoIcon(uniqueLoginsCard);
-      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.');
-
-      infoIcon = selectors.getCardInfoIcon(reqsPerDayCard);
-      await TestUtils.expectToSeeTooltipOnHover(infoIcon,
-          'Sonatype Nexus Repository\'s Pro Starter version only supports up to 200,000 requests per day to repository endpoints for all repositories. Upgrade to Pro with a PostgreSQL database for unlimited requests.');
     });
   });
 });

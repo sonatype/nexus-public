@@ -25,7 +25,7 @@ export const METRICS_CONTENT = {
   }]
 };
 
-export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
+export const METRICS_CONTENT_WITH_CIRCUIT_B_OSS = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 3300,
@@ -35,7 +35,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
         "thresholdValue": 20000
       }
     ],
-    "usageLevel": "FREE_TIER",
+    "utilization": "FREE_TIER",
     "aggregates": [
       {
         "name": "content_request_count",
@@ -53,7 +53,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
         "thresholdValue": 100000
       }
     ],
-    "usageLevel": "FREE_TIER",
+    "utilization": "FREE_TIER",
     "aggregates": [
       {
         "name": "component_total_count",
@@ -71,7 +71,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
         "thresholdValue": 100
       }
     ],
-    "usageLevel": "FREE_TIER",
+    "utilization": "FREE_TIER",
     "aggregates": [
       {
         "name": "unique_user_count",
@@ -82,7 +82,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_OSS = [
   }
 ];
 
-export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO = [
+export const METRICS_CONTENT_WITH_CIRCUIT_B_PRO = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 12500,
@@ -92,7 +92,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO = [
         "thresholdValue": 20000
       }
     ],
-    "usageLevel": "FREE_TIER",
+    "utilization": "FREE_TIER",
     "aggregates": [
       {
         "name": "content_request_count",
@@ -125,7 +125,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO = [
         "thresholdValue": 100000
       }
     ],
-    "usageLevel": "FREE_TIER",
+    "utilization": "FREE_TIER",
     "aggregates": [
       {
         "name": "component_total_count",
@@ -136,12 +136,12 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO = [
   }
 ];
 
-export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL = [
+export const METRICS_CONTENT_WITH_CIRCUIT_B_PRO_POSTGRESQL = [
   {
     "metricName": "peak_requests_per_day_30d",
     "metricValue": 145302,
     "thresholds": [],
-    "usageLevel": "UNLIMITED",
+    "utilization": "FULL",
     "aggregates": []
   },
   {
@@ -153,12 +153,12 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_POSTGRESQL = [
     "metricName": "component_total_count",
     "metricValue": 4758,
     "thresholds": [],
-    "usageLevel": "UNLIMITED",
+    "utilization": "FULL",
     "aggregates": []
   }
 ];
 
-export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
+export const METRICS_CONTENT_WITH_CIRCUIT_B_STARTER = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 5800,
@@ -172,7 +172,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
         "thresholdValue": 200000
       }
     ],
-    "usageLevel": "FREE_TIER",
+    "utilization": "FREE_TIER",
     "aggregates": [
       {
         "name": "content_request_count",
@@ -194,7 +194,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
         "thresholdValue": 120000
       }
     ],
-    "usageLevel": "STARTER_THRESHOLD",
+    "utilization": "STARTER_THRESHOLD",
     "aggregates": [
       {
         "name": "component_total_count",
@@ -212,7 +212,7 @@ export const METRICS_CONTENT_WITH_CIRCUIT_BREAKER_PRO_STARTER = [
         "thresholdValue": 100
       }
     ],
-    "usageLevel": "FREE_TIER",
+    "utilization": "FREE_TIER",
     "aggregates": [
       {
         "name": "unique_user_count",
