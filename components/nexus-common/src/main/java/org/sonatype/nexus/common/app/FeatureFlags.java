@@ -155,4 +155,6 @@ public interface FeatureFlags
    * See https://owasp.org/www-community/controls/SecureCookieAttribute
    */
   String NXSESSIONID_SECURE_COOKIE_NAMED = "${nexus.session.secureCookie:-true}";
+
+  String API_EXTENDED = "nexus.api.extended.enabled";
 }
