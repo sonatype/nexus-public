@@ -20,6 +20,8 @@ import java.util.Properties;
 
 import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
+import org.osgi.framework.Version;
+
 import com.google.common.annotations.VisibleForTesting;
 
 import static java.lang.Boolean.parseBoolean;
@@ -34,6 +36,8 @@ public class NexusEditionPropertiesConfigurer
   static final String NEXUS_DB_FEATURE = "nexus-db-feature";
 
   private static final String NEXUS_EXCLUDE_FEATURES = "nexus-exclude-features";
+
+  private static final Version ORIENT_MAX_JAVA_VERSION = new Version(11, 0, 0);
 
   public Properties getPropertiesFromConfiguration() throws IOException {
 
@@ -131,8 +135,19 @@ public class NexusEditionPropertiesConfigurer
       properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
     }
     else {
+      ensureOrientRunningWithCorrectJavaRuntime();
       properties.setProperty(NEXUS_DB_FEATURE, "nexus-orient");
       properties.setProperty(ORIENT_ENABLED, "true");
+    }
+  }
+
+  @VisibleForTesting
+  void ensureOrientRunningWithCorrectJavaRuntime() {
+    Version currentVersion = new Version(System.getProperty("java.version").replace("_", "."));
+    boolean versionAllowed = currentVersion.getMajor() <= ORIENT_MAX_JAVA_VERSION.getMajor();
+    if (!versionAllowed) {
+      throw new IllegalStateException("The maximum Java version for OrientDb is Java 11. " +
+          "Please check current Java version meets this requirement.");
     }
   }
 

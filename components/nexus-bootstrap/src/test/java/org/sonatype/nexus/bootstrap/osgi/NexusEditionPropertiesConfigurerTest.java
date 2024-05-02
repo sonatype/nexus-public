@@ -64,4 +64,19 @@ public class NexusEditionPropertiesConfigurerTest
     underTest.ensureHACIsDisabled();
   }
 
+  @Test(expected = Test.None.class)
+  public void testOrientDbWithAllowedVersion() {
+    System.setProperty("java.version", "11.0.0");
+    underTest.ensureOrientRunningWithCorrectJavaRuntime();
+  }
+
+  @Test
+  public void testOrientDbWithNotAllowedVersion() {
+    System.setProperty("java.version", "17.0.0");
+    IllegalStateException expected = assertThrows(IllegalStateException.class,
+        underTest::ensureOrientRunningWithCorrectJavaRuntime
+    );
+    assertThat(expected.getMessage(), containsString("The maximum Java version for OrientDb is Java 11"));
+  }
+
 }

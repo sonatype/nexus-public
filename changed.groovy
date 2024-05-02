@@ -13,25 +13,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
-@Grab(group = 'org.apache.maven', module = 'maven-model', version = '3.5.0')
+@Grab(group = 'org.apache.maven', module = 'maven-model', version = '3.8.1')
 @Grab(group = 'org.ajoberstar', module = 'grgit', version = '2.2.1')
-
-import ch.qos.logback.classic.Logger
 
 import org.ajoberstar.grgit.*
 import org.ajoberstar.grgit.operation.*
 import org.ajoberstar.grgit.service.*
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
-
-import static ch.qos.logback.classic.Level.*
-
-import static org.slf4j.Logger.ROOT_LOGGER_NAME
-import static org.slf4j.LoggerFactory.getLogger
-
-// set default log level (jgit seems to have something on DEBUG by default)
-((Logger) getLogger(ROOT_LOGGER_NAME)).setLevel(OFF)
 
 def getChangedProjects() {
   def grgit = Grgit.open()

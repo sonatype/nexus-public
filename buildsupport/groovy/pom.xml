@@ -122,7 +122,7 @@
       <dependency>
         <groupId>org.codehaus.groovy</groupId>
         <artifactId>groovy-dateutil</artifactId>
-        <version>${groovy.version}</version>
+        <version>3.0.19</version>
       </dependency>
 
       <dependency>

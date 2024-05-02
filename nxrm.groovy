@@ -20,16 +20,15 @@
  * - Takari (optional but recommended. Much quicker builds.) - see http://takari.io/book/30-team-maven.html#takari-smart-builder
  *      To enable: Add 'takari=true' to .nxrm/nxrmrc.groovy
  */
-@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.9')
 @Grab(group = 'com.aestasit.infrastructure.sshoogr', module = 'sshoogr', version = '0.9.26')
 @Grab(group = 'com.caseyscarborough.colorizer', module = 'groovy-colorizer', version = '1.0.0')
 @Grab(group = 'jline', module = 'jline', version = '2.14.2')
 @Grab(group = 'org.ajoberstar', module = 'grgit', version = '2.2.1')
-@Grab(group = 'org.apache.commons', module = 'commons-compress', version = '1.15')
-@Grab(group = 'commons-io', module = 'commons-io', version = '2.6')
-@Grab(group = 'org.apache.maven', module = 'maven-model', version = '3.5.0')
+@Grab(group = 'org.apache.commons', module = 'commons-compress', version = '1.24.0')
+@Grab(group = 'commons-io', module = 'commons-io', version = '2.13.0')
+@Grab(group = 'org.apache.maven', module = 'maven-model', version = '3.8.1')
 @Grab(group = 'org.rauschig', module = 'jarchivelib', version = '1.2.0')
-@Grab(group = 'com.google.guava', module = 'guava', version = '25.0-jre')
+@Grab(group = 'com.google.guava', module = 'guava', version = '32.1.1-jre')
 
 import java.nio.file.Paths
 import java.time.ZonedDateTime
@@ -43,20 +42,14 @@ import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.rauschig.jarchivelib.ArchiveFormat
 import org.rauschig.jarchivelib.ArchiverFactory
-import ch.qos.logback.classic.Logger
 import com.google.common.base.Stopwatch
 import java.nio.charset.StandardCharsets
 
-import static ch.qos.logback.classic.Level.*
 import static com.aestasit.infrastructure.ssh.DefaultSsh.*
 import static java.time.ZoneId.systemDefault
 import static java.time.format.DateTimeFormatter.ofPattern
-import static org.slf4j.Logger.ROOT_LOGGER_NAME as ROOT
-import static org.slf4j.LoggerFactory.getLogger
 import java.util.zip.*
 
-// set default log level (jgit seems to have something on DEBUG by default)
-((Logger) getLogger(ROOT)).setLevel(INFO)
 
 ant = new AntBuilder()
 ant.project.buildListeners[0].messageOutputLevel = 0
@@ -425,7 +418,7 @@ Examples:
 
   positionalOptions = cliOptions.arguments()
   positionalOptions.removeAll { it == '-x' }
-  if(positionalOptions.size > 0) {
+  if(!positionalOptions.isEmpty()) {
     debug("Positional options: " + positionalOptions.toString())
   }
   return true

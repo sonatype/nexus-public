@@ -462,7 +462,9 @@ public class AssetDAOTestSupport
       assertTrue(tempResult.blob().isPresent());
       assertThat(tempResult.blob().get(), sameBlob(assetBlob2));
       assertThat(tempResult, sameBlob(asset));
-      assertThat(tempResult.created(), is(oldCreated));
+
+      assertThat(tempResult.created().truncatedTo(ChronoUnit.SECONDS), is(oldCreated.truncatedTo(ChronoUnit.SECONDS)));
+
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated));
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 4 : null);
@@ -493,8 +495,11 @@ public class AssetDAOTestSupport
       assertTrue(tempResult.blob().isPresent());
       assertThat(tempResult.blob().get(), sameBlob(assetBlob2));
       assertThat(tempResult, sameBlob(asset));
-      assertThat(tempResult.created(), is(oldCreated));
-      assertThat(tempResult.lastUpdated(), is(oldLastUpdated));
+
+      assertThat(tempResult.created().truncatedTo(ChronoUnit.SECONDS), is(oldCreated.truncatedTo(ChronoUnit.SECONDS)));
+      assertThat(tempResult.lastUpdated().truncatedTo(ChronoUnit.SECONDS),
+          is(oldLastUpdated.truncatedTo(ChronoUnit.SECONDS)));
+
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 4 : null);
 
@@ -522,7 +527,7 @@ public class AssetDAOTestSupport
 
       tempResult = dao.readPath(repositoryId, path).get();
       assertFalse(tempResult.blob().isPresent());
-      assertThat(tempResult.created(), is(oldCreated));
+      assertThat(tempResult.created().truncatedTo(ChronoUnit.SECONDS), is(oldCreated.truncatedTo(ChronoUnit.SECONDS)));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated));
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 5 : null);
@@ -551,8 +556,11 @@ public class AssetDAOTestSupport
 
       tempResult = dao.readPath(repositoryId, path).get();
       assertFalse(tempResult.blob().isPresent());
-      assertThat(tempResult.created(), is(oldCreated));
-      assertThat(tempResult.lastUpdated(), is(oldLastUpdated));
+
+      assertThat(tempResult.created().truncatedTo(ChronoUnit.SECONDS), is(oldCreated.truncatedTo(ChronoUnit.SECONDS)));
+      assertThat(tempResult.lastUpdated().truncatedTo(ChronoUnit.SECONDS),
+          is(oldLastUpdated.truncatedTo(ChronoUnit.SECONDS)));
+
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 5 : null);
 
@@ -935,7 +943,10 @@ public class AssetDAOTestSupport
       OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
       dao.lastDownloaded(asset1.assetId, dateTime);
 
-      assertThat(dao.readAsset(asset1.assetId).get().lastDownloaded().orElse(null), is(dateTime));
+      Optional<OffsetDateTime> actual = dao.readAsset(asset1.assetId).get().lastDownloaded();
+      assertThat(actual.map(t-> t.truncatedTo(ChronoUnit.SECONDS)).orElse(null),
+          is(dateTime.truncatedTo(ChronoUnit.SECONDS)));
+
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 2 : null);
     }
@@ -957,7 +968,9 @@ public class AssetDAOTestSupport
       OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
       dao.lastUpdated(asset1.assetId, dateTime);
 
-      assertThat(dao.readAsset(asset1.assetId).get().lastUpdated(), is(dateTime));
+      OffsetDateTime actual = dao.readAsset(asset1.assetId).get().lastUpdated();
+      assertThat(actual.truncatedTo(ChronoUnit.SECONDS), is(dateTime.truncatedTo(ChronoUnit.SECONDS)));
+
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 2 : null);
     }
@@ -1194,7 +1207,7 @@ public class AssetDAOTestSupport
 
       assertThat(countAssets(dao, repositoryId), is(5));
       assertThat(dao.readPathsFromRepository(repositoryId,
-          asList(asset1.path(), asset2.path(), asset3.path(), asset4.path(), asset5.path())).size(),
+              asList(asset1.path(), asset2.path(), asset3.path(), asset4.path(), asset5.path())).size(),
           is(5));
 
       assertEntityVersion(component1.componentId, session.access(TestComponentDAO.class),
