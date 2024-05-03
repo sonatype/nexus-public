@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.view.Payload;
@@ -49,6 +50,9 @@ public interface FluentBlobs
    * Ingests the given payload as a temporary blob with the requested hashing.
    */
   TempBlob ingest(Payload payload, Iterable<HashAlgorithm> hashing);
+
+  TempBlob ingest(final Blob srcBlob, final BlobStore srcStore, final Map<HashAlgorithm, HashCode> hashes);
+
 
   /**
    * Ingests the given payload as a temporary blob with the requested hashing.
