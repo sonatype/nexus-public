@@ -19,14 +19,14 @@ import {NxInfoAlert} from '@sonatype/react-shared-components';
 import UIStrings from '../../../../constants/UIStrings';
 
 const {
-  USER_TOKEN_CONFIGURATION: {USER_TOKENS_CHECKBOX, USER_TOKEN_EXPIRY, EXPIRATION_CHECKBOX, REPOSITORY_AUTHENTICATION_CHECKBOX},
+  USER_TOKEN_CONFIGURATION: {USER_TOKENS_CHECKBOX, REPOSITORY_AUTHENTICATION_CHECKBOX},
   SETTINGS: {
     READ_ONLY: {WARNING}
   }
 } = UIStrings;
 
 export default function UserTokensReadOnly({data}) {
-  const {enabled, expirationEnabled, expirationDays, protectContent} = data;
+  const {enabled, protectContent} = data;
 
   return (
     <>
@@ -38,14 +38,6 @@ export default function UserTokensReadOnly({data}) {
       <ReadOnlyField
         label={REPOSITORY_AUTHENTICATION_CHECKBOX.LABEL}
         value={FormUtils.readOnlyCheckboxValueLabel(protectContent)}
-      />
-      <ReadOnlyField
-          label={EXPIRATION_CHECKBOX.LABEL}
-          value={FormUtils.readOnlyCheckboxValueLabel(expirationEnabled)}
-      />
-      <ReadOnlyField
-        label={USER_TOKEN_EXPIRY.LABEL}
-        value={`${expirationDays} Day${expirationDays > 1 ? 's' : ''}`}
       />
     </>
   );

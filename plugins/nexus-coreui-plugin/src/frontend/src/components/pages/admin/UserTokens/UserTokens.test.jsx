@@ -25,9 +25,6 @@ const {
   USER_TOKEN_CONFIGURATION: {
     USER_TOKENS_CHECKBOX,
     REPOSITORY_AUTHENTICATION_CHECKBOX,
-    EXPIRATION_CHECKBOX,
-    USER_TOKEN_EXPIRY,
-    USER_TOKEN_EXPIRY_CONFIRMATION,
     RESET_ALL_TOKENS_BUTTON,
     RESET_CONFIRMATION
   },
@@ -65,18 +62,14 @@ const selectors = {
   userTokensCheckbox: () => screen.getAllByLabelText(USER_TOKENS_CHECKBOX.DESCRIPTION)[0],
   repositoryUserTokensCheckbox: () =>
     screen.getAllByLabelText(REPOSITORY_AUTHENTICATION_CHECKBOX.DESCRIPTION)[1],
-  userTokenExpirationCheckbox: () =>
-      screen.getAllByLabelText(EXPIRATION_CHECKBOX.DESCRIPTION)[2],
-  userTokenExpiry: () => screen.getByLabelText(USER_TOKEN_EXPIRY.LABEL),
   saveButton: () => screen.queryByText(SAVE_BUTTON_LABEL),
   discardButton: () => screen.getByText(DISCARD_BUTTON_LABEL),
   resetButton: () => screen.queryByText(RESET_ALL_TOKENS_BUTTON),
   readOnlyWarning: () => screen.getByText(READ_ONLY_WARNING),
   confirmation: {
     modal: () => screen.queryByRole('dialog'),
-    alert: () => within(selectors.confirmation.modal()).getByRole('alert'),
     cancelButton: () => within(selectors.confirmation.modal()).getByRole('button', {name: CANCEL_BUTTON_LABEL}),
-    submitButton: (n) => within(selectors.confirmation.modal()).getByRole('button', {name: n}),
+    submitButton: () => within(selectors.confirmation.modal()).getByRole('button', {name: RESET_CONFIRMATION.CAPTION}),
     input: () => within(selectors.confirmation.modal()).getByLabelText(RESET_CONFIRMATION.LABEL)
   }
 };
@@ -93,9 +86,7 @@ describe('user tokens', () => {
       .mockResolvedValue({
         data: {
           enabled: false,
-          protectContent: false,
-          expirationEnabled: false,
-          expirationDays: 30
+          protectContent: false
         }
       });
     ExtJS.checkPermission.mockReturnValue(true);
@@ -105,8 +96,7 @@ describe('user tokens', () => {
     const {
       userTokensCheckbox,
       repositoryUserTokensCheckbox,
-      userTokenExpirationCheckbox,
-      userTokenExpiry,
+      saveButton,
       discardButton,
       resetButton
     } = selectors;
@@ -116,10 +106,6 @@ describe('user tokens', () => {
     expect(userTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).toBeDisabled();
-    expect(userTokenExpirationCheckbox()).not.toBeChecked();
-    expect(userTokenExpirationCheckbox()).toBeDisabled();
-    expect(userTokenExpiry()).toBeDisabled();
-    expect(userTokenExpiry()).toHaveValue('30');
     expect(discardButton()).toHaveClass('disabled');
     expect(resetButton()).not.toBeInTheDocument();
 
@@ -127,51 +113,32 @@ describe('user tokens', () => {
 
     expect(repositoryUserTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).toBeEnabled();
-    expect(userTokenExpirationCheckbox()).not.toBeChecked();
-    expect(userTokenExpirationCheckbox()).toBeEnabled();
-    expect(userTokenExpiry()).toBeDisabled();
     expect(discardButton()).not.toHaveClass('disabled');
     expect(resetButton()).not.toBeInTheDocument();
-
-    userEvent.click(userTokenExpirationCheckbox());
-
-    expect(userTokenExpirationCheckbox()).toBeChecked();
-    expect(userTokenExpiry()).toBeEnabled();
-
-    userEvent.click(userTokenExpirationCheckbox());
-
-    expect(userTokenExpirationCheckbox()).not.toBeChecked();
-    expect(userTokenExpiry()).toBeDisabled();
 
     userEvent.click(userTokensCheckbox());
 
     expect(repositoryUserTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).toBeDisabled();
-    expect(userTokenExpirationCheckbox()).not.toBeChecked();
-    expect(userTokenExpirationCheckbox()).toBeDisabled();
-    expect(userTokenExpiry()).toBeDisabled();
     expect(discardButton()).toHaveClass('disabled');
     expect(resetButton()).not.toBeInTheDocument();
   });
 
   it('discards changes', async () => {
-    const {userTokensCheckbox, repositoryUserTokensCheckbox, userTokenExpirationCheckbox, discardButton} = selectors;
+    const {userTokensCheckbox, repositoryUserTokensCheckbox, discardButton} = selectors;
 
     await renderView();
 
     userEvent.click(userTokensCheckbox());
     userEvent.click(repositoryUserTokensCheckbox());
-    userEvent.click(userTokenExpirationCheckbox());
 
     expect(userTokensCheckbox()).toBeChecked();
     expect(repositoryUserTokensCheckbox()).toBeChecked();
-    expect(userTokenExpirationCheckbox()).toBeChecked();
 
     userEvent.click(discardButton());
 
     expect(userTokensCheckbox()).not.toBeChecked();
     expect(repositoryUserTokensCheckbox()).not.toBeChecked();
-    expect(userTokenExpirationCheckbox()).not.toBeChecked();
   });
 
   it('sends correct data to API: enable', async () => {
@@ -187,52 +154,20 @@ describe('user tokens', () => {
     await waitFor(() =>
       expect(Axios.put).toBeCalledWith(API_URL, {
         enabled: true,
-        protectContent: true,
-        expirationEnabled: false,
-        expirationDays: 30
+        protectContent: true
       })
     );
   });
 
-  it('validates the user token expiry field', async () => {
-    const {userTokenExpiry} = selectors;
-
-    when(Axios.get)
-      .calledWith(API_URL)
-      .mockResolvedValueOnce({
-        data: {
-          enabled: true,
-          protectContent: true,
-          expirationEnabled: true,
-          expirationDays: 30
-        }
-      });
-
-    await renderView();
-
-    expect(userTokenExpiry()).not.toHaveErrorMessage();
-
-    await TestUtils.changeField(userTokenExpiry, '');
-    expect(userTokenExpiry()).toHaveErrorMessage(TestUtils.REQUIRED_MESSAGE);
-
-    await TestUtils.changeField(userTokenExpiry, '-1');
-    expect(userTokenExpiry()).toHaveErrorMessage('The minimum value for this field is 1');
-
-    await TestUtils.changeField(userTokenExpiry, '1000');
-    expect(userTokenExpiry()).toHaveErrorMessage('The maximum value for this field is 999');
-  });
-
   it('sends correct data to API: disable', async () => {
-    const {userTokensCheckbox, repositoryUserTokensCheckbox, userTokenExpirationCheckbox, saveButton} = selectors;
+    const {userTokensCheckbox, repositoryUserTokensCheckbox, saveButton} = selectors;
 
     when(Axios.get)
       .calledWith(API_URL)
       .mockResolvedValueOnce({
         data: {
           enabled: true,
-          protectContent: true,
-          expirationEnabled: true,
-          expirationDays: 30
+          protectContent: true
         }
       });
 
@@ -240,7 +175,6 @@ describe('user tokens', () => {
 
     expect(userTokensCheckbox()).toBeChecked();
     expect(repositoryUserTokensCheckbox()).toBeChecked();
-    expect(userTokenExpirationCheckbox()).toBeChecked();
 
     userEvent.click(userTokensCheckbox());
     userEvent.click(saveButton());
@@ -248,9 +182,7 @@ describe('user tokens', () => {
     await waitFor(() =>
       expect(Axios.put).toBeCalledWith(API_URL, {
         enabled: false,
-        protectContent: false,
-        expirationEnabled: false,
-        expirationDays: 30
+        protectContent: false
       })
     );
   });
@@ -274,9 +206,7 @@ describe('reset user tokens', () => {
       .mockResolvedValue({
         data: {
           enabled: true,
-          protectContent: false,
-          expirationEnabled: false,
-          expirationDays: 30
+          protectContent: false
         }
       });
     ExtJS.checkPermission.mockReturnValue(true);
@@ -314,7 +244,7 @@ describe('reset user tokens', () => {
 
     await TestUtils.changeField(input, RESET_CONFIRMATION.CONFIRMATION_STRING);
 
-    userEvent.click(submitButton(RESET_CONFIRMATION.CAPTION));
+    userEvent.click(submitButton());
 
     await waitFor(() => expect(Axios.delete).toBeCalledWith(API_URL));
 
@@ -337,7 +267,7 @@ describe('reset user tokens', () => {
 
     await TestUtils.changeField(input, RESET_CONFIRMATION.CONFIRMATION_STRING);
 
-    userEvent.click(submitButton(RESET_CONFIRMATION.CAPTION));
+    userEvent.click(submitButton());
 
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -355,118 +285,6 @@ describe('reset user tokens', () => {
     await renderView();
 
     userEvent.click(resetButton());
-
-    await waitFor(() => expect(modal()).toBeInTheDocument());
-
-    userEvent.click(cancelButton());
-
-    expect(modal()).not.toBeInTheDocument();
-  });
-});
-
-describe('user token expiration confirmation', () => {
-  beforeEach(() => {
-    when(Axios.get)
-      .calledWith(API_URL)
-      .mockResolvedValue({
-        data: {
-          enabled: true,
-          protectContent: false,
-          expirationEnabled: false,
-          expirationDays: 30
-        }
-      });
-    ExtJS.checkPermission.mockReturnValue(true);
-  });
-
-  it('renders expiration confirmation modal with enabled alert and submits changes', async () => {
-    const {
-      userTokenExpirationCheckbox,
-      saveButton,
-      confirmation: {modal, submitButton, cancelButton, alert}
-    } = selectors;
-
-    const enabledAlertContent = 'Changes to user token expiration will apply to all existing user tokens. ' +
-        'Any user tokens older than the specified age will now expire.';
-
-    await renderView();
-
-    userEvent.click(userTokenExpirationCheckbox());
-    userEvent.click(saveButton());
-
-    await waitFor(() => expect(modal()).toBeInTheDocument());
-    expect(alert()).toBeInTheDocument();
-    expect(alert()).toHaveTextContent(enabledAlertContent);
-    expect(submitButton(USER_TOKEN_EXPIRY_CONFIRMATION.CONFIRM_BUTTON)).toBeInTheDocument();
-    expect(cancelButton()).toBeInTheDocument();
-
-    userEvent.click(submitButton(USER_TOKEN_EXPIRY_CONFIRMATION.CONFIRM_BUTTON));
-
-    await waitFor(() =>
-      expect(Axios.put).toBeCalledWith(API_URL, {
-        enabled: true,
-        protectContent: false,
-        expirationEnabled: true,
-        expirationDays: 30
-      })
-    );
-  });
-
-  it('renders expiration confirmation modal with disabled alert and submits changes', async () => {
-    when(Axios.get)
-      .calledWith(API_URL)
-      .mockResolvedValue({
-        data: {
-          enabled: true,
-          protectContent: false,
-          expirationEnabled: true,
-          expirationDays: 30
-        }
-      });
-
-    const {
-      userTokenExpirationCheckbox,
-      saveButton,
-      confirmation: {modal, submitButton, cancelButton, alert}
-    } = selectors;
-
-    const disabledAlertContent = 'Disabling user token expiration means that all active user tokens will ' +
-        'remain active and never expire.'
-
-    await renderView();
-
-    userEvent.click(userTokenExpirationCheckbox());
-    userEvent.click(saveButton());
-
-    await waitFor(() => expect(modal()).toBeInTheDocument());
-    expect(alert()).toBeInTheDocument();
-    expect(alert()).toHaveTextContent(disabledAlertContent);
-    expect(submitButton(USER_TOKEN_EXPIRY_CONFIRMATION.CONFIRM_BUTTON)).toBeInTheDocument();
-    expect(cancelButton()).toBeInTheDocument();
-
-    userEvent.click(submitButton(USER_TOKEN_EXPIRY_CONFIRMATION.CONFIRM_BUTTON));
-
-    await waitFor(() =>
-      expect(Axios.put).toBeCalledWith(API_URL, {
-        enabled: true,
-        protectContent: false,
-        expirationEnabled: false,
-        expirationDays: 30
-      })
-    );
-  });
-
-  it('closes the modal on cancel', async () => {
-    const {
-      userTokenExpirationCheckbox,
-      saveButton,
-      confirmation: {modal, cancelButton}
-    } = selectors;
-
-    await renderView();
-
-    userEvent.click(userTokenExpirationCheckbox());
-    userEvent.click(saveButton());
 
     await waitFor(() => expect(modal()).toBeInTheDocument());
 

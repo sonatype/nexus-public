@@ -67,10 +67,9 @@ public class ApiKeyDAOTest
 
   private static final char[] API_KEY4 = "api_key4;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
 
-  private static final char[] YET_ANOTHER_API_KEY =
-      "yet_another_api_key;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
+  private static final char[] YET_ANOTHER_API_KEY = "yet_another_api_key;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
 
-  private static final String A_PRINCIPAL = "principal1";
+  private static final String  A_PRINCIPAL = "principal1";
 
   private static final String ANOTHER_PRINCIPAL = "another_principal1";
 
@@ -83,8 +82,7 @@ public class ApiKeyDAOTest
   DataSession<?> session;
 
   @Rule
-  public DataSessionRule sessionRule =
-      new DataSessionRule().access(ApiKeyDAO.class).handle(new ApiKeyTokenTypeHandler());
+  public DataSessionRule sessionRule = new DataSessionRule().access(ApiKeyDAO.class).handle(new ApiKeyTokenTypeHandler());
 
   @Before
   public void setup() {
@@ -115,9 +113,8 @@ public class ApiKeyDAOTest
    */
   @Test
   public void testCreate_differentRealm() {
-    OffsetDateTime created = OffsetDateTime.now();
-    ApiKeyData apiKeyEntity = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL, A_REALM, created);
-    ApiKeyData apiKeyEntity2 = anApiKeyEntity(API_KEY2, DOMAIN, A_PRINCIPAL, ANOTHER_REALM, created);
+    ApiKeyData apiKeyEntity = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL, A_REALM);
+    ApiKeyData apiKeyEntity2 = anApiKeyEntity(API_KEY2, DOMAIN, A_PRINCIPAL, ANOTHER_REALM);
 
     withDao(dao -> dao.save(apiKeyEntity));
     withDao(dao -> dao.save(apiKeyEntity2));
@@ -223,7 +220,7 @@ public class ApiKeyDAOTest
     apiKeyDAO.save(apiKeyEntity);
     apiKeyDAO.save(anotherApiKeyEntity);
 
-    Optional<ApiKey> result = apiKeyDAO.findPrincipals(DOMAIN, new ApiKeyToken(API_KEY1));
+    Optional<ApiKey>  result = apiKeyDAO.findPrincipals(DOMAIN, new ApiKeyToken(API_KEY1));
     assertThat(result.get().getPrincipals().getPrimaryPrincipal(), is(A_PRINCIPAL));
 
     result = apiKeyDAO.findPrincipals(DOMAIN, new ApiKeyToken(API_KEY2));
@@ -308,60 +305,29 @@ public class ApiKeyDAOTest
     assertThat(apiKeyDAO.browse(ANOTHER_DOMAIN), hasSize(1));
   }
 
-  @Test
-  public void testDeleteApiKeyByExpirationDate() {
-    OffsetDateTime createdToday = OffsetDateTime.now().plusMinutes(5);
-    ApiKeyData entity1 = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL, A_REALM, createdToday);
-
-    OffsetDateTime createdYesterday = OffsetDateTime.now().minusDays(1);
-    ApiKeyData entity2 = anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, ANOTHER_PRINCIPAL, ANOTHER_REALM, createdYesterday);
-
-    apiKeyDAO.save(entity1);
-    apiKeyDAO.save(entity2);
-
-    OffsetDateTime expiration = OffsetDateTime.now();
-
-    // Sanity check
-    assertThat(apiKeyDAO.browse(DOMAIN), hasSize(1));
-
-    // Remove my expiration date
-    apiKeyDAO.deleteApiKeyByExpirationDate(expiration);
-
-    assertThat(apiKeyDAO.browse(DOMAIN), hasSize(1));
-    assertThat(apiKeyDAO.browse(ANOTHER_DOMAIN), empty());
-  }
-
-  private static ApiKeyData anApiKeyEntity(
-      final char[] apiKey,
-      final String domain,
-      final String primaryPrincipal)
-  {
-    OffsetDateTime created = OffsetDateTime.now();
-    return anApiKeyEntity(apiKey, domain, primaryPrincipal, A_REALM, created);
+  private static ApiKeyData anApiKeyEntity(final char[] apiKey, final String domain, final String primaryPrincipal) {
+    return anApiKeyEntity(apiKey, domain, primaryPrincipal, A_REALM);
   }
 
   private static ApiKeyData anApiKeyEntity(
       final char[] apiKey,
       final String domain,
       final String primaryPrincipal,
-      final String realm,
-      final OffsetDateTime created)
+      final String realm)
   {
     PrincipalCollection principalCollection = principalCollection(primaryPrincipal, realm);
-    return anApiKeyEntity(apiKey, domain, principalCollection, created);
+    return anApiKeyEntity(apiKey, domain, principalCollection);
   }
 
   private static ApiKeyData anApiKeyEntity(
       final char[] apiKey,
       final String domain,
-      final PrincipalCollection principal,
-      final OffsetDateTime created)
+      final PrincipalCollection principal)
   {
     ApiKeyData data = new ApiKeyData();
     data.setDomain(domain);
     data.setPrincipals(principal);
     data.setApiKey(apiKey);
-    data.setCreated(created);
     return data;
   }
 

@@ -113,15 +113,10 @@
       FROM api_key
      WHERE domain = #{domain};
   </select>
-
+  
   <delete id="deleteApiKeysByDomain">
     DELETE FROM api_key
      WHERE domain = #{domain};
-  </delete>
-
-  <delete id="deleteApiKeyByExpirationDate">
-    DELETE FROM api_key
-    WHERE created &lt; #{expiration};
   </delete>
 
 </mapper>

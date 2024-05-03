@@ -29,19 +29,13 @@ export default {
     </>,
     USER_TOKENS_CHECKBOX: {
       LABEL: 'User Tokens',
+      SUBLABEL: "Allow user tokens for repository access",
       DESCRIPTION: 'Enable'
     },
     REPOSITORY_AUTHENTICATION_CHECKBOX: {
       LABEL: 'Require User Tokens for Repository Authentication',
+      SUBLABEL: "When enabled, any format clients must use a user token to access content. REST APIs and the UI will continue to allow normal logins",
       DESCRIPTION: 'Enable'
-    },
-    EXPIRATION_CHECKBOX: {
-      LABEL: 'User Token Expiration',
-      DESCRIPTION: 'Enable'
-    },
-    USER_TOKEN_EXPIRY: {
-      LABEL: 'User Token Expiry',
-      SUBLABEL: 'Specify the number of days for which a user token is valid. This defaults to 30 days when token expiration is enabled. (E.g., 1-999)'
     },
     RESET_ALL_TOKENS_BUTTON: 'Reset all user tokens',
     RESET_ERROR_MSG: 'An error occurred while resetting user tokens',
@@ -56,15 +50,6 @@ export default {
       },
       WARNING: 'Reset will invalidate ALL existing user tokens and force new tokens to be created the next time they are accessed.',
       BUTTON: 'Reset User Tokens',
-    },
-    USER_TOKEN_EXPIRY_CONFIRMATION: {
-      CAPTION: 'User Token Expiry Changes',
-      WARNING: (enabled) => {
-        return enabled ? 'Changes to user token expiration will apply to all existing user tokens. Any user tokens older than the specified age will now expire.'
-            : 'Disabling user token expiration means that all active user tokens will remain active and never expire.'
-      },
-      CONFIRM_BUTTON: 'Confirm Changes',
-      CANCEL_BUTTON: 'Cancel'
     }
   }
 };

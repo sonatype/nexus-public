@@ -45,7 +45,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 
@@ -322,45 +321,6 @@ public class OrientApiKeyStoreTest
 
     Collection<ApiKey> keys = underTest.browseByCreatedDate(PRINCIPAL_A_DOMAIN, created);
     assertThat(keys, hasSize(1));
-  }
-
-  @Test
-  public void testDeleteApiKeysByExpirationShouldNotDeleteApiKeys() {
-    PrincipalCollection principalA = makePrincipals("name-a");
-    PrincipalCollection principalB = makePrincipals("name-b");
-
-    underTest.createApiKey("foo", principalA);
-    underTest.createApiKey("bar", principalB);
-
-    // To clarify expiration: (currentTime - expirationDays > createdTime)
-    OffsetDateTime expiresTomorrow = OffsetDateTime.now().minusDays(1);
-    underTest.deleteApiKeys(expiresTomorrow);
-
-    Optional<ApiKey> apiKeyFoo = underTest.getApiKey("foo", principalA);
-    Optional<ApiKey> apiKeyBar = underTest.getApiKey("bar", principalB);
-
-    assertThat(apiKeyFoo.isPresent(), is(true));
-    assertThat(apiKeyBar.isPresent(), is(true));
-  }
-
-  @Test
-  public void testDeleteApiKeysByExpirationShouldDeleteApiKeys() {
-    PrincipalCollection principalA = makePrincipals("name-a");
-    PrincipalCollection principalB = makePrincipals("name-b");
-
-    underTest.createApiKey("foo", principalA);
-    underTest.createApiKey("bar", principalB);
-
-    // To clarify expiration: (currentTime - expirationDays > createdTime)
-    OffsetDateTime expiredAMinuteAgo = OffsetDateTime.now().plusMinutes(1);
-    underTest.deleteApiKeys(expiredAMinuteAgo);
-
-
-    Optional<ApiKey> apiKeyFoo = underTest.getApiKey("foo", principalA);
-    Optional<ApiKey> apiKeyBar = underTest.getApiKey("bar", principalB);
-
-    assertThat(apiKeyFoo, equalTo(Optional.empty()));
-    assertThat(apiKeyBar, equalTo(Optional.empty()));
   }
 
   private static PrincipalCollection makePrincipals(final String name) {

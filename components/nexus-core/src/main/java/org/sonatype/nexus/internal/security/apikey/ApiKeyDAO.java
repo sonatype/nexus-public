@@ -98,11 +98,4 @@ public interface ApiKeyDAO
    * @param domain the domain, e.g. npm keys, nuget keys
    */
   void deleteApiKeysByDomain(@Param("domain") String domain);
-
-  /**
-   * Remove all expired API Keys
-   *
-   * @param expiration the date of expiration
-   */
-  void deleteApiKeyByExpirationDate(@Param("expiration") OffsetDateTime expiration);
 }

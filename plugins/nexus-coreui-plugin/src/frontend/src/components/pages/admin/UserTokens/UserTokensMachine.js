@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import Axios from 'axios';
-import {ExtJS, FormUtils, APIConstants, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 import {mergeDeepRight} from 'ramda';
 import {assign} from 'xstate';
@@ -38,17 +38,7 @@ export default FormUtils.buildFormMachine({
             SET_ENABLED: {
               target: 'loaded',
               actions: 'setEnabled'
-            },
-            SAVE: [
-              {
-                target: 'showUserTokenExpiryChangesModal',
-                cond: 'userTokenExpirationEnabled'
-              },
-              {
-                target: 'saving',
-                cond: 'canSave'
-              }
-            ]
+            }
           }
         },
         resetConfirmation: {
@@ -76,27 +66,12 @@ export default FormUtils.buildFormMachine({
               target: 'loaded',
             }
           }
-        },
-        showUserTokenExpiryChangesModal: {
-          on: {
-            CLOSE: {
-              target: 'loaded'
-            },
-            SAVE: {
-              target: 'saving',
-              cond: 'canSave'
-            }
-          }
         }
       }
     })
 }).withConfig({
   actions: {
-    validate: assign({
-      validationErrors: ({data}) => ({
-        expirationDays: ValidationUtils.validateNotBlank(data.expirationDays) || ValidationUtils.isInRange({value: data.expirationDays, min: 1, max: 999})
-      })
-    }),
+    validate: () => {},
     setConfirmationString: assign((_, {value}) => ({
       confirmationString: value || '',
       confirmationStringValidationError:
@@ -113,14 +88,9 @@ export default FormUtils.buildFormMachine({
     setEnabled: assign({
       data: (_, {value}) => ({
         enabled: value,
-        expirationEnabled: false,
-        expirationDays: 30,
         protectContent: false
       })
     })
-  },
-  guards: {
-    userTokenExpirationEnabled: ({isTouched}) => isTouched?.expirationEnabled
   },
   services: {
     fetchData: () => Axios.get(API_URL),

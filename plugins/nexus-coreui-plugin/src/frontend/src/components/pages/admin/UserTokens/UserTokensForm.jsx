@@ -21,17 +21,14 @@ import {
   NxCheckbox,
   NxFieldset,
   NxFontAwesomeIcon,
-  NxFormGroup,
   NxH2,
   NxP,
   NxStatefulForm,
-  NxTextInput,
   NxTooltip
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import UserTokensResetModal from './UserTokensResetModal';
-import UserTokenExpiryChangesModal from './UserTokenExpiryChangesModal';
 
 const {
   USER_TOKEN_CONFIGURATION: {
@@ -39,8 +36,6 @@ const {
     HELP_TEXT,
     USER_TOKENS_CHECKBOX,
     REPOSITORY_AUTHENTICATION_CHECKBOX,
-    EXPIRATION_CHECKBOX,
-    USER_TOKEN_EXPIRY,
     RESET_ALL_TOKENS_BUTTON
   },
   SETTINGS: {DISCARD_BUTTON_LABEL}
@@ -55,16 +50,13 @@ export default function UserTokensForm({service}) {
 
   const {
     isPristine,
-    data: {enabled, expirationEnabled},
+    data: {enabled},
     pristineData: {enabled: enabledSaved}
   } = state.context;
 
   const discard = () => send('RESET');
   const showResetConfirmation = () => send('RESET_CONFIRMATION');
   const setEnabled = (value) => send({type: 'SET_ENABLED', value});
-  const showUserTokenExpiryChangesModal = state.matches('showUserTokenExpiryChangesModal');
-  const save = () => send('SAVE');
-  const closeModal = () => send('CLOSE');
 
   return (
     <>
@@ -94,13 +86,21 @@ export default function UserTokensForm({service}) {
         <NxH2>{CAPTION}</NxH2>
         <NxP>{HELP_TEXT}</NxP>
 
-        <NxFieldset label={USER_TOKENS_CHECKBOX.LABEL}>
+        <NxFieldset
+          label={USER_TOKENS_CHECKBOX.LABEL}
+          sublabel={USER_TOKENS_CHECKBOX.SUBLABEL}
+          isRequired
+        >
           <NxCheckbox {...FormUtils.checkboxProps('enabled', state)} onChange={setEnabled}>
             {USER_TOKENS_CHECKBOX.DESCRIPTION}
           </NxCheckbox>
         </NxFieldset>
 
-        <NxFieldset label={REPOSITORY_AUTHENTICATION_CHECKBOX.LABEL}>
+        <NxFieldset
+          label={REPOSITORY_AUTHENTICATION_CHECKBOX.LABEL}
+          sublabel={REPOSITORY_AUTHENTICATION_CHECKBOX.SUBLABEL}
+          isRequired
+        >
           <NxCheckbox
             {...FormUtils.checkboxProps('protectContent', state)}
             onChange={FormUtils.handleUpdate('protectContent', send)}
@@ -109,35 +109,9 @@ export default function UserTokensForm({service}) {
             {REPOSITORY_AUTHENTICATION_CHECKBOX.DESCRIPTION}
           </NxCheckbox>
         </NxFieldset>
-
-        <NxFieldset label={EXPIRATION_CHECKBOX.LABEL}>
-          <NxCheckbox
-              {...FormUtils.checkboxProps('expirationEnabled', state)}
-              onChange={FormUtils.handleUpdate('expirationEnabled', send)}
-              disabled={!enabled}
-          >
-            {EXPIRATION_CHECKBOX.DESCRIPTION}
-          </NxCheckbox>
-        </NxFieldset>
-
-        <NxFormGroup
-          label={USER_TOKEN_EXPIRY.LABEL}
-          sublabel={USER_TOKEN_EXPIRY.SUBLABEL}
-          isRequired={expirationEnabled}
-        >
-          <NxTextInput
-            {...FormUtils.fieldProps('expirationDays', state)}
-            className="nx-text-input--short nxrm-user-tokens-expiry-field"
-            onChange={FormUtils.handleUpdate('expirationDays', send)}
-            disabled={!enabled || !expirationEnabled}
-          />
-        </NxFormGroup>
       </NxStatefulForm>
 
       {resetConfirmation && <UserTokensResetModal service={service} />}
-      {showUserTokenExpiryChangesModal && <UserTokenExpiryChangesModal onClose={closeModal}
-                                                                       onConfirm={save}
-                                                                       expirationEnabled={expirationEnabled}/>}
     </>
   );
 }
