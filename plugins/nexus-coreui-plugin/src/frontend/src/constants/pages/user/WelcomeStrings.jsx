@@ -83,7 +83,7 @@ export default {
         TITLE: 'Peak requests per day',
         SUB_TITLE: 'Past 30 days'
       },
-      CIRCUIT_BREAKER: {
+      CIRCUIT_B: {
         TOTAL_COMPONENTS: {
           TITLE: 'Total Components',
           SUB_TITLE: 'Current',
@@ -91,13 +91,13 @@ export default {
           METRIC_NAME: 'component_total_count',
           METRIC_NAME_PRO_POSTGRESQL: 'component_total_count',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
-          TOOLTIP: (threshold, edition) => {
-            if (edition === 'PRO-STARTER') {
-              return `Sonatype Nexus Repository\'s Pro Starter version only supports up to ${threshold} components. Upgrade to Pro with a PostgreSQL database for unlimited component support.`
+          TOOLTIP: (edition) => {
+            if (edition === 'Starter_Edition') {
+              return NX.I18n.get('Total_Components_Tooltip');
             } else if (edition === 'PRO') {
               return 'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.'
             } else {
-              return `Sonatype Nexus Repository OSS performs best when your total component counts remain under ${threshold} components across all repositories in your instance.`
+              return 'Sonatype Nexus Repository OSS performs best when your total component counts remain under {} components across all repositories in your instance.'
             }
           }
         },
@@ -108,7 +108,7 @@ export default {
           METRIC_NAME: 'successful_last_24h',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
           TOOLTIP: 'Measures unique users who login over a period of time.',
-          TOOLTIP_PRO_STARTER: 'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.'
+          TOOLTIP_STARTER: 'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.'
         },
         REQUESTS_PER_MINUTE: {
           TITLE: 'Requests Per Minute',
@@ -131,13 +131,13 @@ export default {
           METRIC_NAME: 'peak_requests_per_day',
           METRIC_NAME_PRO_POSTGRESQL: 'peak_requests_per_day_30d',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
-          TOOLTIP: (threshold, edition) => {
-            if (edition === 'PRO-STARTER') {
-              return `Sonatype Nexus Repository\'s Pro Starter version only supports up to ${threshold} requests per day to repository endpoints for all repositories. Upgrade to Pro with a PostgreSQL database for unlimited requests.`
+          TOOLTIP: (edition) => {
+            if (edition === 'Starter_Edition') {
+              return NX.I18n.get('Requests_Per_Day_Tooltip')
             } else if (edition === 'PRO') {
               return 'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.'
             } else {
-              return `Sonatype Nexus Repository OSS performs best when requests per day remain under ${threshold} requests per day to all repository endpoints across all repositories in your instance.`
+              return `Sonatype Nexus Repository OSS performs best when requests per day remain under {} requests per day to all repository endpoints across all repositories in your instance.`
             }
           }
         },
@@ -153,7 +153,7 @@ export default {
         STARTER_THRESHOLD: 'STARTER_THRESHOLD',
         PRO: 'PRO',
         OSS: 'OSS',
-        PRO_STARTER: 'PRO-STARTER'
+        STARTER: 'Starter_Edition',
       },
       CARD_LINK_OSS: {
         TEXT: 'Understand your usage',
@@ -163,7 +163,7 @@ export default {
         TEXT: 'Understand your usage',
         URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-pro'
       },
-      CARD_LINK_PRO_STARTER: {
+      CARD_LINK_STARTER: {
         TEXT: 'Understand your usage',
         URL: 'https://links.sonatype.com/products/nxrm3/docs/review-usage'
       },

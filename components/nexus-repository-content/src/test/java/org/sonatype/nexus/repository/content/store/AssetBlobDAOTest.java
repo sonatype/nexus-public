@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -172,7 +173,8 @@ public class AssetBlobDAOTest
       OffsetDateTime blobCreated = OffsetDateTime.now().minusDays(1);
       dao.setBlobCreated(blobRef1, blobCreated);
 
-      assertThat(dao.readAssetBlob(blobRef1).get().blobCreated(), time(blobCreated));
+      assertThat(dao.readAssetBlob(blobRef1).get().blobCreated().truncatedTo(ChronoUnit.SECONDS),
+          time(blobCreated.truncatedTo(ChronoUnit.SECONDS)));
     }
   }
 

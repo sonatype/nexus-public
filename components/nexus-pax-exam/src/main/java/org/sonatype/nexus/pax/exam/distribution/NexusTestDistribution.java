@@ -24,14 +24,16 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfi
 import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PROPERTIES_FILE;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.SYSTEM_PROPERTIES_FILE;
-import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.java11CompositeOption;
+import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.javaVMCompositeOption;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.nexusFeature;
 
 public interface NexusTestDistribution
 {
   static final String GROOVY_GROUP_ID = "org.codehaus.groovy";
 
-  public static enum Distribution
+  String ORG_OW2_ASM_GROUP_ID = "org.ow2.asm";
+
+  enum Distribution
   {
     BASE, OSS, PRO, PRO_STARTER
   }
@@ -48,6 +50,11 @@ public interface NexusTestDistribution
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.search.event.handler.flushOnCount", "1"),
         mavenBundle("org.apache.aries.spifly", "org.apache.aries.spifly.dynamic.bundle").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm-commons").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm-util").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm-tree").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm-analysis").versionAsInProject(),
         mavenBundle(GROOVY_GROUP_ID, "groovy").versionAsInProject(),
         mavenBundle(GROOVY_GROUP_ID, "groovy-ant").versionAsInProject(),
         mavenBundle(GROOVY_GROUP_ID, "groovy-json").versionAsInProject(),
@@ -57,7 +64,7 @@ public interface NexusTestDistribution
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
         wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*"),
-        java11CompositeOption()
+        javaVMCompositeOption()
     );
   }
 }

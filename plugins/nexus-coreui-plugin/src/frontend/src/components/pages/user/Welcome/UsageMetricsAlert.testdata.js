@@ -28,7 +28,7 @@ export const STARTER_THRESHOLD_REACHED = [
         "thresholdValue": 200000
       }
     ],
-    "usageLevel": "STARTER_THRESHOLD"
+    "utilization": "STARTER_THRESHOLD"
   },
   {
     "metricName": "component_total_count",
@@ -43,7 +43,7 @@ export const STARTER_THRESHOLD_REACHED = [
         "thresholdValue": 120000
       }
     ],
-    "usageLevel": "STARTER_THRESHOLD"
+    "utilization": "STARTER_THRESHOLD"
   },
   {
     "metricName": "successful_last_24h",
@@ -54,7 +54,7 @@ export const STARTER_THRESHOLD_REACHED = [
         "thresholdValue": 75
       }
     ],
-    "usageLevel": "FREE_TIER"
+    "utilization": "FREE_TIER"
   }
 ];
 
@@ -72,7 +72,7 @@ export const SOFT_THRESHOLD_REACHED = [
         "thresholdValue": 200000
       }
     ],
-    "usageLevel": "SOFT_THRESHOLD"
+    "utilization": "SOFT_THRESHOLD"
   },
   {
     "metricName": "component_total_count",
@@ -87,7 +87,7 @@ export const SOFT_THRESHOLD_REACHED = [
         "thresholdValue": 120000
       }
     ],
-    "usageLevel": "FREE_TIER"
+    "utilization": "FREE_TIER"
   },
   {
     "metricName": "successful_last_24h",
@@ -98,7 +98,7 @@ export const SOFT_THRESHOLD_REACHED = [
         "thresholdValue": 75
       }
     ],
-    "usageLevel": "FREE_TIER"
+    "utilization": "FREE_TIER"
   }
 ];
 
@@ -106,7 +106,7 @@ export const NO_THRESHOLDS_DATA = [
   {
     "metricName": "component_total_count",
     "metricValue": 90000,
-    "usageLevel": "FREE_TIER"
+    "utilization": "FREE_TIER"
   },
 ]
 
@@ -123,7 +123,7 @@ export const NO_THRESHOLD_VALUE_DATA = [
         "thresholdName": "STARTER_THRESHOLD",
       }
     ],
-    "usageLevel": "STARTER_THRESHOLD"
+    "utilization": "STARTER_THRESHOLD"
   }
 ]
 
@@ -140,7 +140,7 @@ export const NO_THRESHOLD_NAME_DATA = [
         "thresholdValue": 187500
       }
     ],
-    "usageLevel": "STARTER_THRESHOLD"
+    "utilization": "STARTER_THRESHOLD"
   }
 ]
 
@@ -158,11 +158,11 @@ export const INVALID_THRESHOLD_VALUE_DATA = [
         "thresholdValue": "XYZ"
       }
     ],
-    "usageLevel": "STARTER_THRESHOLD"
+    "utilization": "STARTER_THRESHOLD"
   }
 ]
 
-export const NO_USAGE_LEVEL_DATA = [
+export const NO_UTILIZATION_DATA = [
   {
     "metricName": "peak_requests_per_day",
     "metricValue": 200000,

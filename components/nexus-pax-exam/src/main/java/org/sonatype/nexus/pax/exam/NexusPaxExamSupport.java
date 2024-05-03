@@ -53,6 +53,7 @@ import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.container.internal.JavaVersionUtil;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationFileExtendOption;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.DefaultCompositeOption;
@@ -142,7 +143,13 @@ public abstract class NexusPaxExamSupport
 
   public static final String S3_ENDPOINT_PROPERTY = "mock.s3.service.endpoint";
 
+  private static final String PATCH_MODULE = "--patch-module";
+
+  private static final String KARAF_VERSION = "karaf.version";
+
   public static String TEST_JDBC_URL_PROPERTY = "nexus.test.jdbcUrl";
+
+  private static final String ADD_OPENS = "--add-opens";
 
   private static final String DATABASE_KEY = "it.database";
 
@@ -794,7 +801,7 @@ public abstract class NexusPaxExamSupport
     testIndex.recordAndCopyLink("nexus.log", new File(logDir, "nexus.log"));
     testIndex.recordAndCopyLink("request.log", new File(logDir, "request.log"));
     testIndex.recordAndCopyLink("jvm.log", new File(logDir, "jvm.log"));
-    
+
     if ("true".equals(System.getProperty("it.nexus.recordTaskLogs"))) {
       File tasksDir = new File(logDir, "tasks");
       File[] taskLogs = tasksDir.listFiles(f -> f.getName().endsWith(".log"));
@@ -896,13 +903,49 @@ public abstract class NexusPaxExamSupport
     return result;
   }
 
-  public static CompositeOption java11CompositeOption() {
-    if (!System.getProperty("java.version").startsWith("1.8")) {
+  public static CompositeOption javaVMCompositeOption() {
+    if(JavaVersionUtil.getMajorVersion() == 11) {
       return new DefaultCompositeOption(
           new VMOption("--add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED"),
-          new VMOption("--patch-module"),
+          new VMOption(PATCH_MODULE),
           new VMOption("java.base=lib/endorsed/org.apache.karaf.specs.locator-" +
-              System.getProperty("karaf.version") + ".jar"));
+              System.getProperty(KARAF_VERSION) + ".jar"));
+    }
+    else if (JavaVersionUtil.getMajorVersion() == 17) {
+      return new DefaultCompositeOption(
+          new VMOption("--add-reads=java.xml=java.logging"),
+          new VMOption("--add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED"),
+          new VMOption(PATCH_MODULE),
+          new VMOption("java.base=lib/endorsed/org.apache.karaf.specs.locator-"
+              + System.getProperty(KARAF_VERSION) + ".jar"),
+          new VMOption(PATCH_MODULE), new VMOption("java.xml=lib/endorsed/org.apache.karaf.specs.java.xml-"
+          + System.getProperty(KARAF_VERSION) + ".jar"),
+          new VMOption(ADD_OPENS),
+          new VMOption("java.base/java.security=ALL-UNNAMED"),
+          new VMOption(ADD_OPENS),
+          new VMOption("java.base/java.net=ALL-UNNAMED"),
+          new VMOption(ADD_OPENS),
+          new VMOption("java.base/java.lang=ALL-UNNAMED"),
+          new VMOption(ADD_OPENS),
+          new VMOption("java.base/java.util=ALL-UNNAMED"),
+          new VMOption(ADD_OPENS),
+          new VMOption("java.naming/javax.naming.spi=ALL-UNNAMED"),
+          new VMOption(ADD_OPENS),
+          new VMOption("java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED"),
+          new VMOption("--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED"),
+          new VMOption("--add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED"),
+          new VMOption("--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED"),
+          new VMOption("--add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED"),
+          new VMOption("--add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED"),
+          new VMOption("--add-exports=java.base/sun.net.www.content.text=ALL-UNNAMED"),
+          new VMOption("--add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED"),
+          new VMOption("--add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED"),
+          new VMOption("--add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED"),
+          new VMOption("--add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED"),
+          new VMOption("-classpath"),
+          new VMOption("lib/jdk9plus/*" + File.pathSeparator + "lib/boot/*"
+              + File.pathSeparator + "lib/endorsed/*")
+      );
     }
     return new DefaultCompositeOption();
   }

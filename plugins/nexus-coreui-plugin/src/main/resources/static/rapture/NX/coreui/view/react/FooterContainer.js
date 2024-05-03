@@ -65,10 +65,9 @@ Ext.define('NX.coreui.view.react.FooterContainer', {
     const user = NX.State.getUser();
     const isAdmin = user ? user.administrator : false;
     const isHa = NX.State.getValue('nexus.datastore.clustered.enabled');
-    const isProStarter = NX.State.getEdition() === 'PRO-STARTER';
     const metrics = NX.State.getValue('contentUsageEvaluationResult', []);
 
-    this.setVisible(isAdmin && !isHa && isProStarter && (metrics.length > 0));
+    this.setVisible(isAdmin && !isHa && (metrics.length > 0));
     this.updateLayout();
   },
 

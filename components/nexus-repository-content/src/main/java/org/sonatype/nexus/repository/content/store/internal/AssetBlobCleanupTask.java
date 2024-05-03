@@ -66,13 +66,6 @@ public class AssetBlobCleanupTask
   static final int BLOB_CREATED_DELAY_MINUTE =
       getInteger(PROPERTY_PREFIX + "blobCreatedDelayMinute", 60);
 
-  /**
-   * Comma-separated formats that will ignore batch deletion. Default value null.
-   * maven2,npm
-   */
-  static final String BATCH_DELETE_IGNORE_FORMATS =
-      getString(PROPERTY_PREFIX + "batchDeleteIgnoreForFormat", null);
-
   static final int BATCH_DELETE_POOL_SIZE = getInteger(
       PROPERTY_PREFIX + "batchDeleteThreadPoolSize", 8);
 
@@ -94,8 +87,11 @@ public class AssetBlobCleanupTask
   }
 
   protected void initBatchDeleteIfEnabled(final String format) {
-    if (BATCH_DELETE_IGNORE_FORMATS != null && format != null
-        && BATCH_DELETE_IGNORE_FORMATS.contains(format)) {
+    String batchDeleteIgnoreFormats =
+        getString(PROPERTY_PREFIX + "batchDeleteIgnoreForFormat", null);
+
+    if (batchDeleteIgnoreFormats != null && format != null
+        && batchDeleteIgnoreFormats.contains(format)) {
       batchDeleteEnabled = false;
     } else {
       batchDeleteExecutorService = newFixedThreadPool(
@@ -107,7 +103,6 @@ public class AssetBlobCleanupTask
 
   @Override
   protected Void execute() throws Exception {
-
     String format = getConfiguration().getString(FORMAT_FIELD_ID);
     String contentStore = getConfiguration().getString(CONTENT_STORE_FIELD_ID);
     initBatchDeleteIfEnabled(format);

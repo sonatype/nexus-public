@@ -23,7 +23,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfi
 import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.NEXUS_PROPERTIES_FILE;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.SYSTEM_PROPERTIES_FILE;
-import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.java11CompositeOption;
+import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.javaVMCompositeOption;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.nexusDistribution;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.nexusFeature;
 import static org.sonatype.nexus.pax.exam.NexusPaxExamSupport.options;
@@ -60,6 +60,11 @@ public class BaseNexusTestDistribution
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.test.base", "true"),
 
         mavenBundle("org.apache.aries.spifly", "org.apache.aries.spifly.dynamic.bundle").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm-commons").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm-util").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm-tree").versionAsInProject(),
+        mavenBundle(ORG_OW2_ASM_GROUP_ID, "asm-analysis").versionAsInProject(),
         mavenBundle(GROOVY_GROUP_ID, "groovy").versionAsInProject(),
         mavenBundle(GROOVY_GROUP_ID, "groovy-ant").versionAsInProject(),
         mavenBundle(GROOVY_GROUP_ID, "groovy-json").versionAsInProject(),
@@ -73,6 +78,6 @@ public class BaseNexusTestDistribution
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
         wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE)
             .imports("*"),
-        java11CompositeOption());
+        javaVMCompositeOption());
   }
 }

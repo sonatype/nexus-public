@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -453,7 +454,8 @@ public class ExampleContentTestSupport
 
   protected static Matcher<AssetBlob> sameBlob(final AssetBlob expected) {
     return new FieldMatcher<>(expected, AssetBlob::blobRef, AssetBlob::blobSize, AssetBlob::contentType,
-        AssetBlob::blobCreated, AssetBlob::createdBy, AssetBlob::createdByIp);
+        assetBlob -> assetBlob.blobCreated().truncatedTo(ChronoUnit.SECONDS),
+        AssetBlob::createdBy, AssetBlob::createdByIp);
   }
 
   protected static Matcher<Asset> sameLastDownloaded(final Asset expected) {

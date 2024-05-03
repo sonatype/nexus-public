@@ -12,7 +12,7 @@
  */
 $card-width: 1016px;
 
-.nxrm-usage-metrics-circuit-breaker {
+.nxrm-usage-metrics-circuit-b {
   box-sizing: border-box;
   padding: var(--nx-spacing-6x) 0 0 var(--nx-spacing-6x);
 
@@ -91,11 +91,11 @@ $card-width: 1016px;
         background: var(--nx-swatch-orange-50);
       }
 
-      &.pro-starter-edition::-webkit-meter-optimum-value {
+      &.starter-edition::-webkit-meter-optimum-value {
         background: var(--nx-swatch-red-40);
       }
 
-      &.pro-starter-edition::-moz-meter-bar {
+      &.starter-edition::-moz-meter-bar {
         background: var(--nx-swatch-red-40);
       }
     }
@@ -151,7 +151,7 @@ $card-width: 1016px;
     .recorded-count-with-error-icon {
       color: var(--nx-swatch-orange-45);
 
-      &.pro-starter-edition {
+      &.starter-edition {
         color: var(--nx-swatch-red-40);
       }
     }

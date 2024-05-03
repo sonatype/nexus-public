@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -252,7 +253,7 @@ public class AssetStoreTestSupport
   }
 
   public void testBrowseUpdatedAssetsIdenticalDates() {
-    OffsetDateTime time1 = OffsetDateTime.now();
+    OffsetDateTime time1 = OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS);
     AssetData asset1 = generateAsset(repositoryId, "/asset1/asset1.jar");
     AssetData asset2 = generateAsset(repositoryId, "/asset2/asset2.jar");
     AssetData asset3 = generateAsset(repositoryId, "/asset3/asset3.jar");

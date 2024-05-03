@@ -22,7 +22,7 @@ import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import UsageMetricsMachine from './UsageMetricsMachine';
-import UsageMetricsWithCircuitBreaker from './UsageMetricsWithCircuitBreaker';
+import UsageMetricsWithCircuitB from './UsageMetricsWithCircuitB';
 
 import './UsageMetrics.scss';
 
@@ -41,19 +41,19 @@ export default function UsageMetrics() {
 
   const isProEdition = ExtJS.isProEdition();
   const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
-  const isCircuitBreakerEnabled = ExtJS.state().getValue('nexus.circuitb.enabled');
+  const isCircuitBEnabled = ExtJS.state().getValue('nexus.circuitb.enabled');
 
   function retry() {
     send('RETRY');
   };
 
-  return !isHa && <div className={`nxrm-usage-metrics${isCircuitBreakerEnabled ? '-circuit-breaker' : ''} nxrm-metrics-section`}>
+  return !isHa && <div className={`nxrm-usage-metrics${isCircuitBEnabled ? '-circuit-b' : ''} nxrm-metrics-section`}>
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
       {() =>
         <>
           <NxH2>{MENU.TEXT}</NxH2>
           <NxCard.Container>
-            {isCircuitBreakerEnabled ? <UsageMetricsWithCircuitBreaker /> :
+            {isCircuitBEnabled ? <UsageMetricsWithCircuitB /> :
               <>
                 <NxCard aria-label={TOTAL_COMPONENTS.TITLE}>
                   <NxCard.Header>

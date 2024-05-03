@@ -13,10 +13,9 @@
 package org.sonatype.nexus.repository.content.store.internal;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.UUID;
-
 import java.util.concurrent.ExecutorService;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -24,16 +23,13 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
-import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
-import org.sonatype.nexus.repository.content.store.BlobRefTypeHandler;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -124,9 +120,8 @@ public class AssetBlobCleanupTaskTest
 
   @Test
   public void testUnusedBlobsAreDeleted() throws Exception {
-    AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
-
     setBatchDeleteIgnoreFinalField("raw");
+    AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
 
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
@@ -170,14 +165,12 @@ public class AssetBlobCleanupTaskTest
         .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, "EOL");
 
     inOrder.verifyNoMoreInteractions();
-
-    setBatchDeleteIgnoreFinalField(null);
   }
 
   @Test
   public void testExecutorServiceShutdown() throws Exception {
-    AssetBlobCleanupTask task = spy(new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager));
     setBatchDeleteIgnoreFinalField(null);
+    AssetBlobCleanupTask task = spy(new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager));
 
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
@@ -204,9 +197,9 @@ public class AssetBlobCleanupTaskTest
 
   @Test
   public void testUnusedBlobsAreDeletedBatch() throws Exception {
-    AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
-
     setBatchDeleteIgnoreFinalField(null);
+
+    AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
 
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
@@ -235,14 +228,9 @@ public class AssetBlobCleanupTaskTest
     inOrder.verifyNoMoreInteractions();
   }
 
-  private void setBatchDeleteIgnoreFinalField(String batchDeleteFormats)
-      throws NoSuchFieldException, IllegalAccessException {
-    Field field = AssetBlobCleanupTask.class.getDeclaredField("BATCH_DELETE_IGNORE_FORMATS");
-    field.setAccessible(true);
-    Field modifiers = Field.class.getDeclaredField("modifiers");
-    modifiers.setAccessible(true);
-    modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-    field.set(null, batchDeleteFormats);
+  private void setBatchDeleteIgnoreFinalField(String batchDeleteFormats) {
+    System.setProperty(AssetBlobCleanupTask.PROPERTY_PREFIX + "batchDeleteIgnoreForFormat",
+        batchDeleteFormats == null ? "" : batchDeleteFormats);
   }
 
   private AssetBlobData newAssetBlob() {
