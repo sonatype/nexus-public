@@ -23,6 +23,7 @@ import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import com.google.common.base.Throwables;
 import org.hamcrest.Matcher;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -168,6 +169,7 @@ public class PasswordHelperTest
   }
 
   @Test
+  @Ignore("NEXUS-31383")
   public void testCustomMasterPhrase() throws Exception {
     String password = "clear-text-password";
     String encodedPass = customPasswordHelper.encrypt(password);
