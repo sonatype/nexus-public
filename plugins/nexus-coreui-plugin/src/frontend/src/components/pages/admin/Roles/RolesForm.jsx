@@ -203,7 +203,7 @@ export default function RolesForm({roleId, service, onDone}) {
             {showModalPrivileges &&
               <PrivilegesSelectionModal
                 title={LABELS.SECTIONS.PRIVILEGES}
-                allPrivileges={privileges.filter(r => r.name != data.name)}
+                allPrivileges={privileges}
                 onModalClose={() => setShowModalPrivileges(false)}
                 selectedPrivileges={data.privileges}
                 saveModal={saveModalPrivileges}
