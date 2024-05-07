@@ -220,6 +220,12 @@ describe('user tokens', () => {
 
     await TestUtils.changeField(userTokenExpiry, '1000');
     expect(userTokenExpiry()).toHaveErrorMessage('The maximum value for this field is 999');
+
+    await TestUtils.changeField(userTokenExpiry, '3.5');
+    expect(userTokenExpiry()).toHaveErrorMessage('This field must not contain decimal values');
+
+    await TestUtils.changeField(userTokenExpiry, '2*');
+    expect(userTokenExpiry()).toHaveErrorMessage('This field must contain a numeric value');
   });
 
   it('sends correct data to API: disable', async () => {

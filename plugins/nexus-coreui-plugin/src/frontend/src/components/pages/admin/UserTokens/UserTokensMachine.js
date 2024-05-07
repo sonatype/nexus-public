@@ -94,7 +94,8 @@ export default FormUtils.buildFormMachine({
   actions: {
     validate: assign({
       validationErrors: ({data}) => ({
-        expirationDays: ValidationUtils.validateNotBlank(data.expirationDays) || ValidationUtils.isInRange({value: data.expirationDays, min: 1, max: 999})
+        expirationDays: ValidationUtils.validateNotBlank(data.expirationDays) ||
+          ValidationUtils.isInRange({value: data.expirationDays, min: 1, max: 999, allowDecimals: false})
       })
     }),
     setConfirmationString: assign((_, {value}) => ({
