@@ -31,9 +31,12 @@ import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
+import org.sonatype.nexus.scheduling.Cancelable;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static java.lang.String.format;
+import static org.sonatype.nexus.common.app.FeatureFlags.DISABLE_NORMALIZE_VERSION_TASK;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -43,6 +46,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 @TaskLogging(TaskLogType.TASK_LOG_ONLY_WITH_PROGRESS)
 public class NormalizeComponentVersionTask
     extends TaskSupport
+    implements Cancelable
 {
   public static final String KEY_FORMAT = "%s.normalized.version.available";
 
@@ -56,17 +60,21 @@ public class NormalizeComponentVersionTask
 
   private ProgressLogIntervalHelper progressLogger;
 
+  private final boolean disableTask;
+
   @Inject
   public NormalizeComponentVersionTask(
       final NormalizationPriorityService normalizationPriorityService,
       final VersionNormalizerService versionNormalizerService,
       final GlobalKeyValueStore globalKeyValueStore,
-      final EventManager eventManager)
+      final EventManager eventManager,
+      @Named("${" + DISABLE_NORMALIZE_VERSION_TASK + ":-false}") final boolean disableTask)
   {
     this.normalizationPriorityService = normalizationPriorityService;
     this.versionNormalizerService = versionNormalizerService;
     this.globalKeyValueStore = globalKeyValueStore;
     this.eventManager = eventManager;
+    this.disableTask = disableTask;
   }
 
   @Override
@@ -75,7 +83,12 @@ public class NormalizeComponentVersionTask
   }
 
   @Override
-  protected Object execute() throws Exception {
+  protected Object execute() throws Exception
+  {
+    if (disableTask) {
+      throw new TaskInterruptedException("The normalize version task was disabled", disableTask);
+    }
+
     progressLogger = new ProgressLogIntervalHelper(log, 10);
     Map<Format, FormatStoreManager> formats = normalizationPriorityService.getPrioritizedFormats();
 
