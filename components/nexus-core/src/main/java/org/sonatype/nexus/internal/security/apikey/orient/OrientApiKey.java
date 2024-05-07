@@ -20,6 +20,8 @@ import org.sonatype.nexus.security.authc.apikey.ApiKey;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * An Orient-stored object representing the association between a {@link PrincipalCollection} and a Api Key (char[]).
  *
@@ -37,18 +39,31 @@ public class OrientApiKey
 
   private OffsetDateTime created;
 
-  OrientApiKey() {
-    // package-private constructor
+  OrientApiKey() { }
+
+  OrientApiKey(
+      final String domain,
+      final PrincipalCollection principals,
+      final char[] apiKey,
+      final OffsetDateTime created)
+  {
+    this.domain = checkNotNull(domain);
+    this.principals = checkNotNull(principals);
+    this.apiKey = checkNotNull(apiKey);
+    this.created = created;
   }
 
+  @Override
   public void setDomain(final String domain) {
     this.domain = domain;
   }
 
+  @Override
   public void setPrincipals(final PrincipalCollection principals) {
     this.principals = principals;
   }
 
+  @Override
   public void setApiKey(final char[] apiKey) {
     this.apiKey = Arrays.copyOf(apiKey, apiKey.length);
   }
@@ -73,6 +88,7 @@ public class OrientApiKey
     return created;
   }
 
+  @Override
   public void setCreated(final OffsetDateTime created) {
     this.created = created;
   }
