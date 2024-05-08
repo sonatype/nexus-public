@@ -16,9 +16,6 @@
  */
 import {assign, createMachine} from 'xstate';
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import UIStrings from '../constants/UIStrings';
-
 export default createMachine(
     {
       initial: 'idle',

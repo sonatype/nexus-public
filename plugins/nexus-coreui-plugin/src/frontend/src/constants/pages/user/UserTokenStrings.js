@@ -20,9 +20,10 @@ export default {
       text: 'User Token',
       description: 'Access Sonatype Nexus Repository without the use of passwords'
     },
+    CAPTION: 'Token Information',
     LABELS: {
-      ACCESS_NOTE: 'A new user token will be created the first time it is accessed.',
-      RESET_NOTE: 'Resetting your user token will invalidate the current token and force a new token to be created the next time it is accessed.',
+      NOTE: 'Nexus Repository creates a new user token when a user first accesses that token. ' +
+          'Resetting your user token invalidates the current token. Nexus Repository will create a new user token when you next access that token.',
       USER_TOKEN_NOTE: 'User tokens are a combination of a name and password codes.',
       KEEP_SECRET_NOTE: 'Keep these codes secret.',
       USER_TOKEN_NAME_CODE: 'Your user token name code is',
@@ -36,12 +37,22 @@ export default {
       RESET_AUTHENTICATION: 'Resetting user tokens requires validation of your credentials',
       ACCESS_ERROR: 'You must authenticate successfully to access your token',
       RESET_SUCCESS: 'Your user token has been reset',
-      RESET_ERROR: 'You must authenticate successfully to reset your token'
+      RESET_ERROR: 'You must authenticate successfully to reset your token',
+      GENERATE_AUTHENTICATION: 'Generating user tokens requires validation of your credentials',
+      GENERATE_ERROR: 'You must authenticate successfully to generate your token',
+      EXPIRED: 'User Token expired'
     },
     BUTTONS: {
-      ACCESS: 'Access user token',
-      RESET: 'Reset user token',
+      GENERATE: 'Generate User Token',
+      ACCESS: 'Access User Token',
+      RESET: 'Reset User Token',
       CLOSE: 'Close'
+    },
+    USER_TOKEN_STATUS: {
+      TEXT: 'User Token Status',
+      DESCRIPTION: 'Time remaining until user token expires',
+      TIMESTAMP_TEXT: (isExpired) => isExpired ? 'Expired' : 'Expires: ',
+      EXPIRED_WARNING: 'Your user token has expired. Select generate user token to create a new one.'
     }
   }
 };
