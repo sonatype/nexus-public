@@ -68,7 +68,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.REPOSITORIES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
@@ -83,7 +83,7 @@ import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
  */
 @Named
 @Singleton
-@ManagedLifecycle(phase = SERVICES)
+@ManagedLifecycle(phase = REPOSITORIES)
 @ManagedObject(
     domain = "org.sonatype.nexus.repository.manager",
     typeClass = RepositoryManager.class,

@@ -52,7 +52,7 @@ const ROLE = {
   id: testRoleId,
   name: testRoleName,
   description: testRoleDescription,
-  privileges: ['nx-all', 'nx-blobstores-all'],
+  privileges: ['nx-all', 'nx-blobstores-all', 'testRoleId'],
   roles: ['nx-admin', 'TestRole', 'replication-role'],
 };
 
@@ -67,6 +67,13 @@ const PRIVILEGES = [{
   description: 'All permissions for Blobstores',
   domain: 'blobstores',
   name: 'nx-blobstores-all',
+  readOnly: true,
+  type: 'application',
+},
+{
+  description: 'All permissions for testing',
+  domain: 'test',
+  name: 'testRoleId',
   readOnly: true,
   type: 'application',
 }];
@@ -148,6 +155,7 @@ const selectors = {
     modal: () => screen.queryByRole('dialog'),
     cancel: () => within(selectors.selectionModal.modal()).getByRole('button', {name: 'Cancel'}),
     confirmButton: () => within(selectors.selectionModal.modal()).getByRole('button', {name: 'Confirm'}),
+    filter: () => screen.queryAllByPlaceholderText('Filter')[1],
   },
   cancelButton: () => screen.getByText(SETTINGS.CANCEL_BUTTON_LABEL),
   saveButton: () => screen.getByText(SETTINGS.SAVE_BUTTON_LABEL),
@@ -336,7 +344,7 @@ describe('RolesDetails', function() {
       id: 'RoleId',
       name: 'Updated name',
       description: 'Updated description',
-      privileges: ['nx-all', 'nx-blobstores-all'],
+      privileges: ['nx-all', 'nx-blobstores-all', 'testRoleId'],
       roles: ['nx-admin', 'TestRole', 'replication-role'],
     };
 
@@ -503,6 +511,24 @@ describe('RolesDetails', function() {
 
       userEvent.click(privilegeModalButton());
       expect(modal()).toBeInTheDocument();
+
+      userEvent.click(cancel());
+      expect(modal()).not.toBeInTheDocument();
+    });
+
+    it('can have the same name as the role', async function () {
+      const { queryLoadingMask, privilegeModalButton, selectionModal: { modal, cancel, filter } } = selectors;
+
+      renderDetails(testRoleId);
+      await waitForElementToBeRemoved(queryLoadingMask());
+
+      expect(modal()).not.toBeInTheDocument();
+
+      userEvent.click(privilegeModalButton());
+      expect(modal()).toBeInTheDocument();
+
+      const tableRow = (index) => modal().querySelectorAll('tbody tr')[index];
+      expect(tableRow(2).cells[1]).toHaveTextContent('testRoleId');
 
       userEvent.click(cancel());
       expect(modal()).not.toBeInTheDocument();

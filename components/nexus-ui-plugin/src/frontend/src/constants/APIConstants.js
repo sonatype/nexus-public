@@ -307,7 +307,8 @@ export default {
       },
     },
     SYSTEM_INFORMATION: '/service/rest/atlas/system-information',
-    SYSTEM_INFORMATION_HA: '/service/rest/beta/system/information'
+    SYSTEM_INFORMATION_HA: '/service/rest/beta/system/information',
+    USER_TOKEN_TIMESTAMP: '/service/rest/internal/current-user/user-token/attributes',
   },
   DEBOUNCE_DELAY: 500,
   SORT_DIRECTIONS: {

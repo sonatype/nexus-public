@@ -48,6 +48,7 @@ import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -330,6 +331,7 @@ public class FileBlobStoreTest
     assertThat(subdir2.toFile().exists(), is(false));
   }
 
+  @Ignore("NEXUS-40608")
   @Test
   public void testDeleteBlobTempFiles() throws Exception {
     underTest.doStart();

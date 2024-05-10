@@ -115,6 +115,8 @@ public interface FeatureFlags
   String CLEANUP_USE_SQL = "nexus.cleanup.useSQL";
 
   String FORMAT_RETAIN_PATTERN = "nexus.cleanup.{format}Retain";
+  
+  String DISABLE_NORMALIZE_VERSION_TASK = "nexus.cleanup.disableNormalizeVersionTask";
 
   String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";
 

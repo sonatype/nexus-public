@@ -156,4 +156,9 @@ public class ConfiguredUsersUserManager
   public String getAuthenticationRealmName() {
     return null;
   }
+
+  @Override
+  public boolean isRealmConfigured() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
 }

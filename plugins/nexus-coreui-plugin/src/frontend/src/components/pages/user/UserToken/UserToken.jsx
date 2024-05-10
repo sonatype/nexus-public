@@ -10,12 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useEffect} from 'react';
 import {useMachine, useService} from '@xstate/react';
 import {faKey, faLock} from '@fortawesome/free-solid-svg-icons';
+import {isNil} from 'ramda';
 
 import {
   ContentBody,
+  DateUtils,
   Page,
   PageHeader,
   PageTitle,
@@ -25,14 +27,30 @@ import {
 
 import {
   NxButton,
+  NxButtonBar,
   NxFontAwesomeIcon,
+  NxH2,
+  NxErrorAlert,
+  NxInfoAlert,
   NxLoadWrapper,
+  NxReadOnly,
+  useToggle
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import UserTokenMachine from './UserTokenMachine';
 import UserTokenDetails from './UserTokenDetails';
 import './UserToken.scss';
+
+const {
+  USER_TOKEN: {
+    MENU,
+    CAPTION,
+    LABELS, MESSAGES,
+    BUTTONS,
+    USER_TOKEN_STATUS
+  }
+} = UIStrings;
 
 export default function UserToken() {
   const service = useMachine(UserTokenMachine, {devTools: true})[2];
@@ -41,10 +59,14 @@ export default function UserToken() {
 }
 
 export function UserTokenForm({service}) {
-  const [current, send] = useService(service);
+  const [state, send] = useService(service);
 
-  const context = current.context;
-  const isLoading = !(current.matches('idle') || current.matches('showToken'));
+  const {data, error, token} = state.context;
+  const isLoading = !(state.matches('loaded') || state.matches('showToken'));
+  const expirationTimestamp = data?.expirationTimeTimestamp;
+  const isExpired = !isNil(error);
+  const [isOpen, dismiss] = useToggle(true);
+  const showUserTokenStatus = !isNil(expirationTimestamp) || isExpired;
 
   function onAccessTokenClick() {
     send('ACCESS');
@@ -54,6 +76,9 @@ export function UserTokenForm({service}) {
     send('RESET');
   }
 
+  function onGenerateTokenClick() {
+    send('GENERATE');
+  }
   function onCloseClick() {
     send('HIDE');
   }
@@ -63,21 +88,37 @@ export function UserTokenForm({service}) {
   }
 
   return <Page>
-    <PageHeader><PageTitle icon={faKey} {...UIStrings.USER_TOKEN.MENU}/></PageHeader>
+    <PageHeader><PageTitle icon={faKey} {...MENU}/></PageHeader>
     <ContentBody className='nxrm-usertoken-current'>
-      {current.matches('showToken') && <UserTokenDetails userToken={context.token} onCloseClick={onCloseClick}/>}
+      {state.matches('showToken') && <UserTokenDetails userToken={token} onCloseClick={onCloseClick}/>}
       <Section>
         <NxLoadWrapper loading={isLoading} retryHandler={retry}>
-          <p>{UIStrings.USER_TOKEN.LABELS.ACCESS_NOTE}</p>
-          <p>{UIStrings.USER_TOKEN.LABELS.RESET_NOTE}</p>
+          <NxH2>{CAPTION}</NxH2>
+          <NxInfoAlert>{LABELS.NOTE}</NxInfoAlert>
+          {showUserTokenStatus &&
+            <NxReadOnly>
+              <NxReadOnly.Label>{USER_TOKEN_STATUS.TEXT}</NxReadOnly.Label>
+              <NxReadOnly.Data className="nx-sub-label">{USER_TOKEN_STATUS.DESCRIPTION}</NxReadOnly.Data>
+              <NxReadOnly.Data>
+                {USER_TOKEN_STATUS.TIMESTAMP_TEXT(isExpired)}
+                {isExpired && isOpen && <NxErrorAlert onClose={dismiss}>{error}</NxErrorAlert>}
+                {!isExpired && DateUtils.prettyDateTime(new Date(parseInt(expirationTimestamp)))}
+              </NxReadOnly.Data>
+            </NxReadOnly>
+          }
           <SectionFooter>
-            <NxButton variant='primary' onClick={onAccessTokenClick}>
-              <span>{UIStrings.USER_TOKEN.BUTTONS.ACCESS}</span>
-            </NxButton>
-            <NxButton onClick={onResetTokenClick}>
-              <NxFontAwesomeIcon icon={faLock}/>
-              <span>{UIStrings.USER_TOKEN.BUTTONS.RESET}</span>
-            </NxButton>
+            <NxButtonBar>
+              <NxButton onClick={onResetTokenClick}>
+                <NxFontAwesomeIcon icon={faLock}/>
+                <span>{BUTTONS.RESET}</span>
+              </NxButton>
+              {isExpired && <NxButton variant='primary' onClick={onGenerateTokenClick}>
+                <span>{BUTTONS.GENERATE}</span>
+              </NxButton>}
+              {!isExpired && <NxButton variant='primary' onClick={onAccessTokenClick}>
+                <span>{BUTTONS.ACCESS}</span>
+              </NxButton>}
+            </NxButtonBar>
           </SectionFooter>
         </NxLoadWrapper>
       </Section>

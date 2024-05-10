@@ -13,10 +13,12 @@
 import React from 'react';
 import {act} from 'react-dom/test-utils';
 import {interpret} from 'xstate';
-import {waitFor} from '@testing-library/react';
+import {waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {when} from 'jest-when';
+import axios from "axios";
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtJS, DateUtils} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -25,6 +27,7 @@ import UserTokenMachine from './UserTokenMachine';
 
 const mockToken = 'fakeToken'
 const mockTokenB64 = 'ZmFrZVRva2Vu'
+const API_URL = APIConstants.REST.USER_TOKEN_TIMESTAMP;
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
@@ -33,6 +36,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
       showSuccessMessage: jest.fn(),
       showErrorMessage: jest.fn(),
       requestAuthenticationToken: jest.fn(() => Promise.resolve(mockToken))
+    },
+    DateUtils: {
+      prettyDateTime: jest.fn()
     }
   }
 });
@@ -47,6 +53,25 @@ jest.mock('axios', () => {
             nameCode: 'fWlnS_RJ',
             passCode: 'EAQvjLMhKd0JYV_05Ig7yIg8mwrOyBO61AdsPS7bsJma',
             created: '2020-04-23T21:49:40.112+01:00'
+          }
+        });
+      }
+      if (url === '/service/rest/internal/current-user/user-token/attributes') {
+        return Promise.resolve({
+          data: {
+            "expirationTimeTimestamp": "1713498443006",
+            "expirationEnabled": "true"
+          }
+        });
+      }
+    }),
+    post: jest.fn((url) => {
+      if (url === `/service/rest/internal/current-user/user-token?authToken=${mockTokenB64}`) {
+        return Promise.resolve({
+          data: {
+            nameCode: 'EjGJcwfm',
+            passCode: 'WE9UAaEQJQzh5NrmNJ22I44Eh80_h3oORkkO0EaoB4UR',
+            created: '2024-04-23T21:49:40.112+01:00'
           }
         });
       }
@@ -69,7 +94,7 @@ describe('UserToken', () => {
   });
 
   function renderView(view) {
-    return TestUtils.render(view, ({getByLabelText, getByText}) => ({
+    return TestUtils.render(view, ({getByLabelText, getByText, queryByRole}) => ({
       accessTokenButton: () => getByText(UIStrings.USER_TOKEN.BUTTONS.ACCESS),
       resetTokenButton: () => getByText(UIStrings.USER_TOKEN.BUTTONS.RESET),
       userTokenNameCodeField: () => getByLabelText(UIStrings.USER_TOKEN.LABELS.USER_TOKEN_NAME_CODE),
@@ -77,6 +102,12 @@ describe('UserToken', () => {
       mavenUsageField: () => getByLabelText(UIStrings.USER_TOKEN.LABELS.MAVEN_USAGE),
       b64UserTokenField: () => getByLabelText(UIStrings.USER_TOKEN.LABELS.BASE64_USER_TOKEN),
       closeButton: () => getByText(UIStrings.USER_TOKEN.BUTTONS.CLOSE),
+      userTokenStatusText: () => getByText(UIStrings.USER_TOKEN.USER_TOKEN_STATUS.TEXT),
+      userTokenStatusDescription: () => getByText(UIStrings.USER_TOKEN.USER_TOKEN_STATUS.DESCRIPTION),
+      timestamp: (t) => getByText(t),
+      expiredAlert: () => queryByRole('alert'),
+      alertCloseButton: (c) => within(c).queryByRole('button', {name: 'Close'}),
+      generateTokenButton: () => queryByRole('button', {name: 'Generate User Token'})
     }));
   }
 
@@ -88,23 +119,23 @@ describe('UserToken', () => {
       resetTokenButton
     } = renderView(<UserTokenForm service={service}/>);
 
-    await waitFor(() => expect(service.state.value).toBe('idle'));
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
     expect(loadingMask()).not.toBeInTheDocument();
     expect(accessTokenButton()).toBeEnabled();
     expect(resetTokenButton()).toBeEnabled();
   });
 
-  it('Reset user token requires authentication and displays success message', async () => {
+  it('Resets user token requires authentication and displays success message', async () => {
     const service = interpret(UserTokenMachine).start();
     const {resetTokenButton} = renderView(<UserTokenForm service={service}/>);
-    await waitFor(() => expect(service.state.value).toBe('idle'));
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
 
     await act(async () => userEvent.click(resetTokenButton()));
 
     expect(ExtJS.requestAuthenticationToken).toHaveBeenCalled();
   });
 
-  it('Access user token requires authentication and displays the token', async () => {
+  it('Accesses user token requires authentication and displays the token', async () => {
     const service = interpret(UserTokenMachine).start();
     const {
       accessTokenButton,
@@ -114,7 +145,7 @@ describe('UserToken', () => {
       mavenUsageField,
       closeButton
     } = renderView(<UserTokenForm service={service}/>);
-    await waitFor(() => expect(service.state.value).toBe('idle'));
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
 
     await act(async () => userEvent.click(accessTokenButton()));
 
@@ -127,6 +158,79 @@ describe('UserToken', () => {
         '<server>\n\t<id>${server}</id>\n\t<username>fWlnS_RJ</username>\n\t<password>EAQvjLMhKd0JYV_05Ig7yIg8mwrOyBO61AdsPS7bsJma</password>\n</server>');
 
     await act(async () => userEvent.click(closeButton()));
-    await waitFor(() => expect(service.state.value).toBe('idle'));
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
+  });
+
+  it('Renders user token status with correct data', async () => {
+    when(DateUtils.prettyDateTime).calledWith(expect.any(Date)).mockReturnValue('4/18/2024, 20:47:23 GMT-07:00');
+    const service = interpret(UserTokenMachine).start();
+    const {
+      userTokenStatusText,
+      userTokenStatusDescription,
+      timestamp
+    } = renderView(<UserTokenForm service={service}/>);
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
+
+    expect(userTokenStatusText()).toBeInTheDocument();
+    expect(userTokenStatusDescription()).toBeInTheDocument();
+    expect(timestamp('Expires: 4/18/2024, 20:47:23 GMT-07:00')).toBeInTheDocument();
+  });
+
+  it('Renders user token alert with close button when expired', async () => {
+    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {data: 'User Token expired'}});
+    const service = interpret(UserTokenMachine).start();
+    const {
+      userTokenStatusText,
+      userTokenStatusDescription,
+      expiredAlert,
+      alertCloseButton
+    } = renderView(<UserTokenForm service={service}/>);
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
+
+    const closeButton = alertCloseButton(expiredAlert());
+
+    expect(userTokenStatusText()).toBeInTheDocument();
+    expect(userTokenStatusDescription()).toBeInTheDocument();
+    expect(expiredAlert()).toHaveTextContent('Your user token has expired. Select generate user token to create a new one.');
+    expect(closeButton).toBeInTheDocument();
+
+    userEvent.click(closeButton);
+    expect(expiredAlert()).not.toBeInTheDocument();
+  });
+
+  it('Renders generate user token button when expired', async () => {
+    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {data: 'User Token expired'}});
+    const service = interpret(UserTokenMachine).start();
+    const {generateTokenButton} = renderView(<UserTokenForm service={service}/>);
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
+
+    expect(generateTokenButton()).toBeInTheDocument();
+  });
+
+  it('Generates user token requires authentication and displays the token', async () => {
+    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {data: 'User Token expired'}});
+    const service = interpret(UserTokenMachine).start();
+    const {
+      generateTokenButton,
+      userTokenNameCodeField,
+      userTokenPassCodeField,
+      b64UserTokenField,
+      mavenUsageField,
+      closeButton
+    } = renderView(<UserTokenForm service={service}/>);
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
+
+    await act(async () => userEvent.click(generateTokenButton()));
+
+    expect(ExtJS.requestAuthenticationToken).toHaveBeenCalled();
+    await waitFor(() => expect(service.state.value).toBe('showToken'));
+    expect(userTokenNameCodeField()).toHaveValue('EjGJcwfm');
+    expect(userTokenPassCodeField()).toHaveValue('WE9UAaEQJQzh5NrmNJ22I44Eh80_h3oORkkO0EaoB4UR');
+    expect(b64UserTokenField()).toHaveValue('RWpHSmN3Zm06V0U5VUFhRVFKUXpoNU5ybU5KMjJJNDRFaDgwX2gzb09Sa2tPMEVhb0I0VVI=');
+    expect(mavenUsageField()).toHaveValue(
+        '<server>\n\t<id>${server}</id>\n\t<username>EjGJcwfm</username>\n\t<password>WE9UAaEQJQzh5NrmNJ22I44Eh80_h3oORkkO0EaoB4UR</password>\n</server>');
+
+    await act(async () => userEvent.click(closeButton()));
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
   });
 });

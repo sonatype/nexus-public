@@ -105,4 +105,22 @@ public interface ApiKeyDAO
    * @param expiration the date of expiration
    */
   void deleteApiKeyByExpirationDate(@Param("expiration") OffsetDateTime expiration);
+
+  /**
+   * Updates an existing {@link ApiKey}
+   */
+  void update(ApiKeyData toUpdate);
+
+  /**
+   * Browse all API Keys in the specified domain (paginated)
+   *
+   * @param domain the domain, e.g. npm keys, nuget keys
+   * @param skip   the amount of records to skip/offset
+   * @param limit  the amount of records to limit the query to
+   */
+  Collection<ApiKey> browsePaginated(
+      @Param("domain") String domain,
+      @Param("skip") int skip,
+      @Param("limit") int limit);
+
 }

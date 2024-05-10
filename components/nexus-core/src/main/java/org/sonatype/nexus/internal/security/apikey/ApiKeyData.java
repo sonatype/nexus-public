@@ -18,6 +18,8 @@ import org.sonatype.nexus.security.authc.apikey.ApiKey;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * {@link ApiKey} data.
  *
@@ -34,10 +36,21 @@ public class ApiKeyData
 
   private OffsetDateTime created;
 
+  ApiKeyData() { }
+
+  ApiKeyData(String domain, PrincipalCollection principals, ApiKeyToken token, OffsetDateTime created) {
+    this.domain = checkNotNull(domain);
+    this.principals = checkNotNull(principals);
+    this.token = checkNotNull(token);
+    this.created = created;
+  }
+
+  @Override
   public void setDomain(final String domain) {
     this.domain = domain;
   }
 
+  @Override
   public void setPrincipals(final PrincipalCollection principals) {
     this.principals = principals;
   }
@@ -46,6 +59,7 @@ public class ApiKeyData
     this.token = token;
   }
 
+  @Override
   public void setApiKey(final char[] chars) {
     this.token = new ApiKeyToken(chars);
   }
@@ -53,10 +67,6 @@ public class ApiKeyData
   @Override
   public String getDomain() {
     return domain;
-  }
-
-  public String getPrimaryPrincipal() {
-    return String.valueOf(principals.getPrimaryPrincipal());
   }
 
   @Override
@@ -78,6 +88,7 @@ public class ApiKeyData
     return created;
   }
 
+  @Override
   public void setCreated(final OffsetDateTime created) {
     this.created = created;
   }

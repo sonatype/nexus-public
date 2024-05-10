@@ -180,6 +180,27 @@ public class FluentBlobsImpl
     }
   }
 
+
+  @Override
+  public TempBlob ingest(final Blob srcBlob, final BlobStore srcStore, final Map<HashAlgorithm, HashCode> hashes)
+  {
+    BlobStore destination = blobStore.get();
+
+    String contentType = srcBlob.getHeaders().get(CONTENT_TYPE_HEADER);
+
+    if (destination.getBlobStoreConfiguration().getName().equals(srcStore.getBlobStoreConfiguration().getName())) {
+      Blob blob = destination.copy(srcBlob.getId(), tempHeaders(srcBlob.getHeaders(), contentType));
+      return new TempBlob(blob, hashes, false, srcStore);
+    }
+
+    try (InputStream in = srcBlob.getInputStream()) {
+      return ingest(in, contentType, srcBlob.getHeaders(), hashes.keySet());
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
   /**
    * We often use Content-Type and MIME type interchangeably throughout NXRM.
    * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type

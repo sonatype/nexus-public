@@ -124,4 +124,40 @@
     WHERE created &lt; #{expiration};
   </delete>
 
+  <update id="update" parameterType="ApiKeyData" databaseId="PostgreSQL">
+    INSERT INTO api_key (primary_principal
+                        , domain
+                        , token
+                        , principals
+                        <if test="created != null">, created</if>)
+    VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
+            , #{domain}
+            , #{token}
+            , #{principals}
+            <if test="created != null">, #{created}</if>)
+    ON CONFLICT (domain, token)
+    DO UPDATE SET
+      token = #{token}
+      , principals = #{principals}
+      <if test="created != null">, created = #{created}</if>;
+  </update>
+
+  <update id="update" parameterType="ApiKeyData" databaseId="H2">
+    MERGE INTO api_key KEY (primary_principal, domain, token)
+    VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
+            , #{domain}
+            , #{token}
+            , #{principals}
+            <if test="created != null">, #{created}</if>);
+  </update>
+
+  <select id="browsePaginated" resultType="ApiKeyData">
+    SELECT *
+    FROM api_key
+    WHERE domain = #{domain}
+    ORDER BY created
+    LIMIT #{limit}
+    OFFSET #{skip};
+  </select>
+
 </mapper>

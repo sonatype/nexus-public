@@ -15,7 +15,6 @@ package org.sonatype.nexus.extender;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javax.inject.Named;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -81,6 +80,9 @@ public class NexusLifecycleManagerTest
   private ServicesPhase servicesPhase;
 
   @Mock
+  private RepositoriesPhase repositoriesPhase;
+
+  @Mock
   private CapabilitiesPhase capabilitiesPhase;
 
   @Mock
@@ -104,6 +106,7 @@ public class NexusLifecycleManagerTest
         eventsPhase,
         securityPhase,
         servicesPhase,
+        repositoriesPhase,
         capabilitiesPhase,
         tasksPhase
     );
@@ -140,6 +143,7 @@ public class NexusLifecycleManagerTest
         eventsPhase,
         securityPhase,
         servicesPhase,
+        repositoriesPhase,
         capabilitiesPhase,
         tasksPhase,
         systemBundle
@@ -182,6 +186,10 @@ public class NexusLifecycleManagerTest
     assertThat(underTest.getCurrentPhase(), is(SERVICES));
     inOrder.verify(servicesPhase).start();
 
+    underTest.to(REPOSITORIES);
+    assertThat(underTest.getCurrentPhase(), is(REPOSITORIES));
+    inOrder.verify(repositoriesPhase).start();
+
     underTest.to(CAPABILITIES);
     assertThat(underTest.getCurrentPhase(), is(CAPABILITIES));
     inOrder.verify(capabilitiesPhase).start();
@@ -196,9 +204,13 @@ public class NexusLifecycleManagerTest
     assertThat(underTest.getCurrentPhase(), is(CAPABILITIES));
     inOrder.verify(tasksPhase).stop();
 
+    underTest.to(REPOSITORIES);
+    assertThat(underTest.getCurrentPhase(), is(REPOSITORIES));
+    inOrder.verify(capabilitiesPhase).stop();
+
     underTest.to(SERVICES);
     assertThat(underTest.getCurrentPhase(), is(SERVICES));
-    inOrder.verify(capabilitiesPhase).stop();
+    inOrder.verify(repositoriesPhase).stop();
 
     underTest.to(SECURITY);
     assertThat(underTest.getCurrentPhase(), is(SECURITY));
@@ -281,6 +293,7 @@ public class NexusLifecycleManagerTest
     inOrder.verify(eventsPhase).start();
     inOrder.verify(securityPhase).start();
     inOrder.verify(servicesPhase).start();
+    inOrder.verify(repositoriesPhase).start();
     inOrder.verify(capabilitiesPhase).start();
     inOrder.verify(tasksPhase).start();
 
@@ -295,6 +308,7 @@ public class NexusLifecycleManagerTest
 
     doThrow(new Exception("testing")).when(tasksPhase).stop();
     doThrow(new Exception("testing")).when(capabilitiesPhase).stop();
+    doThrow(new Exception("testing")).when(repositoriesPhase).stop();
     doThrow(new Exception("testing")).when(servicesPhase).stop();
     doThrow(new Exception("testing")).when(securityPhase).stop();
     doThrow(new Exception("testing")).when(eventsPhase).stop();
@@ -312,6 +326,7 @@ public class NexusLifecycleManagerTest
 
     inOrder.verify(tasksPhase).stop();
     inOrder.verify(capabilitiesPhase).stop();
+    inOrder.verify(repositoriesPhase).stop();
     inOrder.verify(servicesPhase).stop();
     inOrder.verify(securityPhase).stop();
     inOrder.verify(eventsPhase).stop();
@@ -389,6 +404,12 @@ public class NexusLifecycleManagerTest
 
   @ManagedLifecycle(phase = SERVICES)
   private static class ServicesPhase
+      extends TestLifecycle
+  {
+  }
+
+  @ManagedLifecycle(phase = REPOSITORIES)
+  private static class RepositoriesPhase
       extends TestLifecycle
   {
   }

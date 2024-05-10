@@ -89,4 +89,9 @@ public abstract class MockUserManagerSupport
   public void changePassword(String userId, String newPassword) throws UserNotFoundException {
     // empty
   }
+
+  @Override
+  public boolean isRealmConfigured() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
 }

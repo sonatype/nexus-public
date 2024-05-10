@@ -306,6 +306,11 @@ public class UserManagerImpl
     return users;
   }
 
+  @Override
+  public boolean isRealmConfigured() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
   private SecuritySystem getSecuritySystem() {
     return this.securitySystem;
   }
