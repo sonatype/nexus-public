@@ -46,6 +46,8 @@ public abstract class TaskSupport
 
   private TaskInfo taskInfo;
 
+  protected static final String TIMESTAMP_FORMAT = "%1$tY-%1$tm-%1$td-%1$tH-%1$tM-%1$tS";
+
   public TaskSupport() {
     this(true);
   }

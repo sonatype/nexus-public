@@ -16,7 +16,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.sql.DataSource;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -35,9 +34,9 @@ import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.mockito.ArgumentCaptor;
 
 import static com.google.inject.Guice.createInjector;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.eq;
@@ -104,6 +103,11 @@ public class DataStoreSupportTest
 
     @Override
     public void backup(final String location) throws SQLException {
+      // do nothing
+    }
+
+    @Override
+    public void generateScript(final String location) {
       // do nothing
     }
   }

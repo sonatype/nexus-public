@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -134,6 +133,8 @@ public class MyBatisDataStore
     extends DataStoreSupport<MyBatisDataSession>
 {
   private static final String REGISTERED_MESSAGE = "Registered {}";
+
+  private static final String H2_DATABASE = "H2";
 
   private static final Key<TypeHandler> TYPE_HANDLER_KEY = Key.get(TypeHandler.class);
 
@@ -342,7 +343,7 @@ public class MyBatisDataStore
   @Override
   public void backup(final String location) throws SQLException {
     try (Connection conn = openConnection()) {
-      if ("H2".equals(conn.getMetaData().getDatabaseProductName())) {
+      if (H2_DATABASE.equals(conn.getMetaData().getDatabaseProductName())) {
         try (PreparedStatement backupStmt = conn.prepareStatement("BACKUP TO ?")) {
           backupStmt.setString(1, location);
           backupStmt.execute();
@@ -350,6 +351,22 @@ public class MyBatisDataStore
       }
       else {
         throw new UnsupportedOperationException("The underlying database is not supported for backup.");
+      }
+    }
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public void generateScript(final String location) throws SQLException {
+    try (Connection conn = openConnection()) {
+      if (H2_DATABASE.equals(conn.getMetaData().getDatabaseProductName())) {
+        try (PreparedStatement scriptStmt = conn.prepareStatement("SCRIPT TO ?")) {
+          scriptStmt.setString(1, location);
+          scriptStmt.execute();
+        }
+      }
+      else {
+        throw new UnsupportedOperationException("The underlying database is not supported for generating a script.");
       }
     }
   }

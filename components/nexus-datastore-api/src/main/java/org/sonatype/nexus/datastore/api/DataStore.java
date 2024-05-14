@@ -14,7 +14,6 @@ package org.sonatype.nexus.datastore.api;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-
 import javax.sql.DataSource;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -101,4 +100,11 @@ public interface DataStore<S extends DataSession<?>>
    * @since 3.21
    */
   void backup(String location) throws Exception;
+
+  /**
+   * Generates a script of the database
+   *
+   * @throws UnsupportedOperationException if the underlying data store does not support generating a script
+   */
+  void generateScript(String location) throws SQLException;
 }
