@@ -425,7 +425,9 @@ Ext.define('NX.coreui.controller.Users', {
       if (userId) {
         selectedModel = store.findRecord('userId', userId, 0, false, true, true);
 
-        enableButton = selectedModel && !selectedModel.get('external') && (selectedModel.get('userId') !== NX.State.getValue('anonymousUsername'));
+        enableButton = selectedModel
+            && (!selectedModel.get('external') || (selectedModel.get('realm') === "SAML" && skipCurrentUser !== undefined))
+            && (selectedModel.get('userId') !== NX.State.getValue('anonymousUsername'));
 
         if (enableButton && skipCurrentUser) {
           enableButton = (selectedModel.get('userId') !== NX.State.getUser().id);
