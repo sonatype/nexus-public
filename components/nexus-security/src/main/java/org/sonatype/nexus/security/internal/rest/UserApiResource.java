@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -39,6 +38,7 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
+import org.sonatype.nexus.security.internal.RealmToSource;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
@@ -67,13 +67,14 @@ public class UserApiResource
     implements Resource, UserApiResourceDoc
 {
   public static final String ADMIN_USER_ID = "admin";
+  private static final String SAML_SOURCE = "SAML";
 
   private final SecuritySystem securitySystem;
-
   private final AdminPasswordFileManager adminPasswordFileManager;
 
   @Inject
-  public UserApiResource(final SecuritySystem securitySystem, final AdminPasswordFileManager adminPasswordFileManager) {
+  public UserApiResource(final SecuritySystem securitySystem,
+                         final AdminPasswordFileManager adminPasswordFileManager) {
     this.securitySystem = checkNotNull(securitySystem);
     this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
   }
@@ -159,13 +160,22 @@ public class UserApiResource
   @Path("{userId}")
   @RequiresAuthentication
   @RequiresPermissions("nexus:users:delete")
-  public void deleteUser(@PathParam("userId") final String userId) {
+  public void deleteUser(@PathParam("userId") final String userId,
+                         @QueryParam("realm") final String realm) {
     User user = null;
     try {
-      user = securitySystem.getUser(userId);
-
-      if (!UserManager.DEFAULT_SOURCE.equals(user.getSource()) && !"SAML".equals(user.getSource())) {
-        throw createWebException(Status.BAD_REQUEST, "Non-local user cannot be deleted.");
+      if (realm == null) {
+        user = securitySystem.getUser(userId);
+        if (!UserManager.DEFAULT_SOURCE.equals(user.getSource()) && !SAML_SOURCE.equals(user.getSource())) {
+          throw createWebException(Status.BAD_REQUEST, "Non-local user cannot be deleted.");
+        }
+      } else {
+        if (!securitySystem.isValidRealm(realm)) {
+          throw createWebException(Status.BAD_REQUEST, "Invalid or empty realm name.");
+        }
+        else {
+          user = securitySystem.getUser(userId, RealmToSource.getSource(realm));
+        }
       }
 
       securitySystem.deleteUser(userId, user.getSource());

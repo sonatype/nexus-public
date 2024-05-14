@@ -251,4 +251,11 @@ public interface SecuritySystem
    * @since 3.19
    */
   List<String> listSources();
+
+  /**
+   * Method to validates a realm name by searching in the existing in the current authentication realms
+   * @param realm name to be validated
+   * @return boolean indicating that the realm name was considered a valid authentication realm
+   */
+  boolean isValidRealm(final String realm);
 }
