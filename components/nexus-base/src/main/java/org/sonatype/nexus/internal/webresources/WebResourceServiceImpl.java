@@ -13,8 +13,6 @@
 package org.sonatype.nexus.internal.webresources;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -23,12 +21,10 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.servlet.ServletContext;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.webresources.FileWebResource;
-import org.sonatype.nexus.webresources.UrlWebResource;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
 import org.sonatype.nexus.webresources.WebResourceService;
@@ -52,19 +48,15 @@ public class WebResourceServiceImpl
 {
   private final DevModeResources devModeResources;
 
-  private final ServletContext servletContext;
-
   private final MimeSupport mimeSupport;
 
   private final Map<String, WebResource> resourcePaths;
 
   @Inject
   public WebResourceServiceImpl(final DevModeResources devModeResources,
-                                final ServletContext servletContext,
                                 final MimeSupport mimeSupport)
   {
     this.devModeResources = checkNotNull(devModeResources);
-    this.servletContext = checkNotNull(servletContext);
     this.mimeSupport = checkNotNull(mimeSupport);
     this.resourcePaths = Maps.newHashMap();
 
@@ -120,21 +112,6 @@ public class WebResourceServiceImpl
       }
     }
 
-    // 3) third, look into WAR embedded resources
-    if (resource == null) {
-      URL url;
-      try {
-        url = servletContext.getResource(path);
-        if (url != null && !isDirectory(url)) {
-          resource = new UrlWebResource(url, path, mimeSupport.guessMimeTypeFromPath(path));
-          log.trace("Found servlet-context resource: {}", resource);
-        }
-      }
-      catch (MalformedURLException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
     return resource;
   }
 
@@ -171,13 +148,5 @@ public class WebResourceServiceImpl
     public void remove(BeanEntry<Named, WebResource> entry, WebResourceServiceImpl watcher) throws Exception {
       // no-op
     }
-  }
-
-  private boolean isDirectory(final URL url) {
-    if ("file".equals(url.getProtocol())) {
-      File file = new File(url.getFile());
-      return file.isDirectory();
-    }
-    return false;
   }
 }

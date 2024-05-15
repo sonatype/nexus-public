@@ -1,0 +1,66 @@
+#*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ *###
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<html>
+<head>
+  <title>Copyright</title>
+  <style type="text/css">
+    body {
+      font-family: arial, tahoma, verdana, helvetica, sans-serif;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<p>
+  Copyright &copy; 2008-present Sonatype, Inc.
+</p>
+
+<p>
+  All rights reserved. Includes the third-party code listed at
+  <a href="http://links.sonatype.com/products/nexus/$edition/attributions" target="_blank" rel="noopener">http://links.sonatype.com/products/nexus/$edition/attributions</a>
+</p>
+
+<p>
+  Sonatype and Sonatype Nexus are trademarks of Sonatype, Inc.
+  <br/>
+  Apache Maven is a trademark of the Apache Foundation.
+  <br/>
+  M2Eclipse is a trademark of the Eclipse Foundation.
+  <br/>
+  All other trademarks are the property of their respective owners.
+</p>
+
+<p>
+  The HealthCheck plugin needs to access Sonatype Data Services to be fully functional.
+  <br/>
+  Access to and use of the Sonatype Data Services is subject to Sonatype's separate
+  <a href="http://links.sonatype.com/products/clm/tos" target="_blank" rel="noopener">terms of service</a> for the data services.
+</p>
+</body>
+</html>
