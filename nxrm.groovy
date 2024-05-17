@@ -71,7 +71,7 @@ positionalOptions = null
 buildLog = new File("build.log")
 
 // test projects - generated with command: for i in `find -name pom.xml`; do cd `dirname $i`; xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml; cd -; done 
-testProjects = [':functional-testsuite', ':nexus-analytics-testsupport', ':nexus-contributedhandler-testsupport', ':nexus-docker-testsupport-internal', ':nexus-fabric-testsupport', ':nexus-ldap-testsupport', ':nexus-migration-testsupport', ':nexus-repository-testsupport-internal', ':nexus-saml-testsupport', ':nexus-stress-testsuite', ':nexus-testlm-edition', ':nexus-testsuite-data', ':nexus-upgrade-testsupport', ':nexuspro-fabric-testsuite', ':nexuspro-migration-testsuite', ':nexuspro-modern-testsuite', ':nexuspro-performance-testsuite', ':nexuspro-sql-fabric-testsuite', ':nexuspro-testsuite', ':nxrm-pro-image', ':pax-exam-spock', ':selenide-functional-tests' ]
+testProjects = [':functional-testsuite', ':nexus-analytics-testsupport', ':nexus-contributedhandler-testsupport', ':nexus-docker-testsupport-internal', ':nexus-ldap-testsupport', ':nexus-migration-testsupport', ':nexus-repository-testsupport-internal', ':nexus-saml-testsupport', ':nexus-stress-testsuite', ':nexus-testlm-edition', ':nexus-testsuite-data', ':nexus-upgrade-testsupport', ':nexuspro-fabric-testsuite', ':nexuspro-migration-testsuite', ':nexuspro-modern-testsuite', ':nexuspro-performance-testsuite', ':nexuspro-sql-fabric-testsuite', ':nexuspro-testsuite', ':nxrm-pro-image', ':pax-exam-spock', ':selenide-functional-tests' ]
 
 /**
  Customize these by creating a .nxrm/nxrmrc.groovy. Sample contents:
