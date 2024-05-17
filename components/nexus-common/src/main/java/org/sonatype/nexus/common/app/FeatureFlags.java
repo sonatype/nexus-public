@@ -126,7 +126,7 @@ public interface FeatureFlags
 
   String REACT_PRIVILEGES = "nexus.react.privileges";
 
-  String REACT_PRIVILEGES_NAMED = "${nexus.react.privileges:-false}";
+  String REACT_PRIVILEGES_NAMED = "${nexus.react.privileges:-true}";
 
   String REACT_PRIVILEGES_MODAL_ENABLED = "nexus.react.privileges.modal.enabled";
 

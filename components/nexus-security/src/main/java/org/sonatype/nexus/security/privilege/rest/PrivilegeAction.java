@@ -84,7 +84,7 @@ public enum PrivilegeAction
     }
   }
 
-    @Nullable
+  @Nullable
   public String getCrudTaskActions() {
     switch (this) {
       case ADD:
@@ -127,6 +127,10 @@ public enum PrivilegeAction
 
   public static List<PrivilegeAction> getCrudActions() {
     return Arrays.asList(READ, EDIT, ADD, DELETE, ASSOCIATE, DISASSOCIATE, ALL);
+  }
+
+  public static List<PrivilegeAction> getCrudTaskAction() {
+    return Arrays.asList(READ, EDIT, ADD, DELETE, ASSOCIATE, DISASSOCIATE, START, STOP, ALL);
   }
 
   public static List<String> getBreadActionStrings() {

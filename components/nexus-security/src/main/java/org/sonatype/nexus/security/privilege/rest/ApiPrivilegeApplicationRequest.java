@@ -72,6 +72,6 @@ public class ApiPrivilegeApplicationRequest
 
   @Override
   protected String doAsActionString() {
-    return toCrudActionString();
+    return toCrudTaskActionString();
   }
 }

@@ -157,7 +157,7 @@ window.plugins.push({
       weight: 10,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        featureFlags: [{key: 'nexus.react.privileges', defaultValue: false}],
+        featureFlags: [{key: 'nexus.react.privileges', defaultValue: true}],
         permissions: [Permissions.PRIVILEGES.READ]
       },
     },
