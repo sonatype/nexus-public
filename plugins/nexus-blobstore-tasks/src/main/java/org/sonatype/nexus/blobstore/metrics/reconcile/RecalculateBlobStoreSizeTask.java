@@ -26,6 +26,7 @@ import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.Cancelable;
+import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import org.joda.time.DateTime;
 
@@ -40,6 +41,8 @@ public class RecalculateBlobStoreSizeTask
   private static final int LOGGING_INTERVAL = 60;
 
   private static final String S3_TYPE = "S3";
+
+  private static final int CANCEL_CHECK_INTERVAL = 300;
 
   @Inject
   public RecalculateBlobStoreSizeTask(final BlobStoreManager blobStoreManager) {
@@ -71,8 +74,10 @@ public class RecalculateBlobStoreSizeTask
           .map(attributes -> attributes.getMetrics().getContentSize())
           .forEach(blobSize -> {
             totalSize.addAndGet(blobSize);
-            totalCount.incrementAndGet();
             metricsService.recordAddition(blobSize);
+            if (totalCount.incrementAndGet() % CANCEL_CHECK_INTERVAL == 0) {
+              CancelableHelper.checkCancellation();
+            }
 
             progressLogger.info("Re-calculating size metrics on blob store '{}', size : {} - blobs count : {}",
                 blobStore.getBlobStoreConfiguration().getName(), totalSize,
