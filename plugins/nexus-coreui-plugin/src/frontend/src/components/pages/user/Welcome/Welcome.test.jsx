@@ -305,6 +305,13 @@ describe('Welcome', function() {
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?abc=123/));
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?def=9000/));
     });
+
+    it('sets the database type to orient when using the orient db', async function() {
+      render(<Welcome />);
+
+      const frame = await selectors.outreachFrame('find');
+      expect(frame.src).toContain('databaseType=orient');
+    });
   });
 
   describe('quick actions', function() {
