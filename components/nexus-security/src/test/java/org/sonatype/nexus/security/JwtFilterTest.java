@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security;
 
+import java.util.ArrayList;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.jwt.JwtVerificationException;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -51,7 +53,8 @@ public class JwtFilterTest
 
   @Before
   public void setupFilter() {
-    this.jwtFilter = new JwtFilter(jwtHelper);
+    this.jwtFilter = new JwtFilter(jwtHelper, new ArrayList<>());
+    when(request.getServletPath()).thenReturn("/somepath");
   }
 
   @Test
@@ -88,6 +91,20 @@ public class JwtFilterTest
   public void testPreHandle_noJwtCookie() throws Exception {
     Cookie[] cookies = new Cookie[] {};
     when(request.getCookies()).thenReturn(cookies);
+
+    jwtFilter.preHandle(request, response);
+
+    verifyNoInteractions(response);
+  }
+
+  @Test
+  public void testPreHandle_JwtCookieTelemetryRequest() throws Exception {
+    this.jwtFilter = new JwtFilter(jwtHelper, ImmutableList.of(() -> "user-telemetry/events"));
+    Cookie oldCookie = makeCookie(OLD_JWT);
+    Cookie[] cookies = new Cookie[] {oldCookie};
+
+    when(request.getCookies()).thenReturn(cookies);
+    when(request.getServletPath()).thenReturn("user-telemetry/events/xyz");
 
     jwtFilter.preHandle(request, response);
 
