@@ -15,7 +15,7 @@
 -->
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.sonatype.nexus.repository.content.kv.global.NexusKeyValueDAO">
-  <insert id="createSchema">
+  <insert id="createSchema" databaseId="PostgreSQL">
     CREATE TABLE IF NOT EXISTS nexus_key_value
     (
       key     VARCHAR UNIQUE           NOT NULL,
@@ -30,10 +30,31 @@
     CREATE INDEX IF NOT EXISTS idx_nexus_key_value_key ON nexus_key_value (key);
   </insert>
 
-  <select id="get" resultType="NexusKeyValue">
+  <insert id="createSchema" databaseId="H2">
+    CREATE TABLE IF NOT EXISTS nexus_key_value
+    (
+      `key`     VARCHAR UNIQUE           NOT NULL,
+      `type`    VARCHAR                  NOT NULL,
+      `value`   ${JSON_TYPE}             NOT NULL,
+      created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+      CONSTRAINT pk_nexus_key_value PRIMARY KEY (`key`)
+      );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS uk_nexus_key_value_key ON nexus_key_value (`key`);
+    CREATE INDEX IF NOT EXISTS idx_nexus_key_value_key ON nexus_key_value (`key`);
+  </insert>
+
+  <select id="get" resultType="NexusKeyValue" databaseId="PostgreSQL">
     SELECT key, type, value
     FROM nexus_key_value
     WHERE key = #{key}
+  </select>
+
+  <select id="get" resultType="NexusKeyValue" databaseId="H2">
+    SELECT `key`, type, `value`
+    FROM nexus_key_value
+    WHERE `key` = #{key}
   </select>
 
   <select id="count" resultType="int">
@@ -51,13 +72,19 @@
   </update>
 
   <update id="set" parameterType="NexusKeyValue" databaseId="H2">
-     MERGE INTO nexus_key_value KEY(key) VALUES (#{key} , #{type} , #{value} , now())
+     MERGE INTO nexus_key_value KEY(`key`) VALUES (#{key} , #{type} , #{value} , now())
   </update>
 
-  <delete id="remove">
+  <delete id="remove" databaseId="PostgreSQL">
     DELETE
     FROM nexus_key_value
     WHERE key = #{key};
+  </delete>
+
+  <delete id="remove" databaseId="H2">
+    DELETE
+    FROM nexus_key_value
+    WHERE `key` = #{key};
   </delete>
 
 </mapper>

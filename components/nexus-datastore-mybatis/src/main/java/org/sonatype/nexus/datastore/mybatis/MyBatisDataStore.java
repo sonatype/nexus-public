@@ -96,6 +96,7 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
+import org.h2.jdbc.JdbcSQLNonTransientConnectionException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -170,6 +171,8 @@ public class MyBatisDataStore
 
   private Configuration mybatisConfig;
 
+  private  H2VersionUpgrader h2VersionUpgrader;
+
   private Optional<Configuration> previousConfig = empty();
 
   @Nullable
@@ -216,7 +219,17 @@ public class MyBatisDataStore
 
   @Override
   protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
-    dataSource = new HikariDataSource(configureHikari(storeName, attributes));
+    HikariConfig hikariConfig = configureHikari(storeName, attributes);
+    try {
+      dataSource = new HikariDataSource(hikariConfig);
+    }catch (Exception exception) {
+      if (isH2UnsupportedDatabaseVersion(exception)) {
+        dataSource = h2VersionUpgrader.upgradeH2Database(storeName, hikariConfig);
+      }
+      else {
+        throw exception;
+      }
+    }
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
 
     if (previousConfig.isPresent()) {
@@ -369,6 +382,11 @@ public class MyBatisDataStore
         throw new UnsupportedOperationException("The underlying database is not supported for generating a script.");
       }
     }
+  }
+
+  @Inject
+  public void setH2VersionUpgrader(final H2VersionUpgrader h2VersionUpgrader) {
+    this.h2VersionUpgrader = checkNotNull(h2VersionUpgrader);
   }
 
   /**
@@ -640,6 +658,14 @@ public class MyBatisDataStore
       log.warn(xml, e);
       throw e;
     }
+  }
+
+
+  private boolean isH2UnsupportedDatabaseVersion(Exception exception){
+    int unsupportedDatabaseErrorCode = 90048;
+    return exception.getCause() instanceof JdbcSQLNonTransientConnectionException &&
+        ((JdbcSQLNonTransientConnectionException) exception.getCause()).getErrorCode() ==
+            unsupportedDatabaseErrorCode ;
   }
 
   /**
