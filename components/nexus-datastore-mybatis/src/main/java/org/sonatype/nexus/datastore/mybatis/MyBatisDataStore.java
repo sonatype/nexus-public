@@ -135,7 +135,7 @@ public class MyBatisDataStore
 {
   private static final String REGISTERED_MESSAGE = "Registered {}";
 
-  private static final String H2_DATABASE = "H2";
+  public static final String H2_DATABASE = "H2";
 
   private static final Key<TypeHandler> TYPE_HANDLER_KEY = Key.get(TypeHandler.class);
 
@@ -364,22 +364,6 @@ public class MyBatisDataStore
       }
       else {
         throw new UnsupportedOperationException("The underlying database is not supported for backup.");
-      }
-    }
-  }
-
-  @Guarded(by = STARTED)
-  @Override
-  public void generateScript(final String location) throws SQLException {
-    try (Connection conn = openConnection()) {
-      if (H2_DATABASE.equals(conn.getMetaData().getDatabaseProductName())) {
-        try (PreparedStatement scriptStmt = conn.prepareStatement("SCRIPT TO ?")) {
-          scriptStmt.setString(1, location);
-          scriptStmt.execute();
-        }
-      }
-      else {
-        throw new UnsupportedOperationException("The underlying database is not supported for generating a script.");
       }
     }
   }

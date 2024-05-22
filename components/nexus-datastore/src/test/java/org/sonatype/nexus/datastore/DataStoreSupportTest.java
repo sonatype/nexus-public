@@ -105,11 +105,6 @@ public class DataStoreSupportTest
     public void backup(final String location) throws SQLException {
       // do nothing
     }
-
-    @Override
-    public void generateScript(final String location) {
-      // do nothing
-    }
   }
 
   private DataStoreSupport<?> underTest;

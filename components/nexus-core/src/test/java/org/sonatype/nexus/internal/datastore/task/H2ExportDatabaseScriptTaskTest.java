@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.internal.datastore.task;
 
+import java.io.File;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.content.testsuite.groups.H2TestGroup;
@@ -22,11 +24,11 @@ import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.datastore.api.DataStoreNotFoundException;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
@@ -51,8 +53,14 @@ public class H2ExportDatabaseScriptTaskTest
   @Mock
   private FreezeService freezeService;
 
-  @InjectMocks
-  private H2ExportDatabaseScriptTask task;
+  @Mock
+  private TaskResultStateStore taskResultStateStore;
+
+  @Mock
+  private AuditRecorder auditRecorder;
+
+  @Mock
+  private File file;
 
   private static final String DEFAULT_LOCATION = "db";
 
@@ -63,11 +71,11 @@ public class H2ExportDatabaseScriptTaskTest
 
   @Test
   public void testDefaultLocation() {
-    H2ExportDatabaseScriptTask h2ExportDatabaseScriptTaskSpy = spy(createTaskWithDefaultLocation());
+    H2ExportDatabaseScriptTask task = spy(createTaskWithDefaultLocation());
 
-    when(h2ExportDatabaseScriptTaskSpy.getConfigurationLocationPath()).thenReturn(DEFAULT_LOCATION);
+    when(task.getConfigurationLocationPath()).thenReturn(DEFAULT_LOCATION);
 
-    String scriptPath = h2ExportDatabaseScriptTaskSpy.getLocationPath();
+    String scriptPath = task.getLocationPath();
 
     assertEquals(DEFAULT_LOCATION, scriptPath);
   }
@@ -75,11 +83,11 @@ public class H2ExportDatabaseScriptTaskTest
   @Test
   public void testUserLocation() {
     String userLocationPath = "foo/bar";
-    H2ExportDatabaseScriptTask h2ExportDatabaseScriptTaskSpy = spy(createTaskWithUserLocation(userLocationPath));
+    H2ExportDatabaseScriptTask task = spy(createTaskWithUserLocation(userLocationPath));
 
-    when(h2ExportDatabaseScriptTaskSpy.getConfigurationLocationPath()).thenReturn(userLocationPath);
+    when(task.getConfigurationLocationPath()).thenReturn(userLocationPath);
 
-    String scriptPath = h2ExportDatabaseScriptTaskSpy.getLocationPath();
+    String scriptPath = task.getLocationPath();
 
     assertEquals(userLocationPath, scriptPath);
   }
@@ -88,15 +96,17 @@ public class H2ExportDatabaseScriptTaskTest
   public void testMissingDataStore() {
     when(dataStoreManager.get(DEFAULT_DATASTORE_NAME)).thenReturn(Optional.empty());
 
-    task = createTaskWithDefaultLocation();
+    H2ExportDatabaseScriptTask task = createTaskWithDefaultLocation();
 
     assertThrows(DataStoreNotFoundException.class, task::execute);
   }
 
   private H2ExportDatabaseScriptTask createTaskWithDefaultLocation() {
-    task = new H2ExportDatabaseScriptTask(dataStoreManager,
+    H2ExportDatabaseScriptTask task = new H2ExportDatabaseScriptTask(dataStoreManager,
         applicationDirectories,
-        freezeService);
+        freezeService,
+        taskResultStateStore,
+        auditRecorder);
     TaskConfiguration configuration = new TaskConfiguration();
     configuration.setString(H2ExportDatabaseScriptTaskDescriptor.LOCATION, DEFAULT_LOCATION);
     configuration.setTypeId(H2ExportDatabaseScriptTaskDescriptor.TYPE_ID);
@@ -106,9 +116,11 @@ public class H2ExportDatabaseScriptTaskTest
   }
 
   private H2ExportDatabaseScriptTask createTaskWithUserLocation(final String location) {
-    task = new H2ExportDatabaseScriptTask(dataStoreManager,
+    H2ExportDatabaseScriptTask task = new H2ExportDatabaseScriptTask(dataStoreManager,
         applicationDirectories,
-        freezeService);
+        freezeService,
+        taskResultStateStore,
+        auditRecorder);
     TaskConfiguration configuration = new TaskConfiguration();
     configuration.setString(H2ExportDatabaseScriptTaskDescriptor.LOCATION, location);
     configuration.setTypeId(H2ExportDatabaseScriptTaskDescriptor.TYPE_ID);

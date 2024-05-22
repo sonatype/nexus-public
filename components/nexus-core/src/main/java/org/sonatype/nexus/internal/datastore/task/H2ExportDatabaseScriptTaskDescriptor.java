@@ -18,9 +18,12 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.formfields.StringTextFormField;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.FeatureFlags.H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED;
 import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
 
@@ -38,11 +41,26 @@ public class H2ExportDatabaseScriptTaskDescriptor
   static final String LOCATION = "location";
 
   @Inject
-  public H2ExportDatabaseScriptTaskDescriptor()
+  public H2ExportDatabaseScriptTaskDescriptor(@Named(DATASTORE_ENABLED_NAMED) boolean datastoreEnabled,
+                                              final DatabaseCheck databaseCheck)
   {
-    super(TYPE_ID, H2ExportDatabaseScriptTask.class, "Admin - Export SQL database to script", VISIBLE, EXPOSED,
+    super(TYPE_ID, H2ExportDatabaseScriptTask.class, "Admin - Export SQL database to script",
+        isValid(datastoreEnabled, databaseCheck),
+        isValid(datastoreEnabled, databaseCheck),
         new StringTextFormField(LOCATION, "Script Location",
         "File system location of the SQL script that will be generated. If not provided, defaults to sonatype-work/nexus3/db",
             OPTIONAL));
+    
+  }
+
+  private static boolean isValid(final boolean dataStoreEnabled, final DatabaseCheck databaseCheck) {
+    return dataStoreEnabled && databaseCheck!=null && !databaseCheck.isPostgresql();
+  }
+
+  @Override
+  public TaskConfiguration createTaskConfiguration() {
+    TaskConfiguration taskConfiguration = super.createTaskConfiguration();
+    taskConfiguration.setBoolean(TaskConfiguration.RUN_WHEN_FROZEN, true);
+    return taskConfiguration;
   }
 }
