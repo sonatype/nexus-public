@@ -1104,6 +1104,11 @@
                 <requireJavaVersion>
                   <version>[1.8,)</version>
                 </requireJavaVersion>
+
+                <!--
+                Resolving these issues after the fact is VERY tedious
+                -->
+                <banDuplicatePomDependencyVersions/>
               </rules>
             </configuration>
           </execution>
