@@ -18,9 +18,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -45,14 +46,16 @@ import org.junit.Test;
 import org.junit.runners.model.MultipleFailureException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.Thread.sleep;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -185,6 +188,47 @@ public class MavenMetadataRebuilderTest
     List<String> baseVersions = Collections.singletonList(version1);
 
     Content content = mock(Content.class);
+    FluentComponent component = mock(FluentComponent.class);
+    Continuation<FluentComponent> fluentComponents = new ContinuationArrayList<>();
+    fluentComponents.add(component);
+    when(mavenContentFacet.get(nullable(MavenPath.class))).thenReturn(Optional.of(content));
+    when(mavenContentFacet.getBaseVersions(group1, artifact1)).thenReturn(baseVersions);
+    when(mavenContentFacet.findComponentsForBaseVersion(anyInt(), eq(null), eq(group1), eq(artifact1), eq(version1)))
+        .thenReturn(fluentComponents);
+
+    MavenMetadataRebuilder mavenMetadataRebuilder = new MavenMetadataRebuilder(bufferSize, maxThreads);
+
+    DatastoreMetadataUpdater metadataUpdaterSpy = Mockito.spy(new DatastoreMetadataUpdater(true, repository));
+    MetadataRebuildWorker worker = new MetadataRebuildWorker(repository, true, group1, artifact1, null, bufferSize);
+    worker.setMetadataUpdater(metadataUpdaterSpy);
+    MetadataRebuildWorker workerSpy = Mockito.spy(worker);
+
+    doNothing().when(workerSpy).rebuildGroupMetadata(group1);
+    doNothing().when(metadataUpdaterSpy).write(any(), any());
+
+    mavenMetadataRebuilder.rebuildWithWorker(workerSpy, false, true, group1, artifact1, null);
+
+    Thread.sleep(1_000L);
+
+    verify(workerSpy, times(1)).rebuildGA(group1, artifact1);
+    verify(workerSpy, times(1)).rebuildBaseVersionsAndChecksums(group1, artifact1, baseVersions, false);
+    verify(workerSpy, times(1)).rebuildVersionsMetadata(group1, artifact1, baseVersions);
+    verify(workerSpy, times(1)).rebuildArtifactMetadata(repository, group1, artifact1);
+
+    MultipleFailures failures = worker.getFailures();
+    assertThat(failures.size(), is(0));
+  }
+
+  @Test
+  public void rebuild_GA_Flow_not_SNAPSHOT() throws Exception {
+    int bufferSize = 20;
+    int maxThreads = 1;
+    final String group1 = "group1";
+    final String artifact1 = "artifact1";
+    final String version1 = "1.0";
+    List<String> baseVersions = Collections.singletonList(version1);
+
+    Content content = mock(Content.class);
     when(mavenContentFacet.get(nullable(MavenPath.class))).thenReturn(Optional.of(content));
     when(mavenContentFacet.getBaseVersions(group1, artifact1)).thenReturn(baseVersions);
 
@@ -200,12 +244,15 @@ public class MavenMetadataRebuilderTest
 
     mavenMetadataRebuilder.rebuildWithWorker(workerSpy, false, true, group1, artifact1, null);
 
-    Thread.sleep(1000);
+    Thread.sleep(1_000L);
 
     verify(workerSpy, times(1)).rebuildGA(group1, artifact1);
     verify(workerSpy, times(1)).rebuildBaseVersionsAndChecksums(group1, artifact1, baseVersions, false);
     verify(workerSpy, times(1)).rebuildVersionsMetadata(group1, artifact1, baseVersions);
     verify(workerSpy, times(1)).rebuildArtifactMetadata(repository, group1, artifact1);
+
+    MultipleFailures failures = worker.getFailures();
+    assertThat(failures.size(), is(0));
   }
 
   private Continuation infiniteContinuation(final Object returnItem) {
@@ -221,18 +268,13 @@ public class MavenMetadataRebuilderTest
     return continuation;
   }
 
-  private Iterable iteratorWithItems(final Object... returnItems) {
-    int numItems = returnItems.length;
-    Iterable iterable = mock(Iterable.class);
-    Iterator iterator = mock(Iterator.class);
-    Spliterator spliterator = Spliterators.spliterator(returnItems, 0);
-
-    final int[] iteratorCounter = {0};
-    when(iterable.spliterator()).thenReturn(spliterator);
-    when(iterable.iterator()).thenReturn(iterator);
-    when(iterator.hasNext()).thenAnswer((Answer<Boolean>) invocation -> iteratorCounter[0] < numItems);
-    when(iterator.next()).thenAnswer((Answer<?>) invocation -> returnItems[iteratorCounter[0]++]);
-
-    return iterable;
+  private static class ContinuationArrayList<E>
+      extends ArrayList<E>
+      implements Continuation<E>
+  {
+    @Override
+    public String nextContinuationToken() {
+      return null;
+    }
   }
 }
