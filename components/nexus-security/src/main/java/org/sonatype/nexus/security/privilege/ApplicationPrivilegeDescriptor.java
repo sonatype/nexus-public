@@ -152,6 +152,6 @@ public class ApplicationPrivilegeDescriptor
 
   @Override
   public void validate(final ApiPrivilegeApplicationRequest apiPrivilege) {
-    validateActions(apiPrivilege, PrivilegeAction.getCrudActions());
+    validateActions(apiPrivilege, PrivilegeAction.getCrudTaskAction());
   }
 }

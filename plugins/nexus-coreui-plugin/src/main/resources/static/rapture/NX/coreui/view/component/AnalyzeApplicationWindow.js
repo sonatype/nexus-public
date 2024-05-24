@@ -37,7 +37,7 @@ Ext.define('NX.coreui.view.component.AnalyzeApplicationWindow', {
    * @override
    */
   hide: function() {
-    const modalWindow = this.child('nx-coreui-react-main-container');
+    const modalWindow = this.child('nx-secondary-container');
     this.remove(modalWindow);
     return this.callParent(arguments);
   },
@@ -48,7 +48,7 @@ Ext.define('NX.coreui.view.component.AnalyzeApplicationWindow', {
   show: function () {
     const me = this;
     this.add({
-      xtype: 'nx-coreui-react-main-container',
+      xtype: 'nx-secondary-container',
       reactView: window.ReactComponents.AnalyzeApplication,
       reactViewProps: {
         componentModel: me.component,

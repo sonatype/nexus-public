@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security;
 
+import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -45,16 +46,21 @@ public class JwtFilter
 
   private final JwtHelper jwtHelper;
 
+  private final List<JwtRefreshExemption> jwtExemptPaths;
+
   @Inject
-  public JwtFilter(final JwtHelper jwtHelper) {
+  public JwtFilter(final JwtHelper jwtHelper,
+                   final List<JwtRefreshExemption> jwtExemptPaths) {
     this.jwtHelper = checkNotNull(jwtHelper);
+    this.jwtExemptPaths = jwtExemptPaths;
   }
 
   @Override
   protected boolean preHandle(final ServletRequest request, final ServletResponse response) throws Exception {
-    Cookie[] cookies = ((HttpServletRequest) request).getCookies();
+    HttpServletRequest servletRequest = (HttpServletRequest) request;
+    Cookie[] cookies = servletRequest.getCookies();
 
-    if (cookies != null) {
+    if ((cookies != null) && !isExemptRequest(servletRequest)) {
       Optional<Cookie> jwtCookie = stream(cookies)
           .filter(cookie -> cookie.getName().equals(JWT_COOKIE_NAME))
           .findFirst();
@@ -79,5 +85,12 @@ public class JwtFilter
       }
     }
     return true;
+  }
+
+  private boolean isExemptRequest(final HttpServletRequest request) {
+    String requestPath = request.getServletPath();
+    return jwtExemptPaths.stream()
+        .map(JwtRefreshExemption::getPath)
+        .anyMatch(requestPath::contains);
   }
 }

@@ -29,7 +29,9 @@ Ext.define('NX.view.Main', {
     'NX.Icons',
     'NX.view.header.QuickSearch',
     'Ext.button.Button',
-    'NX.view.footer.AnalyticsOptOut'
+    'NX.view.footer.AnalyticsOptOut',
+    'NX.view.UpgradeAlert',
+    'NX.view.UpgradeModal'
   ],
 
   layout: 'border',
@@ -71,6 +73,12 @@ Ext.define('NX.view.Main', {
       },
 
       {
+        xtype: 'nx-component-upgrade-modal',
+        region: 'south',
+        hidden: true
+      },
+
+      {
         xtype: 'nx-coreui-react-footer-container',
         reactView: window.ReactComponents.UsageMetricsAlert,
         region: 'south'
@@ -83,6 +91,12 @@ Ext.define('NX.view.Main', {
 
       {
         xtype: 'nx-footer',
+        region: 'south',
+        hidden: true
+      },
+
+      {
+        xtype: 'nx-component-upgrade-alert',
         region: 'south',
         hidden: true
       },

@@ -72,7 +72,11 @@ public class TaskResultStateStoreImpl
     String jobName = ((QuartzTaskInfo) taskInfo).getJobKey().getName();
     JobDataMap jobDataMap = new JobDataMap();
     updateJobData(jobDataMap, taskInfo.getConfiguration());
-    doUpdateJobDataMap(jobName, jobDataMap);
+
+    // Don't persist for any tasks that may run when frozen, as exceptions may occur
+    if (!taskInfo.getConfiguration().getBoolean(TaskConfiguration.RUN_WHEN_FROZEN, false)) {
+      doUpdateJobDataMap(jobName, jobDataMap);
+    }
   }
 
   @Transactional

@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.69.0-SNAPSHOT</version>
+    <version>3.70.0-SNAPSHOT</version>
   </parent>
 
 

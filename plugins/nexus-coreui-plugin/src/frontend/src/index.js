@@ -62,12 +62,16 @@ import Tags from './components/pages/browse/Tags/Tags';
 import Upload from './components/pages/browse/Upload/Upload';
 import Nodes from "./components/pages/admin/Nodes/NodeList";
 import Browse from './components/pages/browse/Browse/Browse';
+import UpgradeAlert from './components/UpgradeAlert/UpgradeAlert';
 import UsageMetricsAlert from './components/pages/user/Welcome/UsageMetricsAlert';
+import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 
 window.ReactComponents = {
   ...window.ReactComponents,
   AnalyzeApplication,
-  UsageMetricsAlert
+  UpgradeAlert,
+  UsageMetricsAlert,
+  UpgradeModal
 };
 
 window.BlobStoreTypes = {
@@ -157,7 +161,7 @@ window.plugins.push({
       weight: 10,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        featureFlags: [{key: 'nexus.react.privileges', defaultValue: false}],
+        featureFlags: [{key: 'nexus.react.privileges', defaultValue: true}],
         permissions: [Permissions.PRIVILEGES.READ]
       },
     },

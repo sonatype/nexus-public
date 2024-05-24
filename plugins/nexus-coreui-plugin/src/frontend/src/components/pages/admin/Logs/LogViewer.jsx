@@ -73,6 +73,7 @@ export default function LogViewer({itemId}) {
   });
 
   function onChangePeriod(period) {
+    const newPeriod = Number(period);
     if (period == 0) {
       send('MANUAL_REFRESH', {period});
     }

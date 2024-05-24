@@ -37,6 +37,7 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.UserIdHelper;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.authc.UserPasswordChanged;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
@@ -44,6 +45,7 @@ import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.realm.SecurityRealm;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.InvalidCredentialsException;
@@ -79,6 +81,8 @@ public class DefaultSecuritySystem
     implements SecuritySystem
 {
   private static final String ALL_ROLES_KEY = "all";
+  public static final String NEXUS_AUTHORIZING_REALM = "NexusAuthorizingRealm";
+  public static final String NEXUS_AUTHENTICATING_REALM = "NexusAuthenticatingRealm";
 
   private final EventManager eventManager;
 
@@ -609,5 +613,20 @@ public class DefaultSecuritySystem
   @Override
   public List<String> listSources() {
     return authorizationManagers.keySet().stream().sorted().collect(Collectors.toList());
+  }
+
+  @Override
+  public boolean isValidRealm(final String realm) {
+    return !realm.isEmpty() &&
+        getAllRealmIds().stream().anyMatch(singleRealm -> singleRealm.equals(realm));
+  }
+
+  private List<String> getAllRealmIds() {
+    List<String> authenticationRealms = AnonymousHelper.getAuthenticationRealms(new ArrayList<>(userManagers.values()));
+    return realmManager.getAvailableRealms(true).stream()
+        .map(SecurityRealm::getId)
+        .filter(authenticationRealms::contains)
+        .map(id -> id.equals(NEXUS_AUTHORIZING_REALM) ? NEXUS_AUTHENTICATING_REALM : id)
+        .collect(Collectors.toList());
   }
 }

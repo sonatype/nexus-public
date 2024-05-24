@@ -23,7 +23,12 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.sonatype.nexus.upgrade.datastore.UpgradeException;
+import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
+import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
 
+import org.flywaydb.core.api.MigrationVersion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,10 +39,15 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-public class UpgradeManagerTest
+public class UpgradeManagerImplTest
     extends TestSupport
 {
   @Rule
@@ -46,16 +56,19 @@ public class UpgradeManagerTest
   @Mock
   DataStoreManager dataStoreManager;
 
+  @Mock
+  private PostStartupUpgradeAuditor auditor;
+
   TestMigrationStep migrationStep = new TestMigrationStep();
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     when(dataStoreManager.get(DEFAULT_DATASTORE_NAME)).thenReturn(getDataStore());
   }
 
   @Test
   public void testNoUpgrades() throws Exception {
-    UpgradeManager upgradeManager = new UpgradeManager(dataStoreManager, emptyList());
+    UpgradeManagerImpl upgradeManager = new UpgradeManagerImpl(dataStoreManager, auditor, emptyList());
 
     upgradeManager.migrate();
 
@@ -73,11 +86,14 @@ public class UpgradeManagerTest
         }
       }
     }
+
+    // No changes should fire no events
+    verifyNoInteractions(auditor);
   }
 
   @Test
   public void testExampleUpgrade() throws Exception {
-    UpgradeManager upgradeManager = new UpgradeManager(dataStoreManager, singletonList(migrationStep));
+    UpgradeManagerImpl upgradeManager = new UpgradeManagerImpl(dataStoreManager, auditor, singletonList(migrationStep));
 
     upgradeManager.migrate();
 
@@ -104,28 +120,34 @@ public class UpgradeManagerTest
         }
       }
     }
+
+    // Migrations should trigger events
+    verify(auditor).post(any(UpgradeStartedEvent.class));
+    verify(auditor).post(any(UpgradeCompletedEvent.class));
+    verifyNoMoreInteractions(auditor);
   }
 
-  @Test(expected = IllegalStateException.class)
-  public void testWithDatastoreFromFuture() {
+  @Test(expected = UpgradeException.class)
+  public void testWithDatastoreFromFuture() throws UpgradeException {
     FutureMigrationStep futureMigrationStep = new FutureMigrationStep();
 
-    UpgradeManager upgradeManagerWithFutureMigration = new UpgradeManager(dataStoreManager,
+    UpgradeManagerImpl upgradeManagerWithFutureMigration = new UpgradeManagerImpl(dataStoreManager, auditor,
         Arrays.asList(migrationStep, futureMigrationStep));
     upgradeManagerWithFutureMigration.migrate();
 
-    UpgradeManager upgradeManagerWithoutFuture = new UpgradeManager(dataStoreManager, singletonList(migrationStep));
+    UpgradeManagerImpl upgradeManagerWithoutFuture = new UpgradeManagerImpl(dataStoreManager, auditor, singletonList(migrationStep));
     upgradeManagerWithoutFuture.migrate();
   }
 
   @Test
-  public void testUpgradeSkippedStep() throws SQLException {
+  public void testUpgradeSkippedStep() throws SQLException, UpgradeException  {
     FutureMigrationStep futureMigrationStep = new FutureMigrationStep();
-    UpgradeManager upgradeManager = new UpgradeManager(dataStoreManager, Arrays.asList(migrationStep, futureMigrationStep));
+    UpgradeManagerImpl
+        upgradeManager = new UpgradeManagerImpl(dataStoreManager, auditor, Arrays.asList(migrationStep, futureMigrationStep));
     upgradeManager.migrate();
 
     SkippedMigrationStep skippedMigrationStep = new SkippedMigrationStep();
-    UpgradeManager upgradeManagerWithSkipped = new UpgradeManager(dataStoreManager, Arrays.asList(migrationStep, futureMigrationStep, skippedMigrationStep));
+    UpgradeManagerImpl upgradeManagerWithSkipped = new UpgradeManagerImpl(dataStoreManager, auditor, Arrays.asList(migrationStep, futureMigrationStep, skippedMigrationStep));
     upgradeManagerWithSkipped.migrate();
 
     try (Connection conn = getConnection()) {
@@ -140,6 +162,30 @@ public class UpgradeManagerTest
     }
   }
 
+  @Test
+  public void testMaxMigrations() {
+    FutureMigrationStep futureMigrationStep = new FutureMigrationStep();
+
+    UpgradeManagerImpl upgradeManagerWithFutureMigration = new UpgradeManagerImpl(dataStoreManager, auditor,
+        Arrays.asList(new NullVersionMigration(), migrationStep, futureMigrationStep));
+
+    assertThat(upgradeManagerWithFutureMigration.getMaxMigrationVersion().get().getVersion(), equalTo("4.5.6"));
+  }
+
+  @Test
+  public void testGetBaselineWorksAsExpected() {
+    TestBaselineMigrationStep baselineMigrationStep = new TestBaselineMigrationStep();
+    FutureMigrationStep futureMigrationStep = new FutureMigrationStep();
+
+    UpgradeManagerImpl upgradeManager = new UpgradeManagerImpl(dataStoreManager, auditor,
+        Arrays.asList(migrationStep, baselineMigrationStep, futureMigrationStep));
+
+    Optional<String> baseline = upgradeManager.getBaseline(MigrationVersion.fromVersion("2.0"));
+
+    assertTrue(baseline.isPresent());
+    assertThat(baseline.get(), equalTo(baselineMigrationStep.version().get()));
+  }
+
   private Optional<DataStore<?>> getDataStore() {
     return dataSessionRule.getDataStore(DEFAULT_DATASTORE_NAME);
   }
@@ -149,5 +195,20 @@ public class UpgradeManagerTest
         .orElseThrow(() -> new IllegalStateException("No DataStore found"))
         .getDataSource()
         .getConnection();
+  }
+
+  /**
+   * Some MigrationSteps do not have a version
+   */
+  private static class NullVersionMigration
+      implements DatabaseMigrationStep
+  {
+    @Override
+    public Optional<String> version() {
+      return Optional.empty();
+    }
+
+    @Override
+    public void migrate(final Connection connection) throws Exception { }
   }
 }

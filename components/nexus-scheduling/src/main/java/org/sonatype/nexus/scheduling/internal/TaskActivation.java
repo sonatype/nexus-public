@@ -22,6 +22,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.Freezable;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
@@ -73,9 +74,15 @@ public class TaskActivation
     if (isStarted()) {
       scheduler.pause();
       scheduler.listsTasks().stream()
+          .filter(this::cancelOnFreeze)
           .filter(taskInfo -> !maybeCancel(taskInfo))
           .forEach(taskInfo -> log.warn("Unable to cancel task: {}", taskInfo.getName()));
     }
+  }
+
+  private boolean cancelOnFreeze(final TaskInfo taskInfo) {
+    return taskInfo.getConfiguration() == null
+        || !taskInfo.getConfiguration().getBoolean(TaskConfiguration.RUN_WHEN_FROZEN, false);
   }
 
   @Override

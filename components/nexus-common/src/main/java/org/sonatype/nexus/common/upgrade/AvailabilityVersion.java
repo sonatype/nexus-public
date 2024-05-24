@@ -10,32 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.upgrade.datastore.internal;
+package org.sonatype.nexus.common.upgrade;
 
-import java.util.List;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.datastore.api.DataStoreManager;
-import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Upgrade manager for the Content database
- *
- * @since 3.29
+ * Marks a class as available from a specified database schema version onwards
+ * 
  */
-@Named
-@Singleton
-public class UpgradeManager
-    extends UpgradeManagerSupport<DatabaseMigrationStep>
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface AvailabilityVersion
 {
-  @Inject
-  public UpgradeManager(
-      final DataStoreManager dataStoreManager,
-      final List<DatabaseMigrationStep> migrations)
-  {
-    super(dataStoreManager, DataStoreManager.DEFAULT_DATASTORE_NAME, migrations);
-  }
+  String from();
 }

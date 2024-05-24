@@ -38,6 +38,8 @@ import UIStrings from '../../../../constants/UIStrings';
 
 import MetricHealthListMachine from './MetricHealthListMachine';
 
+import UpgradeAlert from './UpgradeAlert';
+
 const {METRIC_HEALTH} = UIStrings;
 
 export default function MetricHealthList({onEdit}) {
@@ -66,6 +68,7 @@ export default function MetricHealthList({onEdit}) {
       </PageHeader>
       <ContentBody className="nxrm-metric-health-list">
         <NxTile>
+          <UpgradeAlert/>
           <NxTable>
             <NxTable.Head>
               <NxTable.Row>

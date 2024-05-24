@@ -115,7 +115,7 @@ public interface FeatureFlags
   String CLEANUP_USE_SQL = "nexus.cleanup.useSQL";
 
   String FORMAT_RETAIN_PATTERN = "nexus.cleanup.{format}Retain";
-  
+
   String DISABLE_NORMALIZE_VERSION_TASK = "nexus.cleanup.disableNormalizeVersionTask";
 
   String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";
@@ -126,7 +126,7 @@ public interface FeatureFlags
 
   String REACT_PRIVILEGES = "nexus.react.privileges";
 
-  String REACT_PRIVILEGES_NAMED = "${nexus.react.privileges:-false}";
+  String REACT_PRIVILEGES_NAMED = "${nexus.react.privileges:-true}";
 
   String REACT_PRIVILEGES_MODAL_ENABLED = "nexus.react.privileges.modal.enabled";
 
@@ -148,7 +148,12 @@ public interface FeatureFlags
   String BLOBSTORE_OWNERSHIP_CHECK_DISABLED_NAMED = "${nexus.blobstore.s3.ownership.check.disabled:-false}";
 
   String STARTUP_TASKS_DELAY_SECONDS = "${nexus.startup.task.delay.seconds:-0}";
-  
+
+  /**
+   * Feature flag to expose H2 export database to script task
+   */
+  String H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED = "nexus.database.export.script.task.h2.enabled";
+
   /**
    * When true (default), the Secure attribute will be set on the NXSESSIONID Cookie when delivered over https.
    * In deployments with HTTP-only listeners, this setting will typically have no effect.
@@ -159,4 +164,14 @@ public interface FeatureFlags
   String NXSESSIONID_SECURE_COOKIE_NAMED = "${nexus.session.secureCookie:-true}";
 
   String API_EXTENDED = "nexus.api.extended.enabled";
+
+  String ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_NAMED = "${nexus.audit.attribute.changes.enabled:-true}";
+
+  String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED = "zero.downtime.marketing.modal";
+
+  String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED_NAMED = "${zero.downtime.marketing.modal:-false}";
+
+  /* For testing purposes only */
+  String ZERO_DOWNTIME_BASELINE_FAIL = "nexus.zdu.baseline.fail";
+
 }

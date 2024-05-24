@@ -44,6 +44,13 @@ function getUserType(user) {
   }
 }
 
+function getDatabaseType() {
+  if (ExtJS.state().getValue('nexus.datastore.enabled')) {
+    return ExtJS.state().getValue('datastore.isPostgresql') ? 'postgres' : 'h2';
+  }
+  return 'orient';
+}
+
 const iframeDefaultHeight = 1000;
 const iframePadding = 48;
 
@@ -62,7 +69,8 @@ export default function Welcome() {
         versionMm: getVersionMajorMinor(status.version),
         edition: status.edition,
         usertype: getUserType(user),
-        daysToExpiry: ExtJS.useLicense().daysToExpiry
+        daysToExpiry: ExtJS.useLicense().daysToExpiry,
+        databaseType: getDatabaseType()
       },
       isAdmin = user?.administrator;
 

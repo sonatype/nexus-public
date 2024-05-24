@@ -16,17 +16,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
-import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
-import org.sonatype.nexus.repository.content.kv.global.ValueType;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
-import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTaskDescriptor;
 import org.sonatype.nexus.scheduling.PostStartupTaskScheduler;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -39,16 +34,15 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 public class ComponentNormalizedVersionMigrationStepTest
     extends TestSupport
@@ -70,20 +64,23 @@ public class ComponentNormalizedVersionMigrationStepTest
   @Mock
   private TaskScheduler scheduler;
 
+  @Mock
+  private Format maven2;
+
+  @Mock
+  private Format nuget;
+
   private DataSession<?> session;
 
   private ComponentNormalizedVersionMigrationStep migrationStep;
 
   @Before
   public void setUp() {
-    Format first = mock(Format.class);
-    Format second = mock(Format.class);
-
-    when(first.getValue()).thenReturn("maven2");
-    when(second.getValue()).thenReturn("nuget");
+    when(maven2.getValue()).thenReturn("maven2");
+    when(nuget.getValue()).thenReturn("nuget");
 
     migrationStep =
-        new ComponentNormalizedVersionMigrationStep(Arrays.asList(first, second), globalKeyValueStore, scheduler,
+        new ComponentNormalizedVersionMigrationStep(Arrays.asList(nuget, maven2), globalKeyValueStore, scheduler,
             postStartupTaskScheduler);
 
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
@@ -94,40 +91,28 @@ public class ComponentNormalizedVersionMigrationStepTest
     session.close();
   }
 
+  /*
+   * Verifies that the order of formats doesn't affect the generated checksum
+   */
   @Test
-  public void testChecksumChangesIfFormatsAreNotNormalized() {
-    NexusKeyValue kv1 =
-        new NexusKeyValue(format(NormalizeComponentVersionTask.KEY_FORMAT, "maven2"), ValueType.BOOLEAN, true);
-    NexusKeyValue kv2 =
-        new NexusKeyValue(format(NormalizeComponentVersionTask.KEY_FORMAT, "nuget"), ValueType.BOOLEAN, false);
+  public void testChecksum_order() {
+    ComponentNormalizedVersionMigrationStep migrationStep2 =
+        new ComponentNormalizedVersionMigrationStep(Arrays.asList(maven2, nuget), globalKeyValueStore, scheduler,
+            postStartupTaskScheduler);
 
-    when(globalKeyValueStore.getKey(kv1.key())).thenReturn(Optional.of(kv1));
-    when(globalKeyValueStore.getKey(kv2.key())).thenReturn(Optional.of(kv2));
-
-    int checksum1 = migrationStep.getChecksum();
-
-    await().atMost(5, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
-          int checksum2 = migrationStep.getChecksum();
-          assertNotEquals(checksum1, checksum2);
-        });
+    assertThat(migrationStep.getChecksum(), is(migrationStep2.getChecksum()));
   }
 
+  /*
+   * Verifies that a different list of formats results in a different checksum
+   */
   @Test
-  public void testChecksumMaintainsIfFormatsAreNormalized() {
-    NexusKeyValue kv1 =
-        new NexusKeyValue(format(NormalizeComponentVersionTask.KEY_FORMAT, "maven2"), ValueType.BOOLEAN, true);
-    NexusKeyValue kv2 =
-        new NexusKeyValue(format(NormalizeComponentVersionTask.KEY_FORMAT, "nuget"), ValueType.BOOLEAN, true);
+  public void testChecksum_different() {
+    ComponentNormalizedVersionMigrationStep migrationStep2 =
+        new ComponentNormalizedVersionMigrationStep(Arrays.asList(nuget), globalKeyValueStore, scheduler,
+            postStartupTaskScheduler);
 
-    when(globalKeyValueStore.getKey(kv1.key())).thenReturn(Optional.of(kv1));
-    when(globalKeyValueStore.getKey(kv2.key())).thenReturn(Optional.of(kv2));
-
-    int checksum1 = migrationStep.getChecksum();
-    int checksum2 = migrationStep.getChecksum();
-
-    assertEquals(1, checksum1);
-    assertEquals(checksum1, checksum2);
+    assertThat(migrationStep.getChecksum(), not(migrationStep2.getChecksum()));
   }
 
   @Test

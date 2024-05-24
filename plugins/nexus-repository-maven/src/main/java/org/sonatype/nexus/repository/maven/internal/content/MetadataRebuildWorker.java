@@ -73,6 +73,8 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 public class MetadataRebuildWorker
     extends ComponentSupport
 {
+  private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
+
   private final MultipleFailures failures = new MultipleFailures();
 
   private final Repository repository;
@@ -148,7 +150,7 @@ public class MetadataRebuildWorker
               .map(bv -> new GAV(ga.getLeft(), ga.getRight(), bv, 0));
         })
         // Version level metadata is only relevant for snapshot base versions
-        .filter(gabv -> gabv.baseVersion.endsWith("-SNAPSHOT"))
+        .filter(gabv -> gabv.baseVersion.endsWith(SNAPSHOT_SUFFIX))
         .forEach(this::rebuildVersionMetadata);
 
     return rebuilt;
@@ -304,7 +306,10 @@ public class MetadataRebuildWorker
   @VisibleForTesting
   void rebuildVersionsMetadata(final String namespace, final String name, final Collection<String> bVersions)
   {
-    bVersions.forEach(baseVersion -> rebuildVersionMetadata(namespace, name, baseVersion));
+    bVersions.stream()
+        // Version level metadata is only relevant for snapshot base versions
+        .filter(version -> version.endsWith(SNAPSHOT_SUFFIX))
+        .forEach(version -> rebuildVersionMetadata(namespace, name, version));
   }
 
   /*
@@ -327,7 +332,7 @@ public class MetadataRebuildWorker
     MavenPath metadataPath = metadataPath(namespace, name, bVersion);
     log.debug("Starting rebuild for repo {} g {} a {} v {}", repository.getName(), namespace, name, bVersion);
     try {
-      checkArgument(bVersion.endsWith("-SNAPSHOT"));
+      checkArgument(bVersion.endsWith(SNAPSHOT_SUFFIX));
       MetadataBuilder metadataBuilder = new MetadataBuilder();
       metadataBuilder.onEnterGroupId(namespace);
       metadataBuilder.onEnterArtifactId(name);

@@ -74,6 +74,8 @@ describe('Welcome', function() {
     jest.spyOn(ExtJS, 'useUser').mockImplementation(() => user);
     jest.spyOn(ExtJS, 'state').mockReturnValue({ getUser: () => user, getValue: jest.fn()});
     jest.spyOn(ExtJS, 'isProEdition').mockReturnValue({});
+    jest.spyOn(ExtJS, 'useState').mockReturnValue({});
+    jest.spyOn(ExtJS, 'usePermission').mockReturnValue({});
     jest.spyOn(Object.getPrototypeOf(localStorage), 'getItem').mockImplementation(() => null);
     jest.spyOn(Object.getPrototypeOf(localStorage), 'setItem');
 
@@ -304,6 +306,13 @@ describe('Welcome', function() {
       const frame = await selectors.outreachFrame('find');
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?abc=123/));
       expect(frame).toHaveAttribute('src', expect.stringMatching(/\?(.*&)?def=9000/));
+    });
+
+    it('sets the database type to orient when using the orient db', async function() {
+      render(<Welcome />);
+
+      const frame = await selectors.outreachFrame('find');
+      expect(frame.src).toContain('databaseType=orient');
     });
   });
 

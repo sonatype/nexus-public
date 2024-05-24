@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -41,8 +40,6 @@ public class H2BackupTask
   private final DataStoreManager dataStoreManager;
 
   private final ApplicationDirectories applicationDirectories;
-
-  private static final String TIMESTAMP_FORMAT = "%1$tY-%1$tm-%1$td-%1$tH-%1$tM-%1$tS";
 
   @Inject
   public H2BackupTask(final DataStoreManager dataStoreManager, final ApplicationDirectories applicationDirectories) {

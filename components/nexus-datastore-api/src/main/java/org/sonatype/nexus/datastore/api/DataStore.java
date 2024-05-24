@@ -14,7 +14,6 @@ package org.sonatype.nexus.datastore.api;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-
 import javax.sql.DataSource;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;

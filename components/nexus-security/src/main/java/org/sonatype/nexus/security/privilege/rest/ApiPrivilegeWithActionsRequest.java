@@ -86,6 +86,17 @@ public abstract class ApiPrivilegeWithActionsRequest
     return String.join(",", actionList);
   }
 
+  protected String toCrudTaskActionString() {
+    if (actions == null || actions.isEmpty()) {
+      return null;
+    }
+
+    List<String> actionList = actions.stream().map(PrivilegeAction::getCrudTaskActions).filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+    return String.join(",", actionList);
+  }
+
   protected String toBreadActionString() {
     if (actions == null || actions.isEmpty()) {
       return null;

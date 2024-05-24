@@ -25,10 +25,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.db.DatabaseCheck;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 

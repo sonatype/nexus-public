@@ -26,6 +26,7 @@ import org.sonatype.nexus.security.ErrorMessageUtil;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.sonatype.nexus.security.internal.AdminPasswordFileManagerImpl;
+import org.sonatype.nexus.security.internal.RealmToSource;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
@@ -61,6 +62,12 @@ import static org.mockito.Mockito.when;
 public class UserApiResourceTest
     extends TestSupport
 {
+  public static final String USER_ID = "jsmith";
+  private static final String SAML_REALM_NAME = "SamlRealm";
+  private static final String CROWD_REALM_NAME = "Crowd";
+  private static final String LDAP_REALM_NAME = "LdapRealm";
+  private static final String NEXUS_AUTHENTICATING_REALM_NAME = "NexusAuthenticatingRealm";
+
   @Mock
   private SecuritySystem securitySystem;
 
@@ -149,7 +156,7 @@ public class UserApiResourceTest
   public void testCreateUser() throws Exception {
     User user = createUser();
     when(securitySystem.addUser(user, "admin123")).thenReturn(user);
-    ApiCreateUser createUser = new ApiCreateUser("jsmith", "John", "Smith", "jsmith@example.org", "admin123",
+    ApiCreateUser createUser = new ApiCreateUser(USER_ID, "John", "Smith", "jsmith@example.org", "admin123",
         ApiUserStatus.disabled, Collections.singleton("nx-admin"));
 
     ApiUser returned = underTest.createUser(createUser);
@@ -165,7 +172,7 @@ public class UserApiResourceTest
     when(securitySystem.addUser(user, "admin123")).thenThrow(new NoSuchUserManagerException(user.getSource()));
     expectUnknownUserManager("default");
 
-    ApiCreateUser createUser = new ApiCreateUser("jsmith", "John", "Smith", "jsmith@example.org", "admin123",
+    ApiCreateUser createUser = new ApiCreateUser(USER_ID, "John", "Smith", "jsmith@example.org", "admin123",
         ApiUserStatus.disabled, Collections.singleton("nx-admin"));
 
     underTest.createUser(createUser);
@@ -175,10 +182,64 @@ public class UserApiResourceTest
    * Delete user
    */
   @Test
-  public void testDeleteUsers() throws Exception {
-    underTest.deleteUser("jsmith");
+  public void testDeleteUsersWithNoRealm() throws Exception {
+    underTest.deleteUser(USER_ID, null);
 
-    verify(securitySystem).deleteUser("jsmith", UserManager.DEFAULT_SOURCE);
+    verify(securitySystem).deleteUser(USER_ID, UserManager.DEFAULT_SOURCE);
+  }
+
+  @Test
+  public void testDeleteUsersWithSamlRealm() throws Exception {
+    when(securitySystem.isValidRealm(SAML_REALM_NAME)).thenReturn(true);
+    when(securitySystem.getUser(
+        USER_ID,
+        RealmToSource.getSource(SAML_REALM_NAME))).thenReturn(createUserWithSource(SAML_REALM_NAME));
+    underTest.deleteUser(USER_ID, SAML_REALM_NAME);
+
+    verify(securitySystem).deleteUser(USER_ID, RealmToSource.getSource(SAML_REALM_NAME));
+  }
+
+  @Test
+  public void testDeleteUsersWithEmptyRealm() {
+    expectEmptyOrInvalidRealm();
+    underTest.deleteUser(USER_ID, "");
+  }
+
+  @Test
+  public void testDeleteUsersWithInvalidRealm() {
+    when(securitySystem.isValidRealm(any())).thenReturn(false);
+    expectEmptyOrInvalidRealm();
+    underTest.deleteUser(USER_ID, "InvalidRealm123");
+  }
+
+  @Test
+  public void testDeleteUsersWithCrowdRealm() throws Exception {
+    when(securitySystem.isValidRealm(CROWD_REALM_NAME)).thenReturn(true);
+    when(securitySystem.getUser(USER_ID,
+        RealmToSource.getSource(CROWD_REALM_NAME))).thenReturn(createUserWithSource(CROWD_REALM_NAME));
+    underTest.deleteUser(USER_ID, CROWD_REALM_NAME);
+
+    verify(securitySystem).deleteUser(USER_ID, RealmToSource.getSource(CROWD_REALM_NAME));
+  }
+
+  @Test
+  public void testDeleteUsersWithLdapRealm() throws Exception {
+    when(securitySystem.isValidRealm(LDAP_REALM_NAME)).thenReturn(true);
+    when(securitySystem.getUser(USER_ID,
+        RealmToSource.getSource(LDAP_REALM_NAME))).thenReturn(createUserWithSource(LDAP_REALM_NAME));
+    underTest.deleteUser(USER_ID, LDAP_REALM_NAME);
+
+    verify(securitySystem).deleteUser(USER_ID, RealmToSource.getSource(LDAP_REALM_NAME));
+  }
+
+  @Test
+  public void testDeleteUsersWithDefaultRealm() throws Exception {
+    when(securitySystem.isValidRealm(NEXUS_AUTHENTICATING_REALM_NAME)).thenReturn(true);
+    when(securitySystem.getUser(USER_ID,
+        RealmToSource.getSource(NEXUS_AUTHENTICATING_REALM_NAME))).thenReturn(createUserWithSource(NEXUS_AUTHENTICATING_REALM_NAME));
+    underTest.deleteUser(USER_ID, NEXUS_AUTHENTICATING_REALM_NAME);
+
+    verify(securitySystem).deleteUser(USER_ID, "default");
   }
 
   @Test
@@ -186,7 +247,7 @@ public class UserApiResourceTest
     when(securitySystem.getUser("unknownuser")).thenThrow(new UserNotFoundException("unknownuser"));
     expectMissingUser("unknownuser");
 
-    underTest.deleteUser("unknownuser");
+    underTest.deleteUser("unknownuser", null);
   }
 
   @Test
@@ -196,7 +257,7 @@ public class UserApiResourceTest
         user.getSource());
     expectUnknownUserManager(user.getSource());
 
-    underTest.deleteUser("jsmith");
+    underTest.deleteUser(USER_ID, null);
   }
 
   /*
@@ -205,7 +266,7 @@ public class UserApiResourceTest
   @Test
   public void testUpdateUser() throws Exception {
     User user = createUser();
-    underTest.updateUser("jsmith", underTest.fromUser(user));
+    underTest.updateUser(USER_ID, underTest.fromUser(user));
 
     verify(securitySystem).updateUser(user);
   }
@@ -216,7 +277,7 @@ public class UserApiResourceTest
     ApiUser apiUser = underTest.fromUser(user);
     apiUser.setExternalRoles(null);
 
-    underTest.updateUser("jsmith", apiUser);
+    underTest.updateUser(USER_ID, apiUser);
 
     verify(securitySystem).updateUser(user);
   }
@@ -226,9 +287,9 @@ public class UserApiResourceTest
     User user = createUser();
     user.setSource("LDAP");
     ApiUser apiUser = underTest.fromUser(user);
-    underTest.updateUser("jsmith", apiUser);
+    underTest.updateUser(USER_ID, apiUser);
 
-    verify(securitySystem).setUsersRoles("jsmith", "LDAP", user.getRoles());
+    verify(securitySystem).setUsersRoles(USER_ID, "LDAP", user.getRoles());
   }
 
   @Test
@@ -249,7 +310,7 @@ public class UserApiResourceTest
     when(securitySystem.getUser(any())).thenReturn(createLdapUser());
     thrown.expect(matchWeb(Status.BAD_REQUEST, "Non-local user cannot be deleted."));
 
-    underTest.deleteUser("tanderson");
+    underTest.deleteUser("tanderson", null);
   }
 
   @Test
@@ -266,7 +327,7 @@ public class UserApiResourceTest
     expectUnknownUserManager(user.getSource());
 
     when(securitySystem.updateUser(user)).thenThrow(new NoSuchUserManagerException(user.getSource()));
-    underTest.updateUser("jsmith", underTest.fromUser(user));
+    underTest.updateUser(USER_ID, underTest.fromUser(user));
   }
 
   @Test
@@ -275,7 +336,7 @@ public class UserApiResourceTest
     expectMissingUser(user.getUserId());
 
     when(securitySystem.updateUser(user)).thenThrow(new UserNotFoundException(user.getUserId()));
-    underTest.updateUser("jsmith", underTest.fromUser(user));
+    underTest.updateUser(USER_ID, underTest.fromUser(user));
   }
 
   /*
@@ -347,6 +408,10 @@ public class UserApiResourceTest
     thrown.expect(matchWeb(Status.NOT_FOUND, "Unable to locate source: " + source));
   }
 
+  private void expectEmptyOrInvalidRealm() {
+    thrown.expect(matchWeb(Status.BAD_REQUEST, "Invalid or empty realm name."));
+  }
+
   private User createUser() {
     User user = new User();
     user.setEmailAddress("john@example.org");
@@ -354,7 +419,7 @@ public class UserApiResourceTest
     user.setLastName("Smith");
     user.setReadOnly(false);
     user.setStatus(UserStatus.disabled);
-    user.setUserId("jsmith");
+    user.setUserId(USER_ID);
     user.setVersion(1);
     user.setSource(UserManager.DEFAULT_SOURCE);
     user.setRoles(Collections.singleton(new RoleIdentifier(UserManager.DEFAULT_SOURCE, "nx-admin")));
@@ -372,6 +437,20 @@ public class UserApiResourceTest
     user.setVersion(1);
     user.setSource("LDAP");
     user.setRoles(Collections.singleton(new RoleIdentifier(UserManager.DEFAULT_SOURCE, "nx-admin")));
+    return user;
+  }
+
+  private User createUserWithSource(String realm) {
+    User user = new User();
+    user.setEmailAddress("john@example.org");
+    user.setFirstName("John");
+    user.setLastName("Smith");
+    user.setReadOnly(false);
+    user.setStatus(UserStatus.disabled);
+    user.setUserId(USER_ID);
+    user.setVersion(1);
+    user.setSource(RealmToSource.getSource(realm));
+    user.setRoles(Collections.singleton(new RoleIdentifier(RealmToSource.getSource(realm), "nx-admin")));
     return user;
   }
 

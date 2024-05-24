@@ -69,6 +69,8 @@ public class TaskConfiguration
 
   public static final String PROGRESS_KEY = ".progress";
 
+  public static final String RUN_WHEN_FROZEN = ".runWhenFrozen";
+
   static final String ID_KEY = ".id";
 
   static final String NAME_KEY = ".name";

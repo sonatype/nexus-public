@@ -53,6 +53,9 @@ import TagsStrings from './pages/browse/tags/TagsStrings';
 import UploadStrings from './pages/browse/upload/UploadStrings';
 import NodesStrings from './pages/admin/system/NodesStrings';
 import BrowseStrings from './pages/browse/browse/BrowseStrings';
+import UpgradeAlertStrings from './UpgradeAlertStrings';
+import UpgradeTriggerModalStrings from './UpgradeTriggerModalStrings';
+import ZDUMarketingModalStrings from './ZDUMarketingModalStrings';
 
 export default {
   ...UIStrings,
@@ -112,6 +115,9 @@ export default {
   ...AccountStrings,
   ...NuGetApiKeyStrings,
   ...UserTokenStrings,
+  ...UpgradeAlertStrings,
+  ...UpgradeTriggerModalStrings,
+  ...ZDUMarketingModalStrings,
 
   // other
   FORMAT_PLACEHOLDER: 'Format',

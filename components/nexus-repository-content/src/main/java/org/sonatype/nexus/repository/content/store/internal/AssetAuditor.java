@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -38,6 +38,8 @@ import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_NAMED;
+
 /**
  * Repository asset auditor.
  *
@@ -51,7 +53,10 @@ public class AssetAuditor
 {
   public static final String DOMAIN = "repository.asset";
 
-  public AssetAuditor() {
+  private final boolean attributeChangesDetailEnabled;
+
+  @Inject
+  public AssetAuditor(@Named(ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_NAMED) boolean attributeChangesDetailEnabled) {
     registerType(AssetCreatedEvent.class, CREATED_TYPE);
 
     registerType(AssetDeletedEvent.class, DELETED_TYPE);
@@ -63,6 +68,9 @@ public class AssetAuditor
     registerType(AssetDownloadedEvent.class, UPDATED_TYPE + "-downloaded");
     registerType(AssetKindEvent.class, UPDATED_TYPE + "-kind");
     registerType(AssetUploadedEvent.class, UPDATED_TYPE + "-uploaded");
+
+    this.attributeChangesDetailEnabled = attributeChangesDetailEnabled;
+
   }
 
   @Subscribe
@@ -100,7 +108,7 @@ public class AssetAuditor
       attributes.put("path", asset.path());
       attributes.put("kind", asset.kind());
 
-      if (event instanceof AssetAttributesEvent){
+      if (event instanceof AssetAttributesEvent && attributeChangesDetailEnabled){
         AssetAttributesEvent attributesEvent = (AssetAttributesEvent) event;
 
         attributes.put("attribute.changes", attributesEvent.getChanges()

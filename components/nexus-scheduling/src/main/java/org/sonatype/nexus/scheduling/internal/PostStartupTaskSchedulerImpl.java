@@ -47,7 +47,12 @@ public class PostStartupTaskSchedulerImpl
 
   @Override
   public void schedule(final TaskConfiguration configuration) {
-    configurations.add(configuration);
+    if (this.isStarted()) {
+      scheduleTask(configuration);
+    }
+    else {
+      configurations.add(configuration);
+    }
   }
 
   @Override

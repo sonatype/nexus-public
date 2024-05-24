@@ -25,6 +25,7 @@ import org.sonatype.nexus.capability.CapabilityDescriptorSupport;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.capability.Taggable;
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
@@ -38,6 +39,7 @@ import com.google.common.collect.Lists;
  *
  * @since 3.0
  */
+@AvailabilityVersion(from = "1.0")
 @Named(SettingsCapabilityDescriptor.TYPE_ID)
 @Singleton
 public class SettingsCapabilityDescriptor

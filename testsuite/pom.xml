@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-parent</artifactId>
-    <version>3.69.0-SNAPSHOT</version>
+    <version>3.70.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.sonatype.nexus.testsuite</groupId>
@@ -102,6 +102,12 @@
       <dependency>
         <groupId>com.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-tags-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-api-extension-plugin</artifactId>
         <version>${project.version}</version>
       </dependency>
 

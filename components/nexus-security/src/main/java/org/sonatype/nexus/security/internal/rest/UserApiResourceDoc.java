@@ -33,6 +33,8 @@ public interface UserApiResourceDoc
 {
   String USER_ID_DESCRIPTION = "The userid the request should apply to.";
 
+  String REALM_DESCRIPTION = "The realm the request should apply to.";
+
   String PASSWORD_DESCRIPTION = "The new password to use.";
 
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
@@ -61,7 +63,8 @@ public interface UserApiResourceDoc
   @ApiResponses(value = {@ApiResponse(code = 400, message = NexusSecurityApiConstants.NON_LOCAL_USER_CANNOT_BE_DELETED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND)})
-  void deleteUser(@ApiParam(value = USER_ID_DESCRIPTION) String userId);
+  void deleteUser(@ApiParam(value = USER_ID_DESCRIPTION) String userId,
+                  @ApiParam(value = REALM_DESCRIPTION) String realm);
 
   @ApiOperation("Change a user's password.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),

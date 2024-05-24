@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal.task;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.repository.apt.AptFormat;
@@ -23,6 +24,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
 
+@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class RebuildAptMetadataTaskDescriptor

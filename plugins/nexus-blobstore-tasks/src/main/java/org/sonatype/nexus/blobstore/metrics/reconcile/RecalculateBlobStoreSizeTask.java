@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.metrics.reconcile;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -23,14 +24,17 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.common.BlobStoreTaskSupport;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.Cancelable;
+import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import org.joda.time.DateTime;
 
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 
+@AvailabilityVersion(from = "1.0")
 @Named
 @TaskLogging(TASK_LOG_ONLY)
 public class RecalculateBlobStoreSizeTask
@@ -40,6 +44,8 @@ public class RecalculateBlobStoreSizeTask
   private static final int LOGGING_INTERVAL = 60;
 
   private static final String S3_TYPE = "S3";
+
+  private static final int CANCEL_CHECK_INTERVAL = 300;
 
   @Inject
   public RecalculateBlobStoreSizeTask(final BlobStoreManager blobStoreManager) {
@@ -71,8 +77,10 @@ public class RecalculateBlobStoreSizeTask
           .map(attributes -> attributes.getMetrics().getContentSize())
           .forEach(blobSize -> {
             totalSize.addAndGet(blobSize);
-            totalCount.incrementAndGet();
             metricsService.recordAddition(blobSize);
+            if (totalCount.incrementAndGet() % CANCEL_CHECK_INTERVAL == 0) {
+              CancelableHelper.checkCancellation();
+            }
 
             progressLogger.info("Re-calculating size metrics on blob store '{}', size : {} - blobs count : {}",
                 blobStore.getBlobStoreConfiguration().getName(), totalSize,
