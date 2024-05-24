@@ -31,6 +31,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -48,6 +49,7 @@ import static org.sonatype.nexus.blobstore.BlobStoreSupport.MAX_NAME_LENGTH;
  *
  * @since 3.6
  */
+@AvailabilityVersion(from = "1.0")
 @Named(FileBlobStore.TYPE)
 public class FileBlobStoreDescriptor
     extends BlobStoreDescriptorSupport

@@ -10,11 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.db;
+package org.sonatype.nexus.upgrade.datastore;
 
-public interface DatabaseCheck
+/**
+ * An exception which occurs during a database migration
+ */
+public class UpgradeException
+    extends Exception
 {
-  public static final String POSTGRE_SQL = "PostgreSQL";
+  private static final long serialVersionUID = 1L;
 
-  boolean isPostgresql();
+  public UpgradeException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
+
+  public UpgradeException(final String message) {
+    super(message);
+  }
 }

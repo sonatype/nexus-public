@@ -115,7 +115,7 @@ public interface FeatureFlags
   String CLEANUP_USE_SQL = "nexus.cleanup.useSQL";
 
   String FORMAT_RETAIN_PATTERN = "nexus.cleanup.{format}Retain";
-  
+
   String DISABLE_NORMALIZE_VERSION_TASK = "nexus.cleanup.disableNormalizeVersionTask";
 
   String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";
@@ -166,4 +166,12 @@ public interface FeatureFlags
   String API_EXTENDED = "nexus.api.extended.enabled";
 
   String ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_NAMED = "${nexus.audit.attribute.changes.enabled:-true}";
+
+  String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED = "zero.downtime.marketing.modal";
+
+  String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED_NAMED = "${zero.downtime.marketing.modal:-false}";
+
+  /* For testing purposes only */
+  String ZERO_DOWNTIME_BASELINE_FAIL = "nexus.zdu.baseline.fail";
+
 }

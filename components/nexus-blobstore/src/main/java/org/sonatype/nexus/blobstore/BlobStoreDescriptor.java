@@ -22,6 +22,7 @@ import org.sonatype.nexus.formfields.FormField;
 
 /**
  * Describes a blob store.
+ * Note: Do not inject Map<String, BlobStoreDescriptors> and instead opt to use BlobStoreDescriptorProvider
  *
  * @since 3.6
  */

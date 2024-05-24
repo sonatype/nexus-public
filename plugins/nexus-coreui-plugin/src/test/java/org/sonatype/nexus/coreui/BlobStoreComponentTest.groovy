@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor
+import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
@@ -47,15 +48,19 @@ class BlobStoreComponentTest
 
   BlobStoreTaskService blobStoreTaskService = Mock()
 
+  BlobStoreDescriptorProvider blobStoreDescriptorProvider = Mock()
+
   @Subject
   BlobStoreComponent blobStoreComponent = new BlobStoreComponent(blobStoreManager: blobStoreManager,
       applicationDirectories: applicationDirectories, repositoryManager: repositoryManager,
-      blobStoreGroupService: { blobStoreGroupService }, blobStoreTaskService: blobStoreTaskService)
+      blobStoreGroupService: { blobStoreGroupService }, blobStoreTaskService: blobStoreTaskService,
+      blobStoreDescriptorProvider: blobStoreDescriptorProvider)
 
   def 'Read types returns descriptor data'() {
     given: 'A blobstore descriptor'
-      blobStoreComponent.blobStoreDescriptors =
+      def blobStoreDescriptors =
           [MyType: [getName: { -> 'MyType' }, getFormFields: { -> []}] as BlobStoreDescriptor]
+      _ * blobStoreDescriptorProvider.get() >> blobStoreDescriptors
 
     when: 'Reading blobstore types'
       def types = blobStoreComponent.readTypes()
