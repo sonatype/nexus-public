@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -41,6 +41,11 @@ public class CleanupTestSystem
   public CleanupTestSystem(final CleanupPolicyStorage cleanupPolicyStorage, final EventManager eventManager) {
     super(eventManager);
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
+  }
+
+  @Nullable
+  public CleanupPolicy get(final String name) {
+    return cleanupPolicyStorage.get(name);
   }
 
   public CleanupPolicy createCleanupPolicy(final String name, final String notes) {
