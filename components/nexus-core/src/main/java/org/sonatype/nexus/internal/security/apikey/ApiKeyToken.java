@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.security.apikey;
 
 import java.nio.CharBuffer;
 
-import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.datastore.mybatis.handlers.PasswordCharacterArrayTypeHandler;
 
 /**

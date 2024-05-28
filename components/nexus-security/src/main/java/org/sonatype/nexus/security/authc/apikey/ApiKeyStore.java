@@ -73,11 +73,6 @@ public interface ApiKeyStore
   Collection<ApiKey> browseByCreatedDate(String domain, OffsetDateTime date);
 
   /**
-   * Browse tokens in the domain (paginated)
-   */
-  Collection<ApiKey> browsePaginated(String domain, int page, int pageSize);
-
-  /**
    * Count all the keys for the provided domain
    */
   int count(String domain);
@@ -113,21 +108,4 @@ public interface ApiKeyStore
    * Remove all expired API-Keys
    */
   void deleteApiKeys(OffsetDateTime expiration);
-
-  /**
-   * Updates an existing API-key.
-   */
-  void updateApiKey(ApiKey from, ApiKey to);
-
-  /**
-   * Creates a new {@link ApiKey} instance (default)
-   */
-  default ApiKey newApiKey(String domain, PrincipalCollection principals, char[] apiKey) {
-    return newApiKey(domain, principals, apiKey, OffsetDateTime.now());
-  }
-
-  /**
-   * Creates a new {@link ApiKey} instance
-   */
-  ApiKey newApiKey(String domain, PrincipalCollection principals, char[] apiKey, OffsetDateTime created);
 }

@@ -82,9 +82,4 @@ public class MockUserManager
   public User getUser(final String userId, final Set<String> roleIds) throws UserNotFoundException {
     return getUser(userId);
   }
-
-  @Override
-  public boolean isRealmConfigured() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
 }
