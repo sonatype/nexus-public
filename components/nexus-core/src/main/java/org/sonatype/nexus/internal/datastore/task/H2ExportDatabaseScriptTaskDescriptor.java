@@ -24,7 +24,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
-import static org.sonatype.nexus.common.app.FeatureFlags.H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED_NAMED;
 import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
 
 /**
@@ -32,7 +32,7 @@ import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
  */
 @Named
 @Singleton
-@FeatureFlag(name = H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED)
+@FeatureFlag(name = H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED_NAMED, enabledByDefault = true)
 public class H2ExportDatabaseScriptTaskDescriptor
     extends TaskDescriptorSupport
 {
