@@ -25,7 +25,6 @@ import org.sonatype.nexus.capability.CapabilityDescriptorSupport;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.capability.Taggable;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.UrlFormField;
 
@@ -39,7 +38,6 @@ import static org.sonatype.nexus.capability.Tag.tags;
  *
  * @since 3.0
  */
-@AvailabilityVersion(from = "1.0")
 @Named(BaseUrlCapabilityDescriptor.TYPE_ID)
 @Singleton
 public class BaseUrlCapabilityDescriptor

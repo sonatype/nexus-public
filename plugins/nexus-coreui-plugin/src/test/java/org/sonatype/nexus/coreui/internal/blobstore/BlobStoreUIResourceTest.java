@@ -20,7 +20,6 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
-import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -60,9 +59,6 @@ public class BlobStoreUIResourceTest
   @Mock
   private RepositoryManager repositoryManager;
 
-  @Mock
-  private BlobStoreDescriptorProvider blobStoreDescriptorProvider;
-
   private Map<String, BlobStoreDescriptor> blobStoreDescriptors = new HashMap<>();
 
   private List<BlobStoreConfiguration> configurations = new ArrayList<>();
@@ -75,11 +71,10 @@ public class BlobStoreUIResourceTest
     addDescriptor(S3_TYPE, S3_TYPE_ID);
     addDescriptor(BlobStoreGroup.TYPE, BlobStoreGroup.CONFIG_KEY);
 
-    when(blobStoreDescriptorProvider.get()).thenReturn(blobStoreDescriptors);
     when(blobStoreConfigurationStore.list()).thenReturn(configurations);
 
     underTest = new BlobStoreUIResource(
-        blobStoreManager, blobStoreConfigurationStore, blobStoreDescriptorProvider, ImmutableMap.of(), repositoryManager);
+        blobStoreManager, blobStoreConfigurationStore, blobStoreDescriptors, ImmutableMap.of(), repositoryManager);
   }
 
   @Test

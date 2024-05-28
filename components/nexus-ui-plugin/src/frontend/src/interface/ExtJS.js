@@ -232,34 +232,4 @@ export default class {
 
     return value;
   }
-
-    /**
-   * A hook that automatically re-evaluates whenever any state is changed
-   * @param getValue - A function to get the value from the state subsystem
-   * @returns {unknown}
-   */
-    static usePermission(getValue, dependencies) {
-      const [value, setValue] = useState(getValue());
-  
-      useEffect(() => {
-        function handleChange() {
-          const newValue = getValue();
-          if (value !== newValue) {
-            setValue(newValue);
-          }
-        }
-
-      const permissionsController = Ext.getApplication().getController('Permissions');
-      permissionsController.on('changed', handleChange);
-
-      const stateController = Ext.getApplication().getController('State');
-      stateController.on('userchanged', handleChange);
-      return () => {
-        permissionsController.un('changed', handleChange);
-        stateController.un('userchanged', handleChange);
-        }
-      }, [value, ...(dependencies ?? [])]);
-  
-      return value;
-    }
 }

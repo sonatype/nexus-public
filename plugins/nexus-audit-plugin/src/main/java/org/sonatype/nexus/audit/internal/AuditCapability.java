@@ -31,7 +31,6 @@ import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.capability.Taggable;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -113,7 +112,6 @@ public class AuditCapability
     }
   }
 
-  @AvailabilityVersion(from = "1.0")
   @Named(AuditCapability.TYPE_ID)
   @Singleton
   public static class Descriptor

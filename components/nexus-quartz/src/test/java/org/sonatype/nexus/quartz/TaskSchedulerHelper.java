@@ -22,7 +22,6 @@ import javax.inject.Inject;
 import org.sonatype.goodies.testsupport.TestUtil;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.BaseUrlManager;
-import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -95,8 +94,6 @@ public class TaskSchedulerHelper
 
   private DatabaseStatusDelayedExecutor statusDelayedExecutor;
 
-  private DatabaseCheck databaseCheck;
-
   public TaskSchedulerHelper(final DatabaseInstance databaseInstance) {
     this.databaseInstance = checkNotNull(databaseInstance);
   }
@@ -108,7 +105,6 @@ public class TaskSchedulerHelper
     nodeAccess = mock(NodeAccess.class);
     lastShutdownTimeService = mock(LastShutdownTimeService.class);
     statusDelayedExecutor = mock(DatabaseStatusDelayedExecutor.class);
-    databaseCheck = mock(DatabaseCheck.class);
 
     Module module = binder -> {
       Properties properties = new Properties();
@@ -153,9 +149,6 @@ public class TaskSchedulerHelper
 
       // filtering by feature flag is not supported here yet
       binder.bind(JobStore.class).to(JobStoreImpl.class);
-
-      when(databaseCheck.isAllowedByVersion(any())).thenReturn(true);
-      binder.bind(DatabaseCheck.class).toInstance(databaseCheck);
     };
 
     this.injector = Guice.createInjector(new WireModule(

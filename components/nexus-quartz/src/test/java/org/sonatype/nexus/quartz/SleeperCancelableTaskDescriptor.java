@@ -15,13 +15,11 @@ package org.sonatype.nexus.quartz;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
  * Descriptor for {@link SleeperCancelableTask}.
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class SleeperCancelableTaskDescriptor

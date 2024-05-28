@@ -25,13 +25,10 @@ import org.sonatype.nexus.capability.CapabilityDescriptorSupport;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.capability.Taggable;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 
 import static java.util.Collections.singletonList;
 
-
-@AvailabilityVersion(from = "1.0")
 @Named(OnboardingCapability.TYPE_ID)
 @Singleton
 public class OnboardingCapabilityDescriptor

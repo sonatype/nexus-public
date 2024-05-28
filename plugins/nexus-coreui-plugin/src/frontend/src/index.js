@@ -62,16 +62,12 @@ import Tags from './components/pages/browse/Tags/Tags';
 import Upload from './components/pages/browse/Upload/Upload';
 import Nodes from "./components/pages/admin/Nodes/NodeList";
 import Browse from './components/pages/browse/Browse/Browse';
-import UpgradeAlert from './components/UpgradeAlert/UpgradeAlert';
 import UsageMetricsAlert from './components/pages/user/Welcome/UsageMetricsAlert';
-import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 
 window.ReactComponents = {
   ...window.ReactComponents,
   AnalyzeApplication,
-  UpgradeAlert,
-  UsageMetricsAlert,
-  UpgradeModal
+  UsageMetricsAlert
 };
 
 window.BlobStoreTypes = {

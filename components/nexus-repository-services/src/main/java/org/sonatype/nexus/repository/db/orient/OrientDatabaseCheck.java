@@ -17,7 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.common.db.DatabaseCheck;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
@@ -31,10 +31,5 @@ public class OrientDatabaseCheck
   @Override
   public boolean isPostgresql() {
     return false;
-  }
-
-  @Override
-  public boolean isAllowedByVersion(final Class<?> annotatedClass) {
-    return true;
   }
 }

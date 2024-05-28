@@ -19,7 +19,6 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
@@ -48,7 +47,6 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
  *
  * @since 3.0
  */
-@AvailabilityVersion(from = "1.0")
 @Named(RawGroupRecipe.NAME)
 @Priority(Integer.MAX_VALUE)
 @Singleton

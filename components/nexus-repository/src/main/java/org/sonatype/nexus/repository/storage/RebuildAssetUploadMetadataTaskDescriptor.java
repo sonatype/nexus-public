@@ -17,7 +17,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
@@ -25,7 +24,6 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
  *
  * @since 3.6
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class RebuildAssetUploadMetadataTaskDescriptor

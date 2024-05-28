@@ -19,7 +19,6 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
@@ -31,7 +30,6 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
  *
  * @since 3.2
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class DatabaseBackupTaskDescriptor
