@@ -605,7 +605,7 @@ window.plugins.push({
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [{
           key: 'nexus.react.upload',
-          defaultValue: false
+          defaultValue: true
         }],
         permissions: [Permissions.COMPONENT.CREATE],
       },
