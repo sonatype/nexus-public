@@ -15,13 +15,11 @@ package org.sonatype.nexus.repository.content.store.internal;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
  * @since 3.24
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class AssetBlobCleanupTaskDescriptor

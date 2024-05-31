@@ -78,15 +78,6 @@ public class ApiKeyStoreImpl
     this.defaultApiKeyFactory = checkNotNull(defaultApiKeyFactory);
   }
 
-  public ApiKey newApiKey(
-      final String domain,
-      final PrincipalCollection principals,
-      char[] apiKey,
-      OffsetDateTime created)
-  {
-    return new ApiKeyData(domain, principals, new ApiKeyToken(apiKey), created);
-  }
-
   @Override
   public char[] createApiKey(final String domain, final PrincipalCollection principals) {
     final char[] apiKey = makeApiKey(domain, principals);
@@ -225,22 +216,6 @@ public class ApiKeyStoreImpl
   @Override
   public void deleteApiKeys(final OffsetDateTime expiration) {
     dao().deleteApiKeyByExpirationDate(expiration);
-  }
-
-  @Transactional
-  @Override
-  public void updateApiKey(final ApiKey from, final ApiKey to) {
-    ApiKeyData fromApiKey = (ApiKeyData) from;
-    fromApiKey.setApiKey(to.getApiKey());
-    fromApiKey.setPrincipals(to.getPrincipals());
-    fromApiKey.setCreated(to.getCreated());
-    dao().update(fromApiKey);
-  }
-
-  @Transactional
-  @Override
-  public Collection<ApiKey> browsePaginated(final String domain, final int page, final int pageSize) {
-    return dao().browsePaginated(domain, (page - 1) * pageSize, pageSize);
   }
 
   /*

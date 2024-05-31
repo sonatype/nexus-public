@@ -17,24 +17,22 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.common.db.DatabaseCheck;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.StringTextFormField;
+import org.sonatype.nexus.repository.db.DatabaseCheck;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED_NAMED;
-import static org.sonatype.nexus.common.app.FeatureFlags.H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED_NAMED;
 import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
 
 /**
  * A {@link TaskDescriptor} for exporting the SQL database to a script
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
-@FeatureFlag(name = H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED)
+@FeatureFlag(name = H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED_NAMED, enabledByDefault = true)
 public class H2ExportDatabaseScriptTaskDescriptor
     extends TaskDescriptorSupport
 {

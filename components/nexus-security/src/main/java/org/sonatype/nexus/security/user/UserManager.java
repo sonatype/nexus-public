@@ -83,9 +83,4 @@ public interface UserManager
    * Update a users password.
    */
   void changePassword(String userId, String newPassword) throws UserNotFoundException;
-
-  /**
-   * Returns true if associated realm is configured, false otherwise.
-   */
-  boolean isRealmConfigured();
 }

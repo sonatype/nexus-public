@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven.tasks;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
@@ -25,7 +24,6 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
  *
  * @since 3.0
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class UnpublishMavenIndexTaskDescriptor

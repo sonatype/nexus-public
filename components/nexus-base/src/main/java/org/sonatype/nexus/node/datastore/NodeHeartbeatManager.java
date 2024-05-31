@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.node.datastore;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -49,17 +48,7 @@ public interface NodeHeartbeatManager
   boolean isCurrentNodeClustered();
 
   /**
-   * Triggers a write of the latest heartbeat information
-   */
-  void writeHeartbeat();
-
-  /**
    * Collects and transforms system info from heartbeat table
    */
   Map<String, Map<String, Object>> getSystemInformationForNodes();
-
-  /**
-   * Collects nodeInfo from the heartbeat table
-   */
-  Collection<NodeHeartbeat> getActiveNodeHeartbeatData();
 }

@@ -31,11 +31,4 @@ public class APIConstants
   public static final String BETA_API_PREFIX = "/beta";
 
   public static final String INTERNAL_API_PREFIX = "/internal";
-
-  /**
-   * Mime type for versionless REST API URLs which indicates that the Content-Type is V1 from the endpoint.
-   *
-   * @see <a href="https://swagger.io/docs/specification/2-0/mime-types/">Swagger 2.0 Mime Types</a>
-   */
-  public static final String APPLICATION_NEXUS_V1 = "application/vnd.sonatype.nexus.v1+json";
 }

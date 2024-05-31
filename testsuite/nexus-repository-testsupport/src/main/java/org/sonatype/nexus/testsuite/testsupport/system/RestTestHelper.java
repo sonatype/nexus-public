@@ -639,7 +639,7 @@ public class RestTestHelper
         if (actualStatus != statusCode) {
           String message = "";
           try {
-            message = response.hasEntity() ? response.readEntity(String.class) : null;
+            message = IOUtils.toString((InputStream) response.getEntity(), Charset.defaultCharset());
           }
           catch (Exception e) {
             log.info("Failed to extract message body from response {}", response, e);

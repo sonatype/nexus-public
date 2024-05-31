@@ -14,7 +14,6 @@ package org.sonatype.nexus.blobstore.metrics.reconcile;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -24,7 +23,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.common.BlobStoreTaskSupport;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -34,7 +32,6 @@ import org.joda.time.DateTime;
 
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 
-@AvailabilityVersion(from = "1.0")
 @Named
 @TaskLogging(TASK_LOG_ONLY)
 public class RecalculateBlobStoreSizeTask

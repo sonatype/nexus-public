@@ -20,7 +20,7 @@ import userEvent from '@testing-library/user-event';
 import {values, pick, ascend, descend, sort, prop} from 'ramda';
 import axios from 'axios';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
-import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
+import {APIConstants} from '@sonatype/nexus-ui-plugin';
 import MetricHealthList from './MetricHealthList';
 import {nodes} from './MetricHealth.testdata';
 import {convert} from './MetricHealthListMachine';
@@ -59,9 +59,6 @@ describe('MetricHealthList', () => {
   };
 
   const renderView = async () => {
-    jest.spyOn(ExtJS, 'useState').mockReturnValue({});
-    jest.spyOn(ExtJS, 'usePermission').mockReturnValue({});
-
     const result = render(<MetricHealthList />);
     await waitForElementToBeRemoved(TestUtils.selectors.queryLoadingMask());
     return result;
