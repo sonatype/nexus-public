@@ -102,6 +102,12 @@
 
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-servlets</artifactId>
+        <version>${eclipse-jetty.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-proxy</artifactId>
         <version>${eclipse-jetty.version}</version>
       </dependency>
