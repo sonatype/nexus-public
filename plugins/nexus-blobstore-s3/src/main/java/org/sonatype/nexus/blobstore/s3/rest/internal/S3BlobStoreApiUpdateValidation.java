@@ -23,6 +23,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.rest.ValidationErrorsException;
+import org.apache.commons.lang.StringUtils;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -53,6 +54,15 @@ public class S3BlobStoreApiUpdateValidation
     this.blobStoreManager = blobStoreManager;
   }
 
+  void validateCreateRequest(final S3BlobStoreApiModel s3BlobStoreApiModel) {
+    List<String> errors = new ArrayList<>();
+    checkBlobStoreNameNotEmpty(s3BlobStoreApiModel.getName(), errors);
+
+    if (!errors.isEmpty()) {
+      throw new ValidationErrorsException(BLOB_STORE_NAME, String.join(COMMA, errors));
+    }
+  }
+
   void validateUpdateRequest(final S3BlobStoreApiModel s3BlobStoreApiModel, final String blobStoreName) {
     List<String> errors = new ArrayList<>();
     final boolean blobStoreExists = checkBlobStoreExists(blobStoreName, errors);
@@ -63,6 +73,12 @@ public class S3BlobStoreApiUpdateValidation
 
     if (!errors.isEmpty()) {
       throw new ValidationErrorsException(BLOB_STORE_NAME, join(COMMA, errors));
+    }
+  }
+
+  private void checkBlobStoreNameNotEmpty(final String blobStoreName, final List<String> errors) {
+    if (StringUtils.isBlank(blobStoreName)) {
+      errors.add("Blob store name cannot be empty");
     }
   }
 

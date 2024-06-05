@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.s3.rest.internal;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -32,8 +33,10 @@ import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
+import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
@@ -79,13 +82,15 @@ public class S3BlobStoreApiResource
   @RequiresPermissions("nexus:blobstores:create")
   public Response createBlobStore(@Valid final S3BlobStoreApiModel request) {
     try {
+      s3BlobStoreApiUpdateValidation.validateCreateRequest(request);
       final BlobStoreConfiguration blobStoreConfiguration = map(blobStoreManager.newConfiguration(), request);
       blobStoreManager.create(blobStoreConfiguration);
       return status(CREATED).build();
     }
     catch (Exception e) {
-      throw new WebApplicationMessageException(INTERNAL_SERVER_ERROR, e.getMessage());
+      throw new WebApplicationMessageException(BAD_REQUEST, e.getMessage());
     }
+
   }
 
   @PUT
@@ -155,4 +160,28 @@ public class S3BlobStoreApiResource
     }
     return configuration;
   }
+
+  @DELETE
+  @RequiresAuthentication
+  @Path("/s3")
+  @RequiresPermissions("nexus:blobstores:delete")
+  @ApiOperation(value = "Delete a blob store with an empty name", hidden = true)
+  public Response deleteBlobStoreWithEmptyName() {
+    String blobStoreName = "";
+    try {
+      BlobStore blobStore = blobStoreManager.get(blobStoreName);
+      if (blobStore == null) {
+        return Response.status(Response.Status.NOT_FOUND)
+            .entity("Blob store not found")
+            .build();
+      }
+      blobStoreManager.delete(blobStoreName);
+      return Response.status(Response.Status.NO_CONTENT).build();
+    }
+    catch (Exception e) {
+      throw new WebApplicationMessageException(BAD_REQUEST, e.getMessage());
+    }
+  }
 }
+
+

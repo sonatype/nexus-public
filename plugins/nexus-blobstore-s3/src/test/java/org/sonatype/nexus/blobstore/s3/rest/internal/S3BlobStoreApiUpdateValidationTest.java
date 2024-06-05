@@ -114,6 +114,14 @@ public class S3BlobStoreApiUpdateValidationTest
     verify(blobStoreManager).exists(BLOB_STORE_NAME);
   }
 
+  @Test
+  public void shouldThrowExceptionWhenBlobStoreNameIsEmptyOnCreate() {
+    expectedException.expect(ValidationErrorsException.class);
+    expectedException.expectMessage("Blob store name cannot be empty");
+
+    underTest.validateCreateRequest(anS3BlobStoreApiModel(""));
+  }
+
   private void mockBlobStoreType(final String type) {
     final BlobStoreConfiguration blobStoreConfiguration = new MockBlobStoreConfiguration();
     blobStoreConfiguration.setType(type);
