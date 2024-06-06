@@ -65,7 +65,7 @@
     <nexus.version>3.70.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
-    <karaf.version>4.3.9</karaf.version>
+    <karaf.version>4.4.6</karaf.version>
 
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
     <node.version>v18.17.1</node.version>
@@ -105,7 +105,7 @@
 
     <it.includes>**/*IT.*</it.includes>
 
-    <it.includedGroups></it.includedGroups>
+    <it.includedGroups/>
     <it.excludedGroups>
       org.sonatype.goodies.testsupport.group.Perf,
       org.sonatype.goodies.testsupport.group.External,
