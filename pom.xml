@@ -1306,6 +1306,22 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Enable CLM maven plugin -->
+      <plugin>
+        <groupId>com.sonatype.clm</groupId>
+        <artifactId>clm-maven-plugin</artifactId>
+        <configuration>
+          <skip>${clm.skip}</skip>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>index</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -2245,32 +2261,6 @@
             </plugin>
           </plugins>
         </pluginManagement>
-      </build>
-    </profile>
-
-    <!-- Enable CLM maven plugin on supported JDK -->
-    <profile>
-      <id>clm</id>
-      <activation>
-        <jdk>(,11]</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.sonatype.clm</groupId>
-            <artifactId>clm-maven-plugin</artifactId>
-            <configuration>
-              <skip>${clm.skip}</skip>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>index</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
       </build>
     </profile>
 
