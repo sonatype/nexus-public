@@ -162,12 +162,12 @@ public interface AssetDAO
       @Param("limit") int limit);
 
   /**
-   * Creates the given asset in the content data store.
+   * Creates the given asset in the content data store and retrieves the generated assetId.
    *
    * @param asset                        the asset to create
    * @param updateComponentEntityVersion whether to update the component's entity version
    */
-  void createAsset(
+  int createAsset(
       @Param("asset") AssetData asset,
       @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 

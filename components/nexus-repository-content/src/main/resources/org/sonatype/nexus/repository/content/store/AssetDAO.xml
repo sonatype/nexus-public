@@ -207,24 +207,29 @@
     ORDER BY ab.added_to_repository LIMIT #{limit}
   </select>
 
-  <insert id="createAsset">
+  <insert id="createAsset" databaseId="PostgreSQL">
     <selectKey keyProperty="asset.assetId" resultType="int" order="BEFORE">
-        <if test="_databaseId == 'PostgreSQL'">
-          SELECT NEXTVAL('${format}_asset_asset_id_seq');
-        </if>
-        <if test="_databaseId == 'H2'">
-            SELECT NEXTVAL(CAST((SELECT SEQUENCE_NAME FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE LOWER(table_name) = '${format}_asset' AND LOWER(COLUMN_NAME) = 'asset_id') AS VARCHAR));
-        </if>
+      SELECT NEXTVAL('${format}_asset_asset_id_seq');
     </selectKey>
 
     INSERT INTO ${format}_asset (asset_id, repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
-        attributes, asset_blob_size)
+    attributes, asset_blob_size)
     VALUES (#{asset.assetId}, #{asset.repositoryId}, #{asset.path}, #{asset.kind}, #{asset.componentId}, #{asset.assetBlobId},
-      #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes}, #{asset.assetBlob.blobSize});
+    #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes}, #{asset.assetBlob.blobSize});
 
     <if test="updateComponentEntityVersion and asset.componentId != null">
-        <include refid="componentEntityVersionIncrement"/> WHERE component_id = #{asset.componentId};
+      <include refid="componentEntityVersionIncrement"/> WHERE component_id = #{asset.componentId};
+    </if>
+  </insert>
+
+  <insert id="createAsset" useGeneratedKeys="true" keyProperty="asset.assetId" databaseId="H2">
+    INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
+    attributes, asset_blob_size)
+    VALUES (#{asset.repositoryId}, #{asset.path}, #{asset.kind}, #{asset.componentId}, #{asset.assetBlobId},
+    #{asset.lastUpdated}, #{asset.lastDownloaded},  #{asset.attributes}, #{asset.assetBlob.blobSize});
+
+    <if test="updateComponentEntityVersion and asset.componentId != null">
+      <include refid="componentEntityVersionIncrement"/> WHERE component_id = #{asset.componentId};
     </if>
   </insert>
 
