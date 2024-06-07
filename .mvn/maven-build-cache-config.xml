@@ -26,8 +26,11 @@
     <input>
         <global>
             <glob>
-                {*.lock}
+                {*.lock,*.js,*.jsx,*.scss,*.java,*.groovy,*.properties}
             </glob>
+            <includes>
+                <include>src/</include>
+            </includes>
         </global>
     </input>
 
