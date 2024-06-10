@@ -89,7 +89,8 @@ public class SecurityHelper
     }
 
     if (!anyPermitted(subject, permissions)) {
-      throw new AuthorizationException("User is not permitted.");
+      throw new AuthorizationException("User is not permitted: " + 
+        (permissions.length > 1 ? "[" + permissions[0] + ", ...]" : permissions[0]));
     }
   }
 
