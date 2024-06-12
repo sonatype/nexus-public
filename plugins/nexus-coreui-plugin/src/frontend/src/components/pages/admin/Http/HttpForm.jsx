@@ -36,6 +36,7 @@ import UIStrings from '../../../../constants/UIStrings';
 const {CONFIGURATION: LABELS} = UIStrings.HTTP;
 
 import HttpMachine from './HttpMachine';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 export default function HttpForm() {
   const [current, send] = useMachine(HttpMachine, {devTools: true});
@@ -86,6 +87,9 @@ export default function HttpForm() {
     ValidationUtils.validateWhiteSpace(nonProxyHost) || 
       (nonProxyHosts.includes(nonProxyHost) ? LABELS.EXCLUDE.ALREADY_ADDED : null)
 
+  const timeoutPlaceholder = ExtJS.state().getValue('requestTimeout');
+  const retryCountPlaceholder = ExtJS.state().getValue('retryCount');
+
   return (
     <NxStatefulForm
       {...FormUtils.formProps(current, send)}
@@ -119,6 +123,7 @@ export default function HttpForm() {
           className="nx-text-input--short"
           {...FormUtils.fieldProps('timeout', current)}
           onChange={FormUtils.handleUpdate('timeout', send)}
+          placeholder={timeoutPlaceholder.value}
         />
       </NxFormGroup>
       <NxFormGroup
@@ -129,6 +134,7 @@ export default function HttpForm() {
           className="nx-text-input--short"
           {...FormUtils.fieldProps('retries', current)}
           onChange={FormUtils.handleUpdate('retries', send)}
+          placeholder={retryCountPlaceholder}
         />
       </NxFormGroup>
       <NxH2>{LABELS.PROXY.LABEL}</NxH2>
