@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -26,6 +27,7 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
  *
  * @since 3.0
  */
+@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class CompactBlobStoreTaskDescriptor

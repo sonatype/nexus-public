@@ -16,13 +16,17 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
+import org.sonatype.nexus.common.upgrade.UpgradeStepTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
  * {@link FileBlobStoreMetricsMigrationTask} descriptor.
  */
+@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
+@UpgradeStepTaskDescriptor
 public class FileBlobStoreMetricsMigrationTaskDescriptor
     extends TaskDescriptorSupport
 {

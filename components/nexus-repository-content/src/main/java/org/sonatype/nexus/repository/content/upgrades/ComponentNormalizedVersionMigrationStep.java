@@ -15,8 +15,9 @@ package org.sonatype.nexus.repository.content.upgrades;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -73,30 +74,11 @@ public class ComponentNormalizedVersionMigrationStep
 
   @Override
   public Integer getChecksum() {
-    if (HasFormatsNormalized()) {
-      return 1;
-    }
-
-    return (int) Instant.now().getEpochSecond();
-  }
-
-  /**
-   * Validates if nexus has all it's format tables normalized (valid normalized_version)
-   *
-   * @return a {@link Boolean} indicating if all formats are normalized
-   */
-  private boolean HasFormatsNormalized() {
-    return formats
-        .stream()
-        .map(this::isFormatNormalized)
-        .reduce(true, (a, b) -> a && b);
-  }
-
-  private boolean isFormatNormalized(final Format format) {
-    return globalKeyValueStore
-        .getKey(String.format(NormalizeComponentVersionTask.KEY_FORMAT, format.getValue()))
-        .map(NexusKeyValue::getAsBoolean)
-        .orElse(false);
+    return Objects.hash(formats.stream()
+        .map(Format::getValue)
+        // Ordered so the hash is consistent
+        .sorted()
+        .toArray());
   }
 
   @Override
@@ -113,7 +95,9 @@ public class ComponentNormalizedVersionMigrationStep
   private void alterFormats(final Connection connection) throws SQLException {
     try (Statement alterStmt = connection.createStatement()) {
       for (Format format : formats) {
-        alter(connection, alterStmt, format);
+        if (!isFormatNormalized(format)) {
+          alter(connection, alterStmt, format);
+        }
       }
     }
   }
@@ -142,7 +126,14 @@ public class ComponentNormalizedVersionMigrationStep
     }
   }
 
-  private String replace(String query, String format) {
+  private boolean isFormatNormalized(final Format format) {
+    return globalKeyValueStore
+        .getKey(String.format(NormalizeComponentVersionTask.KEY_FORMAT, format.getValue()))
+        .map(NexusKeyValue::getAsBoolean)
+        .orElse(false);
+  }
+
+  private static String replace(final String query, final String format) {
     return query.replaceAll("\\{format\\}", format);
   }
 }

@@ -130,7 +130,9 @@ Ext.define('NX.app.Application', {
     'Icon',
     'KeyNav',
     'Permissions',
-    'AnalyticsOptOut'
+    'AnalyticsOptOut',
+    'UpgradeAlert',
+    'UpgradeModal'
   ],
 
   /**

@@ -13,10 +13,8 @@
 package org.sonatype.nexus.internal.capability;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -24,6 +22,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
+import org.sonatype.nexus.capability.DefaultCapabilityDescriptorProvider;
 
 import com.google.common.collect.Lists;
 
@@ -34,14 +33,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 class DefaultCapabilityDescriptorRegistry
     implements CapabilityDescriptorRegistry
 {
-
-  private final List<CapabilityDescriptor> descriptors;
+  private final DefaultCapabilityDescriptorProvider defaultCapabilityDescriptorProvider;
 
   private final Set<CapabilityDescriptor> dynamicDescriptors;
 
   @Inject
-  DefaultCapabilityDescriptorRegistry(final List<CapabilityDescriptor> descriptors) {
-    this.descriptors = checkNotNull(descriptors);
+  DefaultCapabilityDescriptorRegistry(final DefaultCapabilityDescriptorProvider defaultCapabilityDescriptorProvider) {
+    this.defaultCapabilityDescriptorProvider = checkNotNull(defaultCapabilityDescriptorProvider);
     this.dynamicDescriptors = new CopyOnWriteArraySet<CapabilityDescriptor>();
   }
 
@@ -59,7 +57,7 @@ class DefaultCapabilityDescriptorRegistry
 
   @Override
   public CapabilityDescriptor get(final CapabilityType capabilityType) {
-    final CapabilityDescriptor descriptor = get(descriptors, capabilityType);
+    final CapabilityDescriptor descriptor = get(defaultCapabilityDescriptorProvider.get(), capabilityType);
     if (descriptor == null) {
       return get(dynamicDescriptors, capabilityType);
     }
@@ -69,7 +67,7 @@ class DefaultCapabilityDescriptorRegistry
   @Override
   public CapabilityDescriptor[] getAll() {
     final Collection<CapabilityDescriptor> all = Lists.newArrayList();
-    all.addAll(descriptors);
+    all.addAll(defaultCapabilityDescriptorProvider.get());
     all.addAll(dynamicDescriptors);
 
     return all.toArray(new CapabilityDescriptor[all.size()]);
@@ -85,5 +83,4 @@ class DefaultCapabilityDescriptorRegistry
     }
     return null;
   }
-
 }

@@ -22,7 +22,7 @@ import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
-import org.sonatype.nexus.blobstore.BlobStoreDescriptor
+import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
@@ -75,7 +75,7 @@ class BlobStoreComponent
   BlobStoreConfigurationStore store;
 
   @Inject
-  Map<String, BlobStoreDescriptor> blobStoreDescriptors
+  BlobStoreDescriptorProvider blobStoreDescriptorProvider;
 
   @Inject
   Map<String, BlobStoreQuota> quotaFactories
@@ -183,7 +183,7 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreTypeXO> readTypes() {
-    List<BlobStoreTypeXO> readTypes = blobStoreDescriptors.collect { key, descriptor ->
+    List<BlobStoreTypeXO> readTypes = blobStoreDescriptorProvider.get().collect { key, descriptor ->
       new BlobStoreTypeXO(
           id: key,
           name: descriptor.name,

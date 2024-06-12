@@ -15,11 +15,13 @@ package org.sonatype.nexus.repository.content.store.internal.migration;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
  * {@link AssetBlobRefMigrationTask} descriptor.
  */
+@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class AssetBlobRefMigrationTaskDescriptor
