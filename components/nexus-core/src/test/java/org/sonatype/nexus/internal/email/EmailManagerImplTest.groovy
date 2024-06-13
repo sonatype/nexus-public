@@ -13,7 +13,7 @@
 package org.sonatype.nexus.internal.email
 
 import java.util.function.Function
-
+import javax.inject.Provider
 import javax.net.ssl.SSLContext
 
 import org.sonatype.nexus.common.event.EventManager
@@ -35,7 +35,8 @@ class EmailManagerImplTest
     given: 'A configured EmailManagerImpl instance'
       TrustStore trustStore = Mock(TrustStore)
       trustStore.getSSLContext() >> SSLContext.getDefault()
-      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), trustStore, Mock(Function))
+      EmailManagerImpl impl =
+          new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), trustStore, Mock(Function), Mock(Provider))
 
     and: 'an populated EmailConfiguration'
       def emailConfig = Mock(EmailConfiguration) {
@@ -73,7 +74,8 @@ class EmailManagerImplTest
   @Unroll
   def 'Configures emails credentials correctly for username #username and password #password.'() {
     given: 'A configured EmailManagerImpl instance'
-      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), Mock(TrustStore), Mock(Function))
+      EmailManagerImpl impl =
+          new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), Mock(TrustStore), Mock(Function), Mock(Provider))
     and: 'an populated EmailConfiguration'
       def emailConfig = Mock(EmailConfiguration) {
         _ * getHost() >> 'example.com'
@@ -101,7 +103,8 @@ class EmailManagerImplTest
       def eventManager = Mock(EventManager)
       def emailConfigurationStore = Mock(EmailConfigurationStore)
       emailConfigurationStore.load() >> Mock(EmailConfiguration)
-      EmailManagerImpl impl = new EmailManagerImpl(eventManager, emailConfigurationStore, Mock(TrustStore), Mock(Function))
+      EmailManagerImpl impl =
+          new EmailManagerImpl(eventManager, emailConfigurationStore, Mock(TrustStore), Mock(Function), Mock(Provider))
 
     when: 'a local event is received'
       def localEvent = Mock(EmailConfigurationEvent)

@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.scheduling;
 
 import java.util.Map;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -97,7 +96,7 @@ public class NexusTaskNotificationEmailSender
       Email mail = new SimpleEmail();
       mail.setSubject(subject);
       mail.addTo(address);
-      mail.setMsg(body);
+      mail.setMsg(emailManager.get().constructMessage(body));
       emailManager.get().send(mail);
     }
     catch (Exception e) {

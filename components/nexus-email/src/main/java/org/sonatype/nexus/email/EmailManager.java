@@ -47,4 +47,6 @@ public interface EmailManager
    * @since 3.20
    */
   EmailConfiguration newConfiguration();
+
+  String constructMessage(String message);
 }
