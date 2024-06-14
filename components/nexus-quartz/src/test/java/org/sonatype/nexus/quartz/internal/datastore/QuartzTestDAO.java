@@ -39,4 +39,6 @@ public interface QuartzTestDAO
    * @return return the type of specified column
    */
   String getTableColumnType(@Param("table_name") String tableName, @Param("column_name") String columnName);
+
+  String getColumnCharacterLimit(@Param("table_name") String tableName, @Param("column_name") String columnName);
 }
