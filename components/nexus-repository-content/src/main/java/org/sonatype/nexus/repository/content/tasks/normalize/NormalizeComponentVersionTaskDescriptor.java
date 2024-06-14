@@ -16,15 +16,17 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.formfields.RepositoryCombobox;
-import org.sonatype.nexus.repository.RepositoryTaskSupport;
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
+import org.sonatype.nexus.common.upgrade.UpgradeStepTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
  * Descriptor for {@link NormalizeComponentVersionTask} which populates the normalized_version column on the {format}_component tables
  */
+@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
+@UpgradeStepTaskDescriptor
 public class NormalizeComponentVersionTaskDescriptor
     extends TaskDescriptorSupport
 {

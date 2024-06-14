@@ -34,7 +34,7 @@ public class GlobalKeyValueStore
     extends TransactionalStoreSupport
 {
   @Inject
-  protected GlobalKeyValueStore(
+  public GlobalKeyValueStore(
       final DataSessionSupplier sessionSupplier)
   {
     super(sessionSupplier, DEFAULT_DATASTORE_NAME);

@@ -10,11 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.db;
+package org.sonatype.nexus.httpclient;
 
-public interface DatabaseCheck
-{
-  public static final String POSTGRE_SQL = "PostgreSQL";
+import org.sonatype.goodies.common.Time;
+import org.sonatype.goodies.common.ByteSize;
 
-  boolean isPostgresql();
+public interface HttpDefaultsCustomizer
+  extends HttpClientPlan.Customizer {
+    Time getRequestTimeout();
+
+    int getRetryCount();
 }

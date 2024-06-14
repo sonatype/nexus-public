@@ -13,7 +13,7 @@
 package org.sonatype.nexus.coreui.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.db.DatabaseCheck;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 
 import org.junit.Test;
 

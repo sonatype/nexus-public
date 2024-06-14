@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -58,6 +59,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 /**
  * @since 3.17
  */
+@AvailabilityVersion(from = "1.0")
 @Named(OrientAptProxyRecipe.NAME)
 @Singleton
 public class OrientAptProxyRecipe

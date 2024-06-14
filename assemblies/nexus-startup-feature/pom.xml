@@ -97,11 +97,6 @@
 
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlets</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-proxy</artifactId>
     </dependency>
 

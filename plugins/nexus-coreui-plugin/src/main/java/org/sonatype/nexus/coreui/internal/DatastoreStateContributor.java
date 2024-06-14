@@ -19,7 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.rapture.StateContributor;
-import org.sonatype.nexus.repository.db.DatabaseCheck;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 
 import com.google.common.collect.ImmutableMap;
 

@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository;
 import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.recipe.RouterBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -35,6 +36,8 @@ public abstract class RecipeSupport
   private BrowseUnsupportedHandler browseUnsupportedHandler;
 
   private HighAvailabilitySupportChecker highAvailabilitySupportChecker;
+
+  private DatabaseCheck databaseCheck;
 
   protected RecipeSupport(final Type type, final Format format) {
     this.type = checkNotNull(type);
@@ -69,6 +72,11 @@ public abstract class RecipeSupport
     this.browseUnsupportedHandler = checkNotNull(browseUnsupportedHandler);
   }
 
+  @Inject
+  public void setDatabaseCheck(final DatabaseCheck databaseCheck) {
+    this.databaseCheck = databaseCheck;
+  }
+
   /**
    * Adds route to redirect access directly with a browser to a handler with links to the repo's components and
    * assets.
@@ -79,6 +87,9 @@ public abstract class RecipeSupport
 
   @Override
   public boolean isFeatureEnabled() {
+    if (databaseCheck != null && !databaseCheck.isAllowedByVersion(getClass())) {
+      return false;
+    }
     if (highAvailabilitySupportChecker != null) {
       return highAvailabilitySupportChecker.isSupported(getFormat().getValue());
     }

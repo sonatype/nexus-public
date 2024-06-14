@@ -33,6 +33,7 @@ import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService;
 import org.sonatype.nexus.blobstore.group.FillPolicy;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
@@ -57,6 +58,7 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
  *
  * @since 3.14
  */
+@AvailabilityVersion(from = "1.0")
 @Named(BlobStoreGroup.TYPE)
 public class BlobStoreGroupDescriptor
     extends BlobStoreDescriptorSupport

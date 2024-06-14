@@ -18,13 +18,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptor;
@@ -43,9 +43,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Default {@link TaskFactory} implementation.
- *
+ * <p>
  * Resolves {@link TaskDescriptor} components via {@link BeanLocator} singleton components.
- *
+ * <p>
  * Resolves {@link Task} components via {@link BeanLocator} lookup by {@link TaskDescriptor#getType()}.
  *
  * @since 3.0
@@ -58,14 +58,20 @@ public class TaskFactoryImpl
 {
   private final BeanLocator beanLocator;
 
+  private final DatabaseCheck databaseCheck;
+
   /**
    * Map of descriptor-id to descriptor instance.
    */
   private final Map<String, TaskDefinition> taskDefinitions = Maps.newConcurrentMap();
 
   @Inject
-  public TaskFactoryImpl(final BeanLocator beanLocator) {
+  public TaskFactoryImpl(
+      final BeanLocator beanLocator,
+      final DatabaseCheck databaseCheck)
+  {
     this.beanLocator = checkNotNull(beanLocator);
+    this.databaseCheck = checkNotNull(databaseCheck);
 
     // watch for TaskDescriptor components
     beanLocator.watch(Key.get(TaskDescriptor.class, Named.class), new TaskDescriptorMediator(), this);
@@ -80,8 +86,9 @@ public class TaskFactoryImpl
 
     private final BeanEntry<Annotation, ? extends Task> beanEntry;
 
-    private TaskDefinition(final TaskDescriptor descriptor,
-                           final BeanEntry<Annotation, ? extends Task> beanEntry)
+    private TaskDefinition(
+        final TaskDescriptor descriptor,
+        final BeanEntry<Annotation, ? extends Task> beanEntry)
     {
       this.descriptor = checkNotNull(descriptor);
       this.beanEntry = checkNotNull(beanEntry);
@@ -131,6 +138,7 @@ public class TaskFactoryImpl
           entry.getImplementationClass().getName());
       return;
     }
+
     log.debug("Adding task type-id: {} -> {}", typeId, entry.getImplementationClass().getName());
     TaskDefinition prevTaskDefinition = taskDefinitions.put(typeId, new TaskDefinition(descriptor, entry));
     if (prevTaskDefinition != null) {
@@ -152,9 +160,9 @@ public class TaskFactoryImpl
   }
 
   /**
-   * Creates a new instance of Task having provided type-id, by using {@link BeanEntry#getProvider()}, hence
-   * new instance is created every time (tasks are enforced to not be singletons, see {@link
-   * #addDescriptor(TaskDescriptor)}.
+   * Creates a new instance of Task having provided type-id, by using {@link BeanEntry#getProvider()}, hence new
+   * instance is created every time (tasks are enforced to not be singletons, see
+   * {@link #addDescriptor(TaskDescriptor)}.
    */
   @VisibleForTesting
   Task newInstance(final String typeId) {
@@ -168,7 +176,10 @@ public class TaskFactoryImpl
   @Override
   public List<TaskDescriptor> getDescriptors() {
     return Collections.unmodifiableList(
-        taskDefinitions.values().stream().map(d -> d.descriptor).collect(Collectors.toList())
+        taskDefinitions.values().stream()
+            .map(d -> d.descriptor)
+            .filter(d -> databaseCheck.isAllowedByVersion(d.getClass()))
+            .collect(Collectors.toList())
     );
   }
 
@@ -177,6 +188,10 @@ public class TaskFactoryImpl
   public TaskDescriptor findDescriptor(final String typeId) {
     TaskDefinition taskDefinition = taskDefinitions.get(typeId);
     if (taskDefinition != null) {
+      if (!databaseCheck.isAllowedByVersion(taskDefinition.descriptor.getClass())) {
+        return null;
+      }
+
       return taskDefinition.descriptor;
     }
     return null;

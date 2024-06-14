@@ -14,15 +14,18 @@ package org.sonatype.nexus.internal.email;
 
 import java.util.Properties;
 import java.util.function.Function;
-
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.mail.Session;
 import javax.net.ssl.SSLContext;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.capability.CapabilityContext;
+import org.sonatype.nexus.capability.CapabilityReference;
+import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -63,18 +66,22 @@ public class EmailManagerImpl
 
   private final Mutex lock = new Mutex();
 
+  private final Provider<CapabilityRegistry> capabilityRegistryProvider;
+
   private EmailConfiguration configuration;
 
   @Inject
   public EmailManagerImpl(final EventManager eventManager,
                           final EmailConfigurationStore store,
                           final TrustStore trustStore,
-                          @Named("initial") final  Function<EmailConfiguration, EmailConfiguration> defaults)
+                          @Named("initial") final  Function<EmailConfiguration, EmailConfiguration> defaults,
+                          final Provider<CapabilityRegistry> capabilityRegistryProvider)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.trustStore = checkNotNull(trustStore);
     this.defaults = checkNotNull(defaults);
+    this.capabilityRegistryProvider = capabilityRegistryProvider;
   }
 
   //
@@ -209,7 +216,7 @@ public class EmailManagerImpl
     Email mail = new SimpleEmail();
     mail.setSubject("Email configuration verification");
     mail.addTo(address);
-    mail.setMsg("Verification successful");
+    mail.setMsg(constructMessage("Verification successful"));
     mail = apply(configuration, mail);
     sendMail(mail);
   }
@@ -217,6 +224,20 @@ public class EmailManagerImpl
   @Override
   public EmailConfiguration newConfiguration() {
     return store.newConfiguration();
+  }
+
+  @Override
+  public String constructMessage(final String message) {
+    return capabilityRegistryProvider.get()
+        .getAll()
+        .stream()
+        .map(CapabilityReference::context)
+        .filter(context -> context.type().toString().equals("baseurl"))
+        .filter(CapabilityContext::isEnabled)
+        .map(capabilityContext -> capabilityContext.properties().get("url"))
+        .findFirst()
+        .map(url -> "Message from: " + url + "\n\n" + message)
+        .orElse(message);
   }
 
   @Subscribe

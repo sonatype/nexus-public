@@ -938,8 +938,7 @@ public class AssetDAOTestSupport
       ComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
       createComponents(componentDAO, entityVersionEnabled, componentData);
-      dao.createAsset(asset1, entityVersionEnabled);
-
+      asset1.assetId = dao.createAsset(asset1, entityVersionEnabled);
       OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
       dao.lastDownloaded(asset1.assetId, dateTime);
 
@@ -963,7 +962,7 @@ public class AssetDAOTestSupport
       ComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
       createComponents(componentDAO, entityVersionEnabled, componentData);
-      dao.createAsset(asset1, entityVersionEnabled);
+      asset1.assetId = dao.createAsset(asset1, entityVersionEnabled);
 
       OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
       dao.lastUpdated(asset1.assetId, dateTime);

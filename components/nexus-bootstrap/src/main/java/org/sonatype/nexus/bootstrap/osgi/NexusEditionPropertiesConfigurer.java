@@ -76,6 +76,11 @@ public class NexusEditionPropertiesConfigurer
       properties.setProperty(FIREWALL_QUARANTINE_FIX_ENABLED,
           Boolean.toString(parseBoolean(System.getenv("FIREWALL_QUARANTINE_FIX_ENABLED"))));
     }
+
+    if (properties.getProperty(ZERO_DOWNTIME_BASELINE_FAIL) == null) {
+      properties.setProperty(ZERO_DOWNTIME_BASELINE_FAIL,
+          Optional.ofNullable(System.getenv("NEXUS_ZDU_BASELINE_FAIL")).orElse("false"));
+    }
   }
 
   private void selectDatastoreFeature(final Properties properties) {
