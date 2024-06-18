@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import Axios from 'axios';
+import axios from 'axios';
 import {assign, createMachine} from 'xstate';
 import {useMachine} from '@xstate/react';
 import {mergeDeepRight} from 'ramda';
@@ -187,7 +187,8 @@ export default class ExtAPIUtils {
    * @return {Promise}
    */
   static extAPIRequest(action, method, options = null) {
-    return Axios.post(URL, this.createRequestBody(action, method, options));
+    this.setupTokenInterceptors();
+    return axios.post(URL, this.createRequestBody(action, method, options));
   }
 
   /**
@@ -198,9 +199,25 @@ export default class ExtAPIUtils {
    * @return {Promise}
    */
   static extAPIBulkRequest(requests) {
+    this.setupTokenInterceptors();
     const data = requests.map(({action, method, options}, index) => {
       return this.createRequestBody(action, method, options, index + 1);
     });
-    return Axios.post(URL, data);
+    return axios.post(URL, data);
+  }
+
+  static setupTokenInterceptors() {
+    if (!this.interceptorSet && process.env.NODE_ENV !== 'test') {
+      axios.interceptors.request.use(
+          function(config) {
+            const csrfToken = (document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)') || 0)[2];
+            if (csrfToken) {
+              config.headers['NX-ANTI-CSRF-TOKEN'] = csrfToken;
+            }
+            return config;
+          }
+      );
+      this.interceptorSet = true;
+    }
   }
 }

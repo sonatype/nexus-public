@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -102,16 +101,6 @@ public class OrientApiKeyStore
     try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
       entityAdapter.register(db);
     }
-  }
-
-  @Override
-  public ApiKey newApiKey(
-      final String domain,
-      final PrincipalCollection principals,
-      final char[] apiKey,
-      final OffsetDateTime created)
-  {
-    return new OrientApiKey(domain, principals, apiKey, created);
   }
 
   @Override
@@ -300,24 +289,6 @@ public class OrientApiKeyStore
         entityAdapter.deleteEntity(db, entity);
       }
     });
-  }
-
-  @Override
-  public void updateApiKey(final ApiKey from, final ApiKey to) {
-    OrientApiKey fromApiKey = (OrientApiKey) from;
-    fromApiKey.setApiKey(to.getApiKey());
-    fromApiKey.setPrincipals(to.getPrincipals());
-    fromApiKey.setCreated(to.getCreated());
-    inTx(databaseInstance).run(db -> entityAdapter.editEntity(db, fromApiKey));
-  }
-
-  @Override
-  public Collection<ApiKey> browsePaginated(final String domain, final int page, final int pageSize) {
-    Iterable<OrientApiKey> keys = inTx(databaseInstance)
-        .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
-        .call(db -> entityAdapter.browseByDomainPaginated(db, domain, (page - 1) * pageSize, pageSize));
-
-    return convert(keys);
   }
 
   private static Collection<ApiKey> convert(final Iterable<OrientApiKey> keys) {

@@ -169,10 +169,6 @@ public interface FeatureFlags
 
   String ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_NAMED = "${nexus.audit.attribute.changes.enabled:-true}";
 
-  String ZERO_DOWNTIME_ENABLED = "nexus.zdu.enabled";
-
-  String ZERO_DOWNTIME_ENABLED_NAMED = "${" + ZERO_DOWNTIME_ENABLED + ":-false}";
-
   String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED = "zero.downtime.marketing.modal";
 
   String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED_NAMED = "${zero.downtime.marketing.modal:-false}";

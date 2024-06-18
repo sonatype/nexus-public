@@ -15,12 +15,7 @@ package org.sonatype.nexus.scheduling;
 /**
  * A helper for upgrades which require scheduling a task after Nexus starts
  */
-public interface UpgradeTaskScheduler
+public interface PostStartupTaskScheduler
 {
   void schedule(TaskConfiguration configuration);
-
-  /**
-   * Create a configuration for the given type-id.
-   */
-  TaskConfiguration createTaskConfigurationInstance(String typeId);
 }

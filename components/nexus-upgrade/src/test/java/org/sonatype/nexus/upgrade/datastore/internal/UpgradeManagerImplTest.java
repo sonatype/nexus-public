@@ -12,12 +12,11 @@
  */
 package org.sonatype.nexus.upgrade.datastore.internal;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Optional;
+import org.flywaydb.core.api.MigrationVersion;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Mock;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataStore;
@@ -28,17 +27,17 @@ import org.sonatype.nexus.upgrade.datastore.UpgradeException;
 import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
 import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
 
-import org.flywaydb.core.api.MigrationVersion;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Optional;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -86,10 +85,10 @@ public class UpgradeManagerImplTest
           () -> stmt.executeQuery(SELECT_FROM_FLYWAY_SCHEMA_HISTORY));
 
       if ("PostgreSQL".equals(conn.getMetaData().getDatabaseProductName())) {
-        assertThat(exception.getMessage(), containsString("relation \"flyway_schema_history\" does not exist"));
+        assertTrue(exception.getMessage().contains("relation \"flyway_schema_history\" does not exist"));
       }
       else {
-        assertThat(exception.getMessage(), containsString("Table \"flyway_schema_history\" not found"));
+        assertTrue(exception.getMessage().contains("Table \"flyway_schema_history\" not found; SQL statement:"));
       }
     }
     // No changes should fire no events

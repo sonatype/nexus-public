@@ -30,7 +30,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodesTaskDescriptor;
-import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
+import org.sonatype.nexus.scheduling.PostStartupTaskScheduler;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
@@ -65,17 +65,17 @@ public class BrowseNodeMigrationStep_1_36
 
   private final TaskScheduler taskScheduler;
 
-  private final UpgradeTaskScheduler upgradeTaskScheduler;
+  private final PostStartupTaskScheduler postStartupTaskScheduler;
 
   @Inject
   public BrowseNodeMigrationStep_1_36(
       final List<Format> formats,
       final TaskScheduler ts,
-      final UpgradeTaskScheduler uts)
+      final PostStartupTaskScheduler psts)
   {
     this.formats = checkNotNull(formats);
     this.taskScheduler = checkNotNull(ts);
-    this.upgradeTaskScheduler = checkNotNull(uts);
+    this.postStartupTaskScheduler = checkNotNull(psts);
   }
 
   @Override
@@ -178,7 +178,7 @@ public class BrowseNodeMigrationStep_1_36
     TaskConfiguration configuration =
         taskScheduler.createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
     configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, repositories);
-    upgradeTaskScheduler.schedule(configuration);
+    postStartupTaskScheduler.schedule(configuration);
     log.info("Scheduled post-startup task to rebuild browse nodes for repositories: {}", repositories);
   }
 }

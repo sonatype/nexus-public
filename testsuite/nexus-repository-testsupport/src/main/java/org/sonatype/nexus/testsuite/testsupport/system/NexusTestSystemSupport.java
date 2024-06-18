@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public abstract class NexusTestSystemSupport<R extends RepositoryTestSystem, C extends CapabilitiesRule>
     extends ExternalResource
 {
-  protected final Logger log = LoggerFactory.getLogger(getClass());
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   private final R repositories;
 
