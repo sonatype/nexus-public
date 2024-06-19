@@ -60,7 +60,7 @@ public abstract class BlobStoreMetricsPropertiesReaderSupport<T extends Implicit
   public Map<OperationType, OperationMetrics> readOperationMetrics() throws Exception {
     T propertiesFile = loadProperties();
     if (propertiesFile == null) {
-      log.warn("{} not found for blob store", metricsFilename());
+      log.debug("{} not found for blob store", metricsFilename());
       return Collections.emptyMap();
     }
 
@@ -98,7 +98,7 @@ public abstract class BlobStoreMetricsPropertiesReaderSupport<T extends Implicit
     }
 
     loadedProperties = getProperties();
-    if (loadedProperties.exists()) {
+    if (loadedProperties != null && loadedProperties.exists()) {
       loadedProperties.load();
     }
     return loadedProperties;
