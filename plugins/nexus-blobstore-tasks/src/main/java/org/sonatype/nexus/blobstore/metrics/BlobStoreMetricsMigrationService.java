@@ -24,20 +24,17 @@ import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsPropertiesReader;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 /**
  * Manage blobstore metrics recalculation.
  */
-@FeatureFlag(name = DATASTORE_ENABLED)
 @Named
 @Singleton
 @ManagedLifecycle(phase = TASKS)
