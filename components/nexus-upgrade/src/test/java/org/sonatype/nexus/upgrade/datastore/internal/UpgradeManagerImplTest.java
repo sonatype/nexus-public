@@ -38,6 +38,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -85,10 +86,10 @@ public class UpgradeManagerImplTest
           () -> stmt.executeQuery(SELECT_FROM_FLYWAY_SCHEMA_HISTORY));
 
       if ("PostgreSQL".equals(conn.getMetaData().getDatabaseProductName())) {
-        assertTrue(exception.getMessage().contains("relation \"flyway_schema_history\" does not exist"));
+        assertThat(exception.getMessage(), containsString("relation \"flyway_schema_history\" does not exist"));
       }
       else {
-        assertTrue(exception.getMessage().contains("Table \"flyway_schema_history\" not found; SQL statement:"));
+        assertThat(exception.getMessage(), containsString("Table \"flyway_schema_history\" not found"));
       }
     }
     // No changes should fire no events
