@@ -537,6 +537,9 @@ public abstract class NexusPaxExamSupport
         when(getValidTestDatabase().isUseContentStore()).useOptions(
             configureDatabase()
         ),
+        when(getValidTestDatabase().isUseOrient()).useOptions(
+            configureDatabase()
+        ),
 
         when(System.getProperty(PROP_TEST_PREFIX) != null).useOptions(
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
@@ -606,7 +609,9 @@ public abstract class NexusPaxExamSupport
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true")
         );
       case ORIENT:
-        return new Option[0];
+        return combine(null,
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "false")
+        );
       default:
         throw new IllegalStateException("No case defined for " + getValidTestDatabase());
     }

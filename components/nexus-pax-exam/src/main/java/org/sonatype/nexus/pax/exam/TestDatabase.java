@@ -30,4 +30,8 @@ public enum TestDatabase
   public boolean isUseContentStore() {
     return useContentStore;
   }
+
+  public boolean isUseOrient() {
+    return !useContentStore;
+  }
 }
