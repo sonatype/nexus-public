@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -76,6 +77,16 @@ public class ApiKeyStoreImpl
     this.principalsHelper = checkNotNull(principalsHelper);
     this.apiKeyFactories = checkNotNull(apiKeyFactories);
     this.defaultApiKeyFactory = checkNotNull(defaultApiKeyFactory);
+  }
+
+  @Override
+  public ApiKey newApiKey(
+      final String domain,
+      final PrincipalCollection principals,
+      final char[] apiKey,
+      final OffsetDateTime created)
+  {
+    return new ApiKeyData(domain, principals, new ApiKeyToken(apiKey), created);
   }
 
   @Override
@@ -216,6 +227,22 @@ public class ApiKeyStoreImpl
   @Override
   public void deleteApiKeys(final OffsetDateTime expiration) {
     dao().deleteApiKeyByExpirationDate(expiration);
+  }
+
+  @Transactional
+  @Override
+  public void updateApiKey(final ApiKey from, final ApiKey to) {
+    ApiKeyData fromApiKey = (ApiKeyData) from;
+    fromApiKey.setApiKey(to.getApiKey());
+    fromApiKey.setPrincipals(to.getPrincipals());
+    fromApiKey.setCreated(to.getCreated());
+    dao().update(fromApiKey);
+  }
+
+  @Transactional
+  @Override
+  public Collection<ApiKey> browsePaginated(final String domain, final int page, final int pageSize) {
+    return dao().browsePaginated(domain, (page - 1) * pageSize, pageSize);
   }
 
   /*
