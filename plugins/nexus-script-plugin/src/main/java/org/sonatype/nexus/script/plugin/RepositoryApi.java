@@ -310,6 +310,35 @@ public interface RepositoryApi
                                final boolean v1Enabled);
 
   /**
+   * Create a Docker proxy repository.
+   *
+   * @param name                        The name of the new Repository
+   * @param remoteUrl                   The url of the external proxy for this Repository
+   * @param indexType                   Use 'REGISTRY' to use the proxy url for the index as well. Use 'HUB' to use the
+   *                                    index from DockerHub. Use 'CUSTOM' in conjunction with the 'indexUrl' param to
+   *                                    specify a custom index location
+   * @param indexUrl                    The url of a 'CUSTOM' index; only used in conjunction with the 'indexType'
+   *                                    parameter
+   * @param httpPort                    The http port to accept traffic for this Repository on (optional)
+   * @param httpsPort                   The https port to accept traffic for this Repository on (optional)
+   * @param blobStoreName               The BlobStore the Repository should use
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @param v1Enabled                   Whether or not this Repository supports Docker V1 format
+   * @param forceBasicAuth              Whether to force basic auth. False is required to enable token auth which can be used for anonymous access
+   * @return the newly created Repository
+   */
+  Repository createDockerProxy(final String name, //NOSONAR
+                               final String remoteUrl,
+                               final String indexType,
+                               final String indexUrl,
+                               Integer httpPort,
+                               Integer httpsPort,
+                               final String blobStoreName,
+                               final boolean strictContentTypeValidation,
+                               final boolean v1Enabled,
+                               final boolean forceBasicAuth);
+
+  /**
    * Create a Docker group repository.
    * @param name The name of the new Repository
    * @param httpPort The http port to accept traffic for this Repository on (optional)
@@ -325,6 +354,25 @@ public interface RepositoryApi
                                final List<String> members,
                                final boolean v1Enabled,
                                final String blobStoreName);
+
+  /**
+   * Create a Docker group repository.
+   * @param name The name of the new Repository
+   * @param httpPort The http port to accept traffic for this Repository on (optional)
+   * @param httpsPort The https port to accept traffic for this Repository on (optional)
+   * @param v1Enabled Whether or not this Repository supports Docker V1 format
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param members The names of the Repositories in the group
+   * @param forceBasicAuth whether to force basic auth. False is required to enable token auth which can be used for anonymous access
+   * @return the newly created Repository
+   */
+  Repository createDockerGroup(final String name,
+                               Integer httpPort,
+                               Integer httpsPort,
+                               final List<String> members,
+                               final boolean v1Enabled,
+                               final String blobStoreName,
+                               final boolean forceBasicAuth);
 
   /**
    * Create a Bower hosted repository.
