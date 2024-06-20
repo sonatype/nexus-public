@@ -157,7 +157,7 @@ public class UpgradeManagerImpl
    * @return a String {@link Optional} indicating the baseline version if found
    */
   @VisibleForTesting
-  Optional<String> getBaseline(MigrationVersion target) {
+  Optional<String> getBaseline(final MigrationVersion target) {
     return migrations.stream()
         .map(NexusJavaMigration::new)
         .map(NexusJavaMigration::getVersion)
@@ -268,6 +268,7 @@ public class UpgradeManagerImpl
   }
 
   private JavaMigration[] getMigrations() {
-    return migrations.stream().map(NexusJavaMigration::new).toArray(JavaMigration[]::new);
+    return new SimpleDependencyResolver(migrations).resolve().stream()
+        .toArray(JavaMigration[]::new);
   }
 }
