@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.upgrade.datastore.internal;
 
-import org.flywaydb.core.api.MigrationVersion;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataStore;
@@ -27,12 +28,11 @@ import org.sonatype.nexus.upgrade.datastore.UpgradeException;
 import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
 import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Optional;
+import org.flywaydb.core.api.MigrationVersion;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Mock;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;

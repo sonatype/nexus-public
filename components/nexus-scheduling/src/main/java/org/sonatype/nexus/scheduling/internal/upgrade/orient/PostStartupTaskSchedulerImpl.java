@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.scheduling.internal;
+package org.sonatype.nexus.scheduling.internal.upgrade.orient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,20 +21,20 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.scheduling.PostStartupTaskScheduler;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 @Named
 @Singleton
 @ManagedLifecycle(phase = TASKS)
 public class PostStartupTaskSchedulerImpl
     extends StateGuardLifecycleSupport
-    implements PostStartupTaskScheduler
+    implements UpgradeTaskScheduler
 {
   private final List<TaskConfiguration> configurations = new ArrayList<>();
 
@@ -53,6 +53,11 @@ public class PostStartupTaskSchedulerImpl
     else {
       configurations.add(configuration);
     }
+  }
+
+  @Override
+  public TaskConfiguration createTaskConfigurationInstance(final String typeId) {
+    return scheduler.createTaskConfigurationInstance(typeId);
   }
 
   @Override

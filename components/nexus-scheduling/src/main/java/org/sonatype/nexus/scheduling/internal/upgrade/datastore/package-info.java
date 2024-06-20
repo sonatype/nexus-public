@@ -10,20 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.upgrade;
+@FeatureFlag(name = DATASTORE_ENABLED)
+package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-/**
- * Marks task descriptor scheduled task from upgrade step.
- */
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface UpgradeStepTaskDescriptor
-{
-}
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;

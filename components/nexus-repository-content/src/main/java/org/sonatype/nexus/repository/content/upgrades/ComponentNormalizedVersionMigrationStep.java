@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTaskDescriptor;
-import org.sonatype.nexus.scheduling.PostStartupTaskScheduler;
+import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
@@ -57,14 +57,14 @@ public class ComponentNormalizedVersionMigrationStep
 
   private final TaskScheduler taskScheduler;
 
-  private final PostStartupTaskScheduler startupScheduler;
+  private final UpgradeTaskScheduler startupScheduler;
 
   @Inject
   public ComponentNormalizedVersionMigrationStep(
       final List<Format> formats,
       final GlobalKeyValueStore globalKeyValueStore,
       final TaskScheduler taskScheduler,
-      final PostStartupTaskScheduler startupScheduler)
+      final UpgradeTaskScheduler startupScheduler)
   {
     this.formats = formats;
     this.globalKeyValueStore = globalKeyValueStore;
