@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -92,6 +91,12 @@ public class OrientApiKeyEntityAdapter
 
   private static final String DOMAIN_QUERY_STRING = format(
       "SELECT FROM %s WHERE %s = :domain ORDER BY %s", DB_CLASS, P_DOMAIN, P_CREATED);
+
+  private static final String DOMAIN_PAGINATED_QUERY_STRING = format(
+      "SELECT FROM %s WHERE %s = :domain ORDER BY %s SKIP :skip LIMIT :limit",
+      DB_CLASS,
+      P_DOMAIN,
+      P_CREATED);
 
   private static final String PRINCIPAL_QUERY_STRING = format(
       "SELECT FROM %s WHERE %s = :primary_principal ORDER BY %s", DB_CLASS, P_PRIMARY_PRINCIPAL, P_CREATED);
@@ -235,6 +240,20 @@ public class OrientApiKeyEntityAdapter
     Map<String, Object> params = ImmutableMap.of(P_DOMAIN, domain);
 
     return query(db, DOMAIN_QUERY_STRING, params);
+  }
+
+  /**
+   * Browse all keys in the specified domain (paginated)
+   */
+  public Iterable<OrientApiKey> browseByDomainPaginated(
+      final ODatabaseDocumentTx db,
+      final String domain,
+      final int skip,
+      final int limit)
+  {
+    Map<String, Object> params = ImmutableMap.of(P_DOMAIN, domain, "skip", skip, "limit", limit);
+
+    return query(db, DOMAIN_PAGINATED_QUERY_STRING, params);
   }
 
   public int countByDomainI(final ODatabaseDocumentTx db, final String domain) {
