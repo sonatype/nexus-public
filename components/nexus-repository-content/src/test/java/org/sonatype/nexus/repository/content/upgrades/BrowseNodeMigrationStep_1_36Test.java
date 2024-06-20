@@ -41,7 +41,7 @@ import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
-import org.sonatype.nexus.scheduling.PostStartupTaskScheduler;
+import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
@@ -74,7 +74,7 @@ public class BrowseNodeMigrationStep_1_36Test
   private TaskScheduler taskScheduler;
 
   @Mock
-  private PostStartupTaskScheduler postStartupTaskScheduler;
+  private UpgradeTaskScheduler upgradeTaskScheduler;
 
   @Mock
   private TaskConfiguration configuration;
@@ -96,7 +96,7 @@ public class BrowseNodeMigrationStep_1_36Test
         .thenReturn(configuration);
 
     upgradeStep = new BrowseNodeMigrationStep_1_36(Arrays.asList(fakeFormat, pypiFormat), taskScheduler,
-        postStartupTaskScheduler);
+        upgradeTaskScheduler);
     store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).get();
   }
 
@@ -104,7 +104,7 @@ public class BrowseNodeMigrationStep_1_36Test
   public void testUnknownFormat() throws Exception {
     when(fakeFormat.getValue()).thenReturn("foo");
     BrowseNodeMigrationStep_1_36 upgradeStep = new BrowseNodeMigrationStep_1_36(Collections.singletonList(fakeFormat),
-        taskScheduler, postStartupTaskScheduler);
+        taskScheduler, upgradeTaskScheduler);
 
     try (Connection conn = store.openConnection()) {
       upgradeStep.migrate(conn);
@@ -145,7 +145,7 @@ public class BrowseNodeMigrationStep_1_36Test
 
     // Order is important here, we specifically want the group rebuild before the member
     verify(configuration).setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, "group,member,my-pypi-group");
-    verify(postStartupTaskScheduler).schedule(configuration);
+    verify(upgradeTaskScheduler).schedule(configuration);
   }
 
 
