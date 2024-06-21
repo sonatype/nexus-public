@@ -21,15 +21,17 @@
                 <dirName>webpack-modules</dirName>
             </dirNames>
         </attachedOutputs>
+        <projectVersioning calculateProjectVersionChecksum="true" />
     </configuration>
 
     <input>
         <global>
             <glob>
-                {*.lock,*.js,*.jsx,*.scss,*.java,*.groovy,*.properties}
+                {*.java,*.groovy,*.scala,*.properties,*.js,*.jsx,*.scss,*.css,*.png,*.gif}
             </glob>
             <includes>
                 <include>src/</include>
+                <include glob="*.json,*.lock">./</include>
             </includes>
         </global>
     </input>
