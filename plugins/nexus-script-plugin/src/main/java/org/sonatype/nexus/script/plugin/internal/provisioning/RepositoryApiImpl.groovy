@@ -50,7 +50,7 @@ class RepositoryApiImpl
   BlobStoreManager blobStoreManager
 
   @Inject
-  @Named('${nexus.datastore.enabled:-false}')
+  @Named('${nexus.datastore.enabled:-true}')
   boolean datastoreEnabled
 
   /**

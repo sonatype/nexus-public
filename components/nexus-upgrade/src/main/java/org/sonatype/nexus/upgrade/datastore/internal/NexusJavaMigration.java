@@ -27,8 +27,15 @@ public class NexusJavaMigration implements JavaMigration
 {
   private final DatabaseMigrationStep dbMigrationStep;
 
+  private final Integer round;
+
   public NexusJavaMigration(final DatabaseMigrationStep dbMigrationStep) {
+    this(dbMigrationStep, null);
+  }
+
+  public NexusJavaMigration(final DatabaseMigrationStep dbMigrationStep, final Integer round) {
     this.dbMigrationStep = dbMigrationStep;
+    this.round = round;
   }
 
   @Override
@@ -43,6 +50,9 @@ public class NexusJavaMigration implements JavaMigration
 
   @Override
   public String getDescription() {
+    if (round != null) {
+      return String.format("Z_%03d_%s", round, dbMigrationStep.getClass().getSimpleName());
+    }
     return dbMigrationStep.getClass().getSimpleName();
   }
 

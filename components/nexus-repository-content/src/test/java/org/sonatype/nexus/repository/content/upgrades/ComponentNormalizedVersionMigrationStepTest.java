@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTaskDescriptor;
-import org.sonatype.nexus.scheduling.PostStartupTaskScheduler;
+import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
@@ -56,7 +56,7 @@ public class ComponentNormalizedVersionMigrationStepTest
       .access(ComponentDAO.class);
 
   @Mock
-  private PostStartupTaskScheduler postStartupTaskScheduler;
+  private UpgradeTaskScheduler upgradeTaskScheduler;
 
   @Mock
   private GlobalKeyValueStore globalKeyValueStore;
@@ -81,7 +81,7 @@ public class ComponentNormalizedVersionMigrationStepTest
 
     migrationStep =
         new ComponentNormalizedVersionMigrationStep(Arrays.asList(nuget, maven2), globalKeyValueStore, scheduler,
-            postStartupTaskScheduler);
+            upgradeTaskScheduler);
 
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
   }
@@ -98,7 +98,7 @@ public class ComponentNormalizedVersionMigrationStepTest
   public void testChecksum_order() {
     ComponentNormalizedVersionMigrationStep migrationStep2 =
         new ComponentNormalizedVersionMigrationStep(Arrays.asList(maven2, nuget), globalKeyValueStore, scheduler,
-            postStartupTaskScheduler);
+            upgradeTaskScheduler);
 
     assertThat(migrationStep.getChecksum(), is(migrationStep2.getChecksum()));
   }
@@ -110,7 +110,7 @@ public class ComponentNormalizedVersionMigrationStepTest
   public void testChecksum_different() {
     ComponentNormalizedVersionMigrationStep migrationStep2 =
         new ComponentNormalizedVersionMigrationStep(Arrays.asList(nuget), globalKeyValueStore, scheduler,
-            postStartupTaskScheduler);
+            upgradeTaskScheduler);
 
     assertThat(migrationStep.getChecksum(), not(migrationStep2.getChecksum()));
   }
@@ -131,7 +131,7 @@ public class ComponentNormalizedVersionMigrationStepTest
     try (Connection connection = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       migrationStep.migrate(connection);
       verify(scheduler).createTaskConfigurationInstance(eq(NormalizeComponentVersionTaskDescriptor.TYPE_ID));
-      verify(postStartupTaskScheduler).schedule(any());
+      verify(upgradeTaskScheduler).schedule(any());
     }
   }
 

@@ -127,10 +127,13 @@
 <div id="loading-mask"></div>
 <div id="loading">
   <div id="loading-background">
-    <img id="loading-logo" src="$raptureUrl/resources/images/sonatype-repository-logo-reverse.svg?$urlSuffix" alt="Product Logo" width='650' />
-    <div class="loading-indicator">
-      <img id="loading-spinner" src="$raptureUrl/resources/images/loading-spinner.gif?$urlSuffix" alt="Loading Spinner"/>
-      <span id="loading-msg">Loading ...</span>
+    <div id="loading-content">
+      <img id="loading-logo" src="$raptureUrl/resources/images/sonatype-repository-logo-loading.svg?$urlSuffix" 
+        alt="Sonatype Nexus Repository Manager Logo"/>
+      <div class="loading-indicator">
+        <i class="fas fa-circle-notch fa-spin"></i>
+        <span id="loading-msg">Loading ...</span>
+      </div>
     </div>
   </div>
 
@@ -142,7 +145,6 @@
 
     ## Load all scripts
     #foreach($uri in $scripts)
-      #message("Loading ${util.fileName($uri)}")
       #script("$uri")
     #end
 

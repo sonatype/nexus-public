@@ -10,29 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.blobstore.metrics.migration;
+package org.sonatype.nexus.upgrade.datastore;
 
-import java.util.Map;
-
-import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.api.OperationMetrics;
-import org.sonatype.nexus.blobstore.api.OperationType;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Read blob store metrics
+ * Marks a dependency from an {@link RepeatableDatabaseMigrationStep} to another repeatable step.
+ *
+ * Each {@link RepeatableDatabaseMigrationStep} can have zero to many explicit {@link DependsOn}.
  */
-public interface BlobStoreMetricsReader
+@Inherited
+@Repeatable(Dependencies.class)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface DependsOn
 {
-  /**
-   * Read common blob store metrics.
-   * @return
-   */
-  BlobStoreMetrics readMetrics(BlobStore blobStore) throws Exception;
-
-  /**
-   * Read blob store operation metrics.
-   * @return
-   */
-  Map<OperationType, OperationMetrics> readOperationMetrics(BlobStore blobStore) throws Exception;
+  Class<? extends RepeatableDatabaseMigrationStep> value();
 }

@@ -306,8 +306,9 @@ public class UserManagerImpl
     return users;
   }
 
-  private SecuritySystem getSecuritySystem() {
-    return this.securitySystem;
+  @Override
+  public boolean isConfigured() {
+    return true;
   }
 
   private String hashPassword(String clearPassword) {

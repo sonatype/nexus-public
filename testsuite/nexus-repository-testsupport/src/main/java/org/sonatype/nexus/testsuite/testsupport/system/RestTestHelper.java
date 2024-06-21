@@ -188,6 +188,25 @@ public class RestTestHelper
   }
 
   /**
+   * @return a generic REST client with authentication configured and custom request config
+   */
+  public Client restClientWithCustomRequestConfig(final String username, final String password, RequestConfig requestConfig) {
+    try {
+      final CloseableHttpClient httpClient = clientBuilder(nexusUrl(), username, password, requestConfig).build();
+      final Credentials credentials = credentials(username, password);
+      return restClientFactory
+          .create(RestClientConfiguration.DEFAULTS
+              .withHttpClient(() -> httpClient)
+              .withCustomizer(getObjectMapperCustomizer(testSuiteObjectMapperResolver))
+          )
+          .register(new BasicAuthentication(credentials.getUserPrincipal().getName(), credentials.getPassword()));
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
    * @return a CloseableHttpClient configured for Nexus with the provided authentication
    */
   public CloseableHttpClient client(final String path, final String username, final String password) {
@@ -490,18 +509,19 @@ public class RestTestHelper
    */
   private static HttpClientBuilder clientBuilder(final URI url, final String username, final String password)
   {
-    int defaultTimeoutMillis = (int) DEFAULT_TIMEOUT.toMillis();
-    RequestConfig requestConfig = RequestConfig.custom()
-        .setConnectTimeout(defaultTimeoutMillis)
-        .setConnectionRequestTimeout((int) CONNECTION_REQUEST_TIMEOUT.toMillis())
-        .setSocketTimeout(defaultTimeoutMillis).build();
+    return clientBuilder(url, username, password, defaultRequestConfig());
+  }
 
+  /**
+   * @return Client that can use custom request config, preemptive auth and self-signed certificates
+   */
+  private static HttpClientBuilder clientBuilder(final URI url, final String username, final String password, RequestConfig requestConfig)
+  {
     HttpClientBuilder builder = clientBuilder();
     if (username != null) {
       doUseCredentials(url, builder, username, password);
     }
     builder.setDefaultRequestConfig(requestConfig);
-
     return builder;
   }
 
@@ -523,6 +543,17 @@ public class RestTestHelper
    */
   private static RequestConfig requestConfig() {
     return RequestConfig.custom().setCookieSpec(CookieSpecs.DEFAULT).build();
+  }
+
+  /**
+   * @return Default request config
+   */
+  private static RequestConfig defaultRequestConfig() {
+    int defaultTimeoutMillis = (int) DEFAULT_TIMEOUT.toMillis();
+    return RequestConfig.custom()
+        .setConnectTimeout(defaultTimeoutMillis)
+        .setConnectionRequestTimeout((int) CONNECTION_REQUEST_TIMEOUT.toMillis())
+        .setSocketTimeout(defaultTimeoutMillis).build();
   }
 
   /**

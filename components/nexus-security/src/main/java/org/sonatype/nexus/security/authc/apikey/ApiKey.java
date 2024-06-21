@@ -28,4 +28,19 @@ public interface ApiKey
   PrincipalCollection getPrincipals();
 
   OffsetDateTime getCreated();
+
+  default String getPrimaryPrincipal() {
+    if (getPrincipals() == null) {
+      return null;
+    }
+    return getPrincipals().getPrimaryPrincipal().toString();
+  }
+
+  void setApiKey(char[] apiKey);
+
+  void setDomain(String domain);
+
+  void setPrincipals(PrincipalCollection principals);
+
+  void setCreated(OffsetDateTime created);
 }

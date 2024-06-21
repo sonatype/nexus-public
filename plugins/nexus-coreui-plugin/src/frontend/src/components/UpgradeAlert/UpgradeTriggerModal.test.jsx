@@ -50,6 +50,6 @@ describe('UpgradeTriggerModal', () => {
     expect(getByText('Continue')).not.toBeDisabled();
     expect(setShowModal).toHaveBeenCalledWith(false);
     expect(axios.post).toHaveBeenCalledTimes(1);
-    expect(axios.post).toHaveBeenCalledWith('/service/rest/clustered/upgrade-database-schema');
+    expect(axios.post).toHaveBeenCalledWith('/service/rest/v1/clustered/upgrade-database-schema');
   });
 });
