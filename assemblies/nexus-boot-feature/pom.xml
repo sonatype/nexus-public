@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.70.0-01</version>
+    <version>3.70.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-boot-feature</artifactId>
