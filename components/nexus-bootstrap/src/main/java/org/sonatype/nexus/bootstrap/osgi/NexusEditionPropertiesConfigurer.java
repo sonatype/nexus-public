@@ -93,6 +93,11 @@ public class NexusEditionPropertiesConfigurer
       properties.setProperty(DATASTORE_ENABLED, TRUE);
     }
 
+    // enable datastore by default unless explicitly set to false
+    if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, TRUE))) {
+      properties.setProperty(DATASTORE_ENABLED, TRUE);
+    }
+
     // table search should only be turned on via clustered flag
     if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED,
         Optional.ofNullable(System.getenv("DATASTORE_CLUSTERED_ENABLED")).orElse(FALSE)))) {
