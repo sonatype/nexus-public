@@ -18,7 +18,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 
 import static java.lang.Boolean.parseBoolean;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PRERELEASE_KEY;
 
 /**
  * Adds criteria for querying on isPrerelease

@@ -215,10 +215,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Component_AssetInfo_Attributes_Title: 'Attributes',
     Component_AssetInfo_HealthCheck_Title: 'Sonatype Lifecycle Component',
 
-    // Browse -> Search -> Bower
-    SearchBower_Text: 'Bower',
-    SearchBower_Description: 'Search for components in Bower repositories',
-
     // Browse -> Search -> Docker
     SearchDocker_Text: 'Docker',
     SearchDocker_Description: 'Search for components in Docker repositories',
@@ -361,9 +357,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositoryFeature_HealthCheckEnable_Button: 'Enable HealthCheck',
     Repository_RepositoryFeature_InvalidateCache_Button: 'Invalidate cache',
     Repository_RepositorySettings_Title: 'Settings',
-    Repository_Facet_BowerProxyFacet_Title: 'Bower',
-    Repository_Facet_BowerProxyFacet_RewritePackageUrls_FieldLabel: 'Enable rewrite of package URLs',
-    Repository_Facet_BowerProxyFacet_RewritePackageUrls_HelpText: 'Force Bower to retrieve packages through the proxy repository',
     Repository_Facet_DockerHostedFacet_V1_Title: 'Docker Registry API Support',
     Repository_Facet_DockerHostedFacet_V1_Enabled: 'Enable Docker V1 API',
     Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this repository',
@@ -466,7 +459,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
         'For more information check out our <a target="_blank" href="https://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">documentation for format specific options</a>',
     Repository_Facet_ProxyFacet_AssetNameMatcher_EmptyText: 'Entry',
     Repository_Facet_ProxyFacet_AssetNameMatcher_InvalidText: 'Invalid Regex',
-    Repository_Facet_ProxyFacet_Bower_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.bower.io',
     Repository_Facet_ProxyFacet_Docker_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry-1.docker.io',
     Repository_Facet_ProxyFacet_Maven_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo1.maven.org/maven2/',
     Repository_Facet_ProxyFacet_Npm_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.npmjs.org',

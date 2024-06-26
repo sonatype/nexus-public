@@ -35,7 +35,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
@@ -153,8 +153,8 @@ public abstract class FileBlobStoreITSupport
     BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker =
         new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService);
 
-    OrientFileBlobStoreMetricsStore metricsStore =
-        new OrientFileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
+    FileBlobStoreMetricsStore metricsStore =
+        new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     config.setName(name);
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());

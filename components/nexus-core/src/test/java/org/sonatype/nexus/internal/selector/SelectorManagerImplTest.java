@@ -36,7 +36,6 @@ import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
-import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
@@ -252,7 +251,7 @@ public class SelectorManagerImplTest
 
   @Test
   public void testDelete_Succeeds() {
-    OrientSelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = new SelectorConfigurationData();
     selectorConfiguration.setName("selector");
     selectorConfiguration.setType(CselSelector.TYPE);
 
@@ -312,7 +311,7 @@ public class SelectorManagerImplTest
   }
 
   private SelectorConfiguration getSelectorConfiguration(final String type, final String expression) {
-    SelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = new SelectorConfigurationData();
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("expression", expression);
     selectorConfiguration.setAttributes(attributes);
@@ -329,7 +328,7 @@ public class SelectorManagerImplTest
     createRole(roleId, rolePrivilegeId);
     createRepositoryContentSelectorPrivilege(rolePrivilegeId, roleSelectorName, repositoryName);
 
-    SelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = new SelectorConfigurationData();
     selectorConfiguration.setName(roleSelectorName);
 
     selectorConfigurations.add(selectorConfiguration);

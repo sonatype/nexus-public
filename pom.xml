@@ -250,27 +250,7 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-orient</artifactId>
-        <version>3.71.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-orient</artifactId>
-        <version>3.71.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus2-npm-metadata-export</artifactId>
-        <version>3.71.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-orient-console</artifactId>
         <version>3.71.0-SNAPSHOT</version>
       </dependency>
 
@@ -395,20 +375,6 @@
         <artifactId>nexus-rapture</artifactId>
         <version>3.71.0-SNAPSHOT</version>
         <classifier>sources</classifier>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-repository</artifactId>
-        <version>3.71.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-repository</artifactId>
-        <version>3.71.0-SNAPSHOT</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -1552,8 +1518,6 @@
       <id>external-resources</id>
       <properties>
         <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
@@ -1595,7 +1559,6 @@
         <it.excludedGroups>
           org.sonatype.goodies.testsupport.group.External,
           org.sonatype.goodies.testsupport.group.Unstable,
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
           org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
         </it.excludedGroups>
@@ -1679,7 +1642,6 @@
       <id>postgres-unit-tests</id>
       <properties>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf,
@@ -1693,11 +1655,9 @@
       <properties>
         <it.includedGroups>
           org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup
         </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf,
@@ -1711,11 +1671,9 @@
       <properties>
         <it.includedGroups>
           org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
           org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
         </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf,
@@ -1729,12 +1687,10 @@
       <properties>
         <it.includedGroups>
           org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf
@@ -1747,12 +1703,10 @@
       <properties>
         <it.includedGroups>
           org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
           org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf

@@ -33,7 +33,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
-import org.sonatype.nexus.blobstore.file.internal.OrientFileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -109,7 +109,7 @@ public class FileBlobStoreTest
   private ApplicationDirectories appDirs;
 
   @Mock
-  private OrientFileBlobStoreMetricsStore metrics;
+  private FileBlobStoreMetricsStore metrics;
 
   @Mock
   private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;

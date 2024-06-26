@@ -25,6 +25,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker
+import org.sonatype.nexus.blobstore.s3.internal.datastore.DatastoreS3BlobStoreMetricsService
 import org.sonatype.nexus.common.log.DryRunPrefix
 
 import com.amazonaws.SdkClientException
@@ -67,7 +68,7 @@ class S3BlobStoreTest
 
   S3Copier copier =  Mock()
 
-  OrientS3BlobStoreMetricsStore storeMetrics = Mock()
+  DatastoreS3BlobStoreMetricsService storeMetrics = Mock()
 
   BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker = Mock()
 

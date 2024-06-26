@@ -39,12 +39,6 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-repository</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-repository-content</artifactId>
       <scope>provided</scope>
     </dependency>
@@ -251,12 +245,9 @@
             <!-- mark Pax-Exam imports as optional; not all are needed at test-time -->
             <Import-Package>
               org.ops4j.pax.exam.*;resolution:=optional,
-              com.orientechnologies.orient.*;resolution:=optional,
               org.apache.maven.*;resolution:=optional,
-              org.sonatype.nexus.orient.*;resolution:=optional,
               com.sonatype.nexus.repository.nuget.*;resolution:=optional,
               org.sonatype.nexus.repository.apt.*;resolution:=optional,
-              org.sonatype.nexus.repository.bower.*;resolution:=optional,
               org.sonatype.nexus.repository.docker.*;resolution:=optional,
               org.sonatype.nexus.repository.gitlfs.*;resolution:=optional,
               org.sonatype.nexus.repository.golang.*;resolution:=optional,

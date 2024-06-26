@@ -53,12 +53,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-repository</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.sonatype.nexus.testsuite</groupId>
       <artifactId>nexus-repository-testsupport</artifactId>
       <scope>test</scope>

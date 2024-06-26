@@ -370,35 +370,6 @@ class RepositoryApiImpl
   }
 
   @Nonnull
-  Repository createBowerHosted(final String name,
-                               final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                               final boolean strictContentTypeValidation = true,
-                               final WritePolicy writePolicy = WritePolicy.ALLOW)
-  {
-    createRepository(createHosted(name, 'bower-hosted', blobStoreName, writePolicy, strictContentTypeValidation))
-  }
-
-  @Nonnull
-  Repository createBowerProxy(final String name,
-                              final String remoteUrl,
-                              final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                              final boolean strictContentTypeValidation = true,
-                              final boolean rewritePackageUrls = true)
-  {
-    def configuration = createProxy(name, 'bower-proxy', remoteUrl, blobStoreName, strictContentTypeValidation)
-    configuration.attributes.bower = ['rewritePackageUrls': rewritePackageUrls] as Map
-    createRepository(configuration)
-  }
-
-  @Nonnull
-  Repository createBowerGroup(final String name,
-                              final List<String> members,
-                              final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
-  {
-    createRepository(createGroup(name, 'bower-group', blobStoreName, members as String[]))
-  }
-
-  @Nonnull
   Repository createPyPiHosted(final String name, final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                               final boolean strictContentTypeValidation = true,
                               final WritePolicy writePolicy = WritePolicy.ALLOW)

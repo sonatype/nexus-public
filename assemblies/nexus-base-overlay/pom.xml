@@ -107,28 +107,10 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-orient</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-datastore-mybatis</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
-    </dependency>
-
-    <!--
-      Included to get access to nexus-orient-console. This provides a convenience
-      jar for starting up the orientdb console app.
-    -->
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-orient-console</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -209,10 +191,6 @@
                 <copy file="${org.bouncycastle:bcutil-jdk15to18:jar}"
                       todir="${project.build.directory}/assembly/lib"/>
 
-                <!-- put nexus-orient-console in lib/support along with its dependencies -->
-                <copy file="${org.sonatype.nexus:nexus-orient-console:jar}"
-                      tofile="${project.build.directory}/assembly/lib/support/nexus-orient-console.jar"/>
-                <delete dir="${project.build.directory}/assembly/system/org/sonatype/nexus/nexus-orient-console"/>
                 <copy file="${org.sonatype.nexus:nexus2-npm-metadata-export:jar}"
                       tofile="${project.build.directory}/assembly/lib/support/nexus2-npm-metadata-export.jar"/>
                 <delete dir="${project.build.directory}/assembly/system/org/sonatype/nexus/nexus2-npm-metadata-export"/>

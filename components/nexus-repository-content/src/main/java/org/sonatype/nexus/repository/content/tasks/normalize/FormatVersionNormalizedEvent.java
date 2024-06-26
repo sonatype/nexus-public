@@ -15,16 +15,22 @@ package org.sonatype.nexus.repository.content.tasks.normalize;
 import org.sonatype.nexus.common.event.EventWithSource;
 import org.sonatype.nexus.repository.Format;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Nexus Event to indicate if the NormalizeComponentVersionTask has finished for the specified format
  */
 public class FormatVersionNormalizedEvent
     extends EventWithSource
 {
-  private final Format format;
+  private Format format;
 
-  public FormatVersionNormalizedEvent(Format format) {
-    this.format = format;
+  public FormatVersionNormalizedEvent() {
+    // deserialization
+  }
+
+  public FormatVersionNormalizedEvent(final Format format) {
+    this.format = checkNotNull(format);
   }
 
   public Format getFormat() {

@@ -26,7 +26,7 @@ public interface FeatureFlags
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 
-  /* Database externalization. Available values: true, false. Default value: false */
+  /* Database externalization. Available values: true, false. Default value: true */
   String DATASTORE_ENABLED = "nexus.datastore.enabled";
   String DATASTORE_ENABLED_NAMED = "${nexus.datastore.enabled:-true}";
 

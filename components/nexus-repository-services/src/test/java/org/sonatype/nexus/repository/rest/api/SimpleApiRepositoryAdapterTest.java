@@ -25,6 +25,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -39,12 +40,14 @@ import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttribut
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiGroupRepository;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiProxyRepository;
-import org.sonatype.nexus.repository.routing.OrientRoutingRule;
+import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.routing.internal.RoutingRuleData;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
@@ -192,7 +195,11 @@ public class SimpleApiRepositoryAdapterTest
     SimpleApiProxyRepository proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertThat(proxyRepository.getRoutingRuleName(), nullValue());
 
-    when(routingRuleStore.getById(any())).thenReturn(new OrientRoutingRule(ROUTING_RULE_NAME, null, null, null));
+    RoutingRuleData routingRule = new RoutingRuleData();
+    routingRule.setId(new EntityUUID());
+    routingRule.setName(ROUTING_RULE_NAME);
+
+    when(routingRuleStore.getById(any())).thenReturn(routingRule);
 
     proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertThat(proxyRepository.getRoutingRuleName(), is(ROUTING_RULE_NAME));

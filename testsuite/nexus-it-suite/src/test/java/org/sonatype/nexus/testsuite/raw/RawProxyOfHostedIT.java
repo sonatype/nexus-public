@@ -14,13 +14,13 @@ package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
 import java.net.URL;
+
 import javax.cache.CacheManager;
 import javax.inject.Inject;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.nexus.common.net.PortAllocator;
-import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testsuite.proxy.DefaultCacheSettingsTester;
@@ -31,7 +31,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -44,7 +43,6 @@ import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.statu
 /**
  * IT for proxy raw repositories
  */
-@Category(OrientAndSQLTestGroup.class)
 public class RawProxyOfHostedIT
     extends RawITSupport
 {

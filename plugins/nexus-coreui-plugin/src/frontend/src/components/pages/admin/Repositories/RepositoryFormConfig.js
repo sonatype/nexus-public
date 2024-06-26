@@ -117,16 +117,6 @@ const repositoryFormats = {
       }
     })
   },
-  bower_proxy: {
-    facets: [RewritePackageUrlsConfiguration, ...genericFacets.proxy],
-    defaultValues: {
-      ...genericDefaultValues.proxy,
-      bower: {rewritePackageUrls: true}
-    },
-    validators: (data) => ({
-      ...genericValidators.proxy(data)
-    })
-  },
   yum_hosted: {
     facets: [RepodataDepthConfiguration, RpmDeployPolicyConfiguration, ...genericFacets.hosted],
     defaultValues: {
