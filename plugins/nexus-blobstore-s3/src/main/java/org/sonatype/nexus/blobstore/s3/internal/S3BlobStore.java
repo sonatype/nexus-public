@@ -24,7 +24,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -50,7 +49,6 @@ import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
-import org.sonatype.nexus.blobstore.s3.internal.datastore.S3BlobStoreMetricsPropertiesReader.S3Config;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.thread.NexusThreadFactory;
@@ -261,10 +259,6 @@ public class S3BlobStore
     }
     metricsService.stop();
     blobStoreQuotaUsageChecker.stop();
-  }
-
-  public void useAmazonS3Config(final Consumer<S3Config> configConsumer) {
-    configConsumer.accept(new S3Config(s3, getConfiguredBucket()));
   }
 
   /**
