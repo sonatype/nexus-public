@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api.metrics;
+package org.sonatype.nexus.repository.content.blobstore.metrics.migration;
 
 import java.util.Map;
 
@@ -20,29 +20,19 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 
 /**
- * Read blob store metrics from properties file (metrics.properties)
+ * Read blob store metrics
  */
-public interface BlobStoreMetricsPropertiesReader
+public interface BlobStoreMetricsReader
 {
-  default String metricsFilename() {
-    return "metrics.properties";
-  }
-
-  /**
-   * Initialize metrics reader for given blob store.
-   * @param blobStore
-   */
-  void initWithBlobStore(BlobStore blobStore) throws Exception;
-
   /**
    * Read common blob store metrics.
-   * @return blob store metrics
+   * @return
    */
-  BlobStoreMetrics readMetrics() throws Exception;
+  BlobStoreMetrics readMetrics(BlobStore blobStore) throws Exception;
 
   /**
    * Read blob store operation metrics.
-   * @return operation metrics
+   * @return
    */
-  Map<OperationType, OperationMetrics> readOperationMetrics() throws Exception;
+  Map<OperationType, OperationMetrics> readOperationMetrics(BlobStore blobStore) throws Exception;
 }
