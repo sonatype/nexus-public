@@ -21,7 +21,6 @@ import java.util.Properties;
 import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
 import org.osgi.framework.Version;
-
 import com.google.common.annotations.VisibleForTesting;
 
 import static java.lang.Boolean.parseBoolean;
@@ -57,7 +56,7 @@ public class NexusEditionPropertiesConfigurer
     Path workDirPath = new File(properties.getProperty("karaf.data")).getCanonicalFile().toPath();
     DirectoryHelper.mkdir(workDirPath);
 
-    NexusEditionFactory.selectActiveEdition(properties,workDirPath);
+    NexusEditionFactory.selectActiveEdition(properties, workDirPath);
 
     selectDatastoreFeature(properties);
     selectAuthenticationFeature(properties);
@@ -88,22 +87,14 @@ public class NexusEditionPropertiesConfigurer
   }
 
   private void selectDatastoreFeature(final Properties properties) {
-    // datastore developer mode includes datastore user mode
-    if (parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, FALSE))) {
-      properties.setProperty(DATASTORE_ENABLED, TRUE);
-    }
-
-    // enable datastore by default unless explicitly set to false
-    if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, TRUE))) {
-      properties.setProperty(DATASTORE_ENABLED, TRUE);
-    }
+    properties.setProperty(DATASTORE_ENABLED, TRUE);
 
     // table search should only be turned on via clustered flag
     if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED,
-        Optional.ofNullable(System.getenv("DATASTORE_CLUSTERED_ENABLED")).orElse(FALSE)))) {
+        Optional.ofNullable(System.getenv("DATASTORE_CLUSTERED_ENABLED")).orElse(FALSE))))
+    {
       // As we read the ENV variable we need to enable feature flagged classes using in-memory properties hashtable
       properties.setProperty(DATASTORE_CLUSTERED_ENABLED, TRUE);
-      properties.setProperty(DATASTORE_ENABLED, TRUE);
       properties.setProperty(DATASTORE_TABLE_SEARCH, TRUE);
       properties.setProperty(ELASTIC_SEARCH_ENABLED, FALSE);
       properties.setProperty(SQL_DISTRIBUTED_CACHE, TRUE);
@@ -117,7 +108,6 @@ public class NexusEditionPropertiesConfigurer
     // disables elastic search mode
     // table search should only be turned on via clustered flag
     if (parseBoolean(properties.getProperty(DATASTORE_TABLE_SEARCH, FALSE))) {
-      properties.setProperty(DATASTORE_ENABLED, TRUE);
       properties.setProperty(ELASTIC_SEARCH_ENABLED, FALSE);
     }
 
@@ -126,33 +116,20 @@ public class NexusEditionPropertiesConfigurer
       properties.setProperty(DATASTORE_TABLE_SEARCH, FALSE);
     }
 
-    if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, TRUE))) {
-      // datastore mode disables orient
-      properties.setProperty(ORIENT_ENABLED, FALSE);
-
-      // datastore mode, but not developer mode
-      if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, FALSE))) {
-        // exclude unfinished format features
-        properties.setProperty(NEXUS_EXCLUDE_FEATURES,
-            properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
-      }
+    // datastore mode, but not developer mode
+    if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, FALSE))) {
+      // exclude unfinished format features
+      properties.setProperty(NEXUS_EXCLUDE_FEATURES, properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
     }
 
     selectDbFeature(properties);
   }
 
   private void selectDbFeature(final Properties properties) {
-    if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, TRUE))) {
-      properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
-      //enable change blobstore task for only for newdb
-      properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED, TRUE);
-      properties.setProperty("nexus.quartz.jobstore.jdbc", TRUE);
-    }
-    else {
-      ensureOrientRunningWithCorrectJavaRuntime();
-      properties.setProperty(NEXUS_DB_FEATURE, "nexus-orient");
-      properties.setProperty(ORIENT_ENABLED, TRUE);
-    }
+    properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
+    //enable change blobstore task for only for newdb
+    properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED, TRUE);
+    properties.setProperty("nexus.quartz.jobstore.jdbc", TRUE);
   }
 
   @VisibleForTesting

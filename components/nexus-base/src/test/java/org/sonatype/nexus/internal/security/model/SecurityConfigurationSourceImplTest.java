@@ -62,7 +62,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.security.config.CUser.STATUS_ACTIVE;
 
@@ -164,14 +163,12 @@ public class SecurityConfigurationSourceImplTest
     }).getInstance(SecurityConfigurationSourceImpl.class);
 
     UnitOfWork.beginBatch(() -> sessionRule.openSession(DEFAULT_DATASTORE_NAME));
-    System.setProperty(ORIENT_ENABLED, "false");
     underTest.start();
     underTest.loadConfiguration();
   }
 
   @After
   public void cleanup() {
-    System.clearProperty(ORIENT_ENABLED);
     UnitOfWork.end();
   }
 

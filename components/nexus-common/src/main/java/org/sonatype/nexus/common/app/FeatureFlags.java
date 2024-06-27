@@ -46,9 +46,6 @@ public interface FeatureFlags
 
   String ELASTIC_SEARCH_ENABLED_NAMED = "${nexus.elasticsearch.enabled:-false}";
 
-  /* Orient flag for marking content that is orient only, and should be disabled when datastore is enabled */
-  String ORIENT_ENABLED = "nexus.orient.enabled";
-
   /* JWT externalization. Available values: true, false. Default value: false */
   String JWT_ENABLED = "nexus.jwt.enabled";
 

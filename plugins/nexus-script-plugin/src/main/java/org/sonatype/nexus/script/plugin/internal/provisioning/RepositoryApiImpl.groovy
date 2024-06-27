@@ -49,10 +49,6 @@ class RepositoryApiImpl
   @Inject 
   BlobStoreManager blobStoreManager
 
-  @Inject
-  @Named('${nexus.datastore.enabled:-true}')
-  boolean datastoreEnabled
-
   /**
    * Create a hosted configuration for the given recipeName.
    */
@@ -157,9 +153,7 @@ class RepositoryApiImpl
       attributes = map.attributes as Map
     }
 
-    if (datastoreEnabled) {
-      config.attributes['storage']['dataStoreName'] = 'nexus'
-    }
+    config.attributes['storage']['dataStoreName'] = 'nexus'
 
     return config
   }

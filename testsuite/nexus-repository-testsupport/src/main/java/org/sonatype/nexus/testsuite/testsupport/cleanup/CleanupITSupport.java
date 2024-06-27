@@ -144,7 +144,7 @@ public class CleanupITSupport
 
   protected void setPolicyToBeRegex(final Repository repository, final String regex) throws Exception {
     String updatedRegex = regex;
-    if (isNewDb() && regex.charAt(0) >= 'a' && regex.charAt(0) <= 'z') {
+    if (regex.charAt(0) >= 'a' && regex.charAt(0) <= 'z') {
       updatedRegex = '/' + regex;
     }
     createOrUpdatePolicyWithCriteria(repository.getFormat().getValue(), ImmutableMap.of(REGEX_KEY, updatedRegex));

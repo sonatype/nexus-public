@@ -45,10 +45,7 @@ function getUserType(user) {
 }
 
 function getDatabaseType() {
-  if (ExtJS.state().getValue('nexus.datastore.enabled')) {
-    return ExtJS.state().getValue('datastore.isPostgresql') ? 'postgres' : 'h2';
-  }
-  return 'orient';
+  return ExtJS.state().getValue('datastore.isPostgresql') ? 'postgres' : 'h2';
 }
 
 const iframeDefaultHeight = 1000;
