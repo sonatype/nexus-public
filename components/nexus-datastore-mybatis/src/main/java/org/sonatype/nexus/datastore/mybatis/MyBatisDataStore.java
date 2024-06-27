@@ -43,6 +43,8 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
+import org.sonatype.nexus.common.log.LogManager;
+import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
@@ -79,6 +81,7 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.pool.HikariPool;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.mapping.Environment;
@@ -165,6 +168,8 @@ public class MyBatisDataStore
 
   private final BeanLocator beanLocator;
 
+  private final LogManager logManager;
+
   private final ClassLoader uberClassLoader;
 
   private HikariDataSource dataSource;
@@ -183,7 +188,8 @@ public class MyBatisDataStore
                           @Named("nexus-uber") final ClassLoader classLoader,
                           final PasswordHelper passwordHelper,
                           final ApplicationDirectories directories,
-                          final BeanLocator beanLocator)
+                          final BeanLocator beanLocator,
+                          final LogManager logManager)
   {
     checkState(databaseCipher instanceof MyBatisCipher);
     this.uberClassLoader = checkNotNull(classLoader);
@@ -191,6 +197,7 @@ public class MyBatisDataStore
     this.passwordHelper = checkNotNull(passwordHelper);
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
+    this.logManager = checkNotNull(logManager);
 
     useMyBatisClassLoaderForEntityProxies();
 
@@ -213,6 +220,7 @@ public class MyBatisDataStore
     }
     this.directories = null;
     this.beanLocator = null;
+    this.logManager = null;
 
     this.declaredAccessTypes = ImmutableList.of();
   }
@@ -220,6 +228,17 @@ public class MyBatisDataStore
   @Override
   protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
     HikariConfig hikariConfig = configureHikari(storeName, attributes);
+
+    // Silence Hikari Logging for this block as we will throw any necessary exceptions and we expect some exceptions
+    // that should not be logged at ERROR level.
+    // We also have to null-check because there is a constructor just for testing that will break otherwise, which is
+    // a terrible idea but apparently somebody thought it made sense.
+    LoggerLevel originalHikariPoolLogLevel = LoggerLevel.DEFAULT;
+    if (logManager!=null) {
+      originalHikariPoolLogLevel = logManager.getLoggerLevel(HikariPool.class.getName());
+      logManager.setLoggerLevelDirect(HikariPool.class.getName(), LoggerLevel.OFF);
+    }
+
     try {
       dataSource = new HikariDataSource(hikariConfig);
     }catch (Exception exception) {
@@ -230,6 +249,12 @@ public class MyBatisDataStore
         throw exception;
       }
     }
+
+    if (logManager!=null) {
+      // Re-enable Hikari logging
+      logManager.setLoggerLevelDirect(HikariPool.class.getName(), originalHikariPoolLogLevel);
+    }
+
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
 
     if (previousConfig.isPresent()) {
