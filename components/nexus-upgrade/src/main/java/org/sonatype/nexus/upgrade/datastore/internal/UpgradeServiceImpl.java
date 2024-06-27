@@ -32,7 +32,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
  * @since 3.29
  */
 @Named
-@FeatureFlag(name = FeatureFlags.DATASTORE_CLUSTERED_ENABLED, inverse = true, enabledByDefault = true)
+@FeatureFlag(name = FeatureFlags.ZERO_DOWNTIME_ENABLED, inverse = true, enabledByDefault = true)
 @ManagedLifecycle(phase = UPGRADE)
 @Singleton
 public class UpgradeServiceImpl

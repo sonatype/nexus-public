@@ -27,6 +27,7 @@ import UpgradeTriggerModal from './UpgradeTriggerModal';
 const {UPGRADE_ALERT: {PENDING, PROGRESS, ERROR, COMPLETE, WARN}} = UIStrings;
 
 export default function UpgradeAlert({onClose}) {
+  const featureEnabled = ExtJS.useState(UpgradeAlertFunctions.featureEnabled);
   const hasUser = ExtJS.useState(UpgradeAlertFunctions.hasUser);
   const state = ExtJS.useState(UpgradeAlertFunctions.currentState);
   const message = ExtJS.useState(UpgradeAlertFunctions.message);
@@ -39,7 +40,7 @@ export default function UpgradeAlert({onClose}) {
   }
 
   return <>
-    {state === 'needsUpgrade' && hasUser && hasPermission &&
+    {state === 'needsUpgrade'  && featureEnabled && hasUser && hasPermission &&
       <NxInfoAlert className="nx-upgrade-alert">
         <NxButtonBar className="upgrade-alert-btn-bar">
           <div className="alert-text">
@@ -52,7 +53,7 @@ export default function UpgradeAlert({onClose}) {
         </NxButtonBar>
       </NxInfoAlert>
     }
-    {state === 'needsUpgrade' && hasUser && hasPermission &&
+    {state === 'needsUpgrade' && featureEnabled && hasUser && hasPermission &&
       <UpgradeTriggerModal showModal={showModal} setShowModal={setShowModal}/>
     }
 
@@ -69,17 +70,17 @@ export default function UpgradeAlert({onClose}) {
         </NxButtonBar>
         </NxWarningAlert>
     }
-    {state === 'nexusUpgradeInProgress' && hasUser && hasPermission &&
+    {state === 'nexusUpgradeInProgress' && featureEnabled && hasUser && hasPermission &&
       <NxInfoAlert className="nx-upgrade-alert upgrade-in-progress-alert">
         <NxLoadingSpinner><strong>{PROGRESS.LABEL}</strong></NxLoadingSpinner>
       </NxInfoAlert>
     }
-    {state === 'nexusUpgradeError' && hasUser && hasPermission &&
+    {state === 'nexusUpgradeError' && featureEnabled && hasUser && hasPermission &&
       <NxErrorAlert className="nx-upgrade-alert">
         <strong>{ERROR.LABEL}&ensp;[{message}]</strong> {ERROR.TEXT} {ERROR.CONTACT_SUPPORT}
       </NxErrorAlert>
     }
-    {state === 'nexusUpgradeComplete' && hasUser && hasPermission &&
+    {state === 'nexusUpgradeComplete' && featureEnabled && hasUser && hasPermission &&
       <NxSuccessAlert className="nx-upgrade-alert">
         <NxButtonBar className="upgrade-alert-btn-bar">
           <div className="alert-text">

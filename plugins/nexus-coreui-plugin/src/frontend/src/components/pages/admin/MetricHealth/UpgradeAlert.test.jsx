@@ -43,6 +43,10 @@ describe('Upgrade Alert', () => {
         .mockReturnValue({currentState: currentState});
 
     when(ExtJS.useState)
+        .calledWith(UpgradeAlertFunctions.featureEnabled)
+        .mockReturnValue(true);
+
+    when(ExtJS.useState)
         .calledWith(UpgradeAlertFunctions.hasUser)
         .mockReturnValue('true');
         

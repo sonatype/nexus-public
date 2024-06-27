@@ -77,6 +77,11 @@ public class NexusEditionPropertiesConfigurer
           Boolean.toString(parseBoolean(System.getenv("FIREWALL_QUARANTINE_FIX_ENABLED"))));
     }
 
+    if (properties.getProperty(ZERO_DOWNTIME_ENABLED) == null) {
+      properties.setProperty(ZERO_DOWNTIME_ENABLED,
+          Optional.ofNullable(System.getenv("NEXUS_ZDU_ENABLED")).orElse("false"));
+    }
+
     if (properties.getProperty(ZERO_DOWNTIME_BASELINE_FAIL) == null) {
       properties.setProperty(ZERO_DOWNTIME_BASELINE_FAIL,
           Optional.ofNullable(System.getenv("NEXUS_ZDU_BASELINE_FAIL")).orElse("false"));

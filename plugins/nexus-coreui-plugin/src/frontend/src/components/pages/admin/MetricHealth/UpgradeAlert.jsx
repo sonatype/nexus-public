@@ -21,6 +21,7 @@ const {UPGRADE_ALERT: {PENDING, WARN}} = UIStrings;
 
 export default function UpgradeAlert() {
 
+  const featureEnabled = ExtJS.useState(UpgradeAlertFunctions.featureEnabled);
   const hasUser = ExtJS.useState(UpgradeAlertFunctions.hasUser);
   const state = ExtJS.useState(UpgradeAlertFunctions.currentState);
   const hasPermission = ExtJS.usePermission(UpgradeAlertFunctions.checkPermissions);
@@ -29,7 +30,7 @@ export default function UpgradeAlert() {
 
   return (
   <>
-    {state === 'needsUpgrade' && hasUser && hasPermission &&
+    {state === 'needsUpgrade' && featureEnabled && hasUser && hasPermission &&
       <NxInfoAlert>
         <strong>{PENDING.STATUS_LABEL}&ensp;</strong>
         {PENDING.TEXT}
@@ -40,23 +41,23 @@ export default function UpgradeAlert() {
         </NxButtonBar>
       </NxInfoAlert>
     }
-    {state === 'needsUpgrade' && hasUser && hasPermission &&
+    {state === 'needsUpgrade' && featureEnabled && hasUser && hasPermission &&
       <UpgradeTriggerModal showModal={showModal} setShowModal={setShowModal}/>
     }
 
-    {state === 'versionMismatch' && hasUser && hasPermission && isOpen &&
+    {state === 'versionMismatch' && featureEnabled && hasUser && hasPermission && isOpen &&
       <NxWarningAlert onClose={dismiss}>
         <strong>{WARN.LABEL}&ensp;</strong>
         {WARN.TEXT}
       </NxWarningAlert>
     }
-    {state === 'nexusNeedsUpgrade1Year' && hasUser && hasPermission &&
+    {state === 'nexusNeedsUpgrade1Year' && featureEnabled && hasUser && hasPermission &&
       <NxInfoAlert>
         <strong>{PENDING.OLDER_LABEL}&ensp;</strong>
         {PENDING.YEAR_OLD_TEXT}
       </NxInfoAlert>
      }
-     {state === 'nexusNeeds18MonthsUpgrade' && hasUser && hasPermission &&
+     {state === 'nexusNeeds18MonthsUpgrade' && featureEnabled && hasUser && hasPermission &&
       <NxInfoAlert>
         <strong>{PENDING.OLDER_LABEL}&ensp;</strong>
         {PENDING.TEXT_18_MONTHS}
