@@ -78,6 +78,10 @@
       <artifactId>objenesis</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-oauth2-http</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

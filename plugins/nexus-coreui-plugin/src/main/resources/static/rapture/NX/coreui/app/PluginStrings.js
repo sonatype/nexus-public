@@ -540,6 +540,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_HttpClientFacet_AuthenticationType_FieldLabel: 'Authentication type',
     Repository_Facet_HttpClientFacet_AuthenticationType_Username: 'Username',
     Repository_Facet_HttpClientFacet_AuthenticationType_NTLM: 'Windows NTLM',
+    Repository_Facet_HttpClientFacet_AuthenticationType_Google: 'Google',
     Repository_Facet_HttpClientFacet_AuthenticationType_Bearer_Token: 'Preemptive Bearer Token',
     Repository_Facet_HttpClientFacet_Authentication_Title: 'Authentication',
     Repository_Facet_HttpClientFacet_HTTP_Title: 'HTTP request settings',
