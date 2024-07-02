@@ -150,6 +150,7 @@ export default {
       NTLM_OPTION: 'Windows NTLM',
       NTLM_HOST_LABEL: 'Windows NTLM hostname',
       NTLM_DOMAIN_LABEL: 'Windows NTLM domain',
+      GOOGLE_OPTION: 'Google',
       REQUEST_SETTINGS_CAPTION: 'HTTP Request Settings',
       USER_AGENT_LABEL: 'User-Agent Customization',
       USER_AGEN_SUBLABEL: 'Define a custom fragment to append to "User-Agent" header in HTTP requests',

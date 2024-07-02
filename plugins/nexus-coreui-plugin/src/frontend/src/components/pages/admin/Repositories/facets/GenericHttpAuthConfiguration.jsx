@@ -54,6 +54,7 @@ export default function GenericHttpAuthConfiguration({parentMachine}) {
           <option value="">{EDITOR.NONE_OPTION}</option>
           <option value="username">{EDITOR.USERNAME_OPTION}</option>
           <option value="ntlm">{EDITOR.NTLM_OPTION}</option>
+          <option value="google">{EDITOR.GOOGLE_OPTION}</option>
         </NxFormSelect>
       </NxFormGroup>
 

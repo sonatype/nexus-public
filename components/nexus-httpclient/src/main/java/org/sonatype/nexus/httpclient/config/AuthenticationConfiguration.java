@@ -32,7 +32,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @JsonSubTypes({
     @Type(value = BearerTokenAuthenticationConfiguration.class, name = BearerTokenAuthenticationConfiguration.TYPE),
     @Type(value = NtlmAuthenticationConfiguration.class, name = NtlmAuthenticationConfiguration.TYPE),
-    @Type(value = UsernameAuthenticationConfiguration.class, name = UsernameAuthenticationConfiguration.TYPE)
+    @Type(value = UsernameAuthenticationConfiguration.class, name = UsernameAuthenticationConfiguration.TYPE),
+    @Type(value = GoogleAuthenticationConfiguration.class, name = GoogleAuthenticationConfiguration.TYPE),    
 })
 public abstract class AuthenticationConfiguration
     implements Cloneable
@@ -44,7 +45,8 @@ public abstract class AuthenticationConfiguration
   public static final Map<String, Class<? extends AuthenticationConfiguration>> TYPES = ImmutableMap.of(
       UsernameAuthenticationConfiguration.TYPE, UsernameAuthenticationConfiguration.class,
       NtlmAuthenticationConfiguration.TYPE, NtlmAuthenticationConfiguration.class,
-      BearerTokenAuthenticationConfiguration.TYPE, BearerTokenAuthenticationConfiguration.class
+      BearerTokenAuthenticationConfiguration.TYPE, BearerTokenAuthenticationConfiguration.class,
+      GoogleAuthenticationConfiguration.TYPE, GoogleAuthenticationConfiguration.class
   );
 
   private final String type;

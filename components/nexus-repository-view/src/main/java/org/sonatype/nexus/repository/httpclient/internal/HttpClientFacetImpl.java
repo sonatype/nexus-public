@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.Valid;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
@@ -29,6 +30,7 @@ import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ConfigurationCustomizer;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
+import org.sonatype.nexus.httpclient.config.GoogleAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
@@ -195,9 +197,18 @@ public class HttpClientFacetImpl
 
   @Override
   public String getBearerToken() {
-    if (config.authentication != null &&
-        BearerTokenAuthenticationConfiguration.TYPE.equals(config.authentication.getType())) {
-      return ((BearerTokenAuthenticationConfiguration) config.authentication).getBearerToken();
+    if (config.authentication != null) {
+      if (BearerTokenAuthenticationConfiguration.TYPE.equals(config.authentication.getType())) {
+        return ((BearerTokenAuthenticationConfiguration) config.authentication).getBearerToken();
+      } else if (GoogleAuthenticationConfiguration.TYPE.equals(config.authentication.getType())) {
+        try {
+          GoogleCredentials creds = GoogleCredentials.getApplicationDefault();
+          creds.refreshIfExpired();
+          return creds.getAccessToken().getTokenValue();
+        } catch (IOException ioe) {
+          throw new RuntimeException(ioe);
+        } 
+      }
     }
     return null;
   }
