@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.70.0-SNAPSHOT</nexus.version>
+    <nexus.version>3.70.0-03</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <karaf.version>4.3.9</karaf.version>
