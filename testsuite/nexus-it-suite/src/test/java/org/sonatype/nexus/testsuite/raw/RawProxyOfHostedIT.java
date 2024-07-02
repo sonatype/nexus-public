@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testsuite.proxy.DefaultCacheSettingsTester;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
+import org.sonatype.nexus.testsuite.testsupport.system.RestTestHelper;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
@@ -64,6 +65,9 @@ public class RawProxyOfHostedIT
 
   @Inject
   private CacheManager cacheManager;
+
+  @Inject
+  private RestTestHelper restTestHelper;
 
   @Before
   public void setUpRepositories() throws Exception {
@@ -256,6 +260,65 @@ public class RawProxyOfHostedIT
       server.stop();
     }
     assertThat(status(proxyClient.get(TEST_PATH)), is(200));
+  }
+
+  @Test
+  public void proxyNarrowNoBreakSpaceNNBSP() {
+    assertThat(
+        restTestHelper
+            .put(
+                "/repository/" + hostedRepo.getName() + "/some/folder/begin\u202Fend.txt",
+                "content",
+                "admin",
+                "admin123"
+            ).getStatus(),
+        is(201)
+    );
+
+    assertThat(
+        componentAssetTestHelper.countComponents(proxyRepo),
+        is(0)
+    );
+    assertThat(
+        componentAssetTestHelper.countAssets(proxyRepo),
+        is(0)
+    );
+    assertThat(
+        componentAssetTestHelper.countComponents(hostedRepo),
+        is(1)
+    );
+    assertThat(
+        componentAssetTestHelper.countAssets(hostedRepo),
+        is(1)
+    );
+
+    assertThat(
+        restTestHelper
+            .get(
+                "/repository/" + proxyRepo.getName() + "/some/folder/begin\u202Fend.txt",
+                "admin",
+                "admin123"
+            ).getStatus(),
+        is(200)
+    );
+
+    assertThat(
+        componentAssetTestHelper.countComponents(proxyRepo),
+        is(1)
+    );
+    assertThat(
+        componentAssetTestHelper.countAssets(proxyRepo),
+        is(1)
+    );
+    assertThat(
+        componentAssetTestHelper.componentExists(
+            proxyRepo,
+            "/some/folder",
+            "/some/folder/begin\u202Fend.txt",
+            ""
+        ),
+        is(true)
+    );
   }
 
   private void responseViaGroupProduces(final int upstreamStatus, final int downstreamStatus) throws Exception {
