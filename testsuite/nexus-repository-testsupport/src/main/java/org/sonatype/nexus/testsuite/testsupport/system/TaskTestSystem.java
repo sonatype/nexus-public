@@ -70,7 +70,7 @@ public class TaskTestSystem
 
   @Subscribe
   public void on(final TaskEvent event) {
-    log.debug("Recieved event: {}", event);
+    log.debug("Received event: {}", event);
     events.add(event);
   }
 
