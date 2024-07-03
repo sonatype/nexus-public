@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -71,17 +72,21 @@ public class ElasticSearchServiceImpl
 
   private final TokenEncoder tokenEncoder;
 
+  private final Set<ElasticSearchExtension> decorators;
+
   @Inject
   public ElasticSearchServiceImpl(
       final ElasticSearchQueryService elasticSearchQueryService,
       final ElasticSearchIndexService elasticSearchIndexService,
       final ElasticSearchUtils elasticSearchUtils,
-      final TokenEncoder tokenEncoder)
+      final TokenEncoder tokenEncoder,
+      final Set<ElasticSearchExtension> decorators)
   {
     this.elasticSearchQueryService = checkNotNull(elasticSearchQueryService);
     this.elasticSearchIndexService = checkNotNull(elasticSearchIndexService);
     this.elasticSearchUtils = checkNotNull(elasticSearchUtils);
     this.tokenEncoder = checkNotNull(tokenEncoder);
+    this.decorators = checkNotNull(decorators);
   }
 
   @Override
@@ -195,6 +200,8 @@ public class ElasticSearchServiceImpl
     componentSearchResult.setFormat(repository.getFormat().getValue());
     componentSearchResult.setLastDownloaded(calculateOffsetDateTime(componentMap, LAST_DOWNLOADED_KEY));
     componentSearchResult.setLastModified(calculateOffsetDateTime(componentMap, LAST_BLOB_UPDATED_KEY));
+
+    decorators.forEach(extension -> extension.updateComponent(componentSearchResult, componentHit));
 
     return componentSearchResult;
   }
