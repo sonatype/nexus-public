@@ -153,6 +153,10 @@ public interface FeatureFlags
 
   String H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED_NAMED = "${nexus.database.export.script.task.h2.enabled:-true}";
 
+  /* When false skips the orient not supported error. Available values: true, false. Default value: true */
+  String ORIENT_WARNING = "nexus.orient.warning";
+  String ORIENT_WARNING_NAMED = "${nexus.orient.warning:-true}";
+
   /**
    * When true (default), the Secure attribute will be set on the NXSESSIONID Cookie when delivered over https.
    * In deployments with HTTP-only listeners, this setting will typically have no effect.

@@ -40,9 +40,12 @@ import javax.inject.Named;
 import javax.sql.DataSource;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.app.FeatureFlags;
+import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
+import org.sonatype.nexus.common.io.FileFinder;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -75,6 +78,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Splitter.MapSplitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
 import com.google.inject.Key;
@@ -172,6 +176,8 @@ public class MyBatisDataStore
 
   private final ClassLoader uberClassLoader;
 
+  private ManagedLifecycleManager managedLifecycleManager;
+
   private HikariDataSource dataSource;
 
   private Configuration mybatisConfig;
@@ -182,6 +188,10 @@ public class MyBatisDataStore
 
   @Nullable
   private Predicate<String> sensitiveAttributeFilter;
+
+  @Inject
+  @Named(FeatureFlags.ORIENT_WARNING_NAMED)
+  private boolean orientWarning;
 
   @Inject
   public MyBatisDataStore(@Named("mybatis") final PbeCipher databaseCipher,
@@ -237,6 +247,10 @@ public class MyBatisDataStore
     if (logManager!=null) {
       originalHikariPoolLogLevel = logManager.getLoggerLevel(HikariPool.class.getName());
       logManager.setLoggerLevelDirect(HikariPool.class.getName(), LoggerLevel.OFF);
+    }
+
+    if (directories != null) {
+      verifyOrientDatabaseDoesNotExist();
     }
 
     try {
@@ -396,6 +410,30 @@ public class MyBatisDataStore
   @Inject
   public void setH2VersionUpgrader(final H2VersionUpgrader h2VersionUpgrader) {
     this.h2VersionUpgrader = checkNotNull(h2VersionUpgrader);
+  }
+
+  @Inject
+  public void setManagedLifecycleManager(final ManagedLifecycleManager managedLifecycleManager) {
+    this.managedLifecycleManager = checkNotNull(managedLifecycleManager);
+  }
+
+  private void verifyOrientDatabaseDoesNotExist() throws Exception {
+    Path dbPath = directories.getWorkDirectory("db").toPath();
+    Set<String> orientFolderNames = ImmutableSet.of("config", "security", "component");
+
+    if (orientWarning && FileFinder.pathContainsFolder(dbPath, orientFolderNames)) {
+      StringBuilder buf = new StringBuilder();
+      buf.append("\n-------------------------------------------------------------------------------------------" +
+          "----------------------------------------------------------------------------------\n\n");
+      buf.append("This instance is using a legacy Orient database. " +
+          "\nYou must migrate to H2 or PostgreSQL before upgrading to this version. " +
+          "See our database migration help documentation at: " +
+          "\nhttps://links.sonatype.com/products/nxrm3/docs/unsupported-db.");
+      buf.append("\n\n-----------------------------------------------------------------------------------------" +
+          "------------------------------------------------------------------------------------\n\n");
+      log.error(buf.toString());
+      managedLifecycleManager.shutdownWithExitCode(1);
+    }
   }
 
   /**
