@@ -27,6 +27,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.role.Role;
@@ -301,6 +302,19 @@ public class SelectorManagerImplTest
 
   @Test
   public void testUserIsTakenFromSystemIfNoValueInCache() throws UserNotFoundException {
+    when(userCache.get(any())).thenReturn(null);
+    when(securitySystem.currentUser()).thenReturn(user);
+
+    manager.browseActive(null, null);
+
+    verify(securitySystem, atMostOnce()).currentUser();
+    verify(userCache, atLeastOnce()).put(any(), any());
+  }
+
+  @Test
+  public void testAnonymousUserIsTakenFromSystemIfNoValueInCache() throws UserNotFoundException {
+    when(subject.isAuthenticated()).thenReturn(false);
+    when(subject.getPrincipals()).thenReturn(new AnonymousPrincipalCollection("anonymous", "default"));
     when(userCache.get(any())).thenReturn(null);
     when(securitySystem.currentUser()).thenReturn(user);
 
