@@ -58,6 +58,9 @@ public class AssetData
   @Nullable
   private OffsetDateTime lastDownloaded;
 
+  @Nullable
+  private String blobStoreName;
+
   // Asset API
 
   @Override
@@ -85,7 +88,19 @@ public class AssetData
     return ofNullable(lastDownloaded);
   }
 
+  @Override
+  public String blobStoreName() {
+    return blobStoreName;
+  }
+
   // MyBatis setters + validation
+
+  /**
+   * Sets the blob store name.
+   */
+  public void setBlobStoreName(@Nullable final String blobStoreName) {
+    this.blobStoreName = blobStoreName;
+  }
 
   /**
    * Sets the internal asset id.

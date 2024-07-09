@@ -26,14 +26,13 @@ import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
-import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
 @Named
 @Singleton
-public class CSVCleanupPreviewContentWriter
+public class CsvCleanupPreviewContentWriter
     extends ComponentSupport
 {
   public void write(final Repository repository, final Stream<ComponentXO> components, final OutputStream outputStream)
@@ -42,7 +41,7 @@ public class CSVCleanupPreviewContentWriter
     log.debug("Creating CSV content for the repository {}.", repository.getName());
 
     CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
-        .setHeader("namespace", "name", "version", "path")
+        .setHeader("namespace", "name", "version", "path", "blob store name")
         .build();
 
     AtomicInteger flushCount = new AtomicInteger();
@@ -56,7 +55,7 @@ public class CSVCleanupPreviewContentWriter
             try {
               for (AssetXO asset : componentXO.getAssets()) {
                 printer.printRecord(componentXO.getGroup(), componentXO.getName(), componentXO.getVersion(),
-                    asset.getPath());
+                    asset.getPath(), asset.getBlobStoreName());
                 totalCount.incrementAndGet();
               }
 

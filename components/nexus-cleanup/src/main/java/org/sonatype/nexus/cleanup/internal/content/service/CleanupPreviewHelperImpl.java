@@ -41,6 +41,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
+import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
@@ -48,6 +50,7 @@ import org.sonatype.nexus.repository.rest.api.DefaultComponentXO;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Collections2.transform;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -169,7 +172,7 @@ public class CleanupPreviewHelperImpl
   private static ComponentXO convert(final FluentComponent component, final Repository repository) {
     ComponentXO componentXO = convert((Component) component, repository);
 
-    List<AssetXO> assetXOS = convert(component.assets());
+    List<AssetXO> assetXOS = convert(component.assets(true));
 
     componentXO.setAssets(assetXOS);
 
@@ -183,6 +186,7 @@ public class CleanupPreviewHelperImpl
           AssetXO assetXO = new AssetXO();
 
           assetXO.setPath(it.path());
+          assetXO.setBlobStoreName(it.blobStoreName());
 
           return assetXO;
         })

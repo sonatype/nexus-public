@@ -56,4 +56,9 @@ public interface Asset
    * If/when this asset was last downloaded.
    */
   Optional<OffsetDateTime> lastDownloaded();
+
+  /**
+   * returns the blob store name if blob_store_name is in the query
+   */
+  String blobStoreName();
 }
