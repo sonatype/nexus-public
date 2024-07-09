@@ -122,8 +122,10 @@ public class CapabilitiesRule
    */
   protected void disable(final String capabilityType) {
     // We don't handle missing capabilities here intentionally
-    Optional<? extends CapabilityReference> capabilityReference = find(capabilityType);
-    capabilityReference.ifPresent(capability -> capabilityRegistryProvider.get().disable(capability.context().id()));
+    find(capabilityType)
+        .ifPresent(capability ->
+            capabilityRegistryProvider.get().disable(capability.context().id())
+        );
   }
 
   /**
