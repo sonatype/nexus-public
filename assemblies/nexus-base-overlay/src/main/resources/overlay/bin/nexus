@@ -323,7 +323,7 @@ setupDefaults() {
         export DIRECT_MAX_MEM
     fi
 
-    DEFAULT_JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} -XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=${KARAF_LOG}/jvm.log -XX:-OmitStackTraceInFastThrow -Djava.net.preferIPv4Stack=true "
+    DEFAULT_JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} -XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=${KARAF_LOG}/jvm.log -XX:-OmitStackTraceInFastThrow "
     #Set the JVM_VENDOR specific JVM flags
     if [ "${JVM_VENDOR}" = "SUN" ]; then
         if [ "${darwin}" = "true" ] && [ `ulimit -n` -gt 10240 ]; then

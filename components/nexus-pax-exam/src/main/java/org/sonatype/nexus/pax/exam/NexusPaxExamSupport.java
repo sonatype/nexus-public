@@ -471,7 +471,6 @@ public abstract class NexusPaxExamSupport
         vmOption("-XX:+LogVMOutput"),
         vmOption("-XX:LogFile=./nexus3/log/jvm.log"),
         vmOption("-XX:-OmitStackTraceInFastThrow"),
-        vmOption("-Djava.net.preferIPv4Stack=true"),
 
         vmOption("-Djava.io.tmpdir=./nexus3/tmp/"),
 
