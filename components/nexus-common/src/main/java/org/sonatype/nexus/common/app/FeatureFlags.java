@@ -55,9 +55,6 @@ public interface FeatureFlags
   /* HTTP Replication. Available values: true, false. Default value: true */
   String REPLICATION_HTTP_ENABLED = "nexus.replication.http.enabled";
 
-  /* V1 Replication. Available values: true, false. Default value: false */
-  String REPLICATION_V1_ENABLED = "nexus.replication.v1.enabled";
-
   /* flag for skipping blob store with soft-quota violation (for Round Robin group policy)
   *  Available values: true, false. Default value: false
   */
