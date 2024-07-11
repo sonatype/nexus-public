@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-parent</artifactId>
-    <version>3.70.1-SNAPSHOT</version>
+    <version>3.70.1-02</version>
   </parent>
 
   <artifactId>nexus-components</artifactId>
@@ -105,7 +105,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-all</artifactId>
         <type>pom</type>
-        <version>3.70.1-SNAPSHOT</version>
+        <version>3.70.1-02</version>
         <scope>import</scope>
       </dependency>
 
@@ -113,7 +113,7 @@
         <groupId>org.sonatype.nexus.bundles</groupId>
         <artifactId>nexus-thirdparty-bundles</artifactId>
         <type>pom</type>
-        <version>3.70.1-SNAPSHOT</version>
+        <version>3.70.1-02</version>
         <scope>import</scope>
       </dependency>
 
