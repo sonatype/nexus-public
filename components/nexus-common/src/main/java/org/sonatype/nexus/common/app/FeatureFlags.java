@@ -172,7 +172,7 @@ public interface FeatureFlags
 
   String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED = "zero.downtime.marketing.modal";
 
-  String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED_NAMED = "${zero.downtime.marketing.modal:-false}";
+  String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED_NAMED = "${zero.downtime.marketing.modal:-true}";
 
   /* For testing purposes only */
   String ZERO_DOWNTIME_BASELINE_FAIL = "nexus.zdu.baseline.fail";
