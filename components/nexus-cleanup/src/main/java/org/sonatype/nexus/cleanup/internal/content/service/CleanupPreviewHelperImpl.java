@@ -187,6 +187,7 @@ public class CleanupPreviewHelperImpl
 
           assetXO.setPath(it.path());
           assetXO.setBlobStoreName(it.blobStoreName());
+          assetXO.setFileSize(it.assetBlobSize());
 
           return assetXO;
         })

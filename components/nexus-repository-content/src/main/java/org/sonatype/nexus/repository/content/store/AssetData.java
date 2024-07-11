@@ -61,6 +61,9 @@ public class AssetData
   @Nullable
   private String blobStoreName;
 
+  @Nullable
+  private long assetBlobSize;
+
   // Asset API
 
   @Override
@@ -92,6 +95,9 @@ public class AssetData
   public String blobStoreName() {
     return blobStoreName;
   }
+
+  @Override
+  public long assetBlobSize() { return assetBlobSize; }
 
   // MyBatis setters + validation
 
@@ -171,6 +177,8 @@ public class AssetData
     this.lastDownloaded = lastDownloaded;
   }
 
+  public void setAssetBlobSize(final long assetBlobSize) { this.assetBlobSize = assetBlobSize; }
+
   // Getters to support lazy-loading (MyBatis will intercept them)
 
   @Nullable
@@ -201,6 +209,7 @@ public class AssetData
         ", assetBlobId=" + assetBlobId +
         ", assetBlob=" + assetBlob +
         ", lastDownloaded=" + lastDownloaded +
+        ", assetSize=" + assetBlobSize +
         "} " + super.toString();
   }
 }

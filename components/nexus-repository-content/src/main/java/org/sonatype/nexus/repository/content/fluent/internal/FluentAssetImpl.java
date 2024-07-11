@@ -115,6 +115,9 @@ public class FluentAssetImpl
   }
 
   @Override
+  public long assetBlobSize() { return asset.assetBlobSize(); }
+
+  @Override
   public NestedAttributesMap attributes() {
     return asset.attributes();
   }

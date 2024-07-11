@@ -41,7 +41,7 @@ public class CsvCleanupPreviewContentWriter
     log.debug("Creating CSV content for the repository {}.", repository.getName());
 
     CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
-        .setHeader("namespace", "name", "version", "path", "blob store name")
+        .setHeader("namespace", "name", "version", "path", "blob store name", "size")
         .build();
 
     AtomicInteger flushCount = new AtomicInteger();
@@ -55,7 +55,7 @@ public class CsvCleanupPreviewContentWriter
             try {
               for (AssetXO asset : componentXO.getAssets()) {
                 printer.printRecord(componentXO.getGroup(), componentXO.getName(), componentXO.getVersion(),
-                    asset.getPath(), asset.getBlobStoreName());
+                    asset.getPath(), asset.getBlobStoreName(), asset.getFileSize());
                 totalCount.incrementAndGet();
               }
 
