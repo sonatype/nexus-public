@@ -66,9 +66,9 @@ public interface ApiKeyDAO
    * @param domain the domain for the token (e.g. NuGetApiKey)
    * @param token the token
    */
-  boolean deleteKey(@Param("domain") String domain, @Param("token") ApiKeyToken token);
+  int deleteKey(@Param("domain") String domain, @Param("token") ApiKeyToken token);
 
-  boolean deleteAllKeys();
+  int deleteAllKeys();
 
   /**
    * Browse all API Keys in the specified domain
@@ -97,14 +97,14 @@ public interface ApiKeyDAO
    *
    * @param domain the domain, e.g. npm keys, nuget keys
    */
-  void deleteApiKeysByDomain(@Param("domain") String domain);
+  int deleteApiKeysByDomain(@Param("domain") String domain);
 
   /**
    * Remove all expired API Keys
    *
    * @param expiration the date of expiration
    */
-  void deleteApiKeyByExpirationDate(@Param("expiration") OffsetDateTime expiration);
+  int deleteApiKeyByExpirationDate(@Param("expiration") OffsetDateTime expiration);
 
   /**
    * Updates an existing {@link ApiKey}

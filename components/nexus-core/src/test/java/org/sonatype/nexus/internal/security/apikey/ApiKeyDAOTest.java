@@ -245,7 +245,8 @@ public class ApiKeyDAOTest
     assertTrue(savedApiKey1.isPresent());
     assertTrue(savedApiKey2.isPresent());
 
-    apiKeyDAO.deleteAllKeys();
+    int deleted = apiKeyDAO.deleteAllKeys();
+    assertThat(deleted, is(2));
     Collection<PrincipalCollection> allRecords = (Collection<PrincipalCollection>) apiKeyDAO.browsePrincipals();
     assertThat(allRecords, hasSize(0));
   }
@@ -301,7 +302,8 @@ public class ApiKeyDAOTest
     assertThat(apiKeyDAO.browse(DOMAIN), hasSize(1));
 
     // Remove keys in DOMAIN
-    apiKeyDAO.deleteApiKeysByDomain(DOMAIN);
+    int deleted = apiKeyDAO.deleteApiKeysByDomain(DOMAIN);
+    assertThat(deleted, is(1));
 
     // Verify only keys in DOMAIN were removed
     assertThat(apiKeyDAO.browse(DOMAIN), empty());
@@ -325,7 +327,8 @@ public class ApiKeyDAOTest
     assertThat(apiKeyDAO.browse(DOMAIN), hasSize(1));
 
     // Remove my expiration date
-    apiKeyDAO.deleteApiKeyByExpirationDate(expiration);
+    int deleted = apiKeyDAO.deleteApiKeyByExpirationDate(expiration);
+    assertThat(deleted, is(1));
 
     assertThat(apiKeyDAO.browse(DOMAIN), hasSize(1));
     assertThat(apiKeyDAO.browse(ANOTHER_DOMAIN), empty());

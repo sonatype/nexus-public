@@ -15,6 +15,8 @@ package org.sonatype.nexus.internal.security.apikey;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.security.usertoken.event.UserTokenPurgedEvent;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
@@ -34,14 +36,20 @@ public class PurgeApiKeysTask
 {
   private final ApiKeyStore store;
 
+  private final EventManager eventManager;
+
   @Inject
-  public PurgeApiKeysTask(final ApiKeyStore store) {
+  public PurgeApiKeysTask(final ApiKeyStore store, final EventManager eventManager) {
     this.store = checkNotNull(store);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
   protected Void execute() throws Exception {
-    store.purgeApiKeys();
+    int deleted = store.purgeApiKeys();
+    if (deleted > 0) {
+      eventManager.post(new UserTokenPurgedEvent(deleted));
+    }
     return null;
   }
 
