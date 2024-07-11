@@ -22,6 +22,8 @@ import javax.inject.Singleton;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
@@ -30,6 +32,9 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.rest.Resource;
@@ -39,7 +44,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
-import static org.sonatype.nexus.coreui.internal.blobstore.BlobStoreUIResource.RESOURCE_PATH;
+import static org.sonatype.nexus.coreui.internal.blobstore.BlobStoreInternalResource.RESOURCE_PATH;
 
 /**
  * @since 3.30
@@ -47,11 +52,17 @@ import static org.sonatype.nexus.coreui.internal.blobstore.BlobStoreUIResource.R
 @Named
 @Singleton
 @Path(RESOURCE_PATH)
-public class BlobStoreUIResource
+public class BlobStoreInternalResource
     extends ComponentSupport
     implements Resource
 {
   static final String RESOURCE_PATH = "/internal/ui/blobstores";
+
+  public static final String AZURE_CONFIG = "azure cloud storage";
+
+  public static final String AZURE_TYPE = "azure";
+
+  public static final String CONTAINER_NAME = "containerName";
 
   private final BlobStoreManager blobStoreManager;
 
@@ -63,8 +74,10 @@ public class BlobStoreUIResource
 
   private final RepositoryManager repositoryManager;
 
+  private static final Logger logger = LoggerFactory.getLogger(BlobStoreInternalResource.class);
+
   @Inject
-  public BlobStoreUIResource(
+  public BlobStoreInternalResource(
       final BlobStoreManager blobStoreManager,
       final BlobStoreConfigurationStore store,
       final BlobStoreDescriptorProvider blobStoreDescriptorProvider,
@@ -87,10 +100,11 @@ public class BlobStoreUIResource
     return store.list().stream()
         .map(configuration -> {
             final String typeId = blobStoreDescriptorProvider.get().get(configuration.getType()).getId();
+            final String path = getPath(typeId.toLowerCase(), configuration);
             BlobStoreMetrics metrics = Optional.ofNullable(blobStoreManager.get(configuration.getName()))
-                .map(BlobStoreUIResource::getBlobStoreMetrics)
+                .map(BlobStoreInternalResource::getBlobStoreMetrics)
                 .orElse(null);
-            return new BlobStoreUIResponse(typeId, configuration, metrics);
+            return new BlobStoreUIResponse(typeId, configuration, metrics, path);
         }).collect(toList());
   }
 
@@ -106,6 +120,24 @@ public class BlobStoreUIResource
           .reduce(Boolean::logicalAnd)
           .orElse(false) ? bs.getMetrics() : null;
     }
+  }
+
+  private static String getPath(final String typeId, BlobStoreConfiguration configuration) {
+    if (typeId.equals(FileBlobStore.TYPE.toLowerCase())) {
+      return configuration.attributes(FileBlobStore.CONFIG_KEY).get(FileBlobStore.PATH_KEY, String.class);
+    }
+    else if (typeId.equals(S3BlobStoreConfigurationHelper.CONFIG_KEY)) {
+      return S3BlobStoreConfigurationHelper.getBucketPrefix(configuration) + configuration
+         .attributes(S3BlobStoreConfigurationHelper.CONFIG_KEY).get(S3BlobStoreConfigurationHelper.BUCKET_KEY, String.class);
+    }
+    else if (typeId.equals(AZURE_TYPE)) {
+      return configuration.attributes(AZURE_CONFIG).get(CONTAINER_NAME, String.class);
+    }
+    else if (typeId.equals(BlobStoreGroup.TYPE.toLowerCase())) {
+      return "N/A";
+    }
+    logger.warn("blob store type {} unknown, defaulting to N/A for path", typeId);
+    return "N/A";
   }
 
   @RequiresAuthentication
@@ -136,5 +168,3 @@ public class BlobStoreUIResource
     return blobStoreQuotaTypes;
   }
 }
-
-

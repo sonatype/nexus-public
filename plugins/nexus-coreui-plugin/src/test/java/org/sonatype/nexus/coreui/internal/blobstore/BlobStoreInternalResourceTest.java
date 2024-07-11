@@ -27,6 +27,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
@@ -40,7 +41,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class BlobStoreUIResourceTest
+public class BlobStoreInternalResourceTest
     extends TestSupport
 {
   public static final String FILE_TYPE = "File";
@@ -67,7 +68,7 @@ public class BlobStoreUIResourceTest
 
   private List<BlobStoreConfiguration> configurations = new ArrayList<>();
 
-  private BlobStoreUIResource underTest;
+  private BlobStoreInternalResource underTest;
 
   @Before
   public void setup() {
@@ -78,7 +79,7 @@ public class BlobStoreUIResourceTest
     when(blobStoreDescriptorProvider.get()).thenReturn(blobStoreDescriptors);
     when(blobStoreConfigurationStore.list()).thenReturn(configurations);
 
-    underTest = new BlobStoreUIResource(
+    underTest = new BlobStoreInternalResource(
         blobStoreManager, blobStoreConfigurationStore, blobStoreDescriptorProvider, ImmutableMap.of(), repositoryManager);
   }
 
@@ -194,7 +195,13 @@ public class BlobStoreUIResourceTest
     when(bs.isStarted()).thenReturn(started);
     when(bs.getMetrics()).thenReturn(metrics);
     // add configuration
-    configurations.add(new MockBlobStoreConfiguration(name, type));
+    MockBlobStoreConfiguration mockBlobStoreConfiguration = new MockBlobStoreConfiguration(name, type);
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    Map<String, Object> attribute = new HashMap<>();
+    attribute.put(FileBlobStore.PATH_KEY, "my_path");
+    attributes.put(FileBlobStore.CONFIG_KEY, attribute);
+    mockBlobStoreConfiguration.setAttributes(attributes);
+    configurations.add(mockBlobStoreConfiguration);
     // return blobstore from blobStoreManager
     when(blobStoreManager.get(name)).thenReturn(bs);
     return bs;

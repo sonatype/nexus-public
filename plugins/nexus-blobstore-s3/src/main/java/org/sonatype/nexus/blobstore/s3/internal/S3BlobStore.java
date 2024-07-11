@@ -47,6 +47,7 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.internal.datastore.S3BlobStoreMetricsPropertiesReader.S3Config;
@@ -89,7 +90,7 @@ import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
@@ -107,12 +108,6 @@ public class S3BlobStore
     extends CloudBlobStoreSupport<S3AttributesLocation>
 {
   public static final String TYPE = "S3";
-
-  public static final String CONFIG_KEY = "s3";
-
-  public static final String BUCKET_KEY = "bucket";
-
-  public static final String BUCKET_PREFIX_KEY = "prefix";
 
   public static final String ACCESS_KEY_ID_KEY = "accessKeyId";
 

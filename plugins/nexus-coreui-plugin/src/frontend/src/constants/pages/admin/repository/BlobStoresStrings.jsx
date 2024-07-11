@@ -46,6 +46,7 @@ export default {
       CREATE_BUTTON: 'Create Blob Store',
       COLUMNS: {
         NAME: 'Name',
+        PATH: 'Path',
         TYPE: 'Type',
         STATE: 'State',
         COUNT: 'Blob Count',

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.s3.internal;
+package org.sonatype.nexus.blobstore.s3;
 
 import java.util.Optional;
 
@@ -19,9 +19,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_PREFIX_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.DEFAULT_EXPIRATION_IN_DAYS;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.EXPIRATION_KEY;
 
@@ -32,6 +29,12 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.EXPIRATION_KE
  */
 public class S3BlobStoreConfigurationHelper
 {
+  public static final String BUCKET_PREFIX_KEY = "prefix";
+
+  public static final String BUCKET_KEY = "bucket";
+
+  public static final String CONFIG_KEY = "s3";
+
   private S3BlobStoreConfigurationHelper() {
     // empty
   }

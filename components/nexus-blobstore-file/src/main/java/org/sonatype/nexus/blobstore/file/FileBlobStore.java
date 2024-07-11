@@ -124,7 +124,6 @@ public class FileBlobStore
 
   public static final String TYPE = "File";
 
-  @VisibleForTesting
   public static final String CONFIG_KEY = "file";
 
   public static final String PATH_KEY = "path";

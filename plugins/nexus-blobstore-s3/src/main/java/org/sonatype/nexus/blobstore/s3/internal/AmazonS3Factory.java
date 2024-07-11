@@ -45,6 +45,7 @@ import com.google.common.base.Predicates;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 
 /**
  * Creates configured AmazonS3 clients.

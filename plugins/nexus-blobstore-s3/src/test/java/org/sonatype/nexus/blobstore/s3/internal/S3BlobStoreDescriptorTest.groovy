@@ -22,8 +22,8 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_PREFIX_KEY
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.CONFIG_KEY
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY
 
 /**
  * {@link S3BlobStoreDescriptor} tests.
