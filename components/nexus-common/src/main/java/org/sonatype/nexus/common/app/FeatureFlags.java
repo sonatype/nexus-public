@@ -163,8 +163,6 @@ public interface FeatureFlags
    */
   String NXSESSIONID_SECURE_COOKIE_NAMED = "${nexus.session.secureCookie:-true}";
 
-  String API_EXTENDED = "nexus.api.extended.enabled";
-
   String ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_NAMED = "${nexus.audit.attribute.changes.enabled:-true}";
 
   String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED = "zero.downtime.marketing.modal";
