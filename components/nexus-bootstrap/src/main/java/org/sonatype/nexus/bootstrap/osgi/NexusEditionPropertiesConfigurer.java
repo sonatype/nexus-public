@@ -80,9 +80,16 @@ public class NexusEditionPropertiesConfigurer
           Boolean.toString(parseBoolean(System.getenv("FIREWALL_QUARANTINE_FIX_ENABLED"))));
     }
 
+    // Used by ZDU ITs to simulate migration failures
     if (properties.getProperty(ZERO_DOWNTIME_BASELINE_FAIL) == null) {
       properties.setProperty(ZERO_DOWNTIME_BASELINE_FAIL,
           Optional.ofNullable(System.getenv("NEXUS_ZDU_BASELINE_FAIL")).orElse(FALSE));
+    }
+
+    // Used by ZDU ITs to simulate behavior when future migrations are available
+    if (properties.getProperty(ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED) == null) {
+      properties.setProperty(ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED,
+          Optional.ofNullable(System.getenv("NEXUS_ZDU_FUTURE_MIGRATION_ENABLED")).orElse(FALSE));
     }
   }
 

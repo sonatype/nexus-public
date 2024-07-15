@@ -172,6 +172,9 @@ public interface FeatureFlags
   /* For testing purposes only */
   String ZERO_DOWNTIME_BASELINE_FAIL = "nexus.zdu.baseline.fail";
 
+  /* For testing purposes only */
+  String ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED = "nexus.zdu.future.enabled";
+
   String MALICIOUS_RISK_ENABLED = "nexus.malicious.risk.enabled";
 
   String MALICIOUS_RISK_ENABLED_NAMED = "${nexus.malicious.risk.enabled:-false}";
