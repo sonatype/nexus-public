@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -49,6 +50,7 @@ import org.sonatype.nexus.common.io.FileFinder;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StatePrerequisitesInvalidException;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
@@ -237,8 +239,6 @@ public class MyBatisDataStore
 
   @Override
   protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
-    HikariConfig hikariConfig = configureHikari(storeName, attributes);
-
     // Silence Hikari Logging for this block as we will throw any necessary exceptions and we expect some exceptions
     // that should not be logged at ERROR level.
     // We also have to null-check because there is a constructor just for testing that will break otherwise, which is
@@ -252,6 +252,8 @@ public class MyBatisDataStore
     if (directories != null) {
       verifyOrientDatabaseDoesNotExist();
     }
+
+    HikariConfig hikariConfig = configureHikari(storeName, attributes);
 
     try {
       dataSource = new HikariDataSource(hikariConfig);
@@ -418,10 +420,9 @@ public class MyBatisDataStore
   }
 
   private void verifyOrientDatabaseDoesNotExist() throws Exception {
-    Path dbPath = directories.getWorkDirectory("db").toPath();
-    Set<String> orientFolderNames = ImmutableSet.of("config", "security", "component");
-
-    if (orientWarning && FileFinder.pathContainsFolder(dbPath, orientFolderNames)) {
+    if (orientWarning && isOrientDbPresent() && (isSqlDbConfigured())) {
+      log.warn("Database directory contains unsupported legacy database files; remove legacy files as soon as possible.");
+    } else if (orientWarning && isOrientDbPresent() && !(isSqlDbConfigured())) {
       StringBuilder buf = new StringBuilder();
       buf.append("\n-------------------------------------------------------------------------------------------" +
           "----------------------------------------------------------------------------------\n\n");
@@ -433,7 +434,52 @@ public class MyBatisDataStore
           "------------------------------------------------------------------------------------\n\n");
       log.error(buf.toString());
       managedLifecycleManager.shutdownWithExitCode(1);
+      throw new StatePrerequisitesInvalidException("An unsupported orient database is present in the database directory, " +
+          "you need to migrate your data before running this version of nexus");
     }
+  }
+
+  private boolean isOrientDbPresent() {
+    Path dbPath = directories.getWorkDirectory("db").toPath();
+    Set<String> orientFolderNames = ImmutableSet.of("config", "security", "component");
+
+    return FileFinder.pathContainsFolder(dbPath, orientFolderNames);
+  }
+
+  private boolean isH2DbPresent() {
+    Path dbPath = directories.getWorkDirectory("db").toPath();
+    Path h2Db = dbPath.resolve("nexus.mv.db");
+
+    return Files.exists(h2Db);
+  }
+
+  private boolean isJdbcUrlSet() {
+    String systemProperty = System.getProperty("nexus.datastore.nexus.jdbcUrl");
+    String environmentVariable = System.getenv("NEXUS_DATASTORE_NEXUS_JDBCURL");
+
+    if (systemProperty != null) {
+      return true;
+    }
+    return environmentVariable != null;
+  }
+
+  private boolean checkNexusStorePropertyExists() {
+    Path fabricPath = directories.getWorkDirectory("etc/fabric").toPath();
+    Path nexusStorePropertiesPath = fabricPath.resolve("nexus-store.properties");
+
+    Properties properties = new Properties();
+
+    try (InputStream input = Files.newInputStream(nexusStorePropertiesPath)) {
+      properties.load(input);
+    } catch (IOException e) {
+      return false;
+    }
+
+    return properties.getProperty("jdbcUrl").startsWith("jdbc:postgresql");
+  }
+
+  private boolean isSqlDbConfigured() {
+    return isJdbcUrlSet() || isH2DbPresent() ||  checkNexusStorePropertyExists();
   }
 
   /**
