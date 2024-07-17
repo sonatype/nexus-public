@@ -179,5 +179,7 @@ public interface FeatureFlags
 
   String MALICIOUS_RISK_ENABLED_NAMED = "${nexus.malicious.risk.enabled:-false}";
 
+  String CONAN_V2_ENABLED = "nexus.conan.v2.enabled";
+
   String CONAN_V2_ENABLED_NAMED = "${nexus.conan.v2.enabled:-false}";
 }
