@@ -46,10 +46,10 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   },
 }));
 
-const FORMATS_URL = '/service/rest/internal/cleanup-policies/criteria/formats';
-const REPOSITORIES_URL = '/service/rest/internal/ui/repositories';
+const FORMATS_URL = 'service/rest/internal/cleanup-policies/criteria/formats';
+const REPOSITORIES_URL = 'service/rest/internal/ui/repositories';
 const PREVIEW_URL =
-  '/service/rest/internal/cleanup-policies/preview/components';
+  'service/rest/internal/cleanup-policies/preview/components';
 
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
 
@@ -372,7 +372,7 @@ describe('CleanupPoliciesForm', function () {
 
     await waitFor(() =>
       expect(axios.post).toHaveBeenCalledWith(
-        '/service/rest/internal/cleanup-policies',
+        'service/rest/internal/cleanup-policies',
         {
           name: EDITABLE_ITEM.name,
           format: EDITABLE_ITEM.format,

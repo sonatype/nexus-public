@@ -115,7 +115,7 @@ describe('Welcome', function() {
       jest.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}));
       render(<Welcome />);
 
-      expect(axios.post).toHaveBeenCalledWith('/service/extdirect', [
+      expect(axios.post).toHaveBeenCalledWith('service/extdirect', [
         expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
         expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' })
       ]);
@@ -164,7 +164,7 @@ describe('Welcome', function() {
       await userEvent.click(retryBtn);
 
       await waitFor(() => expect(axios.post).toHaveBeenCalledTimes(2));
-      expect(axios.post).toHaveBeenLastCalledWith('/service/extdirect', [
+      expect(axios.post).toHaveBeenLastCalledWith('service/extdirect', [
         expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
         expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' }),
         expect.objectContaining({ action: 'outreach_Outreach', method: 'showFirewallAlert' })

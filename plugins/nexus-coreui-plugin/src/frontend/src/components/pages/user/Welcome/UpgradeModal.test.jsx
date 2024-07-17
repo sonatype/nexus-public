@@ -29,6 +29,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     useState: jest.fn(),
     usePermission: jest.fn(),
     useUser: jest.fn(),
+    urlOf: jest.fn()
   },
 }));
 

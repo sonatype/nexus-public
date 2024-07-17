@@ -18,7 +18,7 @@ import Axios from 'axios';
 import {assign} from 'xstate';
 import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
-const BLOB_STORES_URL = '/service/rest/internal/ui/blobstores';
+const BLOB_STORES_URL = 'service/rest/internal/ui/blobstores';
 
 export default ListMachineUtils.buildListMachine({
   id: 'BlobStoresListMachine',

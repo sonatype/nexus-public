@@ -56,7 +56,7 @@ jest.mock('axios', () => {
           }
         });
       }
-      if (url === '/service/rest/internal/current-user/user-token/attributes') {
+      if (url === 'service/rest/internal/current-user/user-token/attributes') {
         return Promise.resolve({
           data: {
             "expirationTimeTimestamp": "1713498443006",

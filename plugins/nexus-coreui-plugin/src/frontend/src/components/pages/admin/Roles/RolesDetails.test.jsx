@@ -181,7 +181,7 @@ describe('RolesDetails', function() {
     when(Axios.get).calledWith(defaultRolesUrl).mockResolvedValue({data: Object.values(ROLES)});
     when(Axios.get).calledWith(privilegesUrl).mockResolvedValue({data: PRIVILEGES});
     when(Axios.get).calledWith(singleRoleUrl(testRoleId)).mockResolvedValue({data: {...ROLE, readOnly: false}});
-    when(Axios.post).calledWith('/service/extdirect', expect.objectContaining(sourcesApi))
+    when(Axios.post).calledWith('service/extdirect', expect.objectContaining(sourcesApi))
         .mockResolvedValue({data: SOURCE_TYPES_RESP});
     ExtJS.checkPermission.mockReturnValue(true);
   });
