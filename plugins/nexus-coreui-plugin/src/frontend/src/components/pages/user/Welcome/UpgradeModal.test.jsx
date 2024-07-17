@@ -45,7 +45,7 @@ describe('UpgradeModal', () => {
         .mockReturnValue(true);
 
     when(ExtJS.state().getValue)
-        .calledWith('nexus.zero.downtime.enabled')
+        .calledWith('nexus.datastore.clustered.enabled')
         .mockReturnValue(true);
   });
   

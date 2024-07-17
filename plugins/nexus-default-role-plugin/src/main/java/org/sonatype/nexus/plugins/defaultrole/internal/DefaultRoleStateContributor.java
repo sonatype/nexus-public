@@ -24,7 +24,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.SecuritySystem;
-import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.role.Role;
 
 import org.apache.shiro.SecurityUtils;
@@ -43,23 +42,16 @@ public class DefaultRoleStateContributor
 
   private final SecuritySystem securitySystem;
 
-  private final RealmManager realmManager;
-
   @Inject
-  public DefaultRoleStateContributor(
-      final DefaultRoleRealm defaultRoleRealm,
-      final SecuritySystem securitySystem,
-      final RealmManager realmManager)
-  {
+  public DefaultRoleStateContributor(final DefaultRoleRealm defaultRoleRealm, final SecuritySystem securitySystem) {
     this.defaultRoleRealm = defaultRoleRealm;
     this.securitySystem = securitySystem;
-    this.realmManager = realmManager;
   }
 
   @Override
   public Map<String, Object> getState() {
     Subject subject = SecurityUtils.getSubject();
-    if (realmManager.isRealmEnabled(DefaultRoleRealm.NAME) && subject != null && (subject.isAuthenticated() || subject.isRemembered())) {
+    if (subject != null && (subject.isAuthenticated() || subject.isRemembered())) {
       try {
         Map<String, Object> defaultRole = new HashMap<>(2);
         Role matched = securitySystem.listRoles(DEFAULT_SOURCE).stream()

@@ -30,13 +30,13 @@ export default function UpgradeModal() {
   const zeroDowntimeMarketingModalClosed = ExtJS.useState(() => ExtJS.state().getValue('zeroDowntimeMarketingModalClosed'));
   const onboarding = !ExtJS.useState(() => ExtJS.state().getValue('onboarding.required'));
   const showModalFlag = ExtJS.state().getValue('zero.downtime.marketing.modal');
-  const isZDU = ExtJS.state().getValue('nexus.zero.downtime.enabled');
+  const isHA = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
   const hasUser = ExtJS.useUser() ?? false;
   const hasPermissions = ExtJS.usePermission(() => ExtJS.checkPermission('nexus:*'), [hasUser])
   const modalCloseHandler = () => send({ type: 'CLOSE_AND_SAVE' });
 
   useEffect(() => {
-    if (showModalFlag && onboarding && isZDU && hasPermissions && hasUser && zeroDowntimeMarketingModalClosed === false) {
+    if (showModalFlag && onboarding && isHA && hasPermissions && hasUser && zeroDowntimeMarketingModalClosed === false) {
       send({ type: 'OPEN_MODAL' });
     } else {
       send({ type: 'CLOSE_MODAL' });

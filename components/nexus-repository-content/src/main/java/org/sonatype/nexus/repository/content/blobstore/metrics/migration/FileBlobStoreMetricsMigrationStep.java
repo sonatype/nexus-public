@@ -13,43 +13,22 @@
 package org.sonatype.nexus.repository.content.blobstore.metrics.migration;
 
 import java.sql.Connection;
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
-import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.content.blobstore.metrics.migration.FileBlobStoreMetricsMigrationTaskDescriptor.TYPE_ID;
-
 /**
- * Manage {@link FileBlobStoreMetricsMigrationTask} task scheduling.
+ * Blob store metrics migration now live in {@link BlobStoreMetricsMigrationService}
  */
 @Named
 @Singleton
 public class FileBlobStoreMetricsMigrationStep
     extends RepeatableDatabaseMigrationStep
 {
-  private final TaskScheduler taskScheduler;
-
-  private final UpgradeTaskScheduler upgradeTaskScheduler;
-
-  @Inject
-  public FileBlobStoreMetricsMigrationStep(
-      final TaskScheduler taskScheduler,
-      final UpgradeTaskScheduler upgradeTaskScheduler)
-  {
-    this.taskScheduler = checkNotNull(taskScheduler);
-    this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
-  }
-
   @Override
   public void migrate(final Connection connection) throws Exception {
-    TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(TYPE_ID);
-    upgradeTaskScheduler.schedule(taskConfiguration);
+    // no-op
   }
 
   @Override

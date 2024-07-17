@@ -15,7 +15,8 @@ package org.sonatype.nexus.bootstrap.osgi;
 public enum NexusEditionFeature
 {
   OSS_FEATURE("nexus-oss-feature"),
-  PRO_FEATURE("nexus-pro-feature");
+  PRO_FEATURE("nexus-pro-feature"),
+  PRO_STARTER_FEATURE("nexus-pro-starter-feature");
 
   public final String featureString;
 

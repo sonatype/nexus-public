@@ -32,7 +32,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 @Named
 @Singleton
 @ManagedLifecycle(phase = TASKS)
-public class UpgradeTaskSchedulerImpl
+public class PostStartupTaskSchedulerImpl
     extends StateGuardLifecycleSupport
     implements UpgradeTaskScheduler
 {
@@ -41,7 +41,7 @@ public class UpgradeTaskSchedulerImpl
   private final TaskScheduler scheduler;
 
   @Inject
-  public UpgradeTaskSchedulerImpl(final TaskScheduler scheduler) {
+  public PostStartupTaskSchedulerImpl(final TaskScheduler scheduler) {
     this.scheduler = checkNotNull(scheduler);
   }
 

@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.71.0-06</version>
+    <version>3.72.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -139,6 +139,12 @@
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus2-npm-metadata-export</artifactId>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>

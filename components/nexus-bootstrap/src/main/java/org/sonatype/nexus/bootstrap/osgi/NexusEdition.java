@@ -32,9 +32,15 @@ public abstract class NexusEdition
 
   public static final String NEXUS_LOAD_AS_OSS_PROP_NAME = "nexus.loadAsOSS";
 
+  public static final String NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME = "nexus.loadAsProStarter";
+
   private static final String EDITION_PRO_PATH = "edition_pro";
 
+  private static final String EDITION_PRO_STARTER_PATH = "edition_pro_starter";
+
   public static final String PRO_LICENSE_LOCATION = "/com/sonatype/nexus/professional";
+
+  public static final String PRO_STARTER_LICENSE_LOCATION = "/com/sonatype/nexus/pro-starter";
 
   public abstract NexusEditionType getEdition();
 
@@ -93,6 +99,9 @@ public abstract class NexusEdition
     switch (edition) {
       case PRO: {
         return workDirPath.resolve(EDITION_PRO_PATH).toFile();
+      }
+      case PRO_STARTER: {
+        return workDirPath.resolve(EDITION_PRO_STARTER_PATH).toFile();
       }
       default: {
         throw new IllegalStateException("Marker for OSS edition not supported!");

@@ -25,7 +25,7 @@ public class NexusEditionFactory
   }
 
   private static final List<NexusEdition> editions =
-      ImmutableList.of(new ProNexusEdition(), new OssNexusEdition());
+      ImmutableList.of(new ProNexusEdition(), new ProStarterNexusEdition(), new OssNexusEdition());
 
   public static void selectActiveEdition(final Properties properties, final Path workDirPath) {
     NexusEdition nexusEdition =

@@ -15,7 +15,8 @@ package org.sonatype.nexus.bootstrap.osgi;
 public enum NexusEditionType
 {
   OSS("nexus-oss-edition"),
-  PRO("nexus-pro-edition");
+  PRO("nexus-pro-edition"),
+  PRO_STARTER("nexus-pro-starter-edition");
 
   public final String editionString;
 

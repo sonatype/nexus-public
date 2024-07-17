@@ -20,8 +20,8 @@ import java.util.Properties;
 
 import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.osgi.framework.Version;
+import com.google.common.annotations.VisibleForTesting;
 
 import static java.lang.Boolean.parseBoolean;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
@@ -82,14 +82,14 @@ public class NexusEditionPropertiesConfigurer
 
     // Used by ZDU ITs to simulate migration failures
     if (properties.getProperty(ZERO_DOWNTIME_BASELINE_FAIL) == null) {
-      Optional.ofNullable(System.getenv("NEXUS_ZDU_BASELINE_FAIL")).ifPresent(v ->
-          properties.setProperty(ZERO_DOWNTIME_BASELINE_FAIL, v));
+      properties.setProperty(ZERO_DOWNTIME_BASELINE_FAIL,
+          Optional.ofNullable(System.getenv("NEXUS_ZDU_BASELINE_FAIL")).orElse(FALSE));
     }
 
     // Used by ZDU ITs to simulate behavior when future migrations are available
     if (properties.getProperty(ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED) == null) {
-      Optional.ofNullable(System.getenv("NEXUS_ZDU_FUTURE_MIGRATION_ENABLED")).ifPresent(v ->
-          properties.setProperty(ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED, v));
+      properties.setProperty(ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED,
+          Optional.ofNullable(System.getenv("NEXUS_ZDU_FUTURE_MIGRATION_ENABLED")).orElse(FALSE));
     }
   }
 
@@ -109,15 +109,6 @@ public class NexusEditionPropertiesConfigurer
       // JWT and Blobstore Metrics should also be enabled for clustered
       properties.setProperty(JWT_ENABLED, TRUE);
       properties.setProperty(DATASTORE_BLOBSTORE_METRICS, TRUE);
-
-      // Enable zero downtime based on property and flag
-      String zduEnabled = Optional.ofNullable(System.getenv(CLUSTERED_ZERO_DOWNTIME_ENABLED_ENV))
-          .orElse(properties.getProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, FALSE));
-      properties.setProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, zduEnabled);
-    }
-    else {
-      // Set default of clustered upgrades off
-      properties.setProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, FALSE);
     }
 
     // datastore search mode enables datastore user mode

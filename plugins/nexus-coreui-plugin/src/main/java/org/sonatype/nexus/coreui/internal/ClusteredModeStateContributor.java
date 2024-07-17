@@ -13,7 +13,6 @@
 package org.sonatype.nexus.coreui.internal;
 
 import java.util.Map;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,8 +22,6 @@ import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.CLUSTERED_ZERO_DOWNTIME_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED;
 
@@ -35,23 +32,18 @@ public class ClusteredModeStateContributor
 {
   private final boolean clusteredModeEnabled;
 
-  private final boolean zeroDowntimeEnabled;
-
   @Inject
   public ClusteredModeStateContributor(
-      @Named(DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean clusteredModeEnabled,
-      @Named(CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED) final boolean zeroDowntimeEnabled)
-  {
+      @Named(DATASTORE_CLUSTERED_ENABLED_NAMED) boolean clusteredModeEnabled
+  ) {
     this.clusteredModeEnabled = clusteredModeEnabled;
-    this.zeroDowntimeEnabled = zeroDowntimeEnabled;
   }
 
   @Nullable
   @Override
   public Map<String, Object> getState() {
     return ImmutableMap.of(
-        DATASTORE_CLUSTERED_ENABLED, clusteredModeEnabled,
-        CLUSTERED_ZERO_DOWNTIME_ENABLED, zeroDowntimeEnabled
+        DATASTORE_CLUSTERED_ENABLED, clusteredModeEnabled
     );
   }
 }

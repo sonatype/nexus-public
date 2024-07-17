@@ -10,8 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.blobstore.metrics.migration;
+package org.sonatype.nexus.blobstore.metrics;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -22,6 +23,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsPropertiesReader;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup;
@@ -37,7 +39,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Provides;
-import org.apache.commons.collections.map.HashedMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,18 +47,23 @@ import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
- * {@link FileBlobStoreMetricsMigrationTask} tests
+ * {@link BlobStoreMetricsMigrationService} tests.
  */
 @Category(PostgresTestGroup.class)
-public class FileBlobStoreMetricsMigrationTaskTest
+public class BlobStoreMetricsMigrationServiceTest
     extends TestSupport
 {
   private static final String DEFAULT_BS_NAME = "default-blobstore";
+
+  private static final String DEFAULT_BS_TYPE = "default-bs-type";
+
+  private static final String TEST_BS_TYPE = "test-bs-type";
 
   private static final String TEST_BS_NAME = "test-blobstore";
 
@@ -75,12 +81,10 @@ public class FileBlobStoreMetricsMigrationTaskTest
 
   private static final String TIME_ON_REQUESTS = "time_on_requests";
 
-  private Map<String, Map<String, Long>> fileMetrics = new HashedMap();
+  private Map<String, Map<String, Long>> fileMetrics = new HashMap<>();
 
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME).access(BlobStoreMetricsDAO.class);
-
-  private FileBlobStoreMetricsMigrationTask underTest;
 
   @Mock
   private BlobStoreManager blobStoreManager;
@@ -89,7 +93,10 @@ public class FileBlobStoreMetricsMigrationTaskTest
   private BlobStore defaultBlobStore;
 
   @Mock
-  private BlobStoreMetricsReader metricsReader;
+  private BlobStoreMetricsPropertiesReader defaultBsReader;
+
+  @Mock
+  private BlobStoreMetricsPropertiesReader testBsReader;
 
   @Mock
   private BlobStore testBlobStore;
@@ -97,7 +104,11 @@ public class FileBlobStoreMetricsMigrationTaskTest
   @Mock
   private EventManager eventManager;
 
+  private Map<String, BlobStoreMetricsPropertiesReader> metricsReaders;
+
   private BlobStoreMetricsStore blobStoreMetricsStore;
+
+  private BlobStoreMetricsMigrationService underTest;
 
   @Before
   public void setup() throws Exception {
@@ -115,6 +126,11 @@ public class FileBlobStoreMetricsMigrationTaskTest
     }).getInstance(BlobStoreMetricsStoreImpl.class);
 
     UnitOfWork.beginBatch(() -> sessionRule.openSession(DataStoreManager.DEFAULT_DATASTORE_NAME));
+
+    metricsReaders = new HashMap<String, BlobStoreMetricsPropertiesReader>() {{
+      put(DEFAULT_BS_TYPE, defaultBsReader);
+      put(TEST_BS_TYPE, testBsReader);
+    }};
   }
 
   @After
@@ -129,8 +145,8 @@ public class FileBlobStoreMetricsMigrationTaskTest
     setupBlobStoresMetrics();
     setupBlobStoresMetricsOperations();
 
-    underTest = new FileBlobStoreMetricsMigrationTask(blobStoreManager, blobStoreMetricsStore, metricsReader);
-    underTest.execute();
+    underTest = new BlobStoreMetricsMigrationService(blobStoreManager, blobStoreMetricsStore, metricsReaders);
+    underTest.start();
 
     assertMigratedMetrics(DEFAULT_BS_NAME, blobStoreMetricsStore.get(DEFAULT_BS_NAME));
     assertMigratedMetrics(TEST_BS_NAME, blobStoreMetricsStore.get(TEST_BS_NAME));
@@ -155,7 +171,7 @@ public class FileBlobStoreMetricsMigrationTaskTest
   }
 
   private void setupExpectedTestMetrics() {
-    fileMetrics.put(DEFAULT_BS_NAME, new HashedMap()
+    fileMetrics.put(DEFAULT_BS_NAME, new HashMap<String, Long>()
     {{
       put(BLOBS_COUNT, 3L);
       put(BLOBS_TOTAL_SIZE, 12345678L);
@@ -165,7 +181,7 @@ public class FileBlobStoreMetricsMigrationTaskTest
       put(SUCCESSFUL_REQUESTS_COUNT, 5L);
       put(TIME_ON_REQUESTS, 1L);
     }});
-    fileMetrics.put(TEST_BS_NAME, new HashedMap()
+    fileMetrics.put(TEST_BS_NAME, new HashMap<String, Long>()
     {{
       put(BLOBS_COUNT, 6L);
       put(BLOBS_TOTAL_SIZE, 555444466L);
@@ -180,11 +196,15 @@ public class FileBlobStoreMetricsMigrationTaskTest
   private void setupBlobStores() {
     BlobStoreConfiguration defaultBlobStoreConfig = mock(BlobStoreConfiguration.class);
     when(defaultBlobStoreConfig.getName()).thenReturn(DEFAULT_BS_NAME);
+    when(defaultBlobStoreConfig.getType()).thenReturn(DEFAULT_BS_TYPE);
     when(defaultBlobStore.getBlobStoreConfiguration()).thenReturn(defaultBlobStoreConfig);
+    when(defaultBlobStore.isStarted()).thenReturn(true);
 
     BlobStoreConfiguration testBlobStoreConfig = mock(BlobStoreConfiguration.class);
     when(testBlobStoreConfig.getName()).thenReturn(TEST_BS_NAME);
+    when(testBlobStoreConfig.getType()).thenReturn(TEST_BS_TYPE);
     when(testBlobStore.getBlobStoreConfiguration()).thenReturn(testBlobStoreConfig);
+    when(testBlobStore.isStarted()).thenReturn(true);
 
     when(blobStoreManager.browse()).thenReturn(ImmutableList.of(defaultBlobStore, testBlobStore));
   }
@@ -197,7 +217,8 @@ public class FileBlobStoreMetricsMigrationTaskTest
     when(metricsForDefaultBlobStore.getAvailableSpace())
         .thenReturn(expectedDefaultBlobStoreMetrics.get(BLOBS_AVAILABLE_SPACE));
 
-    when(metricsReader.readMetrics(defaultBlobStore)).thenReturn(metricsForDefaultBlobStore);
+    defaultBsReader.initWithBlobStore(defaultBlobStore);
+    when(defaultBsReader.readMetrics()).thenReturn(metricsForDefaultBlobStore);
 
     BlobStoreMetrics metricsForTestBlobStore = mock(BlobStoreMetrics.class);
     Map<String, Long> expectedTestBlobStoreMetrics = fileMetrics.get(TEST_BS_NAME);
@@ -206,7 +227,8 @@ public class FileBlobStoreMetricsMigrationTaskTest
     when(metricsForTestBlobStore.getAvailableSpace()).thenReturn(
         expectedTestBlobStoreMetrics.get(BLOBS_AVAILABLE_SPACE));
 
-    when(metricsReader.readMetrics(testBlobStore)).thenReturn(metricsForTestBlobStore);
+    testBsReader.initWithBlobStore(testBlobStore);
+    when(testBsReader.readMetrics()).thenReturn(metricsForTestBlobStore);
   }
 
   private void setupBlobStoresMetricsOperations() throws Exception {
@@ -229,7 +251,8 @@ public class FileBlobStoreMetricsMigrationTaskTest
     when(uploadMetricsForDefaultBlobStore.getTimeOnRequests())
         .thenReturn(expectedDefaultBlobStoreMetrics.get(TIME_ON_REQUESTS));
 
-    when(metricsReader.readOperationMetrics(defaultBlobStore))
+    defaultBsReader.initWithBlobStore(defaultBlobStore);
+    when(defaultBsReader.readOperationMetrics())
         .thenReturn(ImmutableMap.of(
             OperationType.DOWNLOAD, downloadMetricsForDefaultBlobStore,
             OperationType.UPLOAD, uploadMetricsForDefaultBlobStore));
@@ -253,7 +276,8 @@ public class FileBlobStoreMetricsMigrationTaskTest
     when(uploadMetricsForTestBlobStore.getTimeOnRequests())
         .thenReturn(expectedTestBlobStoreMetrics.get(TIME_ON_REQUESTS));
 
-    when(metricsReader.readOperationMetrics(testBlobStore))
+    testBsReader.initWithBlobStore(testBlobStore);
+    when(testBsReader.readOperationMetrics())
         .thenReturn(ImmutableMap.of(
             OperationType.DOWNLOAD, downloadMetricsForTestBlobStore,
             OperationType.UPLOAD, uploadMetricsForTestBlobStore));
