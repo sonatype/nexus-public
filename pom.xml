@@ -110,7 +110,6 @@
       org.sonatype.goodies.testsupport.group.Perf,
       org.sonatype.goodies.testsupport.group.External,
       org.sonatype.goodies.testsupport.group.Unstable,
-      org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
       org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
     </it.excludedGroups>
     <clm.skip>false</clm.skip>
@@ -1521,9 +1520,6 @@
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf
         </it.excludedGroups>
@@ -1558,9 +1554,7 @@
         </it.includedGroups>
         <it.excludedGroups>
           org.sonatype.goodies.testsupport.group.External,
-          org.sonatype.goodies.testsupport.group.Unstable,
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
+          org.sonatype.goodies.testsupport.group.Unstable
         </it.excludedGroups>
       </properties>
       <build>
@@ -1588,9 +1582,7 @@
         </it.includedGroups>
         <it.excludedGroups>
           org.sonatype.goodies.testsupport.group.External,
-          org.sonatype.goodies.testsupport.group.Unstable,
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
+          org.sonatype.goodies.testsupport.group.Unstable
         </it.excludedGroups>
       </properties>
       <build>
@@ -1653,10 +1645,6 @@
     <profile>
       <id>h2-integration-tests</id>
       <properties>
-        <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.H2TestGroup
-        </it.includedGroups>
         <it.excludedGroups>
           org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
@@ -1669,10 +1657,6 @@
     <profile>
       <id>postgres-integration-tests</id>
       <properties>
-        <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
-        </it.includedGroups>
         <it.excludedGroups>
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
@@ -1686,8 +1670,6 @@
       <id>h2-external-resources</id>
       <properties>
         <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
@@ -1702,8 +1684,6 @@
       <id>postgres-external-resources</id>
       <properties>
         <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
