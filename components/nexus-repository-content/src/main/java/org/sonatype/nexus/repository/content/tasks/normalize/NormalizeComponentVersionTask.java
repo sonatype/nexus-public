@@ -120,7 +120,7 @@ public class NormalizeComponentVersionTask
       //once normalization is done set state as true
       setNormalizationState(format, true);
       //publish an event to let interested know the format has been normalized
-      eventManager.post(new FormatVersionNormalizedEvent(format));
+      eventManager.post(new FormatVersionNormalizedEvent(format.getValue()));
 
       int currentCount = processedCount.incrementAndGet();
 

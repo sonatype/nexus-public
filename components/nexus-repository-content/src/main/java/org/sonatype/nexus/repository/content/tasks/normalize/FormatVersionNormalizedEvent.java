@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.content.tasks.normalize;
 
 import org.sonatype.nexus.common.event.EventWithSource;
-import org.sonatype.nexus.repository.Format;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -23,17 +22,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class FormatVersionNormalizedEvent
     extends EventWithSource
 {
-  private Format format;
+  private String format;
 
   public FormatVersionNormalizedEvent() {
     // deserialization
   }
 
-  public FormatVersionNormalizedEvent(final Format format) {
+  public FormatVersionNormalizedEvent(final String format) {
     this.format = checkNotNull(format);
   }
 
-  public Format getFormat() {
+  public String getFormat() {
     return format;
   }
 }
