@@ -182,4 +182,6 @@ public interface FeatureFlags
   String CONAN_V2_ENABLED = "nexus.conan.v2.enabled";
 
   String CONAN_V2_ENABLED_NAMED = "${nexus.conan.v2.enabled:-false}";
+
+  String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
 }
