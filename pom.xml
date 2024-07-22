@@ -1629,6 +1629,7 @@
       <properties>
         <it.excludedGroups>
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+          org.sonatype.nexus.content.testsuite.groups.OSSTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf,
           org.sonatype.goodies.testsupport.group.External
@@ -1653,6 +1654,7 @@
       <properties>
         <it.excludedGroups>
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+          org.sonatype.nexus.content.testsuite.groups.OSSTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf,
           org.sonatype.goodies.testsupport.group.External
@@ -1682,6 +1684,7 @@
         </it.includedGroups>
         <it.excludedGroups>
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+          org.sonatype.nexus.content.testsuite.groups.OSSTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf
         </it.excludedGroups>
