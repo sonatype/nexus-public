@@ -56,6 +56,8 @@ public class DockerSubdomainRequestCustomizer
       }
       String repositoryName = DockerSubdomainRepositoryMapping.get(request.getHeader("Host"));
       if (repositoryName != null) {
+        String dockerLocation = uri.getScheme() != null ? uri.toString() : request.getScheme() + ":" + uri;
+        request.setAttribute("dockerLocation", dockerLocation);
         request.setHttpURI(
             new HttpURI(
                 uri.toString().replaceFirst(version, nexusContextPath + "repository/" + repositoryName + version)
