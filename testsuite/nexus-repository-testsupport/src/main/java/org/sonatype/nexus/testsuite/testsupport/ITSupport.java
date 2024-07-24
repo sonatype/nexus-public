@@ -115,10 +115,13 @@ public abstract class ITSupport
 
   @After
   public void verifyNoDeadBlobs() {
-    //only need to verify no dead blobs for non-newdb dbs
-    if (getValidTestDatabase().isUseContentStore()) {
+    if (shouldVerifyNoDeadBlobs()) {
       doVerifyNoDeadBlobs();
     }
+  }
+
+  protected boolean shouldVerifyNoDeadBlobs() {
+    return true;
   }
 
   /**
