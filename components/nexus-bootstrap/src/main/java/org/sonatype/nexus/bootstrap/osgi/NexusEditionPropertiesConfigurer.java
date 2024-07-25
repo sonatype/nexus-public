@@ -20,8 +20,8 @@ import java.util.Properties;
 
 import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
-import org.osgi.framework.Version;
 import com.google.common.annotations.VisibleForTesting;
+import org.osgi.framework.Version;
 
 import static java.lang.Boolean.parseBoolean;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
@@ -109,6 +109,15 @@ public class NexusEditionPropertiesConfigurer
       // JWT and Blobstore Metrics should also be enabled for clustered
       properties.setProperty(JWT_ENABLED, TRUE);
       properties.setProperty(DATASTORE_BLOBSTORE_METRICS, TRUE);
+
+      // Enable zero downtime based on property and flag
+      String zduEnabled = Optional.ofNullable(System.getenv(CLUSTERED_ZERO_DOWNTIME_ENABLED_ENV))
+          .orElse(properties.getProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, FALSE));
+      properties.setProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, zduEnabled);
+    }
+    else {
+      // Set default of clustered upgrades off
+      properties.setProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, FALSE);
     }
 
     // datastore search mode enables datastore user mode

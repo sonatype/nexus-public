@@ -38,6 +38,11 @@ public interface FeatureFlags
   String DATASTORE_CLUSTERED_ENABLED = "nexus.datastore.clustered.enabled";
   String DATASTORE_CLUSTERED_ENABLED_NAMED = "${nexus.datastore.clustered.enabled:-false}";
 
+  /* Zero downtime upgrades while clustered. Available values: true, false. Default value: false */
+  String CLUSTERED_ZERO_DOWNTIME_ENABLED = "nexus.zero.downtime.enabled";
+  String CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED = "${nexus.zero.downtime.enabled:-false}";
+  String CLUSTERED_ZERO_DOWNTIME_ENABLED_ENV = "NEXUS_ZERO_DOWNTIME_ENABLED";
+
   /* Feature flag to indicate if current db is postgresql */
   String DATASTORE_IS_POSTGRESQL = "datastore.isPostgresql";
 
@@ -167,7 +172,7 @@ public interface FeatureFlags
 
   String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED = "zero.downtime.marketing.modal";
 
-  String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED_NAMED = "${zero.downtime.marketing.modal:-true}";
+  String ZERO_DOWNTIME_MARKETING_MODAL_ENABLED_NAMED = "${zero.downtime.marketing.modal:-false}";
 
   /* For testing purposes only */
   String ZERO_DOWNTIME_BASELINE_FAIL = "nexus.zdu.baseline.fail";
