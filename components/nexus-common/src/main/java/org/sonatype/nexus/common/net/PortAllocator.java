@@ -37,6 +37,8 @@ public class PortAllocator
   private static final int MIN_PORT = 10000;
 
   private static final int MAX_PORT = 30000;
+  // see https://chromium.googlesource.com/chromium/src.git/+/refs/heads/master/net/base/port_util.cc
+  private static final int UNSAFE_PORT = 10080;
 
   /**
    * This does deliberately NOT pick ephemeral ports which are prone to immediate reuse by the OS for a different
@@ -53,12 +55,18 @@ public class PortAllocator
           if (nextPort > MAX_PORT) {
             nextPort = MIN_PORT;
           }
-          try (ServerSocket socket = new ServerSocket(nextPort++)) {
-            return socket.getLocalPort();
+          if (UNSAFE_PORT != nextPort) {
+            try (ServerSocket socket = new ServerSocket(nextPort++)) {
+              return socket.getLocalPort();
+            }
+            catch (BindException e) {
+              // port blocked, try the next one
+            }
           }
-          catch (BindException e) {
-            // port blocked, try the next one
+          else {
+            nextPort++;
           }
+
         }
       }
       finally {

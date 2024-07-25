@@ -211,8 +211,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('renders the form and buttons when the File type is selected', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {loadingMask, typeSelect} = render();
 
@@ -223,8 +223,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('renders the form and buttons when the S3 type is selected', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {loadingMask, typeSelect} = render();
 
@@ -235,8 +235,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('validates the name field', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {loadingMask, typeSelect, name} = render();
 
@@ -259,8 +259,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('renders S3 specific form fields', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {
       loadingMask,
@@ -300,8 +300,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('enables the save button when the minimum fields are filled in S3 blobstore', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {
       name,
@@ -354,8 +354,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('renders the name field and dynamic path field when the File type is selected', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {loadingMask, typeSelect, name, path} = render();
 
@@ -371,8 +371,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('renders the soft quota fields when the blobstore type is selected', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {loadingMask, typeSelect, softQuotaType, softQuotaLimit} = render();
 
@@ -392,8 +392,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('enables the save button when there are changes', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {loadingMask, typeSelect, name, softQuotaType, softQuotaLimit} = render();
 
@@ -435,8 +435,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('creates a new file blob store', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {loadingMask, typeSelect, name, path, softQuotaType, softQuotaLimit} = render();
 
@@ -458,7 +458,7 @@ describe('BlobStoresForm', function() {
     userEvent.click(selectors.querySubmitButton());
 
     expect(axios.post).toHaveBeenCalledWith(
-        '/service/rest/v1/blobstores/file',
+        'service/rest/v1/blobstores/file',
         {
           name: 'test',
           path: 'testPath',
@@ -472,8 +472,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('creates a new S3 blob store', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {
       name,
@@ -542,7 +542,7 @@ describe('BlobStoresForm', function() {
     userEvent.click(selectors.querySubmitButton());
 
     expect(axios.post).toHaveBeenCalledWith(
-        '/service/rest/v1/blobstores/s3',
+        'service/rest/v1/blobstores/s3',
         {
           name: 'test',
           bucketConfiguration: {
@@ -568,8 +568,8 @@ describe('BlobStoresForm', function() {
   });
 
   it('creates a new Azure blob store', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
     const {
       name,
@@ -613,15 +613,15 @@ describe('BlobStoresForm', function() {
     userEvent.click(selectors.querySubmitButton());
 
     expect(axios.post).toHaveBeenCalledWith(
-      '/service/rest/v1/blobstores/azure',
+      'service/rest/v1/blobstores/azure',
       data
     );
   });
 
   it('edits a file blob store', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
-    when(axios.get).calledWith('/service/rest/v1/blobstores/file/test').mockResolvedValue({
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/v1/blobstores/file/test').mockResolvedValue({
       data: {
         path: 'testPath',
         softQuota: {
@@ -642,9 +642,9 @@ describe('BlobStoresForm', function() {
   });
 
   it('edits an s3 blob store', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
-    when(axios.get).calledWith('/service/rest/v1/blobstores/s3/test').mockResolvedValue({
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/v1/blobstores/s3/test').mockResolvedValue({
       data: {
         name: 'test',
         bucketConfiguration: {
@@ -696,9 +696,9 @@ describe('BlobStoresForm', function() {
   });
 
   it('edits a file blob store', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
-    when(axios.get).calledWith('/service/rest/v1/blobstores/file/test').mockResolvedValue({
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/v1/blobstores/file/test').mockResolvedValue({
       data: {
         path: 'testPath',
         softQuota: {
@@ -735,9 +735,9 @@ describe('BlobStoresForm', function() {
   });
 
   it('edits a group blob store', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
-    when(axios.get).calledWith('/service/rest/v1/blobstores/group/test').mockResolvedValue({
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/v1/blobstores/group/test').mockResolvedValue({
       data: {
         "softQuota" : null,
         "members" : [ "test-converted" ],
@@ -768,9 +768,9 @@ describe('BlobStoresForm', function() {
   });
 
   it('convert to group is not shown when editing a group', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
-    when(axios.get).calledWith('/service/rest/v1/blobstores/group/test').mockResolvedValue({
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/v1/blobstores/group/test').mockResolvedValue({
       data: {
         "softQuota" : null,
         "members" : [ "test-converted" ],
@@ -789,12 +789,12 @@ describe('BlobStoresForm', function() {
   });
 
   it('converts to the group blob store', async function() {
-    const convertUrl = '/service/rest/v1/blobstores/group/convert/a-file%2Fee%3A%23%24%25%40/test_1';
+    const convertUrl = 'service/rest/v1/blobstores/group/convert/a-file%2Fee%3A%23%24%25%40/test_1';
     const errorMessage = 'Blob store could not be converted to a group blob store';
 
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
-    when(axios.get).calledWith('/service/rest/v1/blobstores/file/a-file%2Fee%3A%23%24%25%40').mockResolvedValue({
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/v1/blobstores/file/a-file%2Fee%3A%23%24%25%40').mockResolvedValue({
       data: {
         path: 'testPath',
         softQuota: {
@@ -846,10 +846,10 @@ describe('BlobStoresForm', function() {
   });
 
   it('log save error message when blobstore can not be added to group', async function() {
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
-    when(axios.get).calledWith('/service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
 
-    let updateUrl = '/service/rest/v1/blobstores/group/test';
+    let updateUrl = 'service/rest/v1/blobstores/group/test';
 
     when(axios.get).calledWith(updateUrl).mockResolvedValue({
       data: {
@@ -885,17 +885,17 @@ describe('BlobStoresForm', function() {
     expect(blobStoreTypesUrl).toBe('/service/rest/internal/ui/blobstores/types');
     expect(blobStoreQuotaTypesUrl).toBe('/service/rest/internal/ui/blobstores/quotaTypes');
 
-    expect(singleBlobStoreUrl(validName, invalidName)).toBe('/service/rest/v1/blobstores/foo-bar_test/%2Ftest%25%24%23%408*%3E%3F');
-    expect(singleBlobStoreUrl(invalidName, validName)).toBe('/service/rest/v1/blobstores/%2Ftest%25%24%23%408*%3E%3F/foo-bar_test');
+    expect(singleBlobStoreUrl(validName, invalidName)).toBe('service/rest/v1/blobstores/foo-bar_test/%2Ftest%25%24%23%408*%3E%3F');
+    expect(singleBlobStoreUrl(invalidName, validName)).toBe('service/rest/v1/blobstores/%2Ftest%25%24%23%408*%3E%3F/foo-bar_test');
 
-    expect(deleteBlobStoreUrl(validName)).toBe('/service/rest/v1/blobstores/foo-bar_test');
-    expect(deleteBlobStoreUrl(invalidName)).toBe('/service/rest/v1/blobstores/%2Ftest%25%24%23%408*%3E%3F');
+    expect(deleteBlobStoreUrl(validName)).toBe('service/rest/v1/blobstores/foo-bar_test');
+    expect(deleteBlobStoreUrl(invalidName)).toBe('service/rest/v1/blobstores/%2Ftest%25%24%23%408*%3E%3F');
 
-    expect(convertToGroupBlobStoreUrl(validName, invalidName)).toBe('/service/rest/v1/blobstores/group/convert/foo-bar_test/%2Ftest%25%24%23%408*%3E%3F');
-    expect(convertToGroupBlobStoreUrl(invalidName, validName)).toBe('/service/rest/v1/blobstores/group/convert/%2Ftest%25%24%23%408*%3E%3F/foo-bar_test');
+    expect(convertToGroupBlobStoreUrl(validName, invalidName)).toBe('service/rest/v1/blobstores/group/convert/foo-bar_test/%2Ftest%25%24%23%408*%3E%3F');
+    expect(convertToGroupBlobStoreUrl(invalidName, validName)).toBe('service/rest/v1/blobstores/group/convert/%2Ftest%25%24%23%408*%3E%3F/foo-bar_test');
 
-    expect(createBlobStoreUrl(validName)).toBe('/service/rest/v1/blobstores/foo-bar_test');
-    expect(createBlobStoreUrl(invalidName)).toBe('/service/rest/v1/blobstores/%2Ftest%25%24%23%408*%3E%3F');
+    expect(createBlobStoreUrl(validName)).toBe('service/rest/v1/blobstores/foo-bar_test');
+    expect(createBlobStoreUrl(invalidName)).toBe('service/rest/v1/blobstores/%2Ftest%25%24%23%408*%3E%3F');
 
     expect(blobStoreUsageUrl(validName)).toBe('/service/rest/internal/ui/blobstores/usage/foo-bar_test');
     expect(blobStoreUsageUrl(invalidName)).toBe('/service/rest/internal/ui/blobstores/usage/%2Ftest%25%24%23%408*%3E%3F');

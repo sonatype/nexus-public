@@ -35,7 +35,7 @@ export default function UpgradeAlert({onClose}) {
 
   function dismissAlert() {
     onClose();
-    axios.delete('/service/rest/v1/clustered/upgrade-database-schema')
+    axios.delete('service/rest/v1/clustered/upgrade-database-schema')
   }
 
   return <>

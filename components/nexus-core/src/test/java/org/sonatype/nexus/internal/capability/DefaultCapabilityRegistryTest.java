@@ -41,7 +41,7 @@ import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
-import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItem;
+import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemData;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.google.common.collect.ImmutableMap;
@@ -159,8 +159,14 @@ public class DefaultCapabilityRegistryTest
     when(capabilityStorage.newStorageItem(anyInt(), any(), anyBoolean(), any(), any()))
         .thenAnswer(i -> {
           Object[] args = i.getArguments();
-          return new OrientCapabilityStorageItem(
-              (Integer)args[0], (String)args[1], (Boolean)args[2], (String)args[3], (Map)args[4]);
+          final CapabilityStorageItem item = new CapabilityStorageItemData();
+          item.setVersion((Integer) args[0]);
+          item.setType((String) args[1]);
+          item.setEnabled((Boolean) args[2]);
+          item.setProperties((Map) args[4]);
+          item.setNotes((String) args[3]);
+
+          return item;
         });
 
     ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
@@ -299,9 +305,11 @@ public class DefaultCapabilityRegistryTest
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
 
-    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, oldProps
-    );
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(oldProps);
     CapabilityIdentity fooId = capabilityIdentity("foo");
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(fooId, item));
 
@@ -331,9 +339,12 @@ public class DefaultCapabilityRegistryTest
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
 
-    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, oldProps
-    );
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(oldProps);
+
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(capabilityIdentity("foo"), item));
 
     final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
@@ -372,9 +383,12 @@ public class DefaultCapabilityRegistryTest
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
 
-    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, oldProps
-    );
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(oldProps);
+
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(capabilityIdentity("foo"), item));
 
     final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
@@ -402,9 +416,12 @@ public class DefaultCapabilityRegistryTest
   public void loadWhenTypeIsUnknown()
       throws Exception
   {
-    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, null
-    );
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(null);
+
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(capabilityIdentity("foo"), item));
 
     when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(null);
@@ -452,9 +469,11 @@ public class DefaultCapabilityRegistryTest
     Map<String, String> properties = Maps.newHashMap();
     properties.put("foo", "encrypted:bar");
 
-    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, properties
-    );
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(properties);
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(capabilityIdentity("foo"), item));
 
     final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
@@ -504,10 +523,12 @@ public class DefaultCapabilityRegistryTest
   {
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("bad", "data");
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(oldProps);
 
-    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, oldProps
-    );
 
     CapabilityIdentity fooId = capabilityIdentity("foo");
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(fooId, item));
@@ -541,12 +562,13 @@ public class DefaultCapabilityRegistryTest
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("duplicate", "data");
 
-    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, oldProps
-    );
-    final CapabilityStorageItem duplicate = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, oldProps
-    );
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(oldProps);
+
+    final CapabilityStorageItem duplicate = item;
 
     CapabilityIdentity fooId = capabilityIdentity("foo");
     CapabilityIdentity barId = capabilityIdentity("bar");
@@ -586,9 +608,11 @@ public class DefaultCapabilityRegistryTest
     oldProps.put("p2", "v2");
     oldProps.put("password", passwordHelper.decrypt("admin123"));
 
-    final CapabilityStorageItem item = new OrientCapabilityStorageItem(
-        0, CAPABILITY_TYPE.toString(), true, null, oldProps
-    );
+    final CapabilityStorageItem item = new CapabilityStorageItemData();
+    item.setVersion(0);
+    item.setType(CAPABILITY_TYPE.toString());
+    item.setEnabled(true);
+    item.setProperties(oldProps);
     CapabilityIdentity fooId = capabilityIdentity("foo");
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(fooId, item));
 

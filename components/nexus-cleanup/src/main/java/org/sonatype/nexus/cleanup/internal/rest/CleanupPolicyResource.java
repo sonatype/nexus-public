@@ -52,7 +52,7 @@ import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyCreatedEvent;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyDeletedEvent;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyUpdatedEvent;
-import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
+import org.sonatype.nexus.cleanup.internal.preview.CsvCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.rest.CleanupPolicyRequestValidator;
 import org.sonatype.nexus.cleanup.rest.CleanupPolicyXO;
@@ -137,7 +137,7 @@ public class CleanupPolicyResource
 
   private final boolean isPreviewEnabled;
 
-  private final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
+  private final CsvCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
 
   private final Collection<CleanupPolicyRequestValidator> cleanupPolicyValidators;
 
@@ -150,7 +150,7 @@ public class CleanupPolicyResource
       final RepositoryManager repositoryManager,
       final EventManager eventManager,
       @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled,
-      final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter,
+      final CsvCleanupPreviewContentWriter csvCleanupPreviewContentWriter,
       final Collection<CleanupPolicyRequestValidator> cleanupPolicyValidators)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);

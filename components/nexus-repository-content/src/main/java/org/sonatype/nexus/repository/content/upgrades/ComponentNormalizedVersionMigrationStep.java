@@ -21,13 +21,14 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTaskDescriptor;
-import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
 import static java.lang.String.format;
@@ -37,7 +38,8 @@ import static java.lang.String.format;
  */
 @Named
 public class ComponentNormalizedVersionMigrationStep
-    extends RepeatableDatabaseMigrationStep
+    extends ComponentSupport
+    implements RepeatableDatabaseMigrationStep
 {
   private final String TABLE_NAME = "{format}_component";
 

@@ -21,7 +21,6 @@ import javax.inject.Named;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.internal.security.model.orient.OrientCUserRoleMapping;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
@@ -30,6 +29,7 @@ import org.sonatype.nexus.security.config.CUserRoleMapping;
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
+import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
 import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.DuplicateRoleException;
@@ -62,7 +62,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.security.config.CUser.STATUS_ACTIVE;
 
@@ -164,14 +163,12 @@ public class SecurityConfigurationSourceImplTest
     }).getInstance(SecurityConfigurationSourceImpl.class);
 
     UnitOfWork.beginBatch(() -> sessionRule.openSession(DEFAULT_DATASTORE_NAME));
-    System.setProperty(ORIENT_ENABLED, "false");
     underTest.start();
     underTest.loadConfiguration();
   }
 
   @After
   public void cleanup() {
-    System.clearProperty(ORIENT_ENABLED);
     UnitOfWork.end();
   }
 
@@ -377,7 +374,7 @@ public class SecurityConfigurationSourceImplTest
   private void testUserRoleMappings_notCaseSensitive(final String src) throws Exception {
     Set<String> roles = singleton("test-role");
     String userId = "userid";
-    CUserRoleMapping newUserRoleMapping = new OrientCUserRoleMapping();
+    CUserRoleMapping newUserRoleMapping = new MemoryCUserRoleMapping();
     newUserRoleMapping.setUserId(userId);
     newUserRoleMapping.setSource(src);
     newUserRoleMapping.setRoles(roles);

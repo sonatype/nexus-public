@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.upgrade.datastore.internal;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -32,7 +33,8 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
  * @since 3.29
  */
 @Named
-@FeatureFlag(name = FeatureFlags.DATASTORE_CLUSTERED_ENABLED, inverse = true, enabledByDefault = true)
+@FeatureFlag(name = FeatureFlags.CLUSTERED_ZERO_DOWNTIME_ENABLED, inverse = true, enabledByDefault = true)
+@Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = UPGRADE)
 @Singleton
 public class UpgradeServiceImpl

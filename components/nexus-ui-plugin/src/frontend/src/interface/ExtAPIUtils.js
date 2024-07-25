@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import axios from 'axios';
+import Axios from 'axios';
 import {assign, createMachine} from 'xstate';
 import {useMachine} from '@xstate/react';
 import {mergeDeepRight} from 'ramda';
@@ -188,7 +188,7 @@ export default class ExtAPIUtils {
    */
   static extAPIRequest(action, method, options = null) {
     this.setupTokenInterceptors();
-    return axios.post(URL, this.createRequestBody(action, method, options));
+    return Axios.post(URL, this.createRequestBody(action, method, options));
   }
 
   /**
@@ -203,12 +203,12 @@ export default class ExtAPIUtils {
     const data = requests.map(({action, method, options}, index) => {
       return this.createRequestBody(action, method, options, index + 1);
     });
-    return axios.post(URL, data);
+    return Axios.post(URL, data);
   }
 
   static setupTokenInterceptors() {
     if (!this.interceptorSet && process.env.NODE_ENV !== 'test') {
-      axios.interceptors.request.use(
+      Axios.interceptors.request.use(
           function(config) {
             const csrfToken = (document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)') || 0)[2];
             if (csrfToken) {

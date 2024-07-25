@@ -27,6 +27,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.role.Role;
@@ -36,7 +37,6 @@ import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
-import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
@@ -252,7 +252,7 @@ public class SelectorManagerImplTest
 
   @Test
   public void testDelete_Succeeds() {
-    OrientSelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = new SelectorConfigurationData();
     selectorConfiguration.setName("selector");
     selectorConfiguration.setType(CselSelector.TYPE);
 
@@ -311,8 +311,21 @@ public class SelectorManagerImplTest
     verify(userCache, atLeastOnce()).put(any(), any());
   }
 
+  @Test
+  public void testAnonymousUserIsTakenFromSystemIfNoValueInCache() throws UserNotFoundException {
+    when(subject.isAuthenticated()).thenReturn(false);
+    when(subject.getPrincipals()).thenReturn(new AnonymousPrincipalCollection("anonymous", "default"));
+    when(userCache.get(any())).thenReturn(null);
+    when(securitySystem.currentUser()).thenReturn(user);
+
+    manager.browseActive(null, null);
+
+    verify(securitySystem, atMostOnce()).currentUser();
+    verify(userCache, atLeastOnce()).put(any(), any());
+  }
+
   private SelectorConfiguration getSelectorConfiguration(final String type, final String expression) {
-    SelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = new SelectorConfigurationData();
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("expression", expression);
     selectorConfiguration.setAttributes(attributes);
@@ -329,7 +342,7 @@ public class SelectorManagerImplTest
     createRole(roleId, rolePrivilegeId);
     createRepositoryContentSelectorPrivilege(rolePrivilegeId, roleSelectorName, repositoryName);
 
-    SelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = new SelectorConfigurationData();
     selectorConfiguration.setName(roleSelectorName);
 
     selectorConfigurations.add(selectorConfiguration);

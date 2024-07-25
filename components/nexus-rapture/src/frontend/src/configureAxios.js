@@ -33,6 +33,7 @@ export default function configureAxios() {
       else {
         config.url += '?_dc=' + timestamp;
       }
+
       return axiosAdapter(config);
     };
   }

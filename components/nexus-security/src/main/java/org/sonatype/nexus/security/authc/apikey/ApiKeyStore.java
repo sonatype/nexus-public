@@ -85,34 +85,34 @@ public interface ApiKeyStore
   /**
    * Deletes the API-Key associated with the given principals in given domain.
    */
-  void deleteApiKey(String domain, PrincipalCollection principals);
+  int deleteApiKey(String domain, PrincipalCollection principals);
 
   /**
    * Deletes every API-Key associated with the given principals in every domain.
    */
-  void deleteApiKeys(PrincipalCollection principals);
+  int deleteApiKeys(PrincipalCollection principals);
 
   /**
    * Deletes all API-Keys.
    *
    * @since 3.1
    */
-  void deleteApiKeys();
+  int deleteApiKeys();
 
   /**
    * Deletes all API-Keys for the specified domain
    */
-  void deleteApiKeys(String domain);
+  int deleteApiKeys(String domain);
 
   /**
    * Purges any API-Keys associated with missing/deleted users.
    */
-  void purgeApiKeys();
+  int purgeApiKeys();
 
   /**
    * Remove all expired API-Keys
    */
-  void deleteApiKeys(OffsetDateTime expiration);
+  int deleteApiKeys(OffsetDateTime expiration);
 
   /**
    * Updates an existing API-key.

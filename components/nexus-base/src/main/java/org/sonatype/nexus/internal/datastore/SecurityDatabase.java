@@ -23,7 +23,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.internal.orient.DatabaseManagerImpl;
 import org.sonatype.nexus.supportzip.ExportSecurityData;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -43,7 +42,9 @@ public class SecurityDatabase
     extends ComponentSupport
     implements SupportBundleCustomizer
 {
-  private static final Path PATH = Paths.get("work", DatabaseManagerImpl.WORK_PATH);
+  public static final String WORK_PATH = "db";
+
+  private static final Path PATH = Paths.get("work", WORK_PATH);
 
   private static final String FILE_SUFFIX = ".json";
 

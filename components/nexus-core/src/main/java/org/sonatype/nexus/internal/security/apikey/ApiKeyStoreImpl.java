@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -134,29 +133,32 @@ public class ApiKeyStoreImpl
 
   @Transactional
   @Override
-  public void deleteApiKey(final String domain, final PrincipalCollection principals) {
-    findApiKey(domain, principals)
+  public int deleteApiKey(final String domain, final PrincipalCollection principals) {
+    return findApiKey(domain, principals)
         .map(ApiKey::getApiKey)
         .map(ApiKeyToken::new)
-        .ifPresent(token -> dao().deleteKey(domain, token));
+        .map(token -> dao().deleteKey(domain, token))
+        .orElse(0);
   }
 
   @Transactional
   @Override
-  public void deleteApiKeys(final PrincipalCollection principals) {
-    dao().findApiKeysForPrimary(principals.getPrimaryPrincipal().toString()).stream()
+  public int deleteApiKeys(final PrincipalCollection principals) {
+    return dao().findApiKeysForPrimary(principals.getPrimaryPrincipal().toString()).stream()
         .filter(principalMatches(principals))
-        .forEach(key -> dao().deleteKey(key.getDomain(), new ApiKeyToken(key.getApiKey())));
+        .map(key -> dao().deleteKey(key.getDomain(), new ApiKeyToken(key.getApiKey())))
+        .mapToInt(Integer::intValue)
+        .sum();
   }
 
   @Transactional
   @Override
-  public void deleteApiKeys() {
-    dao().deleteAllKeys();
+  public int deleteApiKeys() {
+    return dao().deleteAllKeys();
   }
 
   @Override
-  public void purgeApiKeys() {
+  public int purgeApiKeys() {
     checkCancellation();
     List<PrincipalCollection> candidates = newArrayList(doBrowsePrincipals());
     for (Iterator<PrincipalCollection> itr = candidates.iterator(); itr.hasNext(); ) {
@@ -165,10 +167,12 @@ public class ApiKeyStoreImpl
         itr.remove(); // don't purge keys belonging to existing users
       }
     }
+    int deleted = 0;
     for (PrincipalCollection principals : candidates) {
       checkCancellation();
-      deleteApiKeys(principals);
+      deleted += deleteApiKeys(principals);
     }
+    return deleted;
   }
 
   @Transactional
@@ -219,14 +223,14 @@ public class ApiKeyStoreImpl
 
   @Transactional
   @Override
-  public void deleteApiKeys(final String domain) {
-    dao().deleteApiKeysByDomain(domain);
+  public int deleteApiKeys(final String domain) {
+    return dao().deleteApiKeysByDomain(domain);
   }
 
   @Transactional
   @Override
-  public void deleteApiKeys(final OffsetDateTime expiration) {
-    dao().deleteApiKeyByExpirationDate(expiration);
+  public int deleteApiKeys(final OffsetDateTime expiration) {
+    return dao().deleteApiKeyByExpirationDate(expiration);
   }
 
   @Transactional

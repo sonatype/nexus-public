@@ -29,6 +29,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     useState: jest.fn(),
     usePermission: jest.fn(),
     useUser: jest.fn(),
+    urlOf: jest.fn()
   },
 }));
 
@@ -44,7 +45,7 @@ describe('UpgradeModal', () => {
         .mockReturnValue(true);
 
     when(ExtJS.state().getValue)
-        .calledWith('nexus.datastore.clustered.enabled')
+        .calledWith('nexus.zero.downtime.enabled')
         .mockReturnValue(true);
   });
   

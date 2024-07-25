@@ -26,7 +26,7 @@ public interface FeatureFlags
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 
-  /* Database externalization. Available values: true, false. Default value: false */
+  /* Database externalization. Available values: true, false. Default value: true */
   String DATASTORE_ENABLED = "nexus.datastore.enabled";
   String DATASTORE_ENABLED_NAMED = "${nexus.datastore.enabled:-true}";
 
@@ -38,6 +38,11 @@ public interface FeatureFlags
   String DATASTORE_CLUSTERED_ENABLED = "nexus.datastore.clustered.enabled";
   String DATASTORE_CLUSTERED_ENABLED_NAMED = "${nexus.datastore.clustered.enabled:-false}";
 
+  /* Zero downtime upgrades while clustered. Available values: true, false. Default value: false */
+  String CLUSTERED_ZERO_DOWNTIME_ENABLED = "nexus.zero.downtime.enabled";
+  String CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED = "${nexus.zero.downtime.enabled:-false}";
+  String CLUSTERED_ZERO_DOWNTIME_ENABLED_ENV = "NEXUS_ZERO_DOWNTIME_ENABLED";
+
   /* Feature flag to indicate if current db is postgresql */
   String DATASTORE_IS_POSTGRESQL = "datastore.isPostgresql";
 
@@ -45,9 +50,6 @@ public interface FeatureFlags
   String ELASTIC_SEARCH_ENABLED = "nexus.elasticsearch.enabled";
 
   String ELASTIC_SEARCH_ENABLED_NAMED = "${nexus.elasticsearch.enabled:-false}";
-
-  /* Orient flag for marking content that is orient only, and should be disabled when datastore is enabled */
-  String ORIENT_ENABLED = "nexus.orient.enabled";
 
   /* JWT externalization. Available values: true, false. Default value: false */
   String JWT_ENABLED = "nexus.jwt.enabled";
@@ -57,9 +59,6 @@ public interface FeatureFlags
 
   /* HTTP Replication. Available values: true, false. Default value: true */
   String REPLICATION_HTTP_ENABLED = "nexus.replication.http.enabled";
-
-  /* V1 Replication. Available values: true, false. Default value: false */
-  String REPLICATION_V1_ENABLED = "nexus.replication.v1.enabled";
 
   /* flag for skipping blob store with soft-quota violation (for Round Robin group policy)
   *  Available values: true, false. Default value: false
@@ -156,6 +155,10 @@ public interface FeatureFlags
 
   String H2_DATABASE_EXPORT_SCRIPT_TASK_ENABLED_NAMED = "${nexus.database.export.script.task.h2.enabled:-true}";
 
+  /* When false skips the orient not supported error. Available values: true, false. Default value: true */
+  String ORIENT_WARNING = "nexus.orient.warning";
+  String ORIENT_WARNING_NAMED = "${nexus.orient.warning:-true}";
+
   /**
    * When true (default), the Secure attribute will be set on the NXSESSIONID Cookie when delivered over https.
    * In deployments with HTTP-only listeners, this setting will typically have no effect.
@@ -164,8 +167,6 @@ public interface FeatureFlags
    * See https://owasp.org/www-community/controls/SecureCookieAttribute
    */
   String NXSESSIONID_SECURE_COOKIE_NAMED = "${nexus.session.secureCookie:-true}";
-
-  String API_EXTENDED = "nexus.api.extended.enabled";
 
   String ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_NAMED = "${nexus.audit.attribute.changes.enabled:-true}";
 
@@ -176,4 +177,16 @@ public interface FeatureFlags
   /* For testing purposes only */
   String ZERO_DOWNTIME_BASELINE_FAIL = "nexus.zdu.baseline.fail";
 
+  /* For testing purposes only */
+  String ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED = "nexus.zdu.future.enabled";
+
+  String MALICIOUS_RISK_ENABLED = "nexus.malicious.risk.enabled";
+
+  String MALICIOUS_RISK_ENABLED_NAMED = "${nexus.malicious.risk.enabled:-false}";
+
+  String CONAN_V2_ENABLED = "nexus.conan.v2.enabled";
+
+  String CONAN_V2_ENABLED_NAMED = "${nexus.conan.v2.enabled:-false}";
+
+  String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
 }

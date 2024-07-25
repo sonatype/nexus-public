@@ -19,7 +19,6 @@ import javax.validation.Path
 import org.sonatype.nexus.extdirect.model.ErrorResponse
 import org.sonatype.nexus.extdirect.model.ValidationResponse
 
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException
 import com.softwarementors.extjs.djn.api.RegisteredMethod
 import fake.com.sonatype.insight.rm.rest.HttpException
 import org.junit.Test
@@ -30,17 +29,6 @@ import static org.mockito.Mockito.when
 class ExtDirectExceptionHandlerTest
 {
   private ExtDirectExceptionHandler exceptionHandler = new ExtDirectExceptionHandler();
-
-  @Test
-  void handleExceptionHidesOExceptionDetails() {
-    RegisteredMethod registeredMethod = mock(RegisteredMethod)
-
-    def exception = new OCommandSQLParsingException('error message containing orient syntax')
-
-    ErrorResponse response = (ErrorResponse) exceptionHandler.handleException(registeredMethod, exception)
-
-    assert response.message == 'A database error occurred'
-  }
 
   @Test
   void handleIQConnectionException() {

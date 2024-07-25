@@ -156,12 +156,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.SearchBower',
-      active: function () {
-        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-bower');
-      }
-    },
-    {
       id: 'NX.coreui.controller.SearchConan',
       active: function () {
         return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-conan');

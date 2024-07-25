@@ -162,7 +162,6 @@ export default {
       REPLICATION_LABEL: 'Replication',
       REPLICATION_SUBLABEL: 'If checked, this repository is the target of a replication',
       REWRITE_URLS_LABEL: 'Enable Rewrite of Package URLs',
-      REWRITE_URLS_DESCR: 'Force Bower to retrieve packages through the proxy repository',
       REPODATA_DEPTH_LABEL: 'Repodata Depth',
       REPODATA_DEPTH_SUBLABEL: 'Specifies the repository depth where the repodata folder are created',
       LAYOUT_POLICY_LABEL: 'Layout Policy',
@@ -274,7 +273,6 @@ export default {
         REMOVE: 'Remove',
       },
       REMOTE_URL_EXAMPLES: {
-        bower: ' (e.g., https://registry.bower.io)',
         docker: ' (e.g., https://registry-1.docker.io)',
         maven2: ' (e.g., https://repo1.maven.org/maven2/)',
         npm: ' (e.g., https://registry.npmjs.org)',

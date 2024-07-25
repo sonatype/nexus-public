@@ -87,7 +87,6 @@ testProjects = [':functional-testsuite', ':nexus-analytics-testsupport', ':nexus
    karafSshPort=8023
    javaDebugPort=5006
    ssl=true
-   orient=true
    elastic=false
    takari=false
    deploy=true
@@ -108,7 +107,6 @@ configDefaults = [
     karafSshPort : 8022,
     javaDebugPort: 5005,
     ssl          : true,   // SSL is enabled by default
-    orient       : true,   // Orient access (binary/Studio) is enabled by default
     elastic      : false,  // Elastic is disabled by default
     takari       : false,  // Takari is disabled by default
     caching      : false,  // Maven build caching disabled by default
@@ -222,7 +220,6 @@ ConfigObject processRcConfigFile() {
   config.javaDebugPort = cliOptions.'java-debug-port' ?: config.javaDebugPort
 
   config.ssl = assign('ssl', 'no-ssl', config.ssl)
-  config.orient = assign('orient', 'no-orient', config.orient)
   config.elastic = assign('elastic', 'no-elastic', config.elastic)
   config.takari = assign('takari', 'no-takari', config.takari)
   config.deploy = assign('deploy', 'no-deploy', config.deploy)
@@ -368,8 +365,6 @@ def processCliOptions(args) {
     _ longOpt: 'ssl', 'Enable SSL (if disabled by config)'
     _ longOpt: 'no-ssl', 'Disable SSL (enabled by default)'
     _ longOpt: 'ssl-ip', args: 1, 'Provide the ip address of this machine to generate an SSL certificate for use with Docker'
-    _ longOpt: 'orient', 'Enable Orient (if disabled by config)'
-    _ longOpt: 'no-orient', 'Disable Orient (enabled by default)'
     _ longOpt: 'elastic', 'Enable Elastic plugins (disabled by default)'
     _ longOpt: 'no-elastic', 'Disable Elastic plugins (if enabled by config)'
     _ longOpt: 'takari', 'Enable Takari (disabled by default)'
@@ -994,22 +989,6 @@ def checkSSH() {
 
 }
 
-def checkOrient() {
-  if (rcConfig.orient) {
-    debug("Enabling Orient")
-
-    // Update nexus.properties (and default files)
-    List<String> files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/nexus*.properties")
-    files.each {
-      ensurePresentInFile(new File(it), "nexus.orient.binaryListenerEnabled=true")
-      ensurePresentInFile(new File(it), "nexus.orient.dynamicPlugins=true")
-    }
-  }
-  else {
-    debug('Skipping Orient config')
-  }
-}
-
 def checkElastic() {
   if (rcConfig.elastic) {
     debug("Enabling Elastic")
@@ -1072,7 +1051,6 @@ def runNxrm() {
   checkRestore()
   checkSSL()
   checkSSH()
-  checkOrient()
   checkElastic()
   checkPorts()
 

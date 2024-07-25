@@ -78,7 +78,8 @@ public class UpgradeManagerImpl
   }
 
   @Override
-  public void migrate(@Nullable final String user, final Collection<String> nodeIds) throws UpgradeException {
+  public void migrate(@Nullable final String user, final Collection<String> nodeIds) throws UpgradeException
+  {
     Flyway flyway = createFlyway();
 
     // Compute current state
@@ -198,10 +199,10 @@ public class UpgradeManagerImpl
       log.error("Missing migrations: {}", missingMigrations);
     }
 
-   if (!missingMigrations.isEmpty()) {
-     log.error("Missing migrations: {}", missingMigrations);
-     throw new UpgradeException("The database appears to be from a later version of Nexus Repository");
-   }
+    if (!missingMigrations.isEmpty()) {
+      log.error("Missing migrations: {}", missingMigrations);
+      throw new UpgradeException("The database appears to be from a later version of Nexus Repository");
+    }
   }
 
   private void emitStarted(@Nullable final String user, final MigrationInfoService info) {
@@ -215,7 +216,11 @@ public class UpgradeManagerImpl
     auditor.post(new UpgradeFailedEvent(user, flyway.info().getInfoResult().schemaVersion, errorMessage));
   }
 
-  private void emitCompleted(@Nullable final String user, final Collection<String> nodeIds, final MigrateResult result) {
+  private void emitCompleted(
+      @Nullable final String user,
+      final Collection<String> nodeIds,
+      final MigrateResult result)
+  {
     if (result.migrationsExecuted > 0) {
       auditor.post(new UpgradeCompletedEvent(user, result.targetSchemaVersion, nodeIds, result.migrations.stream()
           .map(m -> m.description)
@@ -230,11 +235,11 @@ public class UpgradeManagerImpl
     checkNotNull(migrations);
 
     List<String> failures = migrations.stream()
-      .filter(migration -> migration.version().isPresent())
-      .map(Object::getClass)
-      .map(Class::getName)
-      .filter(className -> !className.startsWith("org.sonatype"))
-      .collect(Collectors.toList());
+        .filter(migration -> migration.version().isPresent())
+        .map(Object::getClass)
+        .map(Class::getName)
+        .filter(className -> !className.startsWith("org.sonatype"))
+        .collect(Collectors.toList());
 
     if (!failures.isEmpty()) {
       throw new IllegalArgumentException(

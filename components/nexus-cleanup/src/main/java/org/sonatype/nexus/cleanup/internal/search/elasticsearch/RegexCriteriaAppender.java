@@ -20,8 +20,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.RegexpQueryBuilder;
 
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
 import static org.sonatype.nexus.cleanup.storage.config.RegexCriteriaValidator.validate;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
 
 /**
  * Appends criteria for matches based on regular expression

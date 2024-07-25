@@ -18,8 +18,7 @@ package org.sonatype.nexus.pax.exam;
 public enum TestDatabase
 {
   H2(true),
-  POSTGRES(true),
-  ORIENT(false);
+  POSTGRES(true);
 
   final boolean useContentStore;
 

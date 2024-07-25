@@ -20,29 +20,19 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 
 /**
- * Read blob store metrics from properties file (metrics.properties)
+ * Read blob store metrics from properties files
  */
-public interface BlobStoreMetricsPropertiesReader
+public interface BlobStoreMetricsPropertiesReader<B extends BlobStore>
 {
-  default String metricsFilename() {
-    return "metrics.properties";
-  }
+  /**
+   * Retrieve the metrics for the attached blobstore.
+   */
+  BlobStoreMetrics getMetrics();
 
   /**
-   * Initialize metrics reader for given blob store.
-   * @param blobStore
+   * Get the operation metrics for the attached blobstore.
    */
-  void initWithBlobStore(BlobStore blobStore) throws Exception;
+  Map<OperationType, OperationMetrics> getOperationMetrics();
 
-  /**
-   * Read common blob store metrics.
-   * @return blob store metrics
-   */
-  BlobStoreMetrics readMetrics() throws Exception;
-
-  /**
-   * Read blob store operation metrics.
-   * @return operation metrics
-   */
-  Map<OperationType, OperationMetrics> readOperationMetrics() throws Exception;
+  void init(B blobStore) throws Exception;
 }

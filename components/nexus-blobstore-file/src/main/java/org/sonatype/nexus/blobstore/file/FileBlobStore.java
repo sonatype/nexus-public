@@ -40,6 +40,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -124,7 +125,6 @@ public class FileBlobStore
 
   public static final String TYPE = "File";
 
-  @VisibleForTesting
   public static final String CONFIG_KEY = "file";
 
   public static final String PATH_KEY = "path";
@@ -166,7 +166,7 @@ public class FileBlobStore
 
   private Path basedir;
 
-  private FileBlobStoreMetricsService metricsService;
+  private BlobStoreMetricsService<FileBlobStore> metricsService;
 
   private LoadingCache<BlobId, FileBlob> liveBlobs;
 
@@ -191,7 +191,7 @@ public class FileBlobStore
       final BlobIdLocationResolver blobIdLocationResolver,
       final FileOperations fileOperations,
       final ApplicationDirectories applicationDirectories,
-      final FileBlobStoreMetricsService metricsService,
+      @Named(FileBlobStore.TYPE) final BlobStoreMetricsService<FileBlobStore> metricsService,
       final NodeAccess nodeAccess,
       final DryRunPrefix dryRunPrefix,
       final BlobStoreReconciliationLogger reconciliationLogger,
@@ -217,7 +217,7 @@ public class FileBlobStore
       final Path contentDir, //NOSONAR
       final BlobIdLocationResolver blobIdLocationResolver,
       final FileOperations fileOperations,
-      final FileBlobStoreMetricsService metricsService,
+      final BlobStoreMetricsService<FileBlobStore> metricsService,
       final BlobStoreConfiguration configuration,
       final ApplicationDirectories directories,
       final NodeAccess nodeAccess,
@@ -252,9 +252,7 @@ public class FileBlobStore
     }
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(FileBlob::new));
     blobDeletionIndex.initIndex(metadata, this);
-    metricsService.setStorageDir(storageDir);
-    metricsService.setBlobStore(this);
-    metricsService.start();
+    metricsService.init(this);
 
     blobStoreQuotaUsageChecker.setBlobStore(this);
     blobStoreQuotaUsageChecker.start();
@@ -607,7 +605,7 @@ public class FileBlobStore
 
   @Override
   @Guarded(by = STARTED)
-  public BlobStoreMetricsService getMetricsService() {
+  public BlobStoreMetricsService<FileBlobStore> getMetricsService() {
     return metricsService;
   }
 

@@ -34,6 +34,7 @@ import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
@@ -71,6 +72,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
+import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
@@ -261,6 +263,7 @@ public class MavenContentFacetImpl
     return saveAsset(mavenPath, component, content, blob);
   }
 
+  @Transactional
   private FluentComponent createOrGetComponent(final MavenPath mavenPath, final Optional<Model> model)
   {
     Optional<String> optionalKind = model.map(MavenAttributesHelper::getPackaging);
@@ -589,6 +592,7 @@ public class MavenContentFacetImpl
     }
   }
 
+  @Transactional
   @Override
   public FluentComponent copy(final Component source) {
     FluentComponentBuilder componentBuilder = components()
@@ -634,6 +638,18 @@ public class MavenContentFacetImpl
   }
 
   @Override
+  public void updateBaseVersion(final Maven2ComponentData component) {
+    Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
+    componentStore.updateBaseVersion(component);
+  }
+
+  @Override
+  public Iterable<FluentComponent> getComponentsWithMissedBaseVersion() {
+    return Continuations.iterableOf(components()
+        .byFilter("base_version IS NULL", Collections.emptyMap())::browse);
+  }
+
+  @Override
   public Continuation<FluentComponent> findComponentsForBaseVersion(
       final int limit,
       @Nullable final String continuationToken,
@@ -650,6 +666,7 @@ public class MavenContentFacetImpl
   }
 
 
+  @Transactional
   private FluentComponent createOrGetComponent(final Coordinates coordinates) {
     MavenContentFacet facet = getRepository().facet(MavenContentFacet.class);
     final String artifactId = coordinates.getArtifactId();

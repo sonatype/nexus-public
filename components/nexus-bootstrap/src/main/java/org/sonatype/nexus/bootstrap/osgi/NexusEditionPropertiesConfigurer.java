@@ -20,9 +20,8 @@ import java.util.Properties;
 
 import org.sonatype.nexus.bootstrap.internal.DirectoryHelper;
 
-import org.osgi.framework.Version;
-
 import com.google.common.annotations.VisibleForTesting;
+import org.osgi.framework.Version;
 
 import static java.lang.Boolean.parseBoolean;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
@@ -57,7 +56,7 @@ public class NexusEditionPropertiesConfigurer
     Path workDirPath = new File(properties.getProperty("karaf.data")).getCanonicalFile().toPath();
     DirectoryHelper.mkdir(workDirPath);
 
-    NexusEditionFactory.selectActiveEdition(properties,workDirPath);
+    NexusEditionFactory.selectActiveEdition(properties, workDirPath);
 
     selectDatastoreFeature(properties);
     selectAuthenticationFeature(properties);
@@ -81,24 +80,28 @@ public class NexusEditionPropertiesConfigurer
           Boolean.toString(parseBoolean(System.getenv("FIREWALL_QUARANTINE_FIX_ENABLED"))));
     }
 
+    // Used by ZDU ITs to simulate migration failures
     if (properties.getProperty(ZERO_DOWNTIME_BASELINE_FAIL) == null) {
       properties.setProperty(ZERO_DOWNTIME_BASELINE_FAIL,
           Optional.ofNullable(System.getenv("NEXUS_ZDU_BASELINE_FAIL")).orElse(FALSE));
     }
+
+    // Used by ZDU ITs to simulate behavior when future migrations are available
+    if (properties.getProperty(ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED) == null) {
+      properties.setProperty(ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED,
+          Optional.ofNullable(System.getenv("NEXUS_ZDU_FUTURE_MIGRATION_ENABLED")).orElse(FALSE));
+    }
   }
 
   private void selectDatastoreFeature(final Properties properties) {
-    // datastore developer mode includes datastore user mode
-    if (parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, FALSE))) {
-      properties.setProperty(DATASTORE_ENABLED, TRUE);
-    }
+    properties.setProperty(DATASTORE_ENABLED, TRUE);
 
     // table search should only be turned on via clustered flag
     if (parseBoolean(properties.getProperty(DATASTORE_CLUSTERED_ENABLED,
-        Optional.ofNullable(System.getenv("DATASTORE_CLUSTERED_ENABLED")).orElse(FALSE)))) {
+        Optional.ofNullable(System.getenv("DATASTORE_CLUSTERED_ENABLED")).orElse(FALSE))))
+    {
       // As we read the ENV variable we need to enable feature flagged classes using in-memory properties hashtable
       properties.setProperty(DATASTORE_CLUSTERED_ENABLED, TRUE);
-      properties.setProperty(DATASTORE_ENABLED, TRUE);
       properties.setProperty(DATASTORE_TABLE_SEARCH, TRUE);
       properties.setProperty(ELASTIC_SEARCH_ENABLED, FALSE);
       properties.setProperty(SQL_DISTRIBUTED_CACHE, TRUE);
@@ -106,13 +109,21 @@ public class NexusEditionPropertiesConfigurer
       // JWT and Blobstore Metrics should also be enabled for clustered
       properties.setProperty(JWT_ENABLED, TRUE);
       properties.setProperty(DATASTORE_BLOBSTORE_METRICS, TRUE);
+
+      // Enable zero downtime based on property and flag
+      String zduEnabled = Optional.ofNullable(System.getenv(CLUSTERED_ZERO_DOWNTIME_ENABLED_ENV))
+          .orElse(properties.getProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, FALSE));
+      properties.setProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, zduEnabled);
+    }
+    else {
+      // Set default of clustered upgrades off
+      properties.setProperty(CLUSTERED_ZERO_DOWNTIME_ENABLED, FALSE);
     }
 
     // datastore search mode enables datastore user mode
     // disables elastic search mode
     // table search should only be turned on via clustered flag
     if (parseBoolean(properties.getProperty(DATASTORE_TABLE_SEARCH, FALSE))) {
-      properties.setProperty(DATASTORE_ENABLED, TRUE);
       properties.setProperty(ELASTIC_SEARCH_ENABLED, FALSE);
     }
 
@@ -121,33 +132,20 @@ public class NexusEditionPropertiesConfigurer
       properties.setProperty(DATASTORE_TABLE_SEARCH, FALSE);
     }
 
-    if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, TRUE))) {
-      // datastore mode disables orient
-      properties.setProperty(ORIENT_ENABLED, FALSE);
-
-      // datastore mode, but not developer mode
-      if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, FALSE))) {
-        // exclude unfinished format features
-        properties.setProperty(NEXUS_EXCLUDE_FEATURES,
-            properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
-      }
+    // datastore mode, but not developer mode
+    if (!parseBoolean(properties.getProperty(DATASTORE_DEVELOPER, FALSE))) {
+      // exclude unfinished format features
+      properties.setProperty(NEXUS_EXCLUDE_FEATURES, properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
     }
 
     selectDbFeature(properties);
   }
 
   private void selectDbFeature(final Properties properties) {
-    if (parseBoolean(properties.getProperty(DATASTORE_ENABLED, TRUE))) {
-      properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
-      //enable change blobstore task for only for newdb
-      properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED, TRUE);
-      properties.setProperty("nexus.quartz.jobstore.jdbc", TRUE);
-    }
-    else {
-      ensureOrientRunningWithCorrectJavaRuntime();
-      properties.setProperty(NEXUS_DB_FEATURE, "nexus-orient");
-      properties.setProperty(ORIENT_ENABLED, TRUE);
-    }
+    properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
+    //enable change blobstore task for only for newdb
+    properties.setProperty(CHANGE_REPO_BLOBSTORE_TASK_ENABLED, TRUE);
+    properties.setProperty("nexus.quartz.jobstore.jdbc", TRUE);
   }
 
   @VisibleForTesting

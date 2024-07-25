@@ -183,7 +183,7 @@ public class RepositoryManagerImpl
     repository.attach(configFacet.get());
 
     // apply recipe to repository
-    recipe.apply(repository);
+    recipe.apply(repository, configuration);
 
     // verify required facets
     repository.facet(ViewFacet.class);

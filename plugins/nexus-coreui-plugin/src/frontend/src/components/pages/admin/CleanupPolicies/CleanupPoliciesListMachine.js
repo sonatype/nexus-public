@@ -31,6 +31,6 @@ export default ListMachineUtils.buildListMachine({
     })
   },
   services: {
-    fetchData: () => Axios.get('/service/rest/internal/cleanup-policies')
+    fetchData: () => Axios.get('service/rest/internal/cleanup-policies')
   }
 });

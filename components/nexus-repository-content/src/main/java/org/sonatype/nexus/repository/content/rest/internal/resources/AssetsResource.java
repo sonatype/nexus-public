@@ -69,7 +69,7 @@ public class AssetsResource
     extends AssetsResourceSupport
     implements Resource, AssetsResourceDoc
 {
-  static final String RESOURCE_URI = V1_API_PREFIX + "/assets";
+  public static final String RESOURCE_URI = V1_API_PREFIX + "/assets";
 
   static final int PAGE_SIZE = 10;
 

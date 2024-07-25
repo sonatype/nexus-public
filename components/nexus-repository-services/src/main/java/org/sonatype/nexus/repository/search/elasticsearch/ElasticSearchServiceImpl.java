@@ -72,7 +72,7 @@ public class ElasticSearchServiceImpl
 
   private final TokenEncoder tokenEncoder;
 
-  private final Set<OrientSearchExtension> decorators;
+  private final Set<ElasticSearchExtension> decorators;
 
   @Inject
   public ElasticSearchServiceImpl(
@@ -80,7 +80,7 @@ public class ElasticSearchServiceImpl
       final ElasticSearchIndexService elasticSearchIndexService,
       final ElasticSearchUtils elasticSearchUtils,
       final TokenEncoder tokenEncoder,
-      final Set<OrientSearchExtension> decorators)
+      final Set<ElasticSearchExtension> decorators)
   {
     this.elasticSearchQueryService = checkNotNull(elasticSearchQueryService);
     this.elasticSearchIndexService = checkNotNull(elasticSearchIndexService);

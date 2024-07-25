@@ -12,73 +12,80 @@
  */
 package org.sonatype.nexus.blobstore.file.internal.datastore.metrics;
 
+import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
-import org.sonatype.nexus.blobstore.BlobStoreMetricsPropertiesReaderSupport;
-import org.sonatype.nexus.blobstore.api.BlobStore;
+import javax.inject.Named;
+
+import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.BlobStoreMetricsNotAvailableException;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.blobstore.metrics.BlobStoreMetricsPropertiesReaderSupport;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
 import com.google.common.collect.ImmutableMap;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Read {@link BlobStore} metrics from external file (-metrics.properties)
+ * A {@link BlobStoreMetricsPropertiesReaderSupport} implementation that retains blobstore metrics in memory, periodically
+ * writing them out to a file.
+ *
+ * @since 3.0
+ * @deprecated legacy method for metrics stored in the blob store
  */
-@Named("File")
-@Singleton
+@Deprecated
+@Named(FileBlobStore.TYPE)
 public class FileBlobStoreMetricsPropertiesReader
-    extends BlobStoreMetricsPropertiesReaderSupport<PropertiesFile>
+    extends BlobStoreMetricsPropertiesReaderSupport<FileBlobStore, PropertiesFile>
 {
-  private Path storageDir;
+  private Path storageDirectory;
 
   @Override
-  public void initWithBlobStore(final BlobStore blobStore) throws Exception {
-    if (!(blobStore instanceof FileBlobStore)) {
-      throw new IllegalArgumentException("BlobStore must be of type FileBlobStore");
-    }
-    this.storageDir = ((FileBlobStore) blobStore).getAbsoluteBlobDir();
-  }
+  protected void doInit(final FileBlobStore blobstore) throws IOException {
+    Path storageDir = blobStore.getAbsoluteBlobDir();
 
-  @Override
-  protected PropertiesFile getProperties() throws Exception {
-    return loadProperties(storageDir);
-  }
-
-  @Override
-  protected Map<String, Long> getAvailableSpace() throws Exception {
-    FileStore fileStore = Files.getFileStore(storageDir);
-    return ImmutableMap.of("fileStore:" + fileStore.name(), fileStore.getUsableSpace());
-  }
-
-  @Nullable
-  private PropertiesFile loadProperties(final Path storageDir) throws Exception {
     checkNotNull(storageDir);
+    checkArgument(Files.isDirectory(storageDir));
+    this.storageDirectory = storageDir;
+  }
 
-    try (DirectoryStream<Path> files = Files.newDirectoryStream(storageDir,
-        path -> path.toString().endsWith(metricsFilename()))) {
-      Optional<PropertiesFile> propertiesFile =
-          StreamSupport.stream(files.spliterator(), false).collect(toList()).stream()
-              .map(Path::toFile)
-              .map(PropertiesFile::new)
-              .findFirst();
+  @Override
+  protected AccumulatingBlobStoreMetrics getAccumulatingBlobStoreMetrics() throws BlobStoreMetricsNotAvailableException {
+    try {
+      FileStore fileStore = Files.getFileStore(storageDirectory);
+      ImmutableMap<String, Long> availableSpace = ImmutableMap
+          .of("fileStore:" + fileStore.name(), fileStore.getUsableSpace());
+      return new AccumulatingBlobStoreMetrics(0, 0, availableSpace, false);
+    }
+    catch (IOException e) {
+      throw new BlobStoreMetricsNotAvailableException(e);
+    }
+  }
 
-      if (!propertiesFile.isPresent()) {
-        return null;
-      }
-      propertiesFile.get().load();
-      return propertiesFile.get();
+  @Override
+  protected Stream<PropertiesFile> backingFiles() throws BlobStoreMetricsNotAvailableException {
+    if (storageDirectory == null) {
+      return Stream.empty();
+    }
+    try (DirectoryStream<Path> files =
+         Files.newDirectoryStream(storageDirectory, path -> path.toString().endsWith(METRICS_FILENAME))) {
+      return StreamSupport.stream(files.spliterator(), false)
+          .map(Path::toFile)
+          .map(PropertiesFile::new)
+          // we need a terminal operation since the directory stream will be closed
+          .collect(toList())
+          .stream();
+    }
+    catch (IOException | SecurityException e) {
+      throw new BlobStoreMetricsNotAvailableException(e);
     }
   }
 }
