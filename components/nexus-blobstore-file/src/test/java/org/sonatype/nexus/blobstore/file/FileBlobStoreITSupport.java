@@ -35,8 +35,10 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
+import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
+import org.sonatype.nexus.blobstore.file.internal.datastore.metrics.DatastoreFileBlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -54,6 +56,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -71,9 +75,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_ATTRIBUTES_SUFFIX;
@@ -91,7 +97,7 @@ public abstract class FileBlobStoreITSupport
 {
   public static final int TEST_DATA_LENGTH = 10;
 
-  private static final int METRICS_FLUSH_TIMEOUT = 5;
+  private static final int METRICS_FLUSH_TIMEOUT = 1;
 
   private static final int QUOTA_CHECK_INTERVAL = 5;
 
@@ -116,6 +122,11 @@ public abstract class FileBlobStoreITSupport
 
   private DefaultBlobIdLocationResolver blobIdResolver;
 
+  @Mock(answer = Answers.RETURNS_MOCKS)
+  private BlobStoreMetricsStore blobStoreMetricsStore;
+
+  private DatastoreFileBlobStoreMetricsService metricsStore;
+
   @Mock
   NodeAccess nodeAccess;
 
@@ -135,6 +146,9 @@ public abstract class FileBlobStoreITSupport
 
   @Before
   public void setUp() throws Exception {
+    metricsStore = spy(new DatastoreFileBlobStoreMetricsService(METRICS_FLUSH_TIMEOUT, blobStoreMetricsStore,
+        new PeriodicJobServiceImpl()));
+
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
     when(nodeAccess.isOldestNode()).thenReturn(true);
     when(dryRunPrefix.get()).thenReturn("");
@@ -147,14 +161,13 @@ public abstract class FileBlobStoreITSupport
     blobIdResolver = new DefaultBlobIdLocationResolver();
 
     underTest = createBlobStore(UUID.randomUUID().toString(), fileBlobDeletionIndex());
+    reset(metricsStore, blobStoreMetricsStore);
   }
 
   protected FileBlobStore createBlobStore(final String name, final FileBlobDeletionIndex index) throws Exception {
     BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker =
         new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService);
 
-    FileBlobStoreMetricsStore metricsStore =
-        new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations);
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     config.setName(name);
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
@@ -186,34 +199,23 @@ public abstract class FileBlobStoreITSupport
     assertThat("size must be calculated correctly", metrics.getContentSize(), is(equalTo((long) TEST_DATA_LENGTH)));
 
     final BlobStoreMetrics storeMetrics = underTest.getMetrics();
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(1L));
-
-    // FIXME: This is no longer valid
-    //assertThat(storeMetrics.getTotalSize(), is(equalTo((long) TEST_DATA_LENGTH)));
+    verify(metricsStore).recordAddition(TEST_DATA_LENGTH);
+    await().atMost(METRICS_FLUSH_TIMEOUT + 1, SECONDS).untilAsserted(() -> verifyBlobMetricsStore(TEST_DATA_LENGTH, 1l));
 
     assertThat(storeMetrics.getAvailableSpace(), is(greaterThan(0L)));
 
+    reset(metricsStore, blobStoreMetricsStore);
+
     final boolean deleted = underTest.delete(blob.getId(), "basicSmokeTest");
     assertThat(deleted, is(equalTo(true)));
+    verifyNoInteractions(metricsStore);
+
     underTest.compact(null);
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
+    verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
+    await().atMost(METRICS_FLUSH_TIMEOUT + 1, SECONDS).untilAsserted(() -> verifyBlobMetricsStore(-TEST_DATA_LENGTH, -1));
 
     final Blob deletedBlob = underTest.get(blob.getId());
     assertThat(deletedBlob, is(nullValue()));
-
-    // Now that we've deleted the blob, there shouldn't be anything left
-    final BlobStoreMetrics storeMetrics2 = underTest.getMetrics();
-
-    // FIXME: This is no longer valid
-    //assertThat(storeMetrics2.getBlobCount(), is(equalTo(0L)));
-    //assertThat(storeMetrics2.getTotalSize(), is(equalTo((long) TEST_DATA_LENGTH)));
-
-    underTest.compact(null);
-
-    final BlobStoreMetrics storeMetrics3 = underTest.getMetrics();
-
-    // FIXME: This is no longer valid
-    //assertThat("compacting should reclaim deleted blobs' space", storeMetrics3.getTotalSize(), is(equalTo(0L)));
   }
 
   @Test
@@ -233,15 +235,15 @@ public abstract class FileBlobStoreITSupport
     final BlobMetrics metrics = blob.getMetrics();
     assertThat("size must be calculated correctly", metrics.getContentSize(), is(equalTo((long) TEST_DATA_LENGTH)));
 
-    final BlobStoreMetrics storeMetrics = underTest.getMetrics();
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(1L));
+    verify(metricsStore).recordAddition(TEST_DATA_LENGTH);
 
+    final BlobStoreMetrics storeMetrics = underTest.getMetrics();
     assertThat(storeMetrics.getAvailableSpace(), is(greaterThan(0L)));
 
     final boolean deleted = underTest.delete(blob.getId(), "createAndDeleteBlobWithDirectPathSuccessful");
     assertThat(deleted, is(equalTo(true)));
     underTest.compact(null);
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
+    verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
 
     final Blob deletedBlob = underTest.get(blob.getId());
     assertThat(deletedBlob, is(nullValue()));
@@ -327,6 +329,7 @@ public abstract class FileBlobStoreITSupport
   @Test
   public void overwriteDirectPathBlobSuccessful() throws IOException {
     byte[] content = "hello".getBytes();
+    final long initialSize = content.length;
     Blob blob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
         CREATED_BY_HEADER, "test",
         BLOB_NAME_HEADER, "health-check/repositoryName/file.txt",
@@ -340,10 +343,11 @@ public abstract class FileBlobStoreITSupport
     BlobMetrics metrics = blob.getMetrics();
     assertThat("size must be calculated correctly", metrics.getContentSize(), is(equalTo((long) content.length)));
 
-    final BlobStoreMetrics storeMetrics = underTest.getMetrics();
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(1L));
+    verify(metricsStore).recordAddition(content.length);
 
+    final BlobStoreMetrics storeMetrics = underTest.getMetrics();
     assertThat(storeMetrics.getAvailableSpace(), is(greaterThan(0L)));
+    reset(metricsStore);
 
     // now overwrite the blob
     content = "goodbye".getBytes();
@@ -357,13 +361,13 @@ public abstract class FileBlobStoreITSupport
     output = extractContent(blob);
     assertThat("data must have been overwritten", content, is(equalTo(output)));
 
-    metrics = blob.getMetrics();
-    assertThat("size must be updated correctly", metrics.getContentSize(), is(equalTo((long) content.length)));
+    verify(metricsStore).recordAddition(content.length);
+    verify(metricsStore).recordDeletion(initialSize);
 
     final boolean deleted = underTest.delete(blob.getId(), " overwriteDirectPathBlobSuccessful");
     assertThat(deleted, is(equalTo(true)));
     underTest.compact(null);
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(0L));
+    verify(metricsStore).recordDeletion(content.length);
 
     final Blob deletedBlob = underTest.get(blob.getId());
     assertThat(deletedBlob, is(nullValue()));
@@ -371,37 +375,32 @@ public abstract class FileBlobStoreITSupport
 
   @Test
   public void testDeleteHardUpdatesMetrics() {
-    long initialBlobCount = underTest.getMetrics().getBlobCount();
-
     final byte[] content = new byte[TEST_DATA_LENGTH];
     final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
 
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
-        .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
+    verify(metricsStore).recordAddition(TEST_DATA_LENGTH);
 
     assertThat(underTest.deleteHard(blob.getId()), equalTo(true));
 
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
-        .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount));
+    verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
   }
 
   @Test
   public void testSoftDeleteMetricsOnlyUpdateOnCompact() throws IOException {
-    long initialBlobCount = underTest.getMetrics().getBlobCount();
     final byte[] content = new byte[TEST_DATA_LENGTH];
 
     final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
-        .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
+
+    // we don't care about the additions in this test
+    reset(metricsStore);
 
     //Standard delete will not update metrics
     underTest.delete(blob.getId(), "testSoftDeleteMetricsOnlyUpdateOnCompact");
-    assertThat(underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
+    verifyNoInteractions(metricsStore);
 
     //Compact triggers hard delete, so metrics will be updated
     underTest.compact(null);
-    await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
-        .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount));
+    verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
   }
 
   @Test
@@ -721,5 +720,12 @@ public abstract class FileBlobStoreITSupport
     assertThat(Files.exists(contentPath), is(true));
     assertThat(Files.exists(attributesPath), is(true));
     return of(contentPath, attributesPath);
+  }
+
+  private void verifyBlobMetricsStore(final long bytes, final long count) {
+    ArgumentCaptor<BlobStoreMetricsEntity> entity = ArgumentCaptor.forClass(BlobStoreMetricsEntity.class);
+    verify(blobStoreMetricsStore).updateMetrics(entity.capture());
+    assertThat(entity.getValue().getBlobCount(), is(count));
+    assertThat(entity.getValue().getTotalSize(), is(bytes));
   }
 }

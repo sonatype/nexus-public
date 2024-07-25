@@ -10,30 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.blobstore.metrics.migration;
+@FeatureFlag(name = DATASTORE_ENABLED)
+package org.sonatype.nexus.blobstore.internal.datastore;
 
-import javax.inject.Named;
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-import org.sonatype.nexus.scheduling.Cancelable;
-import org.sonatype.nexus.scheduling.TaskSupport;
-
-/**
- * Migrate file blob store metrics from external metrics files to DB. Applies to all registered file blob stores.
- * Deprecated: blob store metrics migration now lives in BlobStoreMetricsPropertiesMigrationTask.
- */
-@Named
-public class FileBlobStoreMetricsMigrationTask
-    extends TaskSupport
-    implements Cancelable
-{
-  @Override
-  protected Object execute() throws Exception {
-    // no-op
-    return null;
-  }
-
-  @Override
-  public String getMessage() {
-    return "Migrate bob store metrics from external metrics files to DB";
-  }
-}
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;

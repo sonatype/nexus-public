@@ -50,10 +50,14 @@ public class NexusJavaMigration implements JavaMigration
 
   @Override
   public String getDescription() {
+    // We need to remove the Guice suffixes to achieve a stable name,
+    // e.g. S3BlobStoreMetricsMigrationStep$$EnhancerByGuice$$2c7e99a6
+    String className = dbMigrationStep.getClass().getSimpleName().split("\\$\\$")[0];
+
     if (round != null) {
-      return String.format("Z_%03d_%s", round, dbMigrationStep.getClass().getSimpleName());
+      return String.format("Z_%03d_%s", round, className);
     }
-    return dbMigrationStep.getClass().getSimpleName();
+    return className;
   }
 
   @Override

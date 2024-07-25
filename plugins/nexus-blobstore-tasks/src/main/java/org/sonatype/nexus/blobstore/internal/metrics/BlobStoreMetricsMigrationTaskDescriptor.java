@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.metrics.reconcile;
+package org.sonatype.nexus.blobstore.internal.metrics;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -21,36 +21,30 @@ import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.blobstore.common.BlobStoreTaskSupport.BLOBSTORE_NAME_FIELD_ID;
-import static org.sonatype.nexus.common.app.FeatureFlags.RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 
-/**
- * Task descriptor for  {@link RecalculateBlobStoreSizeTask}
- */
-@AvailabilityVersion(from = "1.0")
+@AvailabilityVersion(from = "2.0")
 @Named
 @Singleton
-public class RecalculateBlobStoreSizeTaskDescriptor
+public class BlobStoreMetricsMigrationTaskDescriptor
     extends TaskDescriptorSupport
 {
-  public static final String TYPE_ID = "blobstore.metrics.reconcile";
+  private static final String EXPOSED_FLAG = "${nexus.blobstore.metrics.migration.task.expose:-false}";
 
   @Inject
-  public RecalculateBlobStoreSizeTaskDescriptor(
-      @Named(RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED) final boolean taskEnabled)
-  {
-    super(TYPE_ID,
-        RecalculateBlobStoreSizeTask.class,
-        "Repair - Recalculate blob store storage",
+  public BlobStoreMetricsMigrationTaskDescriptor(@Named(EXPOSED_FLAG) final boolean exposed) {
+    super(BlobStoreMetricsMigrationTask.TYPE_ID,
+        BlobStoreMetricsMigrationTask.class,
+        "Migration - Move blobstore metrics to the database",
         VISIBLE,
-        taskEnabled,
+        exposed,
         new ComboboxFormField<String>(
             BLOBSTORE_NAME_FIELD_ID,
             "Blob store",
-            "Select the blob store(s) to recalculate",
+            "Select the blob store(s) to obtain metrics for",
             MANDATORY
-        ).withStoreApi("coreui_Blobstore.ReadNoneGroupEntriesIncludingEntryForAll")
-            .withIdMapping("name")
-    );
+          )
+          .withStoreApi("coreui_Blobstore.ReadNoneGroupEntriesIncludingEntryForAll")
+          .withIdMapping("name"));
   }
 }

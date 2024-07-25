@@ -24,8 +24,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -47,10 +47,9 @@ import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
-import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
-import org.sonatype.nexus.blobstore.s3.internal.datastore.S3BlobStoreMetricsPropertiesReader.S3Config;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.thread.NexusThreadFactory;
@@ -168,7 +167,7 @@ public class S3BlobStore
 
   private boolean preferAsyncCleanup;
 
-  private S3BlobStoreMetricsService metricsService;
+  private BlobStoreMetricsService<S3BlobStore> metricsService;
 
   private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
@@ -197,7 +196,7 @@ public class S3BlobStore
       @Named("${nexus.s3.preferExpire:-false}") final boolean preferExpire,
       @Named("${nexus.s3.forceHardDelete:-false}") final boolean forceHardDelete,
       @Named("${nexus.s3.preferAsyncCleanup:-true}") final boolean preferAsyncCleanup,
-      final S3BlobStoreMetricsService metricsService,
+      @Named(S3BlobStore.TYPE) final BlobStoreMetricsService<S3BlobStore> metricsService,
       final DryRunPrefix dryRunPrefix,
       final BucketManager bucketManager,
       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker)
@@ -237,11 +236,7 @@ public class S3BlobStore
       metadata.store();
     }
     liveBlobs = CacheBuilder.newBuilder().weakValues().build(from(S3Blob::new));
-    metricsService.setBucket(getConfiguredBucket());
-    metricsService.setBucketPrefix(getBucketPrefix());
-    metricsService.setS3(s3);
-    metricsService.setBlobStore(this);
-    metricsService.start();
+    metricsService.init(this);
 
     blobStoreQuotaUsageChecker.setBlobStore(this);
     blobStoreQuotaUsageChecker.start();
@@ -263,10 +258,6 @@ public class S3BlobStore
     blobStoreQuotaUsageChecker.stop();
   }
 
-  public void useAmazonS3Config(final Consumer<S3Config> configConsumer) {
-    configConsumer.accept(new S3Config(s3, getConfiguredBucket()));
-  }
-
   /**
    * Returns path for blob-id content file relative to root directory.
    */
@@ -285,6 +276,7 @@ public class S3BlobStore
     return getLocation(id) + BLOB_FILE_ATTRIBUTES_SUFFIX;
   }
 
+  @Override
   protected String attributePathString(final BlobId blobId) {
     return attributePath(blobId);
   }
@@ -601,7 +593,7 @@ public class S3BlobStore
 
   @Override
   @Guarded(by = STARTED)
-  public BlobStoreMetricsService getMetricsService() {
+  public BlobStoreMetricsService<S3BlobStore> getMetricsService() {
     return metricsService;
   }
 
@@ -657,12 +649,16 @@ public class S3BlobStore
     s3.deleteObject(getConfiguredBucket(), path);
   }
 
-  private String getConfiguredBucket() {
+  String getConfiguredBucket() {
     return S3BlobStoreConfigurationHelper.getConfiguredBucket(blobStoreConfiguration);
   }
 
-  private String getBucketPrefix() {
+  String getBucketPrefix() {
     return S3BlobStoreConfigurationHelper.getBucketPrefix(blobStoreConfiguration);
+  }
+
+  AmazonS3 getS3() {
+    return s3;
   }
 
   /**
@@ -812,7 +808,7 @@ public class S3BlobStore
 
   @Override
   @Timed
-  public void setBlobAttributes(BlobId blobId, BlobAttributes blobAttributes) {
+  public void setBlobAttributes(final BlobId blobId, final BlobAttributes blobAttributes) {
     try {
       S3BlobAttributes s3BlobAttributes = (S3BlobAttributes) getBlobAttributes(blobId);
       s3BlobAttributes.updateFrom(blobAttributes);

@@ -280,7 +280,7 @@ public class BlobStoreGroup
 
   @Override
   @Guarded(by = STARTED)
-  public BlobStoreMetricsService getMetricsService() {
+  public BlobStoreMetricsService<BlobStoreGroup> getMetricsService() {
     throw new UnsupportedOperationException("metrics service is not available at a group level");
   }
 

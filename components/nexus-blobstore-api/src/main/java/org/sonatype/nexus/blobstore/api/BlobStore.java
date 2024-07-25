@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -204,7 +205,7 @@ public interface BlobStore
    * and, if not supported, expect a {@link UnsupportedOperationException}
    * </p>
    */
-  BlobStoreMetricsService getMetricsService();
+  <B extends BlobStore> BlobStoreMetricsService<B> getMetricsService();
 
   /**
    * Provides an immutable snapshot of metrics about the BlobStore's usage.

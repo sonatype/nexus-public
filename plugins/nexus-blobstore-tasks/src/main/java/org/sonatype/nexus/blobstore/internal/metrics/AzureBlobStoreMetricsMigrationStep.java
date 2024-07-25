@@ -10,25 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.blobstore.metrics.migration;
+package org.sonatype.nexus.blobstore.internal.metrics;
 
-import java.sql.Connection;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
-
 /**
- * Blob store metrics migration now live in {@link BlobStoreMetricsMigrationService}
+ * Migration step to move metrics from properties files in the blob store to the DB
  */
 @Named
 @Singleton
-public class FileBlobStoreMetricsMigrationStep
-    extends RepeatableDatabaseMigrationStep
+public class AzureBlobStoreMetricsMigrationStep
+    extends BlobStoreMetricsDatabaseMigrationStepSupport
 {
-  @Override
-  public void migrate(final Connection connection) throws Exception {
-    // no-op
+
+  private static final String BLOB_STORE_TYPE = "Azure Cloud Storage";
+
+  public AzureBlobStoreMetricsMigrationStep() {
+    super(BLOB_STORE_TYPE);
   }
 
   @Override

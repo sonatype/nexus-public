@@ -74,7 +74,7 @@ public class SimpleDependencyResolverTest
   }
 
   private abstract static class TestRepeatableDatabaseMigrationStep
-      extends RepeatableDatabaseMigrationStep
+      implements RepeatableDatabaseMigrationStep
   {
     @Override
     public void migrate(final Connection connection) throws Exception {

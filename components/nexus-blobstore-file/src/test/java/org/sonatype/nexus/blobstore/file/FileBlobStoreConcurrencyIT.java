@@ -36,8 +36,8 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
-import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
+import org.sonatype.nexus.blobstore.file.internal.datastore.metrics.DatastoreFileBlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -81,7 +81,8 @@ public class FileBlobStoreConcurrencyIT
 
   private FileBlobStore underTest;
 
-  private FileBlobStoreMetricsStore metricsStore;
+  @Mock
+  private DatastoreFileBlobStoreMetricsService metricsStore;
 
   private BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker;
 
@@ -117,8 +118,6 @@ public class FileBlobStoreConcurrencyIT
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, root.toString());
 
-    metricsStore = spy(
-        new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, fileOperations));
     blobStoreQuotaUsageChecker = spy(
         new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService));
 
@@ -216,7 +215,7 @@ public class FileBlobStoreConcurrencyIT
 
     runner.go();
 
-    verify(metricsStore).setBlobStore(underTest);
+    verify(metricsStore).init(underTest);
     verify(quotaService, atLeastOnce()).checkQuota(underTest);
   }
 

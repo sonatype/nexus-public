@@ -10,32 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.blobstore.metrics.migration;
+package org.sonatype.nexus.blobstore.internal.metrics;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
-import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
 
 /**
- * {@link FileBlobStoreMetricsMigrationTask} descriptor.
+ * Migration step to move metrics from properties files in the blob store to the DB
  */
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
-public class FileBlobStoreMetricsMigrationTaskDescriptor
-    extends TaskDescriptorSupport
+public class FileBlobStoreMetricsMigrationStep
+    extends BlobStoreMetricsDatabaseMigrationStepSupport
 {
-  public static final String TYPE_ID = "file.blobstore.metrics.datastore.migration";
 
-  @Inject
-  public FileBlobStoreMetricsMigrationTaskDescriptor() {
-    super(TYPE_ID,
-        FileBlobStoreMetricsMigrationTask.class,
-        "Repair - Migrate blob store metrics from external files to DB",
-        NOT_VISIBLE,
-        NOT_EXPOSED);
+  public FileBlobStoreMetricsMigrationStep() {
+    super(FileBlobStore.TYPE);
+  }
+
+  @Override
+  public Integer getChecksum() {
+    return 0;
   }
 }
