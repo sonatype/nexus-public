@@ -27,7 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.LocalDate;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -94,7 +95,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
-import static java.time.LocalDate.now;
+import static java.time.LocalDateTime.now;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.io.FileUtils.forceDelete;
@@ -259,12 +260,12 @@ public class FileBlobStore
   }
 
   @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(final int sinceDays) {
-    if (sinceDays < 0) {
-      throw new IllegalArgumentException("sinceDays must >= 0");
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final Duration duration) {
+    if (duration.isNegative()) {
+      throw new IllegalArgumentException("duration must >= 0");
     }
     else {
-      LocalDate sinceDate = now().minusDays(sinceDays);
+      LocalDateTime sinceDate = now().minusSeconds(duration.getSeconds());
       return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate);
     }
   }

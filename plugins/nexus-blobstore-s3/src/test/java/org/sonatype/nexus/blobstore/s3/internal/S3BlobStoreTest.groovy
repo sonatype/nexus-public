@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal
 
+import java.time.Duration
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.stream.Collectors
@@ -153,7 +154,7 @@ class S3BlobStoreTest
       }
 
     when: 'blob id stream is fetched only wanting blobs updated in the last day'
-      List<BlobId> blobIds = blobStore.getBlobIdUpdatedSinceStream(1).collect(Collectors.toList())
+      List<BlobId> blobIds = blobStore.getBlobIdUpdatedSinceStream(Duration.ofDays(1L)).collect(Collectors.toList())
 
     then: 'only the blob updated in the last day will be returned'
       blobIds.size() == 1
@@ -168,7 +169,7 @@ class S3BlobStoreTest
       blobStore.doStart()
 
     when: 'blob id stream is fetched'
-      blobStore.getBlobIdUpdatedSinceStream(-1)
+      blobStore.getBlobIdUpdatedSinceStream(Duration.ofDays(-1L))
 
     then: 'fails'
       thrown(IllegalArgumentException.class)

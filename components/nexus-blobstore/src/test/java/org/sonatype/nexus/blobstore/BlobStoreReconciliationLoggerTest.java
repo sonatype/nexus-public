@@ -19,7 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -130,7 +130,7 @@ public class BlobStoreReconciliationLoggerTest
         StandardOpenOption.CREATE);
 
     List<String> result = underTest.getBlobsCreatedSince(Paths.get(RECONCILIATION_LOG_DIRECTORY),
-        LocalDate.parse("2021-04-14"))
+        LocalDateTime.parse("2021-04-14T00:00:00"))
         .map(BlobId::asUniqueString)
         .collect(toList());
 

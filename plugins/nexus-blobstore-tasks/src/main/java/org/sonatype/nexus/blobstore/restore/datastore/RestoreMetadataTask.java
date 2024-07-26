@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -258,7 +259,7 @@ public class RestoreMetadataTask
       log.info("Will process all blobs");
       return store.getBlobIdStream()::iterator;
     }
-    return store.getBlobIdUpdatedSinceStream(sinceDays)::iterator;
+    return store.getBlobIdUpdatedSinceStream(Duration.ofDays(sinceDays))::iterator;
   }
 
   private void updateAssets(final Set<Repository> repositories, final boolean updateAssets) {

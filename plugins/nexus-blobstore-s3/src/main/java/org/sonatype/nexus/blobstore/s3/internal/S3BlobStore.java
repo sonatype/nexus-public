@@ -15,10 +15,9 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.time.Instant;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -52,6 +51,7 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.amazonaws.SdkBaseException;
@@ -733,13 +733,13 @@ public class S3BlobStore
   }
 
   @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(final int sinceDays) {
-    if (sinceDays < 0) {
-      throw new IllegalArgumentException("sinceDays must >= 0");
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final Duration duration) {
+    if (duration.isNegative()) {
+      throw new IllegalArgumentException("duration must >= 0");
     }
     else {
       Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), getContentPrefix());
-      OffsetDateTime offsetDateTime = Instant.now().minus(sinceDays, ChronoUnit.DAYS).atOffset(ZoneOffset.UTC);
+      OffsetDateTime offsetDateTime = UTC.now().minusSeconds(duration.getSeconds());
 
       return blobIdStream(stream(summaries.spliterator(), false)
           .filter(s3objectSummary -> s3objectSummary.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(offsetDateTime)));

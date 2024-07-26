@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -261,11 +262,9 @@ public interface BlobStore
   Stream<BlobId> getBlobIdStream();
 
   /**
-   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated since the given number of days.
-   *
-   * @since 3.31
+   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the provided duration.
    */
-  Stream<BlobId> getBlobIdUpdatedSinceStream(int sinceDays);
+  Stream<BlobId> getBlobIdUpdatedSinceStream(Duration duration);
 
   /**
    * Get a {@link Stream} of direct-path {@link BlobId}s under the specified path prefix.

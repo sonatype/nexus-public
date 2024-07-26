@@ -419,11 +419,11 @@ public class BlobStoreGroup
   }
 
   @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(final int sinceDays) {
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final java.time.Duration duration) {
     return members
         .get()
         .stream()
-        .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(sinceDays));
+        .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(duration));
   }
 
   @Override

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -84,7 +85,7 @@ public class BlobStoreReconciliationLogger
    * @param sinceDate for which retrieve newly created blob ids
    * @return stream of BlobId
    */
-  public Stream<BlobId> getBlobsCreatedSince(final Path reconciliationLogPath, final LocalDate sinceDate) {
+  public Stream<BlobId> getBlobsCreatedSince(final Path reconciliationLogPath, final LocalDateTime sinceDate) {
     return getLogFilesToProcess(reconciliationLogPath, sinceDate)
         .flatMap(this::readLines)
         .map(line -> {
@@ -111,7 +112,7 @@ public class BlobStoreReconciliationLogger
     }
   }
 
-  private Stream<File> getLogFilesToProcess(final Path reconciliationLogPath, final LocalDate sinceDate) {
+  private Stream<File> getLogFilesToProcess(final Path reconciliationLogPath, final LocalDateTime sinceDate) {
     File reconciliationLogDirectory = applicationDirectories.getWorkDirectory(reconciliationLogPath.toString());
     File[] logs = reconciliationLogDirectory.listFiles();
     if (Objects.nonNull(logs)) {
@@ -125,11 +126,11 @@ public class BlobStoreReconciliationLogger
     }
   }
 
-  private Predicate<File> isFileNameOlderOrSameAs(final LocalDate sinceDate) {
+  private Predicate<File> isFileNameOlderOrSameAs(final LocalDateTime sinceDate) {
     return file -> {
       try {
         LocalDate logFileDate = LocalDate.parse(file.getName());
-        return !sinceDate.isAfter(logFileDate);
+        return !sinceDate.toLocalDate().isAfter(logFileDate);
       }
       catch (DateTimeParseException e) {
         return false;
