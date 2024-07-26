@@ -18,7 +18,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
-
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 import org.joda.time.DateTime;
@@ -137,5 +137,21 @@ public class DateHelper
       return null;
     }
     return Date.from(date.atStartOfDay(ZoneOffset.UTC).toInstant());
+  }
+
+  /**
+   * Converts an Optional<OffsetDateTime> to a Date.
+   */
+  public static Date optionalOffsetToDate(final Optional<OffsetDateTime> offsetDateTime) {
+    return offsetDateTime.map(OffsetDateTime::toInstant)
+        .map(Date::from)
+        .orElse(null);
+  }
+
+  /**
+   * Converts an OffsetDateTime to a Date.
+   */
+  public static Date offsetToDate(final OffsetDateTime offsetDateTime) {
+    return Date.from(offsetDateTime.toInstant());
   }
 }
