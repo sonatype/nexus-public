@@ -47,6 +47,7 @@ public interface SoftDeletedBlobsDAO
    */
   Continuation<SoftDeletedBlobsData> readRecords(
       @Nullable @Param("continuationToken") String continuationToken,
+      @Param("limit") int limit,
       @Param("sourceBlobStoreName") String sourceBlobStoreName);
 
   /**

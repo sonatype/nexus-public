@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,9 +28,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.file.FileBlobDeletionIndex;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData;
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
@@ -168,7 +165,8 @@ public class DatastoreFileBlobDeletionIndex
     if (Objects.nonNull(oldDeletionIndex) && !oldDeletionIndex.isEmpty()) {
       log.info("Processing blobstore {}, discovered file-based deletion index. Migrating to DB-based",
           blobStore.getBlobStoreConfiguration().getName());
-      Set<String> persistedRecords = getPersistedBlobIdsForBlobStore(blobStoreName);
+      Set<BlobId> persistedRecords = softDeletedBlobsStore.readAllBlobIds(blobStoreName)
+          .collect(Collectors.toSet());
 
       try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS)) {
         for (int counter = 0, numBlobs = oldDeletionIndex.size(); counter < numBlobs; counter++) {
@@ -178,9 +176,9 @@ public class DatastoreFileBlobDeletionIndex
             break;
           }
           BlobId blobId = new BlobId(new String(bytes, UTF_8));
-          if (!persistedRecords.contains(blobId.toString())) {
+          if (!persistedRecords.contains(blobId)) {
             softDeletedBlobsStore.createRecord(blobId, blobStore.getBlobStoreConfiguration().getName());
-            persistedRecords.add(blobId.toString());
+            persistedRecords.add(blobId);
           } else {
             log.debug("Old deletion index contain duplicate entry with blobId - {} for blobstore - {}, " +
                     "duplicate record will be skipped", blobId, blobStoreName);
@@ -196,18 +194,6 @@ public class DatastoreFileBlobDeletionIndex
     if (oldDeletionIndexFile.exists() && !oldDeletionIndexFile.delete()) {
       log.error("Unable to delete 'deletion index' file, path = {}", oldDeletionIndexFile.getAbsolutePath());
     }
-  }
-
-  private Set<String> getPersistedBlobIdsForBlobStore(final String blobStoreName) {
-    Set<String> persistedRecords = new HashSet<>();
-    Continuation<SoftDeletedBlobsData> page = softDeletedBlobsStore.readRecords(null, blobStoreName);
-    while (!page.isEmpty()) {
-      persistedRecords.addAll(page.stream()
-          .map(SoftDeletedBlobsData::getBlobId)
-          .collect(Collectors.toSet()));
-      page = softDeletedBlobsStore.readRecords(page.nextContinuationToken(), blobStoreName);
-    }
-    return persistedRecords;
   }
 
   private void invoke(final ThrowingRunnable callable) {

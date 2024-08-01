@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.file.store;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -37,7 +38,9 @@ public interface SoftDeletedBlobsStore
    * @param sourceBlobStoreName the blobstore name these records are related to
    * @return all records related to provided sourceBlobStoreName
    */
-  Continuation<SoftDeletedBlobsData> readRecords(String continuationToken, String sourceBlobStoreName);
+  Continuation<SoftDeletedBlobsData> readRecords(String continuationToken, int limit, String sourceBlobStoreName);
+
+  Stream<BlobId> readAllBlobIds(String sourceBlobStoreName);
 
   /**
    * Delete single record by provided 'blobId' related to specified blobstore name

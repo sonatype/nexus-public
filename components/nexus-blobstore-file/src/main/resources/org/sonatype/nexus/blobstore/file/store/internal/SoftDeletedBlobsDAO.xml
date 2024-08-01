@@ -39,6 +39,7 @@
     SELECT * FROM soft_deleted_blobs
     WHERE source_blob_store_name = #{sourceBlobStoreName}
     <if test="continuationToken != null"> AND record_id > #{continuationToken}</if>
+    ORDER BY record_id LIMIT #{limit};
   </select>
 
   <delete id="deleteRecord">

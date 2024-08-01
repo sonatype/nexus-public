@@ -58,18 +58,19 @@ public class SoftDeletedBlobsDAOTest
 
   @Test
   public void testDAOOperations() {
-    Continuation<SoftDeletedBlobsData> emptyData = dao.readRecords(null, FAKE_BLOB_STORE_NAME);
+    int limit = 100;
+    Continuation<SoftDeletedBlobsData> emptyData = dao.readRecords(null, limit, FAKE_BLOB_STORE_NAME);
     assertThat(emptyData.isEmpty(), is(true));
 
     dao.createRecord(FAKE_BLOB_STORE_NAME, "blobID");
     Optional<SoftDeletedBlobsData> initialBlobID =
-        dao.readRecords(null, FAKE_BLOB_STORE_NAME).stream().findFirst();
+        dao.readRecords(null, limit, FAKE_BLOB_STORE_NAME).stream().findFirst();
 
     assertThat(initialBlobID.isPresent(), is(true));
     assertThat(initialBlobID.get().getBlobId(), is("blobID"));
 
     dao.deleteRecord(FAKE_BLOB_STORE_NAME, "blobID");
-    Continuation<SoftDeletedBlobsData> newBlobs = dao.readRecords(null, FAKE_BLOB_STORE_NAME);
+    Continuation<SoftDeletedBlobsData> newBlobs = dao.readRecords(null, limit, FAKE_BLOB_STORE_NAME);
 
     assertThat(newBlobs.isEmpty(), is(true));
 
@@ -77,10 +78,10 @@ public class SoftDeletedBlobsDAOTest
     dao.createRecord(FAKE_BLOB_STORE_NAME, "blob2");
     dao.createRecord(FAKE_BLOB_STORE_NAME, "blob3");
 
-    assertThat(dao.readRecords(null, FAKE_BLOB_STORE_NAME).size(), is(3));
+    assertThat(dao.readRecords(null, limit, FAKE_BLOB_STORE_NAME).size(), is(3));
 
     dao.deleteAllRecords(FAKE_BLOB_STORE_NAME, "100");
 
-    assertThat(dao.readRecords(null, FAKE_BLOB_STORE_NAME).size(), is(0));
+    assertThat(dao.readRecords(null, limit, FAKE_BLOB_STORE_NAME).size(), is(0));
   }
 }

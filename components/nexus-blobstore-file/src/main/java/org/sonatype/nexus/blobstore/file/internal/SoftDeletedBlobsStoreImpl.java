@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.file.internal;
 
 import java.util.List;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -22,6 +23,7 @@ import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData;
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
 import org.sonatype.nexus.blobstore.file.store.internal.SoftDeletedBlobsDAO;
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
@@ -50,9 +52,17 @@ public class SoftDeletedBlobsStoreImpl
   @Override
   public Continuation<SoftDeletedBlobsData> readRecords(
       final String continuationToken,
+      int limit,
       final String sourceBlobStoreName)
   {
-    return dao().readRecords(continuationToken, sourceBlobStoreName);
+    return dao().readRecords(continuationToken, limit, sourceBlobStoreName);
+  }
+
+  @Override
+  public Stream<BlobId> readAllBlobIds(final String sourceBlobStoreName) {
+    return Continuations
+        .streamOf((limit, continuationToken) -> readRecords(continuationToken, limit, sourceBlobStoreName))
+        .map(data -> new BlobId(data.getBlobId()));
   }
 
   @Transactional
