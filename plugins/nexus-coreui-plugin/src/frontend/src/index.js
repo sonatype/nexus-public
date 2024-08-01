@@ -65,6 +65,7 @@ import Browse from './components/pages/browse/Browse/Browse';
 import UpgradeAlert from './components/UpgradeAlert/UpgradeAlert';
 import UsageMetricsAlert from './components/pages/user/Welcome/UsageMetricsAlert';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
+import MaliciousRisk from "./components/pages/maliciousrisk/MaliciousRisk";
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -614,5 +615,23 @@ window.plugins.push({
         permissions: [Permissions.COMPONENT.CREATE],
       },
     },
+    {
+      mode: 'browse',
+      path: '/MaliciousRisk',
+      ...UIStrings.MALICIOUS_RISK.MENU,
+      view: MaliciousRisk,
+      iconCls: 'x-fa fa-exclamation-triangle',
+      weight: 101,
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: [Permissions.ADMIN],
+        statesEnabled: [
+          {
+            key: 'MaliciousRiskDashboard',
+            defaultValue: false
+          }
+        ],
+      }
+    }
   ]
 });
