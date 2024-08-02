@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableSet;
 public class RawProxyFacet
     extends ContentProxyFacetSupport
 {
-  private static final ImmutableSet<String> CHARS_TO_ENCODE = ImmutableSet.of("^", "#", "?", "\u202F");
+  private static final ImmutableSet<String> CHARS_TO_ENCODE = ImmutableSet.of("^", "#", "?", "\u202F", "+");
 
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
