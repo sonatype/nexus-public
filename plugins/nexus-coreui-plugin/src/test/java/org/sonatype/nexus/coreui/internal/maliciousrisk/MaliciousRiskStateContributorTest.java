@@ -74,7 +74,15 @@ public class MaliciousRiskStateContributorTest
   }
 
   @Test
-  public void checkMaliciousRiskIsDisabledWhenCapabilityIsConfigured() {
+  public void checkMaliciousRiskStateWhenCapabilitiesAreConfigured() {
+    checkDashBoardVisibilityWithFirewallCapabilities(true, false);
+    checkDashBoardVisibilityWithFirewallCapabilities(false, true);
+  }
+
+  private void checkDashBoardVisibilityWithFirewallCapabilities(
+      final boolean firewallAuditQuarantineCapabilityEnabled,
+      final boolean expectedVisibility)
+  {
     try (MockedStatic<FirewallConfigurationHelper> firewallHelper = Mockito.mockStatic(
         FirewallConfigurationHelper.class)) {
       firewallHelper.when(() -> FirewallConfigurationHelper.firewallLicenseCheck(applicationLicense)).thenReturn(true);
@@ -83,11 +91,13 @@ public class MaliciousRiskStateContributorTest
       try (MockedStatic<FirewallCapability> firewallCapability = Mockito.mockStatic(FirewallCapability.class)) {
         firewallCapability.when(() -> FirewallCapability.findFirewallCapability(capabilityRegistry)).thenReturn(
             capabilityContextOptional);
+        firewallCapability.when(() -> FirewallCapability.auditAndQuarantineCapabilityExists(capabilityRegistry))
+            .thenReturn(firewallAuditQuarantineCapabilityEnabled);
         when(capabilityContextOptional.isPresent()).thenReturn(true);
         when(capabilityContextOptional.get()).thenReturn(capabilityContext);
         when(capabilityContext.isEnabled()).thenReturn(true);
         Map<String, Object> state = underTest.getState();
-        assertThat(state.get("MaliciousRiskDashboard"), is(false));
+        assertThat(state.get("MaliciousRiskDashboard"), is(expectedVisibility));
       }
     }
   }

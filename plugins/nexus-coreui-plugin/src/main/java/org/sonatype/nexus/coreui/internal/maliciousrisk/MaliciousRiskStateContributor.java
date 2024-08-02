@@ -35,7 +35,7 @@ public class MaliciousRiskStateContributor
 {
   private static final String MALICIOUS_RISK_DASH_BOARD = "MaliciousRiskDashboard";
 
-  private CapabilityRegistry capabilityRegistry;
+  private final CapabilityRegistry capabilityRegistry;
 
   private final boolean featureFlag;
 
@@ -62,7 +62,10 @@ public class MaliciousRiskStateContributor
         firewallCapabilityEnabled = true;
       }
 
-      boolean showMaliciousRiskDashBoard = !hasFirewall || !firewallCapabilityEnabled;
+      boolean AuditQuarantineCapabilityEnabled =
+          FirewallCapability.auditAndQuarantineCapabilityExists(capabilityRegistry);
+      boolean showMaliciousRiskDashBoard =
+          !hasFirewall || !firewallCapabilityEnabled || !AuditQuarantineCapabilityEnabled;
       state = new HashMap<>();
       state.put(MALICIOUS_RISK_DASH_BOARD, showMaliciousRiskDashBoard);
     }
