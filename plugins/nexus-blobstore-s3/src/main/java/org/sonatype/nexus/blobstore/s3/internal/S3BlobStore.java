@@ -860,6 +860,19 @@ public class S3BlobStore
 
   @Override
   @Timed
+  public boolean bytesExists(final BlobId blobId) {
+    checkNotNull(blobId);
+    try (final Timer.Context existsContext = existsTimer.time()) {
+      return s3.doesObjectExist(getConfiguredBucket(), contentPath(blobId));
+    }
+    catch (Exception e) {
+      log.debug("Unable to check existence of {}", contentPath(blobId));
+      return false;
+    }
+  }
+
+  @Override
+  @Timed
   public Future<Boolean> asyncDelete(final BlobId blobId) {
     if (preferAsyncCleanup) {
       return executorService.submit(() -> this.deleteHard(blobId));

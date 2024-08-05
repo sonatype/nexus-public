@@ -184,6 +184,13 @@ public interface BlobStore
   boolean exists(BlobId blobId);
 
   /**
+   * Performs a simple existence check for {@code .bytes} for given {@code blobId}.
+   *
+   * @return {@code true} if it exists and {@code false} if it does not.
+   */
+  boolean bytesExists(BlobId blobId);
+
+  /**
    * Removes a blob from the blob store.  This may not immediately delete the blob from the underlying storage
    * mechanism, but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
    *

@@ -60,6 +60,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -497,5 +498,16 @@ public class FileBlobStoreTest
     write(propertiesPath, EMPTY_BLOB_STORE_PROPERTIES);
 
     assertNull(underTest.getBlobAttributes(new BlobId("test-blob")));
+  }
+
+  @Test
+  public void testBytesExists() throws Exception {
+    Path bytesPath = fullPath.resolve("test-blob.bytes");
+    write(bytesPath, "some bytes content".getBytes());
+    when(fileOperations.exists(bytesPath)).thenReturn(true);
+
+    assertThat(bytesPath.toFile().exists(), is(true));
+
+    assertThat(underTest.bytesExists(new BlobId("test-blob")), is(true));
   }
 }

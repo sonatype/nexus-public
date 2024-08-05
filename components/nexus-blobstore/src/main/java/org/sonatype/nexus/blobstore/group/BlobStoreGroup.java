@@ -406,6 +406,12 @@ public class BlobStoreGroup
   }
 
   @Override
+  public boolean bytesExists(final BlobId blobId) {
+    return members.get().stream()
+        .anyMatch((BlobStore member) -> member.bytesExists(blobId));
+  }
+
+  @Override
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     // no-op
