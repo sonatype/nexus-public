@@ -305,6 +305,9 @@ export default {
       get NODE_ID() {
         return `${this.BASE_URL}system/node`;
       },
+      get MALICIOUS_RISK_SUMMARY() {
+        return `${this.BASE_URL}malicious-risk/summary`;
+      },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',
     SYSTEM_INFORMATION_HA: 'service/rest/beta/system/information',

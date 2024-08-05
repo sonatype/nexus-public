@@ -11,10 +11,39 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import {useMachine} from "@xstate/react";
+import MaliciousRiskMachine from "./MaliciousRiskMachine";
+import UIStrings from "../../../constants/UIStrings";
+import {ContentBody, Page, PageHeader, PageTitle} from "@sonatype/nexus-ui-plugin/src/frontend/src";
+import {faGlobe} from "@fortawesome/free-solid-svg-icons";
+import {NxLoadWrapper} from "@sonatype/react-shared-components";
+
+const {MENU, TITLE, LOAD_ERROR} = UIStrings.MALICIOUS_RISK;
 
 export default function MaliciousRisk() {
 
-  return (<>
-    <h1>Malicious Risk Dashboard</h1>
-  </>)
+  const [state, send, service] = useMachine(MaliciousRiskMachine);
+
+  const isLoading = state.matches('loading');
+  const loadError = state.matches('loadError') ? LOAD_ERROR : null;
+
+  const {maliciousRisk} = state.context;
+
+  function retry() {
+    send({type: 'RETRY'});
+  }
+
+  return (
+      <Page>
+        <PageHeader>
+          <PageTitle icon={faGlobe} text={TITLE} description={MENU.description}/>
+        </PageHeader>
+
+        <ContentBody>
+          <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
+            <p>Data: {maliciousRisk.totalMaliciousRiskCount}</p>
+          </NxLoadWrapper>
+        </ContentBody>
+      </Page>
+  )
 }
