@@ -75,7 +75,12 @@ export default {
         }
       },
       EXTERNAL_TYPE: {
-        LABEL: 'External Role Type',
+        LABEL: 'External Role Type', 
+        LDAP: {
+          MORE_CHARACTERS: 'Enter 3 or more characters',
+          NO_RESULTS: 'If no results are found, you can still save this mapping and create an LDAP ' +
+            'role with an identical name later. Mapping will not apply until an identically named LDAP role exists.'
+        }
       },
       ID: {
         LABEL: 'Role ID',

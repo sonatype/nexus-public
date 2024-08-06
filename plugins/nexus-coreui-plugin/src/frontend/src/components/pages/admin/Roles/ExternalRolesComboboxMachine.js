@@ -19,6 +19,8 @@ import {assign, Machine} from 'xstate';
 
 import {URL} from './RolesHelper';
 
+const {getLdapRolesUrl} = URL;
+
 const EMPTY_CONTEXT = {
   query: '',
   data: [],
@@ -54,14 +56,31 @@ export default Machine(
               actions: ['clearError']
             }
           }
+        },
+        debouncing: {
+          after: {
+            500: {
+              target: 'loading',
+              cond: 'meetsCharacterLimit',
+            }
+          }
         }
       },
       on: {
-        SET_QUERY: {
-          actions: ['setQuery'],
-        },
+        SET_QUERY: [
+          {
+            target: 'debouncing',
+            cond: 'isLdap',
+            actions: ['setQuery'],
+          },
+          {
+            target: 'loaded',
+            cond: 'isNotLdap',
+            actions: ['setQuery'],
+          }
+        ],
         UPDATE_TYPE: {
-          target: 'loading',
+          target: 'loaded',
           actions: ['updateType'],
         },
       }
@@ -90,8 +109,23 @@ export default Machine(
           error: () => null,
         })
       },
+      guards: {
+        meetsCharacterLimit: ({ _, query}) => {
+          return query.length > 2;
+        },
+        isLdap: ({ _, externalRoleType}) => {
+          return externalRoleType.toLowerCase() === 'ldap';
+        },
+        isNotLdap: ({ _, externalRoleType}) => {
+          return externalRoleType.toLowerCase() !== 'ldap';
+        },
+      },
       services: {
-        fetchData: ({externalRoleType}) => Axios.get(URL.getRolesUrl(externalRoleType)),
+        fetchData: ({externalRoleType, query}) => {
+          if (externalRoleType.toLowerCase() === 'ldap') {
+            return Axios.get(getLdapRolesUrl(query, externalRoleType));
+          }
+        },
       }
     }
 );

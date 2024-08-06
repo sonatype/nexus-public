@@ -13,16 +13,21 @@
 import React from 'react';
 import {useActor} from '@xstate/react';
 
-import {NxCombobox, NxFormGroup} from '@sonatype/react-shared-components';
+import {NxCombobox, NxFormGroup, NxTextInput} from '@sonatype/react-shared-components';
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
-const {ROLES: {FORM: LABELS}} = UIStrings;
+const { 
+  ROLES: { 
+    FORM: LABELS, 
+    FORM: {EXTERNAL_TYPE: {LDAP: {MORE_CHARACTERS, NO_RESULTS}}} 
+  } 
+} = UIStrings;
 
 export default function ExternalRolesCombobox({actor, parentMachine}) {
   const [state, send] = useActor(actor);
 
-  const {data, query, error} = state.context;
+  const {data, query, error, externalRoleType} = state.context;
   const isLoading = state.matches('loading');
   const retry = () => send('RETRY');
   const [parentState, sendParent] = parentMachine;
@@ -39,19 +44,46 @@ export default function ExternalRolesCombobox({actor, parentMachine}) {
       retry();
     } else {
       send({type: 'SET_QUERY', query: newQuery});
+      if(externalRoleType.toLowerCase() !== 'ldap') {
+        onChangeMappedRole(newQuery);
+      }
     }
   };
 
-  return <NxFormGroup label={LABELS.MAPPED_ROLE.LABEL} isRequired>
-    <NxCombobox
-        {...FormUtils.fieldProps('id', parentState)}
-        onChange={onChangeMappedRole}
-        onSearch={onSearchMappedRole}
-        loading={isLoading}
-        autoComplete={false}
-        matches={externalRoles}
-        loadError={error}
-        aria-label="combobox"
-    />
-  </NxFormGroup>;
+  const emptyMessage = () => {
+    if (externalRoleType.toLowerCase() === 'ldap') {
+      if (query.length > 2) {
+        return NO_RESULTS;
+      } else {
+        return MORE_CHARACTERS;
+      }
+    }
+  }
+
+  return <>
+    {externalRoleType.toLowerCase() !== 'ldap' &&
+      <NxFormGroup label={LABELS.MAPPED_ROLE.LABEL} isRequired>
+        <NxTextInput
+          {...FormUtils.fieldProps('id', parentState)}
+          onChange={(value) => onSearchMappedRole(value)}
+          value={query}
+          />
+      </NxFormGroup>
+    }
+    {externalRoleType.toLowerCase() === 'ldap' &&
+      <NxFormGroup label={LABELS.MAPPED_ROLE.LABEL} isRequired>
+        <NxCombobox
+            {...FormUtils.fieldProps('id', parentState)}
+            onChange={onChangeMappedRole}
+            onSearch={onSearchMappedRole}
+            loading={isLoading}
+            autoComplete={false}
+            matches={externalRoles}
+            loadError={error}
+            aria-label="combobox"
+            emptyMessage={emptyMessage()}
+        />
+      </NxFormGroup>
+    }
+  </>
 }
