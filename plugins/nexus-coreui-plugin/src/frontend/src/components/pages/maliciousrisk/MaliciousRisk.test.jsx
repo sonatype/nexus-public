@@ -10,38 +10,44 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import React from 'react';
 import {when} from "jest-when";
 import axios from "axios";
-import {render, waitForElementToBeRemoved} from "@testing-library/react";
-import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
-import React from "react";
-import {maliciousRiskResponse} from "./MaliciousRisk.testdata";
-import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
-import MaliciousRisk from "./MaliciousRisk";
+import {render, screen, waitForElementToBeRemoved} from "@testing-library/react";
 
-const {MALICIOUS_RISK_SUMMARY} = APIConstants.REST.PUBLIC;
+import MaliciousRisk from "./MaliciousRisk";
+import {maliciousRiskResponse} from "./MaliciousRisk.testdata";
+import {APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
   get: jest.fn()
 }));
 
+const {MALICIOUS_RISK_SUMMARY} = APIConstants.REST.PUBLIC;
+
 const selectors = {
   ...TestUtils.selectors,
+  getHeading: (t) => screen.getByRole('heading', {name: t}),
+  getTextLink: (t) => screen.getByRole('link', {name: t}),
+  getText: (t) => screen.getByText(t),
 };
 
+const content = 'Malicious components exploit the open source DevOps tool chain to introduce malware such as ' +
+    'credential harvester, crypto-miner, a virus, ransomware, data corruption, malicious code injector, etc.'
+
 describe('MaliciousRisk', () => {
-  beforeEach(() => {
-    jest.spyOn(ExtJS, 'state').mockReturnValue({getValue: () => false});
-  });
+  async function renderView() {
+    render(<MaliciousRisk />);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  }
 
   it('renders error page', async () => {
     const message = 'Server Error';
     axios.get.mockRejectedValue({message});
 
-    render(<MaliciousRisk />);
-
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+    await renderView();
 
     expect(selectors.queryLoadError()).toBeInTheDocument();
   });
@@ -51,9 +57,20 @@ describe('MaliciousRisk', () => {
       data: maliciousRiskResponse
     });
 
-    render(<MaliciousRisk />);
+    await renderView();
+  });
 
-    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  it('should render malicious components contents', async () => {
+    await renderView();
 
+    expect(selectors.getHeading('Malicious Risk Dashboard')).toBeInTheDocument();
+    expect(selectors.getHeading('Malicious Components are Malware')).toBeInTheDocument();
+    expect(selectors.getHeading('Average Cost to Remediate a Malicious Attack')).toBeInTheDocument();
+    expect(selectors.getHeading('$5.12 million')).toBeInTheDocument();
+    expect(selectors.getText(content)).toBeInTheDocument();
+
+    const learnMoreLink = selectors.getTextLink('Learn More');
+    expect(learnMoreLink).toBeInTheDocument();
+    expect(learnMoreLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/press-releases');
   });
 })
