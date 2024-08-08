@@ -29,18 +29,11 @@ public interface SecretsDAO
    * Store a record of an encrypted secret. This store is not expected to encrypt the secret, it should be provided
    * in an encrypted form.
    *
-   * @param purpose the purpose of the stored key, e.g. LDAP
-   * @param keyId   the identifier for the key (not the key itself) which was used to encrypt the secret
-   * @param secret  the previously encrypted secret to store
-   * @param userId  the user if known who initiated the request
+   * @param secretData  the previously encrypted secret data to store
    *
    * @return the id for the persisted record
    */
-  int create(
-      @Param("purpose") String purpose,
-      @Nullable @Param("keyId") String keyId,
-      @Param("secret") String secret,
-      @Nullable @Param("userId") String userId);
+  int create(@Param("secretData") SecretData secretData);
 
   /**
    * Deletes a secret from the store by its identifier.

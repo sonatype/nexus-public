@@ -45,7 +45,13 @@ public class SecretsStoreImpl
       final String secret,
       @Nullable final String userId)
   {
-    return dao().create(purpose, keyId, secret, userId);
+    SecretData secretData = new SecretData();
+    secretData.setPurpose(purpose);
+    secretData.setKeyId(keyId);
+    secretData.setSecret(secret);
+    secretData.setUserId(userId);
+    dao().create(secretData);
+    return secretData.getId();
   }
 
   @Transactional
