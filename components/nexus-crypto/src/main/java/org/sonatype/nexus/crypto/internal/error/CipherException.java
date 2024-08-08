@@ -10,26 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.crypto;
+package org.sonatype.nexus.crypto.internal.error;
 
 /**
- * Factory for {@link PbeCipher}s, for password based encryption (PBE).
- *
- * To be used on smaller payloads like user passwords or smaller messages, due to use of byte arrays for payload.
- *
- * @since 3.0
+ * Exception class to identify all the failures related to encryption/decryption
  */
-public interface PbeCipherFactory
+public class CipherException
+    extends RuntimeException
 {
-  interface PbeCipher
-  {
-    byte[] encrypt(final byte[] bytes);
-
-    byte[] decrypt(final byte[] bytes);
+  public CipherException(final String message) {
+    super(message);
   }
 
-  /**
-   * Creates a {@link PbeCipher} with given parameters. None of the parameters may be {@code null}.
-   */
-  PbeCipher create(String password, String salt, String iv) throws Exception;
+  public CipherException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

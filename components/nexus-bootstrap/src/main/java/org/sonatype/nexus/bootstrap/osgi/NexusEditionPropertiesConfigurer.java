@@ -91,6 +91,10 @@ public class NexusEditionPropertiesConfigurer
       Optional.ofNullable(System.getenv("NEXUS_ZDU_FUTURE_MIGRATION_ENABLED")).ifPresent(v ->
           properties.setProperty(ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED, v));
     }
+
+    // Env variable for secrets encryption
+     Optional.ofNullable(System.getenv(SECRETS_FILE_ENV))
+        .ifPresent(secretsFilePath -> properties.setProperty(SECRETS_FILE , secretsFilePath));
   }
 
   private void selectDatastoreFeature(final Properties properties) {

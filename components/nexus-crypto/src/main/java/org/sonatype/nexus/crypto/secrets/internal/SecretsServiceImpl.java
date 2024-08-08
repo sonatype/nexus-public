@@ -15,16 +15,24 @@ package org.sonatype.nexus.crypto.secrets.internal;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
-
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.crypto.PbeCipherFactory;
-import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.db.DatabaseCheck;
+import org.sonatype.nexus.crypto.LegacyCipherFactory;
+import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
+import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
+import org.sonatype.nexus.crypto.internal.error.CipherException;
+import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.crypto.secrets.SecretsStore;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreType;
@@ -32,14 +40,23 @@ import com.fasterxml.jackson.core.Base64Variant;
 import com.fasterxml.jackson.core.Base64Variants;
 import com.google.common.annotations.VisibleForTesting;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 @Named
 @Singleton
 public class SecretsServiceImpl
+    extends ComponentSupport
     implements SecretsFactory, SecretsService
 {
   private static final Base64Variant BASE_64 = Base64Variants.getDefaultVariant();
+
+  private static final String UNDERSCORE = "_";
+
+  private static final String UNDERSCORE_ID = UNDERSCORE + "%d";
+
+  private static final String MINIMUM_VERSION = "1.0";
 
   /**
    * @deprecated this is used to decrypt legacy stored values, or encrypt them until the system has migrated
@@ -47,19 +64,45 @@ public class SecretsServiceImpl
   @Deprecated
   private final PbeCipher legacyCipher;
 
+  private final PbeCipherFactory cipherFactory;
+
+  private final SecretsStore secretsStore;
+
+  private final EncryptionKeySource encryptionKeySource;
+
+  private final DatabaseCheck databaseCheck;
+
+  private final SecretEncryptionKey defaultKey;
+
   @Inject
   public SecretsServiceImpl(
-      final PbeCipherFactory cipherFactory,
+      final LegacyCipherFactory legacyCipherFactory,
+      final PbeCipherFactory pbeCipherFactory,
+      final SecretsStore secretsStore,
+      final EncryptionKeySource encryptionKeySource,
+      final DatabaseCheck databaseCheck,
       @Named("${nexus.mybatis.cipher.password:-changeme}") final String legacyPassword,
       @Named("${nexus.mybatis.cipher.salt:-changeme}") final String legacySalt,
-      @Named("${nexus.mybatis.cipher.iv:-0123456789ABCDEF}") final String legacyIv) throws Exception
+      @Named("${nexus.mybatis.cipher.iv:-0123456789ABCDEF}") final String legacyIv)
   {
-    this.legacyCipher = checkNotNull(cipherFactory).create(legacyPassword, legacySalt, legacyIv);
+    this.legacyCipher = checkNotNull(legacyCipherFactory).create(legacyPassword, legacySalt, legacyIv);//NOSONAR
+    this.cipherFactory = checkNotNull(pbeCipherFactory);
+    this.secretsStore = checkNotNull(secretsStore);
+    this.encryptionKeySource = checkNotNull(encryptionKeySource);
+    this.databaseCheck = checkNotNull(databaseCheck);
+    this.defaultKey = new SecretEncryptionKey(null, legacyPassword);
   }
 
   @VisibleForTesting
-  SecretsServiceImpl(final PbeCipherFactory cipherFactory) throws Exception {
-    this(cipherFactory, "changeme", "changeme", "0123456789ABCDEF");
+  SecretsServiceImpl(
+      final LegacyCipherFactory legacyCipherFactory,
+      final PbeCipherFactory pbeCipherFactory,
+      final SecretsStore secretsStore,
+      final EncryptionKeySource encryptionKeySource,
+      final DatabaseCheck databaseCheck) throws CipherException
+  {
+    this(legacyCipherFactory, pbeCipherFactory, secretsStore, encryptionKeySource, databaseCheck, "changeme",
+        "changeme", "0123456789ABCDEF");
   }
 
   @Override
@@ -68,12 +111,72 @@ public class SecretsServiceImpl
   }
 
   @Override
-  public Secret encrypt(final String purpose, final char[] secret, final String userId) {
-    return new SecretImpl(encryptLegacy(secret));
+  public Secret encrypt(final String purpose, final char[] secret, final String userId) throws CipherException {
+    if (!databaseCheck.isAtLeast(MINIMUM_VERSION)) {
+      return new SecretImpl(encryptLegacy(secret));
+    }
+
+    Optional<SecretEncryptionKey> customKey = encryptionKeySource.getActiveKey();
+
+    //defaulting key_id as NULL, since NULL means legacy encryption
+    String activeKeyId = null;
+
+    if (customKey.isPresent()) {
+      activeKeyId = customKey.get().getId();
+    }
+
+    int tokenId = secretsStore.create(purpose, activeKeyId, doEncrypt(secret, customKey), userId);
+
+    return new SecretImpl(format(UNDERSCORE_ID, tokenId));
   }
 
-  private char[] decrypt(final String token) {
-    return decryptLegacy(token);
+  @Override
+  public void remove(final Secret secret) {
+    checkNotNull(secret);
+
+    if(isLegacyToken(secret.getId())){
+      log.debug("legacy tokens are not stored, deletion not needed.");
+      return;
+    }
+
+    secretsStore.delete(parseToken(secret.getId()));
+  }
+
+  private String doEncrypt(final char[] secret, final Optional<SecretEncryptionKey> customKey) throws CipherException {
+    if (customKey.isPresent()) {
+      return cipherFactory.create(customKey.get()).encrypt(toBytes(secret)).toPhcString();
+    }
+
+    return cipherFactory.create(defaultKey).encrypt(toBytes(secret)).toPhcString();
+  }
+
+  private char[] decrypt(final String token) throws CipherException {
+    if (isLegacyToken(token)) {
+      return decryptLegacy(token);
+    }
+
+    Optional<SecretData> secret = secretsStore.read(parseToken(token));
+
+    if (!secret.isPresent()) {
+      throw new CipherException("Unable find secret for the specified token");
+    }
+
+    SecretData data = secret.get();
+
+    Optional<SecretEncryptionKey> secretKey = Optional.ofNullable(data.getKeyId())
+        .flatMap(encryptionKeySource::getKey);
+
+    if (secretKey.isPresent()) {
+      return toChars(cipherFactory.create(secretKey.get()).decrypt(EncryptedSecret.parse(data.getSecret())));
+    }
+
+    if (data.getKeyId() != null) {
+      log.warn("key id '{}' present in record but not found in existing secrets, secret id : {}", data.getKeyId(),
+          data.getId());
+      throw new CipherException(format("unable to find secret key with id '%s'.", data.getKeyId()));
+    }
+
+    return toChars(cipherFactory.create(defaultKey).decrypt(EncryptedSecret.parse(data.getSecret())));
   }
 
   /**
@@ -98,14 +201,27 @@ public class SecretsServiceImpl
     return toChars(legacyCipher.decrypt(BASE_64.decode(secret)));
   }
 
-  private static byte[] toBytes(final char[] chars) {
-    CharBuffer cbuffer = CharBuffer.wrap(chars);
-    return StandardCharsets.UTF_8.encode(cbuffer).array();
+  private int parseToken(final String token) {
+    checkArgument(token.startsWith(UNDERSCORE), "Unexpected token");
+    return Integer.parseInt(token.substring(1));
   }
 
-  private static char[] toChars(final byte[] chars) {
-    ByteBuffer bbuffer = ByteBuffer.wrap(chars);
-    return StandardCharsets.UTF_8.decode(bbuffer).array();
+  private static boolean isLegacyToken(final String token) {
+    return !token.startsWith(UNDERSCORE);
+  }
+
+  private static byte[] toBytes(final char[] chars) {
+    ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(chars));
+    byte[] bytes = new byte[byteBuffer.limit()];
+    byteBuffer.get(bytes);
+    return bytes;
+  }
+
+  private static char[] toChars(final byte[] bytes) {
+    CharBuffer charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(bytes));
+    char[] chars = new char[charBuffer.limit()];
+    charBuffer.get(chars);
+    return chars;
   }
 
   /*
@@ -128,7 +244,7 @@ public class SecretsServiceImpl
     }
 
     @Override
-    public char[] decrypt() {
+    public char[] decrypt() throws CipherException {
       return SecretsServiceImpl.this.decrypt(tokenId);
     }
   }

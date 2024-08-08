@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.crypto.secrets;
 
+import org.sonatype.nexus.crypto.internal.error.CipherException;
+
 /**
  * An application secret (e.g. a password persisted with reversible encryption
  */
@@ -20,7 +22,7 @@ public interface Secret
   /**
    * May have latency due to decryption or external secret management.
    */
-  char[] decrypt();
+  char[] decrypt() throws CipherException;
 
   /**
    * Returns the token id. Note, if the system has not been upgraded this may be a legacy encrypted string for

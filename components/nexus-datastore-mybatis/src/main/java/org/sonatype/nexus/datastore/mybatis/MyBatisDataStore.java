@@ -52,7 +52,7 @@ import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StatePrerequisitesInvalidException;
 import org.sonatype.nexus.common.thread.TcclBlock;
-import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
+import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.datastore.DataStoreSupport;

@@ -105,6 +105,11 @@ public class DatabaseCheckImpl
     return false;
   }
 
+  @Override
+  public boolean isAtLeast(final String version) {
+    return isAllowed(version);
+  }
+
   @Subscribe
   public void on(final UpgradeEventSupport event) {
     Optional<MigrationVersion> schemaVersion = event.getSchemaVersion()

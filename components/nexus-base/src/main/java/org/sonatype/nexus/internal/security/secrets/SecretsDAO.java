@@ -38,7 +38,7 @@ public interface SecretsDAO
    */
   int create(
       @Param("purpose") String purpose,
-      @Param("keyId") String keyId,
+      @Nullable @Param("keyId") String keyId,
       @Param("secret") String secret,
       @Nullable @Param("userId") String userId);
 

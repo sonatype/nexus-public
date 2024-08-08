@@ -34,7 +34,7 @@ public interface SecretsStore
    *
    * @return the id for the persisted record
    */
-  int create(String purpose, String keyId, String secret, @Nullable String userId);
+  int create(String purpose, @Nullable String keyId, String secret, @Nullable String userId);
 
   /**
    * Deletes a secret from the store by its identifier.

@@ -41,7 +41,7 @@ public class SecretsStoreImpl
   @Override
   public int create(
       final String purpose,
-      final String keyId,
+      @Nullable final String keyId,
       final String secret,
       @Nullable final String userId)
   {

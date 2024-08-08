@@ -10,28 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.crypto.secrets;
-
-import javax.annotation.Nullable;
+package org.sonatype.nexus.crypto;
 
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 
 /**
- * Service responsible for storing secrets (e.g. passwords) with reversible encryption.
+ * Factory for {@link PbeCipher}s, for password based encryption (PBE).
+ *
+ * To be used on smaller payloads like user passwords or smaller messages, due to use of byte arrays for payload.
+ *
+ * @since 3.0
  */
-public interface SecretsService
+public interface LegacyCipherFactory
 {
-  /**
-   * Encrypts the token using the current key and stores it in the DB.
-   * <p>
-   * Callers are responsible for removing the secrets (use {@link SecretsService#remove(Secret)} for this).
-   */
-  Secret encrypt(String purpose, char[] secret, @Nullable String userId) throws CipherException;
+  interface PbeCipher
+  {
+    byte[] encrypt(final byte[] bytes);
+
+    byte[] decrypt(final byte[] bytes);
+  }
 
   /**
-   * Removes a previously stored secret, if a legacy secret is sent does nothing.
-   *
-   * @param secret the secret to be removed
+   * Creates a {@link PbeCipher} with given parameters. None of the parameters may be {@code null}.
    */
-  void remove(Secret secret);
+  PbeCipher create(String password, String salt, String iv) throws CipherException;
 }

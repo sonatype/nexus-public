@@ -10,28 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.crypto.secrets;
-
-import javax.annotation.Nullable;
+package org.sonatype.nexus.crypto.internal;
 
 import org.sonatype.nexus.crypto.internal.error.CipherException;
+import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
 /**
- * Service responsible for storing secrets (e.g. passwords) with reversible encryption.
+ * Factory for {@link PbeCipher}s, for secrets encryption stored in the PHC string format.
+ * <p>
+ * for further info check
+ * <a href="https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md">PHC String format</a>
  */
-public interface SecretsService
+public interface PbeCipherFactory
 {
-  /**
-   * Encrypts the token using the current key and stores it in the DB.
-   * <p>
-   * Callers are responsible for removing the secrets (use {@link SecretsService#remove(Secret)} for this).
-   */
-  Secret encrypt(String purpose, char[] secret, @Nullable String userId) throws CipherException;
+  interface PbeCipher
+  {
+    EncryptedSecret encrypt(final byte[] bytes) throws CipherException;
+
+    byte[] decrypt(EncryptedSecret secret) throws CipherException;
+  }
 
   /**
-   * Removes a previously stored secret, if a legacy secret is sent does nothing.
-   *
-   * @param secret the secret to be removed
+   * Creates a {@link PbeCipher} with the given {@link SecretEncryptionKey}.
    */
-  void remove(Secret secret);
+  PbeCipher create(SecretEncryptionKey secretEncryptionKey) throws CipherException;
 }
