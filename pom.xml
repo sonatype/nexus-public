@@ -105,7 +105,7 @@
 
     <it.includes>**/*IT.*</it.includes>
 
-    <it.includedGroups></it.includedGroups>
+    <it.includedGroups/>
     <it.excludedGroups>
       org.sonatype.goodies.testsupport.group.Perf,
       org.sonatype.goodies.testsupport.group.External,
@@ -604,7 +604,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-core-feature</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.71.0-06</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
