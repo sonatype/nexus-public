@@ -202,6 +202,12 @@ export default {
           URL: 'https://links.sonatype.com/products/nxrm3/docs/upgrade-to-pro'
         }
       }
-    }
+    },
+    MALICIOUS_RISK_BANNER_CONTENT: {
+      FIRST_LINE_HEAVY_BOLD_TEXT: 'NEW! Malicious Risk Dashboard',
+      FIRST_LINE_NORMAL_BOLD_TEXT: 'is now available',
+      SECOND_LINE_TEXT: 'View metrics on your repository risk and take control of your organizational health'
+    },
+    MALICIOUS_RISK_BANNER_BUTTON_CONTENT : 'View Dashboard'
   }
 };

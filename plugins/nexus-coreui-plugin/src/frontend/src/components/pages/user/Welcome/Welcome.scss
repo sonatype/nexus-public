@@ -49,6 +49,40 @@
     // The standard border color doesn't have enough contrast on the NXRM page background
     border-color: var(--nx-swatch-indigo-60);
   }
+
+  &__malicious-risk-banner {
+    max-width: 1016px;
+    margin: var(--nx-spacing-6x) 0 0 var(--nx-spacing-6x);
+    padding: 0 var(--nx-spacing-6x) 0 var(--nx-spacing-6x);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-image: url(/static/rapture/resources/images/malicious_risk_marketing_banner.png);
+  }
+
+  .banner-first-line {
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .heavy-bold {
+    font-weight: 800;
+  }
+
+  .banner-second-line {
+    margin: 0;
+    padding: 0;
+    font-weight: 500;
+  }
+
+  #view-dashboard-banner-btn {
+    align-items: center;
+    font-weight: bold;
+    background: linear-gradient(295.52deg, #00A1E2 -18.79%, rgba(32, 130, 229, 0.79) 11.84%, #7034EE 102.45%);
+    transition: background 0.1s ease;
+  }
 }
 
 .nx-icon-feature-browse-welcome-x16 {

@@ -414,4 +414,47 @@ describe('Welcome', function() {
       expect(selectors.queryAllCards().length).toBe(0);
     });
   });
+
+  describe('malicious risk dashboard banner', function() {
+    it('renders when user is an admin and MaliciousRiskDashboard is true', async () => {
+      user = {administrator: true};
+      when(ExtJS.state().getValue).calledWith('MaliciousRiskDashboard').mockReturnValue(true);
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(selectors.loadingStatus());
+
+      expect(screen.getByText('NEW! Malicious Risk Dashboard')).toBeInTheDocument();
+      expect(screen.getByText('is now available')).toBeInTheDocument();
+      expect(screen.getByText('View metrics on your repository risk and take control of your organizational health'))
+          .toBeInTheDocument();
+      expect(screen.getByRole('button', {name: 'View Dashboard'})).toBeInTheDocument();
+    });
+
+    it('does not render when user is an admin and MaliciousRiskDashboard is false', async () => {
+      user = {administrator: true};
+      when(ExtJS.state().getValue).calledWith('MaliciousRiskDashboard').mockReturnValue(false);
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(selectors.loadingStatus());
+
+      expect(screen.queryByText('NEW! Malicious Risk Dashboard')).not.toBeInTheDocument();
+      expect(screen.queryByText('is now available')).not.toBeInTheDocument();
+      expect(screen.queryByText('View metrics on your repository risk and take control of your organizational health'))
+          .not.toBeInTheDocument();
+      expect(screen.queryByRole('button', {name: 'View Dashboard'})).not.toBeInTheDocument();
+    });
+
+    it('does not render if user is not an admin', async function() {
+      user = { administrator: false };
+      
+      render(<Welcome />);
+      await waitForElementToBeRemoved(selectors.loadingStatus());
+
+      expect(screen.queryByText('NEW! Malicious Risk Dashboard')).not.toBeInTheDocument();
+      expect(screen.queryByText('is now available')).not.toBeInTheDocument();
+      expect(screen.queryByText('View metrics on your repository risk and take control of your organizational health'))
+          .not.toBeInTheDocument();
+      expect(screen.queryByRole('button', {name: 'View Dashboard'})).not.toBeInTheDocument();
+    })
+  });
 });
