@@ -50,7 +50,7 @@ class CoreApiImplTest
 
   CapabilityIdentity identity = new CapabilityIdentity('test')
 
-  CoreApi api = new CoreApiImpl(capabilityRegistry: capabilityRegistry, httpClientManager: httpClientManager)
+  CoreApi api = new CoreApiImpl(capabilityRegistry, httpClientManager)
 
   private static final ProxyConfiguration EXISTING_HTTP = new ProxyConfiguration(
       http: new ProxyServerConfiguration(enabled: true, host: 'http', port: 1))

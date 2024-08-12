@@ -989,6 +989,12 @@
               <exclude>**/src/test/it-resources/**</exclude>
 
               <!--
+              Exclude XML stylesheet template so header doesn't alter expected output
+              -->
+              <exclude>**/nexus-core/**/jetty-stylesheet.xml</exclude>
+              <exclude>**/nexus-core/**/hazelcast-stylesheet.xml</exclude>
+
+              <!--
               Exclude rapture configuration, generated and thirdparty resources.
               -->
               <exclude>**/nexus-rapture/src/main/baseapp/**</exclude>

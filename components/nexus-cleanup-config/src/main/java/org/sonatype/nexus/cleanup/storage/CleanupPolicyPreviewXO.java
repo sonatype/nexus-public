@@ -10,21 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.storage
+package org.sonatype.nexus.cleanup.storage;
 
-import groovy.transform.ToString
-import groovy.transform.builder.Builder
-
-/**
- * Cleanup Policy Preview exchange object.
- *
- * @since 3.14
- */
-@Builder
-@ToString(includePackage = false, includeNames = true)
-class CleanupPolicyPreviewXO
+public class CleanupPolicyPreviewXO
 {
-  String repositoryName;
+  private String repositoryName;
 
-  CleanupPolicyCriteria criteria;
+  private CleanupPolicyCriteria criteria;
+
+  public String getRepositoryName() {
+    return repositoryName;
+  }
+
+  public void setRepositoryName(final String repositoryName) {
+    this.repositoryName = repositoryName;
+  }
+
+  public CleanupPolicyCriteria getCriteria() {
+    return criteria;
+  }
+
+  public void setCriteria(final CleanupPolicyCriteria criteria) {
+    this.criteria = criteria;
+  }
+
+  @Override
+  public String toString() {
+    return "CleanupPolicyPreviewXO(" +
+        "repositoryName:" + repositoryName +
+        ", criteria:" + criteria +
+        ")";
+  }
 }
