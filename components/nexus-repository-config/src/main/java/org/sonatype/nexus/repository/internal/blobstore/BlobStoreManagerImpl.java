@@ -168,7 +168,9 @@ public class BlobStoreManagerImpl
         log.error("Unable to restore BlobStore {}", configuration, e);
       }
       finally {
-        track(configuration.getName(), blobStore);
+        if(blobStore != null) {
+          track(configuration.getName(), blobStore);
+        }
       }
 
       // TODO - event publishing
