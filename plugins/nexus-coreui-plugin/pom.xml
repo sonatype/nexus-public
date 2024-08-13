@@ -140,6 +140,15 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <!-- org.sonatype.nexus.coreui.internal.content:org.sonatype.nexus.coreui.internal.capability -->
+          <excludePackageNames>org.sonatype.nexus.coreui:org.sonatype.nexus.coreui.internal:org.sonatype.nexus.coreui.internal.*:org.sonatype.nexus.coreui.service</excludePackageNames>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>extjs-maven-plugin</artifactId>
         <configuration>

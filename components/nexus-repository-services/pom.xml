@@ -262,7 +262,15 @@
           </instructions>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+          <excludePackageNames>org.sonatype.nexus.repository.rest.api:org.sonatype.nexus.repository.rest.internal.resources:org.sonatype.nexus.repository.rest.internal.resources.doc</excludePackageNames>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
-
 </project>

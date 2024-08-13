@@ -621,14 +621,12 @@
           </configuration>
         </plugin>
 
-        <!--
-        Turn off strict javadoc checks in Java8.
-        -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.6.3</version>
           <configuration>
-            <additionalparam>-Xdoclint:none</additionalparam>
+            <doclint>none</doclint>
           </configuration>
         </plugin>
 

@@ -10,23 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture.internal.logging
-
-import groovy.transform.ToString
+package org.sonatype.nexus.rapture.internal.security;
 
 /**
- * LogEvent exchange-object.
+ * Permission exchange object.
  *
  * @since 3.0
  */
-@ToString(includePackage = false, includeNames = true)
-class LogEventXO
+public class PermissionXO
 {
-  Long timestamp
+  private String id;
 
-  String logger
+  public String getId() {
+    return id;
+  }
 
-  String level
+  public void setId(String id) {
+    this.id = id;
+  }
 
-  String message
+  @Override
+  public String toString() {
+    return "PermissionXO(" +
+        "id:'" + id + '\'' +
+        ')';
+  }
 }

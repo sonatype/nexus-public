@@ -120,6 +120,15 @@
         <groupId>org.apache.karaf.tooling</groupId>
         <artifactId>karaf-maven-plugin</artifactId>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <excludePackageNames>org.sonatype.nexus.script.plugin.internal:org.sonatype.nexus.script.plugin.internal.security:org.sonatype.nexus.script.plugin.internal.rest</excludePackageNames>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>

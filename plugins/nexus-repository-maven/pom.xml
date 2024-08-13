@@ -164,6 +164,14 @@
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <excludePackageNames>org.sonatype.nexus.content.maven.upgrade</excludePackageNames>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>extjs-maven-plugin</artifactId>
         <configuration>

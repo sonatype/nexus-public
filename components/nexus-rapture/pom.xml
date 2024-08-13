@@ -101,6 +101,13 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+            <excludePackageNames>org.sonatype.nexus.rapture.internal.branding:org.sonatype.nexus.rapture.internal.security</excludePackageNames>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>extjs-maven-plugin</artifactId>
         <configuration>
