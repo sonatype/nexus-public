@@ -15,8 +15,9 @@ import React from "react";
 
 export default {
   MALICIOUS_RISK: {
-    MENU:{
-      text:'Malicious Risk <span class="nxrm-new-tag">NEW</span>',
+    MENU: {
+      text: 'Malicious Risk',
+      textComplement: '<span class="nxrm-new-tag">NEW</span>',
       description: 'Visualize risk in your repositories'
     },
     TITLE: 'Malicious Risk Dashboard',

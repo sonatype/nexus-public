@@ -586,7 +586,7 @@ Ext.define('NX.controller.Menu', {
                 id: feature.id,
                 mode: feature.mode,
                 path: feature.path,
-                text: feature.text,
+                text: feature.text + feature.textComplement,
                 view: feature.view,
                 weight: feature.weight,
                 grouped: feature.group
