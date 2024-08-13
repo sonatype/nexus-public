@@ -32,6 +32,9 @@ const selectors = {
   getHeading: (t) => screen.getByRole('heading', {name: t}),
   getTextLink: (t) => screen.getByRole('link', {name: t}),
   getText: (t) => screen.getByText(t),
+  containsText: (t) => screen.getByText(t, {exact: false}),
+  getAllText: (t) => screen.getAllByText(t),
+  getId: (t) => screen.getByTestId(t),
 };
 
 const content = 'Malicious components exploit the open source DevOps tool chain to introduce malware such as ' +
@@ -73,4 +76,23 @@ describe('MaliciousRisk', () => {
     expect(learnMoreLink).toBeInTheDocument();
     expect(learnMoreLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/press-releases');
   });
+
+  it('should render malicious events content widget', async () => {
+    await renderView();
+
+    expect(selectors.getHeading('Unprotected from Malware')).toBeInTheDocument();
+    expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
+    expect(selectors.containsText('16000 malicious events identified by Sonatype in the last 60 days')).toBeInTheDocument();
+    expect(selectors.getAllText('0 / 10 total').length).toBe(2);
+    expect(selectors.getId('meter')).toBeInTheDocument();
+
+    const moreLink = selectors.getTextLink('more');
+    expect(moreLink).toBeInTheDocument();
+    expect(moreLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support');
+
+    const howToProtectLink = selectors.getTextLink('How can I protect my repositories?');
+    expect(howToProtectLink).toBeInTheDocument();
+    expect(howToProtectLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall');
+  });
+
 })

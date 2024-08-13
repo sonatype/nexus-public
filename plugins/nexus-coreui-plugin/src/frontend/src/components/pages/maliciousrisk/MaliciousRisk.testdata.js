@@ -30,5 +30,5 @@ export const maliciousRiskResponse = {
     }
   ],
   'totalMaliciousRiskCount': 16000,
-  'proxyCount': 10,
+  'totalProxyRepositoryCount': 10,
 }

@@ -10,6 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {NxTextLink} from "@sonatype/react-shared-components";
+import React from "react";
+
 export default {
   MALICIOUS_RISK: {
     MENU:{
@@ -30,6 +33,26 @@ export default {
       LEARN_MORE: {
         TEXT: 'Learn More',
         URL: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/press-releases'
+      }
+    },
+    MALICIOUS_EVENTS: {
+      UNPROTECTED_MALWARE: {
+        TEXT: 'Unprotected from Malware',
+        DESCRIPTION: <>
+          malicious events identified by Sonatype in the last 60 days (npmjs.org, PyPI and
+          <NxTextLink
+              href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support"
+              external> more</NxTextLink> )
+        </>,
+      },
+      PROXY_PROTECTION: {
+        TITLE: 'Proxy Repository Protection',
+        DESCRIPTION: 'Proxy repositories protected',
+        TOOLTIP: 'Your total number of proxied repositories that are protected from malicious components',
+      },
+      HOW_TO_PROTECT: {
+        TEXT: 'How can I protect my repositories?',
+        URL: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall'
       }
     },
     LOAD_ERROR: 'An error occurred while fetching the malicious risk data',

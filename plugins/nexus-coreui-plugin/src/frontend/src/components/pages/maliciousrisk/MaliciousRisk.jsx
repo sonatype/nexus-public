@@ -28,17 +28,18 @@ import {
 
 import UIStrings from "../../../constants/UIStrings";
 import MaliciousRiskMachine from "./MaliciousRiskMachine";
-import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 import MaliciousComponents from "./MaliciousComponents";
 import "./MaliciousRisk.scss";
+import MaliciousEvents from "./MaliciousEvents";
+import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 
 const {TITLE, LOAD_ERROR} = UIStrings.MALICIOUS_RISK;
 
 export default function MaliciousRisk() {
-  const [state, send, service] = useMachine(MaliciousRiskMachine);
+  const [state, send, service] = useMachine(MaliciousRiskMachine, {devtools: true});
   const isLoading = state.matches('loading');
   const loadError = state.matches('loadError') ? LOAD_ERROR : null;
-  const {maliciousRisk} = state.context;
+  const {maliciousRisk: {totalMaliciousRiskCount, totalProxyRepositoryCount}} = state.context;
 
   function retry() {
     send({type: 'RETRY'});
@@ -51,11 +52,12 @@ export default function MaliciousRisk() {
         </PageHeader>
         <ContentBody>
           <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-            <p>Data: {maliciousRisk.totalMaliciousRiskCount}</p>
             <NxTile>
               <NxTile.Content>
                 <NxGrid.Row>
                   <MaliciousComponents/>
+                  <MaliciousEvents totalMaliciousRiskCount={totalMaliciousRiskCount}
+                                   totalProxyRepositoryCount={totalProxyRepositoryCount}/>
                 </NxGrid.Row>
               </NxTile.Content>
             </NxTile>
