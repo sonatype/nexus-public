@@ -49,7 +49,7 @@ describe('MaliciousRisk', () => {
       data: maliciousRiskResponse
     });
 
-    render(<MaliciousRisk />);
+    render(<MaliciousRisk/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 
@@ -57,7 +57,7 @@ describe('MaliciousRisk', () => {
     const message = 'Server Error';
     axios.get.mockRejectedValue({message});
 
-    render(<MaliciousRisk />);
+    render(<MaliciousRisk/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(selectors.queryLoadError()).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe('MaliciousRisk', () => {
   it('should render malicious components contents', async () => {
     await renderView();
 
-    expect(selectors.getHeading('Malicious Risk Dashboard')).toBeInTheDocument();
+    expect(selectors.getHeading('Open Source Malware Risk')).toBeInTheDocument();
     expect(selectors.getHeading('Malicious Components are Malware')).toBeInTheDocument();
     expect(selectors.getHeading('Average Cost to Remediate a Malicious Attack')).toBeInTheDocument();
     expect(selectors.getHeading('$5.12 million')).toBeInTheDocument();
@@ -74,7 +74,8 @@ describe('MaliciousRisk', () => {
 
     const learnMoreLink = selectors.getTextLink('Learn More');
     expect(learnMoreLink).toBeInTheDocument();
-    expect(learnMoreLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/press-releases');
+    expect(learnMoreLink).toHaveAttribute('href',
+        'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/press-releases');
   });
 
   it('should render malicious components in high risk ecosystems', async () => {
@@ -90,17 +91,20 @@ describe('MaliciousRisk', () => {
 
     expect(selectors.getHeading('Unprotected from Malware')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
-    expect(selectors.containsText('16000 malicious events identified by Sonatype in the last 60 days')).toBeInTheDocument();
+    expect(selectors.containsText(
+        '16000 malicious events identified by Sonatype in the last 60 days')).toBeInTheDocument();
     expect(selectors.getAllText('0 / 10 total').length).toBe(2);
     expect(selectors.getId('meter')).toBeInTheDocument();
 
     const moreLink = selectors.getTextLink('more');
     expect(moreLink).toBeInTheDocument();
-    expect(moreLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support');
+    expect(moreLink).toHaveAttribute('href',
+        'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support');
 
     const howToProtectLink = selectors.getTextLink('How can I protect my repositories?');
     expect(howToProtectLink).toBeInTheDocument();
-    expect(howToProtectLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall');
+    expect(howToProtectLink).toHaveAttribute('href',
+        'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall');
   });
 })
 
@@ -118,4 +122,4 @@ async function expectEcoSystemToRender(name, count) {
       'Total amount of malicious components found across this ecosystem’s public repositories');
 
   expect(selectors.getHeading(count)).toBeInTheDocument();
-};
+}

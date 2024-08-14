@@ -16,11 +16,11 @@ import React from "react";
 export default {
   MALICIOUS_RISK: {
     MENU: {
-      text: 'Malicious Risk',
+      text: 'OSS Malware Risk',
       textComplement: '<span class="nxrm-new-tag">NEW</span>',
       description: 'Visualize risk in your repositories'
     },
-    TITLE: 'Malicious Risk Dashboard',
+    TITLE: 'Open Source Malware Risk',
     COMPONENTS_IN_HIGH_RISK_ECOSYSTEMS: {
       TEXT: 'Malicious Components in High Risk Ecosystems (Last 60 Days)',
       REPOSITORIES_PROTECTED: '0 repositories protected',
