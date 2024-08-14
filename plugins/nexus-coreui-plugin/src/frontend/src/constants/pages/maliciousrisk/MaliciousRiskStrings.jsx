@@ -21,6 +21,12 @@ export default {
       description: 'Visualize risk in your repositories'
     },
     TITLE: 'Malicious Risk Dashboard',
+    COMPONENTS_IN_HIGH_RISK_ECOSYSTEMS: {
+      TEXT: 'Malicious Components in High Risk Ecosystems (Last 60 Days)',
+      REPOSITORIES_PROTECTED: '0 repositories protected',
+      PUBLIC_MALICIOUS_COMPONENT: 'Public malicious components',
+      TOOLTIP: 'Total amount of malicious components found across this ecosystem’s public repositories'
+    },
     COMPONENT_MALWARE: {
       MALICIOUS_COMPONENTS: {
         TEXT: 'Malicious Components are Malware',

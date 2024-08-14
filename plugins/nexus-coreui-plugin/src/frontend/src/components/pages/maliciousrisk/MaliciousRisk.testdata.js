@@ -18,15 +18,15 @@ export const maliciousRiskResponse = {
   'countByEcosystem': [
     {
       'ecosystem': 'npm',
-      'maliciousRiskCount': 10000,
+      'count': 10000,
     },
     {
       'ecosystem': 'pypi',
-      'maliciousRiskCount': 5000,
+      'count': 5000,
     },
     {
       'ecosystem': 'maven',
-      'maliciousRiskCount': 1000,
+      'count': 1000,
     }
   ],
   'totalMaliciousRiskCount': 16000,

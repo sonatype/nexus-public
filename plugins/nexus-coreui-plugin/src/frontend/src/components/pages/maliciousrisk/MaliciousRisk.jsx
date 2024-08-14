@@ -23,12 +23,13 @@ import {
 import {
   NxGrid,
   NxLoadWrapper,
-  NxTile
+  NxTile,
 } from '@sonatype/react-shared-components';
 
 import UIStrings from "../../../constants/UIStrings";
 import MaliciousRiskMachine from "./MaliciousRiskMachine";
 import MaliciousComponents from "./MaliciousComponents";
+import MaliciousHighRiskEcosystems from "./MaliciousHighRiskEcosystems";
 import "./MaliciousRisk.scss";
 import MaliciousEvents from "./MaliciousEvents";
 import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
@@ -39,7 +40,7 @@ export default function MaliciousRisk() {
   const [state, send, service] = useMachine(MaliciousRiskMachine, {devtools: true});
   const isLoading = state.matches('loading');
   const loadError = state.matches('loadError') ? LOAD_ERROR : null;
-  const {maliciousRisk: {totalMaliciousRiskCount, totalProxyRepositoryCount}} = state.context;
+  const {maliciousRisk: {countByEcosystem, totalMaliciousRiskCount, totalProxyRepositoryCount}} = state.context;
 
   function retry() {
     send({type: 'RETRY'});
@@ -61,6 +62,7 @@ export default function MaliciousRisk() {
                 </NxGrid.Row>
               </NxTile.Content>
             </NxTile>
+            <MaliciousHighRiskEcosystems countByEcosystem={countByEcosystem}/>
           </NxLoadWrapper>
         </ContentBody>
       </Page>

@@ -13,7 +13,7 @@
 import React from 'react';
 import {when} from "jest-when";
 import axios from "axios";
-import {render, screen, waitForElementToBeRemoved} from "@testing-library/react";
+import {render, screen, waitForElementToBeRemoved, within} from "@testing-library/react";
 
 import MaliciousRisk from "./MaliciousRisk";
 import {maliciousRiskResponse} from "./MaliciousRisk.testdata";
@@ -32,6 +32,9 @@ const selectors = {
   getHeading: (t) => screen.getByRole('heading', {name: t}),
   getTextLink: (t) => screen.getByRole('link', {name: t}),
   getText: (t) => screen.getByText(t),
+  getEcoSystem: (id) => screen.getByTestId(id),
+  getEcoSystemInfoIcon: (s) => s.querySelector('[data-icon="info-circle"]'),
+  getEcoSystemIndicator: (s) => within(s).getByRole('status'),
   containsText: (t) => screen.getByText(t, {exact: false}),
   getAllText: (t) => screen.getAllByText(t),
   getId: (t) => screen.getByTestId(t),
@@ -42,6 +45,10 @@ const content = 'Malicious components exploit the open source DevOps tool chain 
 
 describe('MaliciousRisk', () => {
   async function renderView() {
+    when(axios.get).calledWith(MALICIOUS_RISK_SUMMARY).mockResolvedValue({
+      data: maliciousRiskResponse
+    });
+
     render(<MaliciousRisk />);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
@@ -50,17 +57,10 @@ describe('MaliciousRisk', () => {
     const message = 'Server Error';
     axios.get.mockRejectedValue({message});
 
-    await renderView();
+    render(<MaliciousRisk />);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(selectors.queryLoadError()).toBeInTheDocument();
-  });
-
-  it('renders correctly', async () => {
-    when(axios.get).calledWith(MALICIOUS_RISK_SUMMARY).mockResolvedValue({
-      data: maliciousRiskResponse
-    });
-
-    await renderView();
   });
 
   it('should render malicious components contents', async () => {
@@ -75,6 +75,14 @@ describe('MaliciousRisk', () => {
     const learnMoreLink = selectors.getTextLink('Learn More');
     expect(learnMoreLink).toBeInTheDocument();
     expect(learnMoreLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/press-releases');
+  });
+
+  it('should render malicious components in high risk ecosystems', async () => {
+    await renderView();
+
+    await expectEcoSystemToRender('npm', 10000);
+    await expectEcoSystemToRender('pypi', 5000);
+    await expectEcoSystemToRender('maven', 1000);
   });
 
   it('should render malicious events content widget', async () => {
@@ -94,5 +102,20 @@ describe('MaliciousRisk', () => {
     expect(howToProtectLink).toBeInTheDocument();
     expect(howToProtectLink).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall');
   });
-
 })
+
+async function expectEcoSystemToRender(name, count) {
+  const ecosystem = selectors.getEcoSystem(name);
+  expect(ecosystem).toBeInTheDocument();
+
+  const indicator = selectors.getEcoSystemIndicator(ecosystem);
+  expect(indicator).toBeInTheDocument();
+  expect(indicator).toHaveTextContent('0 repositories protected');
+
+  const infoIcon = selectors.getEcoSystemInfoIcon(ecosystem);
+  expect(infoIcon).toBeInTheDocument();
+  await TestUtils.expectToSeeTooltipOnHover(infoIcon,
+      'Total amount of malicious components found across this ecosystem’s public repositories');
+
+  expect(selectors.getHeading(count)).toBeInTheDocument();
+};
