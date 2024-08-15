@@ -46,7 +46,7 @@ export default {
       UNPROTECTED_MALWARE: {
         TEXT: 'Unprotected from Malware',
         DESCRIPTION: <>
-          malicious events identified by Sonatype in the last 60 days (npmjs.org, PyPI and
+          malicious events identified by Sonatype in the last 60 days (npmjs.org, PyPI.org and
           <NxTextLink
               href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support"
               external> more</NxTextLink> )
