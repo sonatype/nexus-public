@@ -92,7 +92,7 @@ describe('MaliciousRisk', () => {
     expect(selectors.getHeading('Unprotected from Malware')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
     expect(selectors.containsText(
-        '16000 malicious events identified by Sonatype in the last 60 days')).toBeInTheDocument();
+        '16000 malicious events identified by Sonatype')).toBeInTheDocument();
     expect(selectors.getAllText('0 / 10 total').length).toBe(2);
     expect(selectors.getId('meter')).toBeInTheDocument();
 

@@ -22,7 +22,7 @@ export default {
     },
     TITLE: 'Open Source Malware Risk',
     COMPONENTS_IN_HIGH_RISK_ECOSYSTEMS: {
-      TEXT: 'Malicious Components in High Risk Ecosystems (Last 60 Days)',
+      TEXT: 'Malicious Components in High Risk Ecosystems',
       REPOSITORIES_PROTECTED: '0 repositories protected',
       PUBLIC_MALICIOUS_COMPONENT: 'Public malicious components',
       TOOLTIP: 'Total amount of malicious components found across this ecosystem’s public repositories'
@@ -46,7 +46,7 @@ export default {
       UNPROTECTED_MALWARE: {
         TEXT: 'Unprotected from Malware',
         DESCRIPTION: <>
-          malicious events identified by Sonatype in the last 60 days (npmjs.org, PyPI.org and
+          malicious events identified by Sonatype (npmjs.org, PyPI.org and
           <NxTextLink
               href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support"
               external> more</NxTextLink> )
