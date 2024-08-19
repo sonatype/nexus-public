@@ -40,7 +40,7 @@ const selectors = {
   getId: (t) => screen.getByTestId(t),
 };
 
-const content = 'Malicious components exploit the open source DevOps tool chain to introduce malware such as ' +
+const content = 'Open Source malware exploits the open source DevOps tool chain to introduce malware such as ' +
     'credential harvester, crypto-miner, a virus, ransomware, data corruption, malicious code injector, etc.'
 
 describe('MaliciousRisk', () => {
@@ -67,8 +67,8 @@ describe('MaliciousRisk', () => {
     await renderView();
 
     expect(selectors.getHeading('Open Source Malware Risk')).toBeInTheDocument();
-    expect(selectors.getHeading('Malicious Components are Malware')).toBeInTheDocument();
-    expect(selectors.getHeading('Average Cost to Remediate a Malicious Attack')).toBeInTheDocument();
+    expect(selectors.getHeading('What Is Open Source Malware?')).toBeInTheDocument();
+    expect(selectors.getHeading('Average Cost to Remediate OSS Malware')).toBeInTheDocument();
     expect(selectors.getHeading('$5.12 million')).toBeInTheDocument();
     expect(selectors.getText(content)).toBeInTheDocument();
 
@@ -81,6 +81,7 @@ describe('MaliciousRisk', () => {
   it('should render malicious components in high risk ecosystems', async () => {
     await renderView();
 
+    expect(selectors.getHeading('Open Source Malware in High Risk Ecosystems')).toBeInTheDocument();
     await expectEcoSystemToRender('npm', 10000);
     await expectEcoSystemToRender('pypi', 5000);
     await expectEcoSystemToRender('maven', 1000);
@@ -89,7 +90,7 @@ describe('MaliciousRisk', () => {
   it('should render malicious events content widget', async () => {
     await renderView();
 
-    expect(selectors.getHeading('Unprotected from Malware')).toBeInTheDocument();
+    expect(selectors.getHeading('You Are Unprotected')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
     expect(selectors.containsText(
         '16000 malicious events identified by Sonatype')).toBeInTheDocument();

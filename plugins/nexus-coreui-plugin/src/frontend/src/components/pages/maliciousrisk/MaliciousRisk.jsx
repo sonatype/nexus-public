@@ -22,6 +22,7 @@ import {
 
 import {
   NxGrid,
+  NxH2,
   NxLoadWrapper,
   NxTile,
 } from '@sonatype/react-shared-components';
@@ -34,7 +35,7 @@ import "./MaliciousRisk.scss";
 import MaliciousEvents from "./MaliciousEvents";
 import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 
-const {TITLE, LOAD_ERROR} = UIStrings.MALICIOUS_RISK;
+const {TITLE,OPEN_SOURCE_MALWARE_PROTECTION_STATUS, LOAD_ERROR} = UIStrings.MALICIOUS_RISK;
 
 export default function MaliciousRisk() {
   const [state, send, service] = useMachine(MaliciousRiskMachine, {devtools: true});
@@ -53,6 +54,7 @@ export default function MaliciousRisk() {
         </PageHeader>
         <ContentBody>
           <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
+            <NxH2>{OPEN_SOURCE_MALWARE_PROTECTION_STATUS}</NxH2>
             <NxTile>
               <NxTile.Content>
                 <NxGrid.Row>

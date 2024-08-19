@@ -22,19 +22,20 @@ export default {
     },
     TITLE: 'Open Source Malware Risk',
     COMPONENTS_IN_HIGH_RISK_ECOSYSTEMS: {
-      TEXT: 'Malicious Components in High Risk Ecosystems',
+      TEXT: 'Open Source Malware in High Risk Ecosystems',
       REPOSITORIES_PROTECTED: '0 repositories protected',
       PUBLIC_MALICIOUS_COMPONENT: 'Public malicious components',
       TOOLTIP: 'Total amount of malicious components found across this ecosystem’s public repositories'
     },
+    OPEN_SOURCE_MALWARE_PROTECTION_STATUS: 'Open Source Malware Protection Status',
     COMPONENT_MALWARE: {
       MALICIOUS_COMPONENTS: {
-        TEXT: 'Malicious Components are Malware',
-        DESCRIPTION: 'Malicious components exploit the open source DevOps tool chain to introduce malware such as ' +
+        TEXT: 'What Is Open Source Malware?',
+        DESCRIPTION: 'Open Source malware exploits the open source DevOps tool chain to introduce malware such as ' +
             'credential harvester, crypto-miner, a virus, ransomware, data corruption, malicious code injector, etc.'
       },
       AVERAGE_ATTACK: {
-        TEXT: 'Average Cost to Remediate a Malicious Attack',
+        TEXT: 'Average Cost to Remediate OSS Malware',
         DESCRIPTION: '$5.12 million'
       },
       LEARN_MORE: {
@@ -44,7 +45,7 @@ export default {
     },
     MALICIOUS_EVENTS: {
       UNPROTECTED_MALWARE: {
-        TEXT: 'Unprotected from Malware',
+        TEXT: 'You Are Unprotected',
         DESCRIPTION: <>
           malicious events identified by Sonatype (npmjs.org, PyPI.org and
           <NxTextLink
