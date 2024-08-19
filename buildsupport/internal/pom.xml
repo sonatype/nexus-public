@@ -29,7 +29,7 @@
 
   <properties>
     <sonatype-licensing.version>1.6.0</sonatype-licensing.version>
-    <clm.dto.model.version>1.57.0-01</clm.dto.model.version>
+    <clm.dto.model.version>1.58.21-01</clm.dto.model.version>
     <insight-brain.version>1.170.0-01</insight-brain.version>
     <insight-scanner.version>2.36.66-01</insight-scanner.version>
   </properties>
@@ -137,6 +137,10 @@
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sonatype.clm</groupId>
+            <artifactId>com.sonatype.clm.dto.model</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
