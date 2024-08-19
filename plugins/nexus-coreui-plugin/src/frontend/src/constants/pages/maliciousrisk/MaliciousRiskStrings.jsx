@@ -47,10 +47,9 @@ export default {
       UNPROTECTED_MALWARE: {
         TEXT: 'You Are Unprotected',
         DESCRIPTION: <>
-          malicious events identified by Sonatype (npmjs.org, PyPI.org and
-          <NxTextLink
-              href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support"
-              external> more</NxTextLink> )
+          malicious events identified by Sonatype (npmjs.org, PyPI.org and <NxTextLink
+            href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support"
+            external>more</NxTextLink>)
         </>,
       },
       PROXY_PROTECTION: {
