@@ -42,6 +42,7 @@ import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
@@ -125,7 +126,8 @@ public class JmxCustomizer
     });
   }
 
-  private Object render(final Object value) {
+  @VisibleForTesting
+  protected Object render(final Object value) {
     if (value == null) {
       return null;
     }
@@ -150,7 +152,7 @@ public class JmxCustomizer
     if (Collection.class.isAssignableFrom(type)) {
       return render((Collection<?>) value);
     }
-    if (type.isArray()) {
+    if (Object[].class.isAssignableFrom(type)) {
       return render((Object[]) value);
     }
     if (Map.class.isAssignableFrom(type)) {
