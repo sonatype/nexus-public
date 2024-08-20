@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.db.datastore;
+package org.sonatype.nexus.internal.datastore;
 
 import java.sql.Connection;
 import java.util.Optional;
@@ -20,7 +20,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -38,14 +37,12 @@ import org.flywaydb.core.api.MigrationInfo;
 import org.flywaydb.core.api.MigrationVersion;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 @Named
 @Singleton
-@FeatureFlag(name = DATASTORE_ENABLED)
 @ManagedLifecycle(phase = STORAGE)
 public class DatabaseCheckImpl
     extends StateGuardLifecycleSupport
