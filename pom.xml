@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>public-parent</artifactId>
-    <version>48</version>
+    <version>44</version>
     <relativePath/>
   </parent>
 
@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.72.0-04</version>
+  <version>3.73.0-SNAPSHOT</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.72.0-04</nexus.version>
+    <nexus.version>3.73.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <karaf.version>4.3.9</karaf.version>
@@ -140,103 +140,103 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-audit</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-base</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-blobstore</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-blobstore-api</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-blobstore-file</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-bootstrap</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-capability</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cleanup</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cleanup-config</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-commands</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-common</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-core</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-crypto</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore-api</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore-mybatis</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore-mybatis</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -244,97 +244,97 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-distributed-event-service-api</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cache</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-elasticsearch</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-email</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-extdirect</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-extender</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-features</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-httpclient</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-jmx</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-scheduling</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-formfields</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-guice-servlet</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-main</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-mime</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-oss-edition</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-oss-edition</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -342,170 +342,170 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-pax-logging</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-plugin-api</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-quartz</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rapture</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rapture</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <classifier>sources</classifier>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-config</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-content</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-services</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-view</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rest</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rest-client</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rest-jackson2</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-script</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-security</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-selector</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-servlet</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-siesta</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-ssl</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-supportzip-api</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-swagger</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-task-logging</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-thread</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-transaction</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-ui-plugin</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-upgrade</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-validation</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-webhooks</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-webresources-api</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <!-- testsupport -->
@@ -513,25 +513,25 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-pax-exam</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-test-common</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-test-db</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-testsupport</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
       </dependency>
 
       <!-- assemblies -->
@@ -539,7 +539,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-startup-feature</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -547,7 +547,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-boot-feature</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -555,7 +555,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-feature</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -563,7 +563,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-core-feature</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -571,14 +571,14 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-overlay</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <type>zip</type>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-template</artifactId>
-        <version>3.72.0-04</version>
+        <version>3.73.0-SNAPSHOT</version>
         <type>zip</type>
       </dependency>
 
@@ -827,7 +827,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.buildsupport</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.72.0-04</version>
+          <version>3.73.0-SNAPSHOT</version>
           <executions>
             <execution>
               <goals>
