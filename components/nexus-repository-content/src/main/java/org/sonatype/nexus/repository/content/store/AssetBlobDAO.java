@@ -165,4 +165,12 @@ public interface AssetBlobDAO
    * @return asset blobs count
    */
   int countNotMigratedAssetBlobs();
+
+  /**
+   * Get repository name by blob reference.
+   *
+   * @param blobRef the blob reference
+   * @return the repository name
+   */
+  String getRepositoryName(@Param("blobRef") BlobRef blobRef);
 }

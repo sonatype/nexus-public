@@ -17,12 +17,15 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.UUID;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 
@@ -264,6 +267,25 @@ public class AssetBlobDAOTest
       dao.browseAssetsWithLegacyBlobRef(100, null).forEach(dao::updateBlobRef);
 
       assertThat(dao.browseAssetsWithLegacyBlobRef(100, null), empty());
+    }
+  }
+
+  @Test
+  public void testGetRepositoryName() {
+    generateConfiguration();
+    ConfigurationData configurationData = generatedConfigurations().get(0);
+    EntityId repositoryId = configurationData.getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    generateRandomNamespaces(1);
+    generateRandomVersions(1);
+    generateContent(1, false);
+
+    BlobRef blobRef = generatedAssetBlobs().get(0).blobRef();
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      String repoName = dao.getRepositoryName(blobRef);
+      System.out.println(repoName);
+      assertThat(repoName, is("repo-name"));
     }
   }
 

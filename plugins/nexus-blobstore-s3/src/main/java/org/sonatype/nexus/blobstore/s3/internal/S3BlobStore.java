@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -780,6 +781,7 @@ public class S3BlobStore
     return nonTempBlobPropertiesFileStream(summaries)
         .map(S3AttributesLocation::new)
         .map(this::getBlobIdFromAttributeFilePath)
+        .filter(Objects::nonNull)
         .map(BlobId::new);
   }
 
@@ -800,10 +802,15 @@ public class S3BlobStore
   @Override
   @Timed
   public BlobAttributes getBlobAttributes(final S3AttributesLocation attributesFilePath) throws IOException {
-    S3BlobAttributes s3BlobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(),
-        attributesFilePath.getFullPath());
-    s3BlobAttributes.load();
-    return s3BlobAttributes;
+    try {
+      S3BlobAttributes s3BlobAttributes = new S3BlobAttributes(
+          s3, getConfiguredBucket(), attributesFilePath.getFullPath());
+      return s3BlobAttributes.load() ? s3BlobAttributes : null;
+    }
+    catch (Exception e) {
+      log.error("Unable to load S3BlobAttributes by path: {}", attributesFilePath.getFullPath(), e);
+      throw new IOException(e);
+    }
   }
 
   @Override

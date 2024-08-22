@@ -598,7 +598,7 @@ public class FileBlobStore
 
   @Nullable
   private Long getContentSizeForDeletion(final BlobId blobId) {
-    return Optional.ofNullable(getFileBlobAttributes(blobId))
+    return ofNullable(getFileBlobAttributes(blobId))
         .map(BlobAttributes::getMetrics)
         .map(BlobMetrics::getContentSize)
         .orElse(null);
@@ -981,11 +981,13 @@ public class FileBlobStore
           return FileVisitResult.CONTINUE;
         }
 
-        FileBlobAttributes attributes =
-            getFileBlobAttributes(new BlobId(getBlobIdFromAttributeFilePath(new FileAttributesLocation(file))));
+        String blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(file));
+        if (blobId != null) {
+          FileBlobAttributes attributes = getFileBlobAttributes(new BlobId(blobId));
 
-        if (attributes != null && attributes.isDeleted()) {
-          compactByAttributes(attributes, inUseChecker, count, progressLogger);
+          if (attributes != null && attributes.isDeleted()) {
+            compactByAttributes(attributes, inUseChecker, count, progressLogger);
+          }
         }
 
         return FileVisitResult.CONTINUE;
@@ -1011,7 +1013,7 @@ public class FileBlobStore
       final ProgressLogIntervalHelper progressLogger)
   {
     String blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
-    FileBlob blob = liveBlobs.getIfPresent(blobId);
+    FileBlob blob = blobId != null ? liveBlobs.getIfPresent(blobId) : null;
     try {
       if (blob == null || blob.isStale()) {
         if (!maybeCompactBlob(inUseChecker, new BlobId(blobId))) {
@@ -1094,6 +1096,7 @@ public class FileBlobStore
       return getAttributeFilePaths()
           .map(FileAttributesLocation::new)
           .map(this::getBlobIdFromAttributeFilePath)
+          .filter(Objects::nonNull)
           .map(BlobId::new);
     }
     catch (IOException e) {
@@ -1166,9 +1169,14 @@ public class FileBlobStore
 
   @Override
   public BlobAttributes getBlobAttributes(final FileAttributesLocation attributesFilePath) throws IOException {
-    FileBlobAttributes fileBlobAttributes = new FileBlobAttributes(attributesFilePath.getPath());
-    fileBlobAttributes.load();
-    return fileBlobAttributes;
+    try {
+      FileBlobAttributes fileBlobAttributes = new FileBlobAttributes(attributesFilePath.getPath());
+      return fileBlobAttributes.load() ? fileBlobAttributes : null;
+    }
+    catch (Exception e) {
+      log.error("Unable to load FileBlobAttributes by path: {}", attributesFilePath.getFullPath(), e);
+      throw new IOException(e);
+    }
   }
 
   @Nullable

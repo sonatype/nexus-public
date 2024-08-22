@@ -207,4 +207,15 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   public boolean notMigratedAssetBlobRefsExists() {
     return dao().countNotMigratedAssetBlobs() > 0;
   }
+
+  /**
+   * Get repository name by blob reference.
+   *
+   * @param blobRef the blob reference
+   * @return the repository name
+   */
+  @Transactional
+  public String getRepositoryName(final BlobRef blobRef) {
+    return dao().getRepositoryName(blobRef);
+  }
 }

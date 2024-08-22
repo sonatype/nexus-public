@@ -41,6 +41,7 @@ import com.codahale.metrics.Timer;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.apache.commons.collections.MapUtils.isNotEmpty;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -269,7 +270,13 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     }
     try {
       BlobAttributes fileBlobAttributes = getBlobAttributes(attributeFilePath);
-      return blobIdLocationResolver.fromHeaders(fileBlobAttributes.getHeaders()).asUniqueString();
+      if (fileBlobAttributes != null && !isNotEmpty(fileBlobAttributes.getHeaders())) {
+        return blobIdLocationResolver.fromHeaders(fileBlobAttributes.getHeaders()).asUniqueString();
+      }
+      else {
+        log.error("Broken properties file by path: {}", attributeFilePath.getFullPath());
+        return null;
+      }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
