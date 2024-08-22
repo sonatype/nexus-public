@@ -16,7 +16,11 @@ import axios from "axios";
 import {render, screen, waitForElementToBeRemoved, within} from "@testing-library/react";
 
 import MaliciousRisk from "./MaliciousRisk";
-import {maliciousRiskResponse} from "./MaliciousRisk.testdata";
+import {
+  maliciousRiskProxyFullyProtectedResponse,
+  maliciousRiskProxyPartiallyProtectedResponse,
+  maliciousRiskProxyUnprotectedResponse
+} from "./MaliciousRisk.testdata";
 import {APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
@@ -34,7 +38,7 @@ const selectors = {
   getText: (t) => screen.getByText(t),
   getEcoSystem: (id) => screen.getByTestId(id),
   getEcoSystemInfoIcon: (s) => s.querySelector('[data-icon="info-circle"]'),
-  getEcoSystemIndicator: (s) => within(s).getByRole('status'),
+  getEcoSystemIndicator: (s) => within(s).queryByRole('status'),
   containsText: (t) => screen.getByText(t, {exact: false}),
   getAllText: (t) => screen.getAllByText(t),
   getId: (t) => screen.getByTestId(t),
@@ -43,10 +47,83 @@ const selectors = {
 const content = 'Open Source malware exploits the open source DevOps tool chain to introduce malware such as ' +
     'credential harvester, crypto-miner, a virus, ransomware, data corruption, malicious code injector, etc.'
 
-describe('MaliciousRisk', () => {
+describe('MaliciousRisk Fully Protected', () => {
   async function renderView() {
     when(axios.get).calledWith(MALICIOUS_RISK_SUMMARY).mockResolvedValue({
-      data: maliciousRiskResponse
+      data: maliciousRiskProxyFullyProtectedResponse
+    });
+
+    render(<MaliciousRisk/>);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  }
+
+  it('should render malicious events content widget', async () => {
+    await renderView();
+
+    expect(selectors.getHeading('Fully Protected from Malware')).toBeInTheDocument();
+    expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
+    expect(selectors.containsText(
+        '16000 malicious events identified by Sonatype')).toBeInTheDocument();
+    expect(selectors.getAllText('10 / 10 total').length).toBe(2);
+    expect(selectors.getId('meter')).toBeInTheDocument();
+
+    const moreLink = selectors.getTextLink('more');
+    expect(moreLink).toBeInTheDocument();
+    expect(moreLink).toHaveAttribute('href',
+        'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support');
+
+    const howToProtectLink = selectors.getTextLink('How can I protect my repositories?');
+    expect(howToProtectLink).toBeInTheDocument();
+    expect(howToProtectLink).toHaveAttribute('href',
+        'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall');
+  });
+});
+
+describe('MaliciousRisk Partially Protected', () => {
+  async function renderView() {
+    when(axios.get).calledWith(MALICIOUS_RISK_SUMMARY).mockResolvedValue({
+      data: maliciousRiskProxyPartiallyProtectedResponse
+    });
+
+    render(<MaliciousRisk/>);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  }
+
+  it('should render malicious components in high risk ecosystems without an indicator', async () => {
+    await renderView();
+
+    expect(selectors.getHeading('Open Source Malware in High Risk Ecosystems')).toBeInTheDocument();
+    await expectEcoSystemToRender('npm', 10000, false);
+    await expectEcoSystemToRender('pypi', 5000, false);
+    await expectEcoSystemToRender('maven', 1000, false);
+  });
+
+  it('should render malicious events content widget', async () => {
+    await renderView();
+
+    expect(selectors.getHeading('Partially Protected from Malware')).toBeInTheDocument();
+    expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
+    expect(selectors.containsText(
+        '16000 malicious events identified by Sonatype')).toBeInTheDocument();
+    expect(selectors.getAllText('3 / 10 total').length).toBe(2);
+    expect(selectors.getId('meter')).toBeInTheDocument();
+
+    const moreLink = selectors.getTextLink('more');
+    expect(moreLink).toBeInTheDocument();
+    expect(moreLink).toHaveAttribute('href',
+        'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support');
+
+    const howToProtectLink = selectors.getTextLink('How can I protect my repositories?');
+    expect(howToProtectLink).toBeInTheDocument();
+    expect(howToProtectLink).toHaveAttribute('href',
+        'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall');
+  });
+});
+
+describe('MaliciousRisk unprotected', () => {
+  async function renderView() {
+    when(axios.get).calledWith(MALICIOUS_RISK_SUMMARY).mockResolvedValue({
+      data: maliciousRiskProxyUnprotectedResponse
     });
 
     render(<MaliciousRisk/>);
@@ -90,7 +167,7 @@ describe('MaliciousRisk', () => {
   it('should render malicious events content widget', async () => {
     await renderView();
 
-    expect(selectors.getHeading('You Are Unprotected')).toBeInTheDocument();
+    expect(selectors.getHeading('Unprotected from Malware')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
     expect(selectors.containsText(
         '16000 malicious events identified by Sonatype')).toBeInTheDocument();
@@ -109,13 +186,18 @@ describe('MaliciousRisk', () => {
   });
 })
 
-async function expectEcoSystemToRender(name, count) {
+async function expectEcoSystemToRender(name, count, expectedIndicator = true) {
   const ecosystem = selectors.getEcoSystem(name);
   expect(ecosystem).toBeInTheDocument();
 
   const indicator = selectors.getEcoSystemIndicator(ecosystem);
-  expect(indicator).toBeInTheDocument();
-  expect(indicator).toHaveTextContent('0 repositories protected');
+  if (expectedIndicator) {
+    expect(indicator).toBeInTheDocument();
+    expect(indicator).toHaveTextContent('0 repositories protected');
+  }
+  else {
+    expect(indicator).not.toBeInTheDocument();
+  }
 
   const infoIcon = selectors.getEcoSystemInfoIcon(ecosystem);
   expect(infoIcon).toBeInTheDocument();

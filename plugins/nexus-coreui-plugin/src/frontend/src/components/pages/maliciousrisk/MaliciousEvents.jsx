@@ -21,14 +21,32 @@ const {
   PROXY_PROTECTION
 } = UIStrings.MALICIOUS_RISK.MALICIOUS_EVENTS;
 
-export default function MaliciousEvents({totalMaliciousRiskCount, totalProxyRepositoryCount}) {
+export default function MaliciousEvents({
+                                          totalMaliciousRiskCount,
+                                          totalProxyRepositoryCount,
+                                          quarantineEnabledRepositoryCount
+                                        }) {
+  function isUnprotected() {
+    return quarantineEnabledRepositoryCount === 0 && totalMaliciousRiskCount > 0;
+  }
+
+  function isPartiallyProtected() {
+    return quarantineEnabledRepositoryCount > 0 && quarantineEnabledRepositoryCount !== totalProxyRepositoryCount;
+  }
+
+  function isFullyProtected() {
+    return quarantineEnabledRepositoryCount === totalProxyRepositoryCount;
+  }
+
   return (
       <NxGrid.Column className="nxrm-component-malicious nx-grid-col--50">
         <NxGrid.ColumnSection>
           <NxGrid.Header>
             <NxH3>
               <NxFontAwesomeIcon icon={faExclamationTriangle}/>
-              <span>{UNPROTECTED_MALWARE.TEXT}</span>
+              {isUnprotected() && <span>{UNPROTECTED_MALWARE.UNPROTECTED}</span>}
+              {isPartiallyProtected() && <span>{UNPROTECTED_MALWARE.PARTIALLY}</span>}
+              {isFullyProtected() && <span>{UNPROTECTED_MALWARE.PROTECTED}</span>}
             </NxH3>
           </NxGrid.Header>
           <p>{totalMaliciousRiskCount} {UNPROTECTED_MALWARE.DESCRIPTION}</p>
@@ -38,12 +56,14 @@ export default function MaliciousEvents({totalMaliciousRiskCount, totalProxyRepo
             <NxH3>{PROXY_PROTECTION.TITLE}</NxH3>
           </NxGrid.Header>
           <NxMeter data-testid="meter"
-                   value={0}
+                   value={quarantineEnabledRepositoryCount}
                    max={totalProxyRepositoryCount}>
-            {`0 / ${totalProxyRepositoryCount} total`}
+            {`${quarantineEnabledRepositoryCount} / ${totalProxyRepositoryCount} total`}
           </NxMeter>
           <div className="nxrm-label-container">
-            <span className="nxrm-label-text-main"> 0 / {totalProxyRepositoryCount} total</span>
+            <span
+                className="nxrm-label-text-main"> {quarantineEnabledRepositoryCount} / {totalProxyRepositoryCount} total
+            </span>
             <span className="nxrm-label-text-info"> {PROXY_PROTECTION.DESCRIPTION}
               <NxTooltip
                   title={PROXY_PROTECTION.TOOLTIP}>

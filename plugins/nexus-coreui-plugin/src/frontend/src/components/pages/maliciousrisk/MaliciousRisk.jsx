@@ -35,13 +35,20 @@ import "./MaliciousRisk.scss";
 import MaliciousEvents from "./MaliciousEvents";
 import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 
-const {TITLE,OPEN_SOURCE_MALWARE_PROTECTION_STATUS, LOAD_ERROR} = UIStrings.MALICIOUS_RISK;
+const {TITLE, OPEN_SOURCE_MALWARE_PROTECTION_STATUS, LOAD_ERROR} = UIStrings.MALICIOUS_RISK;
 
 export default function MaliciousRisk() {
   const [state, send, service] = useMachine(MaliciousRiskMachine, {devtools: true});
   const isLoading = state.matches('loading');
   const loadError = state.matches('loadError') ? LOAD_ERROR : null;
-  const {maliciousRisk: {countByEcosystem, totalMaliciousRiskCount, totalProxyRepositoryCount}} = state.context;
+  const {
+    maliciousRisk: {
+      countByEcosystem,
+      totalMaliciousRiskCount,
+      totalProxyRepositoryCount,
+      quarantineEnabledRepositoryCount
+    }
+  } = state.context;
 
   function retry() {
     send({type: 'RETRY'});
@@ -60,11 +67,13 @@ export default function MaliciousRisk() {
                 <NxGrid.Row>
                   <MaliciousComponents/>
                   <MaliciousEvents totalMaliciousRiskCount={totalMaliciousRiskCount}
-                                   totalProxyRepositoryCount={totalProxyRepositoryCount}/>
+                                   totalProxyRepositoryCount={totalProxyRepositoryCount}
+                                   quarantineEnabledRepositoryCount={quarantineEnabledRepositoryCount}/>
                 </NxGrid.Row>
               </NxTile.Content>
             </NxTile>
-            <MaliciousHighRiskEcosystems countByEcosystem={countByEcosystem}/>
+            <MaliciousHighRiskEcosystems countByEcosystem={countByEcosystem}
+                                         enabledCount={quarantineEnabledRepositoryCount === 0}/>
           </NxLoadWrapper>
         </ContentBody>
       </Page>

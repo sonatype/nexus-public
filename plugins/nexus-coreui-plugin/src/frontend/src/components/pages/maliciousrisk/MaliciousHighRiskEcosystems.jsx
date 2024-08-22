@@ -31,7 +31,7 @@ const {
     TOOLTIP
   }} = UIStrings.MALICIOUS_RISK;
 
-export default function MaliciousHighRiskEcosystems({countByEcosystem}) {
+export default function MaliciousHighRiskEcosystems({countByEcosystem, enabledCount}) {
 
   return (
       <>
@@ -44,7 +44,7 @@ export default function MaliciousHighRiskEcosystems({countByEcosystem}) {
                   <NxGrid.Header>
                     <NxH2>
                       {ecosystem}
-                      <NxErrorStatusIndicator>{REPOSITORIES_PROTECTED}</NxErrorStatusIndicator>
+                      {enabledCount && <NxErrorStatusIndicator>{REPOSITORIES_PROTECTED}</NxErrorStatusIndicator>}
                     </NxH2>
                   </NxGrid.Header>
                   <div className="nxrm-public-malicious-components">

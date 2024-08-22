@@ -49,4 +49,14 @@ public class FirewallCapability
         stream().
         anyMatch(reference -> reference.context().isEnabled());
   }
+
+  public static long countFirewallCapabilities(final CapabilityRegistry capabilities) {
+    return capabilities.get(
+        capabilities()
+            .withType(CapabilityType.capabilityType(AUDIT_QUARANTINE_CAPABILITY_ID))
+            .includeNotExposed()
+            .withProperty("quarantine", "true")
+            .enabled()
+    ).size();
+  }
 }

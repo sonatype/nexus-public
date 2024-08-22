@@ -14,7 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-export const maliciousRiskResponse = {
+export const maliciousRiskProxyUnprotectedResponse = {
   'countByEcosystem': [
     {
       'ecosystem': 'npm',
@@ -31,4 +31,45 @@ export const maliciousRiskResponse = {
   ],
   'totalMaliciousRiskCount': 16000,
   'totalProxyRepositoryCount': 10,
+  'quarantineEnabledRepositoryCount': 0,
+}
+
+export const maliciousRiskProxyPartiallyProtectedResponse = {
+  'countByEcosystem': [
+    {
+      'ecosystem': 'npm',
+      'count': 10000,
+    },
+    {
+      'ecosystem': 'pypi',
+      'count': 5000,
+    },
+    {
+      'ecosystem': 'maven',
+      'count': 1000,
+    }
+  ],
+  'totalMaliciousRiskCount': 16000,
+  'totalProxyRepositoryCount': 10,
+  'quarantineEnabledRepositoryCount': 3,
+}
+
+export const maliciousRiskProxyFullyProtectedResponse = {
+  'countByEcosystem': [
+    {
+      'ecosystem': 'npm',
+      'count': 10000,
+    },
+    {
+      'ecosystem': 'pypi',
+      'count': 5000,
+    },
+    {
+      'ecosystem': 'maven',
+      'count': 1000,
+    }
+  ],
+  'totalMaliciousRiskCount': 16000,
+  'totalProxyRepositoryCount': 10,
+  'quarantineEnabledRepositoryCount': 10,
 }

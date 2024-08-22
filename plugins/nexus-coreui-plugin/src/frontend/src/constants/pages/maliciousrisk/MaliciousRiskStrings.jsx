@@ -45,7 +45,9 @@ export default {
     },
     MALICIOUS_EVENTS: {
       UNPROTECTED_MALWARE: {
-        TEXT: 'You Are Unprotected',
+        UNPROTECTED: 'Unprotected from Malware',
+        PARTIALLY: 'Partially Protected from Malware',
+        PROTECTED: 'Fully Protected from Malware',
         DESCRIPTION: <>
           malicious events identified by Sonatype (npmjs.org, PyPI.org and <NxTextLink
             href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support"
