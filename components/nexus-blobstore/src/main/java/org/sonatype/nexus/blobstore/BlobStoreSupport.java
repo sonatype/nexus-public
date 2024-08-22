@@ -43,7 +43,6 @@ import com.google.common.collect.ImmutableMap;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.apache.commons.collections.MapUtils.isNotEmpty;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
@@ -289,7 +288,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     }
     try {
       BlobAttributes fileBlobAttributes = getBlobAttributes(attributeFilePath);
-      if (fileBlobAttributes != null && !isNotEmpty(fileBlobAttributes.getHeaders())) {
+      if (fileBlobAttributes != null && fileBlobAttributes.getHeaders() != null) {
         return blobIdLocationResolver.fromHeaders(fileBlobAttributes.getHeaders()).asUniqueString();
       }
       else {
