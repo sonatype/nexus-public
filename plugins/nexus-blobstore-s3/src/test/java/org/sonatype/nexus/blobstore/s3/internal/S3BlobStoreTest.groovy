@@ -63,7 +63,7 @@ class S3BlobStoreTest
 
   AmazonS3Factory amazonS3Factory = Mock()
 
-  BlobIdLocationResolver locationResolver = new DefaultBlobIdLocationResolver()
+  BlobIdLocationResolver locationResolver = createBlobIdLocationResolver()
 
   S3Uploader uploader = Mock()
 
@@ -709,16 +709,20 @@ class S3BlobStoreTest
   }
 
   private String propertiesLocation(BlobId blobId) {
-    "content/${locationResolver.permanentLocationStrategy.location(blobId)}.properties"
+    "content/${locationResolver.volumeChapterLocationStrategy.location(blobId)}.properties"
   }
 
   private String bytesLocation(BlobId blobId) {
-    "content/${locationResolver.permanentLocationStrategy.location(blobId)}.bytes"
+    "content/${locationResolver.volumeChapterLocationStrategy.location(blobId)}.bytes"
   }
 
   private static ObjectMetadata getTempBlobMetadata() {
     ObjectMetadata tempBlobMetaData = new ObjectMetadata()
     tempBlobMetaData.addUserMetadata(TEMPORARY_BLOB_HEADER, 'true')
     tempBlobMetaData
+  }
+
+  protected BlobIdLocationResolver createBlobIdLocationResolver() {
+    return new DefaultBlobIdLocationResolver(false)
   }
 }

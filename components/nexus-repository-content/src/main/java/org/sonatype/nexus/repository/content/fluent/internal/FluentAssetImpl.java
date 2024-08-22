@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.AttributesMap;
@@ -180,7 +181,11 @@ public class FluentAssetImpl
         .orElseThrow(() -> new IllegalStateException("No blob attached to " + asset.path()));
 
     BlobRef blobRef = assetBlob.blobRef();
-    Blob blob = Optional.ofNullable(facet.stores().blobStoreProvider.get().get(blobRef.getBlobId()))
+    BlobId blobId = blobRef.getBlobId();
+    blobId.setUseDatePath(assetBlob.useDatePath());
+    blobId.setBlobCreationTime(assetBlob.blobCreated());
+
+    Blob blob = Optional.ofNullable(facet.stores().blobStoreProvider.get().get(blobId))
         .orElseGet(() -> facet.dependencies().getMoveService()
             .map(service -> service.getIfBeingMoved(blobRef, repository().getName()))
             .orElseThrow(() -> new MissingBlobException(blobRef)));

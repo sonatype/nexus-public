@@ -13,15 +13,17 @@
 package org.sonatype.nexus.blobstore;
 
 import java.util.Map;
-
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 
 import static java.util.UUID.randomUUID;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.DATE_BASED_PATH_BLOB_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.DIRECT_PATH_BLOB_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED;
 
 /**
  * Default {@link BlobIdLocationResolver}.
@@ -44,16 +46,24 @@ public class DefaultBlobIdLocationResolver
    */
   public static final String DIRECT_PATH_BLOB_ID_PREFIX = "path$";
 
-  protected final LocationStrategy permanentLocationStrategy;
+  private final LocationStrategy volumeChapterLocationStrategy;
 
-  protected final LocationStrategy temporaryLocationStrategy;
+  private final LocationStrategy temporaryLocationStrategy;
 
-  protected final LocationStrategy directLocationStrategy;
+  private final LocationStrategy directLocationStrategy;
 
-  public DefaultBlobIdLocationResolver() {
-    this.permanentLocationStrategy = new VolumeChapterLocationStrategy();
+  private final LocationStrategy dateBasedLocationStrategy;
+
+  private final boolean dateBasedLayoutEnabled;
+
+  @Inject
+  public DefaultBlobIdLocationResolver(
+      @Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean dateBasedLayoutEnabled) {
+    this.volumeChapterLocationStrategy = new VolumeChapterLocationStrategy();
     this.temporaryLocationStrategy = new TemporaryLocationStrategy();
     this.directLocationStrategy = new DirectPathLocationStrategy();
+    this.dateBasedLocationStrategy = new DateBasedLocationStrategy();
+    this.dateBasedLayoutEnabled = dateBasedLayoutEnabled;
   }
 
   @Override
@@ -64,7 +74,16 @@ public class DefaultBlobIdLocationResolver
     else if (id.asUniqueString().startsWith(DIRECT_PATH_BLOB_ID_PREFIX)) {
       return directLocationStrategy.location(id);
     }
-    return permanentLocationStrategy.location(id);
+    return getBlobIdLocation(id);
+  }
+
+  private String getBlobIdLocation(final BlobId blobId) {
+    if (dateBasedLayoutEnabled && blobId.isUseDatePath()) {
+      return dateBasedLocationStrategy.location(blobId);
+    }
+    else {
+      return volumeChapterLocationStrategy.location(blobId);
+    }
   }
 
   @Override
@@ -80,6 +99,10 @@ public class DefaultBlobIdLocationResolver
     else if (headers.containsKey(DIRECT_PATH_BLOB_HEADER)) {
       return new BlobId(DIRECT_PATH_BLOB_ID_PREFIX + headers.get(BLOB_NAME_HEADER));
     }
-    return new BlobId(randomUUID().toString());
+    BlobId blobId = new BlobId(randomUUID().toString());
+    if (headers.containsKey(DATE_BASED_PATH_BLOB_HEADER)) {
+      blobId.setUseDatePath(true);
+    }
+    return blobId;
   }
 }

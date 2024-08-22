@@ -199,4 +199,7 @@ public interface FeatureFlags
 
   String SECRETS_FILE_ENV = "NEXUS_SECRETS_KEY_FILE";
 
+  String DATE_BASED_BLOBSTORE_LAYOUT_ENABLED = "nexus.blobstore.datebased.layout.enabled";
+
+  String DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED = "${nexus.blobstore.datebased.layout.enabled:-false}";
 }

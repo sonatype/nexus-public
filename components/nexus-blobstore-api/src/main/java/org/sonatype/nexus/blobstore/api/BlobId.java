@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.api;
 
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -26,12 +27,32 @@ public class BlobId
 {
   private final String id;
 
+  private boolean useDatePath;
+
+  private OffsetDateTime blobCreationTime;
+
   public BlobId(final String id) {
     this.id = checkNotNull(id);
   }
 
   public String asUniqueString() {
     return id;
+  }
+
+  public boolean isUseDatePath() {
+    return useDatePath;
+  }
+
+  public void setUseDatePath(boolean useDatePath) {
+    this.useDatePath = useDatePath;
+  }
+
+  public OffsetDateTime getBlobCreationTime() {
+    return blobCreationTime;
+  }
+
+  public void setBlobCreationTime(OffsetDateTime blobCreationTime) {
+    this.blobCreationTime = blobCreationTime;
   }
 
   @Override

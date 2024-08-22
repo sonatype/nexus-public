@@ -312,6 +312,10 @@ public abstract class ContentFacetSupport
     }
   }
 
+  public boolean isDateBasedBlobStoreLayoutEnabled() {
+    return dependencies().isDateBasedBlobStoreLayoutEnabled();
+  }
+
   private void throwNotAllowed(final Asset asset, final String reason) {
     throw new IllegalOperationException(repository().getName() + asset.path() + reason);
   }

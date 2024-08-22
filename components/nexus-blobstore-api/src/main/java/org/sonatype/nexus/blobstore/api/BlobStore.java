@@ -102,6 +102,11 @@ public interface BlobStore
   String DIRECT_PATH_BLOB_HEADER = "BlobStore.direct-path";
 
   /**
+   * Header that indicates this blob uses "date-based paths"
+   */
+  String DATE_BASED_PATH_BLOB_HEADER = "BlobStore.date-based-path";
+
+  /**
    * An associated repository name for disaster recovery purposes (which isn't required to be strictly unique)
    *
    * (uses 'Bucket' prefix for legacy compatibility reasons)

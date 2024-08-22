@@ -53,6 +53,8 @@ public class AssetBlobData
   @Nullable
   private String createdByIp;
 
+  private boolean useDatePath;
+
   // AssetBlob API
 
   @Override
@@ -93,6 +95,11 @@ public class AssetBlobData
   @Override
   public OffsetDateTime addedToRepository() {
     return addedToRepository;
+  }
+
+  @Override
+  public boolean useDatePath() {
+    return useDatePath;
   }
 
   // MyBatis setters + validation
@@ -160,6 +167,10 @@ public class AssetBlobData
    */
   public void setCreatedByIp(@Nullable final String createdByIp) {
     this.createdByIp = createdByIp;
+  }
+
+  public void setUseDatePath(final boolean useDatePath) {
+    this.useDatePath = useDatePath;
   }
 
   // ContinuationAware
