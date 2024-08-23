@@ -23,6 +23,9 @@ public interface FeatureFlags
   /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
   String FEATURE_GOLANG_HOSTED = "nexus.golang.hosted";
 
+  /* Cargo format is temporarily hidden behind the feature flag. Default value: false */
+  String CARGO_FORMAT_ENABLED = "nexus.format.cargo.enabled";
+
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 
