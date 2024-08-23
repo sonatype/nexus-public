@@ -50,10 +50,20 @@
   .nx-meter {
     margin: 0 0 var(--nx-spacing-2x);
     width: 100%;
-    background: var(--nx-swatch-orange-50);
+    background: var(--nx-swatch-orange-55);
 
     &::-webkit-meter-bar{
-        background: var(--nx-swatch-orange-50);
+      background: var(--nx-swatch-orange-55);
+    }
+
+    &::-webkit-meter-optimum-value,
+    &::-webkit-meter-suboptimum-value,
+    &::-webkit-meter-even-less-good-value {
+      background: var(--nx-swatch-green-40);
+    }
+
+    &::-moz-meter-bar {
+      background: var(--nx-swatch-green-40);
     }
   }
 
