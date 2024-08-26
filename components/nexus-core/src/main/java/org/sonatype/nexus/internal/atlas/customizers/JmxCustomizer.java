@@ -33,6 +33,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.RuntimeMBeanException;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.TabularData;
 
@@ -107,7 +108,7 @@ public class JmxCustomizer
                   attrs.put(attr.getName(), render(value));
                 }
                 catch (ReflectionException | AttributeNotFoundException | InstanceNotFoundException |
-                       MBeanException e) {
+                       MBeanException | RuntimeMBeanException e) {
                   log.trace("Unable to fetch attribute: {}; ignoring", attr.getName(), e);
                 }
               }
@@ -186,7 +187,7 @@ public class JmxCustomizer
   private Object render(final TabularData tabularData) {
     List<Object> result = new ArrayList<>();
     tabularData.keySet().forEach(key -> {
-      CompositeData row = tabularData.get((Object[]) key);
+      CompositeData row = tabularData.get(((List<?>) key).toArray());
       result.add(render(row));
     });
     return result;

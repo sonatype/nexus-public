@@ -14,11 +14,9 @@ package org.sonatype.nexus.internal.atlas.customizers;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
@@ -31,15 +29,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.singleton;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -66,10 +65,17 @@ public class JmxCustomizerTest
   @Test
   public void testRenderTabularData() {
     TabularData tabularData = mock(TabularData.class);
-    when(tabularData.keySet()).thenReturn(Collections.emptySet());
+    CompositeData compositeData = mock(CompositeData.class);
+    when(compositeData.getCompositeType()).thenReturn(mock(CompositeType.class));
+    when(compositeData.getCompositeType().keySet()).thenReturn(singleton("key"));
+    when(compositeData.get("key")).thenReturn("value");
+    doReturn(singleton(newArrayList("key1", "key1a"))).when(tabularData).keySet();
+    when(tabularData.get(newArrayList("key1", "key1a").toArray())).thenReturn(compositeData);
     Object result = underTest.render(tabularData);
     assertThat(result, instanceOf(List.class));
-    assertThat((List<?>) result, empty());
+    assertThat((List<?>)result, hasSize(1));
+    assertThat(((List<?>) result).get(0), instanceOf(Map.class));
+    assertThat((Map<?,?>)((List<?>) result).get(0), hasEntry("key", "value"));
   }
 
   @Test
