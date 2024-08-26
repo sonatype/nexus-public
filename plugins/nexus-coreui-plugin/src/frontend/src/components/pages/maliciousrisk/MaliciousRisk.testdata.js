@@ -32,6 +32,7 @@ export const maliciousRiskProxyUnprotectedResponse = {
   'totalMaliciousRiskCount': 16000,
   'totalProxyRepositoryCount': 10,
   'quarantineEnabledRepositoryCount': 0,
+  'hdsError': false
 }
 
 export const maliciousRiskProxyPartiallyProtectedResponse = {
@@ -52,6 +53,7 @@ export const maliciousRiskProxyPartiallyProtectedResponse = {
   'totalMaliciousRiskCount': 16000,
   'totalProxyRepositoryCount': 10,
   'quarantineEnabledRepositoryCount': 3,
+  'hdsError': false
 }
 
 export const maliciousRiskProxyFullyProtectedResponse = {
@@ -72,4 +74,13 @@ export const maliciousRiskProxyFullyProtectedResponse = {
   'totalMaliciousRiskCount': 16000,
   'totalProxyRepositoryCount': 10,
   'quarantineEnabledRepositoryCount': 10,
+  'hdsError': false
+}
+
+export const maliciousRiskResponseWithHdsError = {
+  'countByEcosystem': [],
+  'totalMaliciousRiskCount': 0,
+  'totalProxyRepositoryCount': 2,
+  'quarantineEnabledRepositoryCount': 0,
+  'hdsError': true
 }

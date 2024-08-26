@@ -19,7 +19,8 @@ import MaliciousRisk from "./MaliciousRisk";
 import {
   maliciousRiskProxyFullyProtectedResponse,
   maliciousRiskProxyPartiallyProtectedResponse,
-  maliciousRiskProxyUnprotectedResponse
+  maliciousRiskProxyUnprotectedResponse,
+  maliciousRiskResponseWithHdsError
 } from "./MaliciousRisk.testdata";
 import {APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -42,6 +43,7 @@ const selectors = {
   containsText: (t) => screen.getByText(t, {exact: false}),
   getAllText: (t) => screen.getAllByText(t),
   getId: (t) => screen.getByTestId(t),
+  queryAlert: () => screen.queryByRole('alert'),
 };
 
 const content = 'Open Source malware exploits the open source DevOps tool chain to introduce malware such as ' +
@@ -121,9 +123,9 @@ describe('MaliciousRisk Partially Protected', () => {
 });
 
 describe('MaliciousRisk unprotected', () => {
-  async function renderView() {
+  async function renderView(res = maliciousRiskProxyUnprotectedResponse) {
     when(axios.get).calledWith(MALICIOUS_RISK_SUMMARY).mockResolvedValue({
-      data: maliciousRiskProxyUnprotectedResponse
+      data: res
     });
 
     render(<MaliciousRisk/>);
@@ -183,6 +185,22 @@ describe('MaliciousRisk unprotected', () => {
     expect(howToProtectLink).toBeInTheDocument();
     expect(howToProtectLink).toHaveAttribute('href',
         'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall');
+  });
+
+  it('should not render warning alert when no hds connection error', async () => {
+    await renderView();
+
+    expect(selectors.queryAlert()).not.toBeInTheDocument();
+  });
+
+  it('should render warning alert when hds connection error', async () => {
+    await renderView(maliciousRiskResponseWithHdsError);
+
+    const hdsWarningAlert = selectors.queryAlert();
+    expect(hdsWarningAlert).toBeInTheDocument();
+    expect(hdsWarningAlert).toHaveTextContent('OSS Malware Risk data relies on backend services that are currently ' +
+        'unreachable. To view malware risk, ensure the required URLs are accessible');
+    expect(selectors.getTextLink('ensure the required URLs are accessible')).toBeInTheDocument();
   });
 })
 

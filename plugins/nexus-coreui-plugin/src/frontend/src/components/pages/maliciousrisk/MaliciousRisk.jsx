@@ -25,17 +25,23 @@ import {
   NxH2,
   NxLoadWrapper,
   NxTile,
+  NxWarningAlert
 } from '@sonatype/react-shared-components';
 
 import UIStrings from "../../../constants/UIStrings";
 import MaliciousRiskMachine from "./MaliciousRiskMachine";
 import MaliciousComponents from "./MaliciousComponents";
 import MaliciousHighRiskEcosystems from "./MaliciousHighRiskEcosystems";
-import "./MaliciousRisk.scss";
 import MaliciousEvents from "./MaliciousEvents";
 import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
+import "./MaliciousRisk.scss";
 
-const {TITLE, OPEN_SOURCE_MALWARE_PROTECTION_STATUS, LOAD_ERROR} = UIStrings.MALICIOUS_RISK;
+const {
+  TITLE,
+  OPEN_SOURCE_MALWARE_PROTECTION_STATUS,
+  LOAD_ERROR,
+  HDS_CONNECTION_WARNING} = UIStrings.MALICIOUS_RISK;
+
 
 export default function MaliciousRisk() {
   const [state, send, service] = useMachine(MaliciousRiskMachine, {devtools: true});
@@ -46,7 +52,8 @@ export default function MaliciousRisk() {
       countByEcosystem,
       totalMaliciousRiskCount,
       totalProxyRepositoryCount,
-      quarantineEnabledRepositoryCount
+      quarantineEnabledRepositoryCount,
+      hdsError
     }
   } = state.context;
 
@@ -61,19 +68,22 @@ export default function MaliciousRisk() {
         </PageHeader>
         <ContentBody>
           <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-            <NxH2>{OPEN_SOURCE_MALWARE_PROTECTION_STATUS}</NxH2>
-            <NxTile>
-              <NxTile.Content>
-                <NxGrid.Row>
-                  <MaliciousComponents/>
-                  <MaliciousEvents totalMaliciousRiskCount={totalMaliciousRiskCount}
-                                   totalProxyRepositoryCount={totalProxyRepositoryCount}
-                                   quarantineEnabledRepositoryCount={quarantineEnabledRepositoryCount}/>
-                </NxGrid.Row>
-              </NxTile.Content>
-            </NxTile>
-            <MaliciousHighRiskEcosystems countByEcosystem={countByEcosystem}
-                                         enabledCount={quarantineEnabledRepositoryCount === 0}/>
+            {hdsError && <NxWarningAlert role="alert">{HDS_CONNECTION_WARNING}</NxWarningAlert>}
+            {!hdsError && <>
+              <NxH2>{OPEN_SOURCE_MALWARE_PROTECTION_STATUS}</NxH2>
+              <NxTile>
+                <NxTile.Content>
+                  <NxGrid.Row>
+                    <MaliciousComponents/>
+                    <MaliciousEvents totalMaliciousRiskCount={totalMaliciousRiskCount}
+                                     totalProxyRepositoryCount={totalProxyRepositoryCount}
+                                     quarantineEnabledRepositoryCount={quarantineEnabledRepositoryCount}/>
+                  </NxGrid.Row>
+                </NxTile.Content>
+              </NxTile>
+              <MaliciousHighRiskEcosystems countByEcosystem={countByEcosystem}
+                                           enabledCount={quarantineEnabledRepositoryCount === 0}/>
+            </>}
           </NxLoadWrapper>
         </ContentBody>
       </Page>

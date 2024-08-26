@@ -65,5 +65,10 @@ export default {
       }
     },
     LOAD_ERROR: 'An error occurred while fetching the malicious risk data',
+    HDS_CONNECTION_WARNING: <>
+      OSS Malware Risk data relies on backend services that are currently unreachable. To view malware risk, <NxTextLink
+        href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/repository-health-check-overview"
+        external>ensure the required URLs are accessible</NxTextLink>
+    </>
   }
 }
