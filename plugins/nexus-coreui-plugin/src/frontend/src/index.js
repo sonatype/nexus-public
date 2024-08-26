@@ -620,7 +620,7 @@ window.plugins.push({
       path: '/MaliciousRisk',
       ...UIStrings.MALICIOUS_RISK.MENU,
       view: MaliciousRisk,
-      iconCls: 'x-fa fa-exclamation-triangle',
+      iconCls: 'x-fa fa-exclamation-triangle malicious-risk-icon',
       weight: 101,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
