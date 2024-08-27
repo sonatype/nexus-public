@@ -21,6 +21,8 @@ import org.sonatype.nexus.crypto.internal.error.CipherException;
  */
 public interface SecretsService
 {
+  public static final String SECRETS_MIGRATION_VERSION = "99.9";
+
   /**
    * Encrypts the token using the current key and stores it in the DB.
    * <p>

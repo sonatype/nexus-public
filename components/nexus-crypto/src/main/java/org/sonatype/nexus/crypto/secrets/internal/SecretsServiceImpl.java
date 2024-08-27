@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -55,8 +56,6 @@ public class SecretsServiceImpl
   private static final String UNDERSCORE = "_";
 
   private static final String UNDERSCORE_ID = UNDERSCORE + "%d";
-
-  private static final String MINIMUM_VERSION = "1.0";
 
   /**
    * @deprecated this is used to decrypt legacy stored values, or encrypt them until the system has migrated
@@ -112,7 +111,7 @@ public class SecretsServiceImpl
 
   @Override
   public Secret encrypt(final String purpose, final char[] secret, final String userId) throws CipherException {
-    if (!databaseCheck.isAtLeast(MINIMUM_VERSION)) {
+    if (!databaseCheck.isAtLeast(SECRETS_MIGRATION_VERSION)) {
       return new SecretImpl(encryptLegacy(secret));
     }
 
