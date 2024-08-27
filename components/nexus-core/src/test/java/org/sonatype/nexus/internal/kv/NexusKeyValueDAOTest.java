@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.kv.global;
+package org.sonatype.nexus.internal.kv;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +22,8 @@ import java.util.function.Supplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.kv.NexusKeyValue;
+import org.sonatype.nexus.kv.ValueType;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -111,7 +113,7 @@ public class NexusKeyValueDAOTest
     });
   }
 
-  private void assertKeyValueOperations(Supplier<NexusKeyValue> kvSupplier, Consumer<NexusKeyValue> assertionConsumer) {
+  private void assertKeyValueOperations(final Supplier<NexusKeyValue> kvSupplier, final Consumer<NexusKeyValue> assertionConsumer) {
     NexusKeyValue initial = kvSupplier.get();
     write((dao) -> dao.set(initial));
 

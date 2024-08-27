@@ -10,23 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.kv.global;
+package org.sonatype.nexus.kv;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class NexusKeyValue
     extends ComponentSupport
-    implements Serializable
 {
-  private final String VALUE_NESTED_KEY = "value";
+  private static final String VALUE_NESTED_KEY = "value";
 
   private String key;
 
@@ -67,7 +64,7 @@ public class NexusKeyValue
     this.value = value;
   }
 
-  public void setValue(Object value) {
+  public void setValue(final Object value) {
     this.value.put(VALUE_NESTED_KEY, value);
   }
 
@@ -83,11 +80,11 @@ public class NexusKeyValue
     return Boolean.parseBoolean(getAsString());
   }
 
-  public <T> T getAsObject(final ObjectMapper mapper, Class<T> typeClass) {
+  public <T> T getAsObject(final ObjectMapper mapper, final Class<T> typeClass) {
     return mapper.convertValue(value.get(VALUE_NESTED_KEY), typeClass);
   }
 
-  public <T> List<T> getAsObjectList(final ObjectMapper mapper, Class<T> typeClass) {
+  public <T> List<T> getAsObjectList(final ObjectMapper mapper, final Class<T> typeClass) {
     return mapper.convertValue(value.get(VALUE_NESTED_KEY),
         mapper.getTypeFactory().constructCollectionType(List.class, typeClass));
   }

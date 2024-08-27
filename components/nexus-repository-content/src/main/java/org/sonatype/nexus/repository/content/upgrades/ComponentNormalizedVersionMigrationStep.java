@@ -23,8 +23,8 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
-import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
+import org.sonatype.nexus.kv.GlobalKeyValueStore;
+import org.sonatype.nexus.kv.NexusKeyValue;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTask;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskScheduler;
