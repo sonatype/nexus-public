@@ -40,6 +40,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -286,6 +287,25 @@ public class AssetBlobDAOTest
       String repoName = dao.getRepositoryName(blobRef);
       System.out.println(repoName);
       assertThat(repoName, is("repo-name"));
+    }
+  }
+
+  @Test
+  public void testGetPath() {
+    generateConfiguration();
+    ConfigurationData configurationData = generatedConfigurations().get(0);
+    EntityId repositoryId = configurationData.getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    generateRandomNamespaces(1);
+    generateRandomVersions(1);
+    generateContent(1, false);
+
+    BlobRef blobRef = generatedAssetBlobs().get(0).blobRef();
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      String path = dao.getPathByBlobRef(blobRef);
+      assertNotNull(path);
+      assertFalse(path.isEmpty());
     }
   }
 

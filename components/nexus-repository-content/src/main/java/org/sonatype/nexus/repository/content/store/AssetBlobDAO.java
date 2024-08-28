@@ -173,4 +173,12 @@ public interface AssetBlobDAO
    * @return the repository name
    */
   String getRepositoryName(@Param("blobRef") BlobRef blobRef);
+
+  /**
+   * Get path by blob reference.
+   *
+   * @param blobRef the blob reference
+   * @return the path
+   */
+  String getPathByBlobRef(@Param("blobRef") BlobRef blobRef);
 }

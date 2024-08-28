@@ -218,4 +218,15 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   public String getRepositoryName(final BlobRef blobRef) {
     return dao().getRepositoryName(blobRef);
   }
+
+  /**
+   * Get path by blob reference.
+   *
+   * @param blobRef the blob reference
+   * @return the path
+   */
+  @Transactional
+  public String getPathByBlobRef(final BlobRef blobRef) {
+    return dao().getPathByBlobRef(blobRef);
+  }
 }
