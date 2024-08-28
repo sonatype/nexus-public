@@ -27,7 +27,7 @@ import org.sonatype.nexus.internal.httpclient.handlers.AuthenticationConfigurati
 import org.sonatype.nexus.internal.httpclient.handlers.ConnectionConfigurationHandler
 import org.sonatype.nexus.internal.httpclient.handlers.ProxyConfigurationHandler
 import org.sonatype.nexus.security.PasswordHelper
-import org.sonatype.nexus.security.PhraseService
+import org.sonatype.nexus.crypto.PhraseService
 import org.sonatype.nexus.testdb.DataSessionRule
 
 import org.junit.Rule

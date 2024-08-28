@@ -130,7 +130,7 @@ import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JD
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SCHEMA;
 import static org.sonatype.nexus.datastore.mybatis.PlaceholderTypes.configurePlaceholderTypes;
 import static org.sonatype.nexus.datastore.mybatis.SensitiveAttributes.buildSensitiveAttributeFilter;
-import static org.sonatype.nexus.security.PhraseService.LEGACY_PHRASE_SERVICE;
+import static org.sonatype.nexus.crypto.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * MyBatis {@link DataStore}.

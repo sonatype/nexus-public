@@ -16,7 +16,8 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-
+import java.util.function.Function;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -25,8 +26,10 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.crypto.LegacyCipherFactory;
 import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
+import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
+import org.sonatype.nexus.crypto.maven.MavenCipher;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
@@ -57,11 +60,25 @@ public class SecretsServiceImpl
 
   private static final String UNDERSCORE_ID = UNDERSCORE + "%d";
 
+  private static final String DEFAULT_PASSPHRASE = "CMMDwoV";
+
   /**
    * @deprecated this is used to decrypt legacy stored values, or encrypt them until the system has migrated
    */
   @Deprecated
   private final PbeCipher legacyCipher;
+
+  /**
+   * @deprecated this is used to decrypt legacy stored values that were previously encrypted using {@link MavenCipher}
+   */
+  @Deprecated
+  private final MavenCipher mavenCipher;
+
+  /**
+   * @deprecated this is used to get the right passphrase to decrypt a legacy secret, used by {@link MavenCipher}
+   */
+  @Deprecated
+  private final PhraseService phraseService;
 
   private final PbeCipherFactory cipherFactory;
 
@@ -76,6 +93,8 @@ public class SecretsServiceImpl
   @Inject
   public SecretsServiceImpl(
       final LegacyCipherFactory legacyCipherFactory,
+      final MavenCipher mavenCipher,
+      final PhraseService phraseService,
       final PbeCipherFactory pbeCipherFactory,
       final SecretsStore secretsStore,
       final EncryptionKeySource encryptionKeySource,
@@ -85,6 +104,8 @@ public class SecretsServiceImpl
       @Named("${nexus.mybatis.cipher.iv:-0123456789ABCDEF}") final String legacyIv)
   {
     this.legacyCipher = checkNotNull(legacyCipherFactory).create(legacyPassword, legacySalt, legacyIv);//NOSONAR
+    this.mavenCipher = checkNotNull(mavenCipher);//NOSONAR
+    this.phraseService = checkNotNull(phraseService);//NOSONAR
     this.cipherFactory = checkNotNull(pbeCipherFactory);
     this.secretsStore = checkNotNull(secretsStore);
     this.encryptionKeySource = checkNotNull(encryptionKeySource);
@@ -95,13 +116,15 @@ public class SecretsServiceImpl
   @VisibleForTesting
   SecretsServiceImpl(
       final LegacyCipherFactory legacyCipherFactory,
+      final MavenCipher mavenCipher,
+      final PhraseService phraseService,
       final PbeCipherFactory pbeCipherFactory,
       final SecretsStore secretsStore,
       final EncryptionKeySource encryptionKeySource,
       final DatabaseCheck databaseCheck) throws CipherException
   {
-    this(legacyCipherFactory, pbeCipherFactory, secretsStore, encryptionKeySource, databaseCheck, "changeme",
-        "changeme", "0123456789ABCDEF");
+    this(legacyCipherFactory, mavenCipher, phraseService, pbeCipherFactory, secretsStore, encryptionKeySource,
+        databaseCheck, "changeme", "changeme", "0123456789ABCDEF");
   }
 
   @Override
@@ -110,9 +133,27 @@ public class SecretsServiceImpl
   }
 
   @Override
-  public Secret encrypt(final String purpose, final char[] secret, final String userId) throws CipherException {
+  public Secret encrypt(final String purpose, final char[] secret, @Nullable final String userId)
+      throws CipherException
+  {
+    return this.encrypt(purpose, secret, this::encryptWithLegacyPBE, userId);
+  }
+
+  @Override
+  public Secret encryptMaven(final String purpose, final char[] secret, @Nullable final String userid)
+      throws CipherException
+  {
+    return this.encrypt(purpose, secret, this::encryptWithMavenCipher, userid);
+  }
+
+  private Secret encrypt(
+      final String purpose,
+      final char[] secret,
+      final Function<char[], String> legacyEncryption,
+      final String userId) throws CipherException
+  {
     if (!databaseCheck.isAtLeast(SECRETS_MIGRATION_VERSION)) {
-      return new SecretImpl(encryptLegacy(secret));
+      return new SecretImpl(legacyEncryption.apply(secret));
     }
 
     Optional<SecretEncryptionKey> customKey = encryptionKeySource.getActiveKey();
@@ -133,7 +174,7 @@ public class SecretsServiceImpl
   public void remove(final Secret secret) {
     checkNotNull(secret);
 
-    if(isLegacyToken(secret.getId())){
+    if (isLegacyToken(secret.getId())) {
       log.debug("legacy tokens are not stored, deletion not needed.");
       return;
     }
@@ -179,14 +220,36 @@ public class SecretsServiceImpl
   }
 
   /**
-   * @deprecated this is used to encrypt legacy values until the system migrates to the new version.
+   * @deprecated this is used to encrypt legacy values with {@link LegacyCipherFactory.PbeCipher} until the system
+   * migrates to the new version.
    */
   @Deprecated
-  private String encryptLegacy(final char[] secret) {
+  private String encryptWithLegacyPBE(final char[] secret) {
     if (secret == null) {
       return null;
     }
     return BASE_64.encode(legacyCipher.encrypt(toBytes(secret)));
+  }
+
+  /**
+   * @deprecated this is used to encrypt legacy values with {@link MavenCipher} until the system migrates to the new
+   * version
+   */
+  @Deprecated
+  private String encryptWithMavenCipher(final char[] secret) {
+    String raw = new String(secret);
+
+    if (mavenCipher.isPasswordCipher(raw)) {
+      return raw;
+    }
+
+    String encoded = mavenCipher.encrypt(raw, phraseService.getPhrase(DEFAULT_PASSPHRASE));
+
+    if (encoded != null && !encoded.equals(raw)) {
+      phraseService.mark(encoded);
+    }
+
+    return encoded;
   }
 
   /**
@@ -197,7 +260,23 @@ public class SecretsServiceImpl
     if (secret == null) {
       return null;
     }
+
+    if (mavenCipher.isPasswordCipher(secret)) {
+      return decryptWithMavenCipher(secret);
+    }
+
     return toChars(legacyCipher.decrypt(BASE_64.decode(secret)));
+  }
+
+  /**
+   * @deprecated this is used to decrypt legacy stored values that were previously encrypted with {@link MavenCipher}
+   */
+  @Deprecated
+  private char[] decryptWithMavenCipher(final String secret) {
+    if (phraseService.usesLegacyEncoding(secret)) {
+      return mavenCipher.decryptChars(secret, DEFAULT_PASSPHRASE);
+    }
+    return mavenCipher.decryptChars(secret, phraseService.getPhrase(DEFAULT_PASSPHRASE));
   }
 
   private int parseToken(final String token) {

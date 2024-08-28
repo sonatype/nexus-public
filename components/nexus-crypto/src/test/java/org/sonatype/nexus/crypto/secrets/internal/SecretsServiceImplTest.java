@@ -18,11 +18,14 @@ import java.util.Random;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.crypto.LegacyCipherFactory;
+import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.LegacyCipherFactoryImpl;
+import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
+import org.sonatype.nexus.crypto.maven.MavenCipher;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
@@ -40,12 +43,12 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -69,6 +72,8 @@ public class SecretsServiceImplTest
 
   private final PbeCipherFactory pbeCipherFactory = new PbeCipherFactoryImpl(new CryptoHelperImpl());
 
+  private final MavenCipher mavenCipher = new MavenCipherImpl(new CryptoHelperImpl());
+
   private SecretsServiceImpl underTest;
 
   private final Random random = new Random();
@@ -76,24 +81,53 @@ public class SecretsServiceImplTest
   @Before
   public void setup() throws Exception {
     underTest =
-        new SecretsServiceImpl(cipherFactory, pbeCipherFactory, secretsStore, encryptionKeySource, databaseCheck);
+        new SecretsServiceImpl(cipherFactory, mavenCipher, PhraseService.LEGACY_PHRASE_SERVICE, pbeCipherFactory,
+            secretsStore, encryptionKeySource, databaseCheck);
   }
 
   @Test
-  public void testLegacyEncryptDecrypt() {
+  public void testLegacyMavenEncryptDecrypt() {
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(false);
+
+    char[] secret = "my-secret".toCharArray();
+
+    Secret encrypted = underTest.encryptMaven("testing", secret, null);
+    //validate encrypted value was encrypted using maven cipher
+    assertTrue(mavenCipher.isPasswordCipher(encrypted.getId()));
+
+    verifyNoInteractions(secretsStore, encryptionKeySource);
+    assertThat(encrypted.decrypt(), is(secret));
+  }
+
+  @Test
+  public void testFromLegacyMaven() {
+    char[] secret = "my-secret".toCharArray();
+
+    Secret encrypted = underTest.encryptMaven("testing", secret, null);
+    //validate encrypted value was encrypted using maven cipher
+    assertTrue(mavenCipher.isPasswordCipher(encrypted.getId()));
+
+    // Simulate reading an old value
+    Secret fromEncrypted = underTest.from(encrypted.getId());
+
+    verifyNoInteractions(secretsStore, encryptionKeySource);
+    assertThat(fromEncrypted.decrypt(), is(secret));
+  }
+
+  @Test
+  public void testLegacyPbeEncryptDecrypt() {
     when(databaseCheck.isAtLeast(anyString())).thenReturn(false);
 
     char[] secret = "my-secret".toCharArray();
 
     Secret encrypted = underTest.encrypt("testing", secret, null);
 
-    verify(secretsStore, never()).create(anyString(), anyString(), anyString(), anyString());
     verifyNoInteractions(secretsStore, encryptionKeySource);
     assertThat(encrypted.decrypt(), is(secret));
   }
 
   @Test
-  public void testFromLegacy() {
+  public void testFromLegacyPbe() {
     char[] secret = "my-secret".toCharArray();
 
     Secret encrypted = underTest.encrypt("testing", secret, null);
@@ -101,8 +135,7 @@ public class SecretsServiceImplTest
     // Simulate reading an old value
     Secret fromEncrypted = underTest.from(encrypted.getId());
 
-    verify(secretsStore, never()).read(anyInt());
-    verify(encryptionKeySource, never()).getKey(anyString());
+    verifyNoInteractions(secretsStore, encryptionKeySource);
     assertThat(fromEncrypted.decrypt(), is(secret));
   }
 
