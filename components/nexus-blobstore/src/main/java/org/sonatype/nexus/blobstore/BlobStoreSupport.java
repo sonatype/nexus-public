@@ -14,15 +14,14 @@ package org.sonatype.nexus.blobstore;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -38,13 +37,11 @@ import org.sonatype.nexus.common.stateguard.Transitions;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
-import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
@@ -64,8 +61,6 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   protected final PerformanceLogger performanceLogger = new PerformanceLogger();
 
   private MetricRegistry metricRegistry;
-
-  private boolean dateBasedLayoutEnabled;
 
   protected final BlobIdLocationResolver blobIdLocationResolver;
 
@@ -94,22 +89,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     this.metricRegistry = metricRegistry;
   }
 
-  @Inject
-  public void setDateBasedLayoutEnabled(@Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean enabled) {
-    this.dateBasedLayoutEnabled = enabled;
-  }
-
-  public boolean isDateBasedLayoutEnabled() {
-    return dateBasedLayoutEnabled;
-  }
-
   protected BlobId getBlobId(final Map<String, String> headers, @Nullable final BlobId blobId) {
-    Map<String, String> blobIdHeaders = new HashMap<>(headers);
-    if (isDateBasedLayoutEnabled()) {
-      blobIdHeaders.put(DATE_BASED_PATH_BLOB_HEADER, DATE_BASED_PATH_BLOB_HEADER);
-    }
-    return Optional.ofNullable(blobId).orElseGet(() ->
-        blobIdLocationResolver.fromHeaders(ImmutableMap.copyOf(blobIdHeaders)));
+    return Optional.ofNullable(blobId).orElseGet(() -> blobIdLocationResolver.fromHeaders(headers));
   }
 
   private void checkIsWritable() {

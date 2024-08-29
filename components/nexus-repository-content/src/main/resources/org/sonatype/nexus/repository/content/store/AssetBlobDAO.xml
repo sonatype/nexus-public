@@ -37,8 +37,6 @@
     ALTER TABLE ${format}_asset_blob ADD COLUMN IF NOT EXISTS added_to_repository  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob_added_to_repository ON ${format}_asset_blob (added_to_repository);
 
-    ALTER TABLE ${format}_asset_blob ADD COLUMN IF NOT EXISTS use_date_path BOOLEAN DEFAULT FALSE;
-
     <!-- Performance optimisation for cleanup -->
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob_created ON ${format}_asset_blob (blob_created);
     --
@@ -73,10 +71,10 @@
   <insert id="createAssetBlob" useGeneratedKeys="true" keyProperty="assetBlobId" parameterType="AssetBlobData">
 
     INSERT INTO ${format}_asset_blob (blob_ref, blob_size, content_type, checksums,
-                                      blob_created, created_by, created_by_ip, use_date_path
+                                      blob_created, created_by, created_by_ip
         <if test="addedToRepository != null">, added_to_repository</if>)
         VALUES (#{blobRef}, #{blobSize}, #{contentType}, #{checksums},
-          #{blobCreated}, #{createdBy}, #{createdByIp}, #{useDatePath}
+          #{blobCreated}, #{createdBy}, #{createdByIp}
         <if test="addedToRepository != null">, #{addedToRepository}</if>);
   </insert>
 

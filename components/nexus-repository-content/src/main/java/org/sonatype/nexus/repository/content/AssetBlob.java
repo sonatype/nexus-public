@@ -70,9 +70,4 @@ public interface AssetBlob
    * The client IP that triggered creation of this blob; empty if it was an internal request.
    */
   Optional<String> createdByIp();
-
-  /**
-   * Indicates blob should be located by date-based in the blobstore
-   */
-  boolean useDatePath();
 }

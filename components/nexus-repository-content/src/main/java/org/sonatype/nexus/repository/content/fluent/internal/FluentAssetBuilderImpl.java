@@ -252,7 +252,6 @@ public class FluentAssetBuilderImpl
     assetBlob.setBlobCreated(toOffsetDateTime(metrics.getCreationTime()));
     assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
     assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));
-    assetBlob.setUseDatePath(facet.isDateBasedBlobStoreLayoutEnabled());
 
     facet.stores().assetBlobStore.createAssetBlob(assetBlob);
 

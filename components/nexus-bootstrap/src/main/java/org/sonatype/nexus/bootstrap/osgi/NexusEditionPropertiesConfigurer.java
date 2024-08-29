@@ -142,10 +142,6 @@ public class NexusEditionPropertiesConfigurer
       properties.setProperty(NEXUS_EXCLUDE_FEATURES, properties.getProperty(NEXUS_EXCLUDE_FEATURES, ""));
     }
 
-    if (parseBoolean(properties.getProperty(RECONCILE_PLAN_ENABLED, FALSE))) {
-      properties.setProperty(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED, TRUE);
-    }
-
     selectDbFeature(properties);
   }
 

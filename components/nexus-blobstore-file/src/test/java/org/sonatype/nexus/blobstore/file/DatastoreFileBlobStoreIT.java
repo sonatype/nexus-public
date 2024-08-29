@@ -14,8 +14,6 @@ package org.sonatype.nexus.blobstore.file;
 
 import java.time.Duration;
 
-import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
-import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.file.internal.SoftDeletedBlobsStoreImpl;
 import org.sonatype.nexus.blobstore.file.internal.datastore.DatastoreFileBlobDeletionIndex;
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
@@ -87,8 +85,4 @@ public class DatastoreFileBlobStoreIT
     return new DatastoreFileBlobDeletionIndex(store, periodicJobService, Duration.ofSeconds(1));
   }
 
-  @Override
-  protected BlobIdLocationResolver blobIdLocationResolver() {
-    return new DefaultBlobIdLocationResolver(false);
-  }
 }
