@@ -276,4 +276,11 @@ public class UpgradeManagerImpl
     return new SimpleDependencyResolver(migrations).resolve().stream()
         .toArray(JavaMigration[]::new);
   }
+
+  @Override
+  public boolean isMigrationApplied(final Class<? extends DatabaseMigrationStep> step) {
+    return Arrays.stream(createFlyway().info().applied())
+        .map(MigrationInfo::getDescription)
+        .anyMatch(NexusJavaMigration.nameMatcher(step));
+  }
 }
