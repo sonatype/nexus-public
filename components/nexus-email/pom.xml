@@ -106,6 +106,10 @@
       <artifactId>groovy-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-crypto</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
