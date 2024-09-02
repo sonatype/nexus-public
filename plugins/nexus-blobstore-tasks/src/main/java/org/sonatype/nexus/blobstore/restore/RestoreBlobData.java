@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.restore;
 
+import java.time.OffsetDateTime;
 import java.util.Properties;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -39,6 +40,8 @@ public abstract class RestoreBlobData
   private final BlobStore blobStore;
 
   private final Repository repository;
+
+  private OffsetDateTime lastDownloaded;
 
   protected RestoreBlobData(
       final Blob blob,
@@ -78,5 +81,17 @@ public abstract class RestoreBlobData
 
   public final String getProperty(final String propertyName) {
     return blobProperties.getProperty(propertyName);
+  }
+
+  public void setLastDownloaded(final OffsetDateTime lastDownloaded) {
+    this.lastDownloaded = lastDownloaded;
+  }
+
+  public OffsetDateTime getLastDownloaded() {
+    return lastDownloaded;
+  }
+
+  public boolean hasLastDownloaded() {
+    return lastDownloaded != null;
   }
 }

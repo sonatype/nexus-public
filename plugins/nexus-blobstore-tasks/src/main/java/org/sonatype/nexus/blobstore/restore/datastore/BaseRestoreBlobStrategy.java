@@ -18,7 +18,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.Properties;
-
 import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -82,8 +81,8 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
     String assetPath = prependIfMissing(getAssetPath(restoreData), ASSET_PATH_PREFIX);
 
     try {
-      Optional<FluentAsset> asset =
-          restoreData.getRepository().facet(ContentFacet.class).assets().path(assetPath).find();
+      ContentFacet contentFacet = restoreData.getRepository().facet(ContentFacet.class);
+      Optional<FluentAsset> asset = contentFacet.assets().path(assetPath).find();
 
       if (asset.isPresent()) {
         FluentAsset fluentAsset = asset.get();
@@ -99,6 +98,9 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
           log.info(
               "{} Deleting asset as more recent blob will be restored, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
               logPrefix, blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
+          if (fluentAsset.lastDownloaded().isPresent()) {
+            restoreData.setLastDownloaded(fluentAsset.lastDownloaded().get());
+          }
           if (!isDryRun) {
             fluentAsset.delete();
           }
@@ -113,6 +115,14 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
 
       if (!isDryRun) {
         createAssetFromBlob(blob, restoreData);
+        // try to apply lastDownloaded field to created asset
+        if (restoreData.hasLastDownloaded()) {
+          Optional<FluentAsset> createdAsset = contentFacet.assets().path(assetPath).find();
+          if (createdAsset.isPresent()) {
+            FluentAsset fluentAsset = createdAsset.get();
+            fluentAsset.lastDownloaded(restoreData.getLastDownloaded());
+          }
+        }
       }
 
       log.info("{} Restored asset, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
