@@ -52,7 +52,7 @@ function deriveDynamicFieldData(type) {
 export const SPACE_USED_QUOTA_ID = 'spaceUsedQuota';
 
 export const canUseSpaceUsedQuotaOnly = (storeType) =>
-  ['azure', 's3'].includes(storeType.id);
+  ['azure', 's3', 'google'].includes(storeType.id);
 
 export default FormUtils.buildFormMachine({
   id: 'BlobStoresFormMachine',

@@ -44,6 +44,8 @@ import S3BlobStoreWarning from './components/pages/admin/BlobStores/S3/S3BlobSto
 import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobStoreActions';
 import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/AzureBlobStoreSettings';
 import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
+import GoogleBlobStoreSettings from './components/pages/admin/BlobStores/Google/GoogleBlobStoreSettings';
+import GoogleBlobStoreActions from './components/pages/admin/BlobStores/Google/GoogleBlobStoreActions';
 import IqServer from './components/pages/admin/IqServer/IqServer';
 import Bundles from './components/pages/admin/Bundles/Bundles';
 import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
@@ -85,6 +87,10 @@ window.BlobStoreTypes = {
     Settings: S3BlobStoreSettings,
     Warning: S3BlobStoreWarning,
     Actions: S3BlobStoreActions
+  },
+  google: {
+    Settings: GoogleBlobStoreSettings,
+    Actions: GoogleBlobStoreActions
   }
 }
 

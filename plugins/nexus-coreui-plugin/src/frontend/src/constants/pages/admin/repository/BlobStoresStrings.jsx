@@ -134,6 +134,32 @@ export default {
       TEST_CONNECTION_ERROR: 'Connection failed, check the logs for more information',
       TEST_CONNECTION_SUCCESS: 'Connection succeeded',
       TESTING: 'Testing connection'
+    },
+
+    GOOGLE: {
+      PROJECT_ID: {
+        label: 'Project ID',
+        sublabel: 'Your GCP Project ID is a unique identifier for your Google Cloud project. '
+          + 'It typically consists of lowercase letters, digits, and/or hyphens.'
+      },
+      BUCKET: {
+        label: 'Bucket',
+        sublabel: 'Google Cloud Platform bucket name (must be between 3 and 63 characters long containing only '
+          + 'lower-case characters, numbers, periods, dashes, and underscores. Spaces are not permitted).'
+      },
+      REGION: {
+        label: 'Region',
+        sublabel: 'Must be a valid single region; dual-region or multiple-region locations are not supported.'
+      },
+      AUTHENTICATION: {
+        LABEL: 'Authentication',
+        SUBLABEL: 'The default credentials will use the credentials configured in the environment where Nexus Repository is running.',
+        APPLICATION_DEFAULT_CREDENTIALS: 'Application Default Credentials',
+        CREDENTIAL_JSON_FILE: 'Credential JSON File',
+        JSON_PATH: {
+          label: 'JSON Credential File Path',
+        }
+      }
     }
   },
 

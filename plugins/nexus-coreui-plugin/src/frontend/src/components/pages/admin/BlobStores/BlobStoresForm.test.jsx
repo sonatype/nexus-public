@@ -112,6 +112,10 @@ const blobstoreTypes = {
     {
       "id": "azure",
       "name": "Azure Cloud Storage"
+    },
+    {
+      "id": "google",
+      "name": "Google Cloud Platform"
     }
   ]
 };
@@ -201,7 +205,7 @@ describe('BlobStoresForm', function() {
     await waitForElementToBeRemoved(loadingMask);
 
     expect(selectors.cancelButton()).toBeEnabled();
-    expect(typeSelect().options.length).toBe(5);
+    expect(typeSelect().options.length).toBe(6);
     expect(Array.from(typeSelect().options).map(option => option.textContent)).toEqual(expect.arrayContaining([
         '',
         'File',
@@ -614,6 +618,56 @@ describe('BlobStoresForm', function() {
 
     expect(axios.post).toHaveBeenCalledWith(
       'service/rest/v1/blobstores/azure',
+      data
+    );
+  });
+
+  it('creates a new GCP blob store', async function() {
+    const {
+      name,
+      loadingMask,
+      typeSelect,
+      softQuotaType,
+      softQuotaLimit,
+      spaceUsedQuotaLabel,
+      bucket,
+      region
+    } = render();
+
+    const data = {
+      name: 'gcp-blob-store',
+      bucketConfiguration: {
+        bucketSecurity: {
+          authenticationMethod: 'applicationDefault'
+        },
+        bucket: {
+          name: 'test-bucket',
+          region: 'us-central1'
+        }
+      },
+      softQuota: {
+        limit: 1048576,
+        type: 'spaceUsedQuota',
+        enabled: true
+      }
+    };
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
+    userEvent.type(name(), data.name);
+    userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
+    userEvent.type(region(), data.bucketConfiguration.bucket.region);
+
+    userEvent.click(selectors.getSoftQuota());
+    expect(softQuotaType()).not.toBeInTheDocument();
+    expect(spaceUsedQuotaLabel()).toBeInTheDocument();
+    userEvent.type(softQuotaLimit(), '1');
+
+    userEvent.click(selectors.querySubmitButton());
+
+    expect(axios.post).toHaveBeenCalledWith(
+      'service/rest/v1/blobstores/google',
       data
     );
   });

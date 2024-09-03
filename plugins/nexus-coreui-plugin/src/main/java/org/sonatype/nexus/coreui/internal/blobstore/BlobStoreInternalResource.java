@@ -58,6 +58,12 @@ public class BlobStoreInternalResource
 {
   static final String RESOURCE_PATH = "/internal/ui/blobstores";
 
+  public static final String GOOGLE_CONFIG = "google cloud storage";
+
+  public static final String GOOGLE_TYPE = "google";
+
+  public static final String GOOGLE_BUCKET_KEY = "bucketName";
+
   public static final String AZURE_CONFIG = "azure cloud storage";
 
   public static final String AZURE_TYPE = "azure";
@@ -135,6 +141,9 @@ public class BlobStoreInternalResource
     }
     else if (typeId.equals(BlobStoreGroup.TYPE.toLowerCase())) {
       return "N/A";
+    }
+    else if (typeId.equals(GOOGLE_TYPE)) {
+      return configuration.attributes(GOOGLE_CONFIG).get(GOOGLE_BUCKET_KEY, String.class);
     }
     logger.warn("blob store type {} unknown, defaulting to N/A for path", typeId);
     return "N/A";
