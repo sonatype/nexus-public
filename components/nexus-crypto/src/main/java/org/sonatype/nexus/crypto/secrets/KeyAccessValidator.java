@@ -12,26 +12,16 @@
  */
 package org.sonatype.nexus.crypto.secrets;
 
-import java.util.Optional;
-
 /**
- * Validator of encryption keys, this is useful to check if a key is accessible before using it or get the
- * active key id
+ * Validator used to check if a key is accessible to all nodes in the cluster before using it
  */
-public interface EncryptionKeyValidator
+public interface KeyAccessValidator
 {
   /**
-   * Checks the provided key is accessible
+   * Checks the provided key is accessible to all nodes in the cluster
    *
-   * @param keyId the key to check
+   * @param keyId the key id to check
    * @return {@code true} if the key is accessible, {@code false} otherwise
    */
   boolean isValidKey(String keyId);
-
-  /**
-   * Gets the active key id , if present
-   *
-   * @return an {@link Optional} with the key id String if found
-   */
-  Optional<String> getActiveKeyId();
 }

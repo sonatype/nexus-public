@@ -45,4 +45,14 @@ public interface SecretsService
    * @param secret the secret to be removed
    */
   void remove(Secret secret);
+
+  /**
+   * Changes the current encryption key to the specified key ID
+   */
+  void reEncrypt(SecretData secretData, String keyId) throws CipherException;
+
+  /**
+   * Checks if there are any secrets that have not been re-encrypted with the default key.
+   */
+  boolean isReEncryptRequired();
 }

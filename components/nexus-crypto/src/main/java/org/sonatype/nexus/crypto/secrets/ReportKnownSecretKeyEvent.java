@@ -12,26 +12,29 @@
  */
 package org.sonatype.nexus.crypto.secrets;
 
-import java.util.Optional;
+import org.sonatype.nexus.common.event.EventWithSource;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Validator of encryption keys, this is useful to check if a key is accessible before using it or get the
- * active key id
+ * An event used to indicate that nodes should report whether the specified
+ * encryption key for secrets is known.
  */
-public interface EncryptionKeyValidator
+public class ReportKnownSecretKeyEvent
+    extends EventWithSource
 {
-  /**
-   * Checks the provided key is accessible
-   *
-   * @param keyId the key to check
-   * @return {@code true} if the key is accessible, {@code false} otherwise
-   */
-  boolean isValidKey(String keyId);
+  private final String keyId;
 
-  /**
-   * Gets the active key id , if present
-   *
-   * @return an {@link Optional} with the key id String if found
-   */
-  Optional<String> getActiveKeyId();
+  @JsonCreator
+  public ReportKnownSecretKeyEvent(@JsonProperty("keyId") final String keyId) {
+    this.keyId = checkNotNull(keyId);
+  }
+
+  public String getKeyId() {
+    return keyId;
+  }
+
 }

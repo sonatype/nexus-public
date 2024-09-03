@@ -39,7 +39,7 @@ public class EncryptionKeyList
     this.keys = keys;
   }
 
-   public static class SecretEncryptionKey
+  public static class SecretEncryptionKey
   {
     private String id;
 

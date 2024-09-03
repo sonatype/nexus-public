@@ -10,38 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.crypto.secrets.internal;
+package org.sonatype.nexus.internal.security.secrets.rest;
 
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.Path;
 
-import org.sonatype.nexus.crypto.secrets.EncryptionKeyValidator;
-import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
+import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.crypto.secrets.ReEncryptService;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.SECRETS_API_ENABLED;
+import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 @Named
 @Singleton
-public class EncryptionKeyValidatorImpl
-    implements EncryptionKeyValidator
+@FeatureFlag(name = SECRETS_API_ENABLED)
+@Path(SecretsEncryptionApiResourceV1.RESOURCE_URI)
+public class SecretsEncryptionApiResourceV1
+    extends SecretsEncryptionApiResource
 {
-  private final EncryptionKeySource encryptionKeySource;
+  public static final String RESOURCE_URI = V1_API_PREFIX + RESOURCE_PATH;
 
   @Inject
-  public EncryptionKeyValidatorImpl(final EncryptionKeySource encryptionKeySource) {
-    this.encryptionKeySource = checkNotNull(encryptionKeySource);
-  }
-
-  @Override
-  public boolean isValidKey(final String keyId) {
-    return encryptionKeySource.getKey(keyId).isPresent();
-  }
-
-  @Override
-  public Optional<String> getActiveKeyId() {
-    return encryptionKeySource.getActiveKey()
-        .map(SecretEncryptionKey::getId);
+  public SecretsEncryptionApiResourceV1(final ReEncryptService reEncryptService) {
+    super(reEncryptService);
   }
 }

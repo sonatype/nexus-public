@@ -202,4 +202,6 @@ public interface FeatureFlags
 
   String SECRETS_FILE_ENV = "NEXUS_SECRETS_KEY_FILE";
 
+  String SECRETS_API_ENABLED = "nexus.secrets.api.enabled";
+
 }
