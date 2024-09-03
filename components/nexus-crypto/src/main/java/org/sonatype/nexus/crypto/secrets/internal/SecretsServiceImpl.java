@@ -15,6 +15,7 @@ package org.sonatype.nexus.crypto.secrets.internal;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -324,6 +325,18 @@ public class SecretsServiceImpl
     @Override
     public char[] decrypt() throws CipherException {
       return SecretsServiceImpl.this.decrypt(tokenId);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      SecretImpl other = (SecretImpl) o;
+      return Objects.equals(tokenId, other.tokenId);
     }
   }
 }
