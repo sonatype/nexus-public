@@ -109,6 +109,8 @@ public class UploadManagerImplTest
 
   @Before
   public void setup() {
+    when(handlerA.supportsApiUpload()).thenReturn(true);
+    when(handlerB.supportsApiUpload()).thenReturn(true);
     when(handlerA.getDefinition()).thenReturn(uploadA);
     when(handlerB.getDefinition()).thenReturn(uploadB);
     when(handlerA.getValidatingComponentUpload(componentUploadCaptor.capture())).thenReturn(validatingComponentUpload);
