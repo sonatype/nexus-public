@@ -120,9 +120,6 @@ public abstract class MavenRecipeSupport
   private Provider<MavenMaintenanceFacet> mavenMaintenanceFacet;
 
   @Inject
-  private Provider<MavenReplicationFacet> mavenReplicationFacet;
-
-  @Inject
   private Provider<RemoveSnapshotsFacet> removeSnapshotsFacet;
 
   @Inject
@@ -332,14 +329,6 @@ public abstract class MavenRecipeSupport
 
   public void setMavenMaintenanceFacet(Provider<MavenMaintenanceFacet> mavenMaintenanceFacet) {
     this.mavenMaintenanceFacet = mavenMaintenanceFacet;
-  }
-
-  public Provider<MavenReplicationFacet> getMavenReplicationFacet() {
-    return mavenReplicationFacet;
-  }
-
-  public void setMavenReplicationFacet(Provider<MavenReplicationFacet> mavenReplicationFacet) {
-    this.mavenReplicationFacet = mavenReplicationFacet;
   }
 
   public Provider<RemoveSnapshotsFacet> getRemoveSnapshotsFacet() {
