@@ -27,7 +27,7 @@ import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
-import org.sonatype.nexus.common.event.EventConsumer;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
@@ -59,7 +59,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class EmailManagerImpl
     extends ComponentSupport
-    implements EmailManager
+    implements EmailManager, EventAware
 {
   private static final String PASSWORD_PLACEHOLDER = "#~NXRM~PLACEHOLDER~PASSWORD~#";
 
@@ -147,33 +147,41 @@ public class EmailManagerImpl
     log.info("Saving configuration: {}", model);
 
     synchronized (lock) {
-      if (!EventHelper.isReplicating()) {
-        Secret oldPass = getConfiguration().getPassword();
-        Secret newPass = null;
-        if (!StringUtils.isBlank(password) && !PASSWORD_PLACEHOLDER.equals(password)) {
-          newPass = secretsService.encrypt(EMAIL_CONFIGURATION_SOURCE, password.toCharArray(), UserIdHelper.get());
-          model.setPassword(newPass);
+      Secret oldPass = getConfiguration().getPassword();
+      Secret newPass = null;
+      if (!StringUtils.isBlank(password) && !PASSWORD_PLACEHOLDER.equals(password)) {
+        newPass = secretsService.encrypt(EMAIL_CONFIGURATION_SOURCE, password.toCharArray(), UserIdHelper.get());
+        model.setPassword(newPass);
+      }
+      else if (PASSWORD_PLACEHOLDER.equals(password)) {
+        model.setPassword(oldPass);
+      }
+      try {
+        store.save(model);
+      }
+      catch (Exception e) {
+        if (Objects.nonNull(newPass)) {
+          secretsService.remove(newPass);
         }
-        else if (PASSWORD_PLACEHOLDER.equals(password)) {
-          model.setPassword(oldPass);
-        }
-        try {
-          store.save(model);
-        }
-        catch (Exception e) {
-          if (Objects.nonNull(newPass)) {
-            secretsService.remove(newPass);
-          }
-          throw e;
-        }
-        if (Objects.nonNull(oldPass) && model.getPassword() != oldPass) {
-          secretsService.remove(oldPass);
-        }
+        throw e;
+      }
+      if (Objects.nonNull(oldPass) && model.getPassword() != oldPass) {
+        secretsService.remove(oldPass);
       }
       this.configuration = model;
     }
 
     eventManager.post(new EmailConfigurationChangedEvent(model));
+  }
+
+  @Subscribe
+  public void onStoreChanged(final EmailConfigurationChanged event) {
+    if (EventHelper.isReplicating()) {
+      log.debug("Reloading configuration after change by node {}", event.getRemoteNodeId());
+      synchronized (lock) {
+        configuration = loadConfiguration();
+      }
+    }
   }
 
   /**
@@ -288,24 +296,6 @@ public class EmailManagerImpl
         .findFirst()
         .map(url -> "Message from: " + url + "\n\n" + message)
         .orElse(message);
-  }
-
-  @Subscribe
-  public void onStoreChanged(final EmailConfigurationEvent event) {
-    handleReplication(event, e -> setConfiguration(e.getEmailConfiguration(), Strings2.EMPTY));
-  }
-
-  private void handleReplication(final EmailConfigurationEvent event,
-                                 final EventConsumer<EmailConfigurationEvent> consumer)
-  {
-    if (!event.isLocal()) {
-      try {
-        consumer.accept(event);
-      }
-      catch (Exception e) {
-        log.error("Failed to replicate: {}", event, e);
-      }
-    }
   }
 
   private void sendMail(final Email mail) throws EmailException {

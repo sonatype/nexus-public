@@ -214,4 +214,43 @@ public class EmailManagerImplTest
 
     verify(email, never()).send();
   }
+
+  @Test
+  public void testOnStoreChanged() {
+    EmailConfigurationData newConfig = new EmailConfigurationData();
+    newConfig.setEnabled(true);
+    newConfig.setHost("smtp.example.com");
+    newConfig.setPort(587);
+    newConfig.setUsername("user@example.com");
+    Secret password = mock(Secret.class);
+    newConfig.setPassword(password);
+    newConfig.setFromAddress("noreply@example.com");
+    newConfig.setSubjectPrefix("[Test]");
+    newConfig.setStartTlsEnabled(true);
+    newConfig.setStartTlsRequired(false);
+    newConfig.setSslOnConnectEnabled(true);
+    newConfig.setSslCheckServerIdentityEnabled(true);
+    newConfig.setNexusTrustStoreEnabled(false);
+
+    when(emailConfigurationStore.load()).thenReturn(newConfig);
+
+    EmailConfigurationChanged event = new EmailConfigurationChanged();
+    event.setRemoteNodeId("remoteNodeId");
+    emailManager.onStoreChanged(event);
+
+    EmailConfiguration retrievedConfig = emailManager.getConfiguration();
+
+    assertThat(retrievedConfig.isEnabled(), is(true));
+    assertThat(retrievedConfig.getHost(), is("smtp.example.com"));
+    assertThat(retrievedConfig.getPort(), is(587));
+    assertThat(retrievedConfig.getUsername(), is("user@example.com"));
+    assertThat(retrievedConfig.getPassword(), is(password));
+    assertThat(retrievedConfig.getFromAddress(), is("noreply@example.com"));
+    assertThat(retrievedConfig.getSubjectPrefix(), is("[Test]"));
+    assertThat(retrievedConfig.isStartTlsEnabled(), is(true));
+    assertThat(retrievedConfig.isStartTlsRequired(), is(false));
+    assertThat(retrievedConfig.isSslOnConnectEnabled(), is(true));
+    assertThat(retrievedConfig.isSslCheckServerIdentityEnabled(), is(true));
+    assertThat(retrievedConfig.isNexusTrustStoreEnabled(), is(false));
+  }
 }
