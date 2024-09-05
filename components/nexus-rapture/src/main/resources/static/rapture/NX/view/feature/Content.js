@@ -23,7 +23,7 @@
  */
 Ext.define('NX.view.feature.Content', {
   extend: 'Ext.panel.Panel',
-  requires: [ 'NX.view.feature.BreadcrumbPanel' ],
+  requires: [ 'NX.view.feature.BreadcrumbPanel', 'NX.view.MaliciousRiskOnDisk' ],
   alias: 'widget.nx-feature-content',
   ariaRole: 'main',
   itemId: 'feature-content',
@@ -37,15 +37,34 @@ Ext.define('NX.view.feature.Content', {
    */
   discardUnsavedChanges: false,
 
-  dockedItems: [{
+  dockedItems: [
+    {
+      xtype: 'nx-component-malicious-risk-on-disk',
+      dock: 'top',
+      hidden: true
+    },
+    {
       xtype: 'nx-breadcrumb',
       dock: 'top'
-  }],
+    }
+  ],
 
   listeners: {
     afterrender: function(obj) {
       obj.rendered = true;
       obj.showRoot();
+    }
+  },
+
+  maybeShowMaliciousRiskOnDisk: function() {
+    var me = this;
+    var maliciousRiskOnDisk = me.down('nx-component-malicious-risk-on-disk');
+    const titles = ['Browse', 'Search', 'Welcome'];
+
+    if (titles.includes(me.currentTitle)) {
+      maliciousRiskOnDisk.show();
+    } else {
+      maliciousRiskOnDisk.hide();
     }
   },
 

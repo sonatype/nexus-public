@@ -35,6 +35,7 @@ import MaliciousHighRiskEcosystems from "./MaliciousHighRiskEcosystems";
 import MaliciousEvents from "./MaliciousEvents";
 import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 import "./MaliciousRisk.scss";
+import MaliciousRiskOnDisk from "./riskondisk/MaliciousRiskOnDisk";
 
 const {
   TITLE,
@@ -67,6 +68,7 @@ export default function MaliciousRisk() {
           <PageTitle icon={faExclamationTriangle} text={TITLE}/>
         </PageHeader>
         <ContentBody>
+          <MaliciousRiskOnDisk/>
           <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
             {hdsError && <NxWarningAlert role="alert">{HDS_CONNECTION_WARNING}</NxWarningAlert>}
             {!hdsError && <>

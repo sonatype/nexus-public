@@ -22,7 +22,7 @@ import {
   maliciousRiskProxyUnprotectedResponse,
   maliciousRiskResponseWithHdsError
 } from "./MaliciousRisk.testdata";
-import {APIConstants} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 jest.mock('axios', () => ({
@@ -50,6 +50,10 @@ const content = 'Open Source malware exploits the open source DevOps tool chain 
     'credential harvester, crypto-miner, a virus, ransomware, data corruption, malicious code injector, etc.'
 
 describe('MaliciousRisk Fully Protected', () => {
+  beforeEach(() => {
+    jest.spyOn(ExtJS, 'state').mockReturnValue({getValue: () => false});
+    jest.spyOn(ExtJS, 'useUser').mockImplementation( () => null);
+  });
   async function renderView() {
     when(axios.get).calledWith(MALICIOUS_RISK_SUMMARY).mockResolvedValue({
       data: maliciousRiskProxyFullyProtectedResponse

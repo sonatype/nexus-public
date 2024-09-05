@@ -122,6 +122,8 @@ Ext.define('NX.controller.Content', {
     // Update the breadcrumb
     content.showRoot();
 
+    content.maybeShowMaliciousRiskOnDisk();
+
     // install new feature view
     content.add(cmp);
 

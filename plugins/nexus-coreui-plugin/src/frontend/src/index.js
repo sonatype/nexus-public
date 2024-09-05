@@ -68,13 +68,15 @@ import UpgradeAlert from './components/UpgradeAlert/UpgradeAlert';
 import UsageMetricsAlert from './components/pages/user/Welcome/UsageMetricsAlert';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 import MaliciousRisk from "./components/pages/maliciousrisk/MaliciousRisk";
+import MaliciousRiskOnDisk from "./components/pages/maliciousrisk/riskondisk/MaliciousRiskOnDisk";
 
 window.ReactComponents = {
   ...window.ReactComponents,
   AnalyzeApplication,
   UpgradeAlert,
   UsageMetricsAlert,
-  UpgradeModal
+  UpgradeModal,
+  MaliciousRiskOnDisk
 };
 
 window.BlobStoreTypes = {

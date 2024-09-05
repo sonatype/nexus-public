@@ -308,6 +308,9 @@ export default {
       get MALICIOUS_RISK_SUMMARY() {
         return `${this.BASE_URL}malicious-risk/summary`;
       },
+      get MALICIOUS_RISK_ON_DISK() {
+        return `${this.BASE_URL}malicious-risk/risk-on-disk`;
+      },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',
     SYSTEM_INFORMATION_HA: 'service/rest/beta/system/information',
