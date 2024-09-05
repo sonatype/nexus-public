@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -33,11 +34,10 @@ import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
+import org.sonatype.nexus.crypto.secrets.ActiveKeyChangeEvent;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
-import org.sonatype.nexus.crypto.secrets.ActiveKeyChangeEvent;
-import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
@@ -60,7 +60,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 @ManagedLifecycle(phase = SERVICES)
 public class SecretsServiceImpl
     extends ComponentSupport
-    implements SecretsFactory, SecretsService, EventAware
+    implements SecretsService, EventAware
 {
   private static final Base64Variant BASE_64 = Base64Variants.getDefaultVariant();
 
@@ -214,7 +214,7 @@ public class SecretsServiceImpl
   }
 
   @Override
-  public void reEncrypt(SecretData secretData, String keyId) throws CipherException{
+  public void reEncrypt(final SecretData secretData, final String keyId) throws CipherException{
     Integer secretId = secretData.getId();
     String currentSecret = secretData.getSecret();
     char[] decrypted = this.doDecrypt(secretData);
@@ -239,7 +239,7 @@ public class SecretsServiceImpl
     return doDecrypt(data);
   }
 
-  private char[] doDecrypt(SecretData data) {
+  private char[] doDecrypt(final SecretData data) {
     Optional<SecretEncryptionKey> secretKey = Optional.ofNullable(data.getKeyId())
         .flatMap(encryptionKeySource::getKey);
 
@@ -364,7 +364,7 @@ public class SecretsServiceImpl
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
       if (this == o) {
         return true;
       }

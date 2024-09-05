@@ -20,6 +20,7 @@ import org.sonatype.nexus.crypto.internal.error.CipherException;
  * Service responsible for storing secrets (e.g. passwords) with reversible encryption.
  */
 public interface SecretsService
+    extends SecretsFactory
 {
   public static final String SECRETS_MIGRATION_VERSION = "99.9";
 
