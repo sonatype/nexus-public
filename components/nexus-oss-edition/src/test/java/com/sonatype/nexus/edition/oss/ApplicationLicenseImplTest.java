@@ -56,7 +56,7 @@ public class ApplicationLicenseImplTest
   @Before
   public void setUp() throws BackingStoreException {
     underTest = new ApplicationLicenseImpl(fingerprinter, availableFeatures, productPreferenceFactory, licenseContent);
-    when(productPreferenceFactory.extractPreferences()).thenReturn(preferences);
+    when(productPreferenceFactory.nodeForPath("")).thenReturn(preferences);
     when(preferences.childrenNames()).thenReturn(new String[] {AnalyticsConstants.COMPONENT_TOTAL_COUNT_EXCEEDED, AnalyticsConstants.PEAK_REQUESTS_PER_DAY_EXCEEDED});
   }
 
