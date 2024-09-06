@@ -12,14 +12,29 @@
  */
 package com.sonatype.nexus.edition.oss;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Nullable;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.sonatype.analytics.internal.AnalyticsConstants;
+import com.sonatype.nexus.licensing.ext.AbstractApplicationLicense;
+import com.sonatype.nexus.licensing.ext.NexusCommunityFeature;
+import com.sonatype.nexus.licensing.ext.MultiProductPreferenceFactory;
+import org.sonatype.licensing.feature.Feature;
+import org.sonatype.licensing.product.util.LicenseContent;
+import org.sonatype.licensing.product.util.LicenseFingerprinter;
 import org.sonatype.nexus.common.app.ApplicationLicense;
+import org.sonatype.nexus.common.time.DateHelper;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * OSS {@link ApplicationLicense}.
@@ -29,64 +44,55 @@ import org.sonatype.nexus.common.app.ApplicationLicense;
 @Named("OSS")
 @Singleton
 public class ApplicationLicenseImpl
-  implements ApplicationLicense
+    extends AbstractApplicationLicense
+    implements ApplicationLicense
 {
-  /**
-   * Always {@code false}.
-   */
+
+  private final MultiProductPreferenceFactory productPreferenceFactory;
+
+  private final LicenseContent licenseContent;
+
+  @Inject
+  protected ApplicationLicenseImpl(
+      final LicenseFingerprinter fingerprinter,
+      final List<Feature> availableFeatures,
+      final MultiProductPreferenceFactory productPreferenceFactory,
+      final LicenseContent licenseContent)
+  {
+    super(fingerprinter, availableFeatures);
+    this.productPreferenceFactory = checkNotNull(productPreferenceFactory);
+    this.licenseContent = checkNotNull(licenseContent);
+    refresh();
+  }
+
   @Override
   public boolean isRequired() {
-    return false;
+    return trialPeriodHasEnded();
   }
 
-  /**
-   * Always {@code false}.
-   */
   @Override
-  public boolean isValid() {
-    return false;
+  public final void refresh() {
+    setLicenseKey(licenseContent.key());
   }
 
-  /**
-   * Always {@code false}.
-   */
-  @Override
-  public boolean isInstalled() {
-    return false;
-  }
-
-  /**
-   * Always {@code false}.
-   */
-  @Override
-  public boolean isExpired() {
-    return false;
-  }
-
-  /**
-   * Always empty-map.
-   */
   @Override
   public Map<String, Object> getAttributes() {
     return Collections.emptyMap();
   }
 
-  /**
-   * Always {@code null}.
-   */
-  @Override
-  @Nullable
-  public String getFingerprint() {
-    return null;
-  }
+  private boolean trialPeriodHasEnded() {
+    productPreferenceFactory.setProduct(NexusCommunityFeature.SHORT_NAME);
+    Preferences preferences = productPreferenceFactory.nodeForPath("");
 
-  @Override
-  public void refresh() {
-    // no-op
-  }
+    Long componentTotalCountExceeded = preferences.getLong(AnalyticsConstants.COMPONENT_TOTAL_COUNT_EXCEEDED, 0);
+    Long peakRequestsPerDayExceeded = preferences.getLong(AnalyticsConstants.PEAK_REQUESTS_PER_DAY_EXCEEDED, 0);
 
-  @Override
-  public boolean isEvaluation() {
-    return false;
+    Date oldestDate =
+        DateHelper.oldestDateFromLongs(Arrays.asList(componentTotalCountExceeded, peakRequestsPerDayExceeded));
+    if (oldestDate == null) {
+      return false;
+    }
+
+    return DateHelper.daysElapsed(oldestDate, new Date()) > AnalyticsConstants.TRIAL_PERIOD_DAYS;
   }
 }

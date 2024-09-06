@@ -18,9 +18,12 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -66,6 +69,17 @@ public class DateHelper
       return null;
     }
     return dateTime.toDate();
+  }
+
+  /**
+   * Converts input {@link Long} to {@link Date}, or {@code null} if input is {@code null}.
+   */
+  @Nullable
+  public static Date toDate(@Nullable final Long timestamp) {
+    if (timestamp == null || timestamp == 0) {
+      return null;
+    }
+    return new Date(timestamp);
   }
 
   /**
@@ -153,5 +167,36 @@ public class DateHelper
    */
   public static Date offsetToDate(final OffsetDateTime offsetDateTime) {
     return Date.from(offsetDateTime.toInstant());
+  }
+
+  /**
+   * Receives a list of dates and returns the oldest one. If the list is null or empty, returns null.
+   */
+  public static Date oldestDateFromLongs(final List<Long> dates) {
+    if (dates == null || dates.isEmpty()) {
+      return null;
+    }
+    List<Date> dateList = dates.stream().map(DateHelper::toDate).collect(Collectors.toList());
+    return oldestDate(dateList);
+  }
+
+  /**
+   * Receives a list of dates and returns the oldest one. If the list is null or empty, returns null.
+   */
+  public static Date oldestDate(final List<Date> dates) {
+    if (dates == null || dates.isEmpty()) {
+      return null;
+    }
+    return dates.stream().filter(date -> date != null).min(Date::compareTo).orElse(null);
+  }
+
+  /**
+   * Receives two dates and returns the number of days elapsed between them.
+   */
+  public static int daysElapsed(final Date date1, final Date date2) {
+    if (date1 == null || date2 == null) {
+      return 0;
+    }
+    return (int) ((date2.getTime() - date1.getTime()) / DateUtils.MILLIS_PER_DAY);
   }
 }
