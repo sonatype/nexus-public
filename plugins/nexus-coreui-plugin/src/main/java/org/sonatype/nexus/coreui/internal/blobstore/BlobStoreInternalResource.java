@@ -14,6 +14,7 @@ package org.sonatype.nexus.coreui.internal.blobstore;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -105,13 +107,23 @@ public class BlobStoreInternalResource
 
     return store.list().stream()
         .map(configuration -> {
-            final String typeId = blobStoreDescriptorProvider.get().get(configuration.getType()).getId();
+          String blobStoreType = configuration.getType();
+          BlobStoreDescriptor blobStoreDescriptor = Optional.ofNullable(blobStoreDescriptorProvider.get())
+              .map(it -> it.get(blobStoreType))
+              .orElse(null);
+          if (blobStoreDescriptor == null) {
+            return null;
+          }
+          String typeId = blobStoreDescriptor.getId();
+
             final String path = getPath(typeId.toLowerCase(), configuration);
             BlobStoreMetrics metrics = Optional.ofNullable(blobStoreManager.get(configuration.getName()))
                 .map(BlobStoreInternalResource::getBlobStoreMetrics)
                 .orElse(null);
             return new BlobStoreUIResponse(typeId, configuration, metrics, path);
-        }).collect(toList());
+        })
+        .filter(Objects::nonNull)
+        .collect(toList());
   }
 
   // If a blobstore hasn't started due to an error we still want to return it from the api.
