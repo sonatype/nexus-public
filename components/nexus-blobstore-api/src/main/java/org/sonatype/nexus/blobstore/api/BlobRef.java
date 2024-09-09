@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -115,6 +116,10 @@ public class BlobRef
 
   public BlobId getBlobId() {
     return new BlobId(getBlob());
+  }
+
+  public BlobId getBlobId(final OffsetDateTime blobCreated) {
+    return new BlobId(getBlob(), blobCreated);
   }
 
   /**

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.AttributesMap;
@@ -142,8 +143,12 @@ public class FluentAssetImpl
     facet.stores().assetStore.updateAssetAttributes(asset, new AttributeChangeSet(change, key, value));
     asset.blob().ifPresent(blob ->
         facet.blobMetadataStorage()
-            .attach(facet.stores().blobStoreProvider.get(), blob.blobRef().getBlobId(), null, asset.attributes(),
-                asset.blob().get().checksums()));
+            .attach(
+                facet.stores().blobStoreProvider.get(),
+                blob.blobRef().getBlobId(blob.datePath()),
+                null,
+                asset.attributes(),
+                blob.checksums()));
     return this;
   }
 
@@ -152,7 +157,10 @@ public class FluentAssetImpl
     facet.stores().assetStore.updateAssetAttributes(asset, changes);
     asset.blob().ifPresent(blob ->
         facet.blobMetadataStorage()
-            .attach(facet.stores().blobStoreProvider.get(), blob.blobRef().getBlobId(), null, asset.attributes(),
+            .attach(facet.stores().blobStoreProvider.get(),
+                blob.blobRef().getBlobId(blob.datePath()),
+                null,
+                asset.attributes(),
                 blob.checksums()));
     return this;
   }
@@ -180,7 +188,8 @@ public class FluentAssetImpl
         .orElseThrow(() -> new IllegalStateException("No blob attached to " + asset.path()));
 
     BlobRef blobRef = assetBlob.blobRef();
-    Blob blob = Optional.ofNullable(facet.stores().blobStoreProvider.get().get(blobRef.getBlobId()))
+    BlobId blobId = blobRef.getBlobId(assetBlob.datePath());
+    Blob blob = Optional.ofNullable(facet.stores().blobStoreProvider.get().get(blobId))
         .orElseGet(() -> facet.dependencies().getMoveService()
             .map(service -> service.getIfBeingMoved(blobRef, repository().getName()))
             .orElseThrow(() -> new MissingBlobException(blobRef)));

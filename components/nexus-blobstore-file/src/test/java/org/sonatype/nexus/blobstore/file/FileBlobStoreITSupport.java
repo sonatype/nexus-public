@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
@@ -120,7 +121,7 @@ public abstract class FileBlobStoreITSupport
 
   private SimpleFileOperations fileOperations;
 
-  private DefaultBlobIdLocationResolver blobIdResolver;
+  private BlobIdLocationResolver blobIdResolver;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
   private BlobStoreMetricsStore blobStoreMetricsStore;
@@ -144,6 +145,8 @@ public abstract class FileBlobStoreITSupport
 
   protected abstract FileBlobDeletionIndex fileBlobDeletionIndex();
 
+  protected abstract BlobIdLocationResolver blobIdLocationResolver();
+
   @Before
   public void setUp() throws Exception {
     metricsStore = spy(new DatastoreFileBlobStoreMetricsService(METRICS_FLUSH_TIMEOUT, blobStoreMetricsStore,
@@ -158,7 +161,7 @@ public abstract class FileBlobStoreITSupport
 
     fileOperations = spy(new SimpleFileOperations());
 
-    blobIdResolver = new DefaultBlobIdLocationResolver();
+    blobIdResolver = blobIdLocationResolver();
 
     underTest = createBlobStore(UUID.randomUUID().toString(), fileBlobDeletionIndex());
     reset(metricsStore, blobStoreMetricsStore);
@@ -684,6 +687,25 @@ public abstract class FileBlobStoreITSupport
     assertThat(bytesPath2.toFile().exists(), is(true));
     assertThat(bytesPath3.toFile().exists(), is(false));
     assertThat(bytesPath4.toFile().exists(), is(false));
+  }
+
+  @Test
+  public void testDateBasedLayout() throws Exception {
+    blobIdResolver = new DefaultBlobIdLocationResolver(true);
+
+    underTest = createBlobStore(UUID.randomUUID().toString(), fileBlobDeletionIndex());
+    reset(metricsStore, blobStoreMetricsStore);
+
+    byte[] content = new byte[TEST_DATA_LENGTH];
+    final Blob blob = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+
+    Path bytesPath = contentDirectory.resolve(blobIdResolver.getLocation(blob.getId()) +
+        BLOB_FILE_CONTENT_SUFFIX);
+    Path attributesPath = contentDirectory.resolve(blobIdResolver.getLocation(blob.getId()) +
+        BLOB_FILE_ATTRIBUTES_SUFFIX);
+
+    assertThat(bytesPath.toFile().exists(), is(true));
+    assertThat(attributesPath.toFile().exists(), is(true));
   }
 
   private void verifyMoveOperations(final Blob blob) throws IOException {

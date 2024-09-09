@@ -207,8 +207,9 @@ public class DatastoreDeadBlobFinder
       return new DeadBlobResult<>(repositoryName, null, ASSET_DELETED, "Asset was deleted during inspection");
     }
     try {
+      OffsetDateTime createdTime = asset.blob().map(AssetBlob::datePath).orElse(null);
       Blob blob = asset.blob().map(AssetBlob::blobRef)
-          .map(blobRef -> blobStoreManager.get(blobRef.getStore()).get(blobRef.getBlobId()))
+          .map(blobRef -> blobStoreManager.get(blobRef.getStore()).get(blobRef.getBlobId(createdTime)))
           .orElseThrow(() -> new IllegalStateException("Blob not found."));
       verifyBlob(blob, asset);
     }

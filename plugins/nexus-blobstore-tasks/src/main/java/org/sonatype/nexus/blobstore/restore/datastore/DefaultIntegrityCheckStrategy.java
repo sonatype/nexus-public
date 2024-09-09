@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -28,7 +29,6 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
-import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
@@ -157,9 +157,10 @@ public class DefaultIntegrityCheckStrategy
 
   private boolean checkAsset(final Asset asset, final BlobStore blobStore) {
     try {
+      OffsetDateTime createdTime = asset.blob().map(AssetBlob::datePath).orElse(null);
       Optional<BlobId> blobId = asset.blob()
           .map(AssetBlob::blobRef)
-          .map(BlobRef::getBlobId);
+          .map(b -> b.getBlobId(createdTime));
 
       if (!blobId.isPresent()) {
         log.error(ERROR_ACCESSING_BLOB, asset.path());

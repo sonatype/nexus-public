@@ -345,4 +345,8 @@ public abstract class ContentFacetSupport
   protected ContentRepositoryData newContentRepository() {
     return new ContentRepositoryData();
   }
+
+  public boolean isDateBasedBlobStoreLayoutEnabled() {
+    return dependencies().isDateBasedBlobStoreLayoutEnabled();
+  }
 }

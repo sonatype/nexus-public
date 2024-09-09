@@ -53,6 +53,9 @@ public class AssetBlobData
   @Nullable
   private String createdByIp;
 
+  @Nullable
+  private OffsetDateTime datePath;
+
   // AssetBlob API
 
   @Override
@@ -93,6 +96,11 @@ public class AssetBlobData
   @Override
   public OffsetDateTime addedToRepository() {
     return addedToRepository;
+  }
+
+  @Override
+  public OffsetDateTime datePath() {
+    return datePath;
   }
 
   // MyBatis setters + validation
@@ -162,6 +170,10 @@ public class AssetBlobData
     this.createdByIp = createdByIp;
   }
 
+  public void setDatePath(@Nullable final OffsetDateTime datePath) {
+    this.datePath = datePath;
+  }
+
   // ContinuationAware
 
   @Override
@@ -180,6 +192,7 @@ public class AssetBlobData
         ", blobCreated=" + blobCreated +
         ", createdBy='" + createdBy + '\'' +
         ", createdByIp='" + createdByIp + '\'' +
+        ", datePath=" + datePath +
         '}';
   }
 }

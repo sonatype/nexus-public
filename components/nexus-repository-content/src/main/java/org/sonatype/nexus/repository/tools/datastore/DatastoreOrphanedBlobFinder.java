@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.tools.datastore;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -137,7 +138,8 @@ public class DatastoreOrphanedBlobFinder
       else {
         findAssociatedAsset(assetName, repository).ifPresent(asset -> {
           BlobRef blobRef = asset.blob().map(AssetBlob::blobRef).orElse(null);
-          if (blobRef != null && !blobRef.getBlobId().asUniqueString().equals(id.asUniqueString())) {
+          OffsetDateTime createdTime = asset.blob().map(AssetBlob::datePath).orElse(null);
+          if (blobRef != null && !blobRef.getBlobId(createdTime).asUniqueString().equals(id.asUniqueString())) {
             if (!attributes.isDeleted()) {
               handler.accept(id.asUniqueString());
             }

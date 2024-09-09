@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.tools.datastore;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +33,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -55,6 +58,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.notNull;
@@ -102,13 +106,17 @@ public class DatastoreDeadBlobFinderTest
   @Mock
   private FluentAssetBuilder builder;
 
-  private InputStream blobStream = IOUtils.toInputStream("foo");
+  private final InputStream blobStream = IOUtils.toInputStream("foo", StandardCharsets.UTF_8);
 
-  private FluentAsset asset;
+  private static final DateTime cratedTime = new DateTime(2024, 1, 1, 0, 0, 0, 0);
 
-  private BlobMetrics blobMetrics = new BlobMetrics(DateTime.now(), "1234", 1234);
+  private static final OffsetDateTime blobCratedTime = DateHelper.toOffsetDateTime(cratedTime);
+
+  private final BlobMetrics blobMetrics = new BlobMetrics(cratedTime, "1234", 1234);
 
   private DatastoreDeadBlobFinder deadBlobFinder;
+
+  private FluentAsset asset;
 
   @Before
   public void setup() {
@@ -119,8 +127,9 @@ public class DatastoreDeadBlobFinderTest
     when(repository.optionalFacet(ContentFacet.class)).thenReturn(Optional.of(contentFacet));
     when(contentFacet.assets()).thenReturn(fluentAssets);
 
-    BlobId blobId = new BlobId("blob-1");
+    BlobId blobId = new BlobId("blob-1", blobCratedTime);
     when(blobRef.getBlobId()).thenReturn(blobId);
+    when(blobRef.getBlobId(any(OffsetDateTime.class))).thenReturn(blobId);
     when(blobRef.getStore()).thenReturn("my-blobstore");
     when(blobStore.get(blobId)).thenReturn(blob);
     when(blobStoreManager.get("my-blobstore")).thenReturn(blobStore);
@@ -138,6 +147,7 @@ public class DatastoreDeadBlobFinderTest
     when(asset.path()).thenReturn("foo");
     when(assetBlob.checksums()).thenReturn(Collections.singletonMap(HashAlgorithm.SHA1.name(), "1234"));
     when(assetBlob.blobRef()).thenReturn(blobRef);
+    when(assetBlob.datePath()).thenReturn(blobCratedTime);
     when(asset.blob()).thenReturn(Optional.of(assetBlob));
 
     return asset;
@@ -170,6 +180,7 @@ public class DatastoreDeadBlobFinderTest
     mockAssetReload();
     when(blob.getMetrics()).thenReturn(blobMetrics);
     when(blob.getInputStream()).thenReturn(blobStream);
+    when(assetBlob.datePath()).thenReturn(blobCratedTime);
     when(assetBlob.checksums()).thenReturn(Collections.singletonMap(HashAlgorithm.SHA1.toString(), "1235"));
 
     TestConsumer<DeadBlobResult<Asset>> testConsumer = new TestConsumer<>();
@@ -187,6 +198,7 @@ public class DatastoreDeadBlobFinderTest
     mockAssetReload();
     when(blob.getMetrics()).thenReturn(blobMetrics);
     when(blob.getInputStream()).thenReturn(blobStream);
+    when(assetBlob.datePath()).thenReturn(blobCratedTime);
     when(assetBlob.checksums()).thenReturn(Collections.singletonMap(HashAlgorithm.SHA1.toString(), "1235"));
 
     List<DeadBlobResult<Asset>> result = deadBlobFinder.find(repository);
@@ -273,19 +285,21 @@ public class DatastoreDeadBlobFinderTest
   @Test
   public void anAssetBlobCanBeDeletedWhileTheSystemIsInspected() {
     AssetBlob missingAssetBlob = mockAssetBlob(mock(AssetBlob.class));
+    when(missingAssetBlob.datePath()).thenReturn(blobCratedTime);
     when(asset.blob()).thenReturn(Optional.of(missingAssetBlob)); // first pass we have a missing blobRef
 
     FluentAsset reloadedAsset = createAsset(assetBlob);
     Blob reloadedBlob = mock(Blob.class); // second pass the blobRef is there but file does not exist
     when(reloadedBlob.getMetrics()).thenReturn(blobMetrics);
-    BlobId missingBlobId = reloadedAsset.blob().get().blobRef().getBlobId();
+    BlobId missingBlobId = reloadedAsset.blob().get().blobRef().getBlobId(blobCratedTime);
     when(blobStore.get(missingBlobId)).thenReturn(reloadedBlob);
 
     mockAssetBrowse();
     mockAssetReload(reloadedAsset);
 
     when(reloadedBlob.getMetrics()).thenReturn(blobMetrics);
-    when(reloadedBlob.getInputStream()).thenThrow(new BlobStoreException("Blob has been deleted", new BlobId("foo")));
+    BlobId blobId = new BlobId("foo", blobCratedTime);
+    when(reloadedBlob.getInputStream()).thenThrow(new BlobStoreException("Blob has been deleted", blobId));
 
     List<DeadBlobResult<Asset>> result = deadBlobFinder.find(repository, true);
 
@@ -299,8 +313,9 @@ public class DatastoreDeadBlobFinderTest
     when(assetBlob.blobRef()).thenReturn(blobRef);
     when(assetBlob.checksums()).thenReturn(Collections.singletonMap(HashAlgorithm.SHA1.name(), "1234"));
 
-    BlobId blobId = mock(BlobId.class);
+    BlobId blobId = new BlobId("foo", blobCratedTime);
     when(blobRef.getBlobId()).thenReturn(blobId);
+    when(blobRef.getBlobId(any(OffsetDateTime.class))).thenReturn(blobId);
     return assetBlob;
   }
 
@@ -379,8 +394,9 @@ public class DatastoreDeadBlobFinderTest
   {
     when(blobRef.getStore()).thenReturn("my-blobstore");
 
-    BlobId blobId = new BlobId("blobId");
+    BlobId blobId = new BlobId("blobId", blobCratedTime);
     when(blobRef.getBlobId()).thenReturn(blobId);
+    when(blobRef.getBlobId(any(OffsetDateTime.class))).thenReturn(blobId);
     when(blobStore.get(blobId)).thenReturn(blob);
     when(assetBlob.checksums()).thenReturn(Collections.singletonMap(HashAlgorithm.SHA1.name(), sha1));
     when(blob.getMetrics()).thenReturn(blobMetrics);

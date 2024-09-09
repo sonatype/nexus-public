@@ -16,6 +16,8 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 
@@ -70,4 +72,10 @@ public interface AssetBlob
    * The client IP that triggered creation of this blob; empty if it was an internal request.
    */
   Optional<String> createdByIp();
+
+  /**
+   * The date path of the blob.
+   */
+  @Nullable
+  OffsetDateTime datePath();
 }

@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -42,6 +43,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
@@ -77,6 +79,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   public static final int MIN_NAME_LENGTH = 1;
 
+  private boolean dateBasedLayoutEnabled;
+
   public BlobStoreSupport(final BlobIdLocationResolver blobIdLocationResolver,
                           final DryRunPrefix dryRunPrefix)
   {
@@ -87,6 +91,12 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Inject
   public void setMetricRegistry(final MetricRegistry metricRegistry) {
     this.metricRegistry = metricRegistry;
+  }
+
+  @Inject
+  public void setDateBasedLayoutEnabled(
+      @Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean dateBasedLayoutEnabled) {
+    this.dateBasedLayoutEnabled = dateBasedLayoutEnabled;
   }
 
   protected BlobId getBlobId(final Map<String, String> headers, @Nullable final BlobId blobId) {
@@ -293,6 +303,10 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Override
   public boolean isEmpty() {
     return !getBlobIdStream().findAny().isPresent();
+  }
+
+  public boolean isDateBasedLayoutEnabled() {
+    return dateBasedLayoutEnabled;
   }
 
   /**
