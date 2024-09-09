@@ -313,28 +313,25 @@ public class SupportZipGeneratorImpl
             // determine if the current file is a log file
             boolean isLogFile = source.getType() == LOG || source.getType() == TASKLOG || source.getType() == AUDITLOG;
             // only apply truncation logic to log files
-            if (isLogFile && limitFileSizes && source.getSize() > maxContentSize) {
-              log.warn( "Truncating source contents; exceeds maximum included file size: {}", source.getPath());
-              zip.write(TRUNCATED_TOKEN.getBytes());
-              truncated.set(true);
-              return;
-            }
-
-            // write source content to the zip stream in chunks
             byte[] buff = new byte[chunkSize];
             int len;
+            long writtenBytes = 0;
             while ((len = input.read(buff)) != -1) {
-              // truncate content if max ZIP size reached
-              if (isLogFile && limitZipSize && stream.getCount() + len > maxZipSize) {
-                log.warn("Truncating source contents; max ZIP size reached: {}", source.getPath());
+              // truncate content if max file size or max ZIP size reached
+              if ((isLogFile && limitFileSizes && writtenBytes + len > maxContentSize) ||
+                  (limitZipSize && stream.getCount() + len > maxZipSize)) {
+                log.warn("Truncating source contents; limit reached: {}", source.getPath());
                 zip.write(TRUNCATED_TOKEN.getBytes());
                 truncated.set(true);
                 break;
               }
+
               zip.write(buff, 0, len);
+              writtenBytes += len;
+
               // flush so we can detect compressed size for partially written files
               zip.flush();
-              }
+            }
           }
           catch (Exception e) { //NOSONAR - catching all exceptions so that a bad file of any sort won't cause us to stop
             log.warn("Unable to include {} in bundle, moving onto next file.", source.getPath(), e);
@@ -343,7 +340,7 @@ public class SupportZipGeneratorImpl
           closeEntry(zip, entry);
         });
 
-        // add marker to top of file if we truncated anything
+        // add truncated marker if we truncated anything
         if (truncated.get()) {
           addEntry(zip, "truncated");
         }

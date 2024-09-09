@@ -231,6 +231,38 @@ class SupportZipGeneratorImplTest
       entries.find { it.name == 'prefix/truncated' } != null
   }
 
+  def "Validate log files aren't completely truncated if above file size limit"(){
+    given:
+      logContentSource.contentSize = 40000 // Should only be truncated up until it hits the file size limit
+      taskLogContentSource.contentSize = 40000 // Should only be truncated up until it hits file size limit
+      auditLogContentSource.contentSize = 40000 // Should only be truncated up until it hits file size limit
+      jmxContentSource.contentSize = 50000  // Expected not to be truncated
+      sysInfoContentSource.contentSize = 60000  // Expected not to be truncated
+
+      def req = new SupportZipGeneratorRequest(systemInformation: true, jmx: true, log: true, taskLog: true, auditLog: true, limitFileSizes: true, limitZipSize: true)
+      def out = new ByteArrayOutputStream()
+      def final TRUNCATED_SIZE = "** TRUNCATED **\n".size()
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer, mockSysInfoCustomizer],
+          ByteSize.bytes(30000), ByteSize.bytes(50000))
+
+    when:
+      generator.generate(req, 'prefix', out)
+      def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
+      def entries = []
+      ZipEntry entry
+      while ((entry = zip.getNextEntry()) != null) {
+        entries << entry
+      }
+
+      then:
+        entries.find { it.name == 'prefix/log/nexus.log' && (it.size > TRUNCATED_SIZE && it.size < 40000) } != null //If the size is <= TRUNCATED_SIZE means we truncated the whole file
+        entries.find { it.name == 'prefix/log/tasks/task.log' && (it.size > TRUNCATED_SIZE && it.size < 40000) } != null //If the size is <= TRUNCATED_SIZE means we truncated the whole file
+        entries.find { it.name == 'prefix/log/audit.log' && (it.size > TRUNCATED_SIZE && it.size < 40000) } != null //If the size is <= TRUNCATED_SIZE means we truncated the whole file
+        entries.find { it.name == 'prefix/info/jmx.json' && it.size == 50000 } != null // Expected to not be truncated
+        entries.find { it.name == 'prefix/info/sysinfo.json' && it.size == 60000 } != null // Expected to not be truncated
+        entries.find { it.name == 'prefix/truncated' } != null
+  }
+
   def "Validate log truncation and inclusion of other files without truncation"() {
     given:
       logContentSource.contentSize = 40000  // Expected to be truncated
