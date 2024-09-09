@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
-import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
+import org.sonatype.nexus.security.authc.apikey.ApiKeyService;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -53,7 +53,7 @@ public abstract class BearerTokenRealm
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
-  private final ApiKeyStore keyStore;
+  private final ApiKeyService keyStore;
 
   private final UserPrincipalsHelper principalsHelper;
 
@@ -61,7 +61,7 @@ public abstract class BearerTokenRealm
 
   private Provider<HttpServletRequest> requestProvider;
 
-  protected BearerTokenRealm(final ApiKeyStore keyStore,
+  protected BearerTokenRealm(final ApiKeyService keyStore,
                           final UserPrincipalsHelper principalsHelper,
                           final String format) {
     this.keyStore = checkNotNull(keyStore);

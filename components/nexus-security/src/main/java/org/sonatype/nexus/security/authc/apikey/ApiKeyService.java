@@ -26,7 +26,7 @@ import org.apache.shiro.subject.PrincipalCollection;
  *
  * @since 3.0
  */
-public interface ApiKeyStore
+public interface ApiKeyService
     extends Lifecycle
 {
   /**

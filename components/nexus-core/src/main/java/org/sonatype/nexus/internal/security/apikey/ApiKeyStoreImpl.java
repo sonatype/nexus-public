@@ -32,7 +32,7 @@ import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
-import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
+import org.sonatype.nexus.security.authc.apikey.ApiKeyService;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.transaction.Transactional;
 
@@ -47,7 +47,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
- * MyBatis {@link ApiKeyStore} implementation.
+ * MyBatis {@link ApiKeyService} implementation.
  *
  * @since 3.21
  */
@@ -56,7 +56,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 @Singleton
 public class ApiKeyStoreImpl
     extends ConfigStoreSupport<ApiKeyDAO>
-    implements ApiKeyStore, EventAware
+    implements ApiKeyService, EventAware
 {
   private final UserPrincipalsHelper principalsHelper;
 

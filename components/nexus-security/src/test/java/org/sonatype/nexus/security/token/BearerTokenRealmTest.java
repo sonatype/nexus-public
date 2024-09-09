@@ -21,7 +21,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
-import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
+import org.sonatype.nexus.security.authc.apikey.ApiKeyService;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 
@@ -53,7 +53,7 @@ public class BearerTokenRealmTest
   private static final String FORMAT = "format";
 
   @Mock
-  private ApiKeyStore keyStore;
+  private ApiKeyService keyStore;
 
   @Mock
   private UserPrincipalsHelper principalsHelper;
