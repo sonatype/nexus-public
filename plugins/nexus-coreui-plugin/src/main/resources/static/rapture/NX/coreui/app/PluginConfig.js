@@ -156,6 +156,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.SearchCargo',
+      active: function() {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-cargo');
+      }
+    },
+    {
       id: 'NX.coreui.controller.SearchConan',
       active: function () {
         return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-conan');

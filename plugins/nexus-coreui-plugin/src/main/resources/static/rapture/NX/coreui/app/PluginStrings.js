@@ -303,6 +303,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     FeatureGroups_Browse_Text: 'Browse',
     FeatureGroups_Browse_Description: 'Browse assets and components',
 
+    // Browse -> Search -> Cargo
+    SearchCargo_Text: 'Cargo',
+    SearchCargo_Description: 'Search for components in Cargo repositories',
+
     // Browse -> Upload
     FeatureGroups_Upload_Text: 'Upload',
     FeatureGroups_Upload_Description: 'Upload content to the repository',
@@ -472,6 +476,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_Pypi_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://pypi.org',
     Repository_Facet_ProxyFacet_Rubygems_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://rubygems.org',
     Repository_Facet_ProxyFacet_Yum_Remote_HelpText: 'Location of the remote repository being proxied, e.g.  http://mirror.centos.org/centos/',
+    Repository_Facet_CargoFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://index.crates.io',
     Ssl_SslUseTrustStore_BoxLabel: 'Use the Nexus Repository truststore',
     Ssl_SslUseTrustStore_Certificate_Button: 'View certificate',
     Ssl_SslUseTrustStore_Certificate_HelpText: 'Use certificates stored in the Nexus Repository truststore to connect to external systems',
@@ -549,6 +554,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_CleanupPolicyFacet_Policy_EmptyText: 'None',
     Repository_Formats_All: '(All Formats)',
     Repository_Facet_GolangFacet_Title: 'Go Settings',
+    Repository_Facet_CargoFacet_Title: 'Cargo Settings',
     Repository_Replication_InformationMessage: 'This repository is using the replication {0} to connect to source repository {1}.',
     Repository_Copy_URL: 'Use your repository\'s direct URL (shown below) to connect other tools to your repository. ' +
       'For more information, see our ' +
