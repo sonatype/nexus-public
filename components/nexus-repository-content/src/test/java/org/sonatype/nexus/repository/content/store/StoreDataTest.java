@@ -38,7 +38,6 @@ public class StoreDataTest
 
   @Before
   public void setUp() throws Exception {
-    OffsetDateTime dateTime = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     BlobRef blobRef = new BlobRef("some-node", "some-store", "some-blob");
     assetBlob = new AssetBlobData();
     assetBlob.setAssetBlobId(1);
@@ -46,16 +45,15 @@ public class StoreDataTest
     assetBlob.setBlobSize(1L);
     assetBlob.setContentType("some-contentType");
     assetBlob.setChecksums(Collections.singletonMap("some-algo", "some-checksum"));
-    assetBlob.setBlobCreated(dateTime);
+    assetBlob.setBlobCreated(OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
     assetBlob.setCreatedBy("some-user");
     assetBlob.setCreatedByIp("some-ip-address");
-    assetBlob.setDatePath(dateTime);
     asset = new AssetData();
     asset.setAssetId(1);
     asset.setPath("/some-path");
     asset.setKind("some-kind");
     asset.setAssetBlob(assetBlob);
-    asset.setLastDownloaded(dateTime);
+    asset.setLastDownloaded(OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
     component = new ComponentData();
     component.setComponentId(1);
     component.setNamespace("some-namespace");
@@ -70,8 +68,8 @@ public class StoreDataTest
 
   @Test
   public void shouldHaveMeaningfulToString() {
-    assertEquals("AssetBlobData{assetBlobId=1, blobRef=some-store@some-blob, blobSize=1, contentType='some-contentType', checksums={some-algo=some-checksum}, blobCreated=1970-01-01T00:00Z, createdBy='some-user', createdByIp='some-ip-address', datePath=1970-01-01T00:00Z}", assetBlob.toString());
-    assertEquals("AssetData{assetId=1, path='/some-path', kind='some-kind', componentId=1, component=ComponentData{componentId=1, namespace='some-namespace', name='some-name', kind='some-kind', version='some-version', normalizedVersion='some-normalized-version', entityVersion='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}, assetBlobId=1, assetBlob=AssetBlobData{assetBlobId=1, blobRef=some-store@some-blob, blobSize=1, contentType='some-contentType', checksums={some-algo=some-checksum}, blobCreated=1970-01-01T00:00Z, createdBy='some-user', createdByIp='some-ip-address', datePath=1970-01-01T00:00Z}, lastDownloaded=1970-01-01T00:00Z, assetSize=0} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}", asset.toString());
+    assertEquals("AssetBlobData{assetBlobId=1, blobRef=some-store@some-blob, blobSize=1, contentType='some-contentType', checksums={some-algo=some-checksum}, blobCreated=1970-01-01T00:00Z, createdBy='some-user', createdByIp='some-ip-address'}", assetBlob.toString());
+    assertEquals("AssetData{assetId=1, path='/some-path', kind='some-kind', componentId=1, component=ComponentData{componentId=1, namespace='some-namespace', name='some-name', kind='some-kind', version='some-version', normalizedVersion='some-normalized-version', entityVersion='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}, assetBlobId=1, assetBlob=AssetBlobData{assetBlobId=1, blobRef=some-store@some-blob, blobSize=1, contentType='some-contentType', checksums={some-algo=some-checksum}, blobCreated=1970-01-01T00:00Z, createdBy='some-user', createdByIp='some-ip-address'}, lastDownloaded=1970-01-01T00:00Z, assetSize=0} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}", asset.toString());
     assertEquals("ComponentData{componentId=1, namespace='some-namespace', name='some-name', kind='some-kind', version='some-version', normalizedVersion='some-normalized-version', entityVersion='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}", component.toString());
     assertEquals("ContentRepositoryData{configRepositoryId=DetachedEntityId{value='some-id'}} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}", contentRepository.toString());
   }

@@ -35,7 +35,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -400,17 +399,14 @@ public class DefaultIntegrityCheckStrategyTest
 
   private AssetBlob mockBlob(final BlobId blobId, final Optional<HashCode> sha1) {
     Map<String, String> checksums = new HashMap<>();
-    OffsetDateTime blobCreated = UTC.now();
     checksums.put(HashAlgorithm.SHA1.name(), sha1.map(HashCode::toString).orElse(null));
 
     BlobRef blobRef = mock(BlobRef.class);
     when(blobRef.getBlobId()).thenReturn(blobId);
-    when(blobRef.getBlobId(blobCreated)).thenReturn(blobId);
 
     AssetBlob assetBlob = mock(AssetBlob.class);
     when(assetBlob.blobRef()).thenReturn(blobRef);
     when(assetBlob.checksums()).thenReturn(checksums);
-    when(assetBlob.datePath()).thenReturn(blobCreated);
 
     Blob blob = mock(Blob.class);
     when(blob.getInputStream()).thenReturn(blobData);

@@ -13,11 +13,6 @@
 package org.sonatype.nexus.blobstore.api;
 
 import java.io.Serializable;
-import java.time.OffsetDateTime;
-
-import javax.annotation.Nullable;
-
-import org.sonatype.nexus.common.time.UTC;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,23 +26,12 @@ public class BlobId
 {
   private final String id;
 
-  private final OffsetDateTime blobCreated;
-
   public BlobId(final String id) {
-    this(id, UTC.now());
-  }
-
-  public BlobId(final String id, @Nullable OffsetDateTime blobCreated) {
     this.id = checkNotNull(id);
-    this.blobCreated = blobCreated;
   }
 
   public String asUniqueString() {
     return id;
-  }
-
-  public OffsetDateTime getBlobCreated() {
-    return blobCreated;
   }
 
   @Override

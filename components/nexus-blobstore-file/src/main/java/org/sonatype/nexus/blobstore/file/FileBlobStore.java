@@ -66,7 +66,6 @@ import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
-import org.sonatype.nexus.blobstore.file.internal.WalkFile;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -76,7 +75,6 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
@@ -97,6 +95,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
+import static java.time.LocalDateTime.now;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.io.FileUtils.forceDelete;
@@ -266,14 +265,13 @@ public class FileBlobStore
       throw new IllegalArgumentException("duration must >= 0");
     }
     else {
-      LocalDateTime sinceDate = UTC.now().minusSeconds(duration.getSeconds()).toLocalDateTime();
-      if (isDateBasedLayoutEnabled()) {
-        WalkFile walkFile = new WalkFile(contentDir.toString(), duration);
-        return walkFile.getBlobIdUpdatedSinceStream().stream();
-      }
-
+      LocalDateTime sinceDate = now().minusSeconds(duration.getSeconds());
       return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate);
     }
+  }
+
+  public String getDeletionsFilename() {
+    return nodeAccess.getId() + "-" + DELETIONS_FILENAME;
   }
 
   /*

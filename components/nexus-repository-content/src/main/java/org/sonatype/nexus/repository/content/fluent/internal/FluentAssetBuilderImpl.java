@@ -196,11 +196,7 @@ public class FluentAssetBuilderImpl
       asset.blob()
           .ifPresent(blob -> facet
               .blobMetadataStorage()
-              .attach(facet.stores().blobStoreProvider.get(),
-                  blob.blobRef().getBlobId(blob.datePath()),
-                  null,
-                  asset.attributes(),
-                  blob.checksums())
+              .attach(facet.stores().blobStoreProvider.get(), blob.blobRef().getBlobId(), null, asset.attributes(), blob.checksums())
           );
     }
   }
@@ -256,10 +252,6 @@ public class FluentAssetBuilderImpl
     assetBlob.setBlobCreated(toOffsetDateTime(metrics.getCreationTime()));
     assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
     assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));
-
-    if (facet.isDateBasedBlobStoreLayoutEnabled()) {
-      assetBlob.setDatePath(blob.getId().getBlobCreated());
-    }
 
     facet.stores().assetBlobStore.createAssetBlob(assetBlob);
 

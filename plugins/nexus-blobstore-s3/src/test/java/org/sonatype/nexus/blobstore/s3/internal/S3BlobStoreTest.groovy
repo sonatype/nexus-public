@@ -53,6 +53,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER
 import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER
+
 /**
  * {@link S3BlobStore} tests.
  */
@@ -62,7 +63,7 @@ class S3BlobStoreTest
 
   AmazonS3Factory amazonS3Factory = Mock()
 
-  BlobIdLocationResolver locationResolver = createBlobIdLocationResolver()
+  BlobIdLocationResolver locationResolver = new DefaultBlobIdLocationResolver()
 
   S3Uploader uploader = Mock()
 
@@ -708,15 +709,11 @@ class S3BlobStoreTest
   }
 
   private String propertiesLocation(BlobId blobId) {
-    "content/${locationResolver.volumeChapterLocationStrategy.location(blobId)}.properties"
+    "content/${locationResolver.permanentLocationStrategy.location(blobId)}.properties"
   }
 
   private String bytesLocation(BlobId blobId) {
-    "content/${locationResolver.volumeChapterLocationStrategy.location(blobId)}.bytes"
-  }
-
-  protected BlobIdLocationResolver createBlobIdLocationResolver() {
-    return new DefaultBlobIdLocationResolver(false)
+    "content/${locationResolver.permanentLocationStrategy.location(blobId)}.bytes"
   }
 
   private static ObjectMetadata getTempBlobMetadata() {
