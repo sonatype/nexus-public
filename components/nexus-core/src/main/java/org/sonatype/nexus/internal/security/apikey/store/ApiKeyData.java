@@ -10,23 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.apikey;
+package org.sonatype.nexus.internal.security.apikey.store;
 
 import java.time.OffsetDateTime;
 
-import org.sonatype.nexus.security.authc.apikey.ApiKey;
+import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * {@link ApiKey} data.
+ * {@link ApiKeyInternal} data.
  *
  * @since 3.21
  */
 public class ApiKeyData
-    implements ApiKey
+    implements ApiKeyInternal
 {
   private String domain;
 
@@ -38,7 +38,12 @@ public class ApiKeyData
 
   ApiKeyData() { }
 
-  ApiKeyData(String domain, PrincipalCollection principals, ApiKeyToken token, OffsetDateTime created) {
+  ApiKeyData(
+      final String domain,
+      final PrincipalCollection principals,
+      final ApiKeyToken token,
+      final OffsetDateTime created)
+  {
     this.domain = checkNotNull(domain);
     this.principals = checkNotNull(principals);
     this.token = checkNotNull(token);
@@ -59,7 +64,6 @@ public class ApiKeyData
     this.token = token;
   }
 
-  @Override
   public void setApiKey(final char[] chars) {
     this.token = new ApiKeyToken(chars);
   }

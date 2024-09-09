@@ -10,27 +10,38 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.authc.apikey;
+package org.sonatype.nexus.internal.security.apikey;
 
 import java.time.OffsetDateTime;
+
+import org.sonatype.nexus.security.authc.apikey.ApiKey;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
 /**
  * A database-stored object representing the association between a {@link PrincipalCollection} and a Api Key (char[]).
  */
-public interface ApiKey
+public interface ApiKeyInternal
+    extends ApiKey
 {
-  char[] getApiKey();
+  /**
+   * Returns the domain (e.g. npm, docker, etc) which the key is applicable to.
+   */
+  String getDomain();
 
-  PrincipalCollection getPrincipals();
+  /**
+   * Set the time at which this token was created
+   */
+  void setCreated(OffsetDateTime created);
 
-  OffsetDateTime getCreated();
+  /**
+   * Set the domain of the token
+   */
+  void setDomain(String domain);
 
-  default String getPrimaryPrincipal() {
-    if (getPrincipals() == null) {
-      return null;
-    }
-    return getPrincipals().getPrimaryPrincipal().toString();
-  }
+  /**
+   * Sets the principals for the token, the object may not be preserved and will be constructed from the string
+   * representation of primary principal and the first realm.
+   */
+  void setPrincipals(PrincipalCollection principals);
 }

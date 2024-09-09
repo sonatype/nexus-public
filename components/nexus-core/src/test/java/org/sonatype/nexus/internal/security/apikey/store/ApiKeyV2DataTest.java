@@ -10,27 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.authc.apikey;
+package org.sonatype.nexus.internal.security.apikey.store;
 
-import java.time.OffsetDateTime;
+import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.crypto.secrets.Secret;
 
-import org.apache.shiro.subject.PrincipalCollection;
+import org.junit.Test;
+import org.mockito.Mock;
 
-/**
- * A database-stored object representing the association between a {@link PrincipalCollection} and a Api Key (char[]).
- */
-public interface ApiKey
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.when;
+
+public class ApiKeyV2DataTest
+    extends TestSupport
 {
-  char[] getApiKey();
+  @Mock
+  private Secret secret;
 
-  PrincipalCollection getPrincipals();
+  private final ApiKeyV2Data underTest = new ApiKeyV2Data();
 
-  OffsetDateTime getCreated();
+  @Test
+  public void testGetApiKey() {
+    when(secret.decrypt()).thenReturn("password".toCharArray());
+    underTest.setSecret(secret);
+    underTest.setAccessKey("key");
 
-  default String getPrimaryPrincipal() {
-    if (getPrincipals() == null) {
-      return null;
-    }
-    return getPrincipals().getPrimaryPrincipal().toString();
+    assertThat(underTest.getApiKey(), is("keypassword".toCharArray()));
   }
 }

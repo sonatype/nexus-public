@@ -10,27 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.authc.apikey;
+package org.sonatype.nexus.internal.security.apikey.upgrade;
 
-import java.time.OffsetDateTime;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.apache.shiro.subject.PrincipalCollection;
+import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
-/**
- * A database-stored object representing the association between a {@link PrincipalCollection} and a Api Key (char[]).
- */
-public interface ApiKey
+import static org.sonatype.nexus.internal.security.apikey.upgrade.ApiKeyToSecretsTask.MESSAGE;
+import static org.sonatype.nexus.internal.security.apikey.upgrade.ApiKeyToSecretsTask.TYPE_ID;
+
+@Named
+@Singleton
+public class ApiKeyToSecretsTaskDescriptor
+    extends TaskDescriptorSupport
 {
-  char[] getApiKey();
-
-  PrincipalCollection getPrincipals();
-
-  OffsetDateTime getCreated();
-
-  default String getPrimaryPrincipal() {
-    if (getPrincipals() == null) {
-      return null;
-    }
-    return getPrincipals().getPrimaryPrincipal().toString();
+  @Inject
+  public ApiKeyToSecretsTaskDescriptor(@Named("${nexus.upgrade.apikey.secrets:-false}") final boolean exposed) {
+    super(TYPE_ID, ApiKeyToSecretsTask.class, MESSAGE, true, exposed);
   }
 }

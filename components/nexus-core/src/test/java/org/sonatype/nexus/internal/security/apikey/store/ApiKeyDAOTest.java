@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.apikey;
+package org.sonatype.nexus.internal.security.apikey.store;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -24,7 +24,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStore;
-import org.sonatype.nexus.security.authc.apikey.ApiKey;
+import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.Iterables;
@@ -106,7 +106,7 @@ public class ApiKeyDAOTest
 
     apiKeyDAO.save(apiKeyEntity);
 
-    ApiKey savedApiKey = findApiKey(DOMAIN, A_PRINCIPAL).get();
+    ApiKeyInternal savedApiKey = findApiKey(DOMAIN, A_PRINCIPAL).get();
     assertSavedApiKey(savedApiKey, API_KEY1);
   }
 
@@ -135,8 +135,8 @@ public class ApiKeyDAOTest
     apiKeyDAO.save(apiKeyEntity);
     apiKeyDAO.save(anotherApiKeyEntity);
 
-    ApiKey savedApiKey1 = findApiKey(DOMAIN, A_PRINCIPAL).get();
-    ApiKey savedApiKey2 = findApiKey(DOMAIN, ANOTHER_PRINCIPAL).get();
+    ApiKeyInternal savedApiKey1 = findApiKey(DOMAIN, A_PRINCIPAL).get();
+    ApiKeyInternal savedApiKey2 = findApiKey(DOMAIN, ANOTHER_PRINCIPAL).get();
 
     // retrieve
     assertSavedApiKey(savedApiKey1, API_KEY1);
@@ -146,7 +146,7 @@ public class ApiKeyDAOTest
     apiKeyEntity.setApiKey(YET_ANOTHER_API_KEY);
     apiKeyDAO.save(apiKeyEntity);
 
-    ApiKey updatedApiKey = findApiKey(DOMAIN, A_PRINCIPAL).get();
+    ApiKeyInternal updatedApiKey = findApiKey(DOMAIN, A_PRINCIPAL).get();
     assertSavedApiKey(updatedApiKey, YET_ANOTHER_API_KEY);
   }
 
@@ -159,8 +159,8 @@ public class ApiKeyDAOTest
     apiKeyDAO.save(entity1);
     apiKeyDAO.save(entity2);
 
-    Optional<ApiKey> savedApiKey1 = findApiKey(DOMAIN, A_PRINCIPAL);
-    Optional<ApiKey> savedApiKey2 = findApiKey(DOMAIN, ANOTHER_PRINCIPAL);
+    Optional<ApiKeyInternal> savedApiKey1 = findApiKey(DOMAIN, A_PRINCIPAL);
+    Optional<ApiKeyInternal> savedApiKey2 = findApiKey(DOMAIN, ANOTHER_PRINCIPAL);
 
     assertTrue(savedApiKey1.isPresent());
     assertTrue(savedApiKey2.isPresent());
@@ -199,7 +199,7 @@ public class ApiKeyDAOTest
     apiKeyDAO.save(anApiKeyEntity(API_KEY4, ANOTHER_DOMAIN, ANOTHER_PRINCIPAL));
     apiKeyDAO.save(anApiKeyEntity(API_KEY4, ANOTHER_DOMAIN, ANOTHER_PRINCIPAL));
 
-    Collection<ApiKey> result = apiKeyDAO.findApiKeys(DOMAIN, A_PRINCIPAL);
+    Collection<ApiKeyInternal> result = apiKeyDAO.findApiKeys(DOMAIN, A_PRINCIPAL);
     assertSavedApiKey(Iterables.getFirst(result, null), API_KEY1);
 
     //
@@ -223,32 +223,11 @@ public class ApiKeyDAOTest
     apiKeyDAO.save(apiKeyEntity);
     apiKeyDAO.save(anotherApiKeyEntity);
 
-    Optional<ApiKey> result = apiKeyDAO.findPrincipals(DOMAIN, new ApiKeyToken(API_KEY1));
+    Optional<ApiKeyInternal> result = apiKeyDAO.findPrincipals(DOMAIN, new ApiKeyToken(API_KEY1));
     assertThat(result.get().getPrincipals().getPrimaryPrincipal(), is(A_PRINCIPAL));
 
     result = apiKeyDAO.findPrincipals(DOMAIN, new ApiKeyToken(API_KEY2));
     assertThat(result.get().getPrincipals().getPrimaryPrincipal(), is(ANOTHER_PRINCIPAL));
-  }
-
-  /*
-   * deleteAll should successfully delete all records
-   */
-  @Test
-  public void testDeleteAll() {
-    ApiKeyData entity1 = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
-    ApiKeyData entity2 = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
-    apiKeyDAO.save(entity1);
-    apiKeyDAO.save(entity2);
-
-    Optional<ApiKey> savedApiKey1 = findApiKey(DOMAIN, A_PRINCIPAL);
-    Optional<ApiKey> savedApiKey2 = findApiKey(DOMAIN, ANOTHER_PRINCIPAL);
-    assertTrue(savedApiKey1.isPresent());
-    assertTrue(savedApiKey2.isPresent());
-
-    int deleted = apiKeyDAO.deleteAllKeys();
-    assertThat(deleted, is(2));
-    Collection<PrincipalCollection> allRecords = (Collection<PrincipalCollection>) apiKeyDAO.browsePrincipals();
-    assertThat(allRecords, hasSize(0));
   }
 
   @Test
@@ -288,6 +267,23 @@ public class ApiKeyDAOTest
     apiKeyDAO.save(anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL));
 
     assertThat(apiKeyDAO.browseByCreatedDate(DOMAIN, entity2Date.minusSeconds(1L)), contains(token(entity2)));
+  }
+
+  @Test
+  public void testBrowseAllSince() {
+    ApiKeyData entity1 = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
+    ApiKeyData entity2 = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
+
+    OffsetDateTime entity1Date = OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+    OffsetDateTime entity2Date = OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+    entity1.setCreated(entity1Date);
+    entity2.setCreated(entity2Date);
+
+    apiKeyDAO.save(entity1);
+    apiKeyDAO.save(entity2);
+
+    assertThat(apiKeyDAO.browseAllSince(entity2Date.minusSeconds(1L), 10), contains(token(entity2)));
   }
 
   @Test
@@ -368,7 +364,7 @@ public class ApiKeyDAOTest
     return data;
   }
 
-  private Optional<ApiKey> findApiKey(final String domain, final String primaryPrincipal) {
+  private Optional<ApiKeyInternal> findApiKey(final String domain, final String primaryPrincipal) {
     return apiKeyDAO.findApiKeys(domain, primaryPrincipal).stream()
         .findFirst();
   }
@@ -379,9 +375,9 @@ public class ApiKeyDAOTest
   }
 
   private void withDao(final Consumer<ApiKeyDAO> consumer) {
-    try (DataSession<?> session = sessionRule.openSerializableTransactionSession(DEFAULT_DATASTORE_NAME)) {
-      consumer.accept(session.access(ApiKeyDAO.class));
-      session.getTransaction().commit();
+    try (DataSession<?> sess = sessionRule.openSerializableTransactionSession(DEFAULT_DATASTORE_NAME)) {
+      consumer.accept(sess.access(ApiKeyDAO.class));
+      sess.getTransaction().commit();
     }
   }
 
@@ -389,12 +385,12 @@ public class ApiKeyDAOTest
     return new SimplePrincipalCollection(principal, realm);
   }
 
-  private static void assertSavedApiKey(final ApiKey actualApiKey, final char[] expectedApiKey) {
+  private static void assertSavedApiKey(final ApiKeyInternal actualApiKey, final char[] expectedApiKey) {
     assertThat(new String(actualApiKey.getApiKey()), is(new String(expectedApiKey)));
   }
 
-  private static Matcher<ApiKey> token(final ApiKey key) {
-    return new TypeSafeMatcher<ApiKey>(ApiKey.class)
+  private static Matcher<ApiKeyInternal> token(final ApiKeyInternal key) {
+    return new TypeSafeMatcher<ApiKeyInternal>(ApiKeyInternal.class)
     {
       @Override
       public void describeTo(final Description description) {
@@ -402,7 +398,7 @@ public class ApiKeyDAOTest
       }
 
       @Override
-      protected boolean matchesSafely(final ApiKey item) {
+      protected boolean matchesSafely(final ApiKeyInternal item) {
         return item.getPrincipals().equals(key.getPrincipals()) && item.getDomain().equals(key.getDomain())
             && Arrays.equals(item.getApiKey(), key.getApiKey());
       }

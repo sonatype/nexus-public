@@ -13,11 +13,7 @@
 package org.sonatype.nexus.security.authc.apikey;
 
 import java.time.OffsetDateTime;
-import java.util.Collection;
 import java.util.Optional;
-import javax.annotation.Nullable;
-
-import org.sonatype.goodies.lifecycle.Lifecycle;
 
 import org.apache.shiro.subject.PrincipalCollection;
 
@@ -27,26 +23,11 @@ import org.apache.shiro.subject.PrincipalCollection;
  * @since 3.0
  */
 public interface ApiKeyService
-    extends Lifecycle
 {
   /**
    * Creates an API-Key and assigns it to the given principals in given domain.
    */
   char[] createApiKey(String domain, PrincipalCollection principals);
-
-  /**
-   * Persists an API-Key with a predetermined value.
-   *
-   * @since 3.1
-   */
-  default void persistApiKey(final String domain, final PrincipalCollection principals, final char[] apiKey) {
-    persistApiKey(domain, principals, apiKey, null);
-  }
-
-  /**
-   * Persists an API-Key with a predetermined value.
-   */
-  void persistApiKey(String domain, PrincipalCollection principals, char[] apiKey, @Nullable OffsetDateTime created);
 
   /**
    * Gets the current API-Key assigned to the given principals in given domain.
@@ -61,21 +42,6 @@ public interface ApiKeyService
    * @return {@code null} if the key is invalid or stale
    */
   Optional<ApiKey> getApiKeyByToken(String domain, char[] apiKey);
-
-  /**
-   * Browse tokens in the domain
-   */
-  Collection<ApiKey> browse(String domain);
-
-  /**
-   * Browse tokens in the domain created after the provided date
-   */
-  Collection<ApiKey> browseByCreatedDate(String domain, OffsetDateTime date);
-
-  /**
-   * Browse tokens in the domain (paginated)
-   */
-  Collection<ApiKey> browsePaginated(String domain, int page, int pageSize);
 
   /**
    * Count all the keys for the provided domain
@@ -93,41 +59,12 @@ public interface ApiKeyService
   int deleteApiKeys(PrincipalCollection principals);
 
   /**
-   * Deletes all API-Keys.
-   *
-   * @since 3.1
-   */
-  int deleteApiKeys();
-
-  /**
    * Deletes all API-Keys for the specified domain
    */
   int deleteApiKeys(String domain);
 
   /**
-   * Purges any API-Keys associated with missing/deleted users.
-   */
-  int purgeApiKeys();
-
-  /**
    * Remove all expired API-Keys
    */
   int deleteApiKeys(OffsetDateTime expiration);
-
-  /**
-   * Updates an existing API-key.
-   */
-  void updateApiKey(ApiKey from, ApiKey to);
-
-  /**
-   * Creates a new {@link ApiKey} instance (default)
-   */
-  default ApiKey newApiKey(String domain, PrincipalCollection principals, char[] apiKey) {
-    return newApiKey(domain, principals, apiKey, OffsetDateTime.now());
-  }
-
-  /**
-   * Creates a new {@link ApiKey} instance
-   */
-  ApiKey newApiKey(String domain, PrincipalCollection principals, char[] apiKey, OffsetDateTime created);
 }
