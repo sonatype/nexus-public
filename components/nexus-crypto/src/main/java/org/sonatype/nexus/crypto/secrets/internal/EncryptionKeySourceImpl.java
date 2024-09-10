@@ -22,7 +22,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.crypto.secrets.EncryptionKeyValidator;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +37,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.SECRETS_FILE;
 @Singleton
 public class EncryptionKeySourceImpl
     extends ComponentSupport
-    implements EncryptionKeySource, EncryptionKeyValidator
+    implements EncryptionKeySource
 {
   private final ObjectMapper objectMapper;
 
@@ -89,7 +88,7 @@ public class EncryptionKeySourceImpl
     log.debug("reading secrets file from path : {}", secretsFilePath);
 
     try {
-      configuredKeys = objectMapper.readValue(secretsFile, EncryptionKeyList.class);
+      configuredKeys = objectMapper.readValue(new File(secretsFilePath), EncryptionKeyList.class);
       String activeKeyId = configuredKeys.getActive();
 
       if (pristine) {
@@ -144,16 +143,6 @@ public class EncryptionKeySourceImpl
     }
 
     return findKey(keyId);
-  }
-
-  @Override
-  public boolean isValidKey(final String keyId) {
-    return getKey(keyId).isPresent();
-  }
-
-  @Override
-  public Optional<String> getActiveKeyId() {
-    return getActiveKey().map(SecretEncryptionKey::getId);
   }
 
   @Override

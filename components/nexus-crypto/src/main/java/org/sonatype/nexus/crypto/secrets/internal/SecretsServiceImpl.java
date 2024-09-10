@@ -25,19 +25,17 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
-import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.crypto.LegacyCipherFactory;
 import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
-import org.sonatype.nexus.crypto.secrets.ActiveKeyChangeEvent;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
+import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
@@ -47,20 +45,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreType;
 import com.fasterxml.jackson.core.Base64Variant;
 import com.fasterxml.jackson.core.Base64Variants;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.eventbus.AllowConcurrentEvents;
-import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 @Named
 @Singleton
-@ManagedLifecycle(phase = SERVICES)
 public class SecretsServiceImpl
     extends ComponentSupport
-    implements SecretsService, EventAware
+    implements SecretsFactory, SecretsService
 {
   private static final Base64Variant BASE_64 = Base64Variants.getDefaultVariant();
 
@@ -135,13 +129,6 @@ public class SecretsServiceImpl
         databaseCheck, "changeme", "changeme", "0123456789ABCDEF");
   }
 
-  @Subscribe
-  @AllowConcurrentEvents
-  public void on(final ActiveKeyChangeEvent event) {
-    log.debug("Received a secret key change request");
-    encryptionKeySource.setActiveKey(event.getNewKeyId());
-  }
-
   @Override
   public Secret from(final String token) {
     return new SecretImpl(token);
@@ -205,25 +192,7 @@ public class SecretsServiceImpl
     return cipherFactory.create(defaultKey).encrypt(toBytes(secret)).toPhcString();
   }
 
-  @Override
-  public boolean isReEncryptRequired() {
-    return encryptionKeySource.getActiveKey()
-        .map(SecretEncryptionKey::getId)
-        .map(secretsStore::existWithDifferentKeyId)
-        .orElse(false);
-  }
-
-  @Override
-  public void reEncrypt(final SecretData secretData, final String keyId) throws CipherException{
-    Integer secretId = secretData.getId();
-    String currentSecret = secretData.getSecret();
-    char[] decrypted = this.doDecrypt(secretData);
-    String reEncrypted = this.doEncrypt(decrypted, encryptionKeySource.getKey(keyId));
-    secretsStore.update(secretId, currentSecret, keyId, reEncrypted);
-    log.trace("Secret id: {} successfully re-encrypted", secretId);
-  }
-
-  private char[] doDecrypt(final String token) throws CipherException {
+  private char[] decrypt(final String token) throws CipherException {
     if (isLegacyToken(token)) {
       return decryptLegacy(token);
     }
@@ -236,10 +205,6 @@ public class SecretsServiceImpl
 
     SecretData data = secret.get();
 
-    return doDecrypt(data);
-  }
-
-  private char[] doDecrypt(final SecretData data) {
     Optional<SecretEncryptionKey> secretKey = Optional.ofNullable(data.getKeyId())
         .flatMap(encryptionKeySource::getKey);
 
@@ -360,7 +325,7 @@ public class SecretsServiceImpl
 
     @Override
     public char[] decrypt() throws CipherException {
-      return SecretsServiceImpl.this.doDecrypt(tokenId);
+      return SecretsServiceImpl.this.decrypt(tokenId);
     }
 
     @Override

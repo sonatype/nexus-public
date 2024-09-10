@@ -18,7 +18,6 @@ import java.util.Map;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class NexusKeyValue
@@ -85,11 +84,7 @@ public class NexusKeyValue
     return mapper.convertValue(value.get(VALUE_NESTED_KEY), typeClass);
   }
 
-  public <T> T getAsObject(final ObjectMapper mapper, final TypeReference<T> typeReference) {
-    return mapper.convertValue(value.get(VALUE_NESTED_KEY), typeReference);
-  }
-
-  public <T> List<T> getAsObjectList(final ObjectMapper mapper, Class<T> typeClass) {
+  public <T> List<T> getAsObjectList(final ObjectMapper mapper, final Class<T> typeClass) {
     return mapper.convertValue(value.get(VALUE_NESTED_KEY),
         mapper.getTypeFactory().constructCollectionType(List.class, typeClass));
   }

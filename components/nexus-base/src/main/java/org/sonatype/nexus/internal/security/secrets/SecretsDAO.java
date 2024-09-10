@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.internal.security.secrets;
 
-import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.datastore.api.DataAccess;
 
@@ -27,7 +29,8 @@ public interface SecretsDAO
    * Store a record of an encrypted secret. This store is not expected to encrypt the secret, it should be provided
    * in an encrypted form.
    *
-   * @param secretData the previously encrypted secret data to store
+   * @param secretData  the previously encrypted secret data to store
+   *
    * @return the id for the persisted record
    */
   int create(@Param("secretData") SecretData secretData);
@@ -52,34 +55,22 @@ public interface SecretsDAO
   /**
    * Updates a record by its identifier with a new keyId and secret.
    *
-   * @param id        the identifier of the secret
-   * @param oldSecret the current encrypted secret to update, used to ensure the expected secret is being updated
-   * @param keyId     the identifier for the key (not the key itself) which was used to encrypt the secret
-   * @param secret    the previously encrypted secret to store
+   * @param id     the identifier of the secret
+   * @param keyId  the identifier for the key (not the key itself) which was used to encrypt the secret
+   * @param secret the previously encrypted secret to store
    * @return the id for the updated record
    */
-  int update(
-      @Param("id") int id,
-      @Param("oldSecret") String oldSecret,
-      @Param("keyId") String keyId,
-      @Param("secret") String secret);
+  int update(@Param("id") int id, @Param("keyId") String keyId, @Param("secret") String secret);
 
   /**
-   * Check whether the store has records which were not encrypted by the provided key.
+   * Browse all records stored in the store.
    *
-   * @param keyId an identifier for a key used to encrypt secrets to check
-   * @return true if there are records not encrypted with the provided key, false otherwise
-   */
-  boolean existWithDifferentKeyId(@Param("keyId") String keyId);
-
-  /**
-   * Get records stored in the store which were not encrypted by the provided key.
+   * @param continuationToken a continuation token provided by a previous response, or {@code null}
+   * @param limit             a limit to the number of tokens provided in the page
    *
-   * @param keyId an identifier for a key used to encrypt secrets to filter results by
-   * @param limit a limit to the number of records provided in the page
-   * @return a list containing the page of records.
+   * @return a continuation containing the page of records.
    */
-  List<SecretData> fetchWithDifferentKeyId(
-      @Param("keyId") String keyId,
+  Continuation<SecretData> browse(
+      @Nullable @Param("continuationToken") String continuationToken,
       @Param("limit") int limit);
 }

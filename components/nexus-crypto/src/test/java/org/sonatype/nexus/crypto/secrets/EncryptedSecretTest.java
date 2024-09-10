@@ -30,7 +30,7 @@ public class EncryptedSecretTest
     String phcString = secret.toPhcString();
 
     assertNotNull(phcString);
-    assertThat(secret, equalTo(EncryptedSecret.parse(phcString)));
+    assertThat(EncryptedSecret.parse(phcString), equalTo(secret));
   }
 
   @Test

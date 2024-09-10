@@ -14,10 +14,6 @@ package org.sonatype.nexus.crypto.secrets;
 
 import java.util.Optional;
 
-/**
- * Validator of encryption keys, this is useful to check if a key is accessible before using it or get the
- * active key id
- */
 public interface EncryptionKeyValidator
 {
   /**

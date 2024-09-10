@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.internal.security.secrets;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -97,7 +97,7 @@ public class SecretsStoreImplTests
 
     assertTrue("Removed record", underTest.delete(id));
 
-    // sanity check row removed
+    // sanity check row remoevd
     assertThat(table()).hasNumberOfRows(0);
   }
 
@@ -115,7 +115,8 @@ public class SecretsStoreImplTests
   @Test
   public void testUpdate() {
     final int id = underTest.create(LDAP, MY_KEY, MY_SECRET, null);
-    assertTrue(underTest.update(id, MY_SECRET, MY_KEY2, MY_SECRET2));
+
+    assertTrue(underTest.update(id, MY_KEY2, MY_SECRET2));
 
     assertThat(table()).row()
         .value("id").isEqualTo(id)
@@ -126,24 +127,11 @@ public class SecretsStoreImplTests
   }
 
   @Test
-  public void testUpdateFailsOnUnexpectedSecret() {
-    final int id = underTest.create(LDAP, MY_KEY, MY_SECRET, null);
-    assertFalse(underTest.update(id, MY_SECRET2, MY_KEY2, MY_SECRET2));
-
-    assertThat(table()).row()
-        .value("id").isEqualTo(id)
-        .value("purpose").isEqualTo(LDAP)
-        .value("key_id").isEqualTo(MY_KEY)
-        .value("secret").isEqualTo(MY_SECRET)
-        .value("user_id").isNull();
-  }
-
-  @Test
   public void testUpdate_missing() {
     // create a different row so the db has data
     int id = underTest.create(LDAP, MY_KEY, MY_SECRET, null);
 
-    assertFalse("No rows updated", underTest.update(id + 1, MY_SECRET, MY_KEY, MY_SECRET));
+    assertFalse("No rows updated", underTest.update(id + 1, MY_KEY, MY_SECRET));
   }
 
   @Test
@@ -163,46 +151,38 @@ public class SecretsStoreImplTests
   }
 
   @Test
-  public void testExistWithDifferentKeyId() {
-    underTest.create(LDAP, MY_KEY, MY_SECRET, null);
-    underTest.create(LDAP, MY_KEY2, MY_SECRET, null);
+  public void testBrowse() {
+    // check empty
+    Continuation<SecretData> actual = underTest.browse(null, 100);
+    assertThat(actual, notNullValue());
+    assertThat(actual, empty());
 
-    assertTrue(underTest.existWithDifferentKeyId(MY_KEY));
-  }
+    underTest.create(LDAP, MY_KEY, MY_SECRET, "jsmith");
+    underTest.create(LDAP, MY_KEY2, MY_SECRET2, "jlopez");
 
-  @Test
-  public void testNotExistWithDifferentKeyId() {
-    underTest.create(LDAP, MY_KEY, MY_SECRET, null);
-    underTest.create(LDAP, MY_KEY, MY_SECRET, null);
+    // verify first page
+    actual = underTest.browse(null, 1);
+    assertThat(actual, hasSize(1));
+    assertSecret(actual.iterator().next(), MY_KEY, MY_SECRET, "jsmith");
 
-    assertFalse(underTest.existWithDifferentKeyId(MY_KEY));
-  }
+    // verify using continuation to get second page
+    actual = underTest.browse(actual.nextContinuationToken(), 1);
+    assertThat(actual, hasSize(1));
+    assertSecret(actual.iterator().next(), MY_KEY2, MY_SECRET2, "jlopez");
 
-  @Test
-  public void testFetchExistWithDifferentKeyId() {
-    underTest.create(LDAP, MY_KEY, MY_SECRET, null);
-    underTest.create(LDAP, MY_KEY, MY_SECRET, null);
-
-    List<SecretData> keyList = underTest.fetchWithDifferentKeyId(MY_KEY, 2);
-    assertThat(keyList, empty());
-
-    keyList = underTest.fetchWithDifferentKeyId(MY_KEY2, 2);
-    assertThat(keyList, hasSize(2));
-
-    underTest.update(1, MY_SECRET, MY_KEY2, MY_SECRET);
-
-    keyList = underTest.fetchWithDifferentKeyId(MY_KEY2, 2);
-    assertThat(keyList, hasSize(1));
-
-    underTest.update(2, MY_SECRET, MY_KEY2, MY_SECRET);
-
-    keyList = underTest.fetchWithDifferentKeyId(MY_KEY2, 2);
-    assertThat(keyList, empty());
+    // verify going beyond the current page
+    actual = underTest.browse(actual.nextContinuationToken(), 1);
+    assertThat(actual, notNullValue());
+    assertThat(actual, empty());
   }
 
   private Table table() {
     DataStore<?> dataStore = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(RuntimeException::new);
     return new Table(dataStore.getDataSource(), "secrets");
+  }
+
+  private void assertSecret(final SecretData next, final String myKey, final String mySecret2, final String userId) {
+    assertSecret(Optional.ofNullable(next), myKey, mySecret2, userId);
   }
 
   private static void assertSecret(
