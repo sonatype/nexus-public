@@ -87,8 +87,6 @@ public interface FileOperations
 
   boolean exists(Path path);
 
-  boolean isBlobZeroLength(Path path);
-
   InputStream openInputStream(Path path) throws IOException;
 
   /**

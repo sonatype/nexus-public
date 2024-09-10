@@ -412,12 +412,6 @@ public class BlobStoreGroup
   }
 
   @Override
-  public boolean hasContent(final BlobId blobId) {
-    return members.get().stream()
-            .anyMatch((BlobStore member) -> member.hasContent(blobId));
-  }
-
-  @Override
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     // no-op

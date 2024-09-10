@@ -510,15 +510,4 @@ public class FileBlobStoreTest
 
     assertThat(underTest.bytesExists(new BlobId("test-blob")), is(true));
   }
-
-  @Test
-  public void testHasContent() throws Exception {
-    Path bytesPath = fullPath.resolve("test-blob.bytes");
-    write(bytesPath, "some bytes content".getBytes());
-    when(fileOperations.isBlobZeroLength(bytesPath)).thenReturn(true);
-
-    assertThat(bytesPath.toFile().exists(), is(true));
-
-    assertThat(underTest.hasContent(new BlobId("test-blob")), is(true));
-  }
 }

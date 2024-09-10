@@ -173,15 +173,6 @@ public class SimpleFileOperations
     return Files.exists(path);
   }
 
-  public boolean isBlobZeroLength(final Path path) {
-    checkNotNull(path);
-    try{
-        return Files.exists(path) && Files.size(path) == 0L;
-    } catch (IOException e) {
-      return false;
-    }
-  }
-
   @Override
   public InputStream openInputStream(final Path path) throws IOException {
     checkNotNull(path);

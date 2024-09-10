@@ -191,13 +191,6 @@ public interface BlobStore
   boolean bytesExists(BlobId blobId);
 
   /**
-   * Performs a simple existence and empty size check for {@code .bytes} for given {@code blobId}.
-   *
-   * @return {@code true} if the blobstore is exists and empty {@code false} if it does not.
-   */
-  boolean hasContent(BlobId blobId);
-
-  /**
    * Removes a blob from the blob store.  This may not immediately delete the blob from the underlying storage
    * mechanism, but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
    *

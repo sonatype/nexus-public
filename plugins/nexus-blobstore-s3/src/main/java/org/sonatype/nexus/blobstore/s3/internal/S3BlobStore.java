@@ -30,8 +30,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.CloudBlobStoreSupport;
@@ -878,24 +876,6 @@ public class S3BlobStore
       log.debug("Unable to check existence of {}", contentPath(blobId));
       return false;
     }
-  }
-
-  @Override
-  @Timed
-  public boolean hasContent(final BlobId blobId) {
-    checkNotNull(blobId);
-    try (final Timer.Context existsContext = existsTimer.time()) {
-      return isBlobZeroLength(blobId);
-    }
-    catch (Exception e) {
-      log.debug("Unable to check existence and size of {}", contentPath(blobId));
-      return false;
-    }
-  }
-
-  private boolean isBlobZeroLength(final BlobId blobId) {
-    ObjectMetadata metadata = s3.getObjectMetadata(new GetObjectMetadataRequest(getConfiguredBucket(), contentPath(blobId)));
-    return s3.doesObjectExist(getConfiguredBucket(), contentPath(blobId)) && metadata.getContentLength() == 0;
   }
 
   @Override
