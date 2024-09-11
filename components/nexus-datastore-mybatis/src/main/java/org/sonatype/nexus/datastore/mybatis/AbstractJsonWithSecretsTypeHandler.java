@@ -36,10 +36,7 @@ public class AbstractJsonWithSecretsTypeHandler<T>
   // this guarantees the constructor and buildObjectMapper work on the same mapper, regardless which runs first
   private static final ThreadLocal<ObjectMapper> mapper = ThreadLocal.withInitial(ObjectMapper::new);
 
-  protected final SecretsFactory secretsFactory;
-
   protected AbstractJsonWithSecretsTypeHandler(final SecretsFactory secretsFactory) {
-    this.secretsFactory = secretsFactory;
     mapper.get()
         .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(
             ImmutableList.of(Secret.class)
