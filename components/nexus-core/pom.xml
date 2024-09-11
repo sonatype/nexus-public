@@ -105,6 +105,11 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-base</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-repository-services</artifactId>
     </dependency>
 

@@ -12,26 +12,16 @@
  */
 package org.sonatype.nexus.crypto.secrets;
 
-import java.util.Optional;
+import javax.annotation.Nullable;
 
-/**
- * Validator of encryption keys, this is useful to check if a key is accessible before using it or get the
- * active key id
- */
-public interface EncryptionKeyValidator
+public interface ReEncryptService
 {
   /**
-   * Checks the provided key is accessible
+   * Checks the provided key is available to all nodes. If the key is available, a re-encryption task is submitted.
    *
-   * @param keyId the key to check
-   * @return {@code true} if the key is accessible, {@code false} otherwise
+   * @param secretKeyId the key to use for re-encryption
+   * @param notifyEmail the email address to notify when the re-encryption task is complete
+   * @return the id of the re-encryption task
    */
-  boolean isValidKey(String keyId);
-
-  /**
-   * Gets the active key id , if present
-   *
-   * @return an {@link Optional} with the key id String if found
-   */
-  Optional<String> getActiveKeyId();
+  String submitReEncryption(String secretKeyId, @Nullable String notifyEmail) throws MissingKeyException, ReEncryptionNotSupportedException;
 }

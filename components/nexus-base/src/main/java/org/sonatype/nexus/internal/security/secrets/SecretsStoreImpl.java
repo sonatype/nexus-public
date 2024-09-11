@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.secrets;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -19,7 +20,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
@@ -62,8 +62,8 @@ public class SecretsStoreImpl
 
   @Transactional
   @Override
-  public boolean update(final int id, final String keyId, final String secret) {
-    return dao().update(id, keyId, secret) > 0;
+  public boolean update(final int id, final String oldSecret, final String keyId, final String secret) {
+    return dao().update(id, oldSecret, keyId, secret) > 0;
   }
 
   @Transactional
@@ -74,7 +74,13 @@ public class SecretsStoreImpl
 
   @Transactional
   @Override
-  public Continuation<SecretData> browse(@Nullable final String continuationToken, final int limit) {
-    return dao().browse(continuationToken, limit);
+  public boolean existWithDifferentKeyId(final String keyId) {
+    return dao().existWithDifferentKeyId(keyId);
+  }
+
+  @Transactional
+  @Override
+  public List<SecretData> fetchWithDifferentKeyId(final String keyId, final int limit) {
+    return dao().fetchWithDifferentKeyId(keyId, limit);
   }
 }

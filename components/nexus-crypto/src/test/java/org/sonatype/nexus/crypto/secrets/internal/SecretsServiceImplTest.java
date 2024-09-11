@@ -29,6 +29,7 @@ import org.sonatype.nexus.crypto.maven.MavenCipher;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
+import org.sonatype.nexus.crypto.secrets.ActiveKeyChangeEvent;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
@@ -41,6 +42,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -49,6 +51,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -244,6 +247,50 @@ public class SecretsServiceImplTest
     verifyNoInteractions(secretsStore);
   }
 
+  @Test
+  public void testReEncrypt() {
+    String oldKey = "old-key";
+    String newKey = "new-key";
+
+    SecretEncryptionKey mockSecretKey = getMockSecretKey("old-key", "test-key-secret");
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.of(mockSecretKey));
+    when(encryptionKeySource.getKey("old-key")).thenReturn(Optional.of(mockSecretKey));
+
+    when(secretsStore.read(anyInt())).thenAnswer(invocation -> {
+      int id = invocation.getArgument(0);
+      return Optional.of(getMockSecretData(id, oldKey, getEncryptedSecret(id, "secret" + id, mockSecretKey)));
+    });
+
+    int secretId = random.nextInt();
+    SecretData secretData =
+        getMockSecretData(secretId, oldKey, getEncryptedSecret(secretId, "secret" + secretId, mockSecretKey));
+
+    underTest.reEncrypt(secretData, newKey);
+    verify(secretsStore).update(anyInt(), anyString(), eq(newKey), anyString());
+  }
+
+  @Test
+  public void testReEncryptRequired() {
+    SecretEncryptionKey mockSecretKey = getMockSecretKey("active-key", "test-key-secret");
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.of(mockSecretKey));
+    when(secretsStore.existWithDifferentKeyId("active-key")).thenReturn(true);
+
+    assertTrue(underTest.isReEncryptRequired());
+
+    when(secretsStore.existWithDifferentKeyId("active-key")).thenReturn(false);
+    assertFalse(underTest.isReEncryptRequired());
+
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+    assertFalse(underTest.isReEncryptRequired());
+  }
+
+  @Test
+  public void testActiveKeyChangedOnEvent() {
+    ActiveKeyChangeEvent event = new ActiveKeyChangeEvent("new-key", "old-key", null);
+    underTest.on(event);
+    verify(encryptionKeySource).setActiveKey("new-key");
+  }
+
   private void assertIsPhcSecret(final String value) {
     try {
       EncryptedSecret encryptedSecret = EncryptedSecret.parse(value);
@@ -276,5 +323,15 @@ public class SecretsServiceImplTest
     mockData.setKeyId(keyId);
     mockData.setSecret(secret);
     return mockData;
+  }
+
+  private String getEncryptedSecret(final int secretId, final String secret, final SecretEncryptionKey encryptionKey) {
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(secretId);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.of(encryptionKey));
+    underTest.encrypt("testing", secret.toCharArray(), null);
+    verify(secretsStore, atLeastOnce()).create(eq("testing"), eq(encryptionKey.getId()), encryptedValue.capture(),
+        eq(null));
+    return encryptedValue.getValue();
   }
 }
