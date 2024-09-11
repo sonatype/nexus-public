@@ -49,5 +49,6 @@ Ext.define('NX.coreui.view.repository.recipe.CargoProxy', {
     ];
 
     me.callParent();
+    me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_CargoFacet_Remote_HelpText'));
   }
 });
