@@ -67,9 +67,6 @@ public class ApiKeyDAOTest
 
   private static final char[] API_KEY4 = "api_key4;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
 
-  private static final char[] YET_ANOTHER_API_KEY =
-      "yet_another_api_key;:\"|\\}{}[]+-=-=3/><+\"|:@!^%$£&*~`_+_o".toCharArray();
-
   private static final String A_PRINCIPAL = "principal1";
 
   private static final String ANOTHER_PRINCIPAL = "another_principal1";
@@ -131,23 +128,14 @@ public class ApiKeyDAOTest
   @Test
   public void testUpdate() {
     ApiKeyData apiKeyEntity = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
-    ApiKeyData anotherApiKeyEntity = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
-    apiKeyDAO.save(apiKeyEntity);
-    apiKeyDAO.save(anotherApiKeyEntity);
+    withDao(dao -> dao.save(apiKeyEntity));
 
-    ApiKeyInternal savedApiKey1 = findApiKey(DOMAIN, A_PRINCIPAL).get();
-    ApiKeyInternal savedApiKey2 = findApiKey(DOMAIN, ANOTHER_PRINCIPAL).get();
+    apiKeyEntity.setPrincipals(principalCollection(ANOTHER_PRINCIPAL, ANOTHER_REALM));
 
-    // retrieve
-    assertSavedApiKey(savedApiKey1, API_KEY1);
-    assertSavedApiKey(savedApiKey2, API_KEY2);
+    withDao(dao -> dao.update(apiKeyEntity));
 
-    // make a change
-    apiKeyEntity.setApiKey(YET_ANOTHER_API_KEY);
-    apiKeyDAO.save(apiKeyEntity);
-
-    ApiKeyInternal updatedApiKey = findApiKey(DOMAIN, A_PRINCIPAL).get();
-    assertSavedApiKey(updatedApiKey, YET_ANOTHER_API_KEY);
+    ApiKeyInternal updatedApiKey = findApiKey(DOMAIN, ANOTHER_PRINCIPAL).get();
+    assertSavedApiKey(updatedApiKey, API_KEY1);
   }
 
   /*
@@ -196,7 +184,6 @@ public class ApiKeyDAOTest
     apiKeyDAO.save(anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL));
     apiKeyDAO.save(anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL));
     apiKeyDAO.save(anApiKeyEntity(API_KEY3, ANOTHER_DOMAIN, A_PRINCIPAL));
-    apiKeyDAO.save(anApiKeyEntity(API_KEY4, ANOTHER_DOMAIN, ANOTHER_PRINCIPAL));
     apiKeyDAO.save(anApiKeyEntity(API_KEY4, ANOTHER_DOMAIN, ANOTHER_PRINCIPAL));
 
     Collection<ApiKeyInternal> result = apiKeyDAO.findApiKeys(DOMAIN, A_PRINCIPAL);

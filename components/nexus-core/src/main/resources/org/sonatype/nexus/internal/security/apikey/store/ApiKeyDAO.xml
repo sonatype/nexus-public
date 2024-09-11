@@ -55,21 +55,9 @@
   </select>
 
   <insert id="save" parameterType="ApiKeyData">
-    MERGE INTO api_key (primary_principal, domain, token, principals <if test="created != null">, created</if>)
-        VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler},
-                #{domain}, #{token}, #{principals} <if test="created != null">, #{created}</if>);
-  </insert>
-
-  <insert id="save" parameterType="ApiKeyData" databaseId="PostgreSQL">
     INSERT INTO api_key (primary_principal, domain, token, principals<if test="created != null">, created</if>)
         VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler},
-                #{domain}, #{token}, #{principals}<if test="created != null">, #{created}</if>)
-    ON CONFLICT (primary_principal, domain, principals) DO UPDATE SET
-        token = #{token}, principals = #{principals},
-        <choose>
-          <when test="created != null">created = #{created}</when>
-          <otherwise>created = CURRENT_TIMESTAMP</otherwise>
-        </choose>;
+                #{domain}, #{token}, #{principals}<if test="created != null">, #{created}</if>);
   </insert>
 
   <delete id="deleteDomainKey">
@@ -134,12 +122,15 @@
     ON CONFLICT (domain, token)
     DO UPDATE SET
       token = #{token}
+      , primary_principal = #{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
       , principals = #{principals}
       <if test="created != null">, created = #{created}</if>;
   </update>
 
   <update id="update" parameterType="ApiKeyData" databaseId="H2">
-    MERGE INTO api_key KEY (primary_principal, domain, token)
+     MERGE INTO api_key (primary_principal, domain, token,
+                         principals <if test="created != null">, created</if>)
+       KEY (domain, token)
     VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
             , #{domain}
             , #{token}
