@@ -70,7 +70,7 @@ describe('MaliciousRisk Fully Protected', () => {
     expect(selectors.getHeading('Fully Protected from Malware')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
     expect(selectors.containsText(
-        '16000 malicious events identified by Sonatype')).toBeInTheDocument();
+        '16,000 malicious events identified by Sonatype')).toBeInTheDocument();
     expect(selectors.getAllText('10 / 10 total').length).toBe(2);
     expect(selectors.getId('meter')).toBeInTheDocument();
 
@@ -100,9 +100,9 @@ describe('MaliciousRisk Partially Protected', () => {
     await renderView();
 
     expect(selectors.getHeading('Open Source Malware in High Risk Ecosystems')).toBeInTheDocument();
-    await expectEcoSystemToRender('npm', 10000, false);
-    await expectEcoSystemToRender('pypi', 5000, false);
-    await expectEcoSystemToRender('maven', 1000, false);
+    await expectEcoSystemToRender('npm', '10,000', false);
+    await expectEcoSystemToRender('pypi', '5,000', false);
+    await expectEcoSystemToRender('maven', '1,000', false);
   });
 
   it('should render malicious events content widget', async () => {
@@ -111,7 +111,7 @@ describe('MaliciousRisk Partially Protected', () => {
     expect(selectors.getHeading('Partially Protected from Malware')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
     expect(selectors.containsText(
-        '16000 malicious events identified by Sonatype')).toBeInTheDocument();
+        '16,000 malicious events identified by Sonatype')).toBeInTheDocument();
     expect(selectors.getAllText('3 / 10 total').length).toBe(2);
     expect(selectors.getId('meter')).toBeInTheDocument();
 
@@ -166,9 +166,9 @@ describe('MaliciousRisk unprotected', () => {
     await renderView();
 
     expect(selectors.getHeading('Open Source Malware in High Risk Ecosystems')).toBeInTheDocument();
-    await expectEcoSystemToRender('npm', 10000);
-    await expectEcoSystemToRender('pypi', 5000);
-    await expectEcoSystemToRender('maven', 1000);
+    await expectEcoSystemToRender('npm', '10,000');
+    await expectEcoSystemToRender('pypi', '5,000');
+    await expectEcoSystemToRender('maven', '1,000');
   });
 
   it('should render malicious events content widget', async () => {
@@ -177,7 +177,7 @@ describe('MaliciousRisk unprotected', () => {
     expect(selectors.getHeading('Unprotected from Malware')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
     expect(selectors.containsText(
-        '16000 malicious events identified by Sonatype')).toBeInTheDocument();
+        '16,000 malicious events identified by Sonatype')).toBeInTheDocument();
     expect(selectors.getAllText('0 / 10 total').length).toBe(2);
     expect(selectors.getId('meter')).toBeInTheDocument();
 

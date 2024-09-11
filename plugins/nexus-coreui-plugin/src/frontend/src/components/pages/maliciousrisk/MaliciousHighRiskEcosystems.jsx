@@ -54,7 +54,7 @@ export default function MaliciousHighRiskEcosystems({countByEcosystem, enabledCo
                         <NxFontAwesomeIcon icon={faInfoCircle}/>
                       </NxTooltip>
                     </NxH3>
-                    <NxH2>{count}</NxH2>
+                    <NxH2>{count.toLocaleString()}</NxH2>
                   </div>
                 </NxGrid.Column>
               ))}

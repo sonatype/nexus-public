@@ -49,7 +49,7 @@ export default function MaliciousEvents({
               {isFullyProtected() && <span>{UNPROTECTED_MALWARE.PROTECTED}</span>}
             </NxH3>
           </NxGrid.Header>
-          <p>{totalMaliciousRiskCount} {UNPROTECTED_MALWARE.DESCRIPTION}</p>
+          <p>{totalMaliciousRiskCount.toLocaleString()} {UNPROTECTED_MALWARE.DESCRIPTION}</p>
         </NxGrid.ColumnSection>
         <NxGrid.ColumnSection>
           <NxGrid.Header>
