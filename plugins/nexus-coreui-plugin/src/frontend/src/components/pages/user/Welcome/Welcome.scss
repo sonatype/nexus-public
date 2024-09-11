@@ -52,7 +52,7 @@
 
   &__malicious-risk-banner {
     max-width: 1016px;
-    margin: var(--nx-spacing-6x) 0 0 var(--nx-spacing-6x);
+    margin: var(--nx-spacing-6x) 0 var(--nx-spacing-6x) var(--nx-spacing-6x);
     padding: 0 var(--nx-spacing-6x) 0 var(--nx-spacing-6x);
     display: flex;
     align-items: center;
@@ -82,6 +82,10 @@
     font-weight: bold;
     background: linear-gradient(295.52deg, #00A1E2 -18.79%, rgba(32, 130, 229, 0.79) 11.84%, #7034EE 102.45%);
     transition: background 0.1s ease;
+  }
+
+  .risk-on-disk-container {
+    padding-bottom: 0;
   }
 }
 

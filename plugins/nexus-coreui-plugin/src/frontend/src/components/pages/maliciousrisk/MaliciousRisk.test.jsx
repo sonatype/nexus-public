@@ -51,9 +51,10 @@ const content = 'Open Source malware exploits the open source DevOps tool chain 
 
 describe('MaliciousRisk Fully Protected', () => {
   beforeEach(() => {
-    jest.spyOn(ExtJS, 'state').mockReturnValue({getValue: () => false});
+    jest.spyOn(ExtJS, 'state').mockReturnValue({getValue: () => false, getEdition: () => 'PRO'});
     jest.spyOn(ExtJS, 'useUser').mockImplementation( () => null);
   });
+
   async function renderView() {
     when(axios.get).calledWith(MALICIOUS_RISK_SUMMARY).mockResolvedValue({
       data: maliciousRiskProxyFullyProtectedResponse

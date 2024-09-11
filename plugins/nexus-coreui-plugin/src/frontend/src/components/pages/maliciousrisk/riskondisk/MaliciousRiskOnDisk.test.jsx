@@ -10,15 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import React from "react";
 import {when} from "jest-when";
 import axios from "axios";
-import {render, screen} from "@testing-library/react";
-import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
-import React from "react";
-import {maliciousRiskOnDiskResponse} from "./MaliciousRiskOnDisk.testdata";
-import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
-import MaliciousRiskOnDisk from "./MaliciousRiskOnDisk";
+import {render, screen, waitForElementToBeRemoved} from "@testing-library/react";
 import {act} from "react-dom/test-utils";
+
+import userEvent from '@testing-library/user-event';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
+
+import {maliciousRiskOnDiskResponse} from "./MaliciousRiskOnDisk.testdata";
+import MaliciousRiskOnDisk from "./MaliciousRiskOnDisk";
+
 
 const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
 
@@ -27,62 +31,128 @@ jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
+  ExtJS: {
+    isProEdition: jest.fn(),
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn()
+    }),
+    useUser: jest.fn()
+  },
+}));
+
 const selectors = {
   ...TestUtils.selectors,
-  getText: (t) => screen.getByText(t),
+  getHeading: (t) => screen.getByRole('heading', {name: t}),
+  queryButton: (t) => screen.queryByRole('button', {name: t}),
+  queryAlert: () => screen.queryByRole('alert')
 };
 
 describe('MaliciousRiskOnDisk', () => {
   beforeEach(() => {
-    const user = {
-      'administrator': true
-    };
-
-    jest.spyOn(ExtJS, 'state').mockReturnValue({getValue: () => true});
-    jest.spyOn(ExtJS, 'useUser').mockImplementation( () => user);
-  });
-
-  it('renders correctly', async () => {
+    when(ExtJS.state().getValue)
+        .calledWith('nexus.malicious.risk.on.disk.enabled')
+        .mockReturnValue(true);
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockResolvedValue({
       data: maliciousRiskOnDiskResponse
     });
+  })
 
+  async function renderView(isAdmin, isProEdition, page) {
+    window.location.hash = `#browse/${page}`;
+    ExtJS.isProEdition.mockReturnValue(isProEdition);
+    ExtJS.useUser.mockReturnValue({'administrator': isAdmin});
+
+    render(<MaliciousRiskOnDisk/>);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+  }
+
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+    ('does not render if user is not logged', async (page) => {
+    ExtJS.useUser.mockReturnValue(null);
     await act(async() => {
-      render(<MaliciousRiskOnDisk />);
+      render(<MaliciousRiskOnDisk/>);
     });
 
-    expect(selectors.getText('Total count: 123')).toBeInTheDocument();
+    expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
-  it('does not render if user is not logged', async () => {
-    const user = null;
-
-    jest.spyOn(ExtJS, 'useUser').mockImplementation( () => user);
-
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+    ('does not render if feature flag is false',async (page) => {
+    when(ExtJS.state().getValue)
+        .calledWith('nexus.malicious.risk.on.disk.enabled')
+        .mockReturnValue(false);
     await act(async() => {
-      render(<MaliciousRiskOnDisk />);
+      render(<MaliciousRiskOnDisk/>);
     });
 
-    expect(screen.queryByText('Total count: 123')).not.toBeInTheDocument();
+    expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
-  it('does not render if feature flag is false', async () => {
-    jest.spyOn(ExtJS, 'state').mockReturnValue({getValue: () => false});
-
-    await act(async() => {
-      render(<MaliciousRiskOnDisk />);
-    });
-
-    expect(screen.queryByText('Total count: 123')).not.toBeInTheDocument();
-  });
-
-  it('renders error message if data fetch fails', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+    ('renders error message if data fetch fails', async (page) => {
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockRejectedValue(new Error('Failed to fetch data'));
+    await renderView(true, true, page);
 
-    await act(async() => {
-      render(<MaliciousRiskOnDisk />);
-    });
-
-    expect(selectors.getText('An error occurred loading data. Error loading malicious risk on disk data')).toBeInTheDocument();
+    expect(selectors.queryAlert()).toBeInTheDocument();
+    expect(selectors.queryAlert()).toHaveTextContent('Failed to fetch data');
   });
-})
+
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+    ('renders correctly when admin user and pro edition', async (page) => {
+    await renderView(true, true, page);
+
+    expect(selectors.queryAlert()).toBeInTheDocument();
+    expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Contact Sonatype to protect your repositories from malware', true);
+  });
+
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+    ('renders correctly when admin user and oss edition', async (page) => {
+    await renderView(true, false, page);
+
+    expect(selectors.queryAlert()).toBeInTheDocument();
+    expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Contact Sonatype to protect your repositories from malware', true);
+  });
+
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+    ('renders correctly when non-admin user and pro edition', async (page) => {
+    await renderView(false, true, page);
+
+    expect(selectors.queryAlert()).toBeInTheDocument();
+    expectAlertToRender(page, 123,'Malicious Components Found in Your Repository',
+        'Contact Sonatype or your Nexus Repository administrator for more information.',false);
+  });
+
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+    ('renders correctly when non-admin user and oss edition', async (page) => {
+    await renderView(false, false, page);
+
+    expect(selectors.queryAlert()).toBeInTheDocument();
+    expectAlertToRender(page, 123,'Malicious Components Found in Your Repository',
+        'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
+        false);
+  });
+
+  async function expectAlertToRender(page, count, title, description, contactSonatypeBtn) {
+    expect(selectors.getHeading(count)).toBeInTheDocument();
+    expect(selectors.getHeading(title)).toBeInTheDocument();
+    expect(selectors.queryAlert()).toHaveTextContent(description);
+
+    if (page === 'malicious') {
+      expect(selectors.queryButton('View OSS Malware Risk')).not.toBeInTheDocument();
+    } else {
+      expect(selectors.queryButton('View OSS Malware Risk')).toBeInTheDocument();
+      await userEvent.click(selectors.queryButton('View OSS Malware Risk'));
+      expect(window.location.hash).toBe('#browse/maliciousrisk');
+    }
+
+    if (contactSonatypeBtn) {
+      expect(selectors.queryButton('Contact Sonatype')).toBeInTheDocument();
+    } else {
+      expect(selectors.queryButton('Contact Sonatype')).not.toBeInTheDocument();
+    }
+  }
+});

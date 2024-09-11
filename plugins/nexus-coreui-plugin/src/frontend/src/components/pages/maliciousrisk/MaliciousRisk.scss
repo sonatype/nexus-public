@@ -85,4 +85,12 @@
   .nxrm-label-text-info > .nx-icon {
     color: var(--nx-swatch-blue-40);
   }
+
+  .risk-on-disk-container {
+    padding: 0;
+  }
+
+  .risk-on-disk-alert {
+    margin: var(--nx-spacing-4x) 0 var(--nx-spacing-6x) 0
+  }
 }

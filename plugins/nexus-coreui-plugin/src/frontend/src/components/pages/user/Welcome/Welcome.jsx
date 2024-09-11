@@ -27,6 +27,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import welcomeMachine from './WelcomeMachine';
 import OutreachActions from './OutreachActions';
 import UsageMetrics from './UsageMetrics';
+import MaliciousRiskOnDisk from '../../maliciousrisk/riskondisk/MaliciousRiskOnDisk';
 
 import './Welcome.scss';
 
@@ -134,6 +135,7 @@ export default function Welcome() {
       </NxPageTitle>
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
         <div className="nxrm-welcome__outreach nx-viewport-sized__scrollable">
+          {user && <MaliciousRiskOnDisk/>}
           { shouldShowMaliciousRiskBanner &&
               <div className="nxrm-welcome__malicious-risk-banner">
                 <div className="banner-text">

@@ -12,42 +12,87 @@
  */
 import React from 'react';
 import {useMachine} from "@xstate/react";
-import MaliciousRiskOnDiskMachine from "./MaliciousRiskOnDiskMachine";
-import {NxErrorAlert, NxLoadWrapper} from "@sonatype/react-shared-components";
+
+import {NxButton, NxButtonBar, NxErrorAlert, NxFontAwesomeIcon, NxH2, NxH3, NxLoadWrapper} from "@sonatype/react-shared-components";
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 
-function MaliciousRiskOnDiskContent() {
-  const LOAD_ERROR = 'Error loading malicious risk on disk data ';
+import MaliciousRiskOnDiskMachine from "./MaliciousRiskOnDiskMachine";
+import UIStrings from "../../../../constants/UIStrings";
+import "./MaliciousRiskOnDisk.scss";
 
-  const [state, send] = useMachine(MaliciousRiskOnDiskMachine, {devtools: true});
-  const isLoading = state.matches('loading');
-  const loadError = state.matches('loadError') ? LOAD_ERROR : null;
-  const totalCount = state.context.maliciousRiskOnDisk.totalCount;
-
-  function retry() {
-    send('RETRY');
-  }
-
-  return (
-      <NxLoadWrapper isLoading={isLoading} error={loadError} retryHandler={retry}>
-        <NxErrorAlert>
-          <div>
-            Total count: {totalCount}
-          </div>
-        </NxErrorAlert>
-      </NxLoadWrapper>
-  );
-}
+const {
+  TITLE,
+  DESCRIPTION,
+  CONTACT_SONATYPE,
+  VIEW_OSS_MALWARE_RISK
+} = UIStrings.MALICIOUS_RISK.RISK_ON_DISK;
 
 export default function MaliciousRiskOnDisk() {
+  const [state, send] = useMachine(MaliciousRiskOnDiskMachine, {devtools: true});
+  const {maliciousRiskOnDisk, loadError} = state.context;
+  const isLoading = state.matches('loading');
+
   const isRiskOnDiskEnabled = ExtJS.state().getValue('nexus.malicious.risk.on.disk.enabled');
   const user = ExtJS.useUser();
+  const isAdmin = user?.administrator;
+  const isProEdition = ExtJS.isProEdition();
+
   const userIsLogged = user ?? false;
   const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;
+  const maliciousDashBoardHash = '#browse/maliciousrisk';
+  const notMaliciousDashBoardPage = window.location.hash !== maliciousDashBoardHash;
+
+  function retry() {
+    send({type: 'RETRY'});
+  }
+
+  function navigateToMaliciousDashBoard() {
+    window.location.href = maliciousDashBoardHash;
+  }
+
+  const WarningDescription = function() {
+    const {NON_ADMIN_OSS, NON_ADMIN_PRO, ADMIN_OSS, ADMIN_PRO} = DESCRIPTION;
+
+    if (isAdmin && isProEdition) {
+      return ADMIN_PRO;
+    }
+    else if (!isAdmin && isProEdition) {
+      return NON_ADMIN_PRO;
+    }
+    else if (isAdmin && !isProEdition) {
+      return ADMIN_OSS;
+    }
+    else if (!isAdmin && !isProEdition) {
+      return NON_ADMIN_OSS;
+    }
+    else {
+      return '';
+    }
+  }
 
   if (!showMaliciousRiskOnDisk) {
     return null;
   }
 
-  return <MaliciousRiskOnDiskContent/>;
+  return (
+      <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
+        <div className="risk-on-disk-container">
+          <NxErrorAlert className="risk-on-disk-alert">
+            <div className="risk-on-disk-content">
+              <div>
+                <NxFontAwesomeIcon icon={faExclamationTriangle}/>
+                <NxH2>{maliciousRiskOnDisk?.totalCount}</NxH2>
+                <NxH3>{TITLE}</NxH3>
+              </div>
+              <p><WarningDescription/></p>
+            </div>
+            <NxButtonBar>
+              {notMaliciousDashBoardPage && <NxButton onClick={navigateToMaliciousDashBoard}>{VIEW_OSS_MALWARE_RISK}</NxButton>}
+              {isAdmin && <NxButton variant="error">{CONTACT_SONATYPE}</NxButton>}
+            </NxButtonBar>
+          </NxErrorAlert>
+        </div>
+      </NxLoadWrapper>
+  );
 }

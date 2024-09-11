@@ -23,7 +23,7 @@
  */
 Ext.define('NX.view.feature.Content', {
   extend: 'Ext.panel.Panel',
-  requires: [ 'NX.view.feature.BreadcrumbPanel', 'NX.view.MaliciousRiskOnDisk' ],
+  requires: [ 'NX.view.feature.BreadcrumbPanel', 'NX.view.MaliciousRiskOnDisk', 'NX.State' ],
   alias: 'widget.nx-feature-content',
   ariaRole: 'main',
   itemId: 'feature-content',
@@ -40,8 +40,7 @@ Ext.define('NX.view.feature.Content', {
   dockedItems: [
     {
       xtype: 'nx-component-malicious-risk-on-disk',
-      dock: 'top',
-      hidden: true
+      dock: 'top'
     },
     {
       xtype: 'nx-breadcrumb',
@@ -53,16 +52,25 @@ Ext.define('NX.view.feature.Content', {
     afterrender: function(obj) {
       obj.rendered = true;
       obj.showRoot();
+      obj.maybeShowMaliciousRiskOnDisk();
     }
   },
 
   maybeShowMaliciousRiskOnDisk: function() {
-    var me = this;
-    var maliciousRiskOnDisk = me.down('nx-component-malicious-risk-on-disk');
-    const titles = ['Browse', 'Search', 'Welcome'];
+    const me = this;
+    const maliciousRiskOnDisk = me.down('nx-component-malicious-risk-on-disk');
+    const titles = ['Browse', 'Search'];
+    const user = NX.State.getUser();
+    const edition = NX.State.getEdition();
 
-    if (titles.includes(me.currentTitle)) {
+    if (titles.includes(me.currentTitle) && user) {
+      if (edition === 'OSS' && !user.administrator) {
+        maliciousRiskOnDisk.setHeight(165);
+      } else {
+        maliciousRiskOnDisk.setHeight(140);
+      }
       maliciousRiskOnDisk.show();
+      maliciousRiskOnDisk.rerender();
     } else {
       maliciousRiskOnDisk.hide();
     }

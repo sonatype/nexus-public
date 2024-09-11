@@ -64,6 +64,17 @@ export default {
         URL: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/sonatype-repository-firewall'
       }
     },
+    RISK_ON_DISK: {
+      TITLE: 'Malicious Components Found in Your Repository',
+      DESCRIPTION: {
+        NON_ADMIN_OSS: 'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
+        NON_ADMIN_PRO: 'Contact Sonatype or your Nexus Repository administrator for more information.',
+        ADMIN_OSS: 'Contact Sonatype to protect your repositories from malware.',
+        ADMIN_PRO: 'Contact Sonatype to protect your repositories from malware.'
+      },
+      CONTACT_SONATYPE: 'Contact Sonatype',
+      VIEW_OSS_MALWARE_RISK: 'View OSS Malware Risk'
+    },
     LOAD_ERROR: 'An error occurred while fetching the malicious risk data',
     HDS_CONNECTION_WARNING: <>
       OSS Malware Risk data relies on backend services that are currently unreachable. To view malware risk, <NxTextLink

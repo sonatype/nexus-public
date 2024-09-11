@@ -21,46 +21,53 @@ import {APIConstants} from '@sonatype/nexus-ui-plugin';
 const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
 
 export default createMachine({
-      id: 'MaliciousRiskOnDiskMachine',
-      initial: 'loading',
+  id: 'MaliciousRiskOnDiskMachine',
+  initial: 'loading',
 
-      context: {
-        maliciousRiskOnDisk: {}
-      },
+  context: {
+    maliciousRiskOnDisk: {}
+  },
 
-      states: {
-        loading: {
-          invoke: {
-            src: 'fetchData',
-            onDone: {
-              target: 'loaded',
-              actions: ['setData']
-            },
-            onError: {
-              target: 'loadError',
-              actions: ['logError']
-            }
-          }
+  states: {
+    loading: {
+      invoke: {
+        src: 'fetchData',
+        onDone: {
+          target: 'loaded',
+          actions: ['setData']
         },
-        loaded: {},
-        loadError: {
-          on: {
-            'RETRY': {
-              target: 'loading'
-            }
-          }
+        onError: {
+          target: 'loadError',
+          actions: 'setError'
         }
-      },
-
-    },
-    {
-      actions: {
-        setData: assign({
-          maliciousRiskOnDisk: (_, event) => event.data?.data
-        }),
-        logError: (_, event) => console.error('Failed to load Malicious Risk On Disk Data', event)
-      },
-      services: {
-        fetchData: () => Axios.get(MALICIOUS_RISK_ON_DISK)
       }
-    });
+    },
+    loaded: {},
+    loadError: {
+      on: {
+        'RETRY': {
+          target: 'loading',
+          actions: 'clearError'
+        }
+      }
+    }
+  },
+},
+{
+  actions: {
+    setData: assign({
+      maliciousRiskOnDisk: (_, event) => event.data?.data
+    }),
+
+    setError: assign({
+      loadError: (_, event) => event.data.message
+    }),
+
+    clearError: assign({
+      loadError: () => null
+    })
+  },
+  services: {
+    fetchData: () => Axios.get(MALICIOUS_RISK_ON_DISK)
+  }
+});

@@ -632,7 +632,7 @@ window.plugins.push({
       weight: 101,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: [Permissions.ADMIN],
+        requiresUser: true,
         statesEnabled: [
           {
             key: 'MaliciousRiskDashboard',
