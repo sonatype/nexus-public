@@ -114,6 +114,9 @@ public abstract class MergingGroupHandlerSupport
       headers.set(HttpHeaders.RANGE, rangeheader);
     }
 
+    if (successfulResponses.isEmpty()) {
+      return notFoundResponse(context);
+    }
     if (successfulResponses.size() == 1 && shouldReturnOnlyRespondingMember(context.getRepository())) {
       // When only a single member responds successfully we return its value and don't bother to persist.
       return Iterables.getOnlyElement(successfulResponses.values());
