@@ -62,8 +62,11 @@ Ext.define('NX.view.feature.Content', {
     const titles = ['Browse', 'Search'];
     const user = NX.State.getUser();
     const edition = NX.State.getEdition();
+    const maliciousRiskFeatureEnabled = NX.State.getValue('nexus.malicious.risk.on.disk.enabled');
+    const maliciousDashBoardEnabled = NX.State.getValue('MaliciousRiskDashboard');
+    const showMaliciousRiskOnDisk = maliciousRiskFeatureEnabled && maliciousDashBoardEnabled;
 
-    if (titles.includes(me.currentTitle) && user) {
+    if (showMaliciousRiskOnDisk && titles.includes(me.currentTitle) && user) {
       if (edition === 'OSS' && !user.administrator) {
         maliciousRiskOnDisk.setHeight(165);
       } else {

@@ -13,7 +13,15 @@
 import React from 'react';
 import {useMachine} from "@xstate/react";
 
-import {NxButton, NxButtonBar, NxErrorAlert, NxFontAwesomeIcon, NxH2, NxH3, NxLoadWrapper} from "@sonatype/react-shared-components";
+import {
+  NxButton,
+  NxButtonBar,
+  NxErrorAlert,
+  NxFontAwesomeIcon,
+  NxH2,
+  NxH3,
+  NxLoadWrapper
+} from "@sonatype/react-shared-components";
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 
@@ -28,18 +36,14 @@ const {
   VIEW_OSS_MALWARE_RISK
 } = UIStrings.MALICIOUS_RISK.RISK_ON_DISK;
 
-export default function MaliciousRiskOnDisk() {
+function MaliciousRiskOnDiskContent({user}) {
   const [state, send] = useMachine(MaliciousRiskOnDiskMachine, {devtools: true});
   const {maliciousRiskOnDisk, loadError} = state.context;
   const isLoading = state.matches('loading');
 
-  const isRiskOnDiskEnabled = ExtJS.state().getValue('nexus.malicious.risk.on.disk.enabled');
-  const user = ExtJS.useUser();
   const isAdmin = user?.administrator;
   const isProEdition = ExtJS.isProEdition();
 
-  const userIsLogged = user ?? false;
-  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;
   const maliciousDashBoardHash = '#browse/maliciousrisk';
   const notMaliciousDashBoardPage = window.location.hash !== maliciousDashBoardHash;
 
@@ -71,10 +75,6 @@ export default function MaliciousRiskOnDisk() {
     }
   }
 
-  if (!showMaliciousRiskOnDisk) {
-    return null;
-  }
-
   return (
       <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
         <div className="risk-on-disk-container">
@@ -88,11 +88,25 @@ export default function MaliciousRiskOnDisk() {
               <p><WarningDescription/></p>
             </div>
             <NxButtonBar>
-              {notMaliciousDashBoardPage && <NxButton onClick={navigateToMaliciousDashBoard}>{VIEW_OSS_MALWARE_RISK}</NxButton>}
+              {notMaliciousDashBoardPage &&
+                  <NxButton onClick={navigateToMaliciousDashBoard}>{VIEW_OSS_MALWARE_RISK}</NxButton>}
               {isAdmin && <NxButton variant="error">{CONTACT_SONATYPE}</NxButton>}
             </NxButtonBar>
           </NxErrorAlert>
         </div>
       </NxLoadWrapper>
   );
+}
+
+export default function MaliciousRiskOnDisk() {
+  const isRiskOnDiskEnabled = ExtJS.state().getValue('nexus.malicious.risk.on.disk.enabled');
+  const maliciousRiskDashboardEnabled = ExtJS.state().getValue('MaliciousRiskDashboard');
+  const user = ExtJS.useUser();
+  const userIsLogged = user ?? false;
+  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled && maliciousRiskDashboardEnabled;
+
+  if (!showMaliciousRiskOnDisk) {
+    return null;
+  }
+  return <MaliciousRiskOnDiskContent user={user}/>;
 }

@@ -135,8 +135,8 @@ export default function Welcome() {
       </NxPageTitle>
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
         <div className="nxrm-welcome__outreach nx-viewport-sized__scrollable">
-          {user && <MaliciousRiskOnDisk/>}
-          { shouldShowMaliciousRiskBanner &&
+          <MaliciousRiskOnDisk/>
+          {shouldShowMaliciousRiskBanner &&
               <div className="nxrm-welcome__malicious-risk-banner">
                 <div className="banner-text">
                   <p className="banner-first-line">

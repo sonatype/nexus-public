@@ -54,6 +54,9 @@ describe('MaliciousRiskOnDisk', () => {
     when(ExtJS.state().getValue)
         .calledWith('nexus.malicious.risk.on.disk.enabled')
         .mockReturnValue(true);
+    when(ExtJS.state().getValue)
+        .calledWith('MaliciousRiskDashboard')
+        .mockReturnValue(true);
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockResolvedValue({
       data: maliciousRiskOnDiskResponse
     });
