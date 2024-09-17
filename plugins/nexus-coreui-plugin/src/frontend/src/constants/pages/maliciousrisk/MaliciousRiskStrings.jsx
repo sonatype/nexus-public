@@ -75,7 +75,10 @@ export default {
       },
       CONTACT_SONATYPE: {
         TEXT: 'Contact Sonatype',
-        URL: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/contact-sonatype'
+        URL: {
+          OSS: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/oss-admin-learn-more',
+          PRO: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more'
+        }
       },
       VIEW_OSS_MALWARE_RISK: 'View OSS Malware Risk'
     },
