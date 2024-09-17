@@ -154,5 +154,48 @@
         repository_id = #{repositoryId}
         <if test="limit gt 0"> LIMIT #{limit})</if>;
   </delete>
+  <select id="deleteByAssetIdAndPath" resultType="Long" databaseId="PostgreSQL">
+    DELETE FROM ${format}_browse_node WHERE
+        asset_id = #{internalAssetId} AND request_path = #{path}
+    RETURNING parent_id;
+  </select>
+  <select id="getNodeParents" resultMap="browseNodeResult" databaseId="PostgreSQL">
+    WITH total as (
+      WITH RECURSIVE parent_nodes AS (
+        SELECT *
+        FROM ${format}_browse_node
+        WHERE node_id = #{internalNodeId}
+        UNION ALL
+        SELECT t.*
+        FROM ${format}_browse_node t
+        INNER JOIN parent_nodes pn ON t.node_id = pn.parent_id
+      )
+      SELECT *
+      FROM parent_nodes
+      WHERE parent_id IS NOT NULL
+    )
+    select  parent.node_id, parent.repository_id,
+            parent.parent_id, parent.display_name,
+            parent.request_path, parent.component_id,
+            parent.asset_id, parent.package_url,
+            SUM(CASE WHEN children.asset_id IS NOT NULL THEN 1 ELSE 0 END) AS asset_count
+    from    total parent
+            left join ${format}_browse_node children on
+            parent.node_id = children.parent_id
+    group by parent.node_id, parent.repository_id,
+             parent.parent_id, parent.display_name,
+             parent.request_path, parent.component_id,
+             parent.asset_id, parent.package_url
+    order by parent.request_path desc;
+  </select>
+  <delete id="delete">
+    DELETE FROM ${format}_browse_node WHERE
+        node_id = #{internalNodeId};
+  </delete>
+
+  <select id="getByRequestPath" resultMap="browseNodeResult">
+    SELECT * FROM ${format}_browse_node C WHERE
+        C.repository_id = #{repositoryId} AND C.request_path = #{requestPath};
+  </select>
 
 </mapper>

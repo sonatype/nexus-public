@@ -47,7 +47,7 @@ public class BrowseNodeData
   long parentId; // NOSONAR: internal id
 
   private boolean leaf;
-  
+
   @Nullable
   Integer dbComponentId; // NOSONAR: internal id
 
@@ -56,6 +56,9 @@ public class BrowseNodeData
 
   @Nullable
   private String packageUrl;
+
+  @Nullable
+  private Long assetCount;
 
   // BrowseNode API
 
@@ -88,6 +91,13 @@ public class BrowseNodeData
   @Override
   public String getPackageUrl() {
     return packageUrl;
+  }
+
+  @Override
+  public Long getAssetCount() { return assetCount != null ? assetCount : 0L; }
+
+  public Long getNodeId() {
+    return nodeId;
   }
 
   // MyBatis setters + validation
@@ -158,10 +168,16 @@ public class BrowseNodeData
     this.packageUrl = packageUrl;
   }
 
+  /**
+   * Sets the (optional) asset count to node.
+   */
+  public void setAssetCount(@Nullable final Long assetCount) { this.assetCount = assetCount; }
+
   @Override
   public String toString() {
     return "BrowseNode{" + "nodeId='" + nodeId + "', repositoryId='" + repositoryId + "', displayName='" + displayName +
         "', requestPath='" + requestPath + "', leaf='" + leaf + "', parentId='" + parentId + "', packageUrl='" +
-        packageUrl + "', dbComponentId='" + dbComponentId + "', dbAssetId='" + dbAssetId + "}'";
+        packageUrl + "', dbComponentId='" + dbComponentId + "', dbAssetId='" + dbAssetId + "', assetCount='" +
+        assetCount + "'}";
   }
 }

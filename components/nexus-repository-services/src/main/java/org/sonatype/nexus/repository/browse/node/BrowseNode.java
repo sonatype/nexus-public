@@ -46,4 +46,7 @@ public interface BrowseNode
 
   @Nullable
   EntityId getAssetId();
+
+  @Nullable
+  Long getAssetCount();
 }
