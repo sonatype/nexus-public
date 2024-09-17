@@ -31,12 +31,15 @@ export default {
     COMPONENT_MALWARE: {
       MALICIOUS_COMPONENTS: {
         TEXT: 'What Is Open Source Malware?',
-        DESCRIPTION: 'Open Source malware exploits the open source DevOps tool chain to introduce malware such as ' +
-            'credential harvester, crypto-miner, a virus, ransomware, data corruption, malicious code injector, etc.'
+        DESCRIPTION: <>
+          Open Source malware exploits the open source DevOps tool chain to introduce malware such as
+          <strong> credential harvesting, data exfiltration, backdoor, file system corruption, etc.</strong>
+        </>
       },
       AVERAGE_ATTACK: {
-        TEXT: 'Average Cost to Remediate OSS Malware',
-        DESCRIPTION: '$5.12 million'
+        TEXT: 'Attacks Are on a Sharp Rise',
+        DESCRIPTION: '700%',
+        SUB_TEXT: 'year-over-year increase in OSS malware'
       },
       LEARN_MORE: {
         TEXT: 'Learn More',
@@ -45,13 +48,11 @@ export default {
     },
     MALICIOUS_EVENTS: {
       UNPROTECTED_MALWARE: {
-        UNPROTECTED: 'Unprotected from Malware',
-        PARTIALLY: 'Partially Protected from Malware',
-        PROTECTED: 'Fully Protected from Malware',
+        TEXT: 'Malware Components in Public Component Repositories',
         DESCRIPTION: <>
-          malicious events identified by Sonatype (npmjs.org, PyPI.org and <NxTextLink
+          identified by Sonatype in npmjs.org, PyPI.org and <NxTextLink
             href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/language-and-package-support"
-            external>more</NxTextLink>)
+            external>more</NxTextLink>
         </>,
       },
       PROXY_PROTECTION: {
@@ -69,10 +70,13 @@ export default {
       DESCRIPTION: {
         NON_ADMIN_OSS: 'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
         NON_ADMIN_PRO: 'Contact Sonatype or your Nexus Repository administrator for more information.',
-        ADMIN_OSS: 'Contact Sonatype to protect your repositories from malware.',
-        ADMIN_PRO: 'Contact Sonatype to protect your repositories from malware.'
+        ADMIN_OSS: 'Protect your repositories from malware with Sonatype Malware Defense.',
+        ADMIN_PRO: 'Protect your repositories from malware with Sonatype Malware Defense.'
       },
-      CONTACT_SONATYPE: 'Contact Sonatype',
+      CONTACT_SONATYPE: {
+        TEXT: 'Contact Sonatype',
+        URL: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/contact-sonatype'
+      },
       VIEW_OSS_MALWARE_RISK: 'View OSS Malware Risk'
     },
     LOAD_ERROR: 'An error occurred while fetching the malicious risk data',

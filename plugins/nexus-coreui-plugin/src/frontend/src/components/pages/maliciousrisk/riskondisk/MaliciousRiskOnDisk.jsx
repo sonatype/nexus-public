@@ -90,7 +90,8 @@ function MaliciousRiskOnDiskContent({user}) {
             <NxButtonBar>
               {notMaliciousDashBoardPage &&
                   <NxButton onClick={navigateToMaliciousDashBoard}>{VIEW_OSS_MALWARE_RISK}</NxButton>}
-              {isAdmin && <NxButton variant="error">{CONTACT_SONATYPE}</NxButton>}
+              {isAdmin && <a href={CONTACT_SONATYPE.URL} target="_blank"
+                             className="nx-btn nx-btn--error">{CONTACT_SONATYPE.TEXT}</a>}
             </NxButtonBar>
           </NxErrorAlert>
         </div>

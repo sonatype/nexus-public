@@ -46,6 +46,7 @@ const selectors = {
   ...TestUtils.selectors,
   getHeading: (t) => screen.getByRole('heading', {name: t}),
   queryButton: (t) => screen.queryByRole('button', {name: t}),
+  queryLink: (t) => screen.queryByRole('link', {name: t}),
   queryAlert: () => screen.queryByRole('alert')
 };
 
@@ -108,7 +109,7 @@ describe('MaliciousRiskOnDisk', () => {
 
     expect(selectors.queryAlert()).toBeInTheDocument();
     expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
-        'Contact Sonatype to protect your repositories from malware', true);
+        'Protect your repositories from malware with Sonatype Malware Defense.', true);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -117,7 +118,7 @@ describe('MaliciousRiskOnDisk', () => {
 
     expect(selectors.queryAlert()).toBeInTheDocument();
     expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
-        'Contact Sonatype to protect your repositories from malware', true);
+        'Protect your repositories from malware with Sonatype Malware Defense.', true);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -153,9 +154,11 @@ describe('MaliciousRiskOnDisk', () => {
     }
 
     if (contactSonatypeBtn) {
-      expect(selectors.queryButton('Contact Sonatype')).toBeInTheDocument();
+      expect(selectors.queryLink('Contact Sonatype')).toBeInTheDocument();
+      expect(selectors.queryLink('Contact Sonatype'))
+          .toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/contact-sonatype');
     } else {
-      expect(selectors.queryButton('Contact Sonatype')).not.toBeInTheDocument();
+      expect(selectors.queryLink('Contact Sonatype')).not.toBeInTheDocument();
     }
   }
 });

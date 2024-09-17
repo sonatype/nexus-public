@@ -40,14 +40,10 @@ const selectors = {
   getEcoSystem: (id) => screen.getByTestId(id),
   getEcoSystemInfoIcon: (s) => s.querySelector('[data-icon="info-circle"]'),
   getEcoSystemIndicator: (s) => within(s).queryByRole('status'),
-  containsText: (t) => screen.getByText(t, {exact: false}),
   getAllText: (t) => screen.getAllByText(t),
   getId: (t) => screen.getByTestId(t),
   queryAlert: () => screen.queryByRole('alert'),
 };
-
-const content = 'Open Source malware exploits the open source DevOps tool chain to introduce malware such as ' +
-    'credential harvester, crypto-miner, a virus, ransomware, data corruption, malicious code injector, etc.'
 
 describe('MaliciousRisk Fully Protected', () => {
   beforeEach(() => {
@@ -67,10 +63,10 @@ describe('MaliciousRisk Fully Protected', () => {
   it('should render malicious events content widget', async () => {
     await renderView();
 
-    expect(selectors.getHeading('Fully Protected from Malware')).toBeInTheDocument();
+    expect(selectors.getHeading('Malware Components in Public Component Repositories')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
-    expect(selectors.containsText(
-        '16,000 malicious events identified by Sonatype')).toBeInTheDocument();
+    expect(selectors.getText('16,000')).toBeInTheDocument();
+    expect(selectors.getText('identified by Sonatype in npmjs.org, PyPI.org and')).toBeInTheDocument();
     expect(selectors.getAllText('10 / 10 total').length).toBe(2);
     expect(selectors.getId('meter')).toBeInTheDocument();
 
@@ -108,10 +104,10 @@ describe('MaliciousRisk Partially Protected', () => {
   it('should render malicious events content widget', async () => {
     await renderView();
 
-    expect(selectors.getHeading('Partially Protected from Malware')).toBeInTheDocument();
+    expect(selectors.getHeading('Malware Components in Public Component Repositories')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
-    expect(selectors.containsText(
-        '16,000 malicious events identified by Sonatype')).toBeInTheDocument();
+    expect(selectors.getText('16,000')).toBeInTheDocument();
+    expect(selectors.getText('identified by Sonatype in npmjs.org, PyPI.org and')).toBeInTheDocument();
     expect(selectors.getAllText('3 / 10 total').length).toBe(2);
     expect(selectors.getId('meter')).toBeInTheDocument();
 
@@ -152,9 +148,13 @@ describe('MaliciousRisk unprotected', () => {
 
     expect(selectors.getHeading('Open Source Malware Risk')).toBeInTheDocument();
     expect(selectors.getHeading('What Is Open Source Malware?')).toBeInTheDocument();
-    expect(selectors.getHeading('Average Cost to Remediate OSS Malware')).toBeInTheDocument();
-    expect(selectors.getHeading('$5.12 million')).toBeInTheDocument();
-    expect(selectors.getText(content)).toBeInTheDocument();
+    expect(selectors.getHeading('Attacks Are on a Sharp Rise')).toBeInTheDocument();
+    expect(selectors.getHeading('700%')).toBeInTheDocument();
+    expect(selectors.getText('year-over-year increase in OSS malware')).toBeInTheDocument();
+    expect(selectors.getText('Open Source malware exploits the open source DevOps tool chain to introduce malware such as'))
+        .toBeInTheDocument();
+    expect(selectors.getText('credential harvesting, data exfiltration, backdoor, file system corruption, etc.'))
+        .toBeInTheDocument();
 
     const learnMoreLink = selectors.getTextLink('Learn More');
     expect(learnMoreLink).toBeInTheDocument();
@@ -174,10 +174,10 @@ describe('MaliciousRisk unprotected', () => {
   it('should render malicious events content widget', async () => {
     await renderView();
 
-    expect(selectors.getHeading('Unprotected from Malware')).toBeInTheDocument();
+    expect(selectors.getHeading('Malware Components in Public Component Repositories')).toBeInTheDocument();
     expect(selectors.getHeading('Proxy Repository Protection')).toBeInTheDocument();
-    expect(selectors.containsText(
-        '16,000 malicious events identified by Sonatype')).toBeInTheDocument();
+    expect(selectors.getText('16,000')).toBeInTheDocument();
+    expect(selectors.getText('identified by Sonatype in npmjs.org, PyPI.org and')).toBeInTheDocument();
     expect(selectors.getAllText('0 / 10 total').length).toBe(2);
     expect(selectors.getId('meter')).toBeInTheDocument();
 

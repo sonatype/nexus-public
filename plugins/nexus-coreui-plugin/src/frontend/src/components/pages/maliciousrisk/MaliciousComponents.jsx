@@ -25,17 +25,18 @@ const {
 export default function MaliciousComponents() {
   return (
       <NxGrid.Column className="nxrm-component-malware nx-grid-col--50">
+        <NxGrid.ColumnSection className="attack-content-section">
+          <NxGrid.Header>
+            <NxH3>{AVERAGE_ATTACK.TEXT}</NxH3>
+          </NxGrid.Header>
+          <NxH2>{AVERAGE_ATTACK.DESCRIPTION}</NxH2>
+          <p>{AVERAGE_ATTACK.SUB_TEXT}</p>
+        </NxGrid.ColumnSection>
         <NxGrid.ColumnSection>
           <NxGrid.Header>
             <NxH3>{MALICIOUS_COMPONENTS.TEXT}</NxH3>
           </NxGrid.Header>
           <p>{MALICIOUS_COMPONENTS.DESCRIPTION}</p>
-        </NxGrid.ColumnSection>
-        <NxGrid.ColumnSection>
-          <NxGrid.Header>
-            <NxH3>{AVERAGE_ATTACK.TEXT}</NxH3>
-          </NxGrid.Header>
-          <NxH2>{AVERAGE_ATTACK.DESCRIPTION}</NxH2>
         </NxGrid.ColumnSection>
         <NxGrid.ColumnSection>
           <NxTextLink href={LEARN_MORE.URL} external>{LEARN_MORE.TEXT}</NxTextLink>

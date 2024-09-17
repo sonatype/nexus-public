@@ -93,4 +93,8 @@
   .risk-on-disk-alert {
     margin: var(--nx-spacing-4x) 0 var(--nx-spacing-6x) 0
   }
+
+  .attack-content-section > h2, .identify-component-section > h2{
+    margin-bottom: 0;
+  }
 }

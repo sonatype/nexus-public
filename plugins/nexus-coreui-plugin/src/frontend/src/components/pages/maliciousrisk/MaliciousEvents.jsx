@@ -10,9 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {NxFontAwesomeIcon, NxGrid, NxH3, NxMeter, NxTextLink, NxTooltip} from "@sonatype/react-shared-components";
-import {faExclamationTriangle, faInfoCircle} from "@fortawesome/free-solid-svg-icons";
 import React from "react";
+
+import {
+  NxFontAwesomeIcon,
+  NxGrid,
+  NxH2,
+  NxH3,
+  NxMeter,
+  NxTextLink,
+  NxTooltip} from "@sonatype/react-shared-components";
+import {faInfoCircle} from "@fortawesome/free-solid-svg-icons";
+
 import UIStrings from "../../../constants/UIStrings";
 
 const {
@@ -26,30 +35,15 @@ export default function MaliciousEvents({
                                           totalProxyRepositoryCount,
                                           quarantineEnabledRepositoryCount
                                         }) {
-  function isUnprotected() {
-    return quarantineEnabledRepositoryCount === 0 && totalMaliciousRiskCount > 0;
-  }
-
-  function isPartiallyProtected() {
-    return quarantineEnabledRepositoryCount > 0 && quarantineEnabledRepositoryCount !== totalProxyRepositoryCount;
-  }
-
-  function isFullyProtected() {
-    return quarantineEnabledRepositoryCount === totalProxyRepositoryCount;
-  }
 
   return (
       <NxGrid.Column className="nxrm-component-malicious nx-grid-col--50">
-        <NxGrid.ColumnSection>
+        <NxGrid.ColumnSection className="identify-component-section">
           <NxGrid.Header>
-            <NxH3>
-              <NxFontAwesomeIcon icon={faExclamationTriangle}/>
-              {isUnprotected() && <span>{UNPROTECTED_MALWARE.UNPROTECTED}</span>}
-              {isPartiallyProtected() && <span>{UNPROTECTED_MALWARE.PARTIALLY}</span>}
-              {isFullyProtected() && <span>{UNPROTECTED_MALWARE.PROTECTED}</span>}
-            </NxH3>
+            <NxH3>{ UNPROTECTED_MALWARE.TEXT}</NxH3>
           </NxGrid.Header>
-          <p>{totalMaliciousRiskCount.toLocaleString()} {UNPROTECTED_MALWARE.DESCRIPTION}</p>
+          <NxH2>{totalMaliciousRiskCount.toLocaleString()}</NxH2>
+          <p>{UNPROTECTED_MALWARE.DESCRIPTION}</p>
         </NxGrid.ColumnSection>
         <NxGrid.ColumnSection>
           <NxGrid.Header>
