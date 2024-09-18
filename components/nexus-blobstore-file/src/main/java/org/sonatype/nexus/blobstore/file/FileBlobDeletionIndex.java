@@ -45,12 +45,12 @@ public interface FileBlobDeletionIndex
   void createRecord(BlobId blobId) throws IOException;
 
   /**
-   * Get the oldest record currently present, may return {@code null} if no deletion records are present
+   * Get the oldest BlobId currently present, may return {@code null} if no deletion records are present
    *
-   * @return oldest record or null
+   * @return oldest {@link BlobId} or null
    */
   @Nullable
-  String readOldestRecord() throws IOException;
+  BlobId readOldestRecord() throws IOException;
 
   /**
    * Deletes specified record by {@link BlobId}

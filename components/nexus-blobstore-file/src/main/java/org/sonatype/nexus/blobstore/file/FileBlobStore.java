@@ -29,6 +29,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -65,6 +66,7 @@ import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
+import org.sonatype.nexus.blobstore.file.internal.DateBasedWalkFile;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
@@ -257,21 +259,6 @@ public class FileBlobStore
 
     blobStoreQuotaUsageChecker.setBlobStore(this);
     blobStoreQuotaUsageChecker.start();
-  }
-
-  @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(final Duration duration) {
-    if (duration.isNegative()) {
-      throw new IllegalArgumentException("duration must >= 0");
-    }
-    else {
-      LocalDateTime sinceDate = now().minusSeconds(duration.getSeconds());
-      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate);
-    }
-  }
-
-  public String getDeletionsFilename() {
-    return nodeAccess.getId() + "-" + DELETIONS_FILENAME;
   }
 
   /*
@@ -904,25 +891,24 @@ public class FileBlobStore
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
     for (int counter = 0, numBlobs = blobDeletionIndex.size(); counter < numBlobs; counter++) {
       log.debug("Processing record {} of {}", counter + 1, numBlobs);
-      String oldestDeletedRecord = blobDeletionIndex.readOldestRecord();
-      log.debug("Oldest Deleted Record from deletion index: {}", oldestDeletedRecord);
-      if (Objects.isNull(oldestDeletedRecord)) {
+      BlobId oldestDeletedBlob = blobDeletionIndex.readOldestRecord();
+      log.debug("Oldest Deleted Record from deletion index: {}", oldestDeletedBlob);
+      if (Objects.isNull(oldestDeletedBlob)) {
         log.info("Deleted blobs not found");
         return;
       }
-      BlobId oldestDeletedBlobId = new BlobId(oldestDeletedRecord);
-      FileBlob blob = liveBlobs.getIfPresent(oldestDeletedBlobId);
-      log.debug("Oldest Deleted BlobId: {}", oldestDeletedBlobId);
+      FileBlob blob = liveBlobs.getIfPresent(oldestDeletedBlob);
+      log.debug("Oldest Deleted BlobId: {}", oldestDeletedBlob);
       if (Objects.isNull(blob) || blob.isStale()) {
         log.debug("Compacting...");
-        maybeCompactBlob(inUseChecker, oldestDeletedBlobId);
-        blobDeletionIndex.deleteRecord(oldestDeletedBlobId);
+        maybeCompactBlob(inUseChecker, oldestDeletedBlob);
+        blobDeletionIndex.deleteRecord(oldestDeletedBlob);
       }
       else {
         log.debug("Still in use to deferring");
         // still in use, so move it to end of the queue
-        blobDeletionIndex.deleteRecord(oldestDeletedBlobId);
-        blobDeletionIndex.createRecord(oldestDeletedBlobId);
+        blobDeletionIndex.deleteRecord(oldestDeletedBlob);
+        blobDeletionIndex.createRecord(oldestDeletedBlob);
       }
 
       progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
@@ -981,9 +967,9 @@ public class FileBlobStore
           return FileVisitResult.CONTINUE;
         }
 
-        String blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(file));
+        BlobId blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(file));
         if (blobId != null) {
-          FileBlobAttributes attributes = getFileBlobAttributes(new BlobId(blobId));
+          FileBlobAttributes attributes = getFileBlobAttributes(blobId);
 
           if (attributes != null && attributes.isDeleted()) {
             compactByAttributes(attributes, inUseChecker, count, progressLogger);
@@ -1012,12 +998,12 @@ public class FileBlobStore
       final AtomicInteger count,
       final ProgressLogIntervalHelper progressLogger)
   {
-    String blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
+    BlobId blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
     FileBlob blob = blobId != null ? liveBlobs.getIfPresent(blobId) : null;
     try {
       if (blob == null || blob.isStale()) {
-        if (!maybeCompactBlob(inUseChecker, new BlobId(blobId))) {
-          blobDeletionIndex.createRecord(new BlobId(blobId));
+        if (!maybeCompactBlob(inUseChecker, blobId)) {
+          blobDeletionIndex.createRecord(blobId);
         }
         else {
           progressLogger.info("Elapsed time: {}, processed: {}", progressLogger.getElapsed(),
@@ -1025,7 +1011,7 @@ public class FileBlobStore
         }
       }
       else {
-        blobDeletionIndex.createRecord(new BlobId(blobId));
+        blobDeletionIndex.createRecord(blobId);
       }
     }
     catch (IOException e) {
@@ -1096,11 +1082,25 @@ public class FileBlobStore
       return getAttributeFilePaths()
           .map(FileAttributesLocation::new)
           .map(this::getBlobIdFromAttributeFilePath)
-          .filter(Objects::nonNull)
-          .map(BlobId::new);
+          .filter(Objects::nonNull);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final Duration duration) {
+    if (duration.isNegative()) {
+      throw new IllegalArgumentException("duration must >= 0");
+    }
+    else {
+      // date-based walk files
+      DateBasedWalkFile dateBasedWalkFile = new DateBasedWalkFile(contentDir.toString(), duration);
+      Map<String, OffsetDateTime> dateBasedBlobIds = dateBasedWalkFile.getBlobIdToDateRef();
+
+      LocalDateTime sinceDate = now().minusSeconds(duration.getSeconds());
+      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate, dateBasedBlobIds);
     }
   }
 

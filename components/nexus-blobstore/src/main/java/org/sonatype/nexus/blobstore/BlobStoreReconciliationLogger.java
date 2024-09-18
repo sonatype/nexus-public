@@ -18,7 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -82,10 +84,15 @@ public class BlobStoreReconciliationLogger
    * Stream blob ids of blobs created in a blob store since specified date (inclusive).
    *
    * @param reconciliationLogPath The path to the blob store's reconciliation log directory
-   * @param sinceDate for which retrieve newly created blob ids
+   * @param sinceDate             for which retrieve newly created blob ids
+   * @param dateBasedBlobIds      date-based blob ids
    * @return stream of BlobId
    */
-  public Stream<BlobId> getBlobsCreatedSince(final Path reconciliationLogPath, final LocalDateTime sinceDate) {
+  public Stream<BlobId> getBlobsCreatedSince(
+      final Path reconciliationLogPath,
+      final LocalDateTime sinceDate,
+      final Map<String, OffsetDateTime> dateBasedBlobIds)
+  {
     return getLogFilesToProcess(reconciliationLogPath, sinceDate)
         .flatMap(this::readLines)
         .map(line -> {
@@ -99,7 +106,7 @@ public class BlobStoreReconciliationLogger
           }
         })
         .filter(Objects::nonNull)
-        .map(BlobId::new);
+        .map(id -> new BlobId(id, dateBasedBlobIds.get(id) != null ? dateBasedBlobIds.get(id) : null));
   }
 
   private Stream<String> readLines(final File file) {

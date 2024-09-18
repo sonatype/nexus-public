@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.file.internal;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -45,7 +46,7 @@ public class SoftDeletedBlobsStoreImpl
   @Transactional
   @Override
   public void createRecord(final BlobId blobId, final String sourceBlobStoreName) {
-    dao().createRecord(sourceBlobStoreName, blobId.toString());
+    dao().createRecord(sourceBlobStoreName, blobId.toString(), blobId.getBlobCreatedRef());
   }
 
   @Transactional
@@ -62,7 +63,7 @@ public class SoftDeletedBlobsStoreImpl
   public Stream<BlobId> readAllBlobIds(final String sourceBlobStoreName) {
     return Continuations
         .streamOf((limit, continuationToken) -> readRecords(continuationToken, limit, sourceBlobStoreName))
-        .map(data -> new BlobId(data.getBlobId()));
+        .map(data -> new BlobId(data.getBlobId(), data.getDatePathRef()));
   }
 
   @Transactional
@@ -90,7 +91,9 @@ public class SoftDeletedBlobsStoreImpl
 
   @Transactional
   @Override
-  public List<String> readOldestRecords(final String sourceBlobStoreName) {
-    return dao().readOldestRecords(sourceBlobStoreName);
+  public List<BlobId> readOldestRecords(final String sourceBlobStoreName) {
+    return dao().readOldestRecords(sourceBlobStoreName).stream()
+        .map(data -> new BlobId(data.getBlobId(), data.getDatePathRef()))
+        .collect(Collectors.toList());
   }
 }

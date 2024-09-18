@@ -71,5 +71,5 @@ public interface SoftDeletedBlobsStore
    * @param sourceBlobStoreName the blobstore name these records are related to
    * @return oldest 20 blob_id strings
    */
-  List<String> readOldestRecords(String sourceBlobStoreName);
+  List<BlobId> readOldestRecords(String sourceBlobStoreName);
 }

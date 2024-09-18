@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.blobstore.file.store.internal;
 
+import java.time.OffsetDateTime;
 import java.util.List;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -33,10 +35,12 @@ public interface SoftDeletedBlobsDAO
    *
    * @param sourceBlobStoreName the blobstore name this record is related to
    * @param blobId              string representation of {@link BlobId}
+   * @param datePathRef         the {@link OffsetDateTime} of the blob creation
    */
   void createRecord(
       @Param("sourceBlobStoreName") String sourceBlobStoreName,
-      @Param("blobId") String blobId);
+      @Param("blobId") String blobId,
+      @Param("datePathRef") OffsetDateTime datePathRef);
 
   /**
    * Return all records stored in DB, the continuationToken to be used when amount more than single page (>1000 rows)
@@ -85,5 +89,5 @@ public interface SoftDeletedBlobsDAO
    * @param sourceBlobStoreName the blobstore name these records are related to
    * @return oldest 20 blob_id strings
    */
-  List<String> readOldestRecords(@Param("sourceBlobStoreName") String sourceBlobStoreName);
+  List<SoftDeletedBlobsData> readOldestRecords(@Param("sourceBlobStoreName") String sourceBlobStoreName);
 }

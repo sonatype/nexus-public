@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.tools.datastore;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -38,7 +40,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.tools.OrphanedBlobFinder;
-import org.sonatype.nexus.repository.tools.datastore.DatastoreOrphanedBlobFinder;
 
 import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
@@ -69,6 +70,8 @@ public class DatastoreOrphanedBlobFinderTest
 
   private static final String BLOB_STORE_NAME = "blobStore";
 
+  private static final OffsetDateTime BLOB_CREATED_REF = OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
   @Mock
   private RepositoryManager repositoryManager;
 
@@ -91,7 +94,7 @@ public class DatastoreOrphanedBlobFinderTest
   private ContentFacet contentFacet;
 
   @Mock
-  private Consumer<String> orphanedBlobHandler;
+  private Consumer<BlobId> orphanedBlobHandler;
 
   private OrphanedBlobFinder underTest;
 
@@ -110,7 +113,7 @@ public class DatastoreOrphanedBlobFinderTest
 
     underTest.detect(repository, orphanedBlobHandler);
 
-    verify(orphanedBlobHandler).accept(ORPHANED_BLOB_ID);
+    verify(orphanedBlobHandler).accept(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF));
   }
 
   @Test
@@ -119,7 +122,7 @@ public class DatastoreOrphanedBlobFinderTest
 
     underTest.delete(repository);
 
-    verify(blobStore).deleteHard(new BlobId(ORPHANED_BLOB_ID));
+    verify(blobStore).deleteHard(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF));
   }
 
   @Test
@@ -128,7 +131,7 @@ public class DatastoreOrphanedBlobFinderTest
 
     underTest.delete(repository);
 
-    verify(blobStore, never()).deleteHard(new BlobId(ORPHANED_BLOB_ID));
+    verify(blobStore, never()).deleteHard(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF));
   }
 
   @Test
@@ -140,8 +143,8 @@ public class DatastoreOrphanedBlobFinderTest
 
     underTest.delete();
 
-    verify(blobStore).deleteHard(new BlobId(ORPHANED_BLOB_ID));
-    verify(blobStore2).deleteHard(new BlobId(ORPHANED_BLOB_ID));
+    verify(blobStore).deleteHard(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF));
+    verify(blobStore2).deleteHard(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF));
   }
 
   @Test
@@ -152,8 +155,8 @@ public class DatastoreOrphanedBlobFinderTest
 
     underTest.delete(repository);
 
-    verify(blobStore).deleteHard(new BlobId(ORPHANED_BLOB_ID));
-    verify(blobStore).deleteHard(new BlobId(USED_BLOB_ID));
+    verify(blobStore).deleteHard(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF));
+    verify(blobStore).deleteHard(new BlobId(USED_BLOB_ID, BLOB_CREATED_REF));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -186,10 +189,10 @@ public class DatastoreOrphanedBlobFinderTest
 
   private void setupOrphanedBlob(final BlobStore blobStore, final boolean deleted) {
     when(blobStore.getBlobIdStream())
-        .thenAnswer(i -> Stream.of(new BlobId(ORPHANED_BLOB_ID), new BlobId(USED_BLOB_ID)));
-    when(blobStore.getBlobAttributes(new BlobId(ORPHANED_BLOB_ID)))
+        .thenAnswer(i -> Stream.of(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF), new BlobId(USED_BLOB_ID, BLOB_CREATED_REF)));
+    when(blobStore.getBlobAttributes(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF)))
         .thenReturn(new TestBlobAttributes(deleted));
-    when(blobStore.getBlobAttributes(new BlobId(USED_BLOB_ID))).thenReturn(new TestBlobAttributes(deleted));
+    when(blobStore.getBlobAttributes(new BlobId(USED_BLOB_ID, BLOB_CREATED_REF))).thenReturn(new TestBlobAttributes(deleted));
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
 

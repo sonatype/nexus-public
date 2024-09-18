@@ -781,8 +781,7 @@ public class S3BlobStore
     return nonTempBlobPropertiesFileStream(summaries)
         .map(S3AttributesLocation::new)
         .map(this::getBlobIdFromAttributeFilePath)
-        .filter(Objects::nonNull)
-        .map(BlobId::new);
+        .filter(Objects::nonNull);
   }
 
   @Nullable

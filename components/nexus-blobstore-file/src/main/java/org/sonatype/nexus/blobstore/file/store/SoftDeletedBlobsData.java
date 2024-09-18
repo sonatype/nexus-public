@@ -30,6 +30,8 @@ public class SoftDeletedBlobsData
 
   private OffsetDateTime deletedDate;
 
+  private OffsetDateTime datePathRef;
+
   public String getSourceBlobStoreName() {
     return sourceBlobStoreName;
   }
@@ -48,6 +50,14 @@ public class SoftDeletedBlobsData
 
   public String getBlobId() {
     return blobId;
+  }
+
+  public OffsetDateTime getDatePathRef() {
+    return datePathRef;
+  }
+
+  public void setDatePathRef(final OffsetDateTime datePathRef) {
+    this.datePathRef = datePathRef;
   }
 
   @Override

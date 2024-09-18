@@ -57,7 +57,7 @@ public class DatastoreFileBlobDeletionIndex
 
   private String blobStoreName;
 
-  private Deque<String> deletedRecordsCache;
+  private Deque<BlobId> deletedRecordsCache;
 
   @Inject
   public DatastoreFileBlobDeletionIndex(
@@ -94,7 +94,7 @@ public class DatastoreFileBlobDeletionIndex
   }
 
   @Override
-  public final String readOldestRecord() {
+  public final BlobId readOldestRecord() {
     if (deletedRecordsCache.isEmpty()) {
       populateInternalCache();
     }

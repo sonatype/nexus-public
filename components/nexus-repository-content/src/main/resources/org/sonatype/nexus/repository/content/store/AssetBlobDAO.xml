@@ -123,10 +123,10 @@
     UPDATE ${format}_asset_blob SET checksums = #{checksums}
     WHERE blob_ref = #{blobRef};
   </update>
-  
+
   <select id="browseAssetsWithLegacyBlobRef" resultType="AssetBlobData">
     SELECT * FROM ${format}_asset_blob
-    WHERE blob_ref LIKE '%:%'
+    WHERE blob_ref LIKE '%:%' AND blob_ref NOT LIKE '%@%@%'
     <if test="continuationToken != null">
       AND asset_blob_id > #{continuationToken}
     </if>
@@ -149,7 +149,7 @@
 
   <select id="countNotMigratedAssetBlobs" resultType="int">
     SELECT COUNT(*) FROM ${format}_asset_blob
-    WHERE blob_ref LIKE '%:%'
+    WHERE blob_ref LIKE '%:%' AND blob_ref NOT LIKE '%@%@%'
   </select>
 
   <select id="getRepositoryName" resultType="String">

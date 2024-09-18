@@ -38,6 +38,7 @@ import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -129,8 +130,8 @@ public class BlobStoreReconciliationLoggerTest
         "2021-04-14 00:00:00,00000000-0000-0000-0000-000000000006".getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE);
 
-    List<String> result = underTest.getBlobsCreatedSince(Paths.get(RECONCILIATION_LOG_DIRECTORY),
-        LocalDateTime.parse("2021-04-14T00:00:00"))
+    List<String> result = underTest.getBlobsCreatedSince(
+        Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2021-04-14T00:00:00"), emptyMap())
         .map(BlobId::asUniqueString)
         .collect(toList());
 
