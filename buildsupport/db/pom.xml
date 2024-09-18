@@ -27,6 +27,9 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
+  <properties>
+    <jna.version>5.13.0</jna.version>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -62,13 +65,13 @@
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna</artifactId>
-        <version>5.12.1</version>
+        <version>${jna.version}</version>
       </dependency>
 
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna-platform</artifactId>
-        <version>5.13.0</version>
+        <version>${jna.version}</version>
       </dependency>
 
     </dependencies>
