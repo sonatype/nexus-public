@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.httpclient.config;
 
-import org.sonatype.nexus.common.text.Strings2;
+import javax.validation.constraints.NotNull;
 
-import javax.validation.constraints.NotBlank;
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.crypto.secrets.Secret;
 
 /**
  * Bearer Token authentication configuration
@@ -26,25 +27,30 @@ public class BearerTokenAuthenticationConfiguration
 {
   public static final String TYPE = "bearerToken";
 
-  @NotBlank
-  private String bearerToken;
+  @NotNull
+  private Secret bearerToken;
 
   public BearerTokenAuthenticationConfiguration() {
     super(TYPE);
   }
 
-  public String getBearerToken() {
+  public Secret getBearerToken() {
     return bearerToken;
   }
 
-  public void setBearerToken(final String bearerToken) {
+  public void setBearerToken(final Secret bearerToken) {
     this.bearerToken = bearerToken;
+  }
+
+  @Override
+  public Secret getSecret() {
+    return getBearerToken();
   }
 
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
-        "bearerToken='" + Strings2.mask(bearerToken) + '\'' +
+        "bearerToken='" + Strings2.MASK + '\'' +
         '}';
   }
 }

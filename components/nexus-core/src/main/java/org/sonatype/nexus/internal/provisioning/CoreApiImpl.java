@@ -22,6 +22,8 @@ import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.CoreApi;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.common.entity.EntityHelper;
+import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
@@ -32,11 +34,13 @@ import org.sonatype.nexus.httpclient.config.ProxyServerConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 import org.sonatype.nexus.internal.app.BaseUrlCapabilityDescriptor;
 import org.sonatype.nexus.internal.capability.DefaultCapabilityReference;
+import org.sonatype.nexus.security.UserIdHelper;
 
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.httpclient.config.AuthenticationConfiguration.AUTHENTICATION_CONFIGURATION;
 
 /**
  * @since 3.0
@@ -51,10 +55,14 @@ public class CoreApiImpl
 
   private final HttpClientManager httpClientManager;
 
+  private final SecretsService secretsService;
+
   @Inject
-  public CoreApiImpl(final CapabilityRegistry capabilityRegistry, final HttpClientManager httpClientManager) {
+  public CoreApiImpl(final CapabilityRegistry capabilityRegistry, final HttpClientManager httpClientManager,
+                     final SecretsService secretsService) {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
     this.httpClientManager = checkNotNull(httpClientManager);
+    this.secretsService = checkNotNull(secretsService);
   }
 
   @Override
@@ -118,7 +126,7 @@ public class CoreApiImpl
   public void httpProxy(final String host, final int port) {
     checkNotNull(host);
     checkPort(port);
-    configureProxy(host, port, false, null);
+    configureProxy(host, port, false, null, null);
   }
 
   @Override
@@ -129,8 +137,13 @@ public class CoreApiImpl
     checkNotNull(password);
     UsernameAuthenticationConfiguration config = new UsernameAuthenticationConfiguration();
     config.setUsername(username);
-    config.setPassword(password);
-    configureProxy(host, port, false, config);
+    final Secret secret = encrypt(password);
+    config.setPassword(secret);
+    configureProxy(host, port, false, config, secret);
+  }
+
+  private Secret encrypt(final String password) {
+    return secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION, password.toCharArray(), UserIdHelper.get());
   }
 
   @Override
@@ -150,10 +163,11 @@ public class CoreApiImpl
     checkNotNull(domain);
     NtlmAuthenticationConfiguration config = new NtlmAuthenticationConfiguration();
     config.setUsername(username);
-    config.setPassword(password);
+    final Secret secret = encrypt(password);
+    config.setPassword(secret);
     config.setHost(ntlmHost);
     config.setDomain(domain);
-    configureProxy(host, port, false, config);
+    configureProxy(host, port, false, config, secret);
   }
 
   @Override
@@ -169,7 +183,7 @@ public class CoreApiImpl
   public void httpsProxy(final String host, final int port) {
     checkNotNull(host);
     checkPort(port);
-    configureProxy(host, port, true, null);
+    configureProxy(host, port, true, null, null);
   }
 
   @Override
@@ -180,8 +194,9 @@ public class CoreApiImpl
     checkNotNull(password);
     UsernameAuthenticationConfiguration config = new UsernameAuthenticationConfiguration();
     config.setUsername(username);
-    config.setPassword(password);
-    configureProxy(host, port, true, config);
+    final Secret secret = encrypt(password);
+    config.setPassword(secret);
+    configureProxy(host, port, true, config, secret);
   }
 
   @Override
@@ -201,10 +216,11 @@ public class CoreApiImpl
     checkNotNull(domain);
     NtlmAuthenticationConfiguration config = new NtlmAuthenticationConfiguration();
     config.setUsername(username);
-    config.setPassword(password);
+    final Secret secret = encrypt(password);
+    config.setPassword(secret);
     config.setHost(ntlmHost);
     config.setDomain(domain);
-    configureProxy(host, port, true, config);
+    configureProxy(host, port, true, config, secret);
   }
 
   @Override
@@ -244,7 +260,8 @@ public class CoreApiImpl
       final String host,
       final int port,
       final boolean https,
-      @Nullable final AuthenticationConfiguration auth)
+      @Nullable final AuthenticationConfiguration auth,
+      @Nullable final Secret secret)
   {
     HttpClientConfiguration configuration = detachedConfiguration();
     if (https && (configuration.getProxy() == null || configuration.getProxy().getHttp() == null)) {
@@ -261,7 +278,13 @@ public class CoreApiImpl
     else {
       proxy(configuration).setHttp(proxyServerConfiguration);
     }
-    httpClientManager.setConfiguration(configuration);
+    try {
+      httpClientManager.setConfiguration(configuration);
+    }
+    catch (Exception e) {
+      secretsService.remove(secret);
+      throw e;
+    }
   }
 
   /**

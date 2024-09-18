@@ -18,7 +18,6 @@ import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
-import org.sonatype.nexus.security.PasswordHelper;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -26,7 +25,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.httpclient.config.AuthenticationConfiguration.TYPES;
 
@@ -40,11 +38,9 @@ import static org.sonatype.nexus.httpclient.config.AuthenticationConfiguration.T
 public class AuthenticationConfigurationDeserializer
     extends StdDeserializer<AuthenticationConfiguration>
 {
-  private final PasswordHelper passwordHelper;
 
-  public AuthenticationConfigurationDeserializer(final PasswordHelper passwordHelper) {
+  public AuthenticationConfigurationDeserializer() {
     super(AuthenticationConfiguration.class);
-    this.passwordHelper = checkNotNull(passwordHelper);
   }
 
   @Override
@@ -73,18 +69,15 @@ public class AuthenticationConfigurationDeserializer
     if (UsernameAuthenticationConfiguration.class.equals(type)) {
       UsernameAuthenticationConfiguration upc = (UsernameAuthenticationConfiguration) configuration;
       upc.setUsername(upc.getUsername());
-      upc.setPassword(passwordHelper.tryDecrypt(upc.getPassword()));
     }
     else if (NtlmAuthenticationConfiguration.class.equals(type)) {
       NtlmAuthenticationConfiguration ntc = (NtlmAuthenticationConfiguration) configuration;
       ntc.setUsername(ntc.getUsername());
-      ntc.setPassword(passwordHelper.tryDecrypt(ntc.getPassword()));
       ntc.setDomain(ntc.getDomain());
       ntc.setHost(ntc.getHost());
     }
     else if (BearerTokenAuthenticationConfiguration.class.equals(type)) {
       BearerTokenAuthenticationConfiguration btac = (BearerTokenAuthenticationConfiguration) configuration;
-      btac.setBearerToken(passwordHelper.tryDecrypt(btac.getBearerToken()));
     }
     return configuration;
   }

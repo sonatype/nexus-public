@@ -201,7 +201,7 @@ public class DataSessionRuleTest
       itemA.setVersion(1);
       itemA.setEnabled(true);
       itemA.setNotes("test-entity");
-      itemA.setProperties(ImmutableMap.of("sample", "data", "topSecretInfo", "data", "password", "123"));
+      itemA.setProperties(ImmutableMap.of("sample", "data"));
 
       dao.create(itemA);
 
@@ -214,11 +214,7 @@ public class DataSessionRuleTest
           ResultSet resultSet = statement.executeQuery()) {
         assertTrue("Expected at least one test_item", resultSet.next());
         assertThat(resultSet.getString("properties").replaceAll(" *: *", ":"),
-            allOf(containsString("\"sample\":\"data\""),
-                containsString("\"topSecretInfo\":\"{"),
-                not(containsString("\"topSecretInfo\":\"data\"")),
-                containsString("\"password\":\"{"),
-                not(containsString("\"password\":\"123\""))));
+            allOf(containsString("\"sample\":\"data\"")));
       }
 
       assertThat(dao.browse(), contains(itemA));

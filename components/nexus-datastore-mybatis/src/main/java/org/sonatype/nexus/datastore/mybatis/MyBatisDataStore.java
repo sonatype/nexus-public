@@ -880,9 +880,7 @@ public class MyBatisDataStore
     if (handler instanceof CipherAwareTypeHandler<?>) {
       ((CipherAwareTypeHandler<?>) handler).setCipher(databaseCipher);
     }
-    if (sensitiveAttributeFilter != null && handler instanceof AbstractJsonTypeHandler<?>) {
-      ((AbstractJsonTypeHandler<?>) handler).encryptSensitiveFields(passwordHelper, sensitiveAttributeFilter);
-    }
+
     registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
     Type handledType = ((BaseTypeHandler) handler).getRawType();
     if (handledType instanceof Class<?>) {

@@ -23,6 +23,7 @@ import javax.validation.Valid;
 
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
@@ -88,6 +89,8 @@ public class HttpClientFacetImpl
   private final Map<String, ContentCompressionStrategy> contentCompressionStrategies;
 
   private final Map<String, TargetAuthenticationStrategy> authenticationStrategies;
+
+  private String unencryptedPassword;
 
   @VisibleForTesting
   static class Config
@@ -179,7 +182,11 @@ public class HttpClientFacetImpl
     if (config.authentication instanceof UsernameAuthenticationConfiguration) {
       UsernameAuthenticationConfiguration userAuth = (UsernameAuthenticationConfiguration) config.authentication;
 
-      String auth = format("%1$s:%2$s", userAuth.getUsername(), userAuth.getPassword());
+      if (unencryptedPassword == null) {
+        unencryptedPassword = new String(userAuth.getPassword().decrypt());
+      }
+
+      String auth = format("%1$s:%2$s", userAuth.getUsername(), unencryptedPassword);
 
       byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(ISO_8859_1));
 
@@ -194,7 +201,7 @@ public class HttpClientFacetImpl
   }
 
   @Override
-  public String getBearerToken() {
+  public Secret getBearerToken() {
     if (config.authentication != null &&
         BearerTokenAuthenticationConfiguration.TYPE.equals(config.authentication.getType())) {
       return ((BearerTokenAuthenticationConfiguration) config.authentication).getBearerToken();

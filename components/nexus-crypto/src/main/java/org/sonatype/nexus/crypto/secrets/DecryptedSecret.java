@@ -10,36 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.httpclient;
-
-import javax.annotation.Nullable;
-
-import org.sonatype.nexus.crypto.secrets.Secret;
-import org.sonatype.nexus.repository.Facet;
-
-import org.apache.http.Header;
-import org.apache.http.client.HttpClient;
+package org.sonatype.nexus.crypto.secrets;
 
 /**
- * HTTP client facet.
+ * Intended to hold an unencrypted secret in memory for passing around in the application.
  *
- * @since 3.0
+ * Use this in a scenario where you have a class which expects a Secret but that secret should not be stored in the
+ * database.
  */
-@Facet.Exposed
-public interface HttpClientFacet
-  extends Facet
+public class DecryptedSecret
+    implements Secret
 {
-  HttpClient getHttpClient();
+  private final char[] secret;
 
-  RemoteConnectionStatus getStatus();
+  public DecryptedSecret(final char[] secret) {
+    this.secret = secret;
+  }
 
-  void setStatus(RemoteConnectionStatus status);
+  public String getId() {
+    throw new UnsupportedOperationException();
+  }
 
-  Header createBasicAuthHeader();
-
-  /**
-   * @since 3.20
-   */
-  @Nullable
-  Secret getBearerToken();
+  public char[] decrypt() {
+    return secret;
+  }
 }

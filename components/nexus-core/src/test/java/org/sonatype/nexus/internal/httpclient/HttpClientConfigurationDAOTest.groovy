@@ -15,9 +15,20 @@ package org.sonatype.nexus.internal.httpclient
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.common.Time
+import org.sonatype.nexus.common.db.DatabaseCheck
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
+import org.sonatype.nexus.crypto.LegacyCipherFactory
+import org.sonatype.nexus.crypto.PhraseService
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
+import org.sonatype.nexus.crypto.internal.LegacyCipherFactoryImpl
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl
+import org.sonatype.nexus.crypto.internal.PbeCipherFactory
+import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl
+import org.sonatype.nexus.crypto.maven.MavenCipher
+import org.sonatype.nexus.crypto.secrets.SecretsService
+import org.sonatype.nexus.crypto.secrets.SecretsStore
+import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeySource
+import org.sonatype.nexus.crypto.secrets.internal.SecretsServiceImpl
 import org.sonatype.nexus.datastore.api.DataSession
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration
 import org.sonatype.nexus.httpclient.config.ProxyConfiguration
@@ -26,8 +37,6 @@ import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
 import org.sonatype.nexus.internal.httpclient.handlers.AuthenticationConfigurationHandler
 import org.sonatype.nexus.internal.httpclient.handlers.ConnectionConfigurationHandler
 import org.sonatype.nexus.internal.httpclient.handlers.ProxyConfigurationHandler
-import org.sonatype.nexus.security.PasswordHelper
-import org.sonatype.nexus.crypto.PhraseService
 import org.sonatype.nexus.testdb.DataSessionRule
 
 import org.junit.Rule
@@ -40,14 +49,22 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 class HttpClientConfigurationDAOTest
     extends Specification
 {
-  PasswordHelper passwordHelper = new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl()),
-      PhraseService.LEGACY_PHRASE_SERVICE)
+  private LegacyCipherFactory legacyFactory = new LegacyCipherFactoryImpl(new CryptoHelperImpl());
+
+  private PbeCipherFactory pbeFactory = new PbeCipherFactoryImpl(new CryptoHelperImpl());
+
+  private MavenCipher mavenCipher = new MavenCipherImpl(new CryptoHelperImpl());
+
+  private SecretsService secretService = new SecretsServiceImpl(legacyFactory, mavenCipher,
+      PhraseService.LEGACY_PHRASE_SERVICE, pbeFactory, Mock(SecretsStore),
+      Mock(EncryptionKeySource), Mock(DatabaseCheck),
+      "changeme" ,"changeme", "0123456789ABCDEF")
 
   @Rule
   DataSessionRule sessionRule = new DataSessionRule()
-      .handle(new ConnectionConfigurationHandler(passwordHelper))
-      .handle(new ProxyConfigurationHandler(passwordHelper))
-      .handle(new AuthenticationConfigurationHandler(passwordHelper))
+      .handle(new ConnectionConfigurationHandler(secretService))
+      .handle(new ProxyConfigurationHandler(secretService))
+      .handle(new AuthenticationConfigurationHandler(secretService))
       .access(HttpClientConfigurationDAO)
 
   DataSession session
@@ -145,7 +162,7 @@ class HttpClientConfigurationDAOTest
     given: 'an item'
       def user = new UsernameAuthenticationConfiguration()
       user.username = 'foo'
-      user.password = 'bob'
+      user.password = secretService.encrypt('test', 'bob'.toCharArray(), 'test')
 
       def config = new HttpClientConfigurationData()
       config.authentication = user
@@ -161,11 +178,11 @@ class HttpClientConfigurationDAOTest
     then: 'content has been saved'
       assert readEntity.authentication.type == 'username'
       assert usernameConfig.username == 'foo'
-      assert usernameConfig.password == 'bob'
+      assert new String(usernameConfig.password.decrypt()) == 'bob'
 
     when: 'values are changed'
       usernameConfig.username = 'bar'
-      usernameConfig.password = 'obo'
+      usernameConfig.password = secretService.encrypt('test', 'obo'.toCharArray(), 'test')
 
     and: 'is updated'
       dao.set(readEntity)
@@ -176,7 +193,7 @@ class HttpClientConfigurationDAOTest
 
     then: 'values have been updated'
       assert usernameConfig.username == 'bar'
-      assert usernameConfig.password == 'obo'
+      assert new String(usernameConfig.password.decrypt()) == 'obo'
   }
 
   def 'Can update proxy configuration'() {
