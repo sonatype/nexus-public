@@ -42,7 +42,6 @@ import org.mockito.Mock;
 
 import static org.assertj.db.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
@@ -191,7 +190,7 @@ public class ApiKeyStoreV2ImplTest
     assertThat(token.get().getCreated(), notNullValue());
     assertThat(token.get().getDomain(), is(NUGET));
     assertThat(token.get().getPrimaryPrincipal(), is(PRINCIPALS.getPrimaryPrincipal()));
-    assertThat(token.get().getPrincipals().getRealmNames(), contains("ldap"));
+    assertThat(token.get().getRealm(), is("ldap"));
   }
 
   @Test
@@ -221,6 +220,7 @@ public class ApiKeyStoreV2ImplTest
     assertThat(table()).hasNumberOfRows(1)
         .column("domain").hasValues(NUGET)
         .column("username").hasValues(BOB)
+        .column("realm").hasValues("ldap")
         .column("access_key").hasValues(accessKey(KEY))
         .column("secret").hasValues("0");
 
@@ -238,6 +238,7 @@ public class ApiKeyStoreV2ImplTest
     assertThat(table()).hasNumberOfRows(1)
         .column("domain").hasValues(NUGET)
         .column("username").hasValues(BOB)
+        .column("realm").hasValues("ldap")
         .column("access_key").hasValues(accessKey(KEY2))
         .column("secret").hasValues("1");
   }
@@ -270,6 +271,7 @@ public class ApiKeyStoreV2ImplTest
     assertThat(table()).hasNumberOfRows(1)
         .column("domain").hasValues(NUGET)
         .column("username").hasValues(BOB)
+        .column("realm").hasValues("saml")
         .column("access_key").hasValues(accessKey(KEY))
         .column("secret").hasValues("0");
   }

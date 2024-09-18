@@ -16,8 +16,6 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,6 +30,7 @@ import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import org.apache.shiro.subject.PrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -65,7 +64,7 @@ public class ApiKeyStoreV2Impl
   @Transactional
   @Override
   public Collection<ApiKeyInternal> browseByCreatedDate(final String domain, final OffsetDateTime date) {
-    return dao().browseCreatedAfter(domain, date);
+    return dao().browseCreatedBefore(domain, date);
   }
 
   @Transactional
@@ -97,7 +96,7 @@ public class ApiKeyStoreV2Impl
 
   @Override
   public int deleteApiKeys(final PrincipalCollection principals) {
-    return findApiKeysForUser(principals)
+    return findApiKeysForUser(principals).stream()
         .mapToInt(this::deleteApiKey)
         .sum();
   }
@@ -116,7 +115,8 @@ public class ApiKeyStoreV2Impl
     checkNotNull(domain);
     checkNotNull(principals);
 
-    return findApiKey(domain, principals)
+    return dao().findApiKey(domain, Iterables.getOnlyElement(principals.getRealmNames()),
+        principals.getPrimaryPrincipal().toString())
         .map(ApiKeyInternal.class::cast);
   }
 
@@ -189,8 +189,8 @@ public class ApiKeyStoreV2Impl
   public void updateApiKey(final ApiKeyInternal from, final PrincipalCollection newPrincipal) {
     ApiKeyV2Data fromToken = (ApiKeyV2Data) from;
 
-    dao().updatePrincipal(new ApiKeyV2Data(from.getDomain(), newPrincipal, fromToken.getAccessKey(),
-        fromToken.getSecret(), fromToken.getCreated()));
+    dao().updateRealm(from.getDomain(), fromToken.getUsername(), fromToken.getAccessKey(), fromToken.getRealm(),
+        Iterables.getOnlyElement(newPrincipal.getRealmNames()));
   }
 
   @Transactional
@@ -225,26 +225,21 @@ public class ApiKeyStoreV2Impl
     checkNotNull(domain);
     checkNotNull(principals);
 
-    return dao().findApiKey(domain, principals.getPrimaryPrincipal().toString()).stream()
-        .filter(principalMatcher(principals))
-        .findFirst();
+    return dao().findApiKey(domain, Iterables.getOnlyElement(principals.getRealmNames()),
+        principals.getPrimaryPrincipal().toString());
   }
 
   @Transactional
-  protected Stream<ApiKeyV2Data> findApiKeysForUser(final PrincipalCollection principals) {
+  protected Collection<ApiKeyV2Data> findApiKeysForUser(final PrincipalCollection principals) {
     checkNotNull(principals);
 
-    return dao().findApiKeysForUser(principals.getPrimaryPrincipal().toString()).stream()
-        .filter(principalMatcher(principals));
+    return dao().findApiKeysForUser(Iterables.getOnlyElement(principals.getRealmNames()),
+        principals.getPrimaryPrincipal().toString());
   }
 
   @Transactional
   protected void doSave(final ApiKeyV2Data token) {
     dao().save(token);
-  }
-
-  private static Predicate<ApiKeyV2Data> principalMatcher(final PrincipalCollection collection) {
-    return apiKeyData -> apiKeyData.getPrincipals().equals(collection);
   }
 
   @VisibleForTesting

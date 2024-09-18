@@ -64,8 +64,6 @@ import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableCollection;
-import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE;
-import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE_NON_EXPOSED;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 
 /**
@@ -127,23 +125,6 @@ public class DefaultCapabilityRegistry
                                  @Nullable final String notes,
                                  @Nullable final Map<String, String> properties)
   {
-    return validateAndAdd(type, enabled, notes, properties, CREATE);
-  }
-
-  @Override
-  public CapabilityReference addNonExposed(final CapabilityType type,
-                                 final boolean enabled,
-                                 @Nullable final String notes,
-                                 @Nullable final Map<String, String> properties)
-  {
-    return validateAndAdd(type, enabled, notes, properties, CREATE_NON_EXPOSED);
-  }
-
-  private CapabilityReference validateAndAdd(final CapabilityType type,
-                                             final boolean enabled,
-                                             @Nullable final String notes,
-                                             @Nullable final Map<String, String> properties,
-                                             final ValidationMode validationMode) {
     checkNotNull(type);
 
     try {
@@ -155,7 +136,7 @@ public class DefaultCapabilityRegistry
 
       final CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
 
-      descriptor.validate(null, props, validationMode);
+      descriptor.validate(null, props, ValidationMode.CREATE);
 
       final Map<String, String> encryptedProps = encryptValuesIfNeeded(descriptor, props, Collections.emptyMap());
 
@@ -338,32 +319,6 @@ public class DefaultCapabilityRegistry
       validateId(id);
 
       DefaultCapabilityReference reference = get(id);
-
-      capabilityStorage.remove(id);
-
-      pruneSecretsIfNeeded(reference.descriptor(), Collections.emptyMap(), reference.encryptedProperties());
-
-      return doRemove(id);
-    }
-    finally {
-      lock.writeLock().unlock();
-    }
-  }
-
-  @Override
-  public CapabilityReference removeNonExposed(final CapabilityIdentity id) {
-    try {
-      lock.writeLock().lock();
-
-      validateId(id);
-
-      DefaultCapabilityReference reference = get(id);
-
-      final Map<String, String> props = reference.properties();
-
-      final CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(reference.type());
-
-      descriptor.validate(null, props, ValidationMode.DELETE_NON_EXPOSED);
 
       capabilityStorage.remove(id);
 

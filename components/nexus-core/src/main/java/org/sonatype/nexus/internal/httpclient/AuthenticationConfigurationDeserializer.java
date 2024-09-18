@@ -78,7 +78,6 @@ public class AuthenticationConfigurationDeserializer
     }
     else if (BearerTokenAuthenticationConfiguration.class.equals(type)) {
       BearerTokenAuthenticationConfiguration btac = (BearerTokenAuthenticationConfiguration) configuration;
-      btac.setBearerToken(btac.getBearerToken());
     }
     return configuration;
   }

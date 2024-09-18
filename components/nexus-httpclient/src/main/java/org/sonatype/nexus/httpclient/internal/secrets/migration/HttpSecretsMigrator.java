@@ -15,7 +15,6 @@ package org.sonatype.nexus.httpclient.internal.secrets.migration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -23,6 +22,7 @@ import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
+import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
@@ -88,11 +88,7 @@ public class HttpSecretsMigrator
     }
   }
 
-  private void migrateSecret(
-      final AuthenticationConfiguration config,
-      final List<Secret> secrets,
-      final String context)
-  {
+  private void migrateSecret(AuthenticationConfiguration config, List<Secret> secrets, String context) {
     Secret secret = Optional.ofNullable(config)
         .map(AuthenticationConfiguration::getSecret)
         .orElse(null);
@@ -110,6 +106,9 @@ public class HttpSecretsMigrator
     }
     else if (configuration.getClass().equals(NtlmAuthenticationConfiguration.class)) {
       ((NtlmAuthenticationConfiguration) configuration).setPassword(secret);
+    }
+    else if (configuration.getClass().equals(BearerTokenAuthenticationConfiguration.class)) {
+      ((BearerTokenAuthenticationConfiguration) configuration).setBearerToken(secret);
     }
   }
 

@@ -66,15 +66,15 @@ export default {
       }
     },
     RISK_ON_DISK: {
-      TITLE_PLURAL: 'Malware Components Found',
-      TITLE_SINGULAR: 'Malware Component Found',
+      TITLE: 'Malicious Components Found in Your Repository',
       DESCRIPTION: {
-        TITLE: <><strong>Open source malware is cached in the proxy repositories of this instance of Nexus Repository Manager</strong></>,
-        CONTENT: 'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action is required to remove this malware from your repository.',
-        ADDITIONAL_NON_ADMIN_CONTENT: <><strong>Contact your instance administrator to resolve.</strong></>
+        NON_ADMIN_OSS: 'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
+        NON_ADMIN_PRO: 'Contact Sonatype or your Nexus Repository administrator for more information.',
+        ADMIN_OSS: 'Protect your repositories from malware with Sonatype Malware Defense.',
+        ADMIN_PRO: 'Protect your repositories from malware with Sonatype Malware Defense.'
       },
       CONTACT_SONATYPE: {
-        TEXT: 'Contact Sonatype to Resolve',
+        TEXT: 'Contact Sonatype',
         URL: {
           OSS: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/oss-admin-learn-more',
           PRO: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more'

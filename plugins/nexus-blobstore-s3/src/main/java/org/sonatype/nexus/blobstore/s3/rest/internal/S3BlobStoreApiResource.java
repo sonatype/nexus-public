@@ -31,16 +31,15 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.rest.BlobStoreResourceUtil;
 import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
-import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.status;
@@ -49,7 +48,6 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConstants.NOT_AN_S3_BLOB_STORE_MSG_FORMAT;
 import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelMapper.map;
@@ -69,16 +67,12 @@ public class S3BlobStoreApiResource
 
   private final BlobStoreManager blobStoreManager;
 
-  private SecretsFactory secretsFactory;
-
   public S3BlobStoreApiResource(
       final BlobStoreManager blobStoreManager,
-      final S3BlobStoreApiUpdateValidation validation,
-      final SecretsFactory secretsFactory)
+      final S3BlobStoreApiUpdateValidation validation)
   {
     this.blobStoreManager = blobStoreManager;
     this.s3BlobStoreApiUpdateValidation = validation;
-    this.secretsFactory = checkNotNull(secretsFactory);
   }
 
   @POST
@@ -113,17 +107,8 @@ public class S3BlobStoreApiResource
     if (isPasswordUntouched(request)) {
       //Did not update the password, just use the password we already have
       BlobStore currentS3Blobstore = blobStoreManager.get(blobStoreName);
-      String secretId = currentS3Blobstore.getBlobStoreConfiguration()
-          .getAttributes()
-          .get(TYPE.toLowerCase())
-          .get(SECRET_ACCESS_KEY_KEY)
-          .toString();
-
-      String decryptedSecretKey = new String(secretsFactory.from(secretId).decrypt());
-
-      request.getBucketConfiguration()
-          .getBucketSecurity()
-          .setSecretAccessKey(decryptedSecretKey);
+      request.getBucketConfiguration().getBucketSecurity().setSecretAccessKey(
+          currentS3Blobstore.getBlobStoreConfiguration().getAttributes().get("s3").get("secretAccessKey").toString());
     }
 
     try {

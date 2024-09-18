@@ -20,13 +20,13 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.sonatype.nexus.upgrade.datastore.UpgradeException;
+import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
+import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
 
 import org.flywaydb.core.api.MigrationVersion;
 import org.junit.Before;

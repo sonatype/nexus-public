@@ -43,6 +43,6 @@ public class AuditCapabilityBooterTest
     when(capabilityRegistry.get(any(CapabilityReferenceFilter.class))).thenReturn(null);
     underTest.boot(capabilityRegistry);
 
-    verify(capabilityRegistry).addNonExposed(eq(AuditCapability.TYPE), eq(true), any(), any());
+    verify(capabilityRegistry).add(eq(AuditCapability.TYPE), eq(true), any(), any());
   }
 }

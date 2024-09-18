@@ -10,12 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+@FeatureFlag(name = DATASTORE_ENABLED)
+package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 
-package org.sonatype.nexus.validation.group;
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-/**
- * Bean Validation group that should be used when deleting non-exposed entities.
- */
-public interface DeleteNonExposed extends ValidationGroup
-{
-}
+import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;

@@ -54,7 +54,7 @@ import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUC
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
+
 
 /**
  * A {@link BlobStoreDescriptor} for {@link S3BlobStore}.
@@ -132,11 +132,6 @@ public class S3BlobStoreDescriptor
   @Override
   public Map<String, List<SelectOption>> getDropDownValues() {
     return s3SelectOptions;
-  }
-
-  @Override
-  public List<String> getSensitiveConfigurationFields() {
-    return Collections.singletonList(SECRET_ACCESS_KEY_KEY);
   }
 
   private Map<String, List<SelectOption>> intializeSelectOptions() {

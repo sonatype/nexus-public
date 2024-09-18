@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.manager.internal;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -53,9 +52,8 @@ public class HttpAuthenticationPasswordEncoder
    * Encode password if present in the provided attributes
    */
   public void encodeHttpAuthPassword(final Map<String, Map<String, Object>> attributes) {
-    getAuthentication(attributes).ifPresent(authentication -> {
-      authentication.computeIfPresent(PASSWORD, (key, value) -> encrypt((String) value));
-    });
+    getAuthentication(attributes).ifPresent(authentication ->
+        authentication.computeIfPresent(PASSWORD, (key, value) -> encrypt((String) value)));
   }
 
   /**
@@ -67,7 +65,13 @@ public class HttpAuthenticationPasswordEncoder
       final Map<String, Map<String, Object>> newAttributes)
   {
     getAuthentication(newAttributes).ifPresent(newAuth -> {
-      encodeAuthSecret(PASSWORD, newAuth, attributesToPrune);
+      final String newPassword = (String) newAuth.get(PASSWORD);
+      final String oldPassword =
+          (String) getAuthentication(attributesToPrune).map(oldAuth -> oldAuth.get(PASSWORD)).orElse(null);
+      if (!StringUtils.equals(oldPassword, newPassword)) {
+        log.debug("Secret changed. Creating new secret");
+        newAuth.computeIfPresent(PASSWORD, (key, value) -> encrypt((String) value));
+      }
     });
   }
 
@@ -80,75 +84,37 @@ public class HttpAuthenticationPasswordEncoder
       final Map<String, Map<String, Object>> attributesToPrune,
       final Map<String, Map<String, Object>> persistedAttributes)
   {
-    ofNullable(findAuthKey(attributesToPrune))
-        .ifPresent(authKey -> removeAuthSecret(attributesToPrune, persistedAttributes, authKey));
+    final Optional<Map<String, Object>> newAuthentication = getAuthentication(persistedAttributes);
+    if (!newAuthentication.map(auth -> auth.get(PASSWORD)).isPresent()) {
+      log.debug("No new secret. Removing old secret.");
+      removeSecret(attributesToPrune);
+      return;
+    }
+
+    newAuthentication.ifPresent(newAuth ->
+        getAuthentication(attributesToPrune).ifPresent(oldAuth -> {
+          final String newPassword = (String) newAuth.get(PASSWORD);
+          final String oldPassword = (String) oldAuth.get(PASSWORD);
+          if (!StringUtils.equals(oldPassword, newPassword)) {
+            log.debug("Secret changed. Removing old secret.");
+            removeSecret(attributesToPrune);
+          }
+        }));
   }
 
   /**
    * Remove secret
    */
   public void removeSecret(final Map<String, Map<String, Object>> attributes) {
-    final String authSecretKey = findAuthKey(attributes);
-    ofNullable(authSecretKey).ifPresent(authKey -> removeSecret(attributes, authKey));
-  }
-
-  private void removeSecret(final Map<String, Map<String, Object>> attributes, final String authSecretKey) {
     try {
       getAuthentication(attributes).ifPresent(authentication -> {
-        final String authSecret = (String) authentication.get(authSecretKey);
+        final String password = (String) authentication.get(PASSWORD);
         log.debug("Removing secret.");
-        if (Objects.nonNull(authSecret)) {
-          secretsService.remove(secretsService.from(authSecret));
-        }
+        secretsService.remove(secretsService.from(password));
       });
     }
     catch (Exception e) {
       log.error(e.getMessage(), e);
-    }
-  }
-
-  private String findAuthKey(final Map<String, Map<String, Object>> attributesToPrune) {
-    final Optional<Map<String, Object>> authentication = getAuthentication(attributesToPrune);
-    return authentication
-        .map(auth -> auth.get(PASSWORD))
-        .map(value -> PASSWORD)
-        .orElse(null);
-  }
-
-  private void removeAuthSecret(
-      final Map<String, Map<String, Object>> attributesToPrune,
-      final Map<String, Map<String, Object>> persistedAttributes,
-      final String authSecretKey)
-  {
-    final Optional<Map<String, Object>> newAuthentication = getAuthentication(persistedAttributes);
-    if (!newAuthentication.map(auth -> auth.get(authSecretKey)).isPresent()) {
-      log.debug("No new secret. Removing old secret.");
-      removeSecret(attributesToPrune, authSecretKey);
-      return;
-    }
-
-    newAuthentication.ifPresent(newAuth ->
-        getAuthentication(attributesToPrune).ifPresent(oldAuth -> {
-          final String newPassword = (String) newAuth.get(authSecretKey);
-          final String oldPassword = (String) oldAuth.get(authSecretKey);
-          if (!StringUtils.equals(oldPassword, newPassword)) {
-            log.debug("Secret changed. Removing old secret.");
-            removeSecret(attributesToPrune, authSecretKey);
-          }
-        }));
-  }
-
-  private void encodeAuthSecret(
-      final String authSecretKey,
-      final Map<String, Object> authenticationDetails,
-      final Map<String, Map<String, Object>> attributesToPrune)
-  {
-    final String newAuthSecret = (String) authenticationDetails.get(authSecretKey);
-    final String oldAuthSecret =
-        (String) getAuthentication(attributesToPrune).map(oldAuth -> oldAuth.get(authSecretKey)).orElse(null);
-    if (StringUtils.isNotBlank(newAuthSecret) && !StringUtils.equals(oldAuthSecret, newAuthSecret)) {
-      log.debug("Secret changed. Creating new secret");
-      authenticationDetails.computeIfPresent(authSecretKey, (key, value) -> encrypt((String) value));
     }
   }
 

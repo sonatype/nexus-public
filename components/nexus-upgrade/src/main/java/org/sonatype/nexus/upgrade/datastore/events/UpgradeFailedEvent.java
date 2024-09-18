@@ -10,12 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.upgrade.datastore.events;
 
-package org.sonatype.nexus.validation.group;
+import javax.annotation.Nullable;
 
 /**
- * Bean Validation group that should be used when deleting entities.
+ * An event fired when a database migration fails.
  */
-public interface Delete extends ValidationGroup
+public class UpgradeFailedEvent
+    extends UpgradeEventSupport
 {
+  private String errorMessage;
+
+  protected UpgradeFailedEvent() {
+    // deserialization
+  }
+
+  public UpgradeFailedEvent(@Nullable final String user, final String schemaVersion, final String errorMessage, final String... migrations) {
+    super(user, schemaVersion, migrations);
+    this.errorMessage = errorMessage;
+  }
+
+  /**
+   * @return the error message associated with the failure
+   */
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  public void setErrorMessage(final String errorMessage) {
+    this.errorMessage = errorMessage;
+  }
 }

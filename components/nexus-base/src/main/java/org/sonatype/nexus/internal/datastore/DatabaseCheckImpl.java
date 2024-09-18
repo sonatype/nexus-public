@@ -27,8 +27,8 @@ import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
-import org.sonatype.nexus.common.upgrade.events.UpgradeEventSupport;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
+import org.sonatype.nexus.upgrade.datastore.events.UpgradeEventSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;

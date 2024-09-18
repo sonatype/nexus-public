@@ -23,7 +23,6 @@ import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
-import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.PredefinedClientConfigurations;
@@ -44,7 +43,6 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.google.common.base.Predicates;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
@@ -68,19 +66,15 @@ public class AmazonS3Factory
 
   private final Time connectionTtl;
 
-  private final SecretsFactory secretsFactory;
-
   @Inject
   public AmazonS3Factory(@Named("${nexus.s3.connection.pool:--1}") final int connectionPoolSize,
                          @Nullable @Named("${nexus.s3.connection.ttl:-null}") final Time connectionTtl,
                          @Named("${nexus.s3.cloudwatchmetrics.enabled:-false}") final boolean cloudWatchMetricsEnabled,
-                         @Named("${nexus.s3.cloudwatchmetrics.namespace:-nexus-blobstore-s3}") final String cloudWatchMetricsNamespace,
-                         final SecretsFactory secretsFactory) {
+                         @Named("${nexus.s3.cloudwatchmetrics.namespace:-nexus-blobstore-s3}") final String cloudWatchMetricsNamespace) {
     this.defaultConnectionPoolSize = connectionPoolSize;
     this.cloudWatchMetricsEnabled = cloudWatchMetricsEnabled;
     this.cloudWatchMetricsNamespace = cloudWatchMetricsNamespace;
     this.connectionTtl = connectionTtl;
-    this.secretsFactory = checkNotNull(secretsFactory);
   }
 
   public AmazonS3 create(final BlobStoreConfiguration blobStoreConfiguration) {
@@ -101,8 +95,7 @@ public class AmazonS3Factory
     AWSCredentialsProvider credentialsProvider = null;
     if (!isNullOrEmpty(accessKeyId) && !isNullOrEmpty(secretAccessKey)) {
       String sessionToken = s3Configuration.get(SESSION_TOKEN_KEY, String.class);
-      String decryptedAccessKey = new String(secretsFactory.from(secretAccessKey).decrypt());
-      AWSCredentials credentials = buildCredentials(accessKeyId, decryptedAccessKey, sessionToken);
+      AWSCredentials credentials = buildCredentials(accessKeyId, secretAccessKey, sessionToken);
 
       String assumeRole = s3Configuration.get(ASSUME_ROLE_KEY, String.class);
       credentialsProvider = buildCredentialsProvider(credentials, region, assumeRole);

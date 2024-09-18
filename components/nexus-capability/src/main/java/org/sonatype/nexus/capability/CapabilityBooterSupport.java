@@ -48,10 +48,6 @@ public abstract class CapabilityBooterSupport
 
   protected abstract void boot(final CapabilityRegistry registry) throws Exception;
 
-  /**
-   * This method is ONLY to be called when internally creating capabilities programmatically. Users should not be able
-   * to utilize this method in any fashion.
-   */
   protected void maybeAddCapability(final CapabilityRegistry capabilityRegistry,
                                     final CapabilityType type,
                                     final boolean enabled,
@@ -89,10 +85,6 @@ public abstract class CapabilityBooterSupport
     return null;
   }
 
-  /**
-   * This method is ONLY to be called when internally creating capabilities programmatically. Users should not be able
-   * to utilize this method in any fashion.
-   */
   protected void addCapability(final CapabilityRegistry capabilityRegistry,
                                final CapabilityType type,
                                final boolean enabled,
@@ -100,6 +92,6 @@ public abstract class CapabilityBooterSupport
                                @Nullable final Map<String, String> properties)
       throws Exception
   {
-    capabilityRegistry.addNonExposed(type, enabled, notes == null ? "Automatically added on " + new Date() : notes, properties);
+    capabilityRegistry.add(type, enabled, notes == null ? "Automatically added on " + new Date() : notes, properties);
   }
 }

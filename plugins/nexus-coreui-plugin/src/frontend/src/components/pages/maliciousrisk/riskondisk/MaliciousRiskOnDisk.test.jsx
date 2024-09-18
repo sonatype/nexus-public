@@ -16,20 +16,14 @@ import axios from "axios";
 import {render, screen, waitForElementToBeRemoved} from "@testing-library/react";
 import {act} from "react-dom/test-utils";
 
-import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
+import userEvent from '@testing-library/user-event';
+import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
 
-import {maliciousRiskOnDiskResponse, maliciousRiskOnDiskResponseWithCount0} from "./MaliciousRiskOnDisk.testdata";
+import {maliciousRiskOnDiskResponse} from "./MaliciousRiskOnDisk.testdata";
 import MaliciousRiskOnDisk from "./MaliciousRiskOnDisk";
-import FeatureFlags from '../../../../constants/FeatureFlags';
-import MaliciousRiskStrings from "../../../../constants/pages/maliciousrisk/MaliciousRiskStrings";
 
 const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
-const {
-  MALWARE_RISK_ENABLED,
-  MALWARE_RISK_ON_DISK_ENABLED
-} = FeatureFlags;
-const {MALICIOUS_RISK: {RISK_ON_DISK}} = MaliciousRiskStrings;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -58,10 +52,10 @@ const selectors = {
 describe('MaliciousRiskOnDisk', () => {
   beforeEach(() => {
     when(ExtJS.state().getValue)
-        .calledWith(MALWARE_RISK_ON_DISK_ENABLED)
+        .calledWith('nexus.malicious.risk.on.disk.enabled')
         .mockReturnValue(true);
     when(ExtJS.state().getValue)
-        .calledWith(MALWARE_RISK_ENABLED)
+        .calledWith('MaliciousRiskDashboard')
         .mockReturnValue(true);
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockResolvedValue({
       data: maliciousRiskOnDiskResponse
@@ -72,9 +66,8 @@ describe('MaliciousRiskOnDisk', () => {
     window.location.hash = `#browse/${page}`;
     ExtJS.isProEdition.mockReturnValue(isProEdition);
     ExtJS.useUser.mockReturnValue({'administrator': isAdmin});
-    const rerender = jest.fn();
 
-    render(<MaliciousRiskOnDisk rerender={rerender}/>);
+    render(<MaliciousRiskOnDisk/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 
@@ -91,20 +84,8 @@ describe('MaliciousRiskOnDisk', () => {
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
   ('does not render if feature flag is false', async (page) => {
     when(ExtJS.state().getValue)
-        .calledWith(MALWARE_RISK_ON_DISK_ENABLED)
+        .calledWith('nexus.malicious.risk.on.disk.enabled')
         .mockReturnValue(false);
-    await act(async () => {
-      render(<MaliciousRiskOnDisk/>);
-    });
-
-    expect(selectors.queryAlert()).not.toBeInTheDocument();
-  });
-
-  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
-  ('does not render if malicious count is 0', async (page) => {
-    when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockResolvedValue({
-      data: maliciousRiskOnDiskResponseWithCount0
-    });
     await act(async () => {
       render(<MaliciousRiskOnDisk/>);
     });
@@ -130,8 +111,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
-        showContactSonatypeBtn, isProEdition);
+    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Protect your repositories from malware with Sonatype Malware Defense.', showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -143,8 +124,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
-        showContactSonatypeBtn, isProEdition);
+    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Protect your repositories from malware with Sonatype Malware Defense.', showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -156,8 +137,9 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
-        showContactSonatypeBtn, isProEdition);
+    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Contact Sonatype or your Nexus Repository administrator for more information.', showContactSonatypeBtn,
+        isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -169,7 +151,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
+    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
         showContactSonatypeBtn, isProEdition);
   });
 
@@ -178,16 +161,25 @@ describe('MaliciousRiskOnDisk', () => {
     expect(selectors.getHeading(title)).toBeInTheDocument();
     expect(selectors.queryAlert()).toHaveTextContent(description);
 
+    if (page === 'malicious') {
+      expect(selectors.queryButton('View OSS Malware Risk')).not.toBeInTheDocument();
+    }
+    else {
+      expect(selectors.queryButton('View OSS Malware Risk')).toBeInTheDocument();
+      await userEvent.click(selectors.queryButton('View OSS Malware Risk'));
+      expect(window.location.hash).toBe('#browse/maliciousrisk');
+    }
+
     if (showContactSonatypeBtn) {
-      expect(selectors.queryLink('Contact Sonatype to Resolve')).toBeInTheDocument();
+      expect(selectors.queryLink('Contact Sonatype')).toBeInTheDocument();
 
       if (isProEdition) {
-        expect(selectors.queryLink('Contact Sonatype to Resolve'))
+        expect(selectors.queryLink('Contact Sonatype'))
             .toHaveAttribute('href',
                 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more');
       }
       else {
-        expect(selectors.queryLink('Contact Sonatype to Resolve'))
+        expect(selectors.queryLink('Contact Sonatype'))
             .toHaveAttribute('href',
                 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/oss-admin-learn-more');
       }

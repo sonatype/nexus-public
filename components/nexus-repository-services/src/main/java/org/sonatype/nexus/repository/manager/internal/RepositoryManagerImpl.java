@@ -444,7 +444,8 @@ public class RepositoryManagerImpl
       }
     }
     catch (Exception e) {
-      httpAuthenticationPasswordEncoder.removeSecret(configuration.getAttributes(), oldConfiguration.getAttributes());
+      httpAuthenticationPasswordEncoder.removeSecret(oldConfiguration.getAttributes(),
+          configuration.getAttributes());
       throw e;
     }
 

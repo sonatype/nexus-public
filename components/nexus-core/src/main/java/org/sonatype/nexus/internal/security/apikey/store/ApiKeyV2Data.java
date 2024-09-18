@@ -19,7 +19,9 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
 
+import com.google.common.collect.Iterables;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -29,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ApiKeyV2Data
     implements ApiKeyInternal
 {
-  private PrincipalCollection principals;
+  private String realm;
 
   private String username;
 
@@ -51,7 +53,7 @@ public class ApiKeyV2Data
       @Nullable final OffsetDateTime created)
   {
     this.domain = checkNotNull(domain);
-    this.principals = checkNotNull(principals);
+    this.realm = extractRealm(principals);
     this.username = principals.getPrimaryPrincipal().toString();
     this.accessKey = checkNotNull(accessKey);
     this.secret = checkNotNull(secret);
@@ -86,7 +88,11 @@ public class ApiKeyV2Data
 
   @Override
   public PrincipalCollection getPrincipals() {
-    return principals;
+    return new SimplePrincipalCollection(username, realm);
+  }
+
+  public String getRealm() {
+    return realm;
   }
 
   public Secret getSecret() {
@@ -113,11 +119,16 @@ public class ApiKeyV2Data
 
   @Override
   public void setPrincipals(final PrincipalCollection principals) {
-    this.principals = checkNotNull(principals);
+    this.realm = extractRealm(principals);
     this.username = principals.getPrimaryPrincipal().toString();
   }
 
   public void setSecret(final Secret secret) {
     this.secret = secret;
+  }
+
+  private static String extractRealm(final PrincipalCollection principals) {
+    checkNotNull(principals);
+    return Iterables.getOnlyElement(principals.getRealmNames());
   }
 }

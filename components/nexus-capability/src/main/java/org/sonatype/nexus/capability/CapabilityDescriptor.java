@@ -14,21 +14,18 @@ package org.sonatype.nexus.capability;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.formfields.FormField;
-import org.sonatype.nexus.validation.group.Create;
-import org.sonatype.nexus.validation.group.CreateNonExposed;
-import org.sonatype.nexus.validation.group.Delete;
-import org.sonatype.nexus.validation.group.DeleteNonExposed;
-import org.sonatype.nexus.validation.group.Load;
-import org.sonatype.nexus.validation.group.Update;
 
 /**
- * Describes a capability (its type). Note: Do not inject List<BlobStoreDescriptors> and instead opt to use
- * DefaultCapabilityDescriptorProvider
+ * Describes a capability (its type).
+ * Note: Do not inject List<BlobStoreDescriptors> and instead opt to use DefaultCapabilityDescriptorProvider
  */
-public interface CapabilityDescriptor {
+public interface CapabilityDescriptor
+{
+
   /**
    * Returns the capability type.
    *
@@ -99,23 +96,9 @@ public interface CapabilityDescriptor {
    */
   Map<String, String> convert(Map<String, String> properties, int fromVersion);
 
-  enum ValidationMode {
-    CREATE(Create.class),
-    CREATE_NON_EXPOSED(CreateNonExposed.class),
-    UPDATE(Update.class),
-    LOAD(Load.class),
-    DELETE(Delete.class),
-    DELETE_NON_EXPOSED(DeleteNonExposed.class);
-
-    private final Class<?> groupingClass;
-
-    ValidationMode(final Class<?> groupingClass) {
-      this.groupingClass = groupingClass;
-    }
-
-    public Class<?> getGroupingClass() {
-      return groupingClass;
-    }
+  enum ValidationMode
+  {
+    CREATE, UPDATE, LOAD
   }
 
   /**
@@ -127,7 +110,6 @@ public interface CapabilityDescriptor {
 
   /**
    * Optional warning message to display when disabling the capability.
-   *
    * @since 3.34
    */
   @Nullable
@@ -137,7 +119,6 @@ public interface CapabilityDescriptor {
 
   /**
    * Optional warning message to display when deleting the capability.
-   *
    * @since 3.34
    */
   @Nullable

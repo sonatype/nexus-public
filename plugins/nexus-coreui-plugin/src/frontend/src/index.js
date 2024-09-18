@@ -69,9 +69,6 @@ import UsageMetricsAlert from './components/pages/user/Welcome/UsageMetricsAlert
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 import MaliciousRisk from "./components/pages/maliciousrisk/MaliciousRisk";
 import MaliciousRiskOnDisk from "./components/pages/maliciousrisk/riskondisk/MaliciousRiskOnDisk";
-import FeatureFlags from './constants/FeatureFlags';
-
-const {MALWARE_RISK_ENABLED} = FeatureFlags;
 
 window.ReactComponents = {
   ...window.ReactComponents,
@@ -638,7 +635,7 @@ window.plugins.push({
         requiresUser: true,
         statesEnabled: [
           {
-            key: MALWARE_RISK_ENABLED,
+            key: 'MaliciousRiskDashboard',
             defaultValue: false
           }
         ],

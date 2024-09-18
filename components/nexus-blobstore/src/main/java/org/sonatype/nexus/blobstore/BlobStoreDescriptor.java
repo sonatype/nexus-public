@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.blobstore;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -108,13 +107,6 @@ public interface BlobStoreDescriptor
    */
   default boolean isConnectionTestable() {
     return false;
-  }
-
-  /**
-   * @return a list of the names of the fields that should be encrypted in the configuration
-   */
-  default List<String> getSensitiveConfigurationFields() {
-    return Collections.emptyList();
   }
 
   default Map<String, List<SelectOption>> getDropDownValues() {return null;}

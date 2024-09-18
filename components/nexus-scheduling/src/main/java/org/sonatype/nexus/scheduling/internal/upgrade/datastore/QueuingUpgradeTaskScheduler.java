@@ -15,6 +15,7 @@ package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 import java.time.Duration;
 import java.util.Optional;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -24,11 +25,8 @@ import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
-import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -54,6 +52,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * When a task fails, or is canceled the queue will stop until a Nexus node restarts at which point it will resume the
  * executing the queue. Uses events to identify when a task changes state.
  */
+@Priority(Integer.MAX_VALUE)
 @Named
 @Singleton
 @ManagedLifecycle(phase = TASKS)
@@ -95,6 +94,10 @@ public class QueuingUpgradeTaskScheduler
   @Override
   public void schedule(final TaskConfiguration configuration) {
     upgradeTaskStore.insert(new UpgradeTaskData(configuration.getId(), configuration.asMap()));
+
+    if (this.isStarted()) {
+      maybeStartQueue();
+    }
   }
 
   /**
@@ -117,30 +120,6 @@ public class QueuingUpgradeTaskScheduler
   protected void doStop() throws Exception {
     if (checkRequiresMigration) {
       periodicJobService.stopUsing();
-    }
-  }
-
-  /**
-   * Listens for local upgrade events, this is used to start the queue after upgrades so tasks aren't invoked during
-   * a rolling upgrade.
-   */
-  @Subscribe
-  public void on(final UpgradeCompletedEvent event) {
-    if (this.isStarted() && !EventHelper.isReplicating()) {
-      log.debug("Starting queue due to event {}", event);
-      maybeStartQueue();
-    }
-  }
-
-  /**
-   * Listens for local upgrade events, this is used to start the queue after upgrades so tasks aren't invoked during
-   * a rolling upgrade.
-   */
-  @Subscribe
-  public void on(final UpgradeFailedEvent event) {
-    if (this.isStarted() && !EventHelper.isReplicating()) {
-      log.debug("Starting queue due to event {}", event);
-      maybeStartQueue();
     }
   }
 

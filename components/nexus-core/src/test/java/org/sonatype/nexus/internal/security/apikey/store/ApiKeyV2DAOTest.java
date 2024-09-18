@@ -25,12 +25,10 @@ import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
-import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStore;
-import org.sonatype.nexus.datastore.mybatis.handlers.PrincipalCollectionTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.SecretTypeHandler;
 import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -45,7 +43,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.Mock;
 import org.mockito.internal.stubbing.defaultanswers.ReturnsMocks;
 
 import static org.assertj.db.api.Assertions.assertThat;
@@ -57,7 +54,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -93,24 +89,14 @@ public class ApiKeyV2DAOTest
 
   private SecretsFactory factory = mock(SecretsFactory.class, new ReturnsMocks());
 
-  private final PrincipalCollectionTypeHandler principalHandler = new PrincipalCollectionTypeHandler();
-
-  @Mock
-  private PbeCipher cipher;
-
   @Rule
-  public DataSessionRule sessionRule = new DataSessionRule()
-      .access(ApiKeyV2DAO.class)
-      .handle(new SecretTypeHandler(factory))
-      .handle(principalHandler);
+  public DataSessionRule sessionRule =
+      new DataSessionRule().access(ApiKeyV2DAO.class).handle(new SecretTypeHandler(factory));
 
   @Before
   public void setup() {
     when(factory.from(anyString()))
         .thenAnswer(i -> storedSecrets.get(i.getArguments()[0]));
-
-    when(cipher.encrypt(any())).thenAnswer(i -> i.getArguments()[0]);
-    when(cipher.decrypt(any())).thenAnswer(i -> i.getArguments()[0]);
   }
 
   /*
@@ -145,7 +131,7 @@ public class ApiKeyV2DAOTest
    * update should successfully update matching ApiKey record
    */
   @Test
-  public void testUpdatePrincipal() {
+  public void testUpdateRealm() {
     ApiKeyV2Data apiKeyEntity = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
     ApiKeyV2Data anotherApiKeyEntity = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
     withDao(dao -> dao.save(apiKeyEntity));
@@ -159,8 +145,8 @@ public class ApiKeyV2DAOTest
     assertSavedApiKey(savedApiKey2, API_KEY2);
 
     // make a change
-    savedApiKey1.setPrincipals(principalCollection(apiKeyEntity.getUsername(), ANOTHER_REALM));
-    withDao(dao -> dao.updatePrincipal((ApiKeyV2Data) savedApiKey1));
+    withDao(dao -> dao.updateRealm(DOMAIN, apiKeyEntity.getUsername(), apiKeyEntity.getAccessKey(),
+        apiKeyEntity.getRealm(), ANOTHER_REALM));
 
     ApiKeyInternal updatedApiKey = findApiKey(DOMAIN, ANOTHER_REALM, A_PRINCIPAL).get();
     assertNotNull(updatedApiKey);
@@ -216,14 +202,14 @@ public class ApiKeyV2DAOTest
     withDao(dao -> dao.save(anApiKeyEntity(API_KEY3, ANOTHER_DOMAIN, A_PRINCIPAL)));
     withDao(dao -> dao.save(anApiKeyEntity(API_KEY4, ANOTHER_DOMAIN, ANOTHER_PRINCIPAL)));
 
-    Optional<ApiKeyV2Data> result = callDao(dao -> dao.findApiKey(DOMAIN, A_PRINCIPAL)).stream().findFirst();
+    Optional<ApiKeyV2Data> result = callDao(dao -> dao.findApiKey(DOMAIN, A_REALM, A_PRINCIPAL));
     assertSavedApiKey(result.get(), API_KEY1);
 
     //
-    result = callDao(dao -> dao.findApiKey(DOMAIN, ANOTHER_PRINCIPAL)).stream().findFirst();
+    result = callDao(dao -> dao.findApiKey(DOMAIN, A_REALM, ANOTHER_PRINCIPAL));
     assertSavedApiKey(result.get(), API_KEY2);
 
-    result = callDao(dao -> dao.findApiKey(ANOTHER_DOMAIN, A_PRINCIPAL)).stream().findFirst();
+    result = callDao(dao -> dao.findApiKey(ANOTHER_DOMAIN, A_REALM, A_PRINCIPAL));
     assertSavedApiKey(result.get(), API_KEY3);
   }
 
@@ -263,25 +249,6 @@ public class ApiKeyV2DAOTest
     withDao(dao -> dao.save(anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL)));
 
     assertThat(callDao(dao -> dao.browse(DOMAIN)), containsInAnyOrder(token(entity1), token(entity2)));
-  }
-
-  @Test
-  public void testBrowseCreatedAfter() {
-    ApiKeyV2Data entity1 = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
-    ApiKeyV2Data entity2 = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
-    ApiKeyV2Data entity3 = anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL);
-
-    OffsetDateTime entity1Date = OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-    OffsetDateTime entity2Date = OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-
-    entity1.setCreated(entity1Date);
-    entity2.setCreated(entity2Date);
-
-    withDao(dao -> dao.save(entity1));
-    withDao(dao -> dao.save(entity2));
-    withDao(dao -> dao.save(anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL)));
-
-    assertThat(callDao(dao -> dao.browseCreatedAfter(DOMAIN, entity1Date)), contains(token(entity2), token(entity3)));
   }
 
   @Test
@@ -351,9 +318,7 @@ public class ApiKeyV2DAOTest
   }
 
   private Optional<ApiKeyV2Data> findApiKey(final String domain, final String realm, final String primaryPrincipal) {
-    return callDao(dao -> dao.findApiKey(domain, primaryPrincipal)).stream()
-        .filter(key -> key.getPrincipals().getRealmNames().contains(realm))
-        .findFirst();
+    return callDao(dao -> dao.findApiKey(domain, realm, primaryPrincipal));
   }
 
   private Table table() {

@@ -10,35 +10,39 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.upgrade.events;
+package org.sonatype.nexus.upgrade.datastore.events;
+
+import java.util.Collection;
 
 import javax.annotation.Nullable;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
- * An event fired when a database migration fails.
+ * An event fired when a database migration has completed.
  */
-public class UpgradeFailedEvent
+public class UpgradeCompletedEvent
     extends UpgradeEventSupport
 {
-  private String errorMessage;
+  private Collection<String> nodeIds;
 
-  protected UpgradeFailedEvent() {
+  protected UpgradeCompletedEvent() {
     // deserialization
   }
 
-  public UpgradeFailedEvent(@Nullable final String user, final String schemaVersion, final String errorMessage, final String... migrations) {
+  public UpgradeCompletedEvent(@Nullable final String user, final String schemaVersion, final Collection<String> nodeIds, final String... migrations) {
     super(user, schemaVersion, migrations);
-    this.errorMessage = errorMessage;
+    this.nodeIds = checkNotNull(nodeIds);
   }
 
   /**
-   * @return the error message associated with the failure
+   * Return the nodes who participated in the quorum
    */
-  public String getErrorMessage() {
-    return errorMessage;
+  public Collection<String> getNodeIds() {
+    return nodeIds;
   }
 
-  public void setErrorMessage(final String errorMessage) {
-    this.errorMessage = errorMessage;
+  public void setNodeIds(final Collection<String> nodeIds) {
+    this.nodeIds = nodeIds;
   }
 }

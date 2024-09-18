@@ -18,7 +18,6 @@ import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 
 import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiResourceV1.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -38,9 +37,8 @@ public class S3BlobStoreApiResourceV1
 
   @Inject
   public S3BlobStoreApiResourceV1(final BlobStoreManager blobStoreManager,
-                                  final S3BlobStoreApiUpdateValidation validation,
-                                  final SecretsFactory secretsFactory)
+                                  final S3BlobStoreApiUpdateValidation validation)
   {
-    super(blobStoreManager, validation, secretsFactory);
+    super(blobStoreManager, validation);
   }
 }

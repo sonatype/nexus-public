@@ -15,7 +15,6 @@ package org.sonatype.nexus.content.maven.internal.tasks;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -24,7 +23,6 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID;
 
-@AvailabilityVersion(from = "1.0")
 @Named
 @Singleton
 public class RepairMaven2BaseVersionTaskDescriptor

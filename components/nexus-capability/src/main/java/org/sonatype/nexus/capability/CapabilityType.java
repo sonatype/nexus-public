@@ -13,15 +13,8 @@
 package org.sonatype.nexus.capability;
 
 import javax.validation.constraints.NotNull;
-import javax.validation.groups.Default;
-
-import org.sonatype.nexus.validation.group.Create;
-import org.sonatype.nexus.validation.group.Delete;
-import org.sonatype.nexus.validation.group.DeleteNonExposed;
-import org.sonatype.nexus.validation.group.Update;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE_NON_EXPOSED;
 
 /**
  * Type of a capability.
@@ -33,7 +26,6 @@ public class CapabilityType
 
   @NotNull
   @CapabilityTypeExists
-  @CapabilityTypeIsExposed(groups = {Create.class, Delete.class, Default.class})
   private final String typeId;
 
   public CapabilityType(final String typeId) {

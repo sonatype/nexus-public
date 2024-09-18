@@ -15,11 +15,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 export const maliciousRiskOnDiskResponse = {
-  'totalCount': 1234567,
-  'hdsExceptionThrown': false
-}
-
-export const maliciousRiskOnDiskResponseWithCount0 = {
-  'totalCount': 0,
+  'totalCount': 123,
   'hdsExceptionThrown': false
 }

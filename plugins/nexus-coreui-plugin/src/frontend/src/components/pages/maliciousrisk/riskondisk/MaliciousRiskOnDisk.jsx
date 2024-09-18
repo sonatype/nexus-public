@@ -14,10 +14,10 @@ import React from 'react';
 import {useMachine} from "@xstate/react";
 
 import {
+  NxButton,
   NxButtonBar,
   NxErrorAlert,
   NxFontAwesomeIcon,
-  NxGrid,
   NxH2,
   NxH3,
   NxLoadWrapper
@@ -28,18 +28,15 @@ import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 import MaliciousRiskOnDiskMachine from "./MaliciousRiskOnDiskMachine";
 import UIStrings from "../../../../constants/UIStrings";
 import "./MaliciousRiskOnDisk.scss";
-import FeatureFlags from '../../../../constants/FeatureFlags';
-
-const {MALWARE_RISK_ON_DISK_ENABLED} = FeatureFlags;
 
 const {
-  TITLE_PLURAL,
-  TITLE_SINGULAR,
+  TITLE,
   DESCRIPTION,
   CONTACT_SONATYPE,
+  VIEW_OSS_MALWARE_RISK
 } = UIStrings.MALICIOUS_RISK.RISK_ON_DISK;
 
-function MaliciousRiskOnDiskContent({user, props}) {
+function MaliciousRiskOnDiskContent({user}) {
   const [state, send] = useMachine(MaliciousRiskOnDiskMachine, {devtools: true});
   const {maliciousRiskOnDisk, loadError} = state.context;
   const isLoading = state.matches('loading');
@@ -47,48 +44,56 @@ function MaliciousRiskOnDiskContent({user, props}) {
   const isAdmin = user?.administrator;
   const isProEdition = ExtJS.isProEdition();
 
-  const riskOnDiskCount = maliciousRiskOnDisk?.totalCount ?? 0;
-  const showWarningAlert = riskOnDiskCount > 0;
-
-  setTimeout(() => {
-    if (window.location.hash.includes('#browse/browse') || window.location.hash.includes('#browse/search')) {
-      props.rerender(riskOnDiskCount);
-    }
-  }, 100);
+  const maliciousDashBoardHash = '#browse/maliciousrisk';
+  const notMaliciousDashBoardPage = window.location.hash !== maliciousDashBoardHash;
 
   function retry() {
     send({type: 'RETRY'});
+  }
+
+  function navigateToMaliciousDashBoard() {
+    window.location.href = maliciousDashBoardHash;
   }
 
   function getFirewallContactSonatype() {
     return isProEdition ? CONTACT_SONATYPE.URL.PRO : CONTACT_SONATYPE.URL.OSS;
   }
 
+  const WarningDescription = function() {
+    const {NON_ADMIN_OSS, NON_ADMIN_PRO, ADMIN_OSS, ADMIN_PRO} = DESCRIPTION;
+
+    if (isAdmin && isProEdition) {
+      return ADMIN_PRO;
+    }
+    else if (!isAdmin && isProEdition) {
+      return NON_ADMIN_PRO;
+    }
+    else if (isAdmin && !isProEdition) {
+      return ADMIN_OSS;
+    }
+    else if (!isAdmin && !isProEdition) {
+      return NON_ADMIN_OSS;
+    }
+    else {
+      return '';
+    }
+  }
+
   return (
       <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-        {showWarningAlert && <div className="risk-on-disk-container">
+        <div className="risk-on-disk-container">
           <NxErrorAlert className="risk-on-disk-alert">
             <div className="risk-on-disk-content">
-              <div className="risk-on-disk-alert-title">
+              <div>
                 <NxFontAwesomeIcon icon={faExclamationTriangle}/>
-                <NxH2>{riskOnDiskCount.toLocaleString()}</NxH2>
-                <NxH3>{riskOnDiskCount > 1 ? TITLE_PLURAL : TITLE_SINGULAR}</NxH3>
+                <NxH2>{maliciousRiskOnDisk?.totalCount}</NxH2>
+                <NxH3>{TITLE}</NxH3>
               </div>
-              <NxGrid.Column className='risk-on-disk-alert-description'>
-                <NxGrid.ColumnSection>
-                  <NxGrid.Header>
-                    <NxH3 className='risk-on-disk-alert-description-title'>{DESCRIPTION.TITLE}</NxH3>
-                  </NxGrid.Header>
-                  <p>{DESCRIPTION.CONTENT}</p>
-                </NxGrid.ColumnSection>
-                {!isAdmin &&
-                    <NxGrid.ColumnSection>
-                      <p>{DESCRIPTION.ADDITIONAL_NON_ADMIN_CONTENT}</p>
-                    </NxGrid.ColumnSection>
-                }
-              </NxGrid.Column>
+              <p><WarningDescription/></p>
             </div>
             <NxButtonBar>
+              {notMaliciousDashBoardPage &&
+                  <NxButton onClick={navigateToMaliciousDashBoard}>{VIEW_OSS_MALWARE_RISK}</NxButton>}
               {isAdmin &&
                   <a className="nx-btn nx-btn--error"
                      href={getFirewallContactSonatype()}
@@ -97,19 +102,20 @@ function MaliciousRiskOnDiskContent({user, props}) {
                   </a>}
             </NxButtonBar>
           </NxErrorAlert>
-        </div>}
+        </div>
       </NxLoadWrapper>
   );
 }
 
-export default function MaliciousRiskOnDisk(props) {
-  const isRiskOnDiskEnabled = ExtJS.state().getValue(MALWARE_RISK_ON_DISK_ENABLED);
+export default function MaliciousRiskOnDisk() {
+  const isRiskOnDiskEnabled = ExtJS.state().getValue('nexus.malicious.risk.on.disk.enabled');
+  const maliciousRiskDashboardEnabled = ExtJS.state().getValue('MaliciousRiskDashboard');
   const user = ExtJS.useUser();
   const userIsLogged = user ?? false;
-  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;
+  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled && maliciousRiskDashboardEnabled;
 
   if (!showMaliciousRiskOnDisk) {
     return null;
   }
-  return <MaliciousRiskOnDiskContent user={user} props={props}/>;
+  return <MaliciousRiskOnDiskContent user={user}/>;
 }

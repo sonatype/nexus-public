@@ -16,6 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.httpclient.HttpClientManager;
+import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
@@ -81,8 +82,8 @@ public class HttpSecretsMigratorTest
         times(1)).setPassword(any(Secret.class));
 
     //verify we updated proxy https auth
-    verify((UsernameAuthenticationConfiguration) configuration.getProxy().getHttps().getAuthentication(),
-        times(1)).setPassword(any(Secret.class));
+    verify((BearerTokenAuthenticationConfiguration) configuration.getProxy().getHttps().getAuthentication(),
+        times(1)).setBearerToken(any(Secret.class));
 
     //verify we updated the client manager afterward
     verify(httpClientManager).setConfiguration(configuration);
@@ -101,8 +102,8 @@ public class HttpSecretsMigratorTest
     verify((UsernameAuthenticationConfiguration) configuration.getAuthentication(), times(1)).setPassword(
         any(Secret.class));
     //verify we updated proxy https auth
-    verify((UsernameAuthenticationConfiguration) configuration.getProxy().getHttps().getAuthentication(),
-        times(1)).setPassword(any(Secret.class));
+    verify((BearerTokenAuthenticationConfiguration) configuration.getProxy().getHttps().getAuthentication(),
+        times(1)).setBearerToken(any(Secret.class));
 
     //verify we updated the client manager afterward
     verify(httpClientManager).setConfiguration(configuration);
@@ -158,7 +159,7 @@ public class HttpSecretsMigratorTest
 
     if (includeHttpsProxyAuth) {
       //bearer token auth
-      UsernameAuthenticationConfiguration httpsProxyAuth = mock(UsernameAuthenticationConfiguration.class);
+      BearerTokenAuthenticationConfiguration httpsProxyAuth = mock(BearerTokenAuthenticationConfiguration.class);
       Secret tokenSecret = getMockSecret("https-test-password");
       when(httpsProxyAuth.getSecret()).thenReturn(tokenSecret);
       when(tokenSecret.getId()).thenReturn("https-test-password");

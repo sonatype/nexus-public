@@ -20,9 +20,9 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.common.app.ApplicationVersion;
-import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
-import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
+import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
+import org.sonatype.nexus.upgrade.datastore.events.UpgradeFailedEvent;
+import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
 
 import org.junit.Before;
 import org.junit.Test;

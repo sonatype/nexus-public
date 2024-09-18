@@ -13,7 +13,6 @@
 package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
@@ -25,11 +24,8 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
-import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
-import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
@@ -156,40 +152,6 @@ public class QueuingUpgradeTaskSchedulerTest
     assertThat(upgradeTaskStore.browse().count(), is(1L));
     // and the task was scheduled
 
-    verifyNoInteractions(taskScheduler);
-  }
-
-  @Test
-  public void testOn_upgradeCompleted() throws Exception {
-    startQueuingUpgradeTaskScheduler();
-    underTest.schedule(taskConfiguration);
-
-    EventHelper.asReplicating(
-        () -> underTest.on(new UpgradeCompletedEvent("jsmith", "123", Collections.emptyList(), "Migration_1.0")));
-
-    // replicating events from other nodes should not trigger
-    verifyNoInteractions(taskScheduler);
-
-    underTest.on(new UpgradeCompletedEvent("jsmith", "123", Collections.emptyList(), "Migration_1.0"));
-
-    // non-replicated events should trigger
-    verify(taskScheduler).submit(any());
-  }
-
-  @Test
-  public void testOn_upgradeFailed() throws Exception {
-    startQueuingUpgradeTaskScheduler();
-    underTest.schedule(taskConfiguration);
-
-    EventHelper.asReplicating(
-        () -> underTest.on(new UpgradeFailedEvent("jsmith", "123", "Failed", "Migration_1.0")));
-
-    // replicating events from other nodes should not trigger
-    verifyNoInteractions(taskScheduler);
-
-    underTest.on(new UpgradeFailedEvent("jsmith", "123", "Failed",  "Migration_1.0"));
-
-    // non-replicated events should trigger
     verify(taskScheduler).submit(any());
   }
 
