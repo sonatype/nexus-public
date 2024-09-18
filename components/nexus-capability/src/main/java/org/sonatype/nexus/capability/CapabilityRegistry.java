@@ -17,6 +17,8 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.crypto.secrets.Secret;
+
 import com.google.common.base.Predicate;
 
 /**
@@ -114,4 +116,10 @@ public interface CapabilityRegistry
    */
   void pullAndRefreshReferencesFromDB();
 
+  /**
+   * Re-encrypt secrets of a given capability.
+   * @param capabilityReference capability reference
+   * @param shouldMigrate predicate to determine if a secret should be re-encrypted
+   */
+  void migrateSecrets(CapabilityReference capabilityReference, Predicate<Secret> shouldMigrate);
 }

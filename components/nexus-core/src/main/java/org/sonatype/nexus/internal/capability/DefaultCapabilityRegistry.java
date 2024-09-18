@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -521,6 +520,40 @@ public class DefaultCapabilityRegistry
            }));
   }
 
+  @Override
+  public void migrateSecrets(final CapabilityReference capabilityReference, final Predicate<Secret> shouldMigrate) {
+    try {
+      lock.writeLock().lock();
+
+      DefaultCapabilityReference reference = (DefaultCapabilityReference) capabilityReference;
+
+      Map<String, String> reEncryptedProps =
+          migrateValues(reference.descriptor(), reference.encryptedProperties(), shouldMigrate);
+
+      if (reEncryptedProps.equals(reference.encryptedProperties())) {
+        return;
+      }
+
+      final CapabilityStorageItem item = capabilityStorage.newStorageItem(
+          reference.descriptor().version(), reference.type().toString(), reference.isEnabled(), reference.notes(),
+          reEncryptedProps
+      );
+
+      try {
+        capabilityStorage.update(reference.id(), item);
+      }
+      catch (Exception e) {
+        pruneSecretsIfNeeded(reference.descriptor(), reference.encryptedProperties(), reEncryptedProps);
+        throw e;
+      }
+      reference.updateEncrypted(reference.properties(), reEncryptedProps);
+      pruneSecretsIfNeeded(reference.descriptor(), reEncryptedProps, reference.encryptedProperties());
+    }
+    finally {
+      lock.writeLock().unlock();
+    }
+  }
+
   private DefaultCapabilityReference create(final CapabilityIdentity id,
                                             final CapabilityType type,
                                             final CapabilityDescriptor descriptor)
@@ -561,6 +594,45 @@ public class DefaultCapabilityRegistry
     if (get(id) == null) {
       throw new CapabilityNotFoundException(id);
     }
+  }
+
+  /**
+   * Re encrypts the secrets of the capability (executed by the migration task).
+   *
+   * @param descriptor    capability descriptor
+   * @param props         capability already encrypted properties
+   * @param shouldMigrate predicate to determine if the secret should be re-encrypted
+   * @return the re-encrypted properties
+   */
+  private Map<String, String> migrateValues(
+      final CapabilityDescriptor descriptor,
+      final Map<String, String> props,
+      final Predicate<Secret> shouldMigrate
+  )
+  {
+    if (props == null || props.isEmpty()) {
+      return props;
+    }
+
+    Map<String, String> encrypted = Maps.newHashMap(props);
+    List<FormField> formFields = descriptor.formFields();
+
+    if (formFields != null) {
+      for (FormField formField : formFields) {
+        if (formField instanceof Encrypted) {
+          String value = encrypted.get(formField.getId());
+          if (value != null) {
+            Secret oldSecret = secretsService.from(value);
+            if (shouldMigrate.apply(oldSecret)) {
+              encrypted.put(formField.getId(),
+                  secretsService.encryptMaven("capabilities", oldSecret.decrypt(), UserIdHelper.get()).getId());
+            }
+          }
+        }
+      }
+    }
+
+    return encrypted;
   }
 
   /**

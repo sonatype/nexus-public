@@ -277,13 +277,36 @@ public class DefaultCapabilityReference
    *
    * @param properties         capability configuration
    * @param previousProperties previous capability configuration
+   * @param encryptedProperties capability configuration with encrypted properties
    */
   public void update(
       final Map<String, String> properties,
       final Map<String, String> previousProperties,
       final Map<String, String> encryptedProperties)
   {
-    if (!sameProperties(previousProperties, properties)) {
+    update(properties, previousProperties, encryptedProperties, false);
+  }
+
+  /**
+   * Updates encrypted properties.
+   *
+   * @param properties          capability configuration
+   * @param encryptedProperties encrypted capability configuration
+   */
+  public void updateEncrypted(
+      final Map<String, String> properties,
+      final Map<String, String> encryptedProperties)
+  {
+    update(properties, properties, encryptedProperties, true);
+  }
+
+  private void update(
+      final Map<String, String> properties,
+      final Map<String, String> previousProperties,
+      final Map<String, String> encryptedProperties,
+      final boolean force)
+  {
+    if (force || !sameProperties(previousProperties, properties)) {
       try {
         stateLock.writeLock().lock();
         state.update(properties, previousProperties, encryptedProperties);

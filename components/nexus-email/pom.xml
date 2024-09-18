@@ -110,6 +110,14 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-crypto</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-scheduling</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
