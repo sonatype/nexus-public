@@ -17,15 +17,12 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.crypto.secrets.ReEncryptService;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.SECRETS_API_ENABLED;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 @Named
 @Singleton
-@FeatureFlag(name = SECRETS_API_ENABLED)
 @Path(SecretsEncryptionApiResourceV1.RESOURCE_URI)
 public class SecretsEncryptionApiResourceV1
     extends SecretsEncryptionApiResource
