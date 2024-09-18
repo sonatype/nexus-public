@@ -23,7 +23,6 @@ import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import {maliciousRiskOnDiskResponse} from "./MaliciousRiskOnDisk.testdata";
 import MaliciousRiskOnDisk from "./MaliciousRiskOnDisk";
 
-
 const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
 
 jest.mock('axios', () => ({
@@ -73,9 +72,9 @@ describe('MaliciousRiskOnDisk', () => {
   }
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
-    ('does not render if user is not logged', async (page) => {
+  ('does not render if user is not logged', async (page) => {
     ExtJS.useUser.mockReturnValue(null);
-    await act(async() => {
+    await act(async () => {
       render(<MaliciousRiskOnDisk/>);
     });
 
@@ -83,11 +82,11 @@ describe('MaliciousRiskOnDisk', () => {
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
-    ('does not render if feature flag is false',async (page) => {
+  ('does not render if feature flag is false', async (page) => {
     when(ExtJS.state().getValue)
         .calledWith('nexus.malicious.risk.on.disk.enabled')
         .mockReturnValue(false);
-    await act(async() => {
+    await act(async () => {
       render(<MaliciousRiskOnDisk/>);
     });
 
@@ -95,7 +94,7 @@ describe('MaliciousRiskOnDisk', () => {
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
-    ('renders error message if data fetch fails', async (page) => {
+  ('renders error message if data fetch fails', async (page) => {
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockRejectedValue(new Error('Failed to fetch data'));
     await renderView(true, true, page);
 
@@ -104,61 +103,89 @@ describe('MaliciousRiskOnDisk', () => {
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
-    ('renders correctly when admin user and pro edition', async (page) => {
-    await renderView(true, true, page);
+  ('renders correctly when admin user and pro edition', async (page) => {
+    const isAdmin = true;
+    const isProEdition = true;
+    const showContactSonatypeBtn = isAdmin;
+
+    await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
-        'Protect your repositories from malware with Sonatype Malware Defense.', true);
+    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Protect your repositories from malware with Sonatype Malware Defense.', showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
-    ('renders correctly when admin user and oss edition', async (page) => {
-    await renderView(true, false, page);
+  ('renders correctly when admin user and oss edition', async (page) => {
+    const isAdmin = true;
+    const isProEdition = false;
+    const showContactSonatypeBtn = isAdmin;
+
+    await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
-        'Protect your repositories from malware with Sonatype Malware Defense.', true);
+    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Protect your repositories from malware with Sonatype Malware Defense.', showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
-    ('renders correctly when non-admin user and pro edition', async (page) => {
-    await renderView(false, true, page);
+  ('renders correctly when non-admin user and pro edition', async (page) => {
+    const isAdmin = false;
+    const isProEdition = true;
+    const showContactSonatypeBtn = isAdmin;
+
+    await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    expectAlertToRender(page, 123,'Malicious Components Found in Your Repository',
-        'Contact Sonatype or your Nexus Repository administrator for more information.',false);
+    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+        'Contact Sonatype or your Nexus Repository administrator for more information.', showContactSonatypeBtn,
+        isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
-    ('renders correctly when non-admin user and oss edition', async (page) => {
-    await renderView(false, false, page);
+  ('renders correctly when non-admin user and oss edition', async (page) => {
+    const isAdmin = false;
+    const isProEdition = false;
+    const showContactSonatypeBtn = isAdmin;
+
+    await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    expectAlertToRender(page, 123,'Malicious Components Found in Your Repository',
+    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
         'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
-        false);
+        showContactSonatypeBtn, isProEdition);
   });
 
-  async function expectAlertToRender(page, count, title, description, contactSonatypeBtn) {
+  async function expectAlertToRender(page, count, title, description, showContactSonatypeBtn, isProEdition) {
     expect(selectors.getHeading(count)).toBeInTheDocument();
     expect(selectors.getHeading(title)).toBeInTheDocument();
     expect(selectors.queryAlert()).toHaveTextContent(description);
 
     if (page === 'malicious') {
       expect(selectors.queryButton('View OSS Malware Risk')).not.toBeInTheDocument();
-    } else {
+    }
+    else {
       expect(selectors.queryButton('View OSS Malware Risk')).toBeInTheDocument();
       await userEvent.click(selectors.queryButton('View OSS Malware Risk'));
       expect(window.location.hash).toBe('#browse/maliciousrisk');
     }
 
-    if (contactSonatypeBtn) {
+    if (showContactSonatypeBtn) {
       expect(selectors.queryLink('Contact Sonatype')).toBeInTheDocument();
-      expect(selectors.queryLink('Contact Sonatype'))
-          .toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/contact-sonatype');
-    } else {
-      expect(selectors.queryLink('Contact Sonatype')).not.toBeInTheDocument();
+
+      if (isProEdition) {
+        expect(selectors.queryLink('Contact Sonatype'))
+            .toHaveAttribute('href',
+                'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more');
+      }
+      else {
+        expect(selectors.queryLink('Contact Sonatype'))
+            .toHaveAttribute('href',
+                'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/oss-admin-learn-more');
+      }
+    }
+    else {
+      expect(selectors.queryButton('Contact Sonatype')).not.toBeInTheDocument();
     }
   }
 });

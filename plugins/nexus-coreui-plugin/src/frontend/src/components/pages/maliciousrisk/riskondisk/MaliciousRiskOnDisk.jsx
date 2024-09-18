@@ -55,8 +55,8 @@ function MaliciousRiskOnDiskContent({user}) {
     window.location.href = maliciousDashBoardHash;
   }
 
-  function redirectToFirewallContactSonatype() {
-    window.open(isProEdition ? CONTACT_SONATYPE.URL.PRO : CONTACT_SONATYPE.URL.OSS, '_blank');
+  function getFirewallContactSonatype() {
+    return isProEdition ? CONTACT_SONATYPE.URL.PRO : CONTACT_SONATYPE.URL.OSS;
   }
 
   const WarningDescription = function() {
@@ -95,11 +95,11 @@ function MaliciousRiskOnDiskContent({user}) {
               {notMaliciousDashBoardPage &&
                   <NxButton onClick={navigateToMaliciousDashBoard}>{VIEW_OSS_MALWARE_RISK}</NxButton>}
               {isAdmin &&
-                  <NxButton
-                      variant="error"
-                      onClick={redirectToFirewallContactSonatype}>
+                  <a className="nx-btn nx-btn--error"
+                     href={getFirewallContactSonatype()}
+                     target="_blank">
                     {CONTACT_SONATYPE.TEXT}
-                  </NxButton>}
+                  </a>}
             </NxButtonBar>
           </NxErrorAlert>
         </div>
