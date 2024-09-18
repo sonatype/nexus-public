@@ -31,7 +31,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-public class SecretsMigrationStep_2_2Test
+public class SecretsMigrationStep_2_3Test
     extends TestSupport
 {
   @Rule
@@ -41,13 +41,13 @@ public class SecretsMigrationStep_2_2Test
   @Mock
   private UpgradeTaskScheduler upgradeTaskScheduler;
 
-  private SecretsMigrationStep_2_2 migrationStep;
+  private SecretsMigrationStep_2_3 migrationStep;
 
   private DataSession<?> session;
 
   @Before
   public void setUp() {
-    migrationStep = new SecretsMigrationStep_2_2(upgradeTaskScheduler);
+    migrationStep = new SecretsMigrationStep_2_3(upgradeTaskScheduler);
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
   }
 

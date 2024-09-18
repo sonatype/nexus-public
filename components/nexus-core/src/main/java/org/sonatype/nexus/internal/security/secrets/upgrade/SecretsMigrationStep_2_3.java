@@ -32,14 +32,14 @@ import static org.sonatype.nexus.crypto.secrets.SecretsService.SECRETS_MIGRATION
  */
 @Named
 @Singleton
-public class SecretsMigrationStep_2_2
+public class SecretsMigrationStep_2_3
     extends ComponentSupport
     implements DatabaseMigrationStep
 {
   private final UpgradeTaskScheduler startupScheduler;
 
   @Inject
-  public SecretsMigrationStep_2_2(final UpgradeTaskScheduler startupScheduler) {
+  public SecretsMigrationStep_2_3(final UpgradeTaskScheduler startupScheduler) {
     this.startupScheduler = checkNotNull(startupScheduler);
   }
 
