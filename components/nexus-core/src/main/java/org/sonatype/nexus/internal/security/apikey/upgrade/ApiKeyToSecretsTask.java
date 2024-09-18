@@ -39,7 +39,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.internal.security.apikey.ApiKeyServiceImpl.MIGRATION_COMPLETE;
 
 /**
- * A task which is used to migrate api keys to a new table and encrypt using the {@link SecretsService}
+ * A task which is used to migrate from {@code api_key} to {@code api_key_v2} and encrypt using the
+ * {@link SecretsService}
  */
 @SuppressWarnings("deprecation")
 @Named
