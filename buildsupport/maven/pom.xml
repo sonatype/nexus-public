@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <apache-maven.version>3.8.1</apache-maven.version>
+    <apache-maven.version>3.9.5</apache-maven.version>
     <aether.version>1.1.0</aether.version>
   </properties>
 
