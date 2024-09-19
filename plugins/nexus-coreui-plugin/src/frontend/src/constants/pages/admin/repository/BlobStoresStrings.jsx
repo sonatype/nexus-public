@@ -158,6 +158,7 @@ export default {
         CREDENTIAL_JSON_FILE: 'Credential JSON File',
         JSON_PATH: {
           label: 'JSON Credential File Path',
+          sublabel: 'Upload a .json file (maximum size: 4KB).'
         }
       }
     }

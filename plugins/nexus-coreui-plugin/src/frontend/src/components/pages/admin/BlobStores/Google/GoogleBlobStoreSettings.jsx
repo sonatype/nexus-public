@@ -19,7 +19,8 @@ import {
   NxFieldset,
   NxFormGroup,
   NxTextInput,
-  NxRadio
+  NxRadio,
+  NxFileUpload
 } from '@sonatype/react-shared-components';
 
 const GOOGLE = UIStrings.BLOB_STORES.GOOGLE;
@@ -35,6 +36,10 @@ export default function GoogleBlobStoreSettings({service}) {
   function authenticationField(field) {
     return `bucketConfiguration.bucketSecurity.${field}`;
   }
+
+  const setFiles = (fileList) => {
+    send({type: 'SET_FILES',  data: {files: fileList}});
+  };
 
   return <div className="nxrm-google-blobstore">
     <NxFormGroup {...GOOGLE.PROJECT_ID}>
@@ -73,9 +78,12 @@ export default function GoogleBlobStoreSettings({service}) {
     </NxFieldset>
     {bucketConfiguration.bucketSecurity?.authenticationMethod === 'accountKey' && (
         <NxFormGroup {...GOOGLE.AUTHENTICATION.JSON_PATH} isRequired>
-          <NxTextInput
-              {...FormUtils.fieldProps(authenticationField('accountKey'), current)}
-              onChange={FormUtils.handleUpdate(authenticationField('accountKey'), send)}/>
+          <NxFileUpload
+            onChange={setFiles}
+            isRequired
+            aria-label="gcp credential json file upload"
+            {...FormUtils.fileUploadProps('files', current)}
+          />
         </NxFormGroup>
     )}
   </div>

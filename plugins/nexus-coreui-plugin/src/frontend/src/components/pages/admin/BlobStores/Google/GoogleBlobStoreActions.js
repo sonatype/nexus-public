@@ -26,19 +26,18 @@ export default {
   }),
 
   validation: (data) => {
-    const {bucket} = data.bucketConfiguration;
     const validationErrors = {
       bucketConfiguration: {
         bucket: {
-          name: ValidationUtils.validateNotBlank(bucket?.name),
-          region: ValidationUtils.validateNotBlank(bucket?.region)
+          name: ValidationUtils.validateNotBlank(data.bucketConfiguration?.bucket?.name),
+          region: ValidationUtils.validateNotBlank(data.bucketConfiguration?.bucket?.region)
         }
       }
     };
 
     if (data.bucketConfiguration?.bucketSecurity?.authenticationMethod === 'accountKey') {
-      validationErrors.bucketConfiguration.bucketSecurity = {
-        accountKey: ValidationUtils.validateNotBlank(data.bucketConfiguration.bucketSecurity.accountKey)
+      validationErrors.files ={
+        files: ValidationUtils.validateNotBlank(data.files)
       }
     }
 

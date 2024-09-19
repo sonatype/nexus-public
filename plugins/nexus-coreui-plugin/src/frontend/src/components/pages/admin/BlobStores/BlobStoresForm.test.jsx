@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {screen, waitForElementToBeRemoved, within, waitFor} from '@testing-library/react'
+import {screen, waitForElementToBeRemoved, within, waitFor, act} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -167,6 +167,8 @@ describe('BlobStoresForm', function() {
           path: () => getByLabelText('Path'),
           region: () => getByLabelText('Region'),
           bucket: () => getByLabelText('Bucket'),
+          credentialAuthentication: () => getByLabelText('Credential JSON File'),
+          fileInput: () => getByLabelText('JSON Credential File Path'),
           prefix: () => getByLabelText('Prefix'),
           expiration: () => getByLabelText('Expiration Days'),
           accessKeyId: () => getByLabelText('Access Key ID'),
@@ -622,7 +624,7 @@ describe('BlobStoresForm', function() {
     );
   });
 
-  it('creates a new GCP blob store', async function() {
+  it('creates a new GCP blob store with default application authentication', async function() {
     const {
       name,
       loadingMask,
@@ -665,6 +667,60 @@ describe('BlobStoresForm', function() {
     userEvent.type(softQuotaLimit(), '1');
 
     userEvent.click(selectors.querySubmitButton());
+
+    expect(axios.post).toHaveBeenCalledWith(
+      'service/rest/v1/blobstores/google',
+      data
+    );
+  });
+
+  it('creates a new GCP blob store with JSON credentials authentication', async function() {
+    const {
+      name,
+      loadingMask,
+      typeSelect,
+      bucket,
+      region,
+      credentialAuthentication,
+      fileInput
+    } = render();
+
+    const data = {
+      name: 'gcp-blob-store',
+      bucketConfiguration: {
+        bucketSecurity: {
+          authenticationMethod: 'accountKey',
+          accountKey: "{\"private_key_id\":\"test\"}"
+        },
+        bucket: {
+          name: 'test-bucket2',
+          region: 'us-central1'
+        }
+      },
+      files: {
+        0: expect.any(File),
+        item: expect.any(Function),
+        length: 1,
+      },
+    };
+
+    await act(async () => {    
+      await waitForElementToBeRemoved(loadingMask);
+
+      userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
+      userEvent.type(name(), data.name);
+      userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
+      userEvent.type(region(), data.bucketConfiguration.bucket.region);
+      userEvent.click(credentialAuthentication());
+
+      const file = new File([new ArrayBuffer(1)], 'credentials.json', { type: 'application/json' });
+      file.text = jest.fn().mockResolvedValue(JSON.stringify({ private_key_id: 'test' }));
+
+      userEvent.upload(fileInput(), file);
+      await file.text();
+
+      userEvent.click(selectors.querySubmitButton());
+    });
 
     expect(axios.post).toHaveBeenCalledWith(
       'service/rest/v1/blobstores/google',

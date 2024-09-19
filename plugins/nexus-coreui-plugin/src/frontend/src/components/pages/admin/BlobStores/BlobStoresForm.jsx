@@ -135,7 +135,7 @@ export default function BlobStoresForm({itemId, onDone}) {
         {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
         {isCreate &&
         <NxFormGroup label={FORM.TYPE.label} sublabel={FORM.TYPE.sublabel} isRequired>
-          <NxFormSelect id="type" name="type" value={type?.id} onChange={setType} validatable>
+          <NxFormSelect {...FormUtils.selectProps('type', current)} value={type?.id} onChange={setType}>
             <option disabled={isTypeSelected} value=""></option>
             {types.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
           </NxFormSelect>

@@ -102,6 +102,11 @@ export default FormUtils.buildFormMachine({
 
           MODAL_CONVERT_TO_GROUP_OPEN: {
             target: 'modalConvertToGroup'
+          },
+
+          SET_FILES: {
+            target: 'loaded',
+            actions: ['update']
           }
         }
       },
@@ -318,12 +323,23 @@ export default FormUtils.buildFormMachine({
       }
     },
 
-    saveData: ({data, pristineData, type}) => {
+    saveData: async ({data, pristineData, type}) => {
       let saveData = data.softQuota.enabled ? clone(data) : omit(['softQuota'], data);
       saveData = map((value) => typeof value === 'string' ? value.trim() : value, saveData);
       if (saveData.softQuota?.limit) {
         saveData.softQuota.limit = UnitUtil.megaBytesToBytes(saveData.softQuota.limit);
       }
+    
+      if (data.files && data.files.length > 0) {
+        const file = data.files.item(0);
+        try {
+          const accountKey = await file.text();
+          saveData.bucketConfiguration.bucketSecurity.accountKey = accountKey;
+        } catch (error) {
+          console.error('Error reading or parsing file:', error);
+        }
+      }
+
       if (ValidationUtils.notBlank(pristineData.name)) {
         return axios.put(URLs.singleBlobStoreUrl(type.id, data.name), saveData);
       }
