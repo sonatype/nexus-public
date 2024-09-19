@@ -59,6 +59,7 @@ import com.amazonaws.SdkBaseException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.iterable.S3Objects;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.ObjectTagging;
@@ -875,6 +876,24 @@ public class S3BlobStore
       log.debug("Unable to check existence of {}", contentPath(blobId));
       return false;
     }
+  }
+
+  @Override
+  @Timed
+  public boolean isBlobEmpty(final BlobId blobId) {
+    checkNotNull(blobId);
+    try (final Timer.Context existsContext = existsTimer.time()) {
+      return isBlobZeroLength(blobId);
+    }
+    catch (Exception e) {
+      log.debug("Unable to check existence and size of {}", contentPath(blobId));
+      return false;
+    }
+  }
+
+  private boolean isBlobZeroLength(final BlobId blobId) {
+    ObjectMetadata metadata = s3.getObjectMetadata(new GetObjectMetadataRequest(getConfiguredBucket(), contentPath(blobId)));
+    return s3.doesObjectExist(getConfiguredBucket(), contentPath(blobId)) && metadata.getContentLength() == 0;
   }
 
   @Override

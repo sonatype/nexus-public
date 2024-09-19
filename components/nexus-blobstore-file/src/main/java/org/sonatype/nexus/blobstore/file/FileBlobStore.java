@@ -768,6 +768,16 @@ public class FileBlobStore
     return true;
   }
 
+  @Override
+  public boolean isBlobEmpty(final BlobId blobId) {
+    checkNotNull(blobId);
+    if (fileOperations.isBlobZeroLength(contentPath(blobId))) {
+      log.debug("Blob {} content (.bytes) was not found during existence check", blobId);
+      return true;
+    }
+    return false;
+  }
+
   private boolean delete(final Path path) throws IOException {
     boolean deleted = fileOperations.delete(path);
     if (deleted) {
