@@ -185,11 +185,11 @@ public interface FeatureFlags
 
   String MALICIOUS_RISK_ENABLED = "nexus.malicious.risk.enabled";
 
-  String MALICIOUS_RISK_ENABLED_NAMED = "${nexus.malicious.risk.enabled:-false}";
+  String MALICIOUS_RISK_ENABLED_NAMED = "${nexus.malicious.risk.enabled:-true}";
 
   String MALICIOUS_RISK_ON_DISK_ENABLED = "nexus.malicious.risk.on.disk.enabled";
 
-  String MALICIOUS_RISK_ON_DISK_ENABLED_NAMED = "${nexus.malicious.risk.on.disk.enabled:-false}";
+  String MALICIOUS_RISK_ON_DISK_ENABLED_NAMED = "${nexus.malicious.risk.on.disk.enabled:-true}";
 
   String CONAN_V2_ENABLED = "nexus.conan.v2.enabled";
 
