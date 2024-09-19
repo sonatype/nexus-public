@@ -29,7 +29,6 @@ import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
-import org.sonatype.nexus.security.user.UserManager;
 
 import com.google.common.collect.Iterables;
 import org.apache.shiro.subject.PrincipalCollection;
@@ -67,9 +66,9 @@ public class ApiKeyToSecretsTask
 
   private final int synchronizationDelayMs;
 
-  private final UserManager samlUserManager;
+  private final boolean samlConfigured;
 
-  private final UserManager ldapUserManager;
+  private final boolean ldapConfigured;
 
   @Inject
   public ApiKeyToSecretsTask(
@@ -77,12 +76,12 @@ public class ApiKeyToSecretsTask
       @Named("v2") final ApiKeyStoreV2Impl apiKeyStoreV2,
       @Named("${nexus.distributed.events.fetch.interval.seconds:-5}") final int interval,
       final GlobalKeyValueStore kv,
-      final SecuritySystem securitySystem) throws NoSuchUserManagerException
+      final SecuritySystem securitySystem)
   {
     this.apiKeyStoreV1 = checkNotNull(apiKeyStoreV1);
     this.apiKeyStoreV2 = checkNotNull(apiKeyStoreV2);
-    this.samlUserManager = checkNotNull(securitySystem).getUserManager(SAML_USER_SOURCE);
-    this.ldapUserManager = checkNotNull(securitySystem).getUserManager(LDAP_USER_SOURCE);
+    this.samlConfigured = isConfigured(SAML_USER_SOURCE, checkNotNull(securitySystem));
+    this.ldapConfigured = isConfigured(LDAP_USER_SOURCE, securitySystem);
     this.kv = checkNotNull(kv);
     // We convert this to millis and double it to allow for a good window
     this.synchronizationDelayMs = interval * 2_000;
@@ -159,11 +158,11 @@ public class ApiKeyToSecretsTask
 
     log.debug("Found a dual realm token {}", collection);
 
-    if (samlUserManager.isConfigured() && realms.contains(SAML_USER_SOURCE)) {
+    if (samlConfigured && realms.contains(SAML_USER_SOURCE)) {
       log.debug("Choosing to SAML for {}", collection);
       return new SimplePrincipalCollection(collection.getPrimaryPrincipal(), SAML_REALM_NAME);
     }
-    if (ldapUserManager.isConfigured() && realms.contains(LDAP_USER_SOURCE)) {
+    if (ldapConfigured && realms.contains(LDAP_USER_SOURCE)) {
       log.debug("Converting to LDAP for {}", collection);
       return new SimplePrincipalCollection(collection.getPrimaryPrincipal(), LDAP_REALM_NAME);
     }
@@ -174,5 +173,15 @@ public class ApiKeyToSecretsTask
     log.debug("Converting to {} for {}", realm, primaryPrincipal);
 
     return new SimplePrincipalCollection(primaryPrincipal, realm);
+  }
+
+  private boolean isConfigured(final String realm, final SecuritySystem securitySystem) {
+    try {
+      return securitySystem.getUserManager(realm).isConfigured();
+    }
+    catch (Exception e) {
+      log.debug("No user manager present for {}", realm, e);
+      return false;
+    }
   }
 }
