@@ -25,12 +25,12 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.DateBasedHelper;
 import org.sonatype.nexus.common.time.UTC;
 
 import org.apache.commons.lang3.StringUtils;
@@ -61,7 +61,7 @@ public class DateBasedWalkFile
   public Map<String, OffsetDateTime> getBlobIdToDateRef() {
     OffsetDateTime now = UTC.now();
     OffsetDateTime fromDateTime = now.minusSeconds(duration.getSeconds());
-    String datePathPrefix = contentDir + buildDatePathPrefix(fromDateTime, now);
+    String datePathPrefix = contentDir + DateBasedHelper.getDatePathPrefix(fromDateTime, now);
 
     try {
       return getAllFiles(datePathPrefix, fromDateTime);
@@ -69,29 +69,6 @@ public class DateBasedWalkFile
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-  }
-
-  private String buildDatePathPrefix(final OffsetDateTime fromDateTime, final OffsetDateTime toDateTime)
-  {
-    StringBuilder datePathPrefix = new StringBuilder();
-    if (fromDateTime.getYear() == toDateTime.getYear()) {
-      datePathPrefix.append("yyyy").append("/");
-      if (fromDateTime.getMonth().getValue() == toDateTime.getMonth().getValue()) {
-        datePathPrefix.append("MM").append("/");
-        if (fromDateTime.getDayOfMonth() == toDateTime.getDayOfMonth()) {
-          datePathPrefix.append("dd").append("/");
-          if (fromDateTime.getHour() == toDateTime.getHour()) {
-            datePathPrefix.append("HH").append("/");
-            if (fromDateTime.getMinute() == toDateTime.getMinute()) {
-              datePathPrefix.append("mm").append("/");
-            }
-          }
-        }
-      }
-    }
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(datePathPrefix.toString());
-
-    return toDateTime.format(dateTimeFormatter);
   }
 
   private Map<String, OffsetDateTime> getAllFiles(final String startDir, final OffsetDateTime fromDateTime)

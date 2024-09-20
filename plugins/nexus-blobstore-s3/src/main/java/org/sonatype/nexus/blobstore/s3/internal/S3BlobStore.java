@@ -33,6 +33,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.CloudBlobStoreSupport;
+import org.sonatype.nexus.blobstore.DateBasedHelper;
 import org.sonatype.nexus.blobstore.MetricsInputStream;
 import org.sonatype.nexus.blobstore.StreamMetrics;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -675,6 +676,13 @@ public class S3BlobStore
   }
 
   /**
+   * @return the complete content prefix to Volume/Chapter location, including the trailing slash
+   */
+  private String getContentVolumePrefix() {
+    return getContentPrefix() + "vol-";
+  }
+
+  /**
    * Delete files known to be part of the S3BlobStore implementation if the content directory is empty.
    */
   @Override
@@ -740,12 +748,24 @@ public class S3BlobStore
       throw new IllegalArgumentException("duration must >= 0");
     }
     else {
-      Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), getContentPrefix());
-      OffsetDateTime offsetDateTime = UTC.now().minusSeconds(duration.getSeconds());
+      OffsetDateTime now = UTC.now();
+      OffsetDateTime fromDateTime = now.minusSeconds(duration.getSeconds());
 
-      return blobIdStream(stream(summaries.spliterator(), false)
-          .filter(s3objectSummary -> s3objectSummary.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(offsetDateTime)));
+      // get Blob Ids from volume-chapter location
+      Stream<BlobId> volChapBlobIds = getBlobIdStream(getContentVolumePrefix(), fromDateTime);
+
+      // get Blob Ids from date-based location
+      String prefix = getContentPrefix() + DateBasedHelper.getDatePathPrefix(fromDateTime, now);
+      Stream<BlobId> dateBasedBlobIds = getBlobIdStream(prefix, fromDateTime);
+
+      return Stream.concat(volChapBlobIds, dateBasedBlobIds).distinct();
     }
+  }
+
+  private Stream<BlobId> getBlobIdStream(final String prefix, OffsetDateTime fromDateTime) {
+    Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), prefix);
+    return blobIdStream(stream(summaries.spliterator(), false)
+        .filter(s3Obj -> s3Obj.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(fromDateTime)));
   }
 
   @Override

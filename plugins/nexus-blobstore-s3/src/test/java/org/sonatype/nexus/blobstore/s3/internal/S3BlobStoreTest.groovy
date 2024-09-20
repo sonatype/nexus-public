@@ -159,8 +159,8 @@ class S3BlobStoreTest
     then: 'only the blob updated in the last day will be returned'
       blobIds.size() == 1
       blobIds.get(0).asUniqueString() == "12345678-1234-1234-1234-123456789abc"
-      1 * s3.getObjectMetadata('mybucket', '/content/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.properties') >> getTempBlobMetadata()
-      1 * s3.getObjectMetadata('mybucket', 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.properties') >> new ObjectMetadata()
+      2 * s3.getObjectMetadata('mybucket', '/content/vol-01/chap-01/12345678-1234-1234-1234-123456789ghi.properties') >> getTempBlobMetadata()
+      2 * s3.getObjectMetadata('mybucket', 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.properties') >> new ObjectMetadata()
   }
 
   def 'getBlobIdUpdatedSinceStream throws exception if negative sinceDays is passed in'() {

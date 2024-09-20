@@ -208,6 +208,8 @@ public interface FeatureFlags
 
   String DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED = "${nexus.blobstore.datebased.layout.enabled:-false}";
 
+  String SECRETS_API_ENABLED = "nexus.secrets.api.enabled";
+
   /* OSS registration */
   String OSS_REGISTRATION_ENABLED_NAMED = "${nexus.license.community:-false}";
 }
