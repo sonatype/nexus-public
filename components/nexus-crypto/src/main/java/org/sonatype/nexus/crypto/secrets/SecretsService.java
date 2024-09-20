@@ -22,7 +22,7 @@ import org.sonatype.nexus.crypto.internal.error.CipherException;
 public interface SecretsService
     extends SecretsFactory
 {
-  String SECRETS_MIGRATION_VERSION = "2.3";
+  String SECRETS_MIGRATION_VERSION = "2.2";
 
   /**
    * Encrypts the token using the current key and stores it in the DB.
