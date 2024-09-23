@@ -49,7 +49,9 @@ public interface ApiKeyV2DAO
    * @param domain the domain, e.g. npm keys, nuget keys
    * @param created the date created
    */
-  Collection<ApiKeyInternal> browseCreatedBefore(@Param("domain") String domain, @Param("created") OffsetDateTime created);
+  Collection<ApiKeyInternal> browseCreatedBefore(
+      @Param("domain") String domain,
+      @Param("created") OffsetDateTime created);
 
   /**
    * Browse all API Keys in the specified domain (paginated)
@@ -80,24 +82,21 @@ public interface ApiKeyV2DAO
   int deleteApiKey(ApiKeyV2Data apiTokenData);
 
   /**
-   * Find {@link ApiKeyInternal} record in the domain for the specified realm & user
+   * Find {@link ApiKeyInternal} record in the domain for the specified user name.
    *
    * @param domain the domain for the token (e.g. NuGetApiKey)
-   * @param realm the realm the user belongs to
    * @param user  the user name to locate
    */
-  Optional<ApiKeyV2Data> findApiKey(
+  Collection<ApiKeyV2Data> findApiKey(
       @Param("domain") String domain,
-      @Param("realm") String realm,
       @Param("username") String user);
 
   /**
-   * Find {@link ApiKeyInternal} records across all domains with the specified realm and user.
+   * Find {@link ApiKeyInternal} records across all domains with the specified user.
    *
-   * @param realm the realm the user belongs to
    * @param user  the user name to locate
    */
-  Collection<ApiKeyV2Data> findApiKeysForUser(@Param("realm") String realm, @Param("username") String user);
+  Collection<ApiKeyV2Data> findApiKeysForUser(@Param("username") String user);
 
   /**
    * Find an api key with the matching access key, callers will need to validate the secret matches the expected
@@ -116,16 +115,9 @@ public interface ApiKeyV2DAO
   void save(ApiKeyV2Data token);
 
   /**
-   * Changes the realm associated with a specific token
-   * @param domain
-   * @param username
-   * @param fromRealm
-   * @param toRealm
+   * Changes the principal associated with a specific token
+   *
+   * @param token the token
    */
-  void updateRealm(
-      @Param("domain") String domain,
-      @Param("username") String username,
-      @Param("accessKey") String accessKey,
-      @Param("fromRealm") String fromRealm,
-      @Param("toRealm") String toRealm);
+  void updatePrincipal(ApiKeyV2Data token);
 }

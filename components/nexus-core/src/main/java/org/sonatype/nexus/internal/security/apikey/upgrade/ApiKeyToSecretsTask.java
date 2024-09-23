@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.security.apikey.upgrade;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,12 +26,6 @@ import org.sonatype.nexus.internal.security.apikey.store.ApiKeyStoreV2Impl;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskSupport;
-import org.sonatype.nexus.security.SecuritySystem;
-import org.sonatype.nexus.security.user.NoSuchUserManagerException;
-
-import com.google.common.collect.Iterables;
-import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.SimplePrincipalCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.internal.security.apikey.ApiKeyServiceImpl.MIGRATION_COMPLETE;
@@ -50,14 +43,6 @@ public class ApiKeyToSecretsTask
 
   static final String TYPE_ID = "nexus.apikey.secrets";
 
-  private static final String SAML_REALM_NAME = "SamlRealm";
-
-  private static final String LDAP_REALM_NAME = "LdapRealm";
-
-  private static final String SAML_USER_SOURCE = "SAML";
-
-  private static final String LDAP_USER_SOURCE = "LDAP";
-
   private final ApiKeyStoreImpl apiKeyStoreV1;
 
   private final ApiKeyStoreV2Impl apiKeyStoreV2;
@@ -66,22 +51,15 @@ public class ApiKeyToSecretsTask
 
   private final int synchronizationDelayMs;
 
-  private final boolean samlConfigured;
-
-  private final boolean ldapConfigured;
-
   @Inject
   public ApiKeyToSecretsTask(
       @Named("v1") final ApiKeyStoreImpl apiKeyStoreV1,
       @Named("v2") final ApiKeyStoreV2Impl apiKeyStoreV2,
       @Named("${nexus.distributed.events.fetch.interval.seconds:-5}") final int interval,
-      final GlobalKeyValueStore kv,
-      final SecuritySystem securitySystem)
+      final GlobalKeyValueStore kv)
   {
     this.apiKeyStoreV1 = checkNotNull(apiKeyStoreV1);
     this.apiKeyStoreV2 = checkNotNull(apiKeyStoreV2);
-    this.samlConfigured = isConfigured(SAML_USER_SOURCE, checkNotNull(securitySystem));
-    this.ldapConfigured = isConfigured(LDAP_USER_SOURCE, securitySystem);
     this.kv = checkNotNull(kv);
     // We convert this to millis and double it to allow for a good window
     this.synchronizationDelayMs = interval * 2_000;
@@ -130,7 +108,7 @@ public class ApiKeyToSecretsTask
     String domain = key.getDomain();
     try {
       log.trace("Migrating {} in {}", primary, domain);
-      apiKeyStoreV2.persistApiKey(domain, fixPrincipals(key.getPrincipals()), key.getApiKey(), key.getCreated());
+      apiKeyStoreV2.persistApiKey(domain, key.getPrincipals(), key.getApiKey(), key.getCreated());
     }
     catch (DuplicateKeyException e) {
       log.debug("ApiKey for {} in {} appears to have been migrated.", primary, domain, e);
@@ -144,44 +122,6 @@ public class ApiKeyToSecretsTask
     }
     catch (Exception e) {
       log.warn("Unable to migrate record for user {} for {}", primary, domain, e);
-    }
-  }
-
-  /*
-   * Backup protection for dual realmed tokens that ought to have been fixed.
-   */
-  private PrincipalCollection fixPrincipals(final PrincipalCollection collection) {
-    Set<String> realms = collection.getRealmNames();
-    if (realms == null || realms.size() <= 1) {
-      return collection;
-    }
-
-    log.debug("Found a dual realm token {}", collection);
-
-    if (samlConfigured && realms.contains(SAML_USER_SOURCE)) {
-      log.debug("Choosing to SAML for {}", collection);
-      return new SimplePrincipalCollection(collection.getPrimaryPrincipal(), SAML_REALM_NAME);
-    }
-    if (ldapConfigured && realms.contains(LDAP_USER_SOURCE)) {
-      log.debug("Converting to LDAP for {}", collection);
-      return new SimplePrincipalCollection(collection.getPrimaryPrincipal(), LDAP_REALM_NAME);
-    }
-
-    String realm = Iterables.getLast(realms);
-    Object primaryPrincipal = collection.getPrimaryPrincipal();
-
-    log.debug("Converting to {} for {}", realm, primaryPrincipal);
-
-    return new SimplePrincipalCollection(primaryPrincipal, realm);
-  }
-
-  private boolean isConfigured(final String realm, final SecuritySystem securitySystem) {
-    try {
-      return securitySystem.getUserManager(realm).isConfigured();
-    }
-    catch (Exception e) {
-      log.debug("No user manager present for {}", realm, e);
-      return false;
     }
   }
 }

@@ -18,8 +18,8 @@
 
   <insert id="createSchema">
     CREATE TABLE IF NOT EXISTS api_key_v2 (
-      realm             VARCHAR(200)   NOT NULL,
       username          VARCHAR(200)   NOT NULL,
+      principals        ${BINARY_TYPE} NOT NULL,
 
       domain            VARCHAR(200)   NOT NULL,
       access_key        VARCHAR(200)   NOT NULL,
@@ -31,38 +31,31 @@
       Optimization: put the primary principal before the domain in the primary key,
       so the PK index can be re-used when querying for a principal over all domains
       -->
-      CONSTRAINT pk_api_key_v2_realm_username_domain PRIMARY KEY (realm, username, domain),
+      CONSTRAINT pk_api_key_v2_username_domain_principals PRIMARY KEY (username, domain, principals),
       CONSTRAINT uk_api_key_v2_domain_access_key UNIQUE (domain, access_key)
     );
 
     CREATE INDEX IF NOT EXISTS idx_api_key_v2_domain_created ON api_key_v2 (domain, created);
     CREATE INDEX IF NOT EXISTS idx_api_key_v2_created ON api_key_v2 (created);
+    CREATE INDEX IF NOT EXISTS idx_api_key_v2_principals ON api_key_v2 (principals);
   </insert>
 
-  <resultMap id="principalsResultMap" type="org.apache.shiro.subject.SimplePrincipalCollection">
-    <constructor>
-      <idArg column="username" javaType="Object"/>
-      <idArg column="realm" javaType="String"/>
-    </constructor>
-  </resultMap>
 
-  <select id="browsePrincipals" resultMap="principalsResultMap">
-    SELECT realm, username FROM api_key_v2;
+  <select id="browsePrincipals" resultType="org.apache.shiro.subject.PrincipalCollection">
+    SELECT DISTINCT principals FROM api_key_v2;
   </select>
 
   <select id="findApiKey" resultType="ApiKeyV2Data">
     SELECT *
       FROM api_key_v2
-     WHERE realm  = #{realm}
-       AND username   = #{username}
+     WHERE username   = #{username}
        AND domain = #{domain};
   </select>
 
   <select id="findApiKeysForUser" resultType="ApiKeyV2Data">
     SELECT * 
       FROM api_key_v2
-     WHERE realm  = #{realm}
-       AND username   = #{username};
+     WHERE username   = #{username};
   </select>
 
   <select id="findPrincipals" resultType="ApiKeyV2Data">
@@ -74,15 +67,14 @@
 
   <insert id="save" parameterType="ApiKeyV2Data">
     INSERT INTO api_key_v2
-           (realm, username, domain, access_key, secret <if test="created != null">, created</if>)
-    VALUES (#{realm}, #{username}, #{domain}, #{accessKey}, #{secret} <if test="created != null">, #{created}</if>);
+           (username, principals, domain, access_key, secret <if test="created != null">, created</if>)
+    VALUES (#{username}, #{principals}, #{domain}, #{accessKey}, #{secret} <if test="created != null">, #{created}</if>);
   </insert>
 
   <delete id="deleteApiKey">
     DELETE
       FROM api_key_v2
      WHERE domain = #{domain}
-       AND realm = #{realm}
        AND username = #{username}
        AND access_key = #{accessKey};
   </delete>
@@ -107,11 +99,10 @@
      WHERE domain = #{domain};
   </select>
   
-  <update id="updateRealm">
+  <update id="updatePrincipal" parameterType="ApiKeyV2Data">
     UPDATE api_key_v2
-       SET realm = #{toRealm}
+       SET principals = #{principals}
      WHERE domain = #{domain}
-       AND realm = #{fromRealm}
        AND username = #{username}
        AND access_key = #{accessKey};
   </update>
