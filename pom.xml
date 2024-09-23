@@ -54,7 +54,7 @@
 
   <prerequisites>
     <!-- Mostly meaningless, though site plugin uses this; Minimum version controlled by enforcer plugin -->
-    <maven>3.3.3</maven>
+    <maven>3.9.6</maven>
   </prerequisites>
 
   <properties>
@@ -1056,10 +1056,10 @@
               <fail>true</fail>
               <rules>
                 <!--
-                Require Maven 3.3.3+
+                Require Maven 3.9.6+ for java17 support
                 -->
                 <requireMavenVersion>
-                  <version>[3.3.3,)</version>
+                  <version>[3.9.6,)</version>
                 </requireMavenVersion>
 
                 <!--
