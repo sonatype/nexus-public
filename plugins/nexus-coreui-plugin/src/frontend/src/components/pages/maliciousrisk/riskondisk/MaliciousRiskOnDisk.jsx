@@ -36,7 +36,7 @@ const {
   VIEW_OSS_MALWARE_RISK
 } = UIStrings.MALICIOUS_RISK.RISK_ON_DISK;
 
-function MaliciousRiskOnDiskContent({user}) {
+function MaliciousRiskOnDiskContent({user, props}) {
   const [state, send] = useMachine(MaliciousRiskOnDiskMachine, {devtools: true});
   const {maliciousRiskOnDisk, loadError} = state.context;
   const isLoading = state.matches('loading');
@@ -46,6 +46,15 @@ function MaliciousRiskOnDiskContent({user}) {
 
   const maliciousDashBoardHash = '#browse/maliciousrisk';
   const notMaliciousDashBoardPage = window.location.hash !== maliciousDashBoardHash;
+  const riskOnDiskCount = maliciousRiskOnDisk?.totalCount ?? 0;
+  const showWarningAlert = riskOnDiskCount > 0;
+
+  setTimeout(() => {
+    if (window.location.hash.includes('#browse/browse') || window.location.hash.includes('#browse/search')) {
+      props.rerender(riskOnDiskCount);
+    }
+  }, 100);
+
 
   function retry() {
     send({type: 'RETRY'});
@@ -81,12 +90,12 @@ function MaliciousRiskOnDiskContent({user}) {
 
   return (
       <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-        <div className="risk-on-disk-container">
+        {showWarningAlert && <div className="risk-on-disk-container">
           <NxErrorAlert className="risk-on-disk-alert">
             <div className="risk-on-disk-content">
               <div>
                 <NxFontAwesomeIcon icon={faExclamationTriangle}/>
-                <NxH2>{maliciousRiskOnDisk?.totalCount}</NxH2>
+                <NxH2>{riskOnDiskCount.toLocaleString()}</NxH2>
                 <NxH3>{TITLE}</NxH3>
               </div>
               <p><WarningDescription/></p>
@@ -102,12 +111,12 @@ function MaliciousRiskOnDiskContent({user}) {
                   </a>}
             </NxButtonBar>
           </NxErrorAlert>
-        </div>
+        </div>}
       </NxLoadWrapper>
   );
 }
 
-export default function MaliciousRiskOnDisk() {
+export default function MaliciousRiskOnDisk(props) {
   const isRiskOnDiskEnabled = ExtJS.state().getValue('nexus.malicious.risk.on.disk.enabled');
   const maliciousRiskDashboardEnabled = ExtJS.state().getValue('MaliciousRiskDashboard');
   const user = ExtJS.useUser();
@@ -117,5 +126,5 @@ export default function MaliciousRiskOnDisk() {
   if (!showMaliciousRiskOnDisk) {
     return null;
   }
-  return <MaliciousRiskOnDiskContent user={user}/>;
+  return <MaliciousRiskOnDiskContent user={user} props={props}/>;
 }

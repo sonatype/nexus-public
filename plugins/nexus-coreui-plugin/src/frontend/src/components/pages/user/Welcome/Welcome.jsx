@@ -14,13 +14,10 @@ import React, {useEffect, useRef, useState} from 'react';
 import {useMachine} from '@xstate/react';
 import {ExtJS, toURIParams, getVersionMajorMinor} from '@sonatype/nexus-ui-plugin';
 import {
-  NxButton,
-  NxButtonBar,
   NxLoadWrapper,
   NxPageMain,
   NxPageTitle,
   NxH1,
-  NxWarningAlert
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -76,10 +73,6 @@ export default function Welcome() {
     send('LOAD');
   }
 
-  async function navigateToFirewall() {
-    window.location.href = '#admin/iq';
-  }
-
   const onLoad = () => {
     if (ref.current?.contentWindow) {
       setIframeHeight(
@@ -108,12 +101,6 @@ export default function Welcome() {
     };
   }, []);
 
-  const shouldShowMaliciousRiskBanner = ExtJS.state().getValue('MaliciousRiskDashboard') && isAdmin;
-
-  function navigateToMaliciousRiskDashboard() {
-    window.location.href = '#browse/maliciousrisk';
-  }
-
   return (
     <NxPageMain className="nx-viewport-sized nxrm-welcome">
       <NxPageTitle className="nxrm-welcome__page-title">
@@ -136,35 +123,6 @@ export default function Welcome() {
       <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
         <div className="nxrm-welcome__outreach nx-viewport-sized__scrollable">
           <MaliciousRiskOnDisk/>
-          {shouldShowMaliciousRiskBanner &&
-              <div className="nxrm-welcome__malicious-risk-banner">
-                <div className="banner-text">
-                  <p className="banner-first-line">
-                      <span className="heavy-bold">{UIStrings.WELCOME.MALICIOUS_RISK_BANNER_CONTENT.FIRST_LINE_HEAVY_BOLD_TEXT}
-                      </span> {UIStrings.WELCOME.MALICIOUS_RISK_BANNER_CONTENT.FIRST_LINE_NORMAL_BOLD_TEXT}
-                  </p>
-                  <p className="banner-second-line">{UIStrings.WELCOME.MALICIOUS_RISK_BANNER_CONTENT.SECOND_LINE_TEXT}</p>
-                </div>
-                <NxButtonBar>
-                  <NxButton id="view-dashboard-banner-btn" variant="primary"
-                            onClick={navigateToMaliciousRiskDashboard}>
-                    {UIStrings.WELCOME.MALICIOUS_RISK_BANNER_BUTTON_CONTENT}
-                  </NxButton>
-                </NxButtonBar>
-              </div>
-          }
-          { state.context.data?.showFirewallAlert &&
-              <section id="nxrm-firewall-onboarding-nudge" className="nxrm-firewall-onboarding" aria-label="Firewall Capability Notice">
-                <NxWarningAlert>
-                  <p className="nxrm-firewall-alert-content">{UIStrings.WELCOME.FIREWALL_ALERT_CONTENT}</p>
-                  <NxButtonBar>
-                    <NxButton id="nxrm-welcome-firewall-enable-btn" variant="primary" onClick={navigateToFirewall}>
-                      {UIStrings.WELCOME.FIREWALL_ENABLE_BUTTON_CONTENT}
-                    </NxButton>
-                  </NxButtonBar>
-                </NxWarningAlert>
-              </section>
-          }
           {isAdmin && <UsageMetrics />}
           <OutreachActions />
           { state.context.data?.showOutreachIframe &&

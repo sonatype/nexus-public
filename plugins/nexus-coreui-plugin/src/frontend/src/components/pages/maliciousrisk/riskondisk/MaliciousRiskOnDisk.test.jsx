@@ -20,7 +20,7 @@ import userEvent from '@testing-library/user-event';
 import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
 
-import {maliciousRiskOnDiskResponse} from "./MaliciousRiskOnDisk.testdata";
+import {maliciousRiskOnDiskResponse, maliciousRiskOnDiskResponseWithCount0} from "./MaliciousRiskOnDisk.testdata";
 import MaliciousRiskOnDisk from "./MaliciousRiskOnDisk";
 
 const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
@@ -66,8 +66,9 @@ describe('MaliciousRiskOnDisk', () => {
     window.location.hash = `#browse/${page}`;
     ExtJS.isProEdition.mockReturnValue(isProEdition);
     ExtJS.useUser.mockReturnValue({'administrator': isAdmin});
+    const rerender = jest.fn();
 
-    render(<MaliciousRiskOnDisk/>);
+    render(<MaliciousRiskOnDisk rerender={rerender}/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 
@@ -94,6 +95,18 @@ describe('MaliciousRiskOnDisk', () => {
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('does not render if malicious count is 0', async (page) => {
+    when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockResolvedValue({
+      data: maliciousRiskOnDiskResponseWithCount0
+    });
+    await act(async () => {
+      render(<MaliciousRiskOnDisk/>);
+    });
+
+    expect(selectors.queryAlert()).not.toBeInTheDocument();
+  });
+
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
   ('renders error message if data fetch fails', async (page) => {
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockRejectedValue(new Error('Failed to fetch data'));
     await renderView(true, true, page);
@@ -111,8 +124,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
-        'Protect your repositories from malware with Sonatype Malware Defense.', showContactSonatypeBtn, isProEdition);
+    await expectAlertToRender(page, '1,234,567', 'Malicious Components Found in Your Repository',
+        'Protect your repositories from malware with Sonatype Repository Firewall.', showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -124,8 +137,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
-        'Protect your repositories from malware with Sonatype Malware Defense.', showContactSonatypeBtn, isProEdition);
+    await expectAlertToRender(page, '1,234,567', 'Malicious Components Found in Your Repository',
+        'Protect your repositories from malware with Sonatype Repository Firewall.', showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -137,7 +150,7 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+    await expectAlertToRender(page, '1,234,567', 'Malicious Components Found in Your Repository',
         'Contact Sonatype or your Nexus Repository administrator for more information.', showContactSonatypeBtn,
         isProEdition);
   });
@@ -151,7 +164,7 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, 123, 'Malicious Components Found in Your Repository',
+    await expectAlertToRender(page, '1,234,567', 'Malicious Components Found in Your Repository',
         'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
         showContactSonatypeBtn, isProEdition);
   });

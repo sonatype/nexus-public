@@ -70,8 +70,8 @@ export default {
       DESCRIPTION: {
         NON_ADMIN_OSS: 'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
         NON_ADMIN_PRO: 'Contact Sonatype or your Nexus Repository administrator for more information.',
-        ADMIN_OSS: 'Protect your repositories from malware with Sonatype Malware Defense.',
-        ADMIN_PRO: 'Protect your repositories from malware with Sonatype Malware Defense.'
+        ADMIN_OSS: 'Protect your repositories from malware with Sonatype Repository Firewall.',
+        ADMIN_PRO: 'Protect your repositories from malware with Sonatype Repository Firewall.'
       },
       CONTACT_SONATYPE: {
         TEXT: 'Contact Sonatype',

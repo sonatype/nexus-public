@@ -56,14 +56,6 @@ export default {
       FIRST_STEP_TEXT: <>In the <em>Repositories</em> table, select the <em>Copy</em> button for the repository you wish to connect.</>,
       SECOND_STEP_TEXT: 'A modal with the repository\'s direct URL will appear; copy this URL to use as needed. The modal also contains a link to our help documentation to get more information on how to connect to your repository.'
     },
-    FIREWALL_ALERT_CONTENT: (
-        <>
-          You haven't configured your repository protection. Sonatype Repository Firewall combines
-          over 60 different signals used to identify potentially malicious activity and block risks before
-          download. Automatically block malware from entering your code repositories.
-        </>
-    ),
-    FIREWALL_ENABLE_BUTTON_CONTENT : 'Enable Capability',
     USAGE: {
       MENU: {
         TEXT: 'Usage'
@@ -202,12 +194,6 @@ export default {
           URL: 'https://links.sonatype.com/products/nxrm3/docs/upgrade-to-pro'
         }
       }
-    },
-    MALICIOUS_RISK_BANNER_CONTENT: {
-      FIRST_LINE_HEAVY_BOLD_TEXT: 'NEW! Malicious Risk Dashboard',
-      FIRST_LINE_NORMAL_BOLD_TEXT: 'is now available',
-      SECOND_LINE_TEXT: 'View metrics on your repository risk and take control of your organizational health'
-    },
-    MALICIOUS_RISK_BANNER_BUTTON_CONTENT : 'View Dashboard'
+    }
   }
 };
