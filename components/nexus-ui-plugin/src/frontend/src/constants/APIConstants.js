@@ -162,8 +162,7 @@ export default {
       ACTION: 'outreach_Outreach',
       METHODS: {
         READ_STATUS: 'readStatus',
-        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers',
-        SHOW_FIREWALL_ALERT: 'showFirewallAlert'
+        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers'
       }
     },
     BROWSE: {
