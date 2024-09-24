@@ -71,6 +71,8 @@ public class TaskConfiguration
 
   public static final String RUN_WHEN_FROZEN = ".runWhenFrozen";
 
+  public static final String READ_ONLY_UI_KEY = ".readOnlyUi";
+
   static final String ID_KEY = ".id";
 
   static final String NAME_KEY = ".name";
@@ -303,6 +305,14 @@ public class TaskConfiguration
 
   public void setProgress(final String progress) {
     setString(PROGRESS_KEY, progress);
+  }
+
+  public void setReadOnlyUi(final boolean readOnlyUi) {
+    setBoolean(READ_ONLY_UI_KEY, readOnlyUi);
+  }
+
+  public boolean isReadOnlyUi() {
+    return getBoolean(READ_ONLY_UI_KEY, false);
   }
 
   //

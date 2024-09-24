@@ -71,6 +71,8 @@ class TaskXO
   @CronExpression(groups = AdvancedSchedule)
   String cronExpression
 
+  Boolean isReadOnlyUi
+
   public interface Schedule
   {
     // empty
