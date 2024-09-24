@@ -61,17 +61,12 @@ Ext.define('NX.view.feature.Content', {
     const maliciousRiskOnDisk = me.down('nx-component-malicious-risk-on-disk');
     const titles = ['Browse', 'Search'];
     const user = NX.State.getUser();
-    const edition = NX.State.getEdition();
     const maliciousRiskFeatureEnabled = NX.State.getValue('nexus.malicious.risk.on.disk.enabled');
     const maliciousDashBoardEnabled = NX.State.getValue('MaliciousRiskDashboard');
     const showMaliciousRiskOnDisk = maliciousRiskFeatureEnabled && maliciousDashBoardEnabled;
 
     if (showMaliciousRiskOnDisk && titles.includes(me.currentTitle) && user) {
-      if (edition === 'OSS' && !user.administrator) {
-        maliciousRiskOnDisk.setHeight(165);
-      } else {
-        maliciousRiskOnDisk.setHeight(140);
-      }
+      maliciousRiskOnDisk.setHeight(285);
       maliciousRiskOnDisk.show();
       maliciousRiskOnDisk.rerender();
     } else {
