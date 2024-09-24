@@ -66,15 +66,15 @@ export default {
       }
     },
     RISK_ON_DISK: {
-      TITLE: 'Malicious Components Found in Your Repository',
+      TITLE_PLURAL: 'Malware Components Found',
+      TITLE_SINGULAR: 'Malware Component Found',
       DESCRIPTION: {
-        NON_ADMIN_OSS: 'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
-        NON_ADMIN_PRO: 'Contact Sonatype or your Nexus Repository administrator for more information.',
-        ADMIN_OSS: 'Protect your repositories from malware with Sonatype Repository Firewall.',
-        ADMIN_PRO: 'Protect your repositories from malware with Sonatype Repository Firewall.'
+        TITLE: <><strong>URGENT: Malware is in Your Instance of Nexus Repository Manager</strong></>,
+        CONTENT: 'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.',
+        ADDITIONAL_NON_ADMIN_CONTENT: <><strong>Contact your instance administrator to resolve.</strong></>
       },
       CONTACT_SONATYPE: {
-        TEXT: 'Contact Sonatype',
+        TEXT: 'Contact Sonatype to Resolve',
         URL: {
           OSS: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/oss-admin-learn-more',
           PRO: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more'

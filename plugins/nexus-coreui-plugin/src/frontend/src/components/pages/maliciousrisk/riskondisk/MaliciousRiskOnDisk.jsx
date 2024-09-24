@@ -14,10 +14,9 @@ import React from 'react';
 import {useMachine} from "@xstate/react";
 
 import {
-  NxButton,
   NxButtonBar,
   NxErrorAlert,
-  NxFontAwesomeIcon,
+  NxFontAwesomeIcon, NxGrid,
   NxH2,
   NxH3,
   NxLoadWrapper
@@ -30,10 +29,10 @@ import UIStrings from "../../../../constants/UIStrings";
 import "./MaliciousRiskOnDisk.scss";
 
 const {
-  TITLE,
+  TITLE_PLURAL,
+  TITLE_SINGULAR,
   DESCRIPTION,
   CONTACT_SONATYPE,
-  VIEW_OSS_MALWARE_RISK
 } = UIStrings.MALICIOUS_RISK.RISK_ON_DISK;
 
 function MaliciousRiskOnDiskContent({user, props}) {
@@ -44,8 +43,6 @@ function MaliciousRiskOnDiskContent({user, props}) {
   const isAdmin = user?.administrator;
   const isProEdition = ExtJS.isProEdition();
 
-  const maliciousDashBoardHash = '#browse/maliciousrisk';
-  const notMaliciousDashBoardPage = window.location.hash !== maliciousDashBoardHash;
   const riskOnDiskCount = maliciousRiskOnDisk?.totalCount ?? 0;
   const showWarningAlert = riskOnDiskCount > 0;
 
@@ -55,37 +52,12 @@ function MaliciousRiskOnDiskContent({user, props}) {
     }
   }, 100);
 
-
   function retry() {
     send({type: 'RETRY'});
   }
 
-  function navigateToMaliciousDashBoard() {
-    window.location.href = maliciousDashBoardHash;
-  }
-
   function getFirewallContactSonatype() {
     return isProEdition ? CONTACT_SONATYPE.URL.PRO : CONTACT_SONATYPE.URL.OSS;
-  }
-
-  const WarningDescription = function() {
-    const {NON_ADMIN_OSS, NON_ADMIN_PRO, ADMIN_OSS, ADMIN_PRO} = DESCRIPTION;
-
-    if (isAdmin && isProEdition) {
-      return ADMIN_PRO;
-    }
-    else if (!isAdmin && isProEdition) {
-      return NON_ADMIN_PRO;
-    }
-    else if (isAdmin && !isProEdition) {
-      return ADMIN_OSS;
-    }
-    else if (!isAdmin && !isProEdition) {
-      return NON_ADMIN_OSS;
-    }
-    else {
-      return '';
-    }
   }
 
   return (
@@ -93,16 +65,26 @@ function MaliciousRiskOnDiskContent({user, props}) {
         {showWarningAlert && <div className="risk-on-disk-container">
           <NxErrorAlert className="risk-on-disk-alert">
             <div className="risk-on-disk-content">
-              <div>
+              <div className="risk-on-disk-alert-title">
                 <NxFontAwesomeIcon icon={faExclamationTriangle}/>
                 <NxH2>{riskOnDiskCount.toLocaleString()}</NxH2>
-                <NxH3>{TITLE}</NxH3>
+                <NxH3>{riskOnDiskCount > 1 ? TITLE_PLURAL : TITLE_SINGULAR}</NxH3>
               </div>
-              <p><WarningDescription/></p>
+              <NxGrid.Column className='risk-on-disk-alert-description'>
+                <NxGrid.ColumnSection>
+                  <NxGrid.Header>
+                    <NxH3>{DESCRIPTION.TITLE}</NxH3>
+                  </NxGrid.Header>
+                  <p>{DESCRIPTION.CONTENT}</p>
+                </NxGrid.ColumnSection>
+                {!isAdmin &&
+                    <NxGrid.ColumnSection>
+                      <p>{DESCRIPTION.ADDITIONAL_NON_ADMIN_CONTENT}</p>
+                    </NxGrid.ColumnSection>
+                }
+              </NxGrid.Column>
             </div>
             <NxButtonBar>
-              {notMaliciousDashBoardPage &&
-                  <NxButton onClick={navigateToMaliciousDashBoard}>{VIEW_OSS_MALWARE_RISK}</NxButton>}
               {isAdmin &&
                   <a className="nx-btn nx-btn--error"
                      href={getFirewallContactSonatype()}

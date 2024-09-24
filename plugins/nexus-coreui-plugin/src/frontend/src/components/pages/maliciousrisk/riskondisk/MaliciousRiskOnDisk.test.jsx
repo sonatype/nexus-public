@@ -16,7 +16,6 @@ import axios from "axios";
 import {render, screen, waitForElementToBeRemoved} from "@testing-library/react";
 import {act} from "react-dom/test-utils";
 
-import userEvent from '@testing-library/user-event';
 import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
 import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
 
@@ -124,8 +123,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', 'Malicious Components Found in Your Repository',
-        'Protect your repositories from malware with Sonatype Repository Firewall.', showContactSonatypeBtn, isProEdition);
+    await expectAlertToRender(page, '1,234,567', 'Malware Components Found',
+        'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.', showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -137,8 +136,9 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', 'Malicious Components Found in Your Repository',
-        'Protect your repositories from malware with Sonatype Repository Firewall.', showContactSonatypeBtn, isProEdition);
+    await expectAlertToRender(page, '1,234,567', 'Malware Components Found',
+        'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.',
+        showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -150,8 +150,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', 'Malicious Components Found in Your Repository',
-        'Contact Sonatype or your Nexus Repository administrator for more information.', showContactSonatypeBtn,
+    await expectAlertToRender(page, '1,234,567', 'Malware Components Found',
+        'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.Contact your instance administrator to resolve.', showContactSonatypeBtn,
         isProEdition);
   });
 
@@ -164,8 +164,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', 'Malicious Components Found in Your Repository',
-        'Sonatype Repository Firewall identifies and blocks malware. Contact your Nexus Repository Administrator to resolve.',
+    await expectAlertToRender(page, '1,234,567', 'Malware Components Found',
+        'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.Contact your instance administrator to resolve.',
         showContactSonatypeBtn, isProEdition);
   });
 
@@ -174,25 +174,16 @@ describe('MaliciousRiskOnDisk', () => {
     expect(selectors.getHeading(title)).toBeInTheDocument();
     expect(selectors.queryAlert()).toHaveTextContent(description);
 
-    if (page === 'malicious') {
-      expect(selectors.queryButton('View OSS Malware Risk')).not.toBeInTheDocument();
-    }
-    else {
-      expect(selectors.queryButton('View OSS Malware Risk')).toBeInTheDocument();
-      await userEvent.click(selectors.queryButton('View OSS Malware Risk'));
-      expect(window.location.hash).toBe('#browse/maliciousrisk');
-    }
-
     if (showContactSonatypeBtn) {
-      expect(selectors.queryLink('Contact Sonatype')).toBeInTheDocument();
+      expect(selectors.queryLink('Contact Sonatype to Resolve')).toBeInTheDocument();
 
       if (isProEdition) {
-        expect(selectors.queryLink('Contact Sonatype'))
+        expect(selectors.queryLink('Contact Sonatype to Resolve'))
             .toHaveAttribute('href',
                 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more');
       }
       else {
-        expect(selectors.queryLink('Contact Sonatype'))
+        expect(selectors.queryLink('Contact Sonatype to Resolve'))
             .toHaveAttribute('href',
                 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/oss-admin-learn-more');
       }

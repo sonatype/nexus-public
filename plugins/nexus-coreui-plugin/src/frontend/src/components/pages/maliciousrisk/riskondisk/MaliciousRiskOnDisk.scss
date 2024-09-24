@@ -25,7 +25,7 @@
 
   .nx-alert__content {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
   }
 
   .risk-on-disk-content {
@@ -46,6 +46,24 @@
       margin-left: 0;
       color: var(--nx-color-alert-error-icon);
       vertical-align: middle;
+    }
+
+    .risk-on-disk-alert-title {
+      display: flex;
+      align-items: center;
+      width: fit-content;
+      background: var(--nx-swatch-white);
+      border-style: solid;
+      border-color: var(--nx-swatch-red-40);
+      border-radius: 12px;
+      border-width: 1px;
+      padding: 5px;
+      margin-bottom: var(--nx-spacing-2x);
+    }
+
+    .risk-on-disk-alert-description{
+      border: none;
+      padding-left: 0;
     }
   }
 
