@@ -16,7 +16,7 @@
 }
 
 .risk-on-disk-alert {
-  max-width: 1016px;
+  max-width: 945px;
   margin: 0;
 
   .nx-icon.fa-exclamation-circle {
@@ -61,9 +61,13 @@
       margin-bottom: var(--nx-spacing-2x);
     }
 
-    .risk-on-disk-alert-description{
+    .risk-on-disk-alert-description {
       border: none;
       padding-left: 0;
+    }
+
+    .risk-on-disk-alert-description-title {
+      max-width: 850px
     }
   }
 

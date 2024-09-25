@@ -69,8 +69,8 @@ export default {
       TITLE_PLURAL: 'Malware Components Found',
       TITLE_SINGULAR: 'Malware Component Found',
       DESCRIPTION: {
-        TITLE: <><strong>URGENT: Malware is in Your Instance of Nexus Repository Manager</strong></>,
-        CONTENT: 'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.',
+        TITLE: <><strong>Open source malware is cached in the proxy repositories of this instance of Nexus Repository Manager</strong></>,
+        CONTENT: 'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action is required to remove this malware from your repository.',
         ADDITIONAL_NON_ADMIN_CONTENT: <><strong>Contact your instance administrator to resolve.</strong></>
       },
       CONTACT_SONATYPE: {

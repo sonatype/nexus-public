@@ -21,8 +21,13 @@ import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 
 import {maliciousRiskOnDiskResponse, maliciousRiskOnDiskResponseWithCount0} from "./MaliciousRiskOnDisk.testdata";
 import MaliciousRiskOnDisk from "./MaliciousRiskOnDisk";
+import FeatureFlags from '../../../../constants/FeatureFlags';
 
 const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
+const {
+  MALWARE_RISK_ENABLED,
+  MALWARE_RISK_ON_DISK_ENABLED
+} = FeatureFlags;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -51,10 +56,10 @@ const selectors = {
 describe('MaliciousRiskOnDisk', () => {
   beforeEach(() => {
     when(ExtJS.state().getValue)
-        .calledWith('nexus.malicious.risk.on.disk.enabled')
+        .calledWith(MALWARE_RISK_ON_DISK_ENABLED)
         .mockReturnValue(true);
     when(ExtJS.state().getValue)
-        .calledWith('MaliciousRiskDashboard')
+        .calledWith(MALWARE_RISK_ENABLED)
         .mockReturnValue(true);
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockResolvedValue({
       data: maliciousRiskOnDiskResponse
@@ -84,7 +89,7 @@ describe('MaliciousRiskOnDisk', () => {
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
   ('does not render if feature flag is false', async (page) => {
     when(ExtJS.state().getValue)
-        .calledWith('nexus.malicious.risk.on.disk.enabled')
+        .calledWith(MALWARE_RISK_ON_DISK_ENABLED)
         .mockReturnValue(false);
     await act(async () => {
       render(<MaliciousRiskOnDisk/>);
