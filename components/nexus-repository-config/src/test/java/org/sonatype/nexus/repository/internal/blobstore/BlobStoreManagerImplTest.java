@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.MockedStatic;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
@@ -35,9 +35,12 @@ import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
+import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager;
+import org.sonatype.nexus.security.UserIdHelper;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -59,55 +62,67 @@ import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 
 public class BlobStoreManagerImplTest
-    extends TestSupport {
+    extends TestSupport
+{
+  private static final String SECRET_FIELD_KEY = "secretAccessKey";
 
-  AutoCloseable openMocks;
+  private static final String SECRET_FIELD_VALUE = "secretAccessKeyValue";
+
+  private static final String TEST_USER = "test-user";
+
+  private static final String SECRET_ID = "_1";
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock
-  EventManager eventManager;
+  private EventManager eventManager;
 
   @Mock
-  BlobStoreConfigurationStore store;
+  private BlobStoreConfigurationStore store;
 
   @Mock
-  BlobStoreDescriptor descriptor;
+  private BlobStoreDescriptor descriptor;
 
   @Mock
-  Provider<BlobStore> provider;
+  private Provider<BlobStore> provider;
 
   @Mock
-  FreezeService freezeService;
+  private FreezeService freezeService;
 
   @Mock
-  RepositoryManager repositoryManager;
+  private RepositoryManager repositoryManager;
 
   @Mock
-  NodeAccess nodeAccess;
+  private NodeAccess nodeAccess;
 
   @Mock
-  ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager;
+  private ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager;
 
   @Mock
-  BlobStoreTaskService blobStoreTaskService;
+  private BlobStoreTaskService blobStoreTaskService;
 
   @Mock
-  Provider<BlobStoreOverride> blobStoreOverrideProvider;
+  private Provider<BlobStoreOverride> blobStoreOverrideProvider;
+
+  @Mock
+  private SecretsService secretsService;
+
+  private MockedStatic<UserIdHelper> userIdHelperMockedStatic;
 
   BlobStoreManagerImpl underTest;
 
   @Before
   public void setup() {
-    openMocks = MockitoAnnotations.openMocks(this);
+    userIdHelperMockedStatic = mockStatic(UserIdHelper.class);
+    userIdHelperMockedStatic.when(UserIdHelper::get).thenReturn(TEST_USER);
     when(store.newConfiguration()).thenReturn(new MockBlobStoreConfiguration());
     underTest = newBlobStoreManager(false);
   }
 
   @After
   public void destroy() throws Exception {
-    openMocks.close();
+    userIdHelperMockedStatic.close();
   }
 
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults) {
@@ -125,7 +140,8 @@ public class BlobStoreManagerImplTest
         new DefaultFileBlobStoreProvider(),
         blobStoreTaskService,
         blobStoreOverrideProvider,
-        replicationBlobStoreStatusManager));
+        replicationBlobStoreStatusManager,
+        secretsService));
   }
 
   @Test
@@ -216,7 +232,7 @@ public class BlobStoreManagerImplTest
     assert createdBlobStore == blobStore;
     verify(store).create(configuration);
     verify(blobStore).start();
-    //assert underTest.browse().toList().equals(List.of(blobStore));
+
     assert StreamSupport.stream(underTest.browse().spliterator(), false)
         .collect(Collectors.toList())
         .equals(Collections.singletonList(blobStore));
@@ -224,17 +240,52 @@ public class BlobStoreManagerImplTest
   }
 
   @Test
-  public void canDeleteAnExistingBlobStore() throws Exception {
-    BlobStoreConfiguration configuration = createConfig("test");
+  public void canCreateBlobStoreAndEncryptSensitiveValues() throws Exception {
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(Collections.singletonList(SECRET_FIELD_KEY));
     BlobStore blobStore = mock(BlobStore.class);
+    when(provider.get()).thenReturn(blobStore);
+    Secret secret = mock(Secret.class);
+    when(secret.getId()).thenReturn(SECRET_ID);
+    when(secretsService.encryptMaven(BlobStoreManagerImpl.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(), TEST_USER))
+        .thenReturn(secret);
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put(SECRET_FIELD_KEY, SECRET_FIELD_VALUE);
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Collections.singletonMap("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+
+    BlobStore createdBlobStore = underTest.create(configuration);
+
+    assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(SECRET_ID));
+    assertThat(createdBlobStore, is(createdBlobStore));
+    verify(secretsService).encryptMaven(BlobStoreManagerImpl.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(),
+        TEST_USER);
+    verify(store).create(configuration);
+    verify(blobStore).start();
+  }
+
+  @Test
+  public void canDeleteAnExistingBlobStore() throws Exception {
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(Collections.singletonList(SECRET_FIELD_KEY));
+    BlobStore blobStore = mock(BlobStore.class);
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID);
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Collections.singletonMap("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration);
     doReturn(blobStore).when(underTest).blobStore("test");
     when(store.list()).thenReturn(Collections.singletonList(configuration));
-    when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration);
+    Secret secret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(secret);
 
     underTest.delete(configuration.getName());
 
     verify(blobStore).shutdown();
     verify(store).delete(configuration);
+    verify(secretsService).remove(secret);
     verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.");
   }
 
@@ -307,7 +358,8 @@ public class BlobStoreManagerImplTest
     try {
       underTest.create(configuration);
       fail();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       // expected
     }
 
@@ -330,7 +382,8 @@ public class BlobStoreManagerImplTest
         new DefaultFileBlobStoreProvider(),
         blobStoreTaskService,
         blobStoreOverrideProvider,
-        replicationBlobStoreStatusManager);
+        replicationBlobStoreStatusManager,
+        secretsService);
 
     BlobStore blobStore = mock(BlobStore.class);
     when(provider.get()).thenReturn(blobStore);
@@ -349,6 +402,8 @@ public class BlobStoreManagerImplTest
   public void inUseBlobstoreCannotBeDeleted() throws Exception {
     BlobStore used = mock(BlobStore.class);
     BlobStore unused = mock(BlobStore.class);
+    when(used.getBlobStoreConfiguration()).thenReturn(createConfig("used"));
+    when(unused.getBlobStoreConfiguration()).thenReturn(createConfig("unused"));
     underTest.track("used", used);
     underTest.track("unused", unused);
     when(repositoryManager.isBlobstoreUsed("used")).thenReturn(true);
@@ -357,7 +412,8 @@ public class BlobStoreManagerImplTest
     try {
       underTest.delete("unused");
       underTest.delete("used");
-    } finally {
+    }
+    finally {
       verify(unused, times(1)).remove();
       verify(used, times(0)).remove();
     }
@@ -418,13 +474,14 @@ public class BlobStoreManagerImplTest
     when(store.list()).thenReturn(Collections.singletonList(createConfig("test")));
 
     underTest.doStart();
-    assertThat("blob store manager should still track blob stores that failed on startup", underTest.get("test"), notNullValue());
+    assertThat("blob store manager should still track blob stores that failed on startup", underTest.get("test"),
+        notNullValue());
   }
 
   @Test
   public void canStartWhenABlobStoreFailsToStart() throws Exception {
     BlobStore blobStore = mock(BlobStore.class);
-   doThrow(new IllegalStateException()).when(blobStore).start();
+    doThrow(new IllegalStateException()).when(blobStore).start();
     when(provider.get()).thenReturn(blobStore);
     when(store.list()).thenReturn(Collections.singletonList(createConfig("test")));
     underTest.doStart();
@@ -436,31 +493,67 @@ public class BlobStoreManagerImplTest
 
   @Test
   public void canUpdateBlobStoreFromNewConfig() throws Exception {
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(Collections.singletonList(SECRET_FIELD_KEY));
     BlobStore blobStore = mock(BlobStore.class);
-    BlobStoreConfiguration oldBlobStoreConfig = createConfig("test");
+    Map<String, Map<String, Object>> oldBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> oldBlobConfigMap = new HashMap<>();
+    oldBlobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID);
+    oldBlobStoreAttributes.put("test", oldBlobConfigMap);
+    oldBlobStoreAttributes.put("file", Collections.singletonMap("path", "foo"));
+    BlobStoreConfiguration oldBlobStoreConfig = createConfig("test", oldBlobStoreAttributes);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(oldBlobStoreConfig);
+    Secret oldSecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(oldSecret);
+    when(oldSecret.decrypt()).thenReturn(SECRET_FIELD_VALUE.toCharArray());
 
-    Map<String, Map<String, Object>> updatedFileAttributes = new HashMap<>();
-    updatedFileAttributes.put("file", Collections.singletonMap("path", "foo"));
-    BlobStoreConfiguration newBlobStoreConfig = createConfig("test", updatedFileAttributes);
+    Secret newSecret = mock(Secret.class);
+    when(newSecret.getId()).thenReturn("_2");
+    Map<String, Map<String, Object>> updatedBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> newBlobConfigMap = new HashMap<>();
+    newBlobConfigMap.put(SECRET_FIELD_KEY, SECRET_FIELD_VALUE);
+    updatedBlobStoreAttributes.put("test", newBlobConfigMap);
+    updatedBlobStoreAttributes.put("file", Collections.singletonMap("path", "foo"));
+    BlobStoreConfiguration newBlobStoreConfig = createConfig("test", updatedBlobStoreAttributes);
+    when(secretsService.encryptMaven(BlobStoreManagerImpl.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(),
+        TEST_USER)).thenReturn(newSecret);
+
     underTest.track("test", blobStore);
 
     underTest.update(newBlobStoreConfig);
 
+    verify(secretsService).remove(oldSecret);
+    verify(secretsService).encryptMaven(BlobStoreManagerImpl.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(),
+        TEST_USER);
     verify(store, times(1)).update(newBlobStoreConfig);
     verify(store, times(0)).update(oldBlobStoreConfig);
   }
 
   @Test(expected = BlobStoreException.class)
   public void cannotUpdateBlobStoreFromNewConfig() throws Exception {
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(Collections.singletonList(SECRET_FIELD_KEY));
     BlobStore blobStore = mock(BlobStore.class);
-    BlobStoreConfiguration oldBlobStoreConfig = createConfig("test");
+    Map<String, Map<String, Object>> oldBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> oldBlobConfigMap = new HashMap<>();
+    oldBlobConfigMap.put(SECRET_FIELD_KEY, SECRET_FIELD_VALUE);
+    oldBlobStoreAttributes.put("test", oldBlobConfigMap);
+    oldBlobStoreAttributes.put("file", Collections.singletonMap("path", "foo"));
+    BlobStoreConfiguration oldBlobStoreConfig = createConfig("test", oldBlobStoreAttributes);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(oldBlobStoreConfig);
     BlobId blobId = new BlobId("testBlobId", OffsetDateTime.now());
+    Secret oldSecret = mock(Secret.class);
+    when(secretsService.from(SECRET_FIELD_VALUE)).thenReturn(oldSecret);
+    when(oldSecret.decrypt()).thenReturn(SECRET_FIELD_VALUE.toCharArray());
 
-    Map<String, Map<String, Object>> updatedFileAttributes = new HashMap<>();
-    updatedFileAttributes.put("file", Collections.singletonMap("path", "foo"));
-    BlobStoreConfiguration newBlobStoreConfig = createConfig("test", updatedFileAttributes);
+    Secret newSecret = mock(Secret.class);
+    when(newSecret.getId()).thenReturn("_2");
+    Map<String, Map<String, Object>> updatedBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> newBlobConfigMap = new HashMap<>();
+    newBlobConfigMap.put(SECRET_FIELD_KEY, SECRET_FIELD_VALUE);
+    oldBlobStoreAttributes.put("test", newBlobConfigMap);
+    updatedBlobStoreAttributes.put("file", Collections.singletonMap("path", "foo"));
+    BlobStoreConfiguration newBlobStoreConfig = createConfig("test", updatedBlobStoreAttributes);
+    when(secretsService.encryptMaven(BlobStoreManagerImpl.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(),
+        TEST_USER)).thenReturn(newSecret);
 
     doThrow(new BlobStoreException("Cannot start blobstore with new config", blobId)).when(blobStore).start();
 
@@ -469,7 +562,10 @@ public class BlobStoreManagerImplTest
     underTest.update(newBlobStoreConfig);
 
     verify(store, times(1)).update(newBlobStoreConfig);
-    // old blobstore config should be put back in the database
+    verify(secretsService).encryptMaven(BlobStoreManagerImpl.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(),
+        TEST_USER);
+    // old blobstore config should be put back in the database and new secret should be deleted
+    verify(secretsService).remove(oldSecret);
     verify(store, times(1)).update(oldBlobStoreConfig);
   }
 
