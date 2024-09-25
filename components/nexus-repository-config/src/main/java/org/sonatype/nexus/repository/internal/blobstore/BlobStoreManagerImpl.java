@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.sonatype.nexus.common.app.FreezeService;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -52,12 +54,15 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.distributed.event.service.api.EventType;
 import org.sonatype.nexus.distributed.event.service.api.common.BlobStoreDistributedConfigurationEvent;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager;
+import org.sonatype.nexus.security.UserIdHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -85,6 +90,8 @@ public class BlobStoreManagerImpl
     extends StateGuardLifecycleSupport
     implements BlobStoreManager, BlobSessionSupplier, EventAware
 {
+  protected static final String BLOBSTORE_CONFIG = "blobstore-config";
+
   private final EventManager eventManager;
 
   private final Map<String, BlobStore> stores = Maps.newConcurrentMap();
@@ -109,6 +116,8 @@ public class BlobStoreManagerImpl
 
   private final DefaultBlobStoreProvider defaultBlobstoreProvider;
 
+  private final SecretsService secretService;
+
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
                               final BlobStoreConfigurationStore store,
@@ -121,7 +130,8 @@ public class BlobStoreManagerImpl
                               final DefaultBlobStoreProvider defaultBlobstoreProvider,
                               final BlobStoreTaskService blobStoreTaskService,
                               final Provider<BlobStoreOverride> blobStoreOverrideProvider,
-                              final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager)
+                              final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager,
+                              final SecretsService secretService)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -133,6 +143,7 @@ public class BlobStoreManagerImpl
     this.blobStoreOverrideProvider = blobStoreOverrideProvider;
     this.replicationBlobStoreStatusManager = checkNotNull(replicationBlobStoreStatusManager);
     this.defaultBlobstoreProvider = checkNotNull(defaultBlobstoreProvider);
+    this.secretService = checkNotNull(secretService);
 
     if (provisionDefaults != null) {
       // explicit true/false setting, so honour that
@@ -227,30 +238,35 @@ public class BlobStoreManagerImpl
     checkNotNull(configuration);
     log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(), configuration.getAttributes());
     validateConfiguration(configuration, true);
-    BlobStore blobStore = getBlobStoreForCreate(configuration);
-
-    if (!EventHelper.isReplicating()) {
-      try {
-        store.create(configuration);
-        log.debug("BlobStore: {} created.", configuration.getName());
-      }
-      catch (Exception e) {
+    List<Secret> encryptedAttributes = encryptSensitiveAttributes(newConfiguration(), configuration);
+    try {
+      BlobStore blobStore = getBlobStoreForCreate(configuration);
+      if (!EventHelper.isReplicating()) {
         try {
-          blobStore.remove();
+          store.create(configuration);
+          log.debug("BlobStore: {} created.", configuration.getName());
         }
-        catch (Exception removeException) {
-          // if an error occurs on remove log and rethrow original to avoid losing the root cause
-          log.error("Error removing BlobStore {} after create failed", configuration.getName(), removeException);
+        catch (Exception e) {
+          try {
+            blobStore.remove();
+          }
+          catch (Exception removeException) {
+            // if an error occurs on remove log and rethrow original to avoid losing the root cause
+            log.error("Error removing BlobStore {} after create failed", configuration.getName(), removeException);
+          }
+          throw e;
         }
-        throw e;
       }
+
+      doCreate(blobStore, configuration);
+      log.debug("BlobStore: {} saved into local cache", configuration.getName());
+      eventManager.post(new BlobStoreDistributedConfigurationEvent(configuration.getName(), EventType.CREATED));
+      return blobStore;
     }
-
-    doCreate(blobStore, configuration);
-    log.debug("BlobStore: {} saved into local cache", configuration.getName());
-    eventManager.post(new BlobStoreDistributedConfigurationEvent(configuration.getName(), EventType.CREATED));
-
-    return blobStore;
+    catch (Exception e) {
+      encryptedAttributes.forEach(this::removeSecret);
+      throw e;
+    }
   }
 
   private BlobStore getBlobStoreForCreate(final BlobStoreConfiguration configuration) throws Exception {
@@ -283,7 +299,15 @@ public class BlobStoreManagerImpl
     BlobStore blobStore = getBlobStoreForUpdate(configuration);
 
     if (!EventHelper.isReplicating()) {
-      store.update(configuration);
+      List<Secret> encryptedAttributes = new ArrayList<>();
+      try {
+        encryptedAttributes = encryptSensitiveAttributes(blobStore.getBlobStoreConfiguration(), configuration);
+        store.update(configuration);
+      }
+      catch (Exception e) {
+        encryptedAttributes.forEach(this::removeSecret);
+        throw e;
+      }
     }
 
     doUpdate(blobStore, configuration);
@@ -314,17 +338,37 @@ public class BlobStoreManagerImpl
     try {
       blobStore.init(configuration);
       blobStore.start();
+      executeIfNotReplicating(() -> removeEncryptedAttributes(currentBlobStoreConfiguration, configuration));
       eventManager.post(new BlobStoreUpdatedEvent(blobStore));
       eventManager.post(new BlobStoreStartedEvent(blobStore));
     }
     catch (BlobStoreException e) {
       startWithConfig(blobStore, currentBlobStoreConfiguration);
+      executeIfNotReplicating(restoreOldConfiguration(currentBlobStoreConfiguration, configuration));
       throw e;
     }
     catch (Exception e) {
       log.error("Failed to update configuration", e);
       startWithConfig(blobStore, currentBlobStoreConfiguration);
+      executeIfNotReplicating(restoreOldConfiguration(currentBlobStoreConfiguration, configuration));
       throw new BlobStoreException("Failed to start blob store with new configuration.", null);
+    }
+  }
+
+  private Runnable restoreOldConfiguration(
+      final BlobStoreConfiguration oldConfig,
+      final BlobStoreConfiguration newConfig)
+  {
+    return () -> {
+      log.debug("Restoring old configuration for blob store name: '{}'", oldConfig.getName());
+      store.update(oldConfig);
+      removeEncryptedAttributes(newConfig, oldConfig);
+    };
+  }
+
+  private void executeIfNotReplicating(Runnable action) {
+    if (!EventHelper.isReplicating()) {
+      action.run();
     }
   }
 
@@ -392,7 +436,9 @@ public class BlobStoreManagerImpl
     BlobStore blobStore = doForceDelete(name);
 
     if (!EventHelper.isReplicating()) {
-      store.delete(blobStore.getBlobStoreConfiguration());
+      BlobStoreConfiguration blobStoreConfiguration = blobStore.getBlobStoreConfiguration();
+      store.delete(blobStoreConfiguration);
+      removeEncryptedAttributes(blobStoreConfiguration, newConfiguration());
     }
     eventManager.post(new BlobStoreDeletedEvent(blobStore));
     eventManager.post(new BlobStoreDistributedConfigurationEvent(name, DELETED));
@@ -595,6 +641,62 @@ public class BlobStoreManagerImpl
     }
     catch (BlobStoreException ex) {
       throw new BlobInputStreamException(ex, ex.getBlobId());
+    }
+  }
+
+  private List<Secret> encryptSensitiveAttributes(
+      BlobStoreConfiguration oldBlobStoreConfiguration,
+      BlobStoreConfiguration newblobStoreConfiguration)
+  {
+    String typeKey = newblobStoreConfiguration.getType();
+    NestedAttributesMap newBlobStoreTypeData = newblobStoreConfiguration.attributes(typeKey.toLowerCase());
+    NestedAttributesMap oldBlobStoreTypeData = oldBlobStoreConfiguration.attributes(typeKey.toLowerCase());
+    List<String> sensitiveAttributes = blobStoreDescriptors.get(typeKey).getSensitiveConfigurationFields();
+    List<Secret> secrets = new ArrayList<>();
+    for (String sensitiveAttrKey : sensitiveAttributes) {
+      String value =
+          Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))
+              ? oldBlobStoreTypeData.get(sensitiveAttrKey, String.class)
+              : newBlobStoreTypeData.get(sensitiveAttrKey, String.class);
+
+      if (value != null) {
+        Secret newSecret =
+            Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))
+                ? secretService.encryptMaven(BLOBSTORE_CONFIG, secretService.from(value).decrypt(), UserIdHelper.get())
+                : secretService.encryptMaven(BLOBSTORE_CONFIG, value.toCharArray(), UserIdHelper.get());
+
+        newBlobStoreTypeData.set(sensitiveAttrKey, newSecret.getId());
+        secrets.add(newSecret);
+      }
+    }
+    return secrets;
+  }
+
+  private void removeEncryptedAttributes(
+      BlobStoreConfiguration oldBlobStoreConfiguration,
+      BlobStoreConfiguration newblobStoreConfiguration)
+  {
+    String typeKey = oldBlobStoreConfiguration.getType();
+    NestedAttributesMap newBlobStoreTypeData = newblobStoreConfiguration.attributes(typeKey.toLowerCase());
+    NestedAttributesMap oldBlobStoreTypeData = oldBlobStoreConfiguration.attributes(typeKey.toLowerCase());
+    List<String> sensitiveAttributes = blobStoreDescriptors.get(typeKey).getSensitiveConfigurationFields();
+    log.debug("Removing sensitive attributes from old store configuration. Blob store name: '{}'", oldBlobStoreConfiguration.getName());
+    for (String sensitiveAttrKey : sensitiveAttributes) {
+      if (oldBlobStoreTypeData.get(sensitiveAttrKey) != null &&
+          !Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))) {
+        String value = (String) oldBlobStoreTypeData.get(sensitiveAttrKey);
+        removeSecret(secretService.from(value));
+      }
+    }
+  }
+
+  private void removeSecret(final Secret secret) {
+    try {
+      secretService.remove(secret);
+    }
+    catch (Exception e) {
+      log.error("Failed to cleanup secret {} cause {}", secret.getId(), e.getMessage(),
+          log.isDebugEnabled() ? e : null);
     }
   }
 
