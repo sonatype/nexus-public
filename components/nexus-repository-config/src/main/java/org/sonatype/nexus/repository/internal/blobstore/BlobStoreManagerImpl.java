@@ -318,6 +318,7 @@ public class BlobStoreManagerImpl
       eventManager.post(new BlobStoreStartedEvent(blobStore));
     }
     catch (BlobStoreException e) {
+      store.update(currentBlobStoreConfiguration);
       startWithConfig(blobStore, currentBlobStoreConfiguration);
       throw e;
     }
