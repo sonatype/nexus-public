@@ -28,6 +28,7 @@ const GOOGLE = UIStrings.BLOB_STORES.GOOGLE;
 export default function GoogleBlobStoreSettings({service}) {
   const [current, send] = useService(service);
   const {bucketConfiguration = {}} = current.context.data;
+  const {pristineData} = current.context;
 
   function bucketField(field) {
     return `bucketConfiguration.bucket.${field}`;
@@ -37,9 +38,11 @@ export default function GoogleBlobStoreSettings({service}) {
     return `bucketConfiguration.bucketSecurity.${field}`;
   }
 
-  const setFiles = (fileList) => {
-    send({type: 'SET_FILES',  data: {files: fileList}});
+  const setFiles = (file) => {
+    send({type: 'SET_FILES',  file});
   };
+
+  const isEdit = Boolean(pristineData.name);
 
   return <div className="nxrm-google-blobstore">
     <NxFormGroup {...GOOGLE.PROJECT_ID}>
@@ -52,6 +55,11 @@ export default function GoogleBlobStoreSettings({service}) {
       <NxTextInput
           {...FormUtils.fieldProps(bucketField('name'), current)}
           onChange={FormUtils.handleUpdate(bucketField('name'), send)}/>
+    </NxFormGroup>
+    <NxFormGroup {...GOOGLE.PREFIX}>
+      <NxTextInput
+                 {...FormUtils.fieldProps(bucketField('prefix'), current)}
+                 onChange={FormUtils.handleUpdate(bucketField('prefix'), send)}/>
     </NxFormGroup>
     <NxFormGroup {...GOOGLE.REGION} isRequired>
       <NxTextInput
@@ -77,12 +85,12 @@ export default function GoogleBlobStoreSettings({service}) {
       </NxRadio>
     </NxFieldset>
     {bucketConfiguration.bucketSecurity?.authenticationMethod === 'accountKey' && (
-        <NxFormGroup {...GOOGLE.AUTHENTICATION.JSON_PATH} isRequired>
+        <NxFormGroup {...GOOGLE.AUTHENTICATION.JSON_PATH} isRequired={!isEdit}>
           <NxFileUpload
             onChange={setFiles}
-            isRequired
+            isRequired={!isEdit}
             aria-label="gcp credential json file upload"
-            {...FormUtils.fileUploadProps('files', current)}
+            {...FormUtils.fileUploadProps(authenticationField('file'), current)}
           />
         </NxFormGroup>
     )}

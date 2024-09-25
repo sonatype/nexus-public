@@ -26,6 +26,9 @@ import javax.ws.rs.PathParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
+
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
@@ -65,6 +68,8 @@ public class BlobStoreInternalResource
   public static final String GOOGLE_TYPE = "google";
 
   public static final String GOOGLE_BUCKET_KEY = "bucketName";
+
+  public static final String PREFIX_KEY = "prefix";
 
   public static final String AZURE_CONFIG = "azure cloud storage";
 
@@ -155,7 +160,11 @@ public class BlobStoreInternalResource
       return "N/A";
     }
     else if (typeId.equals(GOOGLE_TYPE)) {
-      return configuration.attributes(GOOGLE_CONFIG).get(GOOGLE_BUCKET_KEY, String.class);
+      final String prefix = Optional.ofNullable(configuration.attributes(GOOGLE_CONFIG).get(PREFIX_KEY, String.class))
+        .filter(Predicates.not(Strings::isNullOrEmpty))
+        .map(s -> s.replaceFirst("/$", "") + "/")
+        .orElse("");
+      return prefix + configuration.attributes(GOOGLE_CONFIG).get(GOOGLE_BUCKET_KEY, String.class);
     }
     logger.warn("blob store type {} unknown, defaulting to N/A for path", typeId);
     return "N/A";

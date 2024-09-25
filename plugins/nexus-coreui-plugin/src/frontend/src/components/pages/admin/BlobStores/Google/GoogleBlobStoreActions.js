@@ -25,7 +25,7 @@ export default {
     }
   }),
 
-  validation: (data) => {
+  validation: (data, pristineData) => {
     const validationErrors = {
       bucketConfiguration: {
         bucket: {
@@ -35,9 +35,11 @@ export default {
       }
     };
 
-    if (data.bucketConfiguration?.bucketSecurity?.authenticationMethod === 'accountKey') {
-      validationErrors.files ={
-        files: ValidationUtils.validateNotBlank(data.files)
+    const isEdit = Boolean(pristineData?.name);
+
+    if (data.bucketConfiguration?.bucketSecurity?.authenticationMethod === 'accountKey' && !isEdit) {
+      validationErrors.bucketConfiguration.bucketSecurity = {
+        file: ValidationUtils.validateNotBlank(data.bucketConfiguration?.bucketSecurity.file)
       }
     }
 

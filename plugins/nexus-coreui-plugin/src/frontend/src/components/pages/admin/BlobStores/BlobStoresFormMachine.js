@@ -106,7 +106,7 @@ export default FormUtils.buildFormMachine({
 
           SET_FILES: {
             target: 'loaded',
-            actions: ['update']
+            actions: ['setFile']
           }
         }
       },
@@ -231,7 +231,7 @@ export default FormUtils.buildFormMachine({
         const isCreate = !ValidationUtils.notBlank(pristineData.name);
         const Actions = type && window.BlobStoreTypes[type.id]?.Actions;
         const validationErrors = {
-          ...(Actions?.validation(data) || {}),
+          ...(Actions?.validation(data, pristineData) || {}),
           type: ValidationUtils.validateNotBlank(type),
           name: isCreate ? ValidationUtils.validateNameField(data.name) : null,
         };
@@ -274,6 +274,21 @@ export default FormUtils.buildFormMachine({
       }
     }),
 
+    setFile: assign({
+      data: ({data}, {file}) => {
+        return {
+          ...data,
+          bucketConfiguration: {
+            ...data.bucketConfiguration,
+            bucketSecurity: {
+              ...data.bucketConfiguration.bucketSecurity,
+              file: file
+            }
+          }
+        };
+      },
+    }),
+    
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.message),
 
     logSaveError: (_, event) => {
@@ -286,6 +301,8 @@ export default FormUtils.buildFormMachine({
         if (error) {
           errorMessage = error.message;
         }
+      } else if (typeof saveErrors === 'object') {
+        errorMessage = saveErrors.message;
       } else {
         errorMessage = saveErrors;
       }
@@ -329,14 +346,21 @@ export default FormUtils.buildFormMachine({
       if (saveData.softQuota?.limit) {
         saveData.softQuota.limit = UnitUtil.megaBytesToBytes(saveData.softQuota.limit);
       }
+
+      if (type.id == "google") {
+        const fileList = data.bucketConfiguration.bucketSecurity?.file;
     
-      if (data.files && data.files.length > 0) {
-        const file = data.files.item(0);
-        try {
-          const accountKey = await file.text();
-          saveData.bucketConfiguration.bucketSecurity.accountKey = accountKey;
-        } catch (error) {
-          console.error('Error reading or parsing file:', error);
+        if (fileList && fileList.length > 0) {
+          const file = fileList.item(0);
+          try {
+            const accountKey = await file.text();
+            saveData.bucketConfiguration.bucketSecurity.accountKey = accountKey;
+          } catch (error) {
+            console.error('Error reading or parsing file:', error);
+          }
+        } else if (saveData.bucketConfiguration?.bucketSecurity?.accountKey == "present-and-encrypted") {
+          let {bucketConfiguration : {bucketSecurity , ...bucket} , ...otherData} = saveData;
+          saveData = {bucketConfiguration: {...bucket} , ...otherData};
         }
       }
 

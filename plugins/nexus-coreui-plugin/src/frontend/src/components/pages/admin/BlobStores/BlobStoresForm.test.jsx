@@ -633,7 +633,8 @@ describe('BlobStoresForm', function() {
       softQuotaLimit,
       spaceUsedQuotaLabel,
       bucket,
-      region
+      region,
+      prefix
     } = render();
 
     const data = {
@@ -644,7 +645,8 @@ describe('BlobStoresForm', function() {
         },
         bucket: {
           name: 'test-bucket',
-          region: 'us-central1'
+          region: 'us-central1',
+          prefix: 'pre'
         }
       },
       softQuota: {
@@ -660,6 +662,7 @@ describe('BlobStoresForm', function() {
     userEvent.type(name(), data.name);
     userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
     userEvent.type(region(), data.bucketConfiguration.bucket.region);
+    userEvent.type(prefix(), data.bucketConfiguration.bucket.prefix);
 
     userEvent.click(selectors.getSoftQuota());
     expect(softQuotaType()).not.toBeInTheDocument();
@@ -690,17 +693,17 @@ describe('BlobStoresForm', function() {
       bucketConfiguration: {
         bucketSecurity: {
           authenticationMethod: 'accountKey',
-          accountKey: "{\"private_key_id\":\"test\"}"
+          accountKey: "{\"private_key_id\":\"test\"}",
+          file: {
+            0: expect.any(File),
+            item: expect.any(Function),
+            length: 1,
+          }
         },
         bucket: {
           name: 'test-bucket2',
           region: 'us-central1'
         }
-      },
-      files: {
-        0: expect.any(File),
-        item: expect.any(Function),
-        length: 1,
       },
     };
 
