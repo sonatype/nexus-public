@@ -16,7 +16,8 @@ import {useMachine} from "@xstate/react";
 import {
   NxButtonBar,
   NxErrorAlert,
-  NxFontAwesomeIcon, NxGrid,
+  NxFontAwesomeIcon,
+  NxGrid,
   NxH2,
   NxH3,
   NxLoadWrapper
@@ -64,9 +65,8 @@ function MaliciousRiskOnDiskContent({user, props}) {
   }
 
   return (
-      showWarningAlert &&
       <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-        <div className="risk-on-disk-container">
+        {showWarningAlert && <div className="risk-on-disk-container">
           <NxErrorAlert className="risk-on-disk-alert">
             <div className="risk-on-disk-content">
               <div className="risk-on-disk-alert-title">
@@ -97,7 +97,7 @@ function MaliciousRiskOnDiskContent({user, props}) {
                   </a>}
             </NxButtonBar>
           </NxErrorAlert>
-        </div>
+        </div>}
       </NxLoadWrapper>
   );
 }
