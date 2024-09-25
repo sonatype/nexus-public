@@ -27,6 +27,9 @@ import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
 import MaliciousRiskOnDiskMachine from "./MaliciousRiskOnDiskMachine";
 import UIStrings from "../../../../constants/UIStrings";
 import "./MaliciousRiskOnDisk.scss";
+import FeatureFlags from '../../../../constants/FeatureFlags';
+
+const {MALWARE_RISK_ON_DISK_ENABLED} = FeatureFlags;
 
 const {
   TITLE_PLURAL,
@@ -61,8 +64,9 @@ function MaliciousRiskOnDiskContent({user, props}) {
   }
 
   return (
+      showWarningAlert &&
       <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
-        {showWarningAlert && <div className="risk-on-disk-container">
+        <div className="risk-on-disk-container">
           <NxErrorAlert className="risk-on-disk-alert">
             <div className="risk-on-disk-content">
               <div className="risk-on-disk-alert-title">
@@ -73,7 +77,7 @@ function MaliciousRiskOnDiskContent({user, props}) {
               <NxGrid.Column className='risk-on-disk-alert-description'>
                 <NxGrid.ColumnSection>
                   <NxGrid.Header>
-                    <NxH3>{DESCRIPTION.TITLE}</NxH3>
+                    <NxH3 className='risk-on-disk-alert-description-title'>{DESCRIPTION.TITLE}</NxH3>
                   </NxGrid.Header>
                   <p>{DESCRIPTION.CONTENT}</p>
                 </NxGrid.ColumnSection>
@@ -93,17 +97,16 @@ function MaliciousRiskOnDiskContent({user, props}) {
                   </a>}
             </NxButtonBar>
           </NxErrorAlert>
-        </div>}
+        </div>
       </NxLoadWrapper>
   );
 }
 
 export default function MaliciousRiskOnDisk(props) {
-  const isRiskOnDiskEnabled = ExtJS.state().getValue('nexus.malicious.risk.on.disk.enabled');
-  const maliciousRiskDashboardEnabled = ExtJS.state().getValue('MaliciousRiskDashboard');
+  const isRiskOnDiskEnabled = ExtJS.state().getValue(MALWARE_RISK_ON_DISK_ENABLED);
   const user = ExtJS.useUser();
   const userIsLogged = user ?? false;
-  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled && maliciousRiskDashboardEnabled;
+  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;
 
   if (!showMaliciousRiskOnDisk) {
     return null;

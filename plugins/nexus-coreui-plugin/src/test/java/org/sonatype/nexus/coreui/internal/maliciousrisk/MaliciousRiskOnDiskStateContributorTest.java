@@ -18,7 +18,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.sonatype.nexus.common.app.FeatureFlags.MALICIOUS_RISK_ON_DISK_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_ENABLED;
 
 public class MaliciousRiskOnDiskStateContributorTest
     extends TestSupport
@@ -26,21 +26,14 @@ public class MaliciousRiskOnDiskStateContributorTest
   @Test
   public void featureFlagShouldBeEnabled() {
     MaliciousRiskOnDiskStateContributor underTest =
-        new MaliciousRiskOnDiskStateContributor(true, true);
-    assertThat(underTest.getState().get(MALICIOUS_RISK_ON_DISK_ENABLED), is(true));
+        new MaliciousRiskOnDiskStateContributor(true);
+    assertThat(underTest.getState().get(MALWARE_RISK_ON_DISK_ENABLED), is(true));
   }
 
   @Test
   public void featureFlagShouldBeDisabled() {
     MaliciousRiskOnDiskStateContributor underTest =
-        new MaliciousRiskOnDiskStateContributor(true, false);
-    assertThat(underTest.getState().get(MALICIOUS_RISK_ON_DISK_ENABLED), is(false));
-  }
-
-  @Test
-  public void featureFlagShouldBeDisabled_whenMaliciousRiskDisabled() {
-    MaliciousRiskOnDiskStateContributor underTest =
-        new MaliciousRiskOnDiskStateContributor(false, true);
-    assertThat(underTest.getState().get(MALICIOUS_RISK_ON_DISK_ENABLED), is(false));
+        new MaliciousRiskOnDiskStateContributor(false);
+    assertThat(underTest.getState().get(MALWARE_RISK_ON_DISK_ENABLED), is(false));
   }
 }

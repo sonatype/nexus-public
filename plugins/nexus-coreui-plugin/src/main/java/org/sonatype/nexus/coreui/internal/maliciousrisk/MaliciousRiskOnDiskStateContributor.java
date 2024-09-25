@@ -13,7 +13,6 @@
 package org.sonatype.nexus.coreui.internal.maliciousrisk;
 
 import java.util.Map;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -22,9 +21,8 @@ import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.MALICIOUS_RISK_ENABLED_NAMED;
-import static org.sonatype.nexus.common.app.FeatureFlags.MALICIOUS_RISK_ON_DISK_ENABLED_NAMED;
-import static org.sonatype.nexus.common.app.FeatureFlags.MALICIOUS_RISK_ON_DISK_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_ENABLED_NAMED;
 
 @Named
 @Singleton
@@ -35,10 +33,9 @@ public class MaliciousRiskOnDiskStateContributor
 
   @Inject
   public MaliciousRiskOnDiskStateContributor(
-      @Named(MALICIOUS_RISK_ENABLED_NAMED) final Boolean maliciousRiskEnabled,
-      @Named(MALICIOUS_RISK_ON_DISK_ENABLED_NAMED) final boolean maliciousRiskOnDiskEnabled)
+      @Named(MALWARE_RISK_ON_DISK_ENABLED_NAMED) final boolean maliciousRiskOnDiskEnabled)
   {
-    this.state = ImmutableMap.of(MALICIOUS_RISK_ON_DISK_ENABLED, maliciousRiskEnabled && maliciousRiskOnDiskEnabled);
+    this.state = ImmutableMap.of(MALWARE_RISK_ON_DISK_ENABLED, maliciousRiskOnDiskEnabled);
   }
 
   @Override

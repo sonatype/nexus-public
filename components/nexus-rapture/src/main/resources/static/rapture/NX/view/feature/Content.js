@@ -23,7 +23,7 @@
  */
 Ext.define('NX.view.feature.Content', {
   extend: 'Ext.panel.Panel',
-  requires: [ 'NX.view.feature.BreadcrumbPanel', 'NX.view.MaliciousRiskOnDisk', 'NX.State' ],
+  requires: ['NX.view.feature.BreadcrumbPanel', 'NX.view.MaliciousRiskOnDisk', 'NX.State', 'NX.constants.FeatureFlags'],
   alias: 'widget.nx-feature-content',
   ariaRole: 'main',
   itemId: 'feature-content',
@@ -60,16 +60,16 @@ Ext.define('NX.view.feature.Content', {
     const me = this;
     const maliciousRiskOnDisk = me.down('nx-component-malicious-risk-on-disk');
     const titles = ['Browse', 'Search'];
+    const isCurrentTitleInTitles = titles.includes(me.currentTitle);
     const user = NX.State.getUser();
-    const maliciousRiskFeatureEnabled = NX.State.getValue('nexus.malicious.risk.on.disk.enabled');
-    const maliciousDashBoardEnabled = NX.State.getValue('MaliciousRiskDashboard');
-    const showMaliciousRiskOnDisk = maliciousRiskFeatureEnabled && maliciousDashBoardEnabled;
+    const isRiskOnDiskEnabled = NX.State.getValue(NX.constants.FeatureFlags.MALWARE_RISK_ON_DISK_ENABLED);
 
-    if (showMaliciousRiskOnDisk && titles.includes(me.currentTitle) && user) {
+    if (isRiskOnDiskEnabled && isCurrentTitleInTitles && user) {
       maliciousRiskOnDisk.setHeight(285);
       maliciousRiskOnDisk.show();
       maliciousRiskOnDisk.rerender();
-    } else {
+    }
+    else {
       maliciousRiskOnDisk.hide();
     }
   },
