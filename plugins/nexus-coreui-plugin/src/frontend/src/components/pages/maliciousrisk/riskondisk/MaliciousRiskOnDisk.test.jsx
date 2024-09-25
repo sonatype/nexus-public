@@ -16,18 +16,20 @@ import axios from "axios";
 import {render, screen, waitForElementToBeRemoved} from "@testing-library/react";
 import {act} from "react-dom/test-utils";
 
-import {ExtJS, APIConstants} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils";
 
 import {maliciousRiskOnDiskResponse, maliciousRiskOnDiskResponseWithCount0} from "./MaliciousRiskOnDisk.testdata";
 import MaliciousRiskOnDisk from "./MaliciousRiskOnDisk";
 import FeatureFlags from '../../../../constants/FeatureFlags';
+import MaliciousRiskStrings from "../../../../constants/pages/maliciousrisk/MaliciousRiskStrings";
 
 const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
 const {
   MALWARE_RISK_ENABLED,
   MALWARE_RISK_ON_DISK_ENABLED
 } = FeatureFlags;
+const {MALICIOUS_RISK: {RISK_ON_DISK}} = MaliciousRiskStrings;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -128,8 +130,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', 'Malware Components Found',
-        'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.', showContactSonatypeBtn, isProEdition);
+    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
+        showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -141,8 +143,7 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', 'Malware Components Found',
-        'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.',
+    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
         showContactSonatypeBtn, isProEdition);
   });
 
@@ -155,9 +156,8 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', 'Malware Components Found',
-        'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.Contact your instance administrator to resolve.', showContactSonatypeBtn,
-        isProEdition);
+    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
+        showContactSonatypeBtn, isProEdition);
   });
 
   it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
@@ -169,8 +169,7 @@ describe('MaliciousRiskOnDisk', () => {
     await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender(page, '1,234,567', 'Malware Components Found',
-        'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action required to remove this malware from your repository.Contact your instance administrator to resolve.',
+    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
         showContactSonatypeBtn, isProEdition);
   });
 
