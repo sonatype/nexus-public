@@ -539,7 +539,7 @@ public class BlobStoreManagerImplTest
     oldBlobStoreAttributes.put("file", Collections.singletonMap("path", "foo"));
     BlobStoreConfiguration oldBlobStoreConfig = createConfig("test", oldBlobStoreAttributes);
     when(blobStore.getBlobStoreConfiguration()).thenReturn(oldBlobStoreConfig);
-    BlobId blobId = new BlobId("testBlobId", OffsetDateTime.now());
+    BlobId blobId = new BlobId("testBlobId");
     Secret oldSecret = mock(Secret.class);
     when(secretsService.from(SECRET_FIELD_VALUE)).thenReturn(oldSecret);
     when(oldSecret.decrypt()).thenReturn(SECRET_FIELD_VALUE.toCharArray());
