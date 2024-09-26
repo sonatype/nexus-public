@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.upgrade.datastore.events;
+package org.sonatype.nexus.common.upgrade.events;
 
 import java.util.Optional;
 
@@ -36,7 +36,11 @@ public abstract class UpgradeEventSupport
     // deserialization
   }
 
-  protected UpgradeEventSupport(@Nullable final String user, @Nullable final String schemaVersion, final String[] migrations) {
+  protected UpgradeEventSupport(
+      @Nullable final String user,
+      @Nullable final String schemaVersion,
+      final String[] migrations)
+  {
     this.user = user;
     this.schemaVersion = schemaVersion;
     this.migrations = checkNotNull(migrations);

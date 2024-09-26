@@ -10,39 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.upgrade.datastore.events;
-
-import java.util.Collection;
+package org.sonatype.nexus.common.upgrade.events;
 
 import javax.annotation.Nullable;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
- * An event fired when a database migration has completed.
+ * An event which is fired when a database migration is starting
  */
-public class UpgradeCompletedEvent
+public class UpgradeStartedEvent
     extends UpgradeEventSupport
 {
-  private Collection<String> nodeIds;
-
-  protected UpgradeCompletedEvent() {
+  protected UpgradeStartedEvent() {
     // deserialization
   }
 
-  public UpgradeCompletedEvent(@Nullable final String user, final String schemaVersion, final Collection<String> nodeIds, final String... migrations) {
+  public UpgradeStartedEvent(@Nullable final String user, final String schemaVersion, final String... migrations) {
     super(user, schemaVersion, migrations);
-    this.nodeIds = checkNotNull(nodeIds);
-  }
-
-  /**
-   * Return the nodes who participated in the quorum
-   */
-  public Collection<String> getNodeIds() {
-    return nodeIds;
-  }
-
-  public void setNodeIds(final Collection<String> nodeIds) {
-    this.nodeIds = nodeIds;
   }
 }
