@@ -21,6 +21,7 @@ import javax.inject.Named;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
@@ -46,8 +47,15 @@ import com.google.common.base.Predicates;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ACCESS_KEY_ID_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ASSUME_ROLE_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.FORCE_PATH_STYLE_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.MAX_CONNECTION_POOL_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SIGNERTYPE_KEY;
 
 /**
  * Creates configured AmazonS3 clients.
@@ -89,7 +97,7 @@ public class AmazonS3Factory
     NestedAttributesMap s3Configuration = blobStoreConfiguration.attributes(CONFIG_KEY);
     String accessKeyId = s3Configuration.get(ACCESS_KEY_ID_KEY, String.class);
     String secretAccessKey = s3Configuration.get(SECRET_ACCESS_KEY_KEY, String.class);
-    String region = s3Configuration.get(REGION_KEY, String.class);
+    String region = S3BlobStoreConfigurationHelper.getConfiguredRegion(blobStoreConfiguration);
     String signerType = s3Configuration.get(SIGNERTYPE_KEY, String.class);
     String forcePathStyle = s3Configuration.get(FORCE_PATH_STYLE_KEY, String.class);
 

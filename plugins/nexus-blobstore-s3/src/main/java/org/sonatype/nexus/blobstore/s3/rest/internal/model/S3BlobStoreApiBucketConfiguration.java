@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.blobstore.s3.rest.internal.model;
 
+import java.util.List;
+
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -29,6 +32,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiBucketConfiguration
 {
+  public static final String FAILOVER_BUCKETS = "failoverBuckets";
+
   @Valid
   @NotNull
   @ApiModelProperty(value = "Details of the S3 bucket such as name and region", required = true)
@@ -43,16 +48,23 @@ public class S3BlobStoreApiBucketConfiguration
   @ApiModelProperty("A custom endpoint URL, signer type and whether path style access is enabled")
   private final S3BlobStoreApiAdvancedBucketConnection advancedBucketConnection;
 
+  @Valid
+  @Nullable
+  @ApiModelProperty("A list of secondary buckets which have bidrectional replication enabled and should be used when Nexus is running in the region")
+  private final List<S3BlobStoreApiFailoverBucket> failoverBuckets;
+
   public S3BlobStoreApiBucketConfiguration(
       @JsonProperty("bucket") final S3BlobStoreApiBucket bucket,
       @JsonProperty("security") final S3BlobStoreApiBucketSecurity bucketSecurity,
       @JsonProperty("encryption") final S3BlobStoreApiEncryption encryption,
-      @JsonProperty("advancedConnection") final S3BlobStoreApiAdvancedBucketConnection advancedBucketConnection)
+      @JsonProperty("advancedConnection") final S3BlobStoreApiAdvancedBucketConnection advancedBucketConnection,
+      @JsonProperty(FAILOVER_BUCKETS) final List<S3BlobStoreApiFailoverBucket> failoverBuckets)
   {
     this.bucket = bucket;
     this.bucketSecurity = bucketSecurity;
     this.encryption = encryption;
     this.advancedBucketConnection = advancedBucketConnection;
+    this.failoverBuckets = failoverBuckets;
   }
 
   public S3BlobStoreApiBucket getBucket() {
@@ -69,5 +81,9 @@ public class S3BlobStoreApiBucketConfiguration
 
   public S3BlobStoreApiAdvancedBucketConnection getAdvancedBucketConnection() {
     return advancedBucketConnection;
+  }
+
+  public List<S3BlobStoreApiFailoverBucket> getFailoverBuckets() {
+    return failoverBuckets;
   }
 }
