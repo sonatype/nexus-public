@@ -10,9 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-@FeatureFlag(name = DATASTORE_ENABLED)
-package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
+package org.sonatype.nexus.common.upgrade.events;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
+import javax.annotation.Nullable;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
+/**
+ * An event fired when a database migration fails.
+ */
+public class UpgradeFailedEvent
+    extends UpgradeEventSupport
+{
+  private String errorMessage;
+
+  protected UpgradeFailedEvent() {
+    // deserialization
+  }
+
+  public UpgradeFailedEvent(@Nullable final String user, final String schemaVersion, final String errorMessage, final String... migrations) {
+    super(user, schemaVersion, migrations);
+    this.errorMessage = errorMessage;
+  }
+
+  /**
+   * @return the error message associated with the failure
+   */
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  public void setErrorMessage(final String errorMessage) {
+    this.errorMessage = errorMessage;
+  }
+}
