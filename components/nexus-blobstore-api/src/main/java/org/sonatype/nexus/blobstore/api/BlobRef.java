@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -35,7 +36,8 @@ public class BlobRef
   /**
    * The pattern to match date based layout in a file system
    */
-  public static final DateTimeFormatter DATE_TIME_PATH_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd/HH/mm");
+  public static final DateTimeFormatter DATE_TIME_PATH_FORMATTER = DateTimeFormatter.ofPattern(
+      "yyyy" + File.separator + "MM" + File.separator +  "dd" + File.separator +  "HH" + File.separator +  "mm");
 
   /**
    * The pattern to match date based layout in an asset reference

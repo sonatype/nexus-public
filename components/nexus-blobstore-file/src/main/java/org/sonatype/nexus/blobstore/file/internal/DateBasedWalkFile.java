@@ -25,7 +25,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -119,7 +118,7 @@ public class DateBasedWalkFile
       LocalDateTime localDateTime = LocalDateTime.parse(dateTimeString, DATE_TIME_PATH_FORMATTER);
       return localDateTime.atOffset(ZoneOffset.UTC);
     }
-    catch (DateTimeParseException e) {
+    catch (Exception e) {
       // we don't care about the files that are not in the expected format
       log.debug("Incorrect date format in path: {}", path);
       return null;
