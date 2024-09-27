@@ -751,14 +751,18 @@ public class S3BlobStore
       OffsetDateTime now = UTC.now();
       OffsetDateTime fromDateTime = now.minusSeconds(duration.getSeconds());
 
-      // get Blob Ids from volume-chapter location
-      Stream<BlobId> volChapBlobIds = getBlobIdStream(getContentVolumePrefix(), fromDateTime);
+      Stream<BlobId> blobIdStreams;
+      if (isDateBasedLayoutEnabled()) {
+        // get Blob Ids from date-based location only
+        String prefix = getContentPrefix() + DateBasedHelper.getDatePathPrefix(fromDateTime, now);
+        blobIdStreams = getBlobIdStream(prefix, fromDateTime);
+      }
+      else {
+        // get Blob Ids from volume-chapter location only
+        blobIdStreams = getBlobIdStream(getContentVolumePrefix(), fromDateTime);
+      }
 
-      // get Blob Ids from date-based location
-      String prefix = getContentPrefix() + DateBasedHelper.getDatePathPrefix(fromDateTime, now);
-      Stream<BlobId> dateBasedBlobIds = getBlobIdStream(prefix, fromDateTime);
-
-      return Stream.concat(volChapBlobIds, dateBasedBlobIds).distinct();
+      return blobIdStreams;
     }
   }
 
