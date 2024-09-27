@@ -25,8 +25,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-import static java.util.Optional.ofNullable;
-
 /**
  * {@link AuthenticationConfiguration} serializer.
  * <p>
@@ -97,7 +95,7 @@ public class AuthenticationConfigurationSerializer
     }
     else if (value instanceof BearerTokenAuthenticationConfiguration) {
       BearerTokenAuthenticationConfiguration btac = (BearerTokenAuthenticationConfiguration) value;
-      jgen.writeStringField(BearerTokenAuthenticationConfiguration.TYPE, btac.getBearerToken().getId());
+      jgen.writeStringField(BearerTokenAuthenticationConfiguration.TYPE, btac.getBearerToken());
     }
     else {
       // be foolproof, if new type added but this class is not updated

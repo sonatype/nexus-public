@@ -39,7 +39,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.security.internal.secrets.migration.RepositoriesSecretsMigrator.AUTHENTICATION_KEY;
-import static org.sonatype.nexus.repository.security.internal.secrets.migration.RepositoriesSecretsMigrator.BEARER_TOKEN_KEY;
 import static org.sonatype.nexus.repository.security.internal.secrets.migration.RepositoriesSecretsMigrator.HTTP_CLIENT_KEY;
 import static org.sonatype.nexus.repository.security.internal.secrets.migration.RepositoriesSecretsMigrator.PASSWORD_KEY;
 
@@ -74,18 +73,17 @@ public class RepositoriesSecretsMigratorTest
 
   @Test
   public void testMigrate_proxy() throws Exception {
-    mockRepositoryManager(mockProxy("my-bearer-token", null), mockProxy(null, "my-password"));
+    mockRepositoryManager(mockProxy(null), mockProxy("my-password"));
 
     underTest.migrate();
 
-    verify(secretsService).from("my-bearer-token");
     verify(secretsService).from("my-password");
-    verify(repositoryManager, times(2)).update(any(Configuration.class));
+    verify(repositoryManager, times(1)).update(any(Configuration.class));
   }
 
   @Test
   public void testMigrate_proxy_notRequired() throws Exception {
-    mockRepositoryManager(mockProxy(null, null));
+    mockRepositoryManager(mockProxy(null));
 
     underTest.migrate();
 
@@ -94,7 +92,7 @@ public class RepositoriesSecretsMigratorTest
 
   @Test
   public void testMigrate_proxy_alreadyMigrated() throws Exception {
-    mockRepositoryManager(mockProxy("_1", null), mockProxy(null, "_2"));
+    mockRepositoryManager(mockProxy(null), mockProxy("_2"));
 
     underTest.migrate();
 
@@ -115,24 +113,18 @@ public class RepositoriesSecretsMigratorTest
     });
   }
 
-  private Repository mockProxy(final String bearerToken, final String passwordKey) {
+  private static Repository mockProxy(final String passwordKey) {
     Configuration configuration = new ConfigurationData();
     Repository repository = mock(Repository.class);
     when(repository.getConfiguration()).thenReturn(configuration);
     when(repository.getType()).thenReturn(new ProxyType());
 
-    configuration.setRepositoryName(bearerToken == null ? passwordKey : bearerToken);
+    configuration.setRepositoryName(passwordKey);
 
     configuration.setAttributes(new HashMap<>());
 
-    if (bearerToken == null && passwordKey == null) {
+    if (passwordKey == null) {
       return repository;
-    }
-
-    if (bearerToken != null) {
-      configuration.attributes(HTTP_CLIENT_KEY)
-          .child(AUTHENTICATION_KEY)
-          .set(BEARER_TOKEN_KEY, bearerToken);
     }
 
     if (passwordKey != null) {

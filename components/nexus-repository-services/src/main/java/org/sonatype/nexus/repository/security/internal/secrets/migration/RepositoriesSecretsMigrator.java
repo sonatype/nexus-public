@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.security.internal.secrets.migration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -76,15 +77,6 @@ public class RepositoriesSecretsMigrator
         .map(global -> global.get(HTTP_CLIENT_KEY))
         .map(http -> (Map<String, Object>) http.get(AUTHENTICATION_KEY))
         .orElse(Collections.emptyMap());
-
-    // These are really either-or but for impl it doesn't matter
-    Secret bearerToken = Optional.ofNullable((String) authConfig.get(BEARER_TOKEN_KEY))
-        .map(secretsService::from)
-        .orElse(null);
-    if (bearerToken != null && isLegacyEncryptedString(bearerToken)) {
-      needUpdate = true;
-      authConfig.put(BEARER_TOKEN_KEY, new String(bearerToken.decrypt()));
-    }
 
     Secret passwordKey = Optional.ofNullable((String) authConfig.get(PASSWORD_KEY))
         .map(secretsService::from)

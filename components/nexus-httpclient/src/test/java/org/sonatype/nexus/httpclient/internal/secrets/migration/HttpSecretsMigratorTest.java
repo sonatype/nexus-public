@@ -83,7 +83,7 @@ public class HttpSecretsMigratorTest
 
     //verify we updated proxy https auth
     verify((BearerTokenAuthenticationConfiguration) configuration.getProxy().getHttps().getAuthentication(),
-        times(1)).setBearerToken(any(Secret.class));
+        times(1)).setBearerToken(any(String.class));
 
     //verify we updated the client manager afterward
     verify(httpClientManager).setConfiguration(configuration);
@@ -103,7 +103,7 @@ public class HttpSecretsMigratorTest
         any(Secret.class));
     //verify we updated proxy https auth
     verify((BearerTokenAuthenticationConfiguration) configuration.getProxy().getHttps().getAuthentication(),
-        times(1)).setBearerToken(any(Secret.class));
+        times(1)).setBearerToken(any(String.class));
 
     //verify we updated the client manager afterward
     verify(httpClientManager).setConfiguration(configuration);
