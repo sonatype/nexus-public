@@ -44,7 +44,17 @@ public interface ApiKeyV2DAO
   Collection<ApiKeyV2Data> browseCreatedBefore(@Param("created") OffsetDateTime created);
 
   /**
-   * Browse all API Keys in the specified domain
+   * Browse all API Keys in the specified domain after the specified date.
+   *
+   * @param domain the domain, e.g. npm keys, nuget keys
+   * @param created the date created
+   */
+  Collection<ApiKeyInternal> browseCreatedAfter(
+      @Param("domain") String domain,
+      @Param("created") OffsetDateTime created);
+
+  /**
+   * Browse all API Keys in the specified domain before the specified date.
    *
    * @param domain the domain, e.g. npm keys, nuget keys
    * @param created the date created

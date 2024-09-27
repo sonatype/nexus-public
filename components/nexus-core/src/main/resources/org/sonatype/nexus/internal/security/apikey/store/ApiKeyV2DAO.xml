@@ -86,6 +86,13 @@
     ORDER BY created;
   </select>
 
+  <select id="browseCreatedAfter" resultType="ApiKeyV2Data">
+    SELECT *
+      FROM api_key_v2
+    WHERE created &gt; #{created}
+    ORDER BY created;
+  </select>
+
   <select id="browseCreatedBefore" resultType="ApiKeyV2Data">
     SELECT *
       FROM api_key_v2

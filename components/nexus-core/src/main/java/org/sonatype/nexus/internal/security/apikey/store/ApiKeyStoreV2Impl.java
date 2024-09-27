@@ -65,7 +65,7 @@ public class ApiKeyStoreV2Impl
   @Transactional
   @Override
   public Collection<ApiKeyInternal> browseByCreatedDate(final String domain, final OffsetDateTime date) {
-    return dao().browseCreatedBefore(domain, date);
+    return dao().browseCreatedAfter(domain, date);
   }
 
   @Transactional

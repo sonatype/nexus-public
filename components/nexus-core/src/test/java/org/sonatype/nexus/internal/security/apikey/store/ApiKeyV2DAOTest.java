@@ -266,6 +266,25 @@ public class ApiKeyV2DAOTest
   }
 
   @Test
+  public void testBrowseCreatedAfter() {
+    ApiKeyV2Data entity1 = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
+    ApiKeyV2Data entity2 = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
+    ApiKeyV2Data entity3 = anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL);
+
+    OffsetDateTime entity1Date = OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+    OffsetDateTime entity2Date = OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+    entity1.setCreated(entity1Date);
+    entity2.setCreated(entity2Date);
+
+    withDao(dao -> dao.save(entity1));
+    withDao(dao -> dao.save(entity2));
+    withDao(dao -> dao.save(anApiKeyEntity(API_KEY2, ANOTHER_DOMAIN, A_PRINCIPAL)));
+
+    assertThat(callDao(dao -> dao.browseCreatedAfter(DOMAIN, entity1Date)), contains(token(entity2), token(entity3)));
+  }
+
+  @Test
   public void testBrowseCreatedBefore() {
     ApiKeyV2Data entity1 = anApiKeyEntity(API_KEY1, DOMAIN, A_PRINCIPAL);
     ApiKeyV2Data entity2 = anApiKeyEntity(API_KEY2, DOMAIN, ANOTHER_PRINCIPAL);
