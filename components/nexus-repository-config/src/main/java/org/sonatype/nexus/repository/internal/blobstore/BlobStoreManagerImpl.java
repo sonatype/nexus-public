@@ -162,7 +162,9 @@ public class BlobStoreManagerImpl
 
     if (configurations.isEmpty() && provisionDefaults.getAsBoolean()) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
-      store.create(defaultBlobstoreProvider.get(this::newConfiguration));
+      BlobStoreConfiguration defaultBlobStoreConfiguration = defaultBlobstoreProvider.get(this::newConfiguration);
+      encryptSensitiveAttributes(newConfiguration(), defaultBlobStoreConfiguration);
+      store.create(defaultBlobStoreConfiguration);
       configurations = store.list();
     }
 
