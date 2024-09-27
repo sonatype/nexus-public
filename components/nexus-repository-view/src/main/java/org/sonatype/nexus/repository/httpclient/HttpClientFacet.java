@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.httpclient;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.repository.Facet;
 
 import org.apache.http.Header;
@@ -41,5 +40,5 @@ public interface HttpClientFacet
    * @since 3.20
    */
   @Nullable
-  Secret getBearerToken();
+  String getBearerToken();
 }

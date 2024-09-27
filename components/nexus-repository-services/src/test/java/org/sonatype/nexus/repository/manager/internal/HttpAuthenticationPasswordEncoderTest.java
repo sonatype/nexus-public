@@ -61,8 +61,8 @@ public class HttpAuthenticationPasswordEncoderTest
   }
 
   @Test
-  public void shouldEncodeSecret() {
-    final Map<String, Map<String, Object>> attributes = getAttributes(PASSWORD);
+  public void shouldEncodePasswordSecret() {
+    final Map<String, Map<String, Object>> attributes = getAttributes("password", PASSWORD);
     mockEncrypt(PASSWORD);
 
     underTest.encodeHttpAuthPassword(attributes);
@@ -72,11 +72,12 @@ public class HttpAuthenticationPasswordEncoderTest
             UserIdHelper.get());
   }
 
+
   @Test
   public void shouldEncodeWhenPasswordAreDifferent() {
     mockEncrypt(PASSWORD);
 
-    underTest.encodeHttpAuthPassword(getAttributes(null), getAttributes(PASSWORD));
+    underTest.encodeHttpAuthPassword(getAttributes("password", null), getAttributes("password", PASSWORD));
 
     verify(secretService)
         .encryptMaven(AUTHENTICATION_CONFIGURATION, PASSWORD.toCharArray(),
@@ -85,7 +86,7 @@ public class HttpAuthenticationPasswordEncoderTest
     String newPassword = "NEW_PASSWORD";
     mockEncrypt(newPassword);
 
-    underTest.encodeHttpAuthPassword(getAttributes(PASSWORD), getAttributes(newPassword));
+    underTest.encodeHttpAuthPassword(getAttributes("password", PASSWORD), getAttributes("password", newPassword));
 
     verify(secretService)
         .encryptMaven(AUTHENTICATION_CONFIGURATION, newPassword.toCharArray(),
@@ -93,10 +94,10 @@ public class HttpAuthenticationPasswordEncoderTest
   }
 
   @Test
-  public void shouldNotEncodeWhenPasswordUnchanged() {
+  public void shouldNotEncodePasswordWhenUnchanged() {
     mockEncrypt(PASSWORD);
 
-    underTest.encodeHttpAuthPassword(getAttributes(PASSWORD), getAttributes(PASSWORD));
+    underTest.encodeHttpAuthPassword(getAttributes("password", PASSWORD), getAttributes("password", PASSWORD));
 
     verify(secretService, never())
         .encryptMaven(AUTHENTICATION_CONFIGURATION, PASSWORD.toCharArray(),
@@ -104,11 +105,11 @@ public class HttpAuthenticationPasswordEncoderTest
   }
 
   @Test
-  public void shouldRemoveSecretWhenNewPasswordNotPresent() {
+  public void shouldRemovePasswordSecretWhenNewPasswordNotPresent() {
     mockEncrypt(PASSWORD);
     when(secretService.from(PASSWORD)).thenReturn(aSecret);
 
-    underTest.removeSecret(getAttributes(PASSWORD), getAttributes(null));
+    underTest.removeSecret(getAttributes("password", PASSWORD), getAttributes("password", null));
 
     verify(secretService).remove(aSecret);
 
@@ -118,32 +119,28 @@ public class HttpAuthenticationPasswordEncoderTest
   }
 
   @Test
-  public void shouldRemoveSecretWhenPasswordIsDifferent() {
-    mockEncrypt(PASSWORD);
-
+  public void shouldRemovePasswordSecretWhenDifferent() {
     String newPassword = "NEW_PASSWORD";
-    mockEncrypt(newPassword);
     when(secretService.from(PASSWORD)).thenReturn(aSecret);
 
-    underTest.removeSecret(getAttributes(PASSWORD), getAttributes(newPassword));
+    underTest.removeSecret(getAttributes("password", PASSWORD), getAttributes("password", newPassword));
 
     verify(secretService)
         .remove(aSecret);
   }
-
   @Test
-  public void shouldNotRemoveSecretWhenNoPreviousSecret() {
+  public void shouldNotRemovePasswordSecretWhenNoPreviousSecret() {
     mockEncrypt(PASSWORD);
 
-    underTest.removeSecret(getAttributes(null), getAttributes(PASSWORD));
+    underTest.removeSecret(getAttributes("password", null), getAttributes("password", PASSWORD));
 
     verify(secretService, never())
         .remove(aSecret);
   }
 
   @Test
-  public void shouldRemoveSecret() {
-    final Map<String, Map<String, Object>> attributes = getAttributes(PASSWORD);
+  public void shouldRemovePasswordSecret() {
+    final Map<String, Map<String, Object>> attributes = getAttributes("password", PASSWORD);
     when(secretService.from(PASSWORD)).thenReturn(aSecret);
 
     underTest.removeSecret(attributes);
@@ -157,9 +154,12 @@ public class HttpAuthenticationPasswordEncoderTest
         UserIdHelper.get())).thenReturn(aSecret);
   }
 
-  private static Map<String, Map<String, Object>> getAttributes(final String password) {
+  private static Map<String, Map<String, Object>> getAttributes(
+      final String authSecretKey,
+      final String authSecretValue)
+  {
     Map<String, Object> authentication = new HashMap<>();
-    authentication.put("password", password);
+    authentication.put(authSecretKey, authSecretValue);
 
     Map<String, Object> httpClient = new HashMap<>();
     httpClient.put("authentication", authentication);

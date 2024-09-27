@@ -28,23 +28,23 @@ public class BearerTokenAuthenticationConfiguration
   public static final String TYPE = "bearerToken";
 
   @NotNull
-  private Secret bearerToken;
+  private String bearerToken;
 
   public BearerTokenAuthenticationConfiguration() {
     super(TYPE);
   }
 
-  public Secret getBearerToken() {
+  public String getBearerToken() {
     return bearerToken;
   }
 
-  public void setBearerToken(final Secret bearerToken) {
+  public void setBearerToken(final String bearerToken) {
     this.bearerToken = bearerToken;
   }
 
   @Override
   public Secret getSecret() {
-    return getBearerToken();
+    return null;
   }
 
   @Override
