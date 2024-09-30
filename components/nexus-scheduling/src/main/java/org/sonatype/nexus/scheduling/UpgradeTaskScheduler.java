@@ -23,4 +23,9 @@ public interface UpgradeTaskScheduler
    * Create a configuration for the given type-id.
    */
   TaskConfiguration createTaskConfigurationInstance(String typeId);
+
+  /**
+   * @return the number of tasks in the queue, this may include running tasks
+   */
+  int getQueuedTaskCount();
 }

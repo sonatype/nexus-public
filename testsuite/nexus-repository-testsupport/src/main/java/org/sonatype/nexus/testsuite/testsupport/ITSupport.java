@@ -27,6 +27,7 @@ import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.tools.DeadBlobFinder;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
+import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.testsuite.testsupport.system.NexusTestSystemSupport;
 import org.sonatype.nexus.testsuite.testsupport.system.NexusTestSystemSupport.NexusTestSystemRule;
 
@@ -67,6 +68,9 @@ public abstract class ITSupport
   private RepositoryManager repositoryManager;
 
   @Inject
+  private UpgradeTaskScheduler upgradeTaskScheduler;
+
+  @Inject
   @Named("http://localhost:${application-port}${nexus-context-path}")
   private URL nexusUrl;
 
@@ -96,6 +100,8 @@ public abstract class ITSupport
     await().atMost(30, TimeUnit.SECONDS)
         .ignoreExceptionsMatching(exception -> !(exception instanceof InterruptedException))
         .until(responseFrom(nexusUrl));
+
+    await().untilAsserted(() -> assertThat(upgradeTaskScheduler.getQueuedTaskCount(), is(0)));
   }
 
   /**

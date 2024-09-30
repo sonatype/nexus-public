@@ -43,6 +43,7 @@ import org.sonatype.nexus.repository.tools.DeadBlobResult;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
 import org.sonatype.nexus.rest.client.RestClientConfiguration.Customizer;
 import org.sonatype.nexus.rest.client.RestClientFactory;
+import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.selector.SelectorManager;
@@ -91,7 +92,10 @@ import org.junit.rules.TestName;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
+import static org.awaitility.Awaitility.await;
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Support for Nexus integration tests.
@@ -135,6 +139,9 @@ public abstract class NexusITSupport
   @Inject
   private AnonymousManager anonymousManager;
 
+  @Inject
+  private UpgradeTaskScheduler upgradeTaskScheduler;
+
   @Rule
   public SecurityRule securityRule = new SecurityRule(() -> securitySystem, () -> selectorManager, () -> anonymousManager);
 
@@ -156,6 +163,8 @@ public abstract class NexusITSupport
   @Before
   public void waitForNexus() throws Exception {
     waitFor(responseFrom(nexusUrl));
+
+    await().untilAsserted(() -> assertThat(upgradeTaskScheduler.getQueuedTaskCount(), is(0)));
   }
 
   /**
