@@ -17,9 +17,9 @@
 
 import axios from 'axios';
 import {assign} from 'xstate';
-import {map, omit, propOr, replace, clone} from 'ramda';
+import {clone, map, omit, propOr, replace} from 'ramda';
 
-import {ExtJS, FormUtils, ValidationUtils, UnitUtil} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, UnitUtil, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 import {URLs} from './BlobStoresHelper';
@@ -54,6 +54,41 @@ export const SPACE_USED_QUOTA_ID = 'spaceUsedQuota';
 export const canUseSpaceUsedQuotaOnly = (storeType) =>
   ['azure', 's3', 'google'].includes(storeType.id);
 
+function extractErrorMessage(event) {
+  let saveErrors = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
+  let errorMessage = '';
+  // try to extract error message from errors from response
+  if (Array.isArray(saveErrors)) {
+    let error = saveErrors[0];
+    if (error) {
+      errorMessage = error.message;
+    }
+  } else if (typeof saveErrors === 'object') {
+    errorMessage = saveErrors.message;
+  } else {
+    errorMessage = saveErrors;
+  }
+  return errorMessage ? errorMessage : UIStrings.ERROR.SAVE_ERROR;
+}
+
+const bucketRegionMismatchException = UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchException;
+
+function transformIfNecessary(context, errorMessage) {
+  if (errorMessage && errorMessage.includes(bucketRegionMismatchException)) {
+    context.bucketRegionMismatch = true;
+    return 'Error cause' + errorMessage.substring(
+        errorMessage.indexOf(bucketRegionMismatchException) + bucketRegionMismatchException.length);
+  }
+  return errorMessage;
+}
+
+function messageToShow(errorMessage) {
+  if (errorMessage && errorMessage.includes(bucketRegionMismatchException)) {
+    return UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchMessage;
+  }
+  return errorMessage;
+}
+
 export default FormUtils.buildFormMachine({
   id: 'BlobStoresFormMachine',
 
@@ -63,7 +98,8 @@ export default FormUtils.buildFormMachine({
     context: {
       ...config.context,
       type: '',
-      types: []
+      types: [],
+      bucketRegionMismatch: false
     },
 
     states: {
@@ -114,7 +150,10 @@ export default FormUtils.buildFormMachine({
         invoke: {
           src: 'confirmSave',
           onDone: 'saving',
-          onError: 'loaded'
+          onError: {
+            target: 'loaded',
+            actions: ['setSaveError', 'logSaveError']
+          }
         }
       },
       modalConvertToGroup: {
@@ -288,27 +327,22 @@ export default FormUtils.buildFormMachine({
         };
       },
     }),
+
+    setSaveError: assign({
+      saveErrorData: ({data}) => data,
+      saveError: (context, event) => {
+        let errorMessage = extractErrorMessage(event);
+
+        return errorMessage ? transformIfNecessary(context, errorMessage) : UIStrings.ERROR.SAVE_ERROR;
+      }
+    }),
     
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.message),
 
     logSaveError: (_, event) => {
-      let saveErrors = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
-      var errorMessage = '';
+      let errorMessage = extractErrorMessage(event);
 
-      // try to extract error message from errors from response
-      if (Array.isArray(saveErrors)) {
-        let error = saveErrors[0];
-        if (error) {
-          errorMessage = error.message;
-        }
-      } else if (typeof saveErrors === 'object') {
-        errorMessage = saveErrors.message;
-      } else {
-        errorMessage = saveErrors;
-      }
-
-      errorMessage = errorMessage ? errorMessage : UIStrings.ERROR.SAVE_ERROR;
-      ExtJS.showErrorMessage(errorMessage);
+      ExtJS.showErrorMessage(messageToShow(errorMessage));
       console.log(`Save Error: ${errorMessage}`);
     }
   },

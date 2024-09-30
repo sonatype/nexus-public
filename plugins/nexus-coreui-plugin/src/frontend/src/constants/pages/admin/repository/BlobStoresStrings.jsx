@@ -77,8 +77,7 @@ export default {
       CREATE_TITLE: 'Create Blob Store',
       EDIT_WARNING: '\
         Updating the blob store configuration will cause it to be temporarily unavailable for a short period of time. \
-        Edits to configuration may also leave the blob store in a non-functional state. \
-        Use caution when changing values.\
+        Edits to configuration may also leave the blob store in a non-functional state.\
       ',
       EDIT_TILE: (name) => `Edit ${name}`,
       EDIT_DESCRIPTION: (type) => `${type} Blob Store`,
@@ -149,7 +148,7 @@ export default {
       },
       REGION: {
         label: 'Region',
-        sublabel: 'Must be a valid single region; dual-region or multiple-region locations are not supported.'
+        sublabel: 'Region must correspond to bucket\'s location.'
       },
       PREFIX: {
         label: 'Prefix',
@@ -164,6 +163,11 @@ export default {
           label: 'JSON Credential File Path',
           sublabel: 'Upload a .json file (maximum size: 4KB).'
         }
+      },
+      ERROR: {
+        bucketRegionMismatchException: 'GoogleCloudBucketRegionMismatchException',
+        bucketRegionMismatchMessage: 'Region and bucket location do not match.',
+        bucketRegionMismatchTitle: 'Selected region does not match the bucket\'s location.'
       }
     }
   },
