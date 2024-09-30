@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.datastore;
 
 import java.util.Optional;
+
 import javax.sql.DataSource;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -64,18 +65,8 @@ public class DatabaseCheckImplTest
   }
 
   @Test
-  public void testNoneClusteredModeAllAreAlwaysEnabled() {
-    underTest = new DatabaseCheckImplForTest(dataStoreManager, false);
-
-    assertTrue(underTest.isAllowedByVersion(withAnnotation.getClass()));
-    assertTrue(underTest.isAllowedByVersion(withoutAnnotation.getClass()));
-    assertTrue(underTest.isAllowedByVersion(withFromAnnotation.getClass()));
-    assertTrue(underTest.isAllowedByVersion(withLatestFromAnnotation.getClass()));
-  }
-
-  @Test
-  public void testClusteredModeIsDeterminedByVersion() {
-    underTest = new DatabaseCheckImplForTest(dataStoreManager, true);
+  public void testIsAllowedByVersion() {
+    underTest = new DatabaseCheckImplForTest(dataStoreManager);
 
     assertTrue(underTest.isAllowedByVersion(withAnnotation.getClass()));
     assertFalse(underTest.isAllowedByVersion(withoutAnnotation.getClass()));
@@ -85,10 +76,9 @@ public class DatabaseCheckImplTest
 
   private static class DatabaseCheckImplForTest extends DatabaseCheckImpl {
     public DatabaseCheckImplForTest(
-        final DataStoreManager dataStoreManager,
-        final boolean datastoreClustered)
+        final DataStoreManager dataStoreManager)
     {
-      super(dataStoreManager, datastoreClustered);
+      super(dataStoreManager);
     }
 
     @Override

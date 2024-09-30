@@ -20,7 +20,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
@@ -50,8 +49,6 @@ public class DatabaseCheckImpl
 {
   private final DataStoreManager dataStoreManager;
 
-  private final boolean datastoreClustered;
-
   private DataSource dataSource;
 
   private MigrationVersion currentSchemaVersion;
@@ -59,12 +56,8 @@ public class DatabaseCheckImpl
   private boolean postgresql = false;
 
   @Inject
-  public DatabaseCheckImpl(
-      final DataStoreManager dataStoreManager,
-      @Named(FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean datastoreClustered)
-  {
+  public DatabaseCheckImpl(final DataStoreManager dataStoreManager) {
     this.dataStoreManager = checkNotNull(dataStoreManager);
-    this.datastoreClustered = datastoreClustered;
   }
 
   @Override
@@ -86,10 +79,6 @@ public class DatabaseCheckImpl
 
   @Override
   public boolean isAllowedByVersion(final Class<?> annotatedClass) {
-    if (!datastoreClustered) {
-      return true;
-    }
-
     AvailabilityVersion availabilityVersion = annotatedClass.getAnnotation(AvailabilityVersion.class);
     if (availabilityVersion != null && isAllowed(availabilityVersion.from())) {
       return true;
