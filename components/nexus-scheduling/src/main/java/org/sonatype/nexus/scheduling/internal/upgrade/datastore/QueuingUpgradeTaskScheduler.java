@@ -246,9 +246,4 @@ public class QueuingUpgradeTaskScheduler
   public TaskConfiguration createTaskConfigurationInstance(final String typeId) {
     return taskScheduler.createTaskConfigurationInstance(typeId);
   }
-
-  @Override
-  public int getQueuedTaskCount() {
-    return (int) upgradeTaskStore.browse().count();
-  }
 }
