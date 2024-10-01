@@ -32,7 +32,7 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Named
-public class BrowseNodeMigrationStep_1_39
+public class BrowseNodeMigrationStep_2_3
     extends ComponentSupport
     implements DatabaseMigrationStep
 {
@@ -40,14 +40,14 @@ public class BrowseNodeMigrationStep_1_39
 
   private final UpgradeTaskScheduler upgradeTaskScheduler;
 
-  private static final String CONAN_FORMAT_NAME = "conan";
+  private static final String CONTENT_REPOSITORY_TABLE = "conan_content_repository";
 
-  private static final String SELECT_REPOSITORY_NAMES = "SELECT R.name " + //
-      "FROM repository R, %s_content_repository C " + //
+  private static final String SELECT_REPOSITORY_NAMES = "SELECT R.name " +
+      "FROM repository R, " + CONTENT_REPOSITORY_TABLE + " C " +
       "WHERE R.id = C.config_repository_id";
 
   @Inject
-  public BrowseNodeMigrationStep_1_39(
+  public BrowseNodeMigrationStep_2_3(
       final TaskScheduler taskScheduler,
       final UpgradeTaskScheduler upgradeTaskScheduler)
   {
@@ -57,11 +57,16 @@ public class BrowseNodeMigrationStep_1_39
 
   @Override
   public Optional<String> version() {
-    return Optional.of("1.39");
+    return Optional.of("2.3");
   }
 
   @Override
   public void migrate(final Connection connection) throws Exception {
+    if (!tableExists(connection, CONTENT_REPOSITORY_TABLE)) {
+      log.debug("No Conan table present to rebuild browse nodes");
+      return;
+    }
+
     String repositoryNames = getRepositoryNames(connection);
 
     if (!repositoryNames.isEmpty()) {
@@ -72,10 +77,11 @@ public class BrowseNodeMigrationStep_1_39
     }
   }
 
-  private String getRepositoryNames(final Connection connection) throws IllegalStateException {
+  protected String getRepositoryNames(final Connection connection)
+      throws IllegalStateException
+  {
     StringJoiner repositoryNames = new StringJoiner(",");
-    try (PreparedStatement statement = connection.prepareStatement(
-        String.format(SELECT_REPOSITORY_NAMES, CONAN_FORMAT_NAME))) {
+    try (PreparedStatement statement = connection.prepareStatement(SELECT_REPOSITORY_NAMES)) {
       try (ResultSet resultSet = statement.executeQuery()) {
         while (resultSet.next()) {
           repositoryNames.add(resultSet.getString(1));

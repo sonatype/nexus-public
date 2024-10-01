@@ -32,13 +32,15 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.UUID.randomUUID;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-public class BrowseNodeMigrationStep_1_39Test
+public class BrowseNodeMigrationStep_2_3Test
     extends ExampleContentTestSupport
 {
   @Mock
@@ -52,9 +54,9 @@ public class BrowseNodeMigrationStep_1_39Test
 
   private DataStore<?> store;
 
-  private BrowseNodeMigrationStep_1_39 underTest;
+  private BrowseNodeMigrationStep_2_3 underTest;
 
-  public BrowseNodeMigrationStep_1_39Test() {
+  public BrowseNodeMigrationStep_2_3Test() {
     super(ConanContentRepositoryDAO.class);
   }
 
@@ -62,7 +64,7 @@ public class BrowseNodeMigrationStep_1_39Test
   public void setup() {
     when(taskScheduler.createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID))
         .thenReturn(configuration);
-    underTest = new BrowseNodeMigrationStep_1_39(taskScheduler, upgradeTaskScheduler);
+    underTest = new BrowseNodeMigrationStep_2_3(taskScheduler, upgradeTaskScheduler);
     store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).get();
   }
 
@@ -86,6 +88,17 @@ public class BrowseNodeMigrationStep_1_39Test
     verify(upgradeTaskScheduler, times(1)).schedule(configuration);
 
     cleanContentRepository(contentRepositoryData);
+  }
+
+  @Test
+  public void testMigrationWithNonExistingTable() throws Exception {
+    OssBrowseNodeMigrationStep_2_3 ossUnderTest =
+        spy(new OssBrowseNodeMigrationStep_2_3(taskScheduler, upgradeTaskScheduler));
+    try (Connection conn = store.openConnection()) {
+      ossUnderTest.migrate(conn);
+    }
+    verify(ossUnderTest, never()).getRepositoryNames(any(Connection.class));
+    verify(upgradeTaskScheduler, never()).schedule(configuration);
   }
 
   private void cleanContentRepository(final ContentRepositoryData contentRepositoryData) {
@@ -125,5 +138,18 @@ public class BrowseNodeMigrationStep_1_39Test
   private interface ConanContentRepositoryDAO
       extends ContentRepositoryDAO
   {
+  }
+
+  private class OssBrowseNodeMigrationStep_2_3
+      extends BrowseNodeMigrationStep_2_3
+  {
+    public OssBrowseNodeMigrationStep_2_3(TaskScheduler taskScheduler, UpgradeTaskScheduler upgradeTaskScheduler) {
+      super(taskScheduler, upgradeTaskScheduler);
+    }
+
+    @Override
+    public boolean tableExists(final Connection conn, final String tableName) {
+      return false;
+    }
   }
 }
