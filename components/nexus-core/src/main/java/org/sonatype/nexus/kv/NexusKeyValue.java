@@ -15,6 +15,7 @@ package org.sonatype.nexus.kv;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
@@ -92,5 +93,22 @@ public class NexusKeyValue
   public <T> List<T> getAsObjectList(final ObjectMapper mapper, Class<T> typeClass) {
     return mapper.convertValue(value.get(VALUE_NESTED_KEY),
         mapper.getTypeFactory().constructCollectionType(List.class, typeClass));
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    NexusKeyValue that = (NexusKeyValue) o;
+    return Objects.equals(key, that.key) && type == that.type && Objects.equals(value, that.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(key, type, value);
   }
 }
