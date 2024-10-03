@@ -160,9 +160,9 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
       settingsFieldSet.importProperties(model.get('properties'), formFields);
       scheduleFieldSet.setRecurringDays(model.get('recurringDays'));
       scheduleFieldSet.setStartDate(model.get('startDate'));
-    }
 
-    this.maybeMakeReadOnly(model);
+      this.maybeMakeReadOnly(model);
+    }
   },
 
   /**
@@ -204,7 +204,11 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
             runButton.disable();
           } else {
             deleteButton.enable();
-            runButton.enable();
+            // check current task state before enabling run button
+            const taskReadyToRun = model.get('runnable');
+            if (taskReadyToRun === true) {
+              runButton.enable();
+            }
           }
         }, 100);
       }
