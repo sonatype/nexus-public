@@ -98,7 +98,7 @@ public interface CapabilityDescriptor
 
   enum ValidationMode
   {
-    CREATE, UPDATE, LOAD
+    CREATE, CREATE_NON_EXPOSED, UPDATE, LOAD, DELETE, DELETE_NON_EXPOSED
   }
 
   /**

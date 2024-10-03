@@ -14,8 +14,8 @@
 package org.sonatype.nexus.validation.group;
 
 /**
- * Bean Validation group that should be used on update.
+ * Bean Validation group that should be used when deleting entities.
  */
-public interface Update extends ValidationGroup
+public interface Delete extends ValidationGroup
 {
 }
