@@ -116,15 +116,6 @@ public interface CapabilityDescriptor {
     public Class<?> getGroupingClass() {
       return groupingClass;
     }
-
-    public static ValidationMode fromGroupingClass(final Class<?> groupingClass) {
-      for (ValidationMode mode : values()) {
-        if (mode.getGroupingClass().equals(groupingClass)) {
-          return mode;
-        }
-      }
-      throw new IllegalArgumentException("No ValidationMode found for grouping class: " + groupingClass);
-    }
   }
 
   /**
