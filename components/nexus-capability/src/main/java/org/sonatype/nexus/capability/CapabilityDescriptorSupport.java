@@ -33,24 +33,11 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.validation.ConstraintViolations;
-import org.sonatype.nexus.validation.group.Create;
-import org.sonatype.nexus.validation.group.CreateNonExposed;
-import org.sonatype.nexus.validation.group.Delete;
-import org.sonatype.nexus.validation.group.DeleteNonExposed;
-import org.sonatype.nexus.validation.group.Load;
-import org.sonatype.nexus.validation.group.Update;
-
-import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
-import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE;
-import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE_NON_EXPOSED;
-import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.DELETE;
-import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.DELETE_NON_EXPOSED;
 import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.LOAD;
-import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.UPDATE;
 import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.capabilities;
 
 /**
@@ -62,17 +49,6 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
     extends ComponentSupport
     implements CapabilityDescriptor
 {
-  private static final Map<ValidationMode, Class<?>>
-      VALIDATION_MODE_TO_VALIDATION_GROUP_MAP =
-      ImmutableMap.of(
-          CREATE, Create.class,
-          CREATE_NON_EXPOSED, CreateNonExposed.class,
-          DELETE, Delete.class,
-          DELETE_NON_EXPOSED, DeleteNonExposed.class,
-          UPDATE, Update.class,
-          LOAD, Load.class
-      );
-
   private Provider<CapabilityRegistry> capabilityRegistry;
 
   private boolean exposed = true;
@@ -175,7 +151,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
 
     ConfigT config = createConfig(properties);
     if (config != null) {
-      validate(config, VALIDATION_MODE_TO_VALIDATION_GROUP_MAP.get(validationMode));
+      validate(config, validationMode.getGroupingClass());
     }
   }
 
