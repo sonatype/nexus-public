@@ -42,6 +42,17 @@ public interface CapabilityRegistry
                           @Nullable Map<String, String> properties);
 
   /**
+   * Creates a new capability that isn't exposed for user creation, this is ONLY intended for internal use, for
+   * automatically creating non-exposed capabilities programmatically.
+   *
+   * NOT TO BE TRIGGERED BY USER ACTIONS!
+   */
+  CapabilityReference addNonExposed(CapabilityType type,
+                          boolean enabled,
+                          @Nullable String notes,
+                          @Nullable Map<String, String> properties);
+
+  /**
    * Updates a capability.
    *
    * @param id         of capability to be updated
@@ -64,6 +75,14 @@ public interface CapabilityRegistry
    * @throws CapabilityNotFoundException If capability with specified id does not exist
    */
   CapabilityReference remove(CapabilityIdentity id);
+
+  /**
+   * Deletes a capability that isn't exposed for user creation, this is ONLY intended for internal use, for
+   * automatically deleting non-exposed capabilities programmatically.
+   *
+   * NOT TO BE TRIGGERED BY USER ACTIONS!
+   */
+  CapabilityReference removeNonExposed(CapabilityIdentity id);
 
   /**
    * Enables a capability.

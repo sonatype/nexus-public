@@ -13,14 +13,12 @@
 package org.sonatype.nexus.capability;
 
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -35,11 +33,11 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.validation.ConstraintViolations;
-import org.sonatype.nexus.validation.group.Create;
-import org.sonatype.nexus.validation.group.Update;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Arrays.asList;
+import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.LOAD;
 import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.capabilities;
 
 /**
@@ -118,14 +116,15 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
   }
 
   @Override
-  public void validate(@Nullable final CapabilityIdentity id,
-                       final Map<String, String> properties,
-                       final ValidationMode validationMode)
+  public void validate(
+      @Nullable final CapabilityIdentity id,
+      final Map<String, String> properties,
+      final ValidationMode validationMode)
   {
     validateConfig(properties, validationMode);
     // skip uniqueness check on load; defer to 'HasNoDuplicates' activation condition
     // but keep it for create and update, as we want early validation in those cases
-    if (validationMode != ValidationMode.LOAD) {
+    if (validationMode != LOAD) {
       validateUnique(id, properties);
     }
   }
@@ -136,9 +135,8 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
   }
 
   /**
-   * Override and return the ids of properties that makes a capability unique.
-   * For example to be able to create multiple capabilities of this type, one per repository, return the id of
-   * repository field.
+   * Override and return the ids of properties that makes a capability unique. For example to be able to create multiple
+   * capabilities of this type, one per repository, return the id of repository field.
    *
    * @return ids of the fields that makes the capability unique.
    */
@@ -153,30 +151,27 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
 
     ConfigT config = createConfig(properties);
     if (config != null) {
-      if (validationMode == ValidationMode.CREATE) {
-        validate(config, Create.class, Default.class);
-      }
-      else {
-        validate(config, Update.class, Default.class);
-      }
+      validate(config, validationMode.getGroupingClass());
     }
   }
 
-  protected void validate(final Object value, final Class<?>... groups) {
+  protected void validate(final Object value, final Class<?> validationGroup) {
     checkNotNull(value);
-    checkNotNull(groups);
+    checkNotNull(validationGroup);
+    List<Class<?>> validationGroups = asList(validationGroup, Default.class);
 
     if (log.isTraceEnabled()) {
-      log.trace("Validating: {} in groups: {}", value, Arrays.asList(groups));
+      log.trace("Validating: {} in groups: {}", value, validationGroups);
     }
 
     Validator validator = validatorProvider.get();
-    Set<ConstraintViolation<Object>> violations = validator.validate(value, groups);
+    Set<ConstraintViolation<Object>> violations = validator.validate(value, validationGroups.toArray(new Class<?>[]{}));
     ConstraintViolations.maybePropagate(violations, log);
   }
 
-  private CapabilityReferenceFilter duplicatesFilter(@Nullable final CapabilityIdentity id,
-                                                     final Map<String, String> properties)
+  private CapabilityReferenceFilter duplicatesFilter(
+      @Nullable final CapabilityIdentity id,
+      final Map<String, String> properties)
   {
     checkNotNull(properties);
     checkNotNull(capabilityRegistry);
@@ -206,7 +201,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
       StringBuilder message = new StringBuilder().append("Only one capability of type '").append(name()).append("'");
       for (Entry<String, String> entry : filter.getProperties().entrySet()) {
         message.append(", ").append(propertyName(entry.getKey()).toLowerCase()).append(" '").append(entry.getValue())
-            .append("'");
+               .append("'");
       }
       message.append(" can be created");
       throw new ValidationException(message.toString());
