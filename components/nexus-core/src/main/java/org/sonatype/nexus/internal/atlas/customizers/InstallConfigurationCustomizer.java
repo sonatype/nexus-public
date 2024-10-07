@@ -56,6 +56,8 @@ public class InstallConfigurationCustomizer
 
   private final ApplicationDirectories applicationDirectories;
 
+  private final String NEXUS_PROPERTIES = "nexus.properties";
+
   @Inject
   public InstallConfigurationCustomizer(final ApplicationDirectories applicationDirectories) {
     this.applicationDirectories = checkNotNull(applicationDirectories);
@@ -67,6 +69,7 @@ public class InstallConfigurationCustomizer
     if (installDir != null) {
       File etcDir = new File(installDir, "etc");
       includeFileIfExists(supportBundle, new File(etcDir, "nexus-default.properties"), INSTALL_ETC, HIGH);
+      includeFileIfExists(supportBundle, new File(etcDir, NEXUS_PROPERTIES), INSTALL_ETC, HIGH);
       includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "fabric"), INSTALL_ETC, HIGH);
       includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "jetty"), INSTALL_ETC, HIGH);
       includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "karaf"), INSTALL_ETC, HIGH);
@@ -76,7 +79,7 @@ public class InstallConfigurationCustomizer
     File workDir = applicationDirectories.getWorkDirectory();
     if (workDir != null) {
       File etcDir = new File(workDir, "etc");
-      includeFileIfExists(supportBundle, new File(etcDir, "nexus.properties"), INSTALL_ETC, HIGH);
+      includeFileIfExists(supportBundle, new File(etcDir, NEXUS_PROPERTIES), INSTALL_ETC, HIGH);
       includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "fabric"), INSTALL_ETC, HIGH);
       includeAllFilesInDirIfExists(supportBundle, new File(etcDir, "logback"), INSTALL_ETC, HIGH);
     }
@@ -90,25 +93,17 @@ public class InstallConfigurationCustomizer
   {
     if (file != null && file.isFile()) {
       log.debug("Including file: {}", file);
-      String filePath = String.join("/", prefixDir, file.getName());
+      String fileName = file.getName();
+      String filePath = String.join("/", prefixDir, fileName);
       try {
-        switch (file.getName()) {
-          case "jetty-https.xml":
-            supportBundle.add(new SanitizedJettyFileSource(CONFIG, filePath, file, priority));
-            break;
-          case "hazelcast.xml":
-          case "hazelcast-network.xml":
-            supportBundle.add(new SanitizedHazelcastFileSource(CONFIG, filePath, file, priority));
-            break;
-          case "store.properties":
-            supportBundle.add(new SanitizedDataStoreFileSource(CONFIG, filePath, file, priority));
-            break;
-          case "nexus.properties":
-            supportBundle.add(new SanitizedNexusFileSource(CONFIG, filePath, file, priority));
-            break;
-          default:
-            supportBundle.add(new FileContentSourceSupport(CONFIG, filePath, file, priority));
-            break;
+        if (fileName.equals("jetty-https.xml")) {
+          supportBundle.add(new SanitizedJettyFileSource(CONFIG, filePath, file, priority));
+        } else if (fileName.endsWith("store.properties")) {
+          supportBundle.add(new SanitizedDataStoreFileSource(CONFIG, filePath, file, priority));
+        } else if (fileName.equals(NEXUS_PROPERTIES)) {
+          supportBundle.add(new SanitizedNexusFileSource(CONFIG, filePath, file, priority));
+        } else {
+          supportBundle.add(new FileContentSourceSupport(CONFIG, filePath, file, priority));
         }
       }
       catch (IOException e) {
@@ -150,21 +145,6 @@ public class InstallConfigurationCustomizer
     {
       super(type, path, file, priority,
           IOUtils.toString(checkNotNull(SanitizedJettyFileSource.class.getResourceAsStream("jetty-stylesheet.xml")),
-              UTF_8));
-    }
-  }
-
-  /**
-   * Removes AWS credentials from hazelcast.xml, if present.
-   */
-  protected static class SanitizedHazelcastFileSource
-      extends SanitizedXmlSourceSupport
-  {
-    public SanitizedHazelcastFileSource(final Type type, final String path, final File file, final Priority priority)
-        throws IOException
-    {
-      super(type, path, file, priority,
-          IOUtils.toString(checkNotNull(SanitizedJettyFileSource.class.getResourceAsStream("hazelcast-stylesheet.xml")),
               UTF_8));
     }
   }
