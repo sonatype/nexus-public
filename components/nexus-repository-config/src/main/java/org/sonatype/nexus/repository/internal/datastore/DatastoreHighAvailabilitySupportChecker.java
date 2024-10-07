@@ -58,6 +58,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("apt")
         .add("yum")
         .add("cargo")
+        .add("composer")
         .build();
   }
 }

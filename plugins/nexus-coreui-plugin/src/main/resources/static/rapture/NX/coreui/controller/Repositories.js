@@ -56,6 +56,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.CargoGroup',
     'repository.recipe.CargoHosted',
     'repository.recipe.CargoProxy',
+    'repository.recipe.ComposerProxy',
     'repository.recipe.CocoapodsProxy',
     'repository.recipe.ConanHosted',
     'repository.recipe.ConanProxy',

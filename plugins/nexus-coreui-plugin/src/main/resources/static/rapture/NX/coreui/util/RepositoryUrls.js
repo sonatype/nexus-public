@@ -118,6 +118,11 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
           assetName = me.getAssetName(assetModel);
       return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodePath(assetName), assetName);
     },
+    composer: function (me, assetModel) {
+      var repositoryName = assetModel.get('repositoryName'),
+          assetName = me.getAssetName(assetModel);
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodePath(assetName), assetName);
+    },
     helm: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = me.getAssetName(assetModel);

@@ -26,6 +26,9 @@ public interface FeatureFlags
   /* Cargo format is temporarily hidden behind the feature flag. Default value: false */
   String CARGO_FORMAT_ENABLED = "nexus.format.cargo.enabled";
 
+  /* Composer format is temporarily hidden behind the feature flag. Default value: false */
+  String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
+
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 
