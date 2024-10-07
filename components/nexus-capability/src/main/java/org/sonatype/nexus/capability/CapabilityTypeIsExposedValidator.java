@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * {@link CapabilityTypeIsExposed} validator.  Note that this validator also validates the CapabilityTypeExists
- * so there is no need to utilize both validators for single CapabilityType in the same validation Group(s)
+ * so there is no need to utilize both validators for single CapabilityType
  */
 @Named
 public class CapabilityTypeIsExposedValidator
