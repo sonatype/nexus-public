@@ -1633,6 +1633,19 @@
     </profile>
 
     <profile>
+      <id>postgres-unit-tests</id>
+      <properties>
+        <it.excludedGroups>
+          org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+          org.sonatype.nexus.content.testsuite.groups.OSSTestGroup,
+          org.sonatype.goodies.testsupport.group.Unstable,
+          org.sonatype.goodies.testsupport.group.Perf,
+          org.sonatype.goodies.testsupport.group.External
+        </it.excludedGroups>
+      </properties>
+    </profile>
+
+    <profile>
       <id>h2-integration-tests</id>
       <properties>
         <it.excludedGroups>
