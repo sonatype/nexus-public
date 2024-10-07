@@ -147,6 +147,10 @@
       <artifactId>aws-java-sdk-dynamodb</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-upgrade</artifactId>
+    </dependency>
 
   </dependencies>
 
