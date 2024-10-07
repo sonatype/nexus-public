@@ -454,7 +454,6 @@ window.plugins.push({
       view: Licensing,
       iconCls: 'x-fa fa-wallet',
       visibility: {
-        featureFlags: [{key: 'nexus.react.licensing', defaultValue: true}],
         permissions: [Permissions.LICENSING.READ]
       },
     },

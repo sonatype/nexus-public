@@ -1338,28 +1338,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     System_HttpRequestSettings_Attempts_FieldLabel: 'Connection/Socket retry attempts',
     System_HttpRequestSettings_Attempts_HelpText: 'Total retries if the initial connection attempt suffers a timeout',
 
-    // Admin -> System -> Licensing
-    Licensing_Text: 'Licensing',
-    Licensing_Description: 'A valid license is required for PRO features. Manage it here.',
-    Licensing_LicensingDetails_Company_FieldLabel: 'Company',
-    Licensing_LicensingDetails_Name_FieldLabel: 'Name',
-    Licensing_LicensingDetails_Email_FieldLabel: 'Email',
-    Licensing_LicensingDetails_EffectiveDate_FieldLabel: 'Effective date',
-    Licensing_LicensingDetails_ExpirationDate_FieldLabel: 'Expiration date',
-    Licensing_LicensingDetails_Type_FieldLabel: 'License type',
-    Licensing_LicensingDetails_LicensedUsers_FieldLabel: 'Number of licensed users',
-    Licensing_LicensingDetails_Fingerprint_FieldLabel: 'Fingerprint',
-    Licensing_LicensingDetails_InstallLicense_Title: 'Install license',
-    Licensing_LicensingDetails_InstallLicense_Html: '<p>Installing a new license requires restarting the server to take effect</p>',
-    Licensing_LicensingDetails_LicenseSelect_Button: 'Select license&hellip;',
-    Licensing_LicensingDetails_LicenseInstall_Button: 'Install license',
-    Licensing_LicenseAgreement_Title: 'Nexus Repository Manager License Agreement',
-    Licensing_LicenseAgreement_Yes_Button: 'I accept',
-    Licensing_LicenseAgreement_No_Button: 'I do not accept',
-    Licensing_LicenseAgreement_Download_Button: 'Download a copy of the agreement.',
-    Licensing_Install_Success: 'License installed. Restart is only required if you are enabling new PRO features.',
-    Licensing_Authentication_Validation: '{0} a license requires validation of your credentials.',
-
     //Nexus Lifecycle -> Server
     Clm_ClmSettings_Permission_Error: 'You do not have permission to configure IQ Server',
     Clm_Text: 'IQ Server',
