@@ -115,6 +115,7 @@ Ext.define('NX.coreui.view.repository.facet.ConanProxyFacet', {
                 if (radioGroupSection.isHidden()) {
                   const conanVersion = Ext.Object.getValues(radioGroupSection.down('radiogroup').getValue())[0];
                   me.setValue(conanVersion);
+                  me.resetOriginalValue();
                 } else {
                   me.up('fieldset').hide();
                 }
