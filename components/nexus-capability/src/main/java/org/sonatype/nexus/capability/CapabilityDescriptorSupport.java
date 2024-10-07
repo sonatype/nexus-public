@@ -37,6 +37,8 @@ import org.sonatype.nexus.validation.ConstraintViolations;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
+import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.DELETE;
+import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.DELETE_NON_EXPOSED;
 import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.LOAD;
 import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.capabilities;
 
@@ -124,7 +126,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
     validateConfig(properties, validationMode);
     // skip uniqueness check on load; defer to 'HasNoDuplicates' activation condition
     // but keep it for create and update, as we want early validation in those cases
-    if (validationMode != LOAD) {
+    if (!asList(DELETE, DELETE_NON_EXPOSED, LOAD).contains(validationMode)) {
       validateUnique(id, properties);
     }
   }
