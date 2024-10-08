@@ -148,8 +148,6 @@ public class S3BlobStore
 
   public static final String TYPE_V1 = "s3/1";
 
-  private static final String CONTENT_PREFIX = "content";
-
   public static final String DIRECT_PATH_PREFIX = CONTENT_PREFIX + "/" + DIRECT_PATH_ROOT;
 
   public static final Tag DELETED_TAG = new Tag("deleted", "true");

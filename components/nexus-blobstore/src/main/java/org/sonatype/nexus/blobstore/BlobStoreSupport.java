@@ -61,6 +61,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     extends StateGuardLifecycleSupport
     implements BlobStore
 {
+  public static final String CONTENT_PREFIX = "content";
+
   public static final String CONTENT_TMP_PATH = "/content/tmp/";
 
   private final Map<String, Timer> timers = new ConcurrentHashMap<>();
@@ -83,7 +85,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
    * To match "content/2024/01/10/18/13/0c89ccf4-ec5b-44a8-83b2-d08df2599c6e.properties"
    */
   private static final Pattern DATE_BASED_PATTERN = Pattern.compile(
-      ".*(\\d{4}/\\d{2}/\\d{2}/\\d{2}/\\d{2})/(\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12})\\b.properties$",
+      ".*(\\d{4}[/\\\\]\\d{2}[/\\\\]\\d{2}[/\\\\]\\d{2}[/\\\\]\\d{2})[/\\\\](\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12})\\b.properties$",
       Pattern.CASE_INSENSITIVE);
 
   public static final int MAX_NAME_LENGTH = 255;

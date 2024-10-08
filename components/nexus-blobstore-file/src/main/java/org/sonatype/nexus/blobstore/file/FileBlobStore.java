@@ -147,8 +147,6 @@ public class FileBlobStore
   @VisibleForTesting
   public static final String DELETIONS_FILENAME = "deletions.index";
 
-  public static final String CONTENT = "content";
-
   public static final String TMP = "tmp";
 
   private static final boolean RETRY_ON_COLLISION =
@@ -656,7 +654,7 @@ public class FileBlobStore
     try {
       Date thresholdDate = DateUtils.addDays(new Date(), -daysOlderThan);
       AgeFileFilter ageFileFilter = new AgeFileFilter(thresholdDate);
-      Iterator<File> filesToDelete = iterateFiles(getAbsoluteBlobDir().resolve(CONTENT).resolve(TMP).toFile(), ageFileFilter, ageFileFilter);
+      Iterator<File> filesToDelete = iterateFiles(getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve(TMP).toFile(), ageFileFilter, ageFileFilter);
       filesToDelete.forEachRemaining(f -> {
             try {
               forceDelete(f);
@@ -719,7 +717,7 @@ public class FileBlobStore
 
     try {
       Path blobDir = getAbsoluteBlobDir();
-      Path content = blobDir.resolve(CONTENT);
+      Path content = blobDir.resolve(CONTENT_PREFIX);
       DirectoryHelper.mkdir(content);
       this.contentDir = content;
       Path reconciliationLogDir = blobDir.resolve("reconciliation");

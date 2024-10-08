@@ -27,6 +27,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.DateBasedHelper;
@@ -35,6 +37,7 @@ import org.sonatype.nexus.common.time.UTC;
 import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.blobstore.BlobStoreSupport.CONTENT_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_PATH_FORMATTER;
 
 /**
@@ -43,6 +46,16 @@ import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_PATH_FORMATTER;
 public class DateBasedWalkFile
     extends ComponentSupport
 {
+  // to support Unix and Windows file separators
+  private static final String FILE_SEPARATOR = "[\\\\/]";
+
+  // to match date, for example "2024/01/01/13/10"
+  private static final String DATE_BASED_MATCHER =
+      "(\\d{4}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2})";
+
+  private static final Pattern DATE_BASED_PATTERN = Pattern.compile(
+      ".*" + CONTENT_PREFIX + FILE_SEPARATOR + DATE_BASED_MATCHER + FILE_SEPARATOR + ".*$", Pattern.CASE_INSENSITIVE);
+
   private static final String PROPS_EXT = ".properties";
 
   private static final String BYTES_EXT = ".bytes";
@@ -85,7 +98,7 @@ public class DateBasedWalkFile
       @Override
       public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
         if (file.toString().endsWith(BYTES_EXT) || file.toString().endsWith(PROPS_EXT)) {
-          OffsetDateTime blobCreated = parseDate(contentDir, file.toString());
+          OffsetDateTime blobCreated = parseDate(file);
           if (blobCreated == null) {
             return FileVisitResult.CONTINUE;
           }
@@ -111,17 +124,21 @@ public class DateBasedWalkFile
     return blobIds;
   }
 
-  private OffsetDateTime parseDate(final String contentDir, final String path) {
-    // Extract the date-time part from the path "2024/01/01/13/10/" (from year to minutes)
-    String dateTimeString = path.split(contentDir)[1].substring(0, 16);
+  private OffsetDateTime parseDate(final Path path) {
     try {
-      LocalDateTime localDateTime = LocalDateTime.parse(dateTimeString, DATE_TIME_PATH_FORMATTER);
-      return localDateTime.atOffset(ZoneOffset.UTC);
+      // Extract the date-time part from the path "2024/01/01/13/10/" (from year to minutes)
+      Matcher matcher = DATE_BASED_PATTERN.matcher(path.toString());
+      if (matcher.find()) {
+        LocalDateTime localDateTime = LocalDateTime.parse(matcher.group(1), DATE_TIME_PATH_FORMATTER);
+        return localDateTime.atOffset(ZoneOffset.UTC);
+      }
     }
     catch (Exception e) {
       // we don't care about the files that are not in the expected format
       log.debug("Incorrect date format in path: {}", path);
       return null;
     }
+
+    return null;
   }
 }

@@ -29,6 +29,7 @@ import org.junit.rules.TemporaryFolder;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.sonatype.nexus.blobstore.BlobStoreSupport.CONTENT_PREFIX;
 
 /**
  * Unit Tests for {@link DateBasedWalkFile}.
@@ -41,6 +42,8 @@ public class DateBasedWalkFileTest
 
   @Test
   public void testWalkFilesWithDifferentDuration() throws Exception {
+    File contentDir = new File(temporaryFolder.getRoot().getPath(), CONTENT_PREFIX);
+
     OffsetDateTime blobCreated = UTC.now();
     String bytesFileNow = "now";
     String bytesFile1minOld = "1minOld";
@@ -60,70 +63,70 @@ public class DateBasedWalkFileTest
     String bytesFile10mOld = "10mOld";
 
     // create 4 files: now, 1 min ago, 3 min ago, and 10 min ago
-    File storageDirNow = new File(temporaryFolder.getRoot(), getDatePath(blobCreated));
+    File storageDirNow = new File(contentDir, getDatePath(blobCreated));
     assertThat(storageDirNow.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDirNow, bytesFileNow + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir1MinOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusMinutes(1)));
+    File storageDir1MinOld = new File(contentDir, getDatePath(blobCreated.minusMinutes(1)));
     assertThat(storageDir1MinOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir1MinOld, bytesFile1minOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir3MinOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusMinutes(3)));
+    File storageDir3MinOld = new File(contentDir, getDatePath(blobCreated.minusMinutes(3)));
     assertThat(storageDir3MinOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir3MinOld, bytesFile3minOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir10MinOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusMinutes(10)));
+    File storageDir10MinOld = new File(contentDir, getDatePath(blobCreated.minusMinutes(10)));
     assertThat(storageDir10MinOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir10MinOld, bytesFile10minOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
     // create 3 files: 1 hour ago, 3 hours ago, and 10 hours ago
-    File storageDir1hOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusHours(1)));
+    File storageDir1hOld = new File(contentDir, getDatePath(blobCreated.minusHours(1)));
     assertThat(storageDir1hOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir1hOld, bytesFile1hOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir3hOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusHours(3)));
+    File storageDir3hOld = new File(contentDir, getDatePath(blobCreated.minusHours(3)));
     assertThat(storageDir3hOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir3hOld, bytesFile3hOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir10hOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusHours(10)));
+    File storageDir10hOld = new File(contentDir, getDatePath(blobCreated.minusHours(10)));
     assertThat(storageDir10hOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir10hOld, bytesFile10hOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
     // create 3 files: 1 day ago, 3 days ago, and 10 days ago
-    File storageDir1dOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusDays(1)));
+    File storageDir1dOld = new File(contentDir, getDatePath(blobCreated.minusDays(1)));
     assertThat(storageDir1dOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir1dOld, bytesFile1dOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir3dOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusDays(3)));
+    File storageDir3dOld = new File(contentDir, getDatePath(blobCreated.minusDays(3)));
     assertThat(storageDir3dOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir3dOld, bytesFile3dOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir10dOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusDays(10)));
+    File storageDir10dOld = new File(contentDir, getDatePath(blobCreated.minusDays(10)));
     assertThat(storageDir10dOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir10dOld, bytesFile10dOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
     // create 3 files: 1 month ago, 3 months ago, and 10 months ago
-    File storageDir1mOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusMonths(1)));
+    File storageDir1mOld = new File(contentDir, getDatePath(blobCreated.minusMonths(1)));
     assertThat(storageDir1mOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir1mOld, bytesFile1mOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir3mOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusMonths(3)));
+    File storageDir3mOld = new File(contentDir, getDatePath(blobCreated.minusMonths(3)));
     assertThat(storageDir3mOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir3mOld, bytesFile3mOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
-    File storageDir10mOld = new File(temporaryFolder.getRoot(), getDatePath(blobCreated.minusMonths(10)));
+    File storageDir10mOld = new File(contentDir, getDatePath(blobCreated.minusMonths(10)));
     assertThat(storageDir10mOld.mkdirs(), is(Boolean.TRUE));
     assertThat(new File(storageDir10mOld, bytesFile10mOld + ".bytes").createNewFile(), is(Boolean.TRUE));
 
     // find all files that have been created 5 min ago
     Duration fiveMin = Duration.ofSeconds(blobCreated.toEpochSecond() - blobCreated.minusMinutes(5L).toEpochSecond());
-    DateBasedWalkFile walkFile = new DateBasedWalkFile(temporaryFolder.getRoot().getAbsolutePath(), fiveMin);
+    DateBasedWalkFile walkFile = new DateBasedWalkFile(contentDir.getAbsolutePath(), fiveMin);
     List<String> blobIds = new ArrayList<>(walkFile.getBlobIdToDateRef().keySet());
     assertThat(blobIds, containsInAnyOrder(bytesFileNow, bytesFile1minOld, bytesFile3minOld));
 
     // find all files that have been created 5 hours ago
     Duration fiveHours = Duration.ofSeconds(blobCreated.toEpochSecond() - blobCreated.minusHours(5L).toEpochSecond());
-    walkFile = new DateBasedWalkFile(temporaryFolder.getRoot().getAbsolutePath(), fiveHours);
+    walkFile = new DateBasedWalkFile(contentDir.getAbsolutePath(), fiveHours);
     blobIds = new ArrayList<>(walkFile.getBlobIdToDateRef().keySet());
     assertThat(blobIds, containsInAnyOrder(
         bytesFileNow, bytesFile1minOld, bytesFile3minOld, bytesFile10minOld,
@@ -131,7 +134,7 @@ public class DateBasedWalkFileTest
 
     // find all files that have been created 5 days ago
     Duration fiveDays = Duration.ofSeconds(blobCreated.toEpochSecond() - blobCreated.minusDays(5L).toEpochSecond());
-    walkFile = new DateBasedWalkFile(temporaryFolder.getRoot().getAbsolutePath(), fiveDays);
+    walkFile = new DateBasedWalkFile(contentDir.getAbsolutePath(), fiveDays);
     blobIds = new ArrayList<>(walkFile.getBlobIdToDateRef().keySet());
     assertThat(blobIds, containsInAnyOrder(
         bytesFileNow, bytesFile1minOld, bytesFile3minOld, bytesFile10minOld,
@@ -140,7 +143,7 @@ public class DateBasedWalkFileTest
 
     // find all files that have been created 5 months ago
     Duration fiveMonths = Duration.ofSeconds(blobCreated.toEpochSecond() - blobCreated.minusMonths(5L).toEpochSecond());
-    walkFile = new DateBasedWalkFile(temporaryFolder.getRoot().getAbsolutePath(), fiveMonths);
+    walkFile = new DateBasedWalkFile(contentDir.getAbsolutePath(), fiveMonths);
     blobIds = new ArrayList<>(walkFile.getBlobIdToDateRef().keySet());
     assertThat(blobIds, containsInAnyOrder(
         bytesFileNow, bytesFile1minOld, bytesFile3minOld, bytesFile10minOld,

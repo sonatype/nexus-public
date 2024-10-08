@@ -60,7 +60,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -73,11 +72,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.blobstore.BlobStoreSupport.CONTENT_PREFIX;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
-import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONTENT;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.TMP;
 
 /**
@@ -181,10 +180,10 @@ public class FileBlobStoreTest
     underTest.setLiveBlobs(loadingCache);
 
     fullPath = underTest.getAbsoluteBlobDir()
-        .resolve(CONTENT).resolve("vol-03").resolve("chap-44");
+        .resolve(CONTENT_PREFIX).resolve("vol-03").resolve("chap-44");
     Files.createDirectories(fullPath);
 
-    directFullPath = underTest.getAbsoluteBlobDir().resolve(CONTENT).resolve("directpath");
+    directFullPath = underTest.getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve("directpath");
     Files.createDirectories(directFullPath);
 
     when(blobIdLocationResolver.getLocation(any(BlobId.class))).thenAnswer(invocation -> {
@@ -338,7 +337,7 @@ public class FileBlobStoreTest
     underTest.doStart();
 
     Path tmpFilePath = underTest.getAbsoluteBlobDir()
-        .resolve(CONTENT).resolve(TMP).resolve("tmp$0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
+        .resolve(CONTENT_PREFIX).resolve(TMP).resolve("tmp$0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
 
     tmpFilePath.toFile().getParentFile().mkdirs();
     write(tmpFilePath, "@BlobStore.created-by=system".getBytes(UTF_8));
@@ -494,7 +493,7 @@ public class FileBlobStoreTest
 
   @Test
   public void getBlobAttributesReturnsNullWhenExceptionIsThrown() throws Exception {
-    Path propertiesPath = underTest.getAbsoluteBlobDir().resolve(CONTENT).resolve("test-blob.properties");
+    Path propertiesPath = underTest.getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve("test-blob.properties");
     write(propertiesPath, EMPTY_BLOB_STORE_PROPERTIES);
 
     assertNull(underTest.getBlobAttributes(new BlobId("test-blob")));
