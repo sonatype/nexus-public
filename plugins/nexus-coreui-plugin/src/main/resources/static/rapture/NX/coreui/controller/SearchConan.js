@@ -59,6 +59,15 @@ Ext.define('NX.coreui.controller.SearchConan', {
         }
       },
       {
+        id: 'attributes.conan.revision.latest',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_RecipeRevisionLatest_FieldLabel'),
+          width: 250
+        }
+      },
+      {
         id: 'assets.attributes.conan.packageId',
         group: NX.I18n.get('SearchConan_Group'),
         config: {
@@ -90,6 +99,7 @@ Ext.define('NX.coreui.controller.SearchConan', {
         {id: 'attributes.conan.baseVersion'},
         {id: 'attributes.conan.channel'},
         {id: 'attributes.conan.revision'},
+        {id: 'attributes.conan.revision.latest'},
         {id: 'assets.attributes.conan.packageId'},
         {id: 'assets.attributes.conan.packageRevision'}
       ]

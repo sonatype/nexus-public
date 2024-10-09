@@ -33,11 +33,16 @@ public enum SearchField
   COMPONENT_KIND,
 
   NAMESPACE,
+
   NAME,
+
   VERSION(SortDirection.DESC),
+
   PRERELEASE,
 
   TAGS,
+
+  LAST_MODIFIED,
 
   /**
    * The paths associated with the assets
