@@ -156,9 +156,8 @@ export default {
       },
       AUTHENTICATION: {
         LABEL: 'Authentication',
-        SUBLABEL: 'The default credentials will use the credentials configured in the environment where Nexus Repository is running.',
-        APPLICATION_DEFAULT_CREDENTIALS: 'Application Default Credentials',
-        CREDENTIAL_JSON_FILE: 'Credential JSON File',
+        APPLICATION_DEFAULT_CREDENTIALS: 'Use Google Application Default Credentials',
+        CREDENTIAL_JSON_FILE: 'Use a separate credential JSON file (select to upload)',
         JSON_PATH: {
           label: 'JSON Credential File Path',
           sublabel: 'Upload a .json file (maximum size: 4KB).'

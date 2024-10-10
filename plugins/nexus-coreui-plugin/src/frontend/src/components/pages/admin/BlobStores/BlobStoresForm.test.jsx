@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {screen, waitForElementToBeRemoved, within, waitFor, act} from '@testing-library/react'
+import {act, screen, waitFor, waitForElementToBeRemoved, within} from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -23,6 +23,8 @@ import S3BlobStoreWarning from './S3/S3BlobStoreWarning';
 import BlobStoresForm from './BlobStoresForm';
 
 import {URLs} from './BlobStoresHelper';
+// Include the blob stores types on the window
+import '../../../../index';
 
 const {
   deleteBlobStoreUrl,
@@ -33,9 +35,6 @@ const {
   blobStoreQuotaTypesUrl,
   blobStoreUsageUrl,
 } = URLs;
-
-// Include the blob stores types on the window
-import '../../../../index';
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -167,7 +166,7 @@ describe('BlobStoresForm', function() {
           path: () => getByLabelText('Path'),
           region: () => getByLabelText('Region'),
           bucket: () => getByLabelText('Bucket'),
-          credentialAuthentication: () => getByLabelText('Credential JSON File'),
+          credentialAuthentication: () => getByLabelText('Use a separate credential JSON file (select to upload)'),
           fileInput: () => getByLabelText('JSON Credential File Path'),
           prefix: () => getByLabelText('Prefix'),
           expiration: () => getByLabelText('Expiration Days'),

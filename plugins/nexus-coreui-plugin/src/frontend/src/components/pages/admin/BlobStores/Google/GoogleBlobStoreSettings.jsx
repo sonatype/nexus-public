@@ -15,13 +15,7 @@ import {useService} from '@xstate/react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../../constants/UIStrings';
-import {
-  NxFieldset,
-  NxFormGroup,
-  NxTextInput,
-  NxRadio,
-  NxFileUpload
-} from '@sonatype/react-shared-components';
+import {NxFieldset, NxFileUpload, NxFormGroup, NxRadio, NxTextInput} from '@sonatype/react-shared-components';
 
 const GOOGLE = UIStrings.BLOB_STORES.GOOGLE;
 
@@ -66,7 +60,7 @@ export default function GoogleBlobStoreSettings({service}) {
           {...FormUtils.fieldProps(bucketField('region'), current)}
           onChange={FormUtils.handleUpdate(bucketField('region'), send)}/>
     </NxFormGroup>
-    <NxFieldset label={GOOGLE.AUTHENTICATION.LABEL} sublabel={GOOGLE.AUTHENTICATION.SUBLABEL}>
+    <NxFieldset label={GOOGLE.AUTHENTICATION.LABEL}>
       <NxRadio
           radioId="applicationDefaultCredentials"
           name="bucketConfiguration.bucketSecurity.authenticationMethod"
