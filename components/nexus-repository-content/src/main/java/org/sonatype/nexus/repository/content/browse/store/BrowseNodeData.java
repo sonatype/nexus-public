@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.browse.store;
 
+import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -60,6 +61,9 @@ public class BrowseNodeData
   @Nullable
   private Long assetCount;
 
+  @Nullable
+  private OffsetDateTime lastUpdated;
+
   // BrowseNode API
 
   @Override
@@ -98,6 +102,12 @@ public class BrowseNodeData
 
   public Long getNodeId() {
     return nodeId;
+  }
+
+  @Nullable
+  @Override
+  public OffsetDateTime getLastUpdated() {
+    return lastUpdated;
   }
 
   // MyBatis setters + validation
@@ -143,6 +153,7 @@ public class BrowseNodeData
   public void setComponent(@Nullable final Component component) {
     if (component != null) {
       this.dbComponentId = internalComponentId(component);
+      this.lastUpdated = component.lastUpdated();
     }
     else {
       this.dbComponentId = null;
@@ -155,6 +166,7 @@ public class BrowseNodeData
   public void setAsset(@Nullable final Asset asset) {
     if (asset != null) {
       this.dbAssetId = internalAssetId(asset);
+      this.lastUpdated = asset.lastUpdated();
     }
     else {
       this.dbAssetId = null;
@@ -178,6 +190,6 @@ public class BrowseNodeData
     return "BrowseNode{" + "nodeId='" + nodeId + "', repositoryId='" + repositoryId + "', displayName='" + displayName +
         "', requestPath='" + requestPath + "', leaf='" + leaf + "', parentId='" + parentId + "', packageUrl='" +
         packageUrl + "', dbComponentId='" + dbComponentId + "', dbAssetId='" + dbAssetId + "', assetCount='" +
-        assetCount + "'}";
+        assetCount + "', lastUpdated='" + lastUpdated + "'}";
   }
 }

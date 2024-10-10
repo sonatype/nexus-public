@@ -59,6 +59,7 @@
     <!-- non-standard field mappings -->
     <result property="dbComponentId" column="component_id"/>
     <result property="dbAssetId" column="asset_id"/>
+    <result property="lastUpdated" column="last_updated"/>
   </resultMap>
 
   <sql id="hasChild">
@@ -74,11 +75,15 @@
   </select>
 
   <select id="getByDisplayPath" resultMap="browseNodeResult">
-    SELECT B.*, NOT EXISTS (<include refid="hasChild"/>) as leaf FROM
+    SELECT B.*,
+        CASE WHEN C.last_updated IS NULL THEN A.last_updated ELSE C.last_updated END AS last_updated,
+        NOT EXISTS (<include refid="hasChild"/>) as leaf FROM
         <foreach collection="displayPath" index="i">
         ${format}_browse_node B${i},
         </foreach>
         ${format}_browse_node B
+    LEFT JOIN ${format}_component C ON B.component_id = C.component_id
+    LEFT JOIN ${format}_asset A ON B.asset_id = A.asset_id
     WHERE 0 = <foreach collection="displayPath" index="i" item="name">
               B${i}.parent_id AND B${i}.repository_id = #{repositoryId} AND B${i}.display_name = #{name} AND B${i}.node_id =
               </foreach>
