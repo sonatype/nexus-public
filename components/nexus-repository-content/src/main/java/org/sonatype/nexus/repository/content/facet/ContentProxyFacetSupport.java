@@ -13,13 +13,28 @@
 package org.sonatype.nexus.repository.content.facet;
 
 import java.io.IOException;
+import java.net.URI;
 
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.HttpClientUtils;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Content {@link ProxyFacet} support.
@@ -44,4 +59,26 @@ public abstract class ContentProxyFacetSupport
       log.debug("Proxied content has no attached asset; cannot refresh cache details");
     }
   }
+
+  protected Payload getPayload(final Repository proxy, final URI uri) throws IOException {
+    final HttpClient client = proxy.facet(HttpClientFacet.class).getHttpClient();
+
+    HttpGet request = new HttpGet(uri);
+    log.debug("Fetching: {}", request);
+
+    HttpResponse response = client.execute(request);
+    StatusLine status = response.getStatusLine();
+    log.debug("Response: {}, status: {}", response, status);
+
+    if (status.getStatusCode() == HttpStatus.SC_OK) {
+      HttpEntity entity = response.getEntity();
+      checkState(entity != null, "No http entity received from remote registry");
+
+      return new HttpEntityPayload(response, entity);
+    }
+    log.warn("Status code {} contacting {}", status.getStatusCode(), uri);
+    HttpClientUtils.closeQuietly(response);
+    return null;
+  }
+
 }
