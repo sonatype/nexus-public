@@ -26,6 +26,9 @@ public interface FeatureFlags
   /* Cargo format is temporarily hidden behind the feature flag. Default value: false */
   String CARGO_FORMAT_ENABLED = "nexus.format.cargo.enabled";
 
+  /* Hugging Face format is temporarily hidden behind the feature flag. Default value: false */
+  String HUGGING_FACE_FORMAT_ENABLED = "nexus.format.huggingface.enabled";
+
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 

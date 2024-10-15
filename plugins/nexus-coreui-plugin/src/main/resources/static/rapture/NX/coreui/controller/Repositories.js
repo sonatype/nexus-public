@@ -69,6 +69,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.GolangHosted',
     'repository.recipe.HelmHosted',
     'repository.recipe.HelmProxy',
+    'repository.recipe.HuggingFaceProxy',
     'repository.recipe.Maven2Group',
     'repository.recipe.Maven2Hosted',
     'repository.recipe.Maven2Proxy',

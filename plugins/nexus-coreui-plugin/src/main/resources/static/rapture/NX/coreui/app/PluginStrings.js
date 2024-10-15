@@ -475,6 +475,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_AssetNameMatcher_EmptyText: 'Entry',
     Repository_Facet_ProxyFacet_AssetNameMatcher_InvalidText: 'Invalid Regex',
     Repository_Facet_ProxyFacet_Docker_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry-1.docker.io',
+    Repository_Facet_ProxyFacet_Huggingface_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://huggingface.co/',
     Repository_Facet_ProxyFacet_Maven_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo1.maven.org/maven2/',
     Repository_Facet_ProxyFacet_Npm_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.npmjs.org',
     Repository_Facet_ProxyFacet_Nuget_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://api.nuget.org/v3/index.json',
