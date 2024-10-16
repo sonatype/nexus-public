@@ -28,7 +28,7 @@
     "ramda": "0.28.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "swagger-ui-react": "4.17.1",
+    "swagger-ui-react": "5.17.12",
     "xstate": "4.16.0"
   },
   "devDependencies": {
