@@ -313,7 +313,8 @@ describe('RolesDetails', function() {
     const combobox = () => container.querySelector('.nx-combobox__alert');
 
     when(Axios.post).calledWith(rolesUrl, externalRole).mockResolvedValue({data: {}});
-
+    when(ExtJS.state().getValue).calledWith('nexus.ldap.mapped.role.query.character.limit').mockReturnValue(3);
+    
     const {container} = renderDetails();
     await waitForElementToBeRemoved(queryLoadingMask());
 
@@ -321,7 +322,7 @@ describe('RolesDetails', function() {
     userEvent.selectOptions(externalRoleType(), 'LDAP');
 
     await TestUtils.changeField(mappedRole, 't');
-    expect(combobox()).toHaveTextContent(MORE_CHARACTERS);
+    expect(combobox()).toHaveTextContent(MORE_CHARACTERS(3));
 
     await TestUtils.changeField(mappedRole, 'testLDAPRoleId');
     expect(combobox()).toHaveTextContent(NO_RESULTS);

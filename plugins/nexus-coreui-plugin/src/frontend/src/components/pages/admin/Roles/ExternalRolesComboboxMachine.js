@@ -70,7 +70,12 @@ export default Machine(
         SET_QUERY: [
           {
             target: 'debouncing',
-            cond: 'isLdap',
+            cond: 'doesNotMeetCharacterLimit' && 'isLdap',
+            actions: ['resetData', 'setQuery'],
+          },
+          {
+            target: 'debouncing',
+            cond: 'meetsCharacterLimit' && 'isLdap',
             actions: ['setQuery'],
           },
           {
@@ -82,6 +87,10 @@ export default Machine(
         UPDATE_TYPE: {
           target: 'loaded',
           actions: ['updateType'],
+        },
+        UPDATE_LDAP_LIMIT: {
+          target: 'loaded',
+          actions: ['updateLdapCharacterLimit'],
         },
       }
     },
@@ -95,6 +104,9 @@ export default Machine(
         updateType: assign({
           externalRoleType: (_, {externalRoleType}) => externalRoleType,
           ...EMPTY_CONTEXT,
+        }),
+        updateLdapCharacterLimit: assign({
+          ldapQueryCharacterLimit: (_, {ldapQueryCharacterLimit}) => ldapQueryCharacterLimit,
         }),
         resetData: assign({
           data: [],
@@ -110,8 +122,11 @@ export default Machine(
         })
       },
       guards: {
-        meetsCharacterLimit: ({ _, query}) => {
-          return query.length > 2;
+        doesNotMeetCharacterLimit: ({ _, query, ldapQueryCharacterLimit}) => {
+          return query.length < ldapQueryCharacterLimit;
+        },
+        meetsCharacterLimit: ({ _, query, ldapQueryCharacterLimit}) => {
+          return query.length >= ldapQueryCharacterLimit;
         },
         isLdap: ({ _, externalRoleType}) => {
           return externalRoleType.toLowerCase() === 'ldap';

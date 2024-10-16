@@ -14,7 +14,7 @@ import React from 'react';
 import {useActor} from '@xstate/react';
 
 import {NxCombobox, NxFormGroup, NxTextInput} from '@sonatype/react-shared-components';
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 const { 
@@ -27,7 +27,7 @@ const {
 export default function ExternalRolesCombobox({actor, parentMachine}) {
   const [state, send] = useActor(actor);
 
-  const {data, query, error, externalRoleType} = state.context;
+  const {data, query, error, externalRoleType, ldapQueryCharacterLimit} = state.context;
   const isLoading = state.matches('loading');
   const retry = () => send('RETRY');
   const [parentState, sendParent] = parentMachine;
@@ -52,10 +52,10 @@ export default function ExternalRolesCombobox({actor, parentMachine}) {
 
   const emptyMessage = () => {
     if (externalRoleType.toLowerCase() === 'ldap') {
-      if (query.length > 2) {
+      if (query.length >= ldapQueryCharacterLimit) {
         return NO_RESULTS;
       } else {
-        return MORE_CHARACTERS;
+        return MORE_CHARACTERS(ldapQueryCharacterLimit);
       }
     }
   }
