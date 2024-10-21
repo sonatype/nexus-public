@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,10 +33,10 @@ import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
+import org.sonatype.nexus.crypto.secrets.ActiveKeyChangeEvent;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
-import org.sonatype.nexus.crypto.secrets.ActiveKeyChangeEvent;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
@@ -215,7 +214,7 @@ public class SecretsServiceImpl
   }
 
   @Override
-  public void reEncrypt(SecretData secretData, String keyId) throws CipherException{
+  public void reEncrypt(SecretData secretData, String keyId) throws CipherException {
     Integer secretId = secretData.getId();
     String currentSecret = secretData.getSecret();
     char[] decrypted = this.doDecrypt(secretData);
@@ -361,7 +360,19 @@ public class SecretsServiceImpl
 
     @Override
     public char[] decrypt() throws CipherException {
-      return SecretsServiceImpl.this.doDecrypt(tokenId);
+      boolean isLegacy = isLegacyToken(tokenId);
+
+      try {
+        return SecretsServiceImpl.this.doDecrypt(tokenId);
+      }
+      catch (CipherException e) {
+        if (isLegacy) {
+          log.debug("Failed to decrypt legacy secret, tokenId will be returned as secret");
+          return tokenId.toCharArray();
+        }
+
+        throw e;
+      }
     }
 
     @Override

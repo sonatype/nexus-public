@@ -37,11 +37,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BlobStoreConfigSecretsMigrator
     implements SecretsMigrator
 {
-   @VisibleForTesting
-   final static String S3_TYPE = "s3";
+  @VisibleForTesting
+  static final String S3_TYPE = "s3";
 
-   @VisibleForTesting
-   static final String SECRET_ACCESS_KEY_KEY = "secretAccessKey";
+  @VisibleForTesting
+  static final String SECRET_ACCESS_KEY_KEY = "secretAccessKey";
 
   private final BlobStoreManager blobStoreManager;
 
