@@ -42,7 +42,8 @@ Ext.define('NX.coreui.controller.SearchCargo', {
       readOnly: true,
       criterias: [
         { id: 'format', value: 'cargo', hidden: true },
-        { id: 'name.cargo' }
+        { id: 'name.raw' },
+        { id: 'version' }
       ]
     }, me);
   }
