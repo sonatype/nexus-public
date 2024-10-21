@@ -84,6 +84,33 @@ Ext.define('NX.coreui.controller.SearchConan', {
           fieldLabel: NX.I18n.get('SearchConan_PackageRevision_FieldLabel'),
           width: 250
         }
+      },
+      {
+        id: 'attributes.conan.settings.arch',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_Arch_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'attributes.conan.settings.os',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_Os_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'attributes.conan.settings.compiler',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_Compiler_FieldLabel'),
+          width: 250
+        }
       }
     ], me);
 

@@ -210,10 +210,14 @@ public interface AssetDAO
   /**
    * Find assets by their component ids.
    *
-   * @param componentIds a set of component ids.
+   * @param componentIds      a set of component ids.
+   * @param assetFilter       optional filter to apply.
+   * @param assetFilterParams parameter map for the optional filter.
    * @return collection of {@link AssetInfo}
    */
-  Collection<AssetInfo> findByComponentIds(@Param("componentIds") Set<Integer> componentIds);
+  Collection<AssetInfo> findByComponentIds(@Param("componentIds") Set<Integer> componentIds,
+                                           @Param("assetFilter") final String assetFilter,
+                                           @Param("assetFilterParams") final Map<String, String> assetFilterParams);
 
   /**
    * Updates the kind of the given asset in the content data store.

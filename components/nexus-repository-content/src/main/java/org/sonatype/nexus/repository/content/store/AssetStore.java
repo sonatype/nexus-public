@@ -301,15 +301,19 @@ public class AssetStore<T extends AssetDAO>
    * Retrieves an assets associated with the given component ids.
    *
    * @param componentIds a set of component ids to search
+   * @param assetFilter       optional filter to apply.
+   * @param assetFilterParams parameter map for the optional filter.
    * @return collection of {@link AssetInfo}
    */
   @Transactional
-  public Collection<AssetInfo> findByComponentIds(final Set<Integer> componentIds) {
+  public Collection<AssetInfo> findByComponentIds(final Set<Integer> componentIds,
+                                                  final String assetFilter,
+                                                  final Map<String, String> assetFilterParams) {
     if (CollectionUtils.isEmpty(componentIds)) {
       return Collections.emptyList();
     }
 
-    return dao().findByComponentIds(componentIds);
+    return dao().findByComponentIds(componentIds, assetFilter, assetFilterParams);
   }
 
   /**

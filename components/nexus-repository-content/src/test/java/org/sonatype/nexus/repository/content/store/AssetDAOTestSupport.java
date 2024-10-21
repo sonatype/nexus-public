@@ -57,7 +57,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -1034,7 +1033,7 @@ public class AssetDAOTestSupport
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
-      Collection<AssetInfo> assets = dao.findByComponentIds(Collections.singleton(1));
+      Collection<AssetInfo> assets = dao.findByComponentIds(Collections.singleton(1), null, Collections.emptyMap());
 
       Optional<AssetInfo> assetOpt = assets.stream().findFirst();
       assertThat(assetOpt.isPresent(), is(true));

@@ -262,12 +262,33 @@
     SELECT *
     FROM ${format}_asset A
     INNER JOIN ${format}_asset_blob USING (asset_blob_id)
-    <where>
-      <foreach collection="componentIds" item="componentId" index="index" open="component_id IN (" close=")" separator=",">
-        #{componentId}
-      </foreach>
-    </where>
-    ORDER BY asset_id
+    <if test="assetFilter != null">
+      INNER JOIN (
+      SELECT
+        ap.format,
+        ap.repository_id,
+        ap.component_id,
+        ap.asset_id
+      FROM search_assets ap
+      <where>
+        (${assetFilter})
+        <if test="componentIds != null and !componentIds.isEmpty()">
+          AND
+          <foreach collection="componentIds" item="componentId" index="index" open="ap.component_id IN (" close=")" separator=",">
+            #{componentId}
+          </foreach>
+        </if>
+      </where>
+      ) content ON '${format}' = content.format AND A.repository_id = content.repository_id AND A.component_id = content.component_id AND A.asset_id = content.asset_id
+    </if>
+    <if test="assetFilter == null">
+      <where>
+        <foreach collection="componentIds" item="componentId" index="index" open="A.component_id IN (" close=")" separator=",">
+          #{componentId}
+        </foreach>
+      </where>
+    </if>
+    ORDER BY A.asset_id
   </select>
 
   <update id="updateAssetKind">
