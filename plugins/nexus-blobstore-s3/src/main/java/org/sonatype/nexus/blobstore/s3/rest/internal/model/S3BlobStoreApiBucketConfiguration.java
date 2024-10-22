@@ -21,6 +21,7 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModelProperty.AccessMode;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -33,6 +34,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 public class S3BlobStoreApiBucketConfiguration
 {
   public static final String FAILOVER_BUCKETS = "failoverBuckets";
+
+  public static final String ACTIVE_REGION = "activeRegion";
 
   @Valid
   @NotNull
@@ -50,21 +53,27 @@ public class S3BlobStoreApiBucketConfiguration
 
   @Valid
   @Nullable
-  @ApiModelProperty("A list of secondary buckets which have bidrectional replication enabled and should be used when Nexus is running in the region")
+  @ApiModelProperty(value = "A list of secondary buckets which have bidirectional replication enabled and should be used when Nexus is running in the region", accessMode = AccessMode.READ_WRITE)
   private final List<S3BlobStoreApiFailoverBucket> failoverBuckets;
+
+  @Nullable
+  @ApiModelProperty(value = "The active region based on bucket configuration, failover buckets, and EC2 region Nexus is running.", accessMode = AccessMode.READ_ONLY)
+  private final String activeRegion;
 
   public S3BlobStoreApiBucketConfiguration(
       @JsonProperty("bucket") final S3BlobStoreApiBucket bucket,
       @JsonProperty("security") final S3BlobStoreApiBucketSecurity bucketSecurity,
       @JsonProperty("encryption") final S3BlobStoreApiEncryption encryption,
       @JsonProperty("advancedConnection") final S3BlobStoreApiAdvancedBucketConnection advancedBucketConnection,
-      @JsonProperty(FAILOVER_BUCKETS) final List<S3BlobStoreApiFailoverBucket> failoverBuckets)
+      @Nullable @JsonProperty(FAILOVER_BUCKETS) final List<S3BlobStoreApiFailoverBucket> failoverBuckets,
+      @Nullable @JsonProperty(ACTIVE_REGION) final String activeRegion)
   {
     this.bucket = bucket;
     this.bucketSecurity = bucketSecurity;
     this.encryption = encryption;
     this.advancedBucketConnection = advancedBucketConnection;
     this.failoverBuckets = failoverBuckets;
+    this.activeRegion = activeRegion;
   }
 
   public S3BlobStoreApiBucket getBucket() {
@@ -83,7 +92,13 @@ public class S3BlobStoreApiBucketConfiguration
     return advancedBucketConnection;
   }
 
+  @Nullable
   public List<S3BlobStoreApiFailoverBucket> getFailoverBuckets() {
     return failoverBuckets;
+  }
+
+  @Nullable
+  public String getActiveRegion() {
+    return activeRegion;
   }
 }

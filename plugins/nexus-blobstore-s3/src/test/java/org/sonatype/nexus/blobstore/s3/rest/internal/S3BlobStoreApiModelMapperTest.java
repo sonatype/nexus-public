@@ -45,6 +45,7 @@ import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUC
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration.ACTIVE_REGION;
 
 public class S3BlobStoreApiModelMapperTest
     extends TestSupport
@@ -117,13 +118,14 @@ public class S3BlobStoreApiModelMapperTest
     assertBucketEncryptionDetails(s3BucketAttributes);
     assertBucketAdvancedConnectionDetails(s3BucketAttributes);
     assertBucketFailover(s3BucketAttributes);
+    assertActiveRegion(s3BucketAttributes);
   }
 
   private static S3BlobStoreApiModel aMinimalS3BlobStoreApiModel() {
     return new S3BlobStoreApiModel(BLOB_STORE_NAME,
         null,
         new S3BlobStoreApiBucketConfiguration(anS3BlobStoreBucket(),
-            null, null, null, null));
+            null, null, null, null, null));
   }
 
   private static S3BlobStoreApiBucket anS3BlobStoreBucket() {
@@ -142,7 +144,8 @@ public class S3BlobStoreApiModelMapperTest
         anS3BlobStoreBucketSecurity(),
         anS3BlobStoreEncryption(),
         anAdvancedBucketConnection(),
-        anS3FailoverBuckets()
+        anS3FailoverBuckets(),
+        mainRegion()
     );
   }
 
@@ -165,6 +168,10 @@ public class S3BlobStoreApiModelMapperTest
 
   private static List<S3BlobStoreApiFailoverBucket> anS3FailoverBuckets() {
     return Arrays.asList(new S3BlobStoreApiFailoverBucket("us-east-1", "my-bucket"));
+  }
+
+  private static String mainRegion() {
+    return AWS_REGION;
   }
 
   private static void assertGeneralBucketDetails(final NestedAttributesMap attributes) {
@@ -227,5 +234,10 @@ public class S3BlobStoreApiModelMapperTest
 
   private static void assertBucketFailover(final NestedAttributesMap attributes) {
     assertThat(attributes.get(FAILOVER_BUCKETS_KEY), is(Collections.singletonMap("us-east-1", "my-bucket")));
+  }
+
+  private static void assertActiveRegion(final NestedAttributesMap attributes) {
+    // active region is not set in the attributes, it's calculated at runtime when requested
+    assertThat(attributes.get(ACTIVE_REGION), is(nullValue()));
   }
 }

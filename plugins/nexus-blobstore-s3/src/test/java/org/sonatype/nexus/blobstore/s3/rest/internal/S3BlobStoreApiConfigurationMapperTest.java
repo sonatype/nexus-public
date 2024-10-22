@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
+import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiAdvancedBucketConnection;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration;
@@ -26,15 +29,25 @@ import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncrypt
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
-import org.hamcrest.core.IsNull;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.google.common.collect.ImmutableMap;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
@@ -52,6 +65,10 @@ public class S3BlobStoreApiConfigurationMapperTest
   private static final String BUCKET_PREFIX = "special_bucket";
 
   private static final String AWS_REGION = "aws-region-1";
+
+  private static final String FAIL_OVER_REGION_1 = "failover-region-1";
+
+  private static final String FAIL_OVER_REGION_2 = "failover-region-2";
 
   private static final String AN_IAM_ACCESS_KEY = "anAccessKey";
 
@@ -77,8 +94,26 @@ public class S3BlobStoreApiConfigurationMapperTest
 
   private static final int QUOTA_LIMIT = 2;
 
+  private MockedStatic<Regions> regionsMock;
+
+  @Mock
+  private Region regionMock;
+
   private Function<BlobStoreConfiguration, S3BlobStoreApiModel> underTest =
       S3BlobStoreApiConfigurationMapper::map;
+
+  @Before
+  public void setup() throws Exception {
+    resetS3BlobStoreConfigHelper();
+    regionsMock = mockStatic(Regions.class);
+    when(regionMock.getName()).thenReturn(AWS_REGION);
+    regionsMock.when(Regions::getCurrentRegion).thenReturn(regionMock);
+  }
+
+  @After
+  public void tearDown() {
+    regionsMock.close();
+  }
 
   @Test
   public void testCopyNonNullAttributes() {
@@ -93,6 +128,7 @@ public class S3BlobStoreApiConfigurationMapperTest
     assertThat(bucketConfiguration.getBucketSecurity(), nullValue());
     assertThat(bucketConfiguration.getEncryption(), nullValue());
     assertThat(bucketConfiguration.getAdvancedBucketConnection(), nullValue());
+    assertThat(bucketConfiguration.getActiveRegion(), is(AWS_REGION));
   }
 
   @Test
@@ -108,6 +144,7 @@ public class S3BlobStoreApiConfigurationMapperTest
     assertBucketSecurityDetails(bucketConfiguration.getBucketSecurity());
     assertBucketEncryptionDetails(bucketConfiguration.getEncryption());
     assertBucketAdvancedConnectionDetails(bucketConfiguration.getAdvancedBucketConnection());
+    assertThat(bucketConfiguration.getActiveRegion(), is(AWS_REGION));
   }
 
   @Test
@@ -116,6 +153,31 @@ public class S3BlobStoreApiConfigurationMapperTest
     S3BlobStoreApiModel model = underTest.apply(configuration);
     S3BlobStoreApiBucketConfiguration bucketConfiguration = model.getBucketConfiguration();
     assertThat(bucketConfiguration.getAdvancedBucketConnection().getMaxConnectionPoolSize(), nullValue());
+  }
+
+  @Test
+  public void testConvertConfigurationToModelWithFailoverBuckets() throws Exception {
+    when(regionMock.getName()).thenReturn(FAIL_OVER_REGION_1);
+
+    BlobStoreConfiguration configuration = aFullySetBlobStoreConfiguration();
+    S3BlobStoreApiModel model = underTest.apply(configuration);
+    S3BlobStoreApiBucketConfiguration bucketConfiguration = model.getBucketConfiguration();
+
+    assertThat(bucketConfiguration.getFailoverBuckets(), notNullValue());
+    assertThat(bucketConfiguration.getFailoverBuckets().size(), is(2));
+    assertThat(bucketConfiguration.getFailoverBuckets().get(0).getRegion(), is(FAIL_OVER_REGION_1));
+    assertThat(bucketConfiguration.getFailoverBuckets().get(0).getBucketName(), is("bucket-1"));
+    assertThat(bucketConfiguration.getFailoverBuckets().get(1).getRegion(), is(FAIL_OVER_REGION_2));
+    assertThat(bucketConfiguration.getFailoverBuckets().get(1).getBucketName(), is("bucket-2"));
+
+    assertThat(bucketConfiguration.getActiveRegion(), is(FAIL_OVER_REGION_1));
+
+    resetS3BlobStoreConfigHelper();
+    when(regionMock.getName()).thenReturn(FAIL_OVER_REGION_2);
+    model = underTest.apply(configuration);
+    bucketConfiguration = model.getBucketConfiguration();
+
+    assertThat(bucketConfiguration.getActiveRegion(), is(FAIL_OVER_REGION_2));
   }
 
   private static BlobStoreConfiguration aMinimalBlobStoreConfiguration() {
@@ -165,6 +227,7 @@ public class S3BlobStoreApiConfigurationMapperTest
     fillBucketSecurityDetails(bucketAttributes);
     fillBucketEncryptionDetails(bucketAttributes);
     fillBucketAdvancedConnectionDetails(bucketAttributes);
+    fillFailoverBucketDetails(bucketAttributes);
   }
 
   private static void fillOptionalBucketDetailsEmptyStringMaxConnection(final NestedAttributesMap bucketAttributes) {
@@ -186,11 +249,16 @@ public class S3BlobStoreApiConfigurationMapperTest
   }
 
   private static void fillBucketAdvancedConnectionDetails(final NestedAttributesMap bucketAttributes) {
-  bucketAttributes.set(ENDPOINT_KEY, S3_ENDPOINT_URL);
-  bucketAttributes.set(SIGNERTYPE_KEY, S3_SIGNER_TYPE);
-  bucketAttributes.set(FORCE_PATH_STYLE_KEY, FORCE_PATH_STYLE);
-  bucketAttributes.set(MAX_CONNECTION_POOL_KEY, MAX_CONNECTION_POOL);
-}
+    bucketAttributes.set(ENDPOINT_KEY, S3_ENDPOINT_URL);
+    bucketAttributes.set(SIGNERTYPE_KEY, S3_SIGNER_TYPE);
+    bucketAttributes.set(FORCE_PATH_STYLE_KEY, FORCE_PATH_STYLE);
+    bucketAttributes.set(MAX_CONNECTION_POOL_KEY, MAX_CONNECTION_POOL);
+  }
+
+  private static void fillFailoverBucketDetails(final NestedAttributesMap bucketAttributes) {
+    Map<String, String> failoverBuckets = ImmutableMap.of(FAIL_OVER_REGION_1, "bucket-1", FAIL_OVER_REGION_2, "bucket-2");
+    bucketAttributes.set(FAILOVER_BUCKETS_KEY, failoverBuckets);
+  }
 
   private static void fillBucketAdvancedConnectionDetailsEmptyStringMaxConnection(final NestedAttributesMap bucketAttributes) {
     bucketAttributes.set(ENDPOINT_KEY, S3_ENDPOINT_URL);
@@ -234,5 +302,11 @@ public class S3BlobStoreApiConfigurationMapperTest
     assertThat(advancedBucketConnection.getSignerType(), is(S3_SIGNER_TYPE));
     assertThat(advancedBucketConnection.getForcePathStyle(), is(FORCE_PATH_STYLE));
     assertThat(advancedBucketConnection.getMaxConnectionPoolSize(), is(MAX_CONNECTION_POOL));
+  }
+
+  private void resetS3BlobStoreConfigHelper() throws Exception {
+    Field regionLoadedField = S3BlobStoreConfigurationHelper.class.getDeclaredField("regionLoaded");
+    regionLoadedField.setAccessible(true);
+    regionLoadedField.set(null, false);
   }
 }

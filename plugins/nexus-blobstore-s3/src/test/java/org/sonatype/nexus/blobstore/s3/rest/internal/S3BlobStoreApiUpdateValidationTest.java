@@ -148,7 +148,7 @@ public class S3BlobStoreApiUpdateValidationTest
 
     S3BlobStoreApiBucketConfiguration bucketConfig = new S3BlobStoreApiBucketConfiguration(
         anS3BlobStoreApiBucket("us-east-1", "use-bucket"), null, null, null,
-        s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"));
+        s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null);
     S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig);
 
     ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () ->
@@ -169,7 +169,7 @@ public class S3BlobStoreApiUpdateValidationTest
 
     S3BlobStoreApiBucketConfiguration bucketConfig = new S3BlobStoreApiBucketConfiguration(
         anS3BlobStoreApiBucket("us-east-1", "use-bucket"), null, null, null,
-        s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"));
+        s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null);
     S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig);
 
     ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () ->

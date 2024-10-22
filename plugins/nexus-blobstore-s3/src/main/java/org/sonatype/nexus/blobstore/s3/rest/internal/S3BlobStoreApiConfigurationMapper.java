@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiAdvancedBucketConnection;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration;
@@ -81,7 +82,8 @@ public final class S3BlobStoreApiConfigurationMapper
         buildS3BlobStoreBucketSecurity(s3BucketAttributes),
         buildS3BlobStoreEncryption(s3BucketAttributes),
         buildS3BlobStoreAdvancedBucketConnection(s3BucketAttributes),
-        buildS3BlobStoreFailoverBuckets(s3BucketAttributes));
+        buildS3BlobStoreFailoverBuckets(s3BucketAttributes),
+        buildS3BlobStoreActiveRegion(configuration));
   }
 
   private static S3BlobStoreApiBucket buildS3BlobStoreBucket(final NestedAttributesMap attributes) {
@@ -146,6 +148,10 @@ public final class S3BlobStoreApiConfigurationMapper
           .collect(Collectors.toList());
     }
     return Collections.emptyList();
+  }
+
+  private static String buildS3BlobStoreActiveRegion(final BlobStoreConfiguration configuration) {
+    return S3BlobStoreConfigurationHelper.getConfiguredRegion(configuration);
   }
 
   private static boolean anyNonNull(final Object... objects) {
