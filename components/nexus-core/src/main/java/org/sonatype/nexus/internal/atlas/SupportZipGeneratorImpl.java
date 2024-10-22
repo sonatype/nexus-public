@@ -197,6 +197,7 @@ public class SupportZipGeneratorImpl
     Set<Type> types = new HashSet<>();
     if (request.isSystemInformation()) {
       types.add(SYSINFO);
+      types.add(DBINFO); //including this in sys information unless we decide to make it it's own front end toggle
     }
     if (request.isThreadDump()) {
       types.add(THREAD);
