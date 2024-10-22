@@ -13,8 +13,7 @@
 package org.sonatype.nexus.internal.log.overrides.file;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,7 +44,7 @@ public class LogbackLoggerOverrides
     extends LogbackLoggerOverridesSupport
     implements LoggerOverrides
 {
-  private final Map<String, LoggerLevel> loggerLevels = new HashMap<>();
+  private final Map<String, LoggerLevel> loggerLevels = new LinkedHashMap<>();
 
   @Inject
   public LogbackLoggerOverrides(final ApplicationDirectories applicationDirectories) {
