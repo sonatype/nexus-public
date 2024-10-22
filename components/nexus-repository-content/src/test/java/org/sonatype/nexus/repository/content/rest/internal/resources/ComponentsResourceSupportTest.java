@@ -50,15 +50,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
+import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.LIMIT;
 
 public class ComponentsResourceSupportTest
     extends TestSupport
 {
   private static final String A_FORMAT = "A_Format";
 
-  // tests assume we've stored more assets than the page limit
-  private static final int NUMBER_OF_COMPONENTS = PAGE_SIZE_LIMIT + 2;
+  private static final int NUMBER_OF_COMPONENTS = 12;
 
   private static final String COMPONENT_NAME = "junit";
 
@@ -127,7 +126,7 @@ public class ComponentsResourceSupportTest
     List<FluentComponent> components = underTest.browse(repository, null);
 
     assertThat(components, empty());
-    verify(fluentComponents).browse(PAGE_SIZE_LIMIT, null);
+    verify(fluentComponents).browse(LIMIT, null);
     verify(contentAuthHelper, never()).checkPathPermissions(COMPONENT_NAME, A_FORMAT, REPOSITORY_NAME);
   }
 
@@ -139,7 +138,7 @@ public class ComponentsResourceSupportTest
     List<FluentComponent> components = underTest.browse(repository, null);
 
     assertThat(components, empty());
-    verify(fluentComponents, times(2)).browse(PAGE_SIZE_LIMIT, null);
+    verify(fluentComponents, times(2)).browse(LIMIT, null);
     verify(contentAuthHelper, times(NUMBER_OF_COMPONENTS))
         .checkPathPermissions(COMPONENT_NAME, A_FORMAT, REPOSITORY_NAME);
   }
@@ -156,7 +155,7 @@ public class ComponentsResourceSupportTest
     List<FluentComponent> components = underTest.browse(repository, null);
 
     assertThat(components, hasSize(numberOfPermittedComponents));
-    verify(fluentComponents, times(2)).browse(PAGE_SIZE_LIMIT, null);
+    verify(fluentComponents, times(2)).browse(LIMIT, null);
     verify(contentAuthHelper, times(NUMBER_OF_COMPONENTS))
         .checkPathPermissions(COMPONENT_NAME, A_FORMAT, REPOSITORY_NAME);
   }
@@ -168,7 +167,7 @@ public class ComponentsResourceSupportTest
 
     List<FluentComponent> components = underTest.browse(repository, null);
 
-    assertThat(components, hasSize(AssetsResource.PAGE_SIZE_LIMIT));
+    assertThat(components, hasSize(AssetsResource.PAGE_SIZE));
     verify(contentAuthHelper, times(NUMBER_OF_COMPONENTS))
         .checkPathPermissions(COMPONENT_NAME, A_FORMAT, REPOSITORY_NAME);
   }
@@ -188,7 +187,7 @@ public class ComponentsResourceSupportTest
   }
 
   private void mockFluentComponents() {
-    when(fluentComponents.browse(PAGE_SIZE_LIMIT, null))
+    when(fluentComponents.browse(LIMIT, null))
         .thenReturn(new FluentContinuation<>(componentContinuation, asset -> aFluentComponent()));
 
     List<FluentComponent> fluentComponentList =

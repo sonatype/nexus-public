@@ -12,22 +12,21 @@
  */
 package org.sonatype.nexus.bootstrap.jetty;
 
+import org.sonatype.goodies.common.ComponentSupport;
+
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConfiguration.Customizer;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.ServerConnector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DockerSubdomainRequestCustomizer
+    extends ComponentSupport
     implements Customizer
 {
-  private static final Logger log = LoggerFactory.getLogger(DockerSubdomainRequestCustomizer.class);
-
   private final String nexusContextPath;
 
   private final int jettyPort;

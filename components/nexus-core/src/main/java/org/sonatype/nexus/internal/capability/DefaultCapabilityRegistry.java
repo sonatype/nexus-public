@@ -182,6 +182,8 @@ public class DefaultCapabilityRegistry
   @Subscribe
   public void on(final CapabilityStorageItemCreatedEvent event) {
     if (!event.isLocal()) {
+      pullAndRefreshReferencesFromDB();
+
       CapabilityIdentity id = event.getCapabilityId();
       if (references.containsKey(id)) {
         log.debug("Capability {} already loaded and registered. Skipping it.", id);
@@ -285,9 +287,7 @@ public class DefaultCapabilityRegistry
 
   @Subscribe
   public void on(final CapabilityStorageItemUpdatedEvent event) {
-    log.debug("Received {} capability updated event", event.getCapabilityId());
     if (!event.isLocal()) {
-      log.debug("capability updated event {} is not local", event.getCapabilityId());
       CapabilityIdentity id = event.getCapabilityId();
       CapabilityStorageItem item = capabilityStorage.getAll().get(id);
 
@@ -319,14 +319,12 @@ public class DefaultCapabilityRegistry
 
     if (reference.isEnabled() && !item.isEnabled()) {
       reference.disable();
-      log.debug("Disabled capability '{}' for type '{}'", reference.id(), reference.type());
     }
     reference.setNotes(item.getNotes());
     reference.update(decryptedProps, reference.properties(), item.getProperties());
     if (!reference.isEnabled() && item.isEnabled()) {
       reference.enable();
       reference.activate();
-      log.debug("Enabled and activated capability '{}' for type '{}'", reference.id(), reference.type());
     }
 
     return reference;
@@ -551,14 +549,20 @@ public class DefaultCapabilityRegistry
 
   @Override
   public void pullAndRefreshReferencesFromDB() {
-    Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
-    references.forEach((capabilityIdentity, capabilityReference) ->
-        Optional.ofNullable(refreshedCapabilities.get(capabilityIdentity)) // When working in HA mode it could be null
-            .ifPresent(value -> {
-              DefaultCapabilityReference reference = get(capabilityIdentity);
-              Map<String, String> decryptedProps = decryptValuesIfNeeded(reference.descriptor(), value.getProperties());
-              doUpdate(capabilityReference, value, decryptedProps);
-            }));
+   Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
+   references.forEach((capabilityIdentity, capabilityReference) ->
+       Optional.ofNullable(refreshedCapabilities.get(capabilityIdentity)) // When working in HA mode it could be null
+           .ifPresent(value -> {
+             DefaultCapabilityReference reference = get(capabilityIdentity);
+             Map<String, String> decryptedProps = decryptValuesIfNeeded(reference.descriptor(), value.getProperties());
+             capabilityReference.update(decryptedProps, capabilityReference.properties(), value.getProperties());
+
+             if (value.isEnabled()) {
+               enable(capabilityIdentity);
+             } else {
+               disable(capabilityIdentity);
+             }
+           }));
   }
 
   @Override

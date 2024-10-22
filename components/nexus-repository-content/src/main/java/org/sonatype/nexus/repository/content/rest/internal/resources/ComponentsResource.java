@@ -87,6 +87,8 @@ public class ComponentsResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/components";
 
+  static final int PAGE_SIZE = 10;
+
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   private final MaintenanceService maintenanceService;
@@ -232,6 +234,6 @@ public class ComponentsResource
 
   private static String nextContinuationToken(final List<FluentComponent> components) {
     int size = components.size();
-    return size < PAGE_SIZE_LIMIT ? null : toExternalId(internalComponentId(components.get(size - 1))).getValue();
+    return size < PAGE_SIZE ? null : toExternalId(internalComponentId(components.get(size - 1))).getValue();
   }
 }

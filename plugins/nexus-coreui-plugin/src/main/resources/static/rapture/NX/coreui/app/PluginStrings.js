@@ -294,11 +294,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchConan_PackageRevision_FieldLabel: 'Package Revision',
     SearchConan_BaseVersionStrict_FieldLabel: 'Base Version Strict',
     SearchConan_RecipeRevisionLatest_FieldLabel: 'Latest revision',
-    SearchConan_Arch_FieldLabel: 'Arch',
     SearchConan_Os_FieldLabel: 'Os',
     SearchConan_Compiler_FieldLabel: 'Compiler',
-    SearchConan_CompilerVersion_FieldLabel: 'Compiler Version',
-    SearchConan_CompilerRuntime_FieldLabel: 'Compiler Runtime',
+    SearchConan_Arch_FieldLabel: 'Arch',
 
     // Browse -> Search -> Conda
     SearchConda_Text: 'Conda',
