@@ -210,6 +210,10 @@ public interface AssetDAO
   /**
    * Find assets by their component ids.
    *
+   *<p>
+   * Important: Aimed to be used ONLY on HA mode, do not use this method in non-HA methods or classes.
+   *</p>
+   *
    * @param componentIds      a set of component ids.
    * @param assetFilter       optional filter to apply.
    * @param assetFilterParams parameter map for the optional filter.

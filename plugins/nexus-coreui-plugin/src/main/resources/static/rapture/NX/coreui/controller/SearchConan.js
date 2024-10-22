@@ -59,15 +59,6 @@ Ext.define('NX.coreui.controller.SearchConan', {
         }
       },
       {
-        id: 'attributes.conan.revision.latest',
-        group: NX.I18n.get('SearchConan_Group'),
-        config: {
-          format: 'conan',
-          fieldLabel: NX.I18n.get('SearchConan_RecipeRevisionLatest_FieldLabel'),
-          width: 250
-        }
-      },
-      {
         id: 'assets.attributes.conan.packageId',
         group: NX.I18n.get('SearchConan_Group'),
         config: {
@@ -82,6 +73,24 @@ Ext.define('NX.coreui.controller.SearchConan', {
         config: {
           format: 'conan',
           fieldLabel: NX.I18n.get('SearchConan_PackageRevision_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'attributes.conan.baseVersion.strict',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_BaseVersionStrict_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'attributes.conan.revision.latest',
+        group: NX.I18n.get('SearchConan_Group'),
+        config: {
+          format: 'conan',
+          fieldLabel: NX.I18n.get('SearchConan_RecipeRevisionLatest_FieldLabel'),
           width: 250
         }
       },
@@ -124,9 +133,9 @@ Ext.define('NX.coreui.controller.SearchConan', {
         {id: 'format', value: 'conan', hidden: true},
         {id: 'name.raw'},
         {id: 'attributes.conan.baseVersion'},
+        {id: 'attributes.conan.baseVersion.strict'},
         {id: 'attributes.conan.channel'},
         {id: 'attributes.conan.revision'},
-        {id: 'attributes.conan.revision.latest'},
         {id: 'assets.attributes.conan.packageId'},
         {id: 'assets.attributes.conan.packageRevision'}
       ]
