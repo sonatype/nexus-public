@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.bootstrap.jetty;
 
+import org.sonatype.goodies.common.ComponentSupport;
+
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -22,6 +24,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DockerSubdomainRequestCustomizer
+    extends ComponentSupport
     implements Customizer
 {
   private final String nexusContextPath;
@@ -40,13 +43,24 @@ public class DockerSubdomainRequestCustomizer
   @Override
   public void customize(final Connector connector, final HttpConfiguration channelConfig, final Request request) {
     HttpURI uri = request.getHttpURI();
+
+    String path = uri.getPath();
+
+    if (path == null) {
+      log.debug("Invalid URL for request: {}", request);
+      return;
+    }
+
     String version = null;
-    if (uri.getPath().startsWith("/v1")) {
+    if (path.startsWith("/v1")) {
       version = "/v1";
     }
-    else if (uri.getPath().startsWith("/v2")) {
+    else if (path.startsWith("/v2")) {
       version = "/v2";
     }
+
+    log.debug("Found {} for {}", version, uri);
+
     if (version != null) {
       if (connector instanceof ServerConnector) {
         int localPort = ((ServerConnector) connector).getLocalPort();
@@ -54,9 +68,13 @@ public class DockerSubdomainRequestCustomizer
           return;
         }
       }
+
       String repositoryName = DockerSubdomainRepositoryMapping.get(request.getHeader("Host"));
       if (repositoryName != null) {
         String dockerLocation = uri.getScheme() != null ? uri.toString() : request.getScheme() + ":" + uri;
+
+        log.debug("For {} dockerLocation {}", repositoryName, dockerLocation);
+
         request.setAttribute("dockerLocation", dockerLocation);
         request.setHttpURI(
             new HttpURI(
