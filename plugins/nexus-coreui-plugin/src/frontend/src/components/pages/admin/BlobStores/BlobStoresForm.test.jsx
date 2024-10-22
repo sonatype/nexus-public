@@ -26,6 +26,9 @@ import {URLs} from './BlobStoresHelper';
 // Include the blob stores types on the window
 import '../../../../index';
 
+import UIStrings from '../../../../constants/UIStrings'
+const S3_STRINGS = UIStrings.S3_BLOBSTORE_CONFIGURATION;
+
 const {
   deleteBlobStoreUrl,
   convertToGroupBlobStoreUrl,
@@ -47,7 +50,10 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     requestConfirmation: jest.fn(),
-    showErrorMessage: jest.fn()
+    showErrorMessage: jest.fn(),
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn().mockReturnValue(true)
+    })
   }
 }));
 
@@ -106,7 +112,23 @@ const blobstoreTypes = {
   },
     {
       "id": "s3",
-      "name": "S3"
+      "name": "S3",
+      "dropDownValues": {
+        regions: [
+          {
+            "id": "DEFAULT",
+            "name": "Default"
+          },
+          {
+            "id": "us-west-2",
+            "name": "us-west-2"
+          },
+          {
+            "id": "eu-north-1",
+            "name": "eu-north-1"
+          }
+        ]
+      }
     },
     {
       "id": "azure",
@@ -135,6 +157,13 @@ const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.formSelectors,
   maxConnectionPoolSize: () => screen.queryByLabelText('Max Connection Pool Size'),
+  addReplicationBucketButton: () => screen.queryByRole('button', {name: 'Add Replication Bucket'}),
+  removeReplicationBucketButtons: () => screen.queryAllByRole('button', {name: 'Remove Bucket'}),
+  // First region is for the primary bucket, the rest are for replication buckets
+  replicationBucketRegionSelects: () => screen.queryAllByLabelText('Region').slice(1),
+  replicationBucketBucketNames: () => screen.queryAllByLabelText('Bucket Name'),
+  maxReplicationBucketsWarning: () => screen.getByText(S3_STRINGS.S3BlobStore_ReplicationBucketsSettings_MaxFailoverBucketsWarning),
+  configureReplicationBucketsInfo: () => screen.getAllByText(S3_STRINGS.S3BlobStore_ReplicationBucketsSettings_ConfigureBucketReplicationMessage),
   cancelButton: () => screen.getByText('Cancel'),
   getSoftQuota: () => within(screen.getByRole('group', {name: 'Soft Quota'})).getByLabelText('Enabled'),
   getUsePathStyle: () => within(screen.getByRole('group', {name: 'Use path-style access'})).getByLabelText(
@@ -177,6 +206,7 @@ describe('BlobStoresForm', function() {
           encryptionType: () => getByLabelText('Encryption Type'),
           kmsKeyId: () => getByLabelText('KMS Key ID (Optional)'),
           endpointURL: () => getByLabelText('Endpoint URL'),
+          replicationBuckets: () => queryByText('AWS S3 Replication Buckets (Optional)'),
           signatureVersion: () => getByLabelText('Signature Version'),
           availableMembers: () => getByRole('group', {name: 'Available Blob Stores'}),
           selectedMembers: () => getByRole('group', {name: 'Selected Blob Stores'}),
@@ -489,6 +519,7 @@ describe('BlobStoresForm', function() {
       accessKeyId,
       secretAccessKey,
       endpointURL,
+      replicationBuckets,
       softQuotaType,
       softQuotaLimit,
       spaceUsedQuotaLabel
@@ -539,6 +570,18 @@ describe('BlobStoresForm', function() {
     userEvent.type(selectors.maxConnectionPoolSize(), '1');
     expect(selectors.maxConnectionPoolSize()).not.toHaveErrorMessage(expect.anything());
 
+    expect(replicationBuckets()).toBeInTheDocument();
+    expect(selectors.addReplicationBucketButton()).not.toBeVisible();
+    expect(selectors.removeReplicationBucketButtons()).toHaveLength(0);
+    userEvent.click(replicationBuckets());
+    expect(selectors.addReplicationBucketButton()).toBeVisible();
+    userEvent.click(selectors.addReplicationBucketButton());
+    expect(selectors.removeReplicationBucketButtons()[0]).toBeInTheDocument();
+    userEvent.selectOptions(selectors.replicationBucketRegionSelects()[0], 'us-west-2');
+    expect(selectors.replicationBucketRegionSelects()[0]).toHaveValue('us-west-2');
+    userEvent.type(selectors.replicationBucketBucketNames()[0], 'test-replication-bucket');
+    expect(selectors.replicationBucketBucketNames()[0]).toHaveValue('test-replication-bucket');
+
     userEvent.click(selectors.getSoftQuota());
     expect(softQuotaType()).not.toBeInTheDocument();
     expect(spaceUsedQuotaLabel()).toBeInTheDocument();
@@ -561,7 +604,9 @@ describe('BlobStoresForm', function() {
               endpoint: 'http://www.fakeurl.com',
               maxConnectionPoolSize: '1',
               forcePathStyle: false
-            }
+            },
+            failoverBuckets: [{region: 'us-west-2', bucketName: 'test-replication-bucket'}],
+            activeRegion: null
           },
           softQuota: {
             enabled: true,
@@ -570,6 +615,27 @@ describe('BlobStoresForm', function() {
           }
         }
     );
+  });
+
+  it('creates a new S3 blob store failover buckets not visible', async function() {
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    const { ExtJS } = require('@sonatype/nexus-ui-plugin');
+    ExtJS.state().getValue.mockReturnValueOnce(false);
+
+    const {
+      loadingMask,
+      typeSelect,
+      replicationBuckets,
+    } = render();
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'S3');
+    expect(typeSelect()).toHaveValue('s3');
+
+    // Replication buckets not available
+    expect(replicationBuckets()).not.toBeInTheDocument();
   });
 
   it('creates a new Azure blob store', async function() {
@@ -772,7 +838,29 @@ describe('BlobStoresForm', function() {
             endpoint: 'http://www.fakeurl.com',
             signerType: 'DEFAULT',
             forcePathStyle: ''
-          }
+          },
+          failoverBuckets: [
+            {
+              region: "us-east-1", 
+              bucketName: "replication-bucket-1"
+            },
+            {
+              region: "us-east-2", 
+              bucketName: "replication-bucket-2"
+            },
+            {
+              region: "us-west-1", 
+              bucketName: "replication-bucket-3"
+            },
+            {
+              region: "us-west-2", 
+              bucketName: "replication-bucket-4"
+            },
+            {
+              region: "eu-west-1", 
+              bucketName: "replication-bucket-5"
+            }
+          ]
         }
       }
     });
@@ -786,6 +874,7 @@ describe('BlobStoresForm', function() {
       accessKeyId,
       secretAccessKey,
       endpointURL,
+      replicationBuckets,
       name,
       title
     } = render('s3/test');
@@ -804,7 +893,76 @@ describe('BlobStoresForm', function() {
     expect(secretAccessKey()).toHaveValue('SomeSecretAccessKey');
     expect(endpointURL()).toHaveValue('http://www.fakeurl.com');
 
+    expect(replicationBuckets()).toBeInTheDocument();
+    expect(selectors.addReplicationBucketButton()).not.toBeInTheDocument();
+    expect(selectors.removeReplicationBucketButtons()).toHaveLength(5);
+    expect(selectors.maxReplicationBucketsWarning()).toBeInTheDocument();
+    expect(selectors.configureReplicationBucketsInfo()).toHaveLength(5);
+    userEvent.click(selectors.removeReplicationBucketButtons()[0]);
+    userEvent.click(selectors.removeReplicationBucketButtons()[0]);
+    expect(selectors.removeReplicationBucketButtons()).toHaveLength(3);
+    expect(selectors.configureReplicationBucketsInfo()).toHaveLength(3);
+    expect(selectors.addReplicationBucketButton()).toBeInTheDocument();
+    userEvent.click(selectors.addReplicationBucketButton());
+    expect(selectors.removeReplicationBucketButtons()).toHaveLength(4);
+
     expect(convertToGroup()).toBeInTheDocument();
+  });
+
+  it('edits S3 blob store failover buckets not visible', async function() {
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/types').mockResolvedValue(blobstoreTypes);
+    when(axios.get).calledWith('service/rest/internal/ui/blobstores/quotaTypes').mockResolvedValue(quotaTypes);
+    when(axios.get).calledWith('service/rest/v1/blobstores/s3/test').mockResolvedValue({
+      data: {
+        name: 'test',
+        bucketConfiguration: {
+          bucket: { region: 'DEFAULT', name: 'bucket', prefix: '', expiration: '3' },
+          failoverBuckets: [
+            {
+              region: "us-east-1",
+              bucketName: "replication-bucket-1"
+            },
+            {
+              region: "us-east-2",
+              bucketName: "replication-bucket-2"
+            },
+            {
+              region: "us-west-1",
+              bucketName: "replication-bucket-3"
+            },
+            {
+              region: "us-west-2",
+              bucketName: "replication-bucket-4"
+            },
+            {
+              region: "eu-west-1",
+              bucketName: "replication-bucket-5"
+            }
+          ]
+        }
+      }
+    });
+    const { ExtJS } = require('@sonatype/nexus-ui-plugin');
+    ExtJS.state().getValue.mockReturnValueOnce(false);
+
+    const {
+      loadingMask,
+      typeSelect,
+      title,
+      name,
+      replicationBuckets,
+    } = render('s3/test');
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    expect(title()).toHaveTextContent('Edit test');
+
+    // The type and name fields cannot be changed during edit
+    expect(typeSelect()).not.toBeInTheDocument();
+    expect(name()).not.toBeInTheDocument();
+
+    // Replication buckets not available
+    expect(replicationBuckets()).not.toBeInTheDocument();
   });
 
   it('edits a file blob store', async function() {

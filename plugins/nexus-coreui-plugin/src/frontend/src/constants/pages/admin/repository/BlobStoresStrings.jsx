@@ -175,8 +175,14 @@ export default {
     S3BlobStore_Help: '<em>S3 blob stores require specific permissions to support full provisioning and functionality through Nexus Repository Manager. ' +
         'Consult our <a href="https://links.sonatype.com/products/nexus/blobstores/s3/docs" target="_blank">documentation</a>' +
         ' for the specific set of permissions required.</em>',
+    S3BlobStore_RegionStatus_FieldLabel: 'Region Status',
+    S3BlobStore_RegionStatus_InUseText: 'In use:',
+    S3BlobStore_RegionStatus_PrimaryRegionText: 'Primary Region',
+    S3BlobStore_RegionStatus_FailoverRegionText: 'Failover Region',
     S3BlobStore_Region_FieldLabel: 'Region',
     S3BlobStore_Region_HelpText: 'Select an AWS Region',
+    S3BlobStore_Region_PrimaryRegionInactiveText: 'The primary region is currently not in use.',
+    S3BlobStore_Region_FailoverRegionActiveText: 'The region for this AWS S3 replication bucket is currently in use.',
     S3BlobStore_Bucket_FieldLabel: 'Bucket',
     S3BlobStore_Bucket_HelpText: 'S3 Bucket Name (must be between 3 and 63 characters long containing only lower-case characters, numbers, periods, and dashes)',
     S3BlobStore_Prefix_FieldLabel: 'Prefix',
@@ -202,6 +208,15 @@ export default {
     S3BlobStore_AdvancedConnectionSettings_SignatureVersion_FieldLabel: 'Signature Version',
     S3BlobStore_AdvancedConnectionSettings_SignatureVersion_HelpText: 'An API signature version which may be required for third party object stores using the S3 API',
     S3BlobStore_AdvancedConnectionSettings_PathStyleAccess_FieldLabel: 'Use path-style access',
-    S3BlobStore_AdvancedConnectionSettings_PathStyleAccess_HelpText: 'Setting this flag will result in path-style access being used for all requests'
+    S3BlobStore_AdvancedConnectionSettings_PathStyleAccess_HelpText: 'Setting this flag will result in path-style access being used for all requests',
+    S3BlobStore_ReplicationBucketsSettings_Title: 'AWS S3 Replication Buckets (Optional)',
+    S3BlobStore_ReplicationBucketsSettings_Region_FieldLabel: 'Region',
+    S3BlobStore_ReplicationBucketsSettings_Region_HelpText: 'Select an AWS Region',
+    S3BlobStore_ReplicationBucketsSettings_BucketName_FieldLabel: 'Bucket Name',
+    S3BlobStore_ReplicationBucketsSettings_BucketName_HelpText: 'S3 Bucket Name (must be between 3 and 63 characters long containing only lower-case characters, numbers, periods, and dashes)',
+    S3BlobStore_ReplicationBucketsSettings_AddFailoverBucket: 'Add Replication Bucket',
+    S3BlobStore_ReplicationBucketsSettings_DeleteFailoverBucket: 'Remove Bucket',
+    S3BlobStore_ReplicationBucketsSettings_ConfigureBucketReplicationMessage: 'Bi-directional replication should be configured between the primary bucket and the replication bucket',
+    S3BlobStore_ReplicationBucketsSettings_MaxFailoverBucketsWarning: 'You have reached the maximum number of failover buckets allowed (5). Remove a bucket to configure another one.',
   }
 };

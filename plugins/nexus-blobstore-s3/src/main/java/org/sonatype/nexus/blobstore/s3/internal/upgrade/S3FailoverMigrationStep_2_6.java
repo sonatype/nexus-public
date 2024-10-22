@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,55 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.blobstore.s3.internal.upgrade;
 
-.nxrm-s3-blobstore {
-  .nx-tile-content {
-    padding-left: 0px;
-  }
-}
+import java.sql.Connection;
+import java.util.Optional;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-.nxrm-s3-blobstore-prefix-text {
-  margin-left: 5px;
-}
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-.nxrm-replication-bucket-button {
-  margin-left: 0px;
-}
+@Named
+@Singleton
+public class S3FailoverMigrationStep_2_6
+    implements DatabaseMigrationStep
+{
+  public static final String S3_FAILOVER_MIGRATION_VERSION = "2.6";
 
-.nxrm-active-region-section {
-  > * {
-    margin-bottom: 0px;
-  }
-
-  .s3-in-use-region {
-    font-weight: bold;
-  }
-}
-
-.nxrm-inactive-region-message {
-  display: flex;
-  align-items: center;
-
-  .nx-icon {
-    color: var(--nx-swatch-red-40);
-    margin-left: 0;
-  }
-}
-
-.nxrm-active-failover-region-message {
-  display: flex;
-  align-items: center;
-
-  .nx-icon {
-    color: var(--nx-color-validation-valid);
-    margin-left: 0;
+  @Override
+  public Optional<String> version() {
+    return Optional.of(S3_FAILOVER_MIGRATION_VERSION);
   }
 
-  &.invalid {
-    margin-top: 30px;
+  @Override
+  public void migrate(final Connection connection) throws Exception {
+    // No-op, this makes the S3 failover region available
   }
-}
-
-.nxrm-s3-region-select-message {
-  margin-bottom: 0px;
 }
