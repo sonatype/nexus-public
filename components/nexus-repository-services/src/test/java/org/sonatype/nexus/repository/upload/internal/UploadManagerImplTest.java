@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.upload.internal;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +31,6 @@ import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.types.VirtualType;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
-import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadManager.UIUploadEvent;
 import org.sonatype.nexus.repository.upload.UploadProcessor;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
@@ -58,7 +55,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;

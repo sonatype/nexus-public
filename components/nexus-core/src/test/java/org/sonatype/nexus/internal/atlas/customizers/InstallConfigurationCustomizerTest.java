@@ -24,9 +24,7 @@ import java.util.stream.Collectors;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedDataStoreFileSource;
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedJettyFileSource;
-import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedNexusFileSource;
 
 import org.junit.Ignore;
 import org.junit.Rule;

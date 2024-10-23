@@ -17,7 +17,6 @@ import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Rule;

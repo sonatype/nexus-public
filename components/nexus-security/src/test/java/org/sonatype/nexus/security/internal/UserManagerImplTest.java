@@ -23,7 +23,6 @@ import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
 import org.sonatype.nexus.security.user.User;
-import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 
 import com.google.common.collect.ImmutableList;

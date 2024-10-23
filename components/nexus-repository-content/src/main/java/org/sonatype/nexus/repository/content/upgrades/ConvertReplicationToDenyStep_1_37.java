@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
-import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
