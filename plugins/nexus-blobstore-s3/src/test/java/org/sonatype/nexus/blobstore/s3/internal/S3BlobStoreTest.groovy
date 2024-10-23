@@ -113,7 +113,7 @@ class S3BlobStoreTest
       def count = blobIdStream.collect(Collectors.toList()).size()
 
     then: 'the correct request is made'
-      count == 1
+      count == 2
       1 * s3.listObjects(_) >> { listObjectsRequest ->
         assert listObjectsRequest[0].getPrefix() == expected
 
@@ -124,7 +124,7 @@ class S3BlobStoreTest
 
         return listing
       }
-      1 * s3.getObjectMetadata('mybucket', _) >> new ObjectMetadata()
+      2 * s3.getObjectMetadata('mybucket', _) >> new ObjectMetadata()
 
     where:
       prefix     | expected

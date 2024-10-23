@@ -78,14 +78,14 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   protected BlobStoreConfiguration blobStoreConfiguration;
 
   private static final Pattern UUID_PATTERN = Pattern.compile(
-          ".*vol-\\d{2}[/\\\\]chap-\\d{2}[/\\\\]\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b.properties$",
+          ".*vol-\\d{2}[/\\\\]chap-\\d{2}[/\\\\]\\b([0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b).(properties|bytes)$",
           Pattern.CASE_INSENSITIVE);
 
   /**
    * To match "content/2024/01/10/18/13/0c89ccf4-ec5b-44a8-83b2-d08df2599c6e.properties"
    */
   private static final Pattern DATE_BASED_PATTERN = Pattern.compile(
-      ".*(\\d{4}[/\\\\]\\d{2}[/\\\\]\\d{2}[/\\\\]\\d{2}[/\\\\]\\d{2})[/\\\\](\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12})\\b.properties$",
+      ".*(\\d{4}([/\\\\]\\d{2}){4})[/\\\\]([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\.(properties|bytes)$",
       Pattern.CASE_INSENSITIVE);
 
   public static final int MAX_NAME_LENGTH = 255;
@@ -286,17 +286,16 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   protected abstract BlobAttributes getBlobAttributes(final T attributesFilePath) throws IOException;
 
   protected BlobId getBlobIdFromAttributeFilePath(final T attributeFilePath) {
-    if (UUID_PATTERN.matcher(attributeFilePath.getFullPath()).matches()) {
-      String filename = attributeFilePath.getFileName();
-      String id = filename.substring(0, filename.length() - BLOB_FILE_ATTRIBUTES_SUFFIX.length());
-      return new BlobId(id, null);
+    Matcher matcher = UUID_PATTERN.matcher(attributeFilePath.getFullPath());
+    if (matcher.find()) {
+      return new BlobId(matcher.group(1), null);
     }
 
-    Matcher matcher = DATE_BASED_PATTERN.matcher(attributeFilePath.getFullPath());
+    matcher = DATE_BASED_PATTERN.matcher(attributeFilePath.getFullPath());
     if (matcher.find()) {
       LocalDateTime localDateTime = LocalDateTime.parse(matcher.group(1), DATE_TIME_PATH_FORMATTER);
       OffsetDateTime blobCreatedRef = localDateTime.atOffset(ZoneOffset.UTC);
-      return new BlobId(matcher.group(2), blobCreatedRef);
+      return new BlobId(matcher.group(3), blobCreatedRef);
     }
 
     try {

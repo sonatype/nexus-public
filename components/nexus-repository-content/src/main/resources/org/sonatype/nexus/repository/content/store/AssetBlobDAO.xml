@@ -50,6 +50,15 @@
     ORDER BY asset_blob_id LIMIT #{limit};
   </select>
 
+  <select id="browseAssetBlobsWithinDuration" resultType="AssetBlobData">
+    SELECT * FROM ${format}_asset_blob
+    WHERE added_to_repository BETWEEN #{end} AND #{start}
+    <if test="continuationToken != null">
+      AND asset_blob_id > #{continuationToken}
+    </if>
+    ORDER BY asset_blob_id LIMIT #{limit};
+  </select>
+
   <select id="browseUnusedAssetBlobs" resultType="AssetBlobData">
     SELECT B.* FROM ${format}_asset_blob B LEFT JOIN ${format}_asset A
         USING (asset_blob_id)

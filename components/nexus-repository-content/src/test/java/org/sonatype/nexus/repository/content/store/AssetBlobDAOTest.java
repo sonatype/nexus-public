@@ -166,6 +166,29 @@ public class AssetBlobDAOTest
   }
 
   @Test
+  public void testBrowseWithinDuration() {
+    OffsetDateTime now = UTC.now();
+    OffsetDateTime blobCreated1 = now.minusDays(10);
+    OffsetDateTime blobCreated2 = now.minusDays(5);
+    AssetBlobData assetBlob1 = randomAssetBlob(blobCreated1);
+    AssetBlobData assetBlob2 = randomAssetBlob(blobCreated2);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+
+      dao.createAssetBlob(assetBlob1);
+      dao.createAssetBlob(assetBlob2);
+
+      // blobs created in desired time range
+      Continuation<AssetBlob> assetBlobs = dao.browseAssetBlobsWithinDuration(2, now, now.minusDays(11), null);
+      assertThat(assetBlobs, contains(sameBlob(assetBlob1),sameBlob(assetBlob2)));
+
+      // blobs are not in range
+      assertThat(dao.browseAssetBlobsWithinDuration(2, now.plusDays(20), now.plusDays(11), null), hasSize(0));
+    }
+  }
+
+  @Test
   public void testBlob() {
     AssetBlobData assetBlob1 = randomAssetBlob();
     BlobRef blobRef1 = assetBlob1.blobRef();

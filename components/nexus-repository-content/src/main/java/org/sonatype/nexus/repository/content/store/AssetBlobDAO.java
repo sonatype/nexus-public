@@ -56,11 +56,26 @@ public interface AssetBlobDAO
    * @param limit maximum number of asset blobs to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of asset blobs and the next continuation token
-   *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<AssetBlob> browseAssetBlobs(
       @Param("limit") int limit,
+      @Param("continuationToken") @Nullable String continuationToken);
+
+  /**
+   * Browse asset blobs in the content data store in a paged fashion.
+   *
+   * @param limit             maximum number of asset blobs to return
+   * @param start             start date
+   * @param end               end date
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of asset blobs and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   */
+  Continuation<AssetBlob> browseAssetBlobsWithinDuration(
+      @Param("limit") int limit,
+      @Param("start") OffsetDateTime start,
+      @Param("end") OffsetDateTime end,
       @Param("continuationToken") @Nullable String continuationToken);
 
   /**

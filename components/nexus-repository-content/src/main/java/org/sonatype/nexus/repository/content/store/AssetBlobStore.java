@@ -76,6 +76,26 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   }
 
   /**
+   * Browse asset blobs in the content data store in a paged fashion.
+   *
+   * @param limit maximum number of asset blobs to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of asset blobs and the next continuation token
+   *
+   * @see Continuation#nextContinuationToken()
+   */
+  @Transactional
+  public Continuation<AssetBlob> browseAssetBlobsWithinDuration(
+      final int limit,
+      OffsetDateTime start,
+      OffsetDateTime end,
+      @Nullable final String continuationToken)
+  {
+    return dao().browseAssetBlobsWithinDuration(limit, start, end, continuationToken);
+  }
+
+
+  /**
    * Creates the given asset blob in the content data store.
    *
    * @param assetBlob the asset blob to create
