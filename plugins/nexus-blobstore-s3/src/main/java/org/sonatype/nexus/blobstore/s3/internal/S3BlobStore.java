@@ -313,6 +313,22 @@ public class S3BlobStore
     throw new BlobStoreException("hard links not supported", null);
   }
 
+  @Override
+  public void createBlobAttributes(final BlobId blobId,
+                                   final Map<String, String> headers,
+                                   final BlobMetrics blobMetrics)
+  {
+    String attributePath = attributePath(blobId);
+    try {
+      writeBlobAttributes(headers, attributePath, blobMetrics);
+    }
+    catch (Exception e) {
+      // Something went wrong, clean up the file we created
+      deleteQuietly(attributePath);
+      throw new BlobStoreException(e, blobId);
+    }
+  }
+
   @Timed
   private Blob create(
       final Map<String, String> headers,

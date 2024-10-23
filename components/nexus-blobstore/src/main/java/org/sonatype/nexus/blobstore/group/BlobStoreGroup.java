@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.blobstore.MemoryBlobSession;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobSession;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -201,6 +203,15 @@ public class BlobStoreGroup
     Blob blob = createBlobFunction.create(result);
     locatedBlobs.put(blob.getId(), result.getBlobStoreConfiguration().getName());
     return blob;
+  }
+
+  @Override
+  public void createBlobAttributes(final BlobId blobId, Map<String, String> headers, final BlobMetrics metrics) {
+    BlobStore result = fillPolicy.chooseBlobStore(this, headers);
+    if (result == null) {
+      throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create properties", null);
+    }
+    result.createBlobAttributes(blobId, headers, metrics);
   }
 
   @Override

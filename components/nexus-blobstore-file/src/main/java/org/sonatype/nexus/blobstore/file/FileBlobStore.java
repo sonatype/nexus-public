@@ -353,6 +353,23 @@ public class FileBlobStore
     }, null);
   }
 
+  @Override
+  public void createBlobAttributes(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics blobMetrics)
+  {
+    Path attributePath = attributePath(blobId);
+    try {
+      FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath, headers, blobMetrics);
+      blobAttributes.store();
+    } catch (Exception e) {
+      // Something went wrong, clean up the file we created
+      fileOperations.deleteQuietly(attributePath);
+      throw new BlobStoreException(e, blobId);
+    }
+  }
+
   private Blob create(final Map<String, String> headers, final BlobIngester ingester, final BlobId blobId) {
     for (int retries = 0; retries <= MAX_COLLISION_RETRIES; retries++) {
       try {

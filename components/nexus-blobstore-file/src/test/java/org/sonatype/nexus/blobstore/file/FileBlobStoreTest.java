@@ -28,7 +28,9 @@ import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
@@ -39,6 +41,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
@@ -46,6 +49,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
+import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -519,5 +523,29 @@ public class FileBlobStoreTest
     assertThat(bytesPath.toFile().exists(), is(true));
 
     assertThat(underTest.isBlobEmpty(new BlobId("test-blob")), is(true));
+  }
+
+  @Test
+  public void testCreateBlobAttributes() {
+    BlobId blobId = new BlobId("fakeid", UTC.now());
+    final DateTime creationTime = new DateTime();
+    String sha1 = "356a192b7913b04c54574d18c28d46e6395428ab";
+    long size = 10L;
+
+    BlobMetrics blobMetrics = new BlobMetrics(creationTime, sha1, size);
+    underTest.createBlobAttributes(blobId, TEST_HEADERS, blobMetrics);
+
+    BlobAttributes blobAttributes = underTest.getBlobAttributes(blobId);
+    assertNotNull(blobAttributes);
+
+    // test headers were written
+    Map<String, String> headers = blobAttributes.getHeaders();
+    TEST_HEADERS.forEach((header, value) -> assertThat(headers.get(header), is(value)));
+
+    // test metrics were written
+    BlobMetrics metrics = blobAttributes.getMetrics();
+    assertThat(metrics.getContentSize(), is(size));
+    assertThat(metrics.getSha1Hash(), is(sha1));
+    assertThat(metrics.getCreationTime(), is(creationTime));
   }
 }

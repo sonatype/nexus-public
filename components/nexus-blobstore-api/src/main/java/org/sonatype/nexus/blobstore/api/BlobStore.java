@@ -145,6 +145,15 @@ public interface BlobStore
   Blob create(Path sourceFile, Map<String, String> headers, long size, HashCode sha1);
 
   /**
+   * Creates the new blob attributes
+   *
+   * @param blobId      the blob id
+   * @param headers     the headers of the blob, {@see BlobStore}
+   * @param blobMetrics blob metrics
+   */
+  default void createBlobAttributes(BlobId blobId, Map<String, String> headers, BlobMetrics blobMetrics) { }
+
+  /**
    * Duplicates a blob within the blob store by copying the temp blob but with the provided headers. The blob must be
    * in this blob store; moving blobs between blob stores is not supported.
    *
