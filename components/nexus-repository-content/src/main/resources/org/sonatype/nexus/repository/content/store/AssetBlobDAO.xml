@@ -167,13 +167,13 @@
     JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
     JOIN ${format}_content_repository cr ON cr.repository_id = a.repository_id
     JOIN repository r ON r.id = cr.config_repository_id
-    WHERE ab.blob_ref = #{blobRef};
+    WHERE ab.blob_ref LIKE CONCAT(CAST(#{blobRef} AS VARCHAR), '%');
   </select>
 
   <select id="getPathByBlobRef" resultType="String">
     SELECT a.path
     FROM ${format}_asset a
     JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
-    WHERE ab.blob_ref = #{blobRef};
+    WHERE ab.blob_ref LIKE CONCAT(CAST(#{blobRef} AS VARCHAR), '%');
   </select>
 </mapper>
