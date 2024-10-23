@@ -42,7 +42,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -899,24 +898,23 @@ public class FileBlobStore
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
     for (int counter = 0, numBlobs = blobDeletionIndex.size(); counter < numBlobs; counter++) {
       log.debug("Processing record {} of {}", counter + 1, numBlobs);
-      BlobId oldestDeletedBlob = blobDeletionIndex.readOldestRecord();
-      log.debug("Oldest Deleted Record from deletion index: {}", oldestDeletedBlob);
-      if (Objects.isNull(oldestDeletedBlob)) {
+      BlobId nextAvailableRecord = blobDeletionIndex.getNextAvailableRecord();
+      if (Objects.isNull(nextAvailableRecord)) {
         log.info("Deleted blobs not found");
         return;
       }
-      FileBlob blob = liveBlobs.getIfPresent(oldestDeletedBlob);
-      log.debug("Oldest Deleted BlobId: {}", oldestDeletedBlob);
+      FileBlob blob = liveBlobs.getIfPresent(nextAvailableRecord);
+      log.debug("Next available record for compaction: {}", nextAvailableRecord);
       if (Objects.isNull(blob) || blob.isStale()) {
         log.debug("Compacting...");
-        maybeCompactBlob(inUseChecker, oldestDeletedBlob);
-        blobDeletionIndex.deleteRecord(oldestDeletedBlob);
+        maybeCompactBlob(inUseChecker, nextAvailableRecord);
+        blobDeletionIndex.deleteRecord(nextAvailableRecord);
       }
       else {
         log.debug("Still in use to deferring");
         // still in use, so move it to end of the queue
-        blobDeletionIndex.deleteRecord(oldestDeletedBlob);
-        blobDeletionIndex.createRecord(oldestDeletedBlob);
+        blobDeletionIndex.deleteRecord(nextAvailableRecord);
+        blobDeletionIndex.createRecord(nextAvailableRecord);
       }
 
       progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.file.store;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -64,12 +63,4 @@ public interface SoftDeletedBlobsStore
    * @return amount of soft deleted blobs
    */
   int count(String sourceBlobStoreName);
-
-  /**
-   * Returns a list of the oldest 20 blob_ids in the soft_deleted_blobs table related to the provided blobstore.
-   *
-   * @param sourceBlobStoreName the blobstore name these records are related to
-   * @return oldest 20 blob_id strings
-   */
-  List<BlobId> readOldestRecords(String sourceBlobStoreName);
 }

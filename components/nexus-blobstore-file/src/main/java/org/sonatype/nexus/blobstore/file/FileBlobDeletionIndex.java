@@ -13,7 +13,6 @@
 package org.sonatype.nexus.blobstore.file;
 
 import java.io.IOException;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -45,12 +44,12 @@ public interface FileBlobDeletionIndex
   void createRecord(BlobId blobId) throws IOException;
 
   /**
-   * Get the oldest BlobId currently present, may return {@code null} if no deletion records are present
+   * Get the next BlobId currently present, may return {@code null} if no deletion records are present
    *
    * @return oldest {@link BlobId} or null
    */
   @Nullable
-  BlobId readOldestRecord() throws IOException;
+  BlobId getNextAvailableRecord() throws IOException;
 
   /**
    * Deletes specified record by {@link BlobId}

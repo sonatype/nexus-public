@@ -30,6 +30,12 @@
 
     CREATE INDEX IF NOT EXISTS idx_soft_deleted_blobs_source_blob_store_name
         ON soft_deleted_blobs (source_blob_store_name, blob_id);
+
+    /*
+    -- See SoftDeletedBlobsByBlobStoreIndexMigrationStep_2_7.java
+    CREATE INDEX IF NOT EXISTS idx_soft_deleted_blobs_by_source_blob_store_name_record_id"
+    ON soft_deleted_blobs (source_blob_store_name, record_id);
+     */
   </insert>
 
   <insert id="createRecord">

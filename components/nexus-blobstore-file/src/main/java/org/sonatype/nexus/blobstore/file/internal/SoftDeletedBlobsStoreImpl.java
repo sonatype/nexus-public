@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -87,13 +85,5 @@ public class SoftDeletedBlobsStoreImpl
   @Override
   public int count(final String sourceBlobStoreName) {
     return dao().count(sourceBlobStoreName);
-  }
-
-  @Transactional
-  @Override
-  public List<BlobId> readOldestRecords(final String sourceBlobStoreName) {
-    return dao().readOldestRecords(sourceBlobStoreName).stream()
-        .map(data -> new BlobId(data.getBlobId(), data.getDatePathRef()))
-        .collect(Collectors.toList());
   }
 }

@@ -15,9 +15,9 @@ package org.sonatype.nexus.blobstore.file.internal.datastore;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -28,7 +28,9 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.file.FileBlobDeletionIndex;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData;
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
@@ -53,21 +55,27 @@ public class DatastoreFileBlobDeletionIndex
 
   private final Duration migrationDelay;
 
+  private final int deletedFileCacheLimit;
+
   private FileBlobStore blobStore;
 
   private String blobStoreName;
 
-  private Deque<BlobId> deletedRecordsCache;
+  private Iterator<BlobId> currentBatchIterator;
+
+  private Continuation<SoftDeletedBlobsData> deletionContinuation;
 
   @Inject
   public DatastoreFileBlobDeletionIndex(
       final SoftDeletedBlobsStore softDeletedBlobsStore,
       final PeriodicJobService periodicJobService,
-      @Named("${nexus.file.deletion.migrate.delay:-60s}") final Duration migrationDelay)
+      @Named("${nexus.file.deletion.migrate.delay:-60s}") final Duration migrationDelay,
+      @Named("${nexus.file.deletion.buffer.size:-1000}") final int deletedFileBufferSize)
   {
     this.softDeletedBlobsStore = checkNotNull(softDeletedBlobsStore);
     this.periodicJobService = checkNotNull(periodicJobService);
     this.migrationDelay = checkNotNull(migrationDelay);
+    this.deletedFileCacheLimit = deletedFileBufferSize;
     checkArgument(!migrationDelay.isNegative(), "Non-negative nexus.file.deletion.migrate.delay required");
   }
 
@@ -76,7 +84,6 @@ public class DatastoreFileBlobDeletionIndex
     this.blobStore = blobStore;
     this.blobStoreName = blobStore.getBlobStoreConfiguration().getName();
     scheduleMigrateIndex(metadata);
-    deletedRecordsCache = new ArrayDeque<>();
   }
 
   @Override
@@ -90,20 +97,34 @@ public class DatastoreFileBlobDeletionIndex
   }
 
   private void populateInternalCache() {
-    deletedRecordsCache.addAll(softDeletedBlobsStore.readOldestRecords(blobStoreName));
+    String token = Optional.ofNullable(deletionContinuation)
+        .filter(value -> !value.isEmpty())
+        .map(Continuation::nextContinuationToken)
+        .orElse("0");
+
+    deletionContinuation = softDeletedBlobsStore.readRecords(token,
+        Math.abs(deletedFileCacheLimit), blobStoreName);
+
+    if(!deletionContinuation.isEmpty()) {
+      currentBatchIterator = this.deletionContinuation.stream()
+          .map(value -> new BlobId(value.getBlobId(), value.getDatePathRef()))
+          .iterator();
+    } else {
+      currentBatchIterator = null;
+    }
   }
 
   @Override
-  public final BlobId readOldestRecord() {
-    if (deletedRecordsCache.isEmpty()) {
+  public final BlobId getNextAvailableRecord() {
+    if(Objects.isNull(currentBatchIterator) || !currentBatchIterator.hasNext() ) {
       populateInternalCache();
     }
-    return deletedRecordsCache.pollFirst();
+
+    return Objects.nonNull(this.currentBatchIterator) ? currentBatchIterator.next() : null;
   }
 
   @Override
   public final void deleteRecord(final BlobId blobId) {
-    deletedRecordsCache.remove(blobId.asUniqueString());
     softDeletedBlobsStore.deleteRecord(blobStoreName, blobId);
   }
 
