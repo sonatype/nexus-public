@@ -47,6 +47,7 @@ import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryD
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
+import org.apache.ibatis.annotations.Param;
 import org.apache.shiro.util.CollectionUtils;
 
 import static java.util.Arrays.stream;
@@ -528,6 +529,17 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void lastUpdated(final Asset asset, final OffsetDateTime lastUpdated) {
     dao().lastUpdated(InternalIds.internalAssetId(asset), lastUpdated);
+  }
+
+  /**
+   * Checks for existence of asset in all three: <format>_asset, <format>_asset_blob, <format>_component tables
+   *
+   * @param blobRef the blob reference
+   * @return {@code true} if asset exists in all three: <format>_asset, <format>_asset_blob, <format>_component tables
+   */
+  @Transactional
+  public Boolean assetRecordsExist(final BlobRef blobRef) {
+    return dao().assetRecordsExist(blobRef);
   }
 
   private int purgeAssets(final int[] assetIds) {

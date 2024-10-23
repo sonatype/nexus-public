@@ -446,6 +446,14 @@
     </where>
   </select>
 
+  <select id="assetRecordsExist" resultType="boolean">
+    SELECT EXISTS (SELECT 1
+                   FROM raw_asset a
+                          JOIN raw_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
+                          JOIN raw_component c ON c.component_id = a.component_id
+                   WHERE ab.blob_ref = #{blobRef});
+  </select>
+
   <sql id="componentEntityVersionIncrement">
     UPDATE ${format}_component SET
       entity_version = COALESCE(entity_version, 1) + 1

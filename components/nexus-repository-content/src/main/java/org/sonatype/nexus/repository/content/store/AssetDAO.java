@@ -376,4 +376,12 @@ public interface AssetDAO
    * @return The component ids for the assets identified by the asset ids.
    */
   int[] selectComponentIds(@Param("assetIds") int[] assetIds);
+
+  /**
+   * Checks for existence of asset in all three: <format>_asset, <format>_asset_blob, <format>_component tables
+   *
+   * @param blobRef the blob reference
+   * @return {@code true} if asset exists in all three: <format>_asset, <format>_asset_blob, <format>_component tables
+   */
+  boolean assetRecordsExist(@Param("blobRef") BlobRef blobRef);
 }
