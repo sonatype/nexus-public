@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.UTC;
@@ -1240,6 +1241,35 @@ public class AssetDAOTestSupport
           entityVersionEnabled ? 6 : null);
       assertEntityVersion(component2.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 5 : null);
+    }
+  }
+
+  public void testAssetRecordsExist() {
+    AssetBlobData assetBlob = randomAssetBlob();
+    AssetData asset = randomAsset(repositoryId);
+
+    ComponentData componentData = randomComponent(repositoryId);
+    componentData.setComponentId(1);
+
+    asset.setComponent(componentData);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO assetDao = session.access(TestAssetDAO.class);
+      AssetBlobDAO assetBlobDao = session.access(TestAssetBlobDAO.class);
+      ComponentDAO componentDAO = session.access(TestComponentDAO.class);
+
+      assetBlobDao.createAssetBlob(assetBlob);
+      componentDAO.createComponent(componentData, entityVersionEnabled);
+      asset.setAssetBlob(assetBlob);
+      assetDao.createAsset(asset, entityVersionEnabled);
+      session.getTransaction().commit();
+
+      // existing asset + blob + component
+      assertThat(assetDao.assetRecordsExist(assetBlob.blobRef()), is(true));
+
+      // random blob is not exists
+      BlobRef blobRef = new BlobRef("default", UUID.randomUUID().toString());
+      assertThat(assetDao.assetRecordsExist(blobRef), is(false));
     }
   }
 

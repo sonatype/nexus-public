@@ -776,7 +776,7 @@ public class S3BlobStore
         blobIdStreams = getBlobIdStream(getContentVolumePrefix(), fromDateTime);
       }
 
-      return blobIdStreams;
+      return blobIdStreams.distinct();
     }
   }
 

@@ -448,9 +448,9 @@
 
   <select id="assetRecordsExist" resultType="boolean">
     SELECT EXISTS (SELECT 1
-                   FROM raw_asset a
-                          JOIN raw_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
-                          JOIN raw_component c ON c.component_id = a.component_id
+                   FROM ${format}_asset a
+                   JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
+                   JOIN ${format}_component c ON c.component_id = a.component_id
                    WHERE ab.blob_ref = #{blobRef});
   </select>
 
