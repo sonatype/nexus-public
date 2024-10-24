@@ -95,6 +95,10 @@ public class NexusEditionPropertiesConfigurer
     // Env variable for secrets encryption
      Optional.ofNullable(System.getenv(SECRETS_FILE_ENV))
         .ifPresent(secretsFilePath -> properties.setProperty(SECRETS_FILE , secretsFilePath));
+
+    // Env variable for enabling s3 logging policy
+    Optional.ofNullable(System.getenv(S3_LOGGING_ENABLED_ENV))
+        .ifPresent(s3LoggingEnabled -> properties.setProperty(S3_LOGGING_ENABLED , s3LoggingEnabled));
   }
 
   private void selectDatastoreFeature(final Properties properties) {

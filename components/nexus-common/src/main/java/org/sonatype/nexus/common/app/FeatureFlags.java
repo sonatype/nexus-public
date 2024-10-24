@@ -216,6 +216,12 @@ public interface FeatureFlags
 
   String SECRETS_API_ENABLED = "nexus.secrets.api.enabled";
 
+  /* Feature flag to enable/disable s3 logging */
+
+  String S3_LOGGING_ENABLED = "nexus.s3.logging.enabled";
+
+  String S3_LOGGING_ENABLED_ENV = "S3_LOGGING_ENABLED";
+
   /* OSS registration */
   String OSS_REGISTRATION_ENABLED_NAMED = "${nexus.license.community:-false}";
 }

@@ -74,6 +74,12 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -105,6 +111,9 @@
               !org.osgi.service.event,
               javax.*|org.*|com.codahale.*
             </Import-Package>
+            <Export-Package>
+              org.sonatype.nexus.pax.logging.*
+            </Export-Package>
           </instructions>
         </configuration>
       </plugin>
