@@ -71,7 +71,8 @@ public class BlobStoreReconciliationLogger
   public void logBlobCreated(final Path reconciliationLogPath, final BlobId blobId) {
     if (isNotTemporaryBlob(blobId)) {
       MDC.put(BLOBSTORE, reconciliationLogPath.toString());
-      reconciliationLogger.info(blobId.asUniqueString());
+      // blobId.getBlobCreatedRef() != null means the blob was stored under the date-based layout
+      reconciliationLogger.info("{},{}", blobId.asUniqueString(), blobId.getBlobCreatedRef() != null);
       MDC.remove(BLOBSTORE);
     }
   }
@@ -99,6 +100,16 @@ public class BlobStoreReconciliationLogger
           String[] split = line.split(",");
           if (split.length == 2) {
             return split[1];
+          }
+          else if (split.length == 3) {
+            String blobId = split[1];
+            if (Boolean.parseBoolean(split[2])) {
+              // we already have date-based blob ids, so we can skip them
+              return dateBasedBlobIds.get(blobId) != null ? blobId : null;
+            }
+            else {
+              return blobId;
+            }
           }
           else {
             LOGGER.info("Cannot find blob id on line, skipping: {}", line);
