@@ -593,18 +593,10 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <dependencies>
-            <!--
-            Keep versions in sync with buildsupport/groovy/pom.xml
-            -->
             <dependency>
               <groupId>org.codehaus.groovy</groupId>
               <artifactId>groovy-eclipse-compiler</artifactId>
               <version>3.7.0</version>
-            </dependency>
-            <dependency>
-              <groupId>org.codehaus.groovy</groupId>
-              <artifactId>groovy-eclipse-batch</artifactId>
-              <version>3.0.13-02</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -1290,6 +1282,57 @@
   </build>
 
   <profiles>
+    <profile>
+      <id>sonatype</id>
+      <activation>
+        <property>
+          <name>!public</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-eclipse-batch</artifactId>
+                <version>3.0.13-02</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>public</id>
+      <activation>
+        <property>
+          <name>public</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <dependencies>
+              <!--
+                To support building nexus-public, we have to select the last version of groovy-eclipse-batch available
+                in Maven Central. This comes with a downside, as this compiler won't support the use of the parallel
+                build options in maven (e.g. `-T 1C`).
+               -->
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-eclipse-batch</artifactId>
+                <version>3.0.8-01</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
    <profile>
       <id>surefire-jdk8</id>
       <activation>

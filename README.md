@@ -34,7 +34,7 @@ Following best practices, the nexus-public POM does not include any root `<repos
 
 ## Building From Source
 
-Released versions are tagged and branched using a name of the form `release-{version}`. For example: `release-3.29.2-02`
+Released versions are tagged and branched using a name of the form `release-{version}`. For example: `release-3.72.0-04`
 
 To build a tagged release, first fetch all tags:
 
@@ -45,14 +45,16 @@ git fetch --tags
 Then checkout the remote branch you want. For example:
 
 ```shell
-git checkout -b release-3.29.2-02 origin/release-3.29.2-02 --
+git checkout -b release-3.72.0-04 origin/release-3.72.0-04 --
 ```
 
 Then build using the included Maven wrapper script. For example:
 
 ```shell
-./mvnw clean install
+./mvnw clean install -Dpublic
 ```
+
+The `public` property is required outside of Sonatype's internal infrastructure.
 
 ## Running
 
