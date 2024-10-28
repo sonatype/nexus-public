@@ -59,11 +59,11 @@ public class GroupFacetImpl
     extends FacetSupport
     implements GroupFacet
 {
-  private final RepositoryManager repositoryManager;
+  protected final RepositoryManager repositoryManager;
 
   private final Type groupType;
 
-  private final ConstraintViolationFactory constraintViolationFactory;
+  protected final ConstraintViolationFactory constraintViolationFactory;
 
   public static final String CONFIG_KEY = "group";
 
@@ -108,11 +108,24 @@ public class GroupFacetImpl
 
       Set<ConstraintViolation<?>> violations = new HashSet<>();
       maybeAdd(violations, validateGroupDoesNotContainItself(configuration.getRepositoryName(), configToValidate));
+      maybeAdd(violations, validateFormat(configuration, configToValidate));
       maybePropagate(violations, log);
     }
   }
 
-  private boolean containsGroup(Repository root, String repositoryName, Set<Repository> checkedGroups) {
+  /**
+   * A method subclasses can override to perform format specific validation if necessary
+   *
+   * @param configuration the configuration of the repository
+   * @param groupConfig the group's config object
+   * @return the validation failures or null
+   */
+  protected ConstraintViolation<?> validateFormat(final Configuration configuration, final Config groupConfig) {
+    // empty for subclasses to optionally override
+    return null;
+  }
+
+  private boolean containsGroup(final Repository root, final String repositoryName, final Set<Repository> checkedGroups) {
     return root.facet(GroupFacet.class).members().stream().anyMatch((repository) -> {
       return checkedGroups.add(repository) &&
           (repository.getName().equals(repositoryName) ||
