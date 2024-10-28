@@ -1246,7 +1246,10 @@ public class AssetDAOTestSupport
 
   public void testAssetRecordsExist() {
     AssetBlobData assetBlob = randomAssetBlob();
+    AssetBlobData assetBlobWithoutComponent = randomAssetBlob();
+
     AssetData asset = randomAsset(repositoryId);
+    AssetData assetWithoutComponent = randomAsset(repositoryId);
 
     ComponentData componentData = randomComponent(repositoryId);
     componentData.setComponentId(1);
@@ -1259,9 +1262,12 @@ public class AssetDAOTestSupport
       ComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
       assetBlobDao.createAssetBlob(assetBlob);
+      assetBlobDao.createAssetBlob(assetBlobWithoutComponent);
       componentDAO.createComponent(componentData, entityVersionEnabled);
       asset.setAssetBlob(assetBlob);
+      assetWithoutComponent.setAssetBlob(assetBlobWithoutComponent);
       assetDao.createAsset(asset, entityVersionEnabled);
+      assetDao.createAsset(assetWithoutComponent, entityVersionEnabled);
       session.getTransaction().commit();
 
       // existing asset + blob + component
@@ -1270,6 +1276,9 @@ public class AssetDAOTestSupport
       // random blob is not exists
       BlobRef blobRef = new BlobRef("default", UUID.randomUUID().toString());
       assertThat(assetDao.assetRecordsExist(blobRef), is(false));
+
+      // record still exists without a component
+      assertThat(assetDao.assetRecordsExist(assetBlobWithoutComponent.blobRef()), is(true));
     }
   }
 

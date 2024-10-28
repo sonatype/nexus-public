@@ -450,7 +450,7 @@
     SELECT EXISTS (SELECT 1
                    FROM ${format}_asset a
                    JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
-                   JOIN ${format}_component c ON c.component_id = a.component_id
+                   LEFT JOIN ${format}_component c ON c.component_id = a.component_id AND a.component_id IS NOT NULL
                    WHERE ab.blob_ref = #{blobRef});
   </select>
 
