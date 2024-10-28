@@ -782,8 +782,13 @@ public class S3BlobStore
 
   private Stream<BlobId> getBlobIdStream(final String prefix, OffsetDateTime fromDateTime) {
     Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), prefix);
-    return blobIdStream(stream(summaries.spliterator(), false)
-        .filter(s3Obj -> s3Obj.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(fromDateTime)));
+    return stream(summaries.spliterator(), false)
+        .filter(o -> o.getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) || o.getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX))
+        .filter(this::isNotTempBlob)
+        .filter(s3Obj -> s3Obj.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(fromDateTime))
+        .map(S3AttributesLocation::new)
+        .map(this::getBlobIdFromAttributeFilePath)
+        .filter(Objects::nonNull);
   }
 
   @Override
@@ -799,7 +804,7 @@ public class S3BlobStore
 
   private Stream<S3ObjectSummary> nonTempBlobPropertiesFileStream(final Stream<S3ObjectSummary> summaries) {
     return summaries
-        .filter(o -> o.getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) || o.getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX))
+        .filter(o -> o.getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX))
         .filter(this::isNotTempBlob);
   }
 
