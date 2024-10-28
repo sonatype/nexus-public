@@ -52,7 +52,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.LIMIT;
+import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 
 public class AssetsResourceTest
@@ -118,7 +118,7 @@ public class AssetsResourceTest
 
     assertNotNull(assets);
 
-    verify(fluentAssets).browse(LIMIT, null);
+    verify(fluentAssets).browse(PAGE_SIZE_LIMIT, null);
   }
 
   @Test
@@ -165,7 +165,7 @@ public class AssetsResourceTest
     when(contentFacet.assets()).thenReturn(fluentAssets);
     when(contentFacetSupport.dependencies()).thenReturn(dependencies);
     when(dependencies.getMoveService()).thenReturn(Optional.of(moveService));
-    when(fluentAssets.browse(LIMIT, null)).thenReturn(assetContinuation);
+    when(fluentAssets.browse(PAGE_SIZE_LIMIT, null)).thenReturn(assetContinuation);
     when(assetContinuation.isEmpty()).thenReturn(true);
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository.getUrl()).thenReturn(REPOSITORY_URL);
