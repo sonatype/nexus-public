@@ -103,14 +103,16 @@ public class GroupFacetImpl
   protected void doValidate(final Configuration configuration) throws Exception {
     facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class);
 
-    if (getStateGuard().is(STARTED)) {
-      Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+    Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+    Set<ConstraintViolation<?>> violations = new HashSet<>();
 
-      Set<ConstraintViolation<?>> violations = new HashSet<>();
+    maybeAdd(violations, validateFormat(configuration, configToValidate));
+
+    if (getStateGuard().is(STARTED)) {
       maybeAdd(violations, validateGroupDoesNotContainItself(configuration.getRepositoryName(), configToValidate));
-      maybeAdd(violations, validateFormat(configuration, configToValidate));
-      maybePropagate(violations, log);
     }
+
+    maybePropagate(violations, log);
   }
 
   /**
@@ -133,7 +135,7 @@ public class GroupFacetImpl
     });
   }
 
-  ConstraintViolation<?> validateGroupDoesNotContainItself(String repositoryName, Config config) {
+  ConstraintViolation<?> validateGroupDoesNotContainItself(final String repositoryName, final Config config) {
     Set<Repository> checkedGroups = new HashSet<>();
     for (String memberName : config.memberNames) {
       Repository repository = repositoryManager.get(memberName);
