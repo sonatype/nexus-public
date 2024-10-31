@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.74.0-SNAPSHOT</version>
+    <version>3.74.0-04</version>
   </parent>
 
   <artifactId>nexus-default-role-plugin</artifactId>
