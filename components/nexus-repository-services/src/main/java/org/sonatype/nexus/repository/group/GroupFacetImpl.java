@@ -106,7 +106,7 @@ public class GroupFacetImpl
     Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
     Set<ConstraintViolation<?>> violations = new HashSet<>();
 
-    maybeAdd(violations, validateFormat(configuration, configToValidate));
+    maybeAdd(violations, validateFormat(configToValidate));
 
     if (getStateGuard().is(STARTED)) {
       maybeAdd(violations, validateGroupDoesNotContainItself(configuration.getRepositoryName(), configToValidate));
@@ -118,11 +118,10 @@ public class GroupFacetImpl
   /**
    * A method subclasses can override to perform format specific validation if necessary
    *
-   * @param configuration the configuration of the repository
    * @param groupConfig the group's config object
    * @return the validation failures or null
    */
-  protected ConstraintViolation<?> validateFormat(final Configuration configuration, final Config groupConfig) {
+  protected ConstraintViolation<?> validateFormat(final Config groupConfig) { // NOSONAR
     // empty for subclasses to optionally override
     return null;
   }
