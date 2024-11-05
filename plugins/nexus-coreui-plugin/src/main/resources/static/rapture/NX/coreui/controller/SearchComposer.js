@@ -34,6 +34,36 @@ Ext.define('NX.coreui.controller.SearchComposer', {
     var me = this,
         search = me.getController('NX.coreui.controller.Search');
 
+    search.registerCriteria([
+      {
+        id: 'assets.attributes.composer.vendor',
+        group: NX.I18n.get('SearchComposer_Group'),
+        config: {
+          format: 'composer',
+          fieldLabel: NX.I18n.get('SearchComposer_Vendor_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.composer.package',
+        group: NX.I18n.get('SearchComposer_Group'),
+        config: {
+          format: 'composer',
+          fieldLabel: NX.I18n.get('SearchComposer_Package_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'assets.attributes.composer.version',
+        group: NX.I18n.get('SearchComposer_Group'),
+        config: {
+          format: 'composer',
+          fieldLabel: NX.I18n.get('SearchComposer_Version_FieldLabel'),
+          width: 250
+        }
+      }
+    ], me);
+
     search.registerFilter({
       id: 'composer',
       name: 'Composer',
@@ -42,7 +72,9 @@ Ext.define('NX.coreui.controller.SearchComposer', {
       readOnly: true,
       criterias: [
         { id: 'format', value: 'composer', hidden: true },
-        { id: 'name.composer' }
+        { id: 'assets.attributes.composer.vendor' },
+        { id: 'assets.attributes.composer.package' },
+        { id: 'assets.attributes.composer.version' }
       ]
     }, me);
   }
