@@ -294,5 +294,10 @@ public class DatastoreOrphanedBlobFinderTest
     public void store() {
       throw new UnsupportedOperationException("Not implemented");
     }
+
+    @Override
+    public void writeProperties() {
+      throw new UnsupportedOperationException("Not implemented");
+    }
   }
 }

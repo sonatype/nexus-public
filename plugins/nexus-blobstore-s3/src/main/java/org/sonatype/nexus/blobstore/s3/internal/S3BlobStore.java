@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -327,6 +326,15 @@ public class S3BlobStore
       deleteQuietly(attributePath);
       throw new BlobStoreException(e, blobId);
     }
+  }
+
+  @Override
+  public S3BlobAttributes createBlobAttributesInstance(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics blobMetrics)
+  {
+    return new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId), headers, blobMetrics);
   }
 
   @Timed
@@ -935,7 +943,8 @@ public class S3BlobStore
   }
 
   private boolean isBlobZeroLength(final BlobId blobId) {
-    ObjectMetadata metadata = s3.getObjectMetadata(new GetObjectMetadataRequest(getConfiguredBucket(), contentPath(blobId)));
+    ObjectMetadata metadata =
+        s3.getObjectMetadata(new GetObjectMetadataRequest(getConfiguredBucket(), contentPath(blobId)));
     return s3.doesObjectExist(getConfiguredBucket(), contentPath(blobId)) && metadata.getContentLength() == 0;
   }
 

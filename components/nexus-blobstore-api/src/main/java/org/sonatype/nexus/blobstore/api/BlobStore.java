@@ -153,6 +153,16 @@ public interface BlobStore
    */
   default void createBlobAttributes(BlobId blobId, Map<String, String> headers, BlobMetrics blobMetrics) { }
 
+
+  /**
+   * Creates the new blob attributes instance
+   *
+   * @param blobId      the blob id
+   * @param headers     the headers of the blob, {@see BlobStore}
+   * @param metrics blob metrics
+   */
+  BlobAttributes createBlobAttributesInstance(BlobId blobId, Map<String, String> headers, BlobMetrics metrics);
+
   /**
    * Duplicates a blob within the blob store by copying the temp blob but with the provided headers. The blob must be
    * in this blob store; moving blobs between blob stores is not supported.

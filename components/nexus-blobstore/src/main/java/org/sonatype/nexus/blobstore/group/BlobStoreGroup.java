@@ -23,7 +23,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
@@ -119,10 +118,12 @@ public class BlobStoreGroup
   private Cache<BlobId, String> locatedBlobs;
 
   @Inject
-  public BlobStoreGroup(final BlobStoreManager blobStoreManager,
-                        final Map<String, Provider<FillPolicy>> fillPolicyProviders,
-                        final Provider<CacheHelper> cacheHelperProvider,
-                        @Named("${nexus.blobstore.group.blobId.cache.timeToLive:-2d}") final Time blobIdCacheTimeout) {
+  public BlobStoreGroup(
+      final BlobStoreManager blobStoreManager,
+      final Map<String, Provider<FillPolicy>> fillPolicyProviders,
+      final Provider<CacheHelper> cacheHelperProvider,
+      @Named("${nexus.blobstore.group.blobId.cache.timeToLive:-2d}") final Time blobIdCacheTimeout)
+  {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.fillPolicyProviders = checkNotNull(fillPolicyProviders);
     this.cacheHelperProvider = checkNotNull(cacheHelperProvider);
@@ -212,6 +213,19 @@ public class BlobStoreGroup
       throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create properties", null);
     }
     result.createBlobAttributes(blobId, headers, metrics);
+  }
+
+  @Override
+  public BlobAttributes createBlobAttributesInstance(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics metrics)
+  {
+    BlobStore result = fillPolicy.chooseBlobStore(this, headers);
+    if (result == null) {
+      throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create properties", null);
+    }
+    return result.createBlobAttributesInstance(blobId, headers, metrics);
   }
 
   @Override

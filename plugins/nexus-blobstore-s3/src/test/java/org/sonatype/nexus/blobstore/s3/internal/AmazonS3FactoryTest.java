@@ -119,6 +119,7 @@ public class AmazonS3FactoryTest
     when(secretsFactory.from("_1")).thenReturn(secretMock);
     when(secretMock.decrypt()).thenReturn("secretAccessKey".toCharArray());
     config.getAttributes().get("s3").put(SECRET_ACCESS_KEY_KEY, "_1");
+    config.getAttributes().get("s3").put("region", "us-west-2");
     config.getAttributes().get("s3").put(ACCESS_KEY_ID_KEY, "accessKeyId");
 
     amazonS3Factory.create(config);

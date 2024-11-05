@@ -363,11 +363,21 @@ public class FileBlobStore
     try {
       FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath, headers, blobMetrics);
       blobAttributes.store();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       // Something went wrong, clean up the file we created
       fileOperations.deleteQuietly(attributePath);
       throw new BlobStoreException(e, blobId);
     }
+  }
+
+  @Override
+  public FileBlobAttributes createBlobAttributesInstance(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics blobMetrics)
+  {
+    return new FileBlobAttributes(attributePath(blobId), headers, blobMetrics);
   }
 
   private Blob create(final Map<String, String> headers, final BlobIngester ingester, final BlobId blobId) {
@@ -670,7 +680,9 @@ public class FileBlobStore
     try {
       Date thresholdDate = DateUtils.addDays(new Date(), -daysOlderThan);
       AgeFileFilter ageFileFilter = new AgeFileFilter(thresholdDate);
-      Iterator<File> filesToDelete = iterateFiles(getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve(TMP).toFile(), ageFileFilter, ageFileFilter);
+      Iterator<File> filesToDelete =
+          iterateFiles(getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve(TMP).toFile(), ageFileFilter,
+              ageFileFilter);
       filesToDelete.forEachRemaining(f -> {
             try {
               forceDelete(f);
@@ -681,7 +693,7 @@ public class FileBlobStore
           }
       );
     }
-    catch (UncheckedIOException | NoSuchFileException e ) {
+    catch (UncheckedIOException | NoSuchFileException e) {
       log.debug("Tmp folder is empty: {}", e.getMessage());
     }
     catch (TaskInterruptedException e) {

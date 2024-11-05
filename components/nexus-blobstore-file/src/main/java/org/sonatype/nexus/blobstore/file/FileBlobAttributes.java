@@ -65,4 +65,9 @@ public class FileBlobAttributes
     writeTo(propertiesFile);
     propertiesFile.store();
   }
+
+  @Override
+  public void writeProperties(){
+    writeTo(propertiesFile);
+  }
 }
