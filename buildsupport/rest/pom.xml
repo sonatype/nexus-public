@@ -32,7 +32,7 @@
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.15.6.Final</resteasy.version>
     <swagger.version>1.6.11</swagger.version>
-    <snakeyaml.version>2.2</snakeyaml.version>
+    <snakeyaml.version>2.3</snakeyaml.version>
   </properties>
 
   <dependencyManagement>
