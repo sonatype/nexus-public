@@ -47,7 +47,6 @@ import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryD
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
-import org.apache.ibatis.annotations.Param;
 import org.apache.shiro.util.CollectionUtils;
 
 import static java.util.Arrays.stream;
