@@ -57,6 +57,9 @@
     </if>
   </select>
 
+  <select id="readByRecipe" resultType="ConfigurationData">
+    SELECT * FROM repository WHERE recipe_name = #{value} ORDER by id ASC;
+  </select>
 
   <update id="update" parameterType="ConfigurationData" useGeneratedKeys="true" keyProperty="id">
     UPDATE repository SET
