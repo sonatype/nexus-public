@@ -587,6 +587,11 @@ public class BlobStoreManagerImpl
   }
 
   @Override
+  public boolean existBlobFile(final BlobId blobId, final BlobStore blobStore) {
+    return blobStore.exists(blobId);
+  }
+
+  @Override
   public Blob moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
     checkNotNull(srcBlobStore);
     checkNotNull(destBlobStore);
