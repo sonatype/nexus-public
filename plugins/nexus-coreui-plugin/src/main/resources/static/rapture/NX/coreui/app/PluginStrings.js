@@ -322,6 +322,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchComposer_Text: 'Composer',
     SearchComposer_Description: 'Search for components in Composer repositories',
 
+    // Browse -> Search -> HuggingFace
+    SearchHuggingFace_Text: 'HuggingFace',
+    SearchHuggingFace_Description: 'Search for components in HuggingFace repositories',
+
     // Browse -> Upload
     FeatureGroups_Upload_Text: 'Upload',
     FeatureGroups_Upload_Description: 'Upload content to the repository',

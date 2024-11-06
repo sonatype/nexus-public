@@ -204,6 +204,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.SearchHuggingFace',
+      active: function () {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-huggingface');
+      }
+    },
+    {
       id: 'NX.coreui.controller.SearchMaven',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-maven');
