@@ -432,12 +432,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ConanProxyFacet_HelpText: 'Automatic migration from Conan 1 to Conan 2 is not available.',
     Repository_Facet_ConanProxyFacet_HelpLink: 'Read our <a href="https://links.sonatype.com/products/nxrm3/docs/conan-v2" target="_blank" style="font-weight: bold">documentation</a> for more details.',
     Repository_Facet_ConanGroupFacet_Title: 'Conan',
-    Repository_Facet_ConanGroupFacet_ProtocolVersion: 'Protocol version',
-    Repository_Facet_ConanGroupFacet_Version: 'Version',
-    Repository_Facet_ConanGroupFacet_V1: 'Conan V1',
-    Repository_Facet_ConanGroupFacet_V2: 'Conan V2',
-    Repository_Facet_ConanGroupFacet_HelpText: 'Automatic migration from Conan 1 to Conan 2 is not available.',
-    Repository_Facet_ConanGroupFacet_HelpLink: 'Read our <a href="https://links.sonatype.com/products/nxrm3/docs/conan-v2" target="_blank" style="font-weight: bold">documentation</a> for more details.',
 
     Repository_Facet_GroupFacet_Title: 'Group',
     Repository_Facet_NugetGroupFacet_NugetGroupValidationLabel: '<span style="color: red; ">Group repositories cannot include a mix of NuGet v2 and v3 members. You cannot add <b>{0}</b> ({1}) because the group contains <b>{2}</b> ({3}).</span>',

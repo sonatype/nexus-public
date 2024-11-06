@@ -121,7 +121,7 @@ public class GroupFacetImpl
    * @param groupConfig the group's config object
    * @return the validation failures or null
    */
-  protected ConstraintViolation<?> validateFormat(final Config groupConfig) { // NOSONAR
+  protected ConstraintViolation<?> validateFormat(final Config groupConfig) {
     // empty for subclasses to optionally override
     return null;
   }

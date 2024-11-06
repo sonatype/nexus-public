@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -338,6 +339,13 @@ public class RepositoryManagerImpl
   @Override
   public boolean exists(final String name) {
     return isRepositoryLoaded(name) || store.exists(name);
+  }
+
+  @Override
+  public Stream<Configuration> getConfigurations() {
+    return repositories.values()
+        .stream()
+        .map(Repository::getConfiguration);
   }
 
   @Nullable

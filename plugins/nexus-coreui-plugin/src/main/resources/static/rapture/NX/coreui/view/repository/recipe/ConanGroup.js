@@ -27,7 +27,6 @@ Ext.define('NX.coreui.view.repository.recipe.ConanGroup', {
   requires: [
     'NX.coreui.view.repository.facet.GroupFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.ConanGroupFacet'
   ],
 
   /**
@@ -37,7 +36,6 @@ Ext.define('NX.coreui.view.repository.recipe.ConanGroup', {
     const me = this;
 
     me.items = [
-      {xtype: 'nx-coreui-repository-conangroup-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-group-facet', format: 'conan', supportsGroupWrite: true }
     ];
