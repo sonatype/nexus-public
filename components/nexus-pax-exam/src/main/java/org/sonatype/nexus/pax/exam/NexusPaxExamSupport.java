@@ -799,6 +799,7 @@ public abstract class NexusPaxExamSupport
     testIndex.recordAndCopyLink("karaf.log", new File(logDir, "karaf.log"));
     testIndex.recordAndCopyLink("nexus.log", new File(logDir, "nexus.log"));
     testIndex.recordAndCopyLink("request.log", new File(logDir, "request.log"));
+    testIndex.recordAndCopyLink("outbound-request.log", new File(logDir, "outbound-request.log"));
     testIndex.recordAndCopyLink("jvm.log", new File(logDir, "jvm.log"));
 
     if ("true".equals(System.getProperty("it.nexus.recordTaskLogs"))) {
