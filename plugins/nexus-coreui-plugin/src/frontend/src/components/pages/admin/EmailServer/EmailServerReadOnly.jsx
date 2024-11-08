@@ -36,7 +36,7 @@ export default function EmailServerReadOnly() {
   const nexusTrustStoreEnabled = readOnlyCheckboxValueLabel(
     data.nexusTrustStoreEnabled
   );
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   const renderData = (label, value) => {
     const enable = value ? 'ENABLE' : 'NOT_ENABLE';

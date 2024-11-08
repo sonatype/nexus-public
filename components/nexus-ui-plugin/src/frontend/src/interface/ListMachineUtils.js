@@ -14,7 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign, actions, send, Machine} from 'xstate';
+import {actions, assign, createMachine, send} from 'xstate';
 
 import APIConstants from '../constants/APIConstants';
 
@@ -197,7 +197,8 @@ export default class ListMachineUtils {
         }),
 
         debounceApiFilter: actions.cancel('debounced-filter'),
-        apiFilter: send('API_FILTER', {
+        apiFilter: send({
+          type: 'API_FILTER',
           id: 'debounced-filter',
           delay: APIConstants.DEBOUNCE_DELAY,
         }),
@@ -219,7 +220,7 @@ export default class ListMachineUtils {
       }
     };
 
-    return Machine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
+    return createMachine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
   }
 
   /**

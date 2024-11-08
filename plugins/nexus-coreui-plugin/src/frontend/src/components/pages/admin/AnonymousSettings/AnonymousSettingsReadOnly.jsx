@@ -33,7 +33,7 @@ export default function AnonymousSettingsReadOnly() {
   const accessStatus = FormUtils.readOnlyCheckboxValueLabel(data.enabled);
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>

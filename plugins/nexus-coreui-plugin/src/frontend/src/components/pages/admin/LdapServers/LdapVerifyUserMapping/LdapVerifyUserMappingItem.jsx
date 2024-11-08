@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {NxModal, NxH2} from '@sonatype/react-shared-components';
 import {ReadOnlyField} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../../constants/UIStrings';
@@ -31,9 +31,9 @@ const {
 } = UIStrings;
 
 export default function LdapVerifyUserMappingItem({service}) {
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
 
-  const backToList = () => send('SHOW_LIST');
+  const backToList = () => send({type: 'SHOW_LIST'});
 
   const {item} = state.context;
 

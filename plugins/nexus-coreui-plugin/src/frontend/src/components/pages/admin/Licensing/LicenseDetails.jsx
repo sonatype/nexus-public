@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {
   NxReadOnly,
@@ -30,7 +30,7 @@ import UIStrings from '../../../../constants/UIStrings';
 const {LICENSING: {DETAILS: LABELS}, LICENSING} = UIStrings;
 
 export default function LicenseDetails({service}) {
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
 
   const {
     data: {
@@ -51,7 +51,7 @@ export default function LicenseDetails({service}) {
   const effectiveDateLabel = DateUtils.prettyDate(effectiveDate);
   const expirationDateLabel = DateUtils.prettyDate(expirationDate);
 
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   return (
       <NxTile>

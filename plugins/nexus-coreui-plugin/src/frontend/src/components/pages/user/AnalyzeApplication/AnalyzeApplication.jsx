@@ -35,23 +35,23 @@ export default function AnalyzeApplication(props) {
   const showAnalyze = !state.matches('loading') && !showEula;
 
   function handleAnalyzed() {
-    send('ANALYZED');
+    send({type: 'ANALYZED'});
   }
 
   function handleCancel() {
-    send('CANCEL');
+    send({type: 'CANCEL'});
   }
 
   function handleAccept() {
-    send('EULA_ACCEPTED');
+    send({type: 'EULA_ACCEPTED'});
   }
 
   function handleDecline() {
-    send('EULA_DECLINED');
+    send({type: 'EULA_DECLINED'});
   }
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   // This is needed to allow ExtJs to rerender the window 'after' React has rendered its components onto the DOM

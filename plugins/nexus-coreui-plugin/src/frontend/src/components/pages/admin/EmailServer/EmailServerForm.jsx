@@ -37,7 +37,7 @@ export default function EmailServerForm({ parentMachine }) {
     isPristine
   } = state.context;
 
-  const discard = () => send('RESET');
+  const discard = () => send({type: 'RESET'});
 
   const remoteUrl = !isEmpty(data.host) ? `https://${data.host}:${data.port}` : '';
 

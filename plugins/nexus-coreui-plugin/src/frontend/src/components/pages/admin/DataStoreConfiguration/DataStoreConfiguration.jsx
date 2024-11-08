@@ -44,7 +44,7 @@ export default function DataStoreConfiguration() {
   });
 
   const {isPristine, data} = state.context;
-  const discard = () => send('RESET');
+  const discard = () => send({type: 'RESET'});
 
   return (
     <Page>

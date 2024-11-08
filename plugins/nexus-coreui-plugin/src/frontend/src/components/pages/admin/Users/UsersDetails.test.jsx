@@ -569,8 +569,7 @@ describe('UsersDetails', function() {
 
     expect(Axios.post).toHaveBeenCalledWith(createUserUrl, expect.anything());
 
-    waitFor(() => expect(NX.Messages.error).toHaveBeenCalledWith(UIStrings.ERROR.SAVE_ERROR));
-    expect(screen.getByText(new RegExp(message))).toBeInTheDocument();
+    await waitFor(() => expect(selectors.querySaveErrorAlert()).toHaveTextContent(message));
   });
 
   it('fires onDone when cancelled', async function() {

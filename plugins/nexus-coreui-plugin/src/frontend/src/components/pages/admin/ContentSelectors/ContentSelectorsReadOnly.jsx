@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {FormUtils, Section} from '@sonatype/nexus-ui-plugin';
 
@@ -27,7 +27,7 @@ import {
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function ContentSelectorsReadOnly({service, onDone}) {
-  const [state] = useService(service);
+  const [state] = useActor(service);
 
   const {data} = state.context;
 

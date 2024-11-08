@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine, useService} from '@xstate/react';
+import {useMachine, useActor} from '@xstate/react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 import {
@@ -31,7 +31,7 @@ import UIStrings from '../../../../../constants/UIStrings';
 const AZURE = UIStrings.BLOB_STORES.AZURE;
 
 export default function AzureBlobStoreSettings({service}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
   const {bucketConfiguration = {}} = current.context.data;
 
   const [azureState, sendAzureEvent] = useMachine(AzureBlobStoreSettingsMachine, {

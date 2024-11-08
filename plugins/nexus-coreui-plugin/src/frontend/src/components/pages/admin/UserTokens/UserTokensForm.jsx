@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {faKey} from '@fortawesome/free-solid-svg-icons';
 
 import {ExtJS, Permissions, FormUtils} from '@sonatype/nexus-ui-plugin';
@@ -49,7 +49,7 @@ const {
 export default function UserTokensForm({service}) {
   const canDelete = ExtJS.checkPermission(Permissions.USER_TOKENS_USERS.DELETE);
 
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
 
   const resetConfirmation = state.matches('resetConfirmation');
 
@@ -59,8 +59,8 @@ export default function UserTokensForm({service}) {
     pristineData: {enabled: enabledSaved}
   } = state.context;
 
-  const discard = () => send('RESET');
-  const showResetConfirmation = () => send('RESET_CONFIRMATION');
+  const discard = () => send({type: 'RESET'});
+  const showResetConfirmation = () => send({type: 'RESET_CONFIRMATION'});
   const setEnabled = (value) => send({type: 'SET_ENABLED', value});
   const showUserTokenExpiryChangesModal = state.matches('showUserTokenExpiryChangesModal');
   const save = () => send('SAVE');

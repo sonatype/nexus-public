@@ -57,13 +57,13 @@ export default function TasksList({onCreate, onEdit}) {
   const lastRunSortDir = ListMachineUtils.getSortDirection('lastRun', state.context);
   const lastRunResultSortDir = ListMachineUtils.getSortDirection('lastRunResult', state.context);
 
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByTypeName = () => send('SORT_BY_TYPE_NAME');
-  const sortByStatusDescription = () => send('SORT_BY_STATUS_DESCRIPTION');
-  const sortBySchedule = () => send('SORT_BY_SCHEDULE');
-  const sortByNextRun = () => send('SORT_BY_NEXT_RUN');
-  const sortByLastRun = () => send('SORT_BY_LAST_RUN');
-  const sortByLastRunResult = () => send('SORT_BY_LAST_RUN_RESULT');
+  const sortByName = () => send({type: 'SORT_BY_NAME'});
+  const sortByTypeName = () => send({type: 'SORT_BY_TYPE_NAME'});
+  const sortByStatusDescription = () => send({type: 'SORT_BY_STATUS_DESCRIPTION'});
+  const sortBySchedule = () => send({type: 'SORT_BY_SCHEDULE'});
+  const sortByNextRun = () => send({type: 'SORT_BY_NEXT_RUN'});
+  const sortByLastRun = () => send({type: 'SORT_BY_LAST_RUN'});
+  const sortByLastRunResult = () => send({type: 'SORT_BY_LAST_RUN_RESULT'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
   const canCreate = canCreateTask();

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useMachine, useService} from '@xstate/react';
+import {useMachine, useActor} from '@xstate/react';
 import {faTrash} from "@fortawesome/free-solid-svg-icons";
 import {faAtlassian} from '@fortawesome/free-brands-svg-icons';
 import CrowdSettingsMachine from './CrowdSettingsMachine';
@@ -40,21 +40,21 @@ export default function CrowdSettings() {
 }
 
 export function CrowdSettingsForm({service}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
 
   const {data, isPristine, validationErrors} = current.context;
   const isInvalid = FormUtils.isInvalid(validationErrors);
 
   function discard() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   function verifyConnection() {
-    send('VERIFY-CONNECTION');
+    send({type: 'VERIFY-CONNECTION'});
   }
 
   function clearCache() {
-    send('CLEAR-CACHE');
+    send({type: 'CLEAR-CACHE'});
   }
 
   return <Page>

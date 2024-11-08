@@ -33,7 +33,7 @@ export default function FreezeAction() {
 
   const {frozen} = state.context;
 
-  const openModal = () => send('CONFIRM');
+  const openModal = () => send({type: 'CONFIRM'});
 
   const isConfirming = state.matches('confirm');
   const isToggling = state.matches('toggling') || state.matches('releasing');

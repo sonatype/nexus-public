@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {createContext, useContext} from 'react';
-import {useInterpret, useService} from '@xstate/react';
+import {useInterpret, useActor} from '@xstate/react';
 import RepositoriesListMachine from './RepositoriesListMachine';
 
 const RepositoriesContext = createContext({});
@@ -28,5 +28,5 @@ export default function RepositoriesContextProvider(props) {
 
 export const useRepositoriesService = () => {
   const context = useContext(RepositoriesContext);
-  return useService(context.service);
+  return useActor(context.service);
 }

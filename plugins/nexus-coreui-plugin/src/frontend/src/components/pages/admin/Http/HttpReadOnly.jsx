@@ -37,7 +37,7 @@ export default function HttpReadOnly() {
   const isLoading = current.matches('loading');
   const nonProxyHosts = data.nonProxyHosts || [];
 
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   return (
     <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>

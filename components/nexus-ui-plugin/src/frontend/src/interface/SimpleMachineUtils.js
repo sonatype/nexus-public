@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import Axios from 'axios';
-import {assign, Machine} from 'xstate';
+import {assign, createMachine} from 'xstate';
 import {useMachine} from '@xstate/react';
 
 export default function useSimpleMachine({
@@ -29,7 +29,7 @@ export default function useSimpleMachine({
 
   const load = (eventPayload = {}) => send({type: 'LOAD_DATA', ...eventPayload});
 
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   const isLoading = current.matches('loading');
 
@@ -37,7 +37,7 @@ export default function useSimpleMachine({
 }
 
 const getSimpleMachine = (id, url, initial) =>
-  Machine(
+  createMachine(
     {
       id,
       initial,

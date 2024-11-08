@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, { useState, useEffect } from 'react';
-import { useService } from '@xstate/react';
+import {useActor} from '@xstate/react';
 import { FormUtils } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../../constants/UIStrings';
 import { NxFieldset, NxFileUpload, NxFormGroup, NxRadio, NxTextInput, NxCheckbox } from '@sonatype/react-shared-components';
@@ -19,7 +19,7 @@ import { NxFieldset, NxFileUpload, NxFormGroup, NxRadio, NxTextInput, NxCheckbox
 const GOOGLE = UIStrings.BLOB_STORES.GOOGLE;
 
 export default function GoogleBlobStoreSettings({ service }) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
   const { bucketConfiguration = {} } = current.context.data;
   const { pristineData } = current.context;
 

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {Fragment} from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {
   NxButton,
@@ -30,7 +30,7 @@ import UIStrings from '../../../../constants/UIStrings';
 const {PRIVILEGES: {FORM: LABELS}} = UIStrings;
 
 export default function PrivilegesReadOnly({service, onDone}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
 
   const {
     data,
@@ -44,7 +44,7 @@ export default function PrivilegesReadOnly({service, onDone}) {
 
   const cancel = () => onDone();
 
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
     <NxTile.Content>

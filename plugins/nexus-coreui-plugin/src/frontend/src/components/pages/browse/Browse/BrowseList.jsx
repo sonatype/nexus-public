@@ -58,7 +58,7 @@ export default function BrowseList({onEdit, copyUrl = doCopyUrl}) {
   const [state, send] = useRepositoriesService();
 
   useEffect(() => {
-    send('LOAD');
+    send({type: 'LOAD'});
   }, []);
 
   const {data, error, filter: filterText} = state.context;
@@ -68,10 +68,10 @@ export default function BrowseList({onEdit, copyUrl = doCopyUrl}) {
   const typeSortDir = ListMachineUtils.getSortDirection('type', state.context);
   const formatSortDir = ListMachineUtils.getSortDirection('format', state.context);
   const statusSortDir = ListMachineUtils.getSortDirection('status', state.context);
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByType = () => send('SORT_BY_TYPE');
-  const sortByFormat = () => send('SORT_BY_FORMAT');
-  const sortByStatus = () => send('SORT_BY_STATUS');
+  const sortByName = () => send({type: 'SORT_BY_NAME'});
+  const sortByType = () => send({type: 'SORT_BY_TYPE'});
+  const sortByFormat = () => send({type: 'SORT_BY_FORMAT'});
+  const sortByStatus = () => send({type: 'SORT_BY_STATUS'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 

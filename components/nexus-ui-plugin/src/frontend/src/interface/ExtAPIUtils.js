@@ -21,6 +21,7 @@ import {useMachine} from '@xstate/react';
 import {mergeDeepRight} from 'ramda';
 import UIStrings from '../constants/UIStrings';
 import APIConstants from '../constants/APIConstants';
+import {useState} from "react";
 
 const {EXT: {URL, SMALL_PAGE_SIZE}, SORT_DIRECTIONS: {ASC}} = APIConstants;
 
@@ -28,7 +29,7 @@ export default class ExtAPIUtils {
   static useExtMachine(action, method, options = {}) {
     const defaultResult = options.defaultResult || [];
 
-    const machine = createMachine({
+    const [machine] = useState(createMachine({
       id: `ExtMachine(${action}, ${method})`,
 
       initial: options.initial || 'loaded',
@@ -73,7 +74,7 @@ export default class ExtAPIUtils {
           return this.extractResult(response, defaultResult);
         }
       }
-    });
+    }));
 
     return useMachine(machine, mergeDeepRight({
       context: {

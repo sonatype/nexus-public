@@ -74,7 +74,7 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
   }
 
   function save() {
-    send('SAVE');
+    send({type: 'SAVE'});
   }
 
   function handleEnter(event) {
@@ -84,11 +84,11 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
   }
 
   function cancel() {
-    send('CANCEL');
+    send({type: 'CANCEL'});
   }
 
   function reset() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   return <Page className="nxrm-logging-configuration">

@@ -54,10 +54,10 @@ export default function PrivilegesList({onCreate, onEdit}) {
   const typeSortDir = ListMachineUtils.getSortDirection('type', current.context);
   const permissionSortDir = ListMachineUtils.getSortDirection('permission', current.context);
 
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByDescription = () => send('SORT_BY_DESCRIPTION');
-  const sortByType = () => send('SORT_BY_TYPE');
-  const sortByPermission = () => send('SORT_BY_PERMISSION');
+  const sortByName = () => send({type: 'SORT_BY_NAME'});
+  const sortByDescription = () => send({type: 'SORT_BY_DESCRIPTION'});
+  const sortByType = () => send({type: 'SORT_BY_TYPE'});
+  const sortByPermission = () => send({type: 'SORT_BY_PERMISSION'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
   const canCreate = ExtJS.checkPermission('nexus:privileges:create');

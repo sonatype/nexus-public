@@ -94,7 +94,8 @@ const Field = ({id, dynamicProps, current:parentState, onChange}) => {
             error: null,
           }),
           debounceApiCall: actions.cancel('debounced-api-call'),
-          doFetch: send('FETCH', {
+          doFetch: send({
+            type: 'FETCH',
             id: 'debounced-api-call',
             delay: APIConstants.DEBOUNCE_DELAY,
           }),

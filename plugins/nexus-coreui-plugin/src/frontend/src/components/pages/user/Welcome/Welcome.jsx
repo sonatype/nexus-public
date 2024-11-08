@@ -70,7 +70,7 @@ export default function Welcome() {
       isAdmin = user?.administrator;
 
   function load() {
-    send('LOAD');
+    send({type: 'LOAD'});
   }
 
   const onLoad = () => {

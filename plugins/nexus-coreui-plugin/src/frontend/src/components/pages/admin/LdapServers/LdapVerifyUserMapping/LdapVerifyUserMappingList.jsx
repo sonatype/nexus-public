@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {NxModal, NxH2, NxTable} from '@sonatype/react-shared-components';
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -30,14 +30,14 @@ const {
 } = UIStrings;
 
 export default function LdapVerifyUserMappingList({service}) {
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
 
   const {data = [], error} = state.context;
 
   const isLoading = state.matches('loading');
 
   const showItem = (itemIndex) => send({type: 'SHOW_ITEM', itemIndex});
-  const retryHandler = () => send('RETRY');
+  const retryHandler = () => send({type: 'RETRY'});
 
   return (
     <>

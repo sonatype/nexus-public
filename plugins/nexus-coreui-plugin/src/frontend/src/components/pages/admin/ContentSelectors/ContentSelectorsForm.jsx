@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -34,7 +34,7 @@ import ContentSelectorsPreview from './ContentSelectorsPreview';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function ContentSelectorsForm({service, onDone}) {
-  const stateMachine = useService(service);
+  const stateMachine = useActor(service);
   const [state, send] = stateMachine;
 
   const {pristineData, data, loadError} = state.context;
@@ -47,7 +47,7 @@ export default function ContentSelectorsForm({service, onDone}) {
   }
 
   function confirmDelete() {
-    send('CONFIRM_DELETE');
+    send({type: 'CONFIRM_DELETE'});
   }
   
   return <>

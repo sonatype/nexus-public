@@ -42,23 +42,23 @@ export default function AnalyzeApplicationModal(props) {
   const isLoading = state.matches('loading');
 
   function handleAssetChange(value) {
-    send('ASSET', {data: {'selectedAsset': value}});
+    send({type: 'ASSET', data: {'selectedAsset': value}});
   }
 
   function handleUpdate(event) {
-    send('UPDATE', {data: {[event.target.name]: event.target.value}});
+    send({type: 'UPDATE', data: {[event.target.name]: event.target.value}});
   }
 
   function handleAnalyze() {
-    send('ANALYZE');
+    send({type: 'ANALYZE'});
   }
 
   function handleCancel() {
-    send('CANCEL');
+    send({type: 'CANCEL'});
   }
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   return <NxModal onCancel={handleCancel}>

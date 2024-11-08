@@ -55,9 +55,9 @@ export default function LdapServerUserAndGroupForm({actor, onDone}) {
   const updateTemplate = (value) =>
     send({type: 'UPDATE_TEMPLATE', value});
   const setSystemPassword = (value) => send({type: 'SET_PASSWORD', name: 'authPassword', value})
-  const verifyLogin = () => send('VERIFY_LOGIN');
-  const verifyUserMapping = () => send('VERIFY_USER_MAPPING');
-  const cancel = () => send('CANCEL');
+  const verifyLogin = () => send({type: 'VERIFY_LOGIN'});
+  const verifyUserMapping = () => send({type: 'VERIFY_USER_MAPPING'});
+  const cancel = () => send({type: 'CANCEL'});
 
   return (
     <NxTile.Content>

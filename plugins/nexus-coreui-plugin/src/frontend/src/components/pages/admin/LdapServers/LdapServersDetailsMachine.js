@@ -162,7 +162,7 @@ export default FormUtils.buildFormMachine({
       return context;
     }),
     clearPassword: assign((context) =>
-      context.userAndGroup.send('CLEAR_PASSWORD')
+      context.userAndGroup.send({type: 'CLEAR_PASSWORD'})
     ),
     connectionStatus: assign((context, event) => {
       const isCorrect = event.data?.data?.result.success;

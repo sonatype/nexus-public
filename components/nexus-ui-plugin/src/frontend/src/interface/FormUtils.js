@@ -14,11 +14,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {assign, Machine} from 'xstate';
+import {assign, createMachine} from 'xstate';
 import ExtJS from './ExtJS';
 import UIStrings from '../constants/UIStrings';
 import Utils from './Utils';
-import {hasPath, join, lensPath, path, pathOr, set, whereEq, dissocPath, any} from 'ramda';
+import {any, dissocPath, hasPath, join, lensPath, path, pathOr, set, whereEq} from 'ramda';
 
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
@@ -306,7 +306,7 @@ export default class FormUtils {
       }
     };
 
-    return Machine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
+    return createMachine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
   }
 
   /**
@@ -391,8 +391,8 @@ export default class FormUtils {
     const submitMaskMessage = UIStrings.SAVING;
     const submitMaskState = FormUtils.submitMaskState(state);
 
-    const doLoad = () => send('RETRY');
-    const onSubmit = () => send('SAVE');
+    const doLoad = () => send({type: 'RETRY'});
+    const onSubmit = () => send({type: 'SAVE'});
 
     let submitError = saveError;
     if (!submitError && FormUtils.isInvalid(saveErrors)) {

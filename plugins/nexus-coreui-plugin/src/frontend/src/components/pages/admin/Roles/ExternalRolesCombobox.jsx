@@ -29,7 +29,7 @@ export default function ExternalRolesCombobox({actor, parentMachine}) {
 
   const {data, query, error, externalRoleType, ldapQueryCharacterLimit} = state.context;
   const isLoading = state.matches('loading');
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
   const [parentState, sendParent] = parentMachine;
 
   const lowercaseQuery = query.toLowerCase();

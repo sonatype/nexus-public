@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {
   FormUtils,
@@ -38,7 +38,7 @@ import UIStrings from '../../../../constants/UIStrings';
 const {PRIVILEGES: {FORM: LABELS}} = UIStrings;
 
 export default function PrivilegesForm({itemId, service, onDone}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
 
   const {
     data: {type, readOnly},
@@ -56,7 +56,7 @@ export default function PrivilegesForm({itemId, service, onDone}) {
 
   const cancel = () => onDone();
 
-  const confirmDelete = () => send('CONFIRM_DELETE');
+  const confirmDelete = () => send({type: 'CONFIRM_DELETE'});
 
   const setType = privilegeType => send({type: 'SET_TYPE', privilegeType});
 

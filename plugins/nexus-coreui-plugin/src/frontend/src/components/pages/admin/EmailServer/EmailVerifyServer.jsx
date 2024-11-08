@@ -36,7 +36,7 @@ export default function EmailVerifyServer({actor}) {
   const isInvalid = FormUtils.isInvalid(validationErrors);
   const disabled = isInvalid || isSaving || ValidationUtils.isBlank(data.email);
 
-  const onTest = () => send('SAVE');
+  const onTest = () => send({type: 'SAVE'});
 
   const handleEnter = (event) => {
     if (event.key === 'Enter') {

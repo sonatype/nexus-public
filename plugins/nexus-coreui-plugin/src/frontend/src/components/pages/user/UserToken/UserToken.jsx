@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {useEffect} from 'react';
-import {useMachine, useService} from '@xstate/react';
+import {useMachine, useActor} from '@xstate/react';
 import {faKey, faLock} from '@fortawesome/free-solid-svg-icons';
 import {isNil} from 'ramda';
 
@@ -59,7 +59,7 @@ export default function UserToken() {
 }
 
 export function UserTokenForm({service}) {
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
 
   const {data, error, token} = state.context;
   const isLoading = !(state.matches('loaded') || state.matches('showToken'));
@@ -69,22 +69,22 @@ export function UserTokenForm({service}) {
   const showUserTokenStatus = !isNil(expirationTimestamp) || isExpired;
 
   function onAccessTokenClick() {
-    send('ACCESS');
+    send({type: 'ACCESS'});
   }
 
   function onResetTokenClick() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   function onGenerateTokenClick() {
     send('GENERATE');
   }
   function onCloseClick() {
-    send('HIDE');
+    send({type: 'HIDE'});
   }
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   return <Page>

@@ -65,10 +65,10 @@ export default function SslCertificatesList({onCreate, onEdit}) {
   );
   const fingerprintSortDir = ListMachineUtils.getSortDirection('fingerprint', current.context);
 
-  const sortBySubjectCommonName = () => send('SORT_BY_SUBJECT_COMMON_NAME');
-  const sortBySubjectOrganization = () => send('SORT_BY_SUBJECT_ORGANIZATION');
-  const sortByIssuerOrganization = () => send('SORT_BY_ISSUER_ORGANIZATION');
-  const sortByFingerprint = () => send('SORT_BY_FINGERPRINT');
+  const sortBySubjectCommonName = () => send({type: 'SORT_BY_SUBJECT_COMMON_NAME'});
+  const sortBySubjectOrganization = () => send({type: 'SORT_BY_SUBJECT_ORGANIZATION'});
+  const sortByIssuerOrganization = () => send({type: 'SORT_BY_ISSUER_ORGANIZATION'});
+  const sortByFingerprint = () => send({type: 'SORT_BY_FINGERPRINT'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 

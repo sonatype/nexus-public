@@ -37,7 +37,7 @@ export default function IqServerReadOnly() {
   const showLink = FormUtils.readOnlyCheckboxValueLabel(data.showLink);
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>

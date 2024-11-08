@@ -32,7 +32,7 @@ export default function ProprietaryRepositories() {
   const {data: {enabledRepositories}, possibleRepos, isPristine} = current.context;
 
   function discard() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   const repositories = possibleRepos?.map((it) => ({id: it.id, displayName: it.name})) || [];

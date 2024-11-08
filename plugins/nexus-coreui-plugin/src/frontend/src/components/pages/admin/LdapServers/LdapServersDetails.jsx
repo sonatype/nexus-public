@@ -62,7 +62,7 @@ export default function LdapServersDetails({itemId, onDone}) {
 
   const onTabSelectedEditMode = (value) => {
     if (TABS_INDEX.CREATE_CONNECTION === value) {
-      send('CREATE_CONNECTION');
+      send({type: 'CREATE_CONNECTION'});
     }
 
     if (TABS_INDEX.USER_AND_GROUP === value && !isNil(ref.current)) {
@@ -74,11 +74,11 @@ export default function LdapServersDetails({itemId, onDone}) {
 
   const onTabSelectedReadOnlyMode = (value) => {
     if (TABS_INDEX.CREATE_CONNECTION === value) {
-      send('CREATE_CONNECTION');
+      send({type: 'CREATE_CONNECTION'});
     }
 
     if (TABS_INDEX.USER_AND_GROUP === value) {
-      send('NEXT');
+      send({type: 'NEXT'});
     }
   };
 

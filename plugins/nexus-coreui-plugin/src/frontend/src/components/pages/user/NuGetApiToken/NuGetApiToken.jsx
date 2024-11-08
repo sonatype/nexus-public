@@ -28,19 +28,19 @@ export default function NuGetApiToken() {
   const showNugetModal = state.matches('showToken');
 
   function handleAccessKey() {
-    send('ACCESS');
+    send({type: 'ACCESS'});
   }
 
   function handleResetKey() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   function handleCloseKey() {
-    send('HIDE');
+    send({type: 'HIDE'});
   }
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   return <Page>

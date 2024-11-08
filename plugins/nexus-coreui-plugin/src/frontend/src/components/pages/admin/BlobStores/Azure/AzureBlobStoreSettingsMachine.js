@@ -16,11 +16,11 @@
  */
 
 import axios from 'axios';
-import {assign, Machine} from 'xstate';
+import {assign, createMachine} from 'xstate';
 
 const TEST_CONNECTION_URL = 'service/rest/internal/ui/azureblobstore/test-connection';
 
-export default Machine({
+export default createMachine({
   id: 'AzureBlobStoreSettingsMachine',
   initial: 'editing',
   context: {

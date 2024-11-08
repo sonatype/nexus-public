@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {indexBy, prop} from 'ramda';
 
 import {
@@ -32,7 +32,7 @@ import {STATUSES, isExternalUser} from './UsersHelper';
 const {USERS: {FORM: LABELS}} = UIStrings;
 
 export default function UsersReadOnly({service, onDone}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
 
   const {
     data,
@@ -48,7 +48,7 @@ export default function UsersReadOnly({service, onDone}) {
 
   const cancel = () => onDone();
 
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
     <NxTile.Content>

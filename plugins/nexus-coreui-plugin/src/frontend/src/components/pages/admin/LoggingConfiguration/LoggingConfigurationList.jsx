@@ -52,11 +52,11 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
   const levelSortDir = ListMachineUtils.getSortDirection('level', current.context);
 
   function filter(value) {
-    send('FILTER', {filter: value});
+    send({type: 'FILTER', filter: value});
   }
 
   function reset() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   return <Page className="nxrm-logging-configuration">
@@ -85,10 +85,10 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
         <NxTable>
           <NxTableHead>
             <NxTableRow>
-              <NxTableCell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_NAME'})} isSortable sortDir={nameSortDir}>
                 {UIStrings.LOGGING.NAME_LABEL}
               </NxTableCell>
-              <NxTableCell onClick={() => send('SORT_BY_LEVEL')} isSortable sortDir={levelSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_LEVEL'})} isSortable sortDir={levelSortDir}>
                 {UIStrings.LOGGING.LEVEL_LABEL}
               </NxTableCell>
               <NxTableCell chevron/>

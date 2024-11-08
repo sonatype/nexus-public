@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {NxFilterInput, NxTable} from '@sonatype/react-shared-components';
 import {
   ContentBody,
@@ -25,7 +25,7 @@ import {faPuzzlePiece} from '@fortawesome/free-solid-svg-icons';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function BundlesList ({ onEdit, service }) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
   const isLoading = current.matches('loading');
   const data = current.context.data;
   const filterText = current.context.filter;
@@ -38,7 +38,7 @@ export default function BundlesList ({ onEdit, service }) {
   const versionSortDir = ListMachineUtils.getSortDirection('version', current.context);
 
   function filter(value) {
-    send('FILTER', {filter: value});
+    send({type: 'FILTER', filter: value});
   }
 
   return (
@@ -52,19 +52,19 @@ export default function BundlesList ({ onEdit, service }) {
           <NxTable>
             <NxTable.Head>
               <NxTable.Row>
-                <NxTable.Cell onClick={() => send('SORT_BY_ID')} isSortable sortDir={idSortDir}>
+                <NxTable.Cell onClick={() => send({type: 'SORT_BY_ID'})} isSortable sortDir={idSortDir}>
                   {UIStrings.BUNDLES.LIST.ID_LABEL}
                 </NxTable.Cell>
-                <NxTable.Cell onClick={() => send('SORT_BY_STATE')} isSortable sortDir={stateSortDir}>
+                <NxTable.Cell onClick={() => send({type: 'SORT_BY_STATE'})} isSortable sortDir={stateSortDir}>
                   {UIStrings.BUNDLES.LIST.STATE_LABEL}
                 </NxTable.Cell>
-                <NxTable.Cell onClick={() => send('SORT_BY_START_LEVEL')} isSortable sortDir={levelSortDir}>
+                <NxTable.Cell onClick={() => send({type: 'SORT_BY_START_LEVEL'})} isSortable sortDir={levelSortDir}>
                   {UIStrings.BUNDLES.LIST.LEVEL_LABEL}
                 </NxTable.Cell>
-                <NxTable.Cell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
+                <NxTable.Cell onClick={() => send({type: 'SORT_BY_NAME'})} isSortable sortDir={nameSortDir}>
                   {UIStrings.BUNDLES.LIST.NAME_LABEL}
                 </NxTable.Cell>
-                <NxTable.Cell onClick={() => send('SORT_BY_VERSION')} isSortable sortDir={versionSortDir}>
+                <NxTable.Cell onClick={() => send({type: 'SORT_BY_VERSION'})} isSortable sortDir={versionSortDir}>
                   {UIStrings.BUNDLES.LIST.VERSION_LABEL}
                 </NxTable.Cell>
                 <NxTable.Cell chevron />

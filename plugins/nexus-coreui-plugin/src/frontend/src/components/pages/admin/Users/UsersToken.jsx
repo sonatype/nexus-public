@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {
   NxH2,
   NxTile,
@@ -33,7 +33,7 @@ const {
 import ConfirmAdminPasswordForm from './ConfirmAdminPasswordForm';
 
 export default function UsersToken({service}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
   const activeCapabilities =
     ExtJS.state().getValue('capabilityActiveTypes') || [];
   const isCapabilityActive = activeCapabilities.includes('usertoken');
@@ -44,7 +44,7 @@ export default function UsersToken({service}) {
 
   const reset = () => {
     if (canReset) {
-      send('RESET_TOKEN');
+      send({type: 'RESET_TOKEN'});
     }
   };
 

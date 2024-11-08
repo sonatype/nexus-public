@@ -42,12 +42,12 @@ export default function ContentSelectorsPreview({type, expression}) {
   const isLoading = state.matches('loading');
   const isLoadingPreview = state.matches('preview');
 
-  const repositoryChangeHandler = (repositories) => send('SET_REPOSITORIES', {repositories});
-  const previewHandler = () => send('PREVIEW', {selectorType: type, expression});
-  const filter = (value) => send('FILTER', {filter: value});
+  const repositoryChangeHandler = (repositories) => send({type: 'SET_REPOSITORIES', repositories});
+  const previewHandler = () => send({type: 'PREVIEW', selectorType: type, expression});
+  const filter = (value) => send({type: 'FILTER', filter: value});
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   return <Section className="nxrm-content-selectors-preview">

@@ -75,30 +75,30 @@ export default function LogViewer({itemId}) {
   function onChangePeriod(period) {
     const newPeriod = Number(period);
     if (period == 0) {
-      send('MANUAL_REFRESH', {period});
+      send({type: 'MANUAL_REFRESH', period});
     }
     else {
-      send('UPDATE_PERIOD', {period: newPeriod});
+      send({type: 'UPDATE_PERIOD', period: newPeriod});
     }
   }
 
   function onChangeSize(size) {
-    send('UPDATE_SIZE', {size});
+    send({type: 'UPDATE_SIZE', size});
   }
 
   function updateMark(value) {
-    send('UPDATE_MARK', {mark: value});
+    send({type: 'UPDATE_MARK', mark: value});
   }
 
   function onMarkKeyPress(event) {
     if (event.key === 'Enter') {
       event.preventDefault();
-      send('INSERT_MARK');
+      send({type: 'INSERT_MARK'});
     }
   }  
 
   function insertMark() {
-    send('INSERT_MARK');
+    send({type: 'INSERT_MARK'});
   }
 
   return <Page>
