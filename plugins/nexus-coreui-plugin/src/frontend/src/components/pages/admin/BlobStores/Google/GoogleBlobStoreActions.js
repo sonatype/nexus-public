@@ -21,6 +21,9 @@ export default {
     bucketConfiguration: {
       bucketSecurity: {
         authenticationMethod: 'applicationDefault'
+      },
+      encryption: {
+        encryptionType: 'default'
       }
     }
   }),
@@ -40,6 +43,12 @@ export default {
     if (data.bucketConfiguration?.bucketSecurity?.authenticationMethod === 'accountKey' && !isEdit) {
       validationErrors.bucketConfiguration.bucketSecurity = {
         file: ValidationUtils.validateNotBlank(data.bucketConfiguration?.bucketSecurity.file)
+      }
+    }
+
+    if (data.bucketConfiguration?.encryption?.encryptionType === 'kmsManagedEncryption') {
+      validationErrors.bucketConfiguration.encryption = {
+        encryptionKey: ValidationUtils.validateNotBlank(data.bucketConfiguration?.encryption.encryptionKey)
       }
     }
 

@@ -10,19 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {useService} from '@xstate/react';
-
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import React, { useState, useEffect } from 'react';
+import { useService } from '@xstate/react';
+import { FormUtils } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../../constants/UIStrings';
-import {NxFieldset, NxFileUpload, NxFormGroup, NxRadio, NxTextInput} from '@sonatype/react-shared-components';
+import { NxFieldset, NxFileUpload, NxFormGroup, NxRadio, NxTextInput, NxCheckbox } from '@sonatype/react-shared-components';
 
 const GOOGLE = UIStrings.BLOB_STORES.GOOGLE;
 
-export default function GoogleBlobStoreSettings({service}) {
+export default function GoogleBlobStoreSettings({ service }) {
   const [current, send] = useService(service);
-  const {bucketConfiguration = {}} = current.context.data;
-  const {pristineData} = current.context;
+  const { bucketConfiguration = {} } = current.context.data;
+  const { pristineData } = current.context;
 
   function bucketField(field) {
     return `bucketConfiguration.bucket.${field}`;
@@ -32,61 +31,103 @@ export default function GoogleBlobStoreSettings({service}) {
     return `bucketConfiguration.bucketSecurity.${field}`;
   }
 
+  function encryptionField(field) {
+    return `bucketConfiguration.encryption.${field}`;
+  }
+
   const setFiles = (file) => {
-    send({type: 'SET_FILES',  file});
+    send({ type: 'SET_FILES', file });
   };
 
   const isEdit = Boolean(pristineData.name);
 
-  return <div className="nxrm-google-blobstore">
-    <NxFormGroup {...GOOGLE.PROJECT_ID}>
-        <NxTextInput
-            {...FormUtils.fieldProps(bucketField('projectId'), current)}
-            onChange={FormUtils.handleUpdate(bucketField('projectId'), send)}
-        />
-    </NxFormGroup>
-    <NxFormGroup {...GOOGLE.BUCKET} isRequired>
-      <NxTextInput
-          {...FormUtils.fieldProps(bucketField('name'), current)}
-          onChange={FormUtils.handleUpdate(bucketField('name'), send)}/>
-    </NxFormGroup>
-    <NxFormGroup {...GOOGLE.PREFIX}>
-      <NxTextInput
-                 {...FormUtils.fieldProps(bucketField('prefix'), current)}
-                 onChange={FormUtils.handleUpdate(bucketField('prefix'), send)}/>
-    </NxFormGroup>
-    <NxFormGroup {...GOOGLE.REGION} isRequired>
-      <NxTextInput
-          {...FormUtils.fieldProps(bucketField('region'), current)}
-          onChange={FormUtils.handleUpdate(bucketField('region'), send)}/>
-    </NxFormGroup>
-    <NxFieldset label={GOOGLE.AUTHENTICATION.LABEL}>
-      <NxRadio
-          radioId="applicationDefaultCredentials"
-          name="bucketConfiguration.bucketSecurity.authenticationMethod"
-          value="applicationDefault"
-          isChecked={bucketConfiguration.bucketSecurity?.authenticationMethod === 'applicationDefault'}
-          onChange={FormUtils.handleUpdate(authenticationField('authenticationMethod'), send)}>
-        {GOOGLE.AUTHENTICATION.APPLICATION_DEFAULT_CREDENTIALS}
-      </NxRadio>
-      <NxRadio
-          radioId="credentialJSONFile"
-          name="bucketConfiguration.bucketSecurity.authenticationMethod"
-          value="accountKey"
-          isChecked={bucketConfiguration.bucketSecurity?.authenticationMethod === 'accountKey'}
-          onChange={FormUtils.handleUpdate(authenticationField('authenticationMethod'), send)}>
-        {GOOGLE.AUTHENTICATION.CREDENTIAL_JSON_FILE}
-      </NxRadio>
-    </NxFieldset>
-    {bucketConfiguration.bucketSecurity?.authenticationMethod === 'accountKey' && (
-        <NxFormGroup {...GOOGLE.AUTHENTICATION.JSON_PATH} isRequired={!isEdit}>
-          <NxFileUpload
-            onChange={setFiles}
-            isRequired={!isEdit}
-            aria-label="gcp credential json file upload"
-            {...FormUtils.fileUploadProps(authenticationField('file'), current)}
+  const [isChecked, setIsChecked] = useState(bucketConfiguration.encryption?.encryptionType === 'kmsManagedEncryption');
+
+  useEffect(() => {
+    setIsChecked(bucketConfiguration.encryption?.encryptionType === 'kmsManagedEncryption');
+  }, [bucketConfiguration.encryption?.encryptionType]);
+
+  const handleCheckboxChange = (isChecked) => {
+    setIsChecked(isChecked);
+    send({
+      type: 'UPDATE',
+      name: encryptionField('encryptionType'),
+      value: isChecked ? 'kmsManagedEncryption' : 'default'
+    });
+  };
+
+  return (
+      <div className="nxrm-google-blobstore">
+        <NxFormGroup {...GOOGLE.PROJECT_ID}>
+          <NxTextInput
+              {...FormUtils.fieldProps(bucketField('projectId'), current)}
+              onChange={FormUtils.handleUpdate(bucketField('projectId'), send)}
           />
         </NxFormGroup>
-    )}
-  </div>
+        <NxFormGroup {...GOOGLE.BUCKET} isRequired>
+          <NxTextInput
+              {...FormUtils.fieldProps(bucketField('name'), current)}
+          onChange={FormUtils.handleUpdate(bucketField('name'), send)}/>
+        </NxFormGroup>
+        <NxFormGroup {...GOOGLE.PREFIX}>
+          <NxTextInput
+              {...FormUtils.fieldProps(bucketField('prefix'), current)}
+                 onChange={FormUtils.handleUpdate(bucketField('prefix'), send)}/>
+        </NxFormGroup>
+        <NxFormGroup {...GOOGLE.REGION} isRequired>
+          <NxTextInput
+              {...FormUtils.fieldProps(bucketField('region'), current)}
+          onChange={FormUtils.handleUpdate(bucketField('region'), send)}/>
+        </NxFormGroup>
+        <NxFieldset label={GOOGLE.AUTHENTICATION.LABEL}>
+          <NxRadio
+              radioId="applicationDefaultCredentials"
+              name="bucketConfiguration.bucketSecurity.authenticationMethod"
+              value="applicationDefault"
+              isChecked={bucketConfiguration.bucketSecurity?.authenticationMethod === 'applicationDefault'}
+          onChange={FormUtils.handleUpdate(authenticationField('authenticationMethod'), send)}>
+            {GOOGLE.AUTHENTICATION.APPLICATION_DEFAULT_CREDENTIALS}
+          </NxRadio>
+          <NxRadio
+              radioId="credentialJSONFile"
+              name="bucketConfiguration.bucketSecurity.authenticationMethod"
+              value="accountKey"
+              isChecked={bucketConfiguration.bucketSecurity?.authenticationMethod === 'accountKey'}
+          onChange={FormUtils.handleUpdate(authenticationField('authenticationMethod'), send)}>
+            {GOOGLE.AUTHENTICATION.CREDENTIAL_JSON_FILE}
+          </NxRadio>
+        </NxFieldset>
+        {bucketConfiguration.bucketSecurity?.authenticationMethod === 'accountKey' && (
+            <NxFormGroup {...GOOGLE.AUTHENTICATION.JSON_PATH} isRequired={!isEdit}>
+              <NxFileUpload
+                  onChange={setFiles}
+                  isRequired={!isEdit}
+                  aria-label="gcp credential json file upload"
+                  {...FormUtils.fileUploadProps(authenticationField('file'), current)}
+              />
+            </NxFormGroup>
+        )}
+        <NxFieldset label={GOOGLE.ENCRYPTION.LABEL}>
+          <p>GCP provides encryption by default. You can change the encryption type to use KMS</p>
+          <NxCheckbox
+              checkboxId="encryptionKey"
+              name="bucketConfiguration.encryption.encryptionType"
+              isChecked={isChecked}
+              isDisabled={bucketConfiguration.encryption?.encryptionType === 'default'}
+              onChange={handleCheckboxChange}
+          >
+            {GOOGLE.ENCRYPTION.KMS_MANAGED}
+          </NxCheckbox>
+        </NxFieldset>
+        {isChecked && (
+            <NxFormGroup {...GOOGLE.ENCRYPTION.KEY_NAME} isRequired={!isEdit}>
+              <NxTextInput
+                  {...FormUtils.fieldProps(encryptionField('encryptionKey'), current)}
+                  onChange={FormUtils.handleUpdate(encryptionField('encryptionKey'), send)}
+                  placeholder="e.g. projects/PROJECT_ID/locations/LOCATION/keyRings/KEY_RING_NAME/cryptoKeys/KEY_NAME"
+              />
+            </NxFormGroup>
+        )}
+      </div>
+  );
 }

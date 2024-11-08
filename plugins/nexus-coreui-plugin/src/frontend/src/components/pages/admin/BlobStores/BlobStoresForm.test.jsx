@@ -197,6 +197,8 @@ describe('BlobStoresForm', function() {
           bucket: () => getByLabelText('Bucket'),
           credentialAuthentication: () => getByLabelText('Use a separate credential JSON file (select to upload)'),
           fileInput: () => getByLabelText('JSON Credential File Path'),
+          kmsEncryption: () => getByLabelText('KMS managed encryption'),
+          kmsKeyResourceName: () => getByLabelText('KMS key resource name'),
           prefix: () => getByLabelText('Prefix'),
           expiration: () => getByLabelText('Expiration Days'),
           accessKeyId: () => getByLabelText('Access Key ID'),
@@ -708,6 +710,9 @@ describe('BlobStoresForm', function() {
         bucketSecurity: {
           authenticationMethod: 'applicationDefault'
         },
+        encryption: {
+          encryptionType: 'default'
+        },
         bucket: {
           name: 'test-bucket',
           region: 'us-central1',
@@ -765,6 +770,9 @@ describe('BlobStoresForm', function() {
             length: 1,
           }
         },
+        encryption: {
+          encryptionType: 'default'
+        },
         bucket: {
           name: 'test-bucket2',
           region: 'us-central1'
@@ -793,6 +801,123 @@ describe('BlobStoresForm', function() {
     expect(axios.post).toHaveBeenCalledWith(
       'service/rest/v1/blobstores/google',
       data
+    );
+  });
+
+  it('creates a new GCP blob store with default encryption', async function() {
+    const {
+      name,
+      loadingMask,
+      typeSelect,
+      softQuotaType,
+      softQuotaLimit,
+      spaceUsedQuotaLabel,
+      bucket,
+      region,
+      prefix
+    } = render();
+
+    const data = {
+      name: 'gcp-blob-store',
+      bucketConfiguration: {
+        bucketSecurity: {
+          authenticationMethod: 'applicationDefault'
+        },
+        encryption: {
+          encryptionType: 'default'
+        },
+        bucket: {
+          name: 'test-bucket',
+          region: 'us-central1',
+          prefix: 'pre'
+        }
+      },
+      softQuota: {
+        limit: 1048576,
+        type: 'spaceUsedQuota',
+        enabled: true
+      }
+    };
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
+    userEvent.type(name(), data.name);
+    userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
+    userEvent.type(region(), data.bucketConfiguration.bucket.region);
+    userEvent.type(prefix(), data.bucketConfiguration.bucket.prefix);
+
+    userEvent.click(selectors.getSoftQuota());
+    expect(softQuotaType()).not.toBeInTheDocument();
+    expect(spaceUsedQuotaLabel()).toBeInTheDocument();
+    userEvent.type(softQuotaLimit(), '1');
+
+    userEvent.click(selectors.querySubmitButton());
+
+    expect(axios.post).toHaveBeenCalledWith(
+        'service/rest/v1/blobstores/google',
+        data
+    );
+  });
+
+  it('creates a new GCP blob store with KMS encryption', async function() {
+    const {
+      name,
+      loadingMask,
+      typeSelect,
+      softQuotaType,
+      softQuotaLimit,
+      spaceUsedQuotaLabel,
+      bucket,
+      region,
+      prefix,
+      kmsEncryption,
+      kmsKeyResourceName
+    } = render();
+
+    const data = {
+      name: 'gcp-blob-store',
+      bucketConfiguration: {
+        bucketSecurity: {
+          authenticationMethod: 'applicationDefault'
+        },
+        encryption: {
+          encryptionType: 'kmsManagedEncryption',
+          encryptionKey: 'projects/test_project_id/locations/global/keyRings/test_key_ring/cryptoKeys/test_key'
+        },
+        bucket: {
+          name: 'test-bucket',
+          region: 'us-central1',
+          prefix: 'pre'
+        }
+      },
+      softQuota: {
+        limit: 1048576,
+        type: 'spaceUsedQuota',
+        enabled: true
+      }
+    };
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
+    userEvent.type(name(), data.name);
+    userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
+    userEvent.type(region(), data.bucketConfiguration.bucket.region);
+    userEvent.type(prefix(), data.bucketConfiguration.bucket.prefix);
+    userEvent.click(kmsEncryption());
+    userEvent.type(kmsKeyResourceName(), data.bucketConfiguration.encryption.encryptionKey);
+
+    userEvent.click(selectors.getSoftQuota());
+    expect(softQuotaType()).not.toBeInTheDocument();
+    expect(spaceUsedQuotaLabel()).toBeInTheDocument();
+    userEvent.type(softQuotaLimit(), '1');
+
+    userEvent.click(selectors.querySubmitButton());
+
+    expect(axios.post).toHaveBeenCalledWith(
+        'service/rest/v1/blobstores/google',
+        data
     );
   });
 
