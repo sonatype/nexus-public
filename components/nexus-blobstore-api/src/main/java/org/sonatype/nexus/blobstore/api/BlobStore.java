@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -298,6 +299,12 @@ public interface BlobStore
    * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the provided duration.
    */
   Stream<BlobId> getBlobIdUpdatedSinceStream(Duration duration);
+
+  /**
+   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the provided from date
+   * and under the specified path prefix.
+   */
+  Stream<BlobId>  getBlobIdUpdatedSinceStream(String prefix, OffsetDateTime fromDateTime);
 
   /**
    * Get a {@link Stream} of direct-path {@link BlobId}s under the specified path prefix.

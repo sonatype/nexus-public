@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.group;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -461,6 +462,14 @@ public class BlobStoreGroup
         .get()
         .stream()
         .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(duration));
+  }
+
+  @Override
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final String prefix, final OffsetDateTime fromDateTime) {
+    return members
+        .get()
+        .stream()
+        .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(prefix, fromDateTime));
   }
 
   @Override
