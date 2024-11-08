@@ -15,10 +15,10 @@ import React from 'react';
 export default {
   TRIGGER_MODAL: {
     TITLE: 'Proceed with upgrade?',
-    DESCRIPTION: <>After beginning the upgrade process, you will not be able to create new Nexus Repository instances or nodes 
-    until the process is complete. <strong>We highly recommend backing up your data before proceeding.</strong></>,
-    CHECKBOX_LABEL: 'Checking this box acknowledges that you have backed up your instance, or are aware of the risk of ' +
-    'proceeding without backing up your nodes.',
+    DESCRIPTION: <>After beginning the database schema migration process, you will not be able to start Nexus Repository nodes 
+    until the process is complete. <strong>We highly recommend backing up your database before proceeding.</strong></>,
+    CHECKBOX_LABEL: 'Checking this box indicates that you have backed up your database or are aware of the risks associated ' +
+    'with proceeding without doing so.',
     CANCEL: 'Cancel',
     CONTINUE: 'Continue'
   }

@@ -168,6 +168,24 @@ public class AssetBlobCleanupTaskTest
   }
 
   @Test
+  public void testDefaultBatchSize() throws Exception {
+    setBatchDeleteIgnoreFinalField("raw");
+    AssetBlobCleanupTask task = new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager);
+
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
+    taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "content");
+    taskConfiguration.setId(UUID.randomUUID().toString());
+    taskConfiguration.setTypeId(TYPE_ID);
+    task.configure(taskConfiguration);
+
+    task.execute();
+
+    int expectedBatchSize = 1000;
+    verify(assetBlobStore).browseUnusedAssetBlobs(expectedBatchSize, BLOB_CREATED_DELAY_MINUTE, null);
+  }
+
+  @Test
   public void testExecutorServiceShutdown() throws Exception {
     setBatchDeleteIgnoreFinalField(null);
     AssetBlobCleanupTask task = spy(new AssetBlobCleanupTask(ImmutableMap.of("raw", formatStoreManager), blobStoreManager));

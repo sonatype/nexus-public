@@ -34,6 +34,13 @@ public class SearchMapping
 
   private final boolean exactMatch;
 
+  private final FilterType filterType;
+
+  public enum FilterType {
+    COMPONENT,
+    ASSET;
+  }
+
   /**
    * Creates a SearchMapping where the exact match of the mapping is true
    */
@@ -52,11 +59,31 @@ public class SearchMapping
       final String description,
       final SearchField field,
       final boolean exactMatch) {
+    this(alias, attribute, description, field, exactMatch, FilterType.COMPONENT);
+  }
+
+  public SearchMapping(
+      final String alias,
+      final String attribute,
+      final String description,
+      final SearchField field,
+      final FilterType filterType) {
+    this(alias, attribute, description, field, true, filterType);
+  }
+
+  public SearchMapping(
+      final String alias,
+      final String attribute,
+      final String description,
+      final SearchField field,
+      final boolean exactMatch,
+      final FilterType filterType) {
     this.alias = checkNotNull(alias);
     this.attribute = checkNotNull(attribute);
     this.description = checkNotNull(description);
     this.field = checkNotNull(field);
     this.exactMatch = exactMatch;
+    this.filterType = checkNotNull(filterType);
   }
 
   /**
@@ -112,12 +139,16 @@ public class SearchMapping
         Objects.equals(alias, that.alias) &&
         Objects.equals(description, that.description) &&
         Objects.equals(field, that.field) &&
-        Objects.equals(exactMatch, that.exactMatch);
+        Objects.equals(exactMatch, that.exactMatch) && filterType == that.filterType;
+  }
+
+  public FilterType getFilterType() {
+    return filterType;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(attribute, alias, description, field, exactMatch);
+    return Objects.hash(attribute, alias, description, field, exactMatch, filterType);
   }
 
   @Override
@@ -128,6 +159,7 @@ public class SearchMapping
         ", description='" + description + '\'' +
         ", field='" + field + '\'' +
         ", exactMatch='" + exactMatch + '\'' +
+        ", filterType=" + filterType +
         '}';
   }
 }

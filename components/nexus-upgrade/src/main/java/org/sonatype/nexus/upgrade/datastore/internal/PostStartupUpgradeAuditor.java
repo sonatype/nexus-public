@@ -22,7 +22,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeEventSupport;
+import org.sonatype.nexus.common.upgrade.events.UpgradeEventSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;

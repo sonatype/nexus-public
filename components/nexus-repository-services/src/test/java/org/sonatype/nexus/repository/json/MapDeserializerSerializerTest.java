@@ -17,7 +17,6 @@ import java.io.IOException;
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonTokenId;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.ValueInstantiator;
 import com.fasterxml.jackson.databind.deser.std.MapDeserializer;

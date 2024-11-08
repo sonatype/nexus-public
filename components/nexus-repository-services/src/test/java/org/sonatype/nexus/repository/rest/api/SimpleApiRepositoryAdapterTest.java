@@ -40,14 +40,12 @@ import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttribut
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiGroupRepository;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiProxyRepository;
-import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleData;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;

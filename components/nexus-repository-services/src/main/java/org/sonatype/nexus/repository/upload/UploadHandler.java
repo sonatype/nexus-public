@@ -142,4 +142,11 @@ public interface UploadHandler
   default boolean supportsExportImport() {
     return false;
   }
+
+  /**
+   * Denote if the format is supported using the component API upload
+   */
+  default boolean supportsApiUpload() {
+    return true;
+  }
 }

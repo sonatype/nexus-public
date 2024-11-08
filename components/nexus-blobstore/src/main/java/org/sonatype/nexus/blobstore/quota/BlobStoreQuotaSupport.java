@@ -20,11 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.Math.abs;
-import static java.lang.Math.floor;
-import static java.lang.Math.log10;
-import static java.lang.Math.pow;
-import static java.lang.String.format;
 
 /**
  * A base class for {@link BlobStoreQuota} that holds constants which map to config values in {@link

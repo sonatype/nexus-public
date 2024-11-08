@@ -37,7 +37,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.security.BreadActions.BROWSE;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**

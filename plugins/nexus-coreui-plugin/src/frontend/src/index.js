@@ -44,6 +44,8 @@ import S3BlobStoreWarning from './components/pages/admin/BlobStores/S3/S3BlobSto
 import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobStoreActions';
 import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/AzureBlobStoreSettings';
 import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
+import GoogleBlobStoreSettings from './components/pages/admin/BlobStores/Google/GoogleBlobStoreSettings';
+import GoogleBlobStoreActions from './components/pages/admin/BlobStores/Google/GoogleBlobStoreActions';
 import IqServer from './components/pages/admin/IqServer/IqServer';
 import Bundles from './components/pages/admin/Bundles/Bundles';
 import ProprietaryRepositories from './components/pages/admin/ProprietaryRepositories/ProprietaryRepositories';
@@ -65,13 +67,19 @@ import Browse from './components/pages/browse/Browse/Browse';
 import UpgradeAlert from './components/UpgradeAlert/UpgradeAlert';
 import UsageMetricsAlert from './components/pages/user/Welcome/UsageMetricsAlert';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
+import MaliciousRisk from "./components/pages/maliciousrisk/MaliciousRisk";
+import MaliciousRiskOnDisk from "./components/pages/maliciousrisk/riskondisk/MaliciousRiskOnDisk";
+import FeatureFlags from './constants/FeatureFlags';
+
+const {MALWARE_RISK_ENABLED} = FeatureFlags;
 
 window.ReactComponents = {
   ...window.ReactComponents,
   AnalyzeApplication,
   UpgradeAlert,
   UsageMetricsAlert,
-  UpgradeModal
+  UpgradeModal,
+  MaliciousRiskOnDisk
 };
 
 window.BlobStoreTypes = {
@@ -84,6 +92,10 @@ window.BlobStoreTypes = {
     Settings: S3BlobStoreSettings,
     Warning: S3BlobStoreWarning,
     Actions: S3BlobStoreActions
+  },
+  google: {
+    Settings: GoogleBlobStoreSettings,
+    Actions: GoogleBlobStoreActions
   }
 }
 
@@ -442,7 +454,6 @@ window.plugins.push({
       view: Licensing,
       iconCls: 'x-fa fa-wallet',
       visibility: {
-        featureFlags: [{key: 'nexus.react.licensing', defaultValue: true}],
         permissions: [Permissions.LICENSING.READ]
       },
     },
@@ -614,5 +625,23 @@ window.plugins.push({
         permissions: [Permissions.COMPONENT.CREATE],
       },
     },
+    {
+      mode: 'browse',
+      path: '/MaliciousRisk',
+      ...UIStrings.MALICIOUS_RISK.MENU,
+      view: MaliciousRisk,
+      iconCls: 'x-fa fa-exclamation-triangle malicious-risk-icon',
+      weight: 101,
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        requiresUser: true,
+        statesEnabled: [
+          {
+            key: MALWARE_RISK_ENABLED,
+            defaultValue: false
+          }
+        ],
+      }
+    }
   ]
 });

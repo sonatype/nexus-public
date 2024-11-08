@@ -14,8 +14,6 @@ package org.sonatype.nexus.cleanup.content;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * {@link CleanupPolicyUpdated} event.
  *

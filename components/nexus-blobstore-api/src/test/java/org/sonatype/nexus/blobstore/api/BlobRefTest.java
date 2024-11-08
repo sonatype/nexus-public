@@ -12,13 +12,19 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_FORMATTER;
 
 /**
  * Tests for {@link BlobRef}.
@@ -34,6 +40,10 @@ public class BlobRefTest
   private static final String BLOB_ID = "a8f3f56f-e895-4b6e-984a-1cf1f5107d36";
 
   private static final String[] STORES = {"store-@:@:@name", "@", ":", "abc/+xy&%$#", "store-:@:@:@name-for-testing"};
+
+  private static final OffsetDateTime DATE_CREATED = OffsetDateTime.of(2024, 1, 1, 10,  30, 45, 0, ZoneOffset.UTC);
+
+  private static final String DATE_BASED_REF = DATE_CREATED.format(DATE_TIME_FORMATTER);
 
   @Test
   public void testToString() {
@@ -92,10 +102,23 @@ public class BlobRefTest
     }
   }
 
+  @Test
+  public void testDateBasedLayout() {
+    String blobRefString = String.format("%s@%s@%s", STORE_NAME, BLOB_ID, DATE_BASED_REF);
+    BlobRef parsed = BlobRef.parse(blobRefString);
+    assertThat(parsed.getBlob(), is(BLOB_ID));
+    assertThat(parsed.getStore(), is(STORE_NAME));
+    assertThat(parsed.getNode(), isEmptyOrNullString());
+    OffsetDateTime blobCreatedRef = parsed.getDateBasedRef();
+    assertThat(blobCreatedRef, notNullValue());
+    assertThat(blobCreatedRef.format(DATE_TIME_FORMATTER), is(DATE_CREATED.format(DATE_TIME_FORMATTER)));
+  }
+
   private void assertParsed(final BlobRef parsed, final String storeName) {
     assertThat(parsed.getBlob(), is(equalTo(BLOB_ID)));
     assertThat(parsed.getStore(), is(equalTo(storeName)));
     assertThat(parsed.getNode(), isEmptyOrNullString());
+    assertThat(parsed.getDateBasedRef(), nullValue());
   }
 
   @Test

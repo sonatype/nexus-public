@@ -16,10 +16,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.security.usertoken.event.UserTokenPurgedEvent;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
-import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
+import org.sonatype.nexus.security.authc.apikey.ApiKeyService;
+import org.sonatype.nexus.security.usertoken.event.UserTokenPurgedEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -27,26 +27,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Purge orphaned API keys task.
  *
  * @since 3.0
- * @see ApiKeyStore#purgeApiKeys()
+ * @see ApiKeyService#purgeApiKeys()
  */
 @Named
 public class PurgeApiKeysTask
     extends TaskSupport
     implements Cancelable
 {
-  private final ApiKeyStore store;
+  private final ApiKeyInternalService apiKeyService;
 
   private final EventManager eventManager;
 
   @Inject
-  public PurgeApiKeysTask(final ApiKeyStore store, final EventManager eventManager) {
-    this.store = checkNotNull(store);
+  public PurgeApiKeysTask(final ApiKeyInternalService store, final EventManager eventManager) {
+    this.apiKeyService = checkNotNull(store);
     this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
   protected Void execute() throws Exception {
-    int deleted = store.purgeApiKeys();
+    int deleted = apiKeyService.purgeApiKeys();
     if (deleted > 0) {
       eventManager.post(new UserTokenPurgedEvent(deleted));
     }

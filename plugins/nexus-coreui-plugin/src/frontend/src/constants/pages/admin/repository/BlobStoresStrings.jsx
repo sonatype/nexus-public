@@ -76,9 +76,8 @@ export default {
     FORM: {
       CREATE_TITLE: 'Create Blob Store',
       EDIT_WARNING: '\
-        Updating the blob store configuration will cause it to be temporarily unavailble for a short period of time. \
-        Edits to configuration may also leave the blob store in a non-functional state. \
-        Use caution when changing values.\
+        Updating the blob store configuration will cause it to be temporarily unavailable for a short period of time. \
+        Edits to configuration may also leave the blob store in a non-functional state.\
       ',
       EDIT_TILE: (name) => `Edit ${name}`,
       EDIT_DESCRIPTION: (type) => `${type} Blob Store`,
@@ -134,6 +133,41 @@ export default {
       TEST_CONNECTION_ERROR: 'Connection failed, check the logs for more information',
       TEST_CONNECTION_SUCCESS: 'Connection succeeded',
       TESTING: 'Testing connection'
+    },
+
+    GOOGLE: {
+      PROJECT_ID: {
+        label: 'Project ID',
+        sublabel: 'Your GCP Project ID is a unique identifier for your Google Cloud project. '
+          + 'It typically consists of lowercase letters, digits, and/or hyphens.'
+      },
+      BUCKET: {
+        label: 'Bucket',
+        sublabel: 'Google Cloud Platform bucket name (must be between 3 and 63 characters long containing only '
+          + 'lower-case characters, numbers, periods, dashes, and underscores. Spaces are not permitted).'
+      },
+      REGION: {
+        label: 'Region',
+        sublabel: 'Region must correspond to bucket\'s location.'
+      },
+      PREFIX: {
+        label: 'Prefix',
+        sublabel: 'Google Cloud Storage path prefix.'
+      },
+      AUTHENTICATION: {
+        LABEL: 'Authentication',
+        APPLICATION_DEFAULT_CREDENTIALS: 'Use Google Application Default Credentials',
+        CREDENTIAL_JSON_FILE: 'Use a separate credential JSON file (select to upload)',
+        JSON_PATH: {
+          label: 'JSON Credential File Path',
+          sublabel: 'Upload a .json file (maximum size: 4KB).'
+        }
+      },
+      ERROR: {
+        bucketRegionMismatchException: 'GoogleCloudBucketRegionMismatchException',
+        bucketRegionMismatchMessage: 'Region and bucket location do not match.',
+        bucketRegionMismatchTitle: 'Selected region does not match the bucket\'s location.'
+      }
     }
   },
 
@@ -141,8 +175,14 @@ export default {
     S3BlobStore_Help: '<em>S3 blob stores require specific permissions to support full provisioning and functionality through Nexus Repository Manager. ' +
         'Consult our <a href="https://links.sonatype.com/products/nexus/blobstores/s3/docs" target="_blank">documentation</a>' +
         ' for the specific set of permissions required.</em>',
+    S3BlobStore_RegionStatus_FieldLabel: 'Region Status',
+    S3BlobStore_RegionStatus_InUseText: 'In use:',
+    S3BlobStore_RegionStatus_PrimaryRegionText: 'Primary Region',
+    S3BlobStore_RegionStatus_FailoverRegionText: 'Failover Region',
     S3BlobStore_Region_FieldLabel: 'Region',
     S3BlobStore_Region_HelpText: 'Select an AWS Region',
+    S3BlobStore_Region_PrimaryRegionInactiveText: 'The primary region is currently not in use.',
+    S3BlobStore_Region_FailoverRegionActiveText: 'The region for this AWS S3 replication bucket is currently in use.',
     S3BlobStore_Bucket_FieldLabel: 'Bucket',
     S3BlobStore_Bucket_HelpText: 'S3 Bucket Name (must be between 3 and 63 characters long containing only lower-case characters, numbers, periods, and dashes)',
     S3BlobStore_Prefix_FieldLabel: 'Prefix',
@@ -168,6 +208,15 @@ export default {
     S3BlobStore_AdvancedConnectionSettings_SignatureVersion_FieldLabel: 'Signature Version',
     S3BlobStore_AdvancedConnectionSettings_SignatureVersion_HelpText: 'An API signature version which may be required for third party object stores using the S3 API',
     S3BlobStore_AdvancedConnectionSettings_PathStyleAccess_FieldLabel: 'Use path-style access',
-    S3BlobStore_AdvancedConnectionSettings_PathStyleAccess_HelpText: 'Setting this flag will result in path-style access being used for all requests'
+    S3BlobStore_AdvancedConnectionSettings_PathStyleAccess_HelpText: 'Setting this flag will result in path-style access being used for all requests',
+    S3BlobStore_ReplicationBucketsSettings_Title: 'AWS S3 Replication Buckets (Optional)',
+    S3BlobStore_ReplicationBucketsSettings_Region_FieldLabel: 'Region',
+    S3BlobStore_ReplicationBucketsSettings_Region_HelpText: 'Select an AWS Region',
+    S3BlobStore_ReplicationBucketsSettings_BucketName_FieldLabel: 'Bucket Name',
+    S3BlobStore_ReplicationBucketsSettings_BucketName_HelpText: 'S3 Bucket Name (must be between 3 and 63 characters long containing only lower-case characters, numbers, periods, and dashes)',
+    S3BlobStore_ReplicationBucketsSettings_AddFailoverBucket: 'Add Replication Bucket',
+    S3BlobStore_ReplicationBucketsSettings_DeleteFailoverBucket: 'Remove Bucket',
+    S3BlobStore_ReplicationBucketsSettings_ConfigureBucketReplicationMessage: 'Bi-directional replication should be configured between the primary bucket and the replication bucket',
+    S3BlobStore_ReplicationBucketsSettings_MaxFailoverBucketsWarning: 'You have reached the maximum number of failover buckets allowed (5). Remove a bucket to configure another one.',
   }
 };

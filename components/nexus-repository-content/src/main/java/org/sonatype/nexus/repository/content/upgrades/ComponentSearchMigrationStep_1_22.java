@@ -14,15 +14,10 @@ package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
 import java.sql.Statement;
-import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Deletes the component_search table.

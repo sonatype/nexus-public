@@ -35,7 +35,6 @@ import org.sonatype.nexus.testsuite.testsupport.system.repository.MavenFormatRep
 import org.sonatype.nexus.testsuite.testsupport.system.repository.RFormatRepositoryTestSystem;
 import org.sonatype.nexus.testsuite.testsupport.system.repository.RawFormatRepositoryTestSystem;
 
-import com.google.common.collect.Streams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

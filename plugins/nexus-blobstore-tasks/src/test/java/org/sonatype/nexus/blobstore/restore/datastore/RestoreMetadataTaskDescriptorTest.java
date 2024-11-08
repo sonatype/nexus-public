@@ -15,23 +15,31 @@ package org.sonatype.nexus.blobstore.restore.datastore;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.blobstore.restore.datastore.RestoreMetadataTaskDescriptor;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.formfields.FormField;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class RestoreMetadataTaskDescriptorTest
     extends TestSupport
 {
   RestoreMetadataTaskDescriptor underTest;
 
+  @Mock
+  ApplicationVersion applicationVersion;
+
   @Before
   public void setup() {
-    underTest = new RestoreMetadataTaskDescriptor();
+    when(applicationVersion.getEdition())
+        .thenReturn("RPO");
+
+    underTest = new RestoreMetadataTaskDescriptor(true, applicationVersion);
   }
 
   @Test

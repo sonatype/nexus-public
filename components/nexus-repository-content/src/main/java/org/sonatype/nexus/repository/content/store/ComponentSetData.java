@@ -12,10 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import java.util.Objects;
-
 import org.sonatype.nexus.common.entity.ContinuationAware;
-import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ComponentSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;

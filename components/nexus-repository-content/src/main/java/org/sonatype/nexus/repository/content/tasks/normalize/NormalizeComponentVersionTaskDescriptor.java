@@ -41,7 +41,7 @@ public class NormalizeComponentVersionTaskDescriptor
   {
     super(TYPE_ID,
         NormalizeComponentVersionTask.class,
-        "Components - Normalize versions",
+        "Repair - Normalize component versions for retain-n",
         visible,
         exposed);
   }

@@ -264,21 +264,11 @@ export default class FormUtils {
         }),
 
         update: assign({
-          data: ({data}, event) => {
-            if (event.name) {
-              return set(lensPath(event.name.split('.')), event.value, data);
-            } else if (event.data) {
-              return {
-                ...data,
-                ...event.data
-              };
-            } else {
-              console.error('update event must have a name and value or a data object', event);
-            }
-          },
+          data: FormUtils.updateFormDataDefaultAction,
           isTouched: ({isTouched}, event) => {
             if (event.name) {
-              return set(lensPath(event.name.split('.')), true, isTouched);
+              const pthArray = event.name instanceof Array ? event.name : event.name.split('.');
+              return set(lensPath(pthArray), true, isTouched);
             }
 
             const result = {...isTouched};
@@ -320,6 +310,28 @@ export default class FormUtils {
   }
 
   /**
+   * Handles form data updates according to the received event
+   * @param data to update
+   * @param event that triggered the update
+   * @returns {data: object} updated data
+   */
+  static updateFormDataDefaultAction({data}, event) {
+    if (event.name) {
+      const pthArray = event.name instanceof Array ? event.name : event.name.split('.');
+      return set(lensPath(pthArray), event.value, data);
+    }
+    else if (event.data) {
+      return {
+        ...data,
+        ...event.data
+      };
+    }
+    else {
+      console.error('update event must have a name and value or a data object', event);
+    }
+  }
+
+  /**
    * Extract api error message if possible
    * @param event
    * @return {string|null}
@@ -349,9 +361,14 @@ export default class FormUtils {
       Object.values(errors).find((error) => {
         if (error === null || error === undefined) {
           return false;
-        } else if (error.length > 0) {
+        }
+        else if (Array.isArray(error)) {
+          return error.some(e => this.isInvalid(e));
+        }
+        else if (error.length > 0) {
           return true;
-        } else {
+        }
+        else {
           return this.isInvalid(error);
         }
       })

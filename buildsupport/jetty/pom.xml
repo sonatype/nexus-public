@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.72.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-jetty</artifactId>
@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <eclipse-jetty.version>9.4.53.v20231009</eclipse-jetty.version>
+    <eclipse-jetty.version>9.4.56.v20240826</eclipse-jetty.version>
   </properties>
 
   <dependencyManagement>

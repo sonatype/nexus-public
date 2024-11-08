@@ -14,6 +14,7 @@ package org.sonatype.nexus.coreui.internal.blobstore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,20 @@ public class BlobStoreInternalResourceTest
   public void listNoBlobStores() {
     List<BlobStoreUIResponse> responses = underTest.listBlobStores();
     assertThat(responses.isEmpty(), is(true));
+  }
+
+  @Test
+  public void noDataInBlobStoreDescriptorProvider() {
+    addBlobStore("fileStore1", FILE_TYPE);
+    addBlobStore("s3BlobStore", S3_TYPE);
+
+    assertThat(underTest.listBlobStores().size(), is(2));
+
+    when(blobStoreDescriptorProvider.get()).thenReturn(null);
+    assertThat(underTest.listBlobStores().isEmpty(), is(true));
+
+    when(blobStoreDescriptorProvider.get()).thenReturn(Collections.emptyMap());
+    assertThat(underTest.listBlobStores().isEmpty(), is(true));
   }
 
   @Test
