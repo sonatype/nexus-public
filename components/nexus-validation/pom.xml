@@ -44,11 +44,6 @@
     </dependency>
 
     <dependency>
-      <groupId>commons-validator</groupId>
-      <artifactId>commons-validator</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.glassfish</groupId>
       <artifactId>jakarta.el</artifactId>
     </dependency>

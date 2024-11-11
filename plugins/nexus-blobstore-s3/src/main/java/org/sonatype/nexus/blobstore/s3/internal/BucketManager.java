@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getBucketPrefix;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredBucket;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
@@ -116,29 +116,35 @@ public class BucketManager
       log.info("Not removing S3 bucket {} because it is not empty", bucket);
       BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(bucket);
       List<Rule> nonBlobstoreRules = nonBlobstoreRules(lifecycleConfiguration, blobStoreConfiguration.getName());
-      if(!isEmpty(nonBlobstoreRules)) {
+      if (!isEmpty(nonBlobstoreRules)) {
         lifecycleConfiguration.setRules(nonBlobstoreRules);
         s3.setBucketLifecycleConfiguration(bucket, lifecycleConfiguration);
-      } else {
+      }
+      else {
         s3.deleteBucketLifecycleConfiguration(bucket);
       }
     }
   }
 
   @VisibleForTesting
-  boolean isExpirationLifecycleConfigurationPresent(final BucketLifecycleConfiguration lifecycleConfiguration,
-                                                            final BlobStoreConfiguration blobStoreConfiguration) {
+  boolean isExpirationLifecycleConfigurationPresent(
+      final BucketLifecycleConfiguration lifecycleConfiguration,
+      final BlobStoreConfiguration blobStoreConfiguration)
+  {
     String bucketPrefix = getBucketPrefix(blobStoreConfiguration);
     int expirationInDays = getConfiguredExpirationInDays(blobStoreConfiguration);
     return lifecycleConfiguration != null &&
         lifecycleConfiguration.getRules() != null &&
-        lifecycleConfiguration.getRules().stream()
-        .filter(r -> r.getExpirationInDays() == expirationInDays)
-        .anyMatch(r -> isDeletedTagPredicate(r.getFilter().getPredicate(), bucketPrefix));
+        lifecycleConfiguration.getRules()
+            .stream()
+            .filter(r -> r.getExpirationInDays() == expirationInDays)
+            .anyMatch(r -> isDeletedTagPredicate(r.getFilter().getPredicate(), bucketPrefix));
   }
 
-  private BucketLifecycleConfiguration makeLifecycleConfiguration(final BucketLifecycleConfiguration existing,
-                                                                  final BlobStoreConfiguration blobStoreConfiguration) {
+  private BucketLifecycleConfiguration makeLifecycleConfiguration(
+      final BucketLifecycleConfiguration existing,
+      final BlobStoreConfiguration blobStoreConfiguration)
+  {
     String blobStoreName = blobStoreConfiguration.getName();
     String bucketPrefix = getBucketPrefix(blobStoreConfiguration);
     int expirationInDays = getConfiguredExpirationInDays(blobStoreConfiguration);
@@ -148,8 +154,8 @@ public class BucketManager
     }
     else {
       filterPredicate = new LifecycleAndOperator(asList(
-        new LifecyclePrefixPredicate(bucketPrefix),
-        new LifecycleTagPredicate(S3BlobStore.DELETED_TAG)));
+          new LifecyclePrefixPredicate(bucketPrefix),
+          new LifecycleTagPredicate(S3BlobStore.DELETED_TAG)));
     }
     BucketLifecycleConfiguration.Rule rule = new BucketLifecycleConfiguration.Rule()
         .withId(LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + blobStoreName)
@@ -183,13 +189,15 @@ public class BucketManager
     }
     return rules.stream()
         .filter(r -> !r.getId().equals(LIFECYCLE_EXPIRATION_RULE_ID_PREFIX + blobStoreName) &&
-                !r.getId().equals(OLD_LIFECYCLE_EXPIRATION_RULE_ID))
+            !r.getId().equals(OLD_LIFECYCLE_EXPIRATION_RULE_ID))
         .collect(toList());
   }
 
-  private void setBucketLifecycleConfiguration(final AmazonS3 s3,
-                                               final BlobStoreConfiguration blobStoreConfiguration,
-                                               final BucketLifecycleConfiguration lifecycleConfiguration) {
+  private void setBucketLifecycleConfiguration(
+      final AmazonS3 s3,
+      final BlobStoreConfiguration blobStoreConfiguration,
+      final BucketLifecycleConfiguration lifecycleConfiguration)
+  {
     String bucket = getConfiguredBucket(blobStoreConfiguration);
     BucketLifecycleConfiguration newLifecycleConfiguration =
         makeLifecycleConfiguration(lifecycleConfiguration, blobStoreConfiguration);
@@ -208,8 +216,7 @@ public class BucketManager
     }
     else if (filterPredicate instanceof LifecycleAndOperator) {
       LifecycleAndOperator andOperator = (LifecycleAndOperator) filterPredicate;
-      return
-          andOperator.getOperands().stream().anyMatch(op -> isDeletedTagPredicate(op, bucketPrefix)) &&
+      return andOperator.getOperands().stream().anyMatch(op -> isDeletedTagPredicate(op, bucketPrefix)) &&
           andOperator.getOperands().stream().anyMatch(op -> isBucketPrefixPredicate(op, bucketPrefix));
     }
     else {

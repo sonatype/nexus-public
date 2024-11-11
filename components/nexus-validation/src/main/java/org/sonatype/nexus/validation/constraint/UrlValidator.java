@@ -22,8 +22,6 @@ import javax.validation.ConstraintValidatorContext;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
-import org.apache.commons.validator.routines.InetAddressValidator;
-
 /**
  * Validates a uri.
  *
@@ -33,11 +31,14 @@ public class UrlValidator
     extends ConstraintValidatorSupport<Url, URI>
 {
   private static final Pattern SCHEME_RE = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
+
   private static final Pattern USER_INFO_RE = Pattern.compile("^(?:\\S+(?::\\S*)?)?$", Pattern.CASE_INSENSITIVE);
+
   private static final Pattern RESOURCE_RE = Pattern.compile("^(?:[ \\S]*\\S)?$", Pattern.CASE_INSENSITIVE);
+
   private static final Pattern HOSTNAME_RE = Pattern.compile("^(?:[^\"<>^`{|}:/]+)$", Pattern.CASE_INSENSITIVE);
+
   private static final Pattern IPV6_RE = Pattern.compile("^\\[(?<ipv6>[0-9:a-f]{3,39})\\]$", Pattern.CASE_INSENSITIVE);
-  private static final InetAddressValidator INET_ADDRESS_VALIDATOR = new InetAddressValidator();
 
   @Override
   public boolean isValid(final URI uri, final ConstraintValidatorContext constraintValidatorContext) {
@@ -82,7 +83,7 @@ public class UrlValidator
 
   private boolean isValidHost(final String host) {
     return isMatch(HOSTNAME_RE, host, false)
-        || (isMatch(IPV6_RE, host, false) && INET_ADDRESS_VALIDATOR.isValidInet6Address(host.substring(1, host.length() - 2)));
+        || (isMatch(IPV6_RE, host, false));
   }
 
   private boolean isValidPort(final int port) {
