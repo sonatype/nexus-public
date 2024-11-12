@@ -1033,6 +1033,37 @@
           <artifactId>maven-gpg-plugin</artifactId>
           <version>3.0.1</version>
         </plugin>
+
+        <plugin>
+          <!-- see developer-documentation/development/formatting.md -->
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>2.43.0</version>
+
+          <configuration>
+            <ratchetFrom>origin/main</ratchetFrom>
+
+            <formats>
+              <format>
+                <includes>
+                  <include>*.java</include>
+                </includes>
+                <excludes>
+                  <exclude>target/generated-sources/**/*.java</exclude>
+                </excludes>
+                <trimTrailingWhitespace/>
+                <endWithNewline/>
+              </format>
+            </formats>
+            <java>
+              <removeUnusedImports/>
+
+              <eclipse>
+                <file>${session.executionRootDirectory}/sonatype-config/sonatype-eclipse.xml</file>
+              </eclipse>
+            </java>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -1280,44 +1311,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <!-- see developer-documentation/development/formatting.md -->
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-        <version>2.43.0</version>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>apply</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <ratchetFrom>origin/main</ratchetFrom>
-
-          <formats>
-            <format>
-              <includes>
-                <include>*.java</include>
-              </includes>
-              <excludes>
-                <exclude>target/generated-sources/**/*.java</exclude>
-              </excludes>
-              <trimTrailingWhitespace/>
-              <endWithNewline/>
-            </format>
-          </formats>
-          <java>
-            <removeUnusedImports/>
-
-            <eclipse>
-              <file>${session.executionRootDirectory}/sonatype-config/sonatype-eclipse.xml</file>
-            </eclipse>
-          </java>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
@@ -1341,6 +1334,19 @@
                 <version>3.0.13-02</version>
               </dependency>
             </dependencies>
+          </plugin>
+          <plugin>
+            <!-- the default behavior is to run the apply goal, which will apply linting to edited files -->
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>compile</phase>
+                <goals>
+                  <goal>apply</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -2316,6 +2322,31 @@
                 <version>1.0</version>
               </signature>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>ci</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <configuration>
+              <!-- when the CI profile is activated, we have to skip the apply goal -->
+              <applySkip>true</applySkip>
+            </configuration>
+            <!-- when the ci profile is activated, we bind the check goal to the compile phase to validate linting -->
+            <executions>
+              <execution>
+                <phase>compile</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
