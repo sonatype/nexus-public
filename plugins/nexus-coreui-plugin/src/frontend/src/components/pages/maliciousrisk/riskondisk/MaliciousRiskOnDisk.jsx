@@ -30,7 +30,7 @@ import UIStrings from "../../../../constants/UIStrings";
 import "./MaliciousRiskOnDisk.scss";
 import FeatureFlags from '../../../../constants/FeatureFlags';
 
-const {MALWARE_RISK_ON_DISK_ENABLED} = FeatureFlags;
+const {MALWARE_RISK_ON_DISK_ENABLED, MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED} = FeatureFlags;
 
 const {
   TITLE_PLURAL,
@@ -108,7 +108,11 @@ export default function MaliciousRiskOnDisk(props) {
   const userIsLogged = user ?? false;
   const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;
 
-  if (!showMaliciousRiskOnDisk) {
+  const isRiskOnDiskNoneAdminOverrideEnabled = ExtJS.state().getValue(MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED);
+  const isAdmin = user && user.administrator;
+  const shouldHideForNonAdmin = isRiskOnDiskNoneAdminOverrideEnabled && !isAdmin;
+
+  if (!showMaliciousRiskOnDisk || shouldHideForNonAdmin) {
     return null;
   }
   return <MaliciousRiskOnDiskContent user={user} props={props}/>;
