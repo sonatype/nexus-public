@@ -23,7 +23,7 @@ import org.sonatype.nexus.cleanup.datastore.search.criteria.AssetCleanupEvaluato
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
 
 /**
  * Creates an predicate which determines whether an asset's path matches the specified regular expression

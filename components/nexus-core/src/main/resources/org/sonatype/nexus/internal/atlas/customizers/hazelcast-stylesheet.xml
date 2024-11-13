@@ -1,0 +1,28 @@
+<xsl:stylesheet version = "1.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:hz="http://www.hazelcast.com/schema/config">
+  <xsl:output omit-xml-declaration="no" standalone="no"
+              indent="yes"/>
+
+  <xsl:template match = "node()|@*">
+    <xsl:copy>
+      <xsl:apply-templates select = "node()|@*"/>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match = "hz:access-key/text()">
+    <xsl:text>removed</xsl:text>
+  </xsl:template>
+  <xsl:template match = "hz:secret-key/text()">
+    <xsl:text>removed</xsl:text>
+  </xsl:template>
+  <xsl:template match = "hz:password/text()">
+    <xsl:text>removed</xsl:text>
+  </xsl:template>
+  <xsl:template match = "hz:property[@name='access-key']/text()">
+    <xsl:text>removed</xsl:text>
+  </xsl:template>
+  <xsl:template match = "hz:property[@name='secret-key']/text()">
+    <xsl:text>removed</xsl:text>
+  </xsl:template>
+</xsl:stylesheet>

@@ -56,6 +56,6 @@ export default Machine(
       closeModal: () => ExtJS.state().setValue('zeroDowntimeMarketingModalClosed', true),
     },
     services: {
-      saveData: () => Axios.put('/service/rest/internal/ui/upgradeModalOpened', {"zeroDowntimeMarketingModalClosed": true})
+      saveData: () => Axios.put('service/rest/internal/ui/upgradeModalOpened', {"zeroDowntimeMarketingModalClosed": true})
     }
   });

@@ -17,8 +17,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
-import org.sonatype.nexus.formfields.RepositoryCombobox;
-import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
@@ -43,7 +41,7 @@ public class NormalizeComponentVersionTaskDescriptor
   {
     super(TYPE_ID,
         NormalizeComponentVersionTask.class,
-        "Components - Normalize versions",
+        "Repair - Normalize component versions for retain-n",
         visible,
         exposed);
   }

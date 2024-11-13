@@ -19,7 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -38,8 +38,10 @@ import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.mock;
@@ -88,9 +90,7 @@ public class BlobStoreReconciliationLoggerTest
 
   @After
   public void teardown() {
-    if (mockedStatic != null) {
-      mockedStatic.close();
-    }
+    mockedStatic.close();
   }
 
   @Test
@@ -103,7 +103,7 @@ public class BlobStoreReconciliationLoggerTest
   public void shouldLogBlobId() {
     underTest.logBlobCreated(reconciliationLogPath, new BlobId("00000000-0000-0000-0000-000000000000"));
 
-    verify(logger).info("00000000-0000-0000-0000-000000000000");
+    verify(logger).info("{},{}", "00000000-0000-0000-0000-000000000000", false);
 
     mockedStatic.verify(() -> LoggerFactory.getLogger("blobstore-reconciliation-log"));
   }
@@ -129,8 +129,8 @@ public class BlobStoreReconciliationLoggerTest
         "2021-04-14 00:00:00,00000000-0000-0000-0000-000000000006".getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE);
 
-    List<String> result = underTest.getBlobsCreatedSince(Paths.get(RECONCILIATION_LOG_DIRECTORY),
-        LocalDate.parse("2021-04-14"))
+    List<String> result = underTest.getBlobsCreatedSince(
+        Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2021-04-14T00:00:00"), emptyMap())
         .map(BlobId::asUniqueString)
         .collect(toList());
 
@@ -139,5 +139,27 @@ public class BlobStoreReconciliationLoggerTest
         "00000000-0000-0000-0000-000000000002",
         "00000000-0000-0000-0000-000000000004",
         "00000000-0000-0000-0000-000000000005"));
+  }
+
+  @Test
+  public void testDateBasedLayoutFlag() throws IOException {
+    when(applicationDirectories
+        .getWorkDirectory(RECONCILIATION_LOG_DIRECTORY))
+        .thenReturn(temporaryFolder.getRoot());
+
+    Files.write(temporaryFolder.newFile("2024-05-01").toPath(),
+        ("2024-05-01 01:00:00,00000000-0000-0000-0000-000000000001,true\n" +
+         "2024-05-01 02:00:00,00000000-0000-0000-0000-000000000002,false\n" +
+         "2024-05-01 03:00:00,00000000-0000-0000-0000-000000000003,true\n")
+            .getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+
+    List<String> result = underTest.getBlobsCreatedSince(
+            Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2024-05-01T00:00:00"), emptyMap())
+        .map(BlobId::asUniqueString)
+        .collect(toList());
+
+    // should return only 1 blob with vol/chap layout
+    assertThat(result, hasSize(1));
+    assertThat(result, contains("00000000-0000-0000-0000-000000000002"));
   }
 }

@@ -150,6 +150,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchCriteria_Checksum_Group: 'Checksum',
     SearchDocker_Group: 'Docker Repositories',
     SearchMaven_Group: 'Maven Repositories',
+    SearchComposer_Group: 'Composer Repositories',
     SearchNpm_Group: 'npm Repositories',
     SearchNuget_Group: 'NuGet Repositories',
     SearchPyPi_Group: 'PyPI Repositories',
@@ -172,6 +173,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchMaven_GroupID_FieldLabel: 'Group Id',
     SearchMaven_Classifier_FieldLabel: 'Classifier',
     SearchMaven_Version_FieldLabel: 'Version',
+    SearchComposer_Vendor_FieldLabel: 'Vendor',
+    SearchComposer_Package_FieldLabel: 'Package',
+    SearchComposer_Version_FieldLabel: 'Version',
     SearchNpm_Scope_FieldLabel: 'Scope',
     SearchNpm_Name_FieldLabel: 'Name',
     SearchNpm_Version_FieldLabel: 'Version',
@@ -214,10 +218,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Component_Vulnerability_Info_Title: 'OSS Index Vulnerabilities',
     Component_AssetInfo_Attributes_Title: 'Attributes',
     Component_AssetInfo_HealthCheck_Title: 'Sonatype Lifecycle Component',
-
-    // Browse -> Search -> Bower
-    SearchBower_Text: 'Bower',
-    SearchBower_Description: 'Search for components in Bower repositories',
 
     // Browse -> Search -> Docker
     SearchDocker_Text: 'Docker',
@@ -296,6 +296,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchConan_RecipeRevision_FieldLabel: 'Recipe Revision',
     SearchConan_PackageId_FieldLabel: 'Package Id',
     SearchConan_PackageRevision_FieldLabel: 'Package Revision',
+    SearchConan_BaseVersionStrict_FieldLabel: 'Base Version Strict',
+    SearchConan_RecipeRevisionLatest_FieldLabel: 'Latest revision',
+    SearchConan_Arch_FieldLabel: 'Arch',
+    SearchConan_Os_FieldLabel: 'Os',
+    SearchConan_Compiler_FieldLabel: 'Compiler',
+    SearchConan_CompilerVersion_FieldLabel: 'Compiler Version',
+    SearchConan_CompilerRuntime_FieldLabel: 'Compiler Runtime',
 
     // Browse -> Search -> Conda
     SearchConda_Text: 'Conda',
@@ -306,6 +313,18 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Browse
     FeatureGroups_Browse_Text: 'Browse',
     FeatureGroups_Browse_Description: 'Browse assets and components',
+
+    // Browse -> Search -> Cargo
+    SearchCargo_Text: 'Cargo',
+    SearchCargo_Description: 'Search for components in Cargo repositories',
+
+    // Browse -> Search -> Composer
+    SearchComposer_Text: 'Composer',
+    SearchComposer_Description: 'Search for components in Composer repositories',
+
+    // Browse -> Search -> HuggingFace
+    SearchHuggingFace_Text: 'HuggingFace',
+    SearchHuggingFace_Description: 'Search for components in HuggingFace repositories',
 
     // Browse -> Upload
     FeatureGroups_Upload_Text: 'Upload',
@@ -361,9 +380,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositoryFeature_HealthCheckEnable_Button: 'Enable HealthCheck',
     Repository_RepositoryFeature_InvalidateCache_Button: 'Invalidate cache',
     Repository_RepositorySettings_Title: 'Settings',
-    Repository_Facet_BowerProxyFacet_Title: 'Bower',
-    Repository_Facet_BowerProxyFacet_RewritePackageUrls_FieldLabel: 'Enable rewrite of package URLs',
-    Repository_Facet_BowerProxyFacet_RewritePackageUrls_HelpText: 'Force Bower to retrieve packages through the proxy repository',
     Repository_Facet_DockerHostedFacet_V1_Title: 'Docker Registry API Support',
     Repository_Facet_DockerHostedFacet_V1_Enabled: 'Enable Docker V1 API',
     Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this repository',
@@ -408,6 +424,15 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_AptSigningFacet_Keypair_HelpText: 'PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor <Name or ID>)',
     Repository_Facet_AptSigningFacet_Passphrase_FieldLabel: 'Passphrase',
     Repository_Facet_CondaFacet_Title: 'Conda Settings',
+    Repository_Facet_ConanProxyFacet_Title: 'Conan',
+    Repository_Facet_ConanProxyFacet_ProtocolVersion: 'Protocol version',
+    Repository_Facet_ConanProxyFacet_Version: 'Version',
+    Repository_Facet_ConanProxyFacet_V1: 'Conan V1',
+    Repository_Facet_ConanProxyFacet_V2: 'Conan V2',
+    Repository_Facet_ConanProxyFacet_HelpText: 'Automatic migration from Conan 1 to Conan 2 is not available.',
+    Repository_Facet_ConanProxyFacet_HelpLink: 'Read our <a href="https://links.sonatype.com/products/nxrm3/docs/conan-v2" target="_blank" style="font-weight: bold">documentation</a> for more details.',
+    Repository_Facet_ConanGroupFacet_Title: 'Conan',
+
     Repository_Facet_GroupFacet_Title: 'Group',
     Repository_Facet_NugetGroupFacet_NugetGroupValidationLabel: '<span style="color: red; ">Group repositories cannot include a mix of NuGet v2 and v3 members. You cannot add <b>{0}</b> ({1}) because the group contains <b>{2}</b> ({3}).</span>',
     Repository_Facet_HttpClientFacet_Title: 'HTTP',
@@ -453,7 +478,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_StorageFacetHosted_Deployment_DisableLatestItem: 'Allow redeploy only on \'latest\' tag',
     Repository_Facet_StorageFacetHosted_Deployment_DisableLatestItemHelpText: 'Allow redeploying the \'latest\' tag but defer to the Deployment Policy for all other tags',
     Repository_Facet_StorageFacetHosted_Deployment_ReadOnlyItem: 'Read-only',
-    Repository_Facet_StorageFacetHosted_Deployment_ReplicationOnlyItem: 'Deploy by Replication Only',
     Repository_Facet_StorageFacetHosted_Proprietary_Components_HelpText: 'Components in this repository count as proprietary for namespace conflict attacks (requires Sonatype Nexus Firewall)',
     Repository_Facet_StorageFacetHosted_Proprietary_Components_FieldLabel: 'Proprietary Components',
     Repository_Facet_ProxyFacet_Remote_FieldLabel: 'Remote storage',
@@ -466,14 +490,17 @@ Ext.define('NX.coreui.app.PluginStrings', {
         'For more information check out our <a target="_blank" href="https://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">documentation for format specific options</a>',
     Repository_Facet_ProxyFacet_AssetNameMatcher_EmptyText: 'Entry',
     Repository_Facet_ProxyFacet_AssetNameMatcher_InvalidText: 'Invalid Regex',
-    Repository_Facet_ProxyFacet_Bower_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.bower.io',
     Repository_Facet_ProxyFacet_Docker_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry-1.docker.io',
+    Repository_Facet_ProxyFacet_Huggingface_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://huggingface.co/',
     Repository_Facet_ProxyFacet_Maven_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo1.maven.org/maven2/',
     Repository_Facet_ProxyFacet_Npm_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.npmjs.org',
     Repository_Facet_ProxyFacet_Nuget_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://api.nuget.org/v3/index.json',
     Repository_Facet_ProxyFacet_Pypi_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://pypi.org',
     Repository_Facet_ProxyFacet_Rubygems_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://rubygems.org',
     Repository_Facet_ProxyFacet_Yum_Remote_HelpText: 'Location of the remote repository being proxied, e.g.  http://mirror.centos.org/centos/',
+    Repository_Facet_CargoFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://index.crates.io',
+    Repository_Facet_ComposerFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://packagist.org',
+    Repository_Facet_ProxyFacet_Conan_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://center.conan.io',
     Ssl_SslUseTrustStore_BoxLabel: 'Use the Nexus Repository truststore',
     Ssl_SslUseTrustStore_Certificate_Button: 'View certificate',
     Ssl_SslUseTrustStore_Certificate_HelpText: 'Use certificates stored in the Nexus Repository truststore to connect to external systems',
@@ -549,11 +576,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_CleanupPolicyFacet_Policy_FromTitle: 'Available',
     Repository_Facet_CleanupPolicyFacet_Policy_ToTitle: 'Applied',
     Repository_Facet_CleanupPolicyFacet_Policy_EmptyText: 'None',
-    Repository_Facet_ReplicationFacet_Title: 'Replication',
-    Repository_Facet_ReplicationFacet_Enabled_FieldLabel: 'Enabled',
-    Repository_Facet_ReplicationFacet_Enabled_HelpText: 'If checked, this repository is the target of a replication',
     Repository_Formats_All: '(All Formats)',
     Repository_Facet_GolangFacet_Title: 'Go Settings',
+    Repository_Facet_CargoFacet_Title: 'Cargo Settings',
+    Repository_Facet_ComposerFacet_Title: 'Composer Settings',
     Repository_Replication_InformationMessage: 'This repository is using the replication {0} to connect to source repository {1}.',
     Repository_Copy_URL: 'Use your repository\'s direct URL (shown below) to connect other tools to your repository. ' +
       'For more information, see our ' +
@@ -1336,28 +1362,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     System_HttpRequestSettings_Timeout_HelpText: 'Seconds to wait for activity before stopping and retrying the connection',
     System_HttpRequestSettings_Attempts_FieldLabel: 'Connection/Socket retry attempts',
     System_HttpRequestSettings_Attempts_HelpText: 'Total retries if the initial connection attempt suffers a timeout',
-
-    // Admin -> System -> Licensing
-    Licensing_Text: 'Licensing',
-    Licensing_Description: 'A valid license is required for PRO features. Manage it here.',
-    Licensing_LicensingDetails_Company_FieldLabel: 'Company',
-    Licensing_LicensingDetails_Name_FieldLabel: 'Name',
-    Licensing_LicensingDetails_Email_FieldLabel: 'Email',
-    Licensing_LicensingDetails_EffectiveDate_FieldLabel: 'Effective date',
-    Licensing_LicensingDetails_ExpirationDate_FieldLabel: 'Expiration date',
-    Licensing_LicensingDetails_Type_FieldLabel: 'License type',
-    Licensing_LicensingDetails_LicensedUsers_FieldLabel: 'Number of licensed users',
-    Licensing_LicensingDetails_Fingerprint_FieldLabel: 'Fingerprint',
-    Licensing_LicensingDetails_InstallLicense_Title: 'Install license',
-    Licensing_LicensingDetails_InstallLicense_Html: '<p>Installing a new license requires restarting the server to take effect</p>',
-    Licensing_LicensingDetails_LicenseSelect_Button: 'Select license&hellip;',
-    Licensing_LicensingDetails_LicenseInstall_Button: 'Install license',
-    Licensing_LicenseAgreement_Title: 'Nexus Repository Manager License Agreement',
-    Licensing_LicenseAgreement_Yes_Button: 'I accept',
-    Licensing_LicenseAgreement_No_Button: 'I do not accept',
-    Licensing_LicenseAgreement_Download_Button: 'Download a copy of the agreement.',
-    Licensing_Install_Success: 'License installed. Restart is only required if you are enabling new PRO features.',
-    Licensing_Authentication_Validation: '{0} a license requires validation of your credentials.',
 
     //Nexus Lifecycle -> Server
     Clm_ClmSettings_Permission_Error: 'You do not have permission to configure IQ Server',

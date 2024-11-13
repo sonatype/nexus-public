@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
 
 /**
  * Creates a test which evaluates whether all assets under a component had their blob created (i.e. attached) before the

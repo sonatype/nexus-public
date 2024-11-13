@@ -15,7 +15,6 @@ package org.sonatype.nexus.security.role.rest;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.testsupport.TestSupport;

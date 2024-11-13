@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cache xmlns="http://maven.apache.org/BUILD-CACHE-CONFIG/1.0.0"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://maven.apache.org/BUILD-CACHE-CONFIG/1.0.0 https://maven.apache.org/xsd/build-cache-config-1.0.0.xsd">
+    <configuration>
+        <enabled>true</enabled>
+        <hashAlgorithm>XX</hashAlgorithm>
+        <local>
+            <maxBuildsCached>10</maxBuildsCached>
+        </local>
+        <attachedOutputs>
+            <dirNames>
+                <dirName>classes</dirName>
+                <dirName>generated-sources</dirName>
+                <dirName>generated-resources</dirName>
+                <dirName>generated-test-sources</dirName>
+                <dirName>maven-archiver</dirName>
+                <dirName>sonatype-clm</dirName>
+                <dirName>test-classes</dirName>
+                <dirName>maven-status</dirName>
+                <dirName>webpack-modules</dirName>
+            </dirNames>
+        </attachedOutputs>
+        <projectVersioning calculateProjectVersionChecksum="true" />
+    </configuration>
+
+    <input>
+        <global>
+            <glob>
+                {*.java,*.groovy,*.scala,*.properties,*.js,*.jsx,*.scss,*.css,*.png,*.gif}
+            </glob>
+            <includes>
+                <include>src/</include>
+                <include glob="*.json,*.lock">./</include>
+            </includes>
+        </global>
+    </input>
+
+    <executionControl>
+      <!--
+        Make the build cache work better if you skip tests.
+        See https://maven.apache.org/extensions/maven-build-cache-extension/how-to.html#i-occasionally-cached-build-with-dskiptests-true-and-tests-do-no for details.
+      -->
+      <reconcile>
+          <plugins>
+              <plugin artifactId="maven-surefire-plugin" goal="test">
+                  <reconciles>
+                      <reconcile propertyName="skip" skipValue="true"/>
+                      <reconcile propertyName="skipExec" skipValue="true"/>
+                      <reconcile propertyName="skipTests" skipValue="true"/>
+                      <reconcile propertyName="testFailureIgnore" skipValue="true"/>
+                  </reconciles>
+              </plugin>
+              <plugin artifactId="maven-failsafe-plugin" goal="test">
+                  <reconciles>
+                      <reconcile propertyName="skip" skipValue="true"/>
+                      <reconcile propertyName="skipExec" skipValue="true"/>
+                      <reconcile propertyName="skipTests" skipValue="true"/>
+                      <reconcile propertyName="testFailureIgnore" skipValue="true"/>
+                  </reconciles>
+              </plugin>
+          </plugins>
+      </reconcile>
+    </executionControl>
+</cache>

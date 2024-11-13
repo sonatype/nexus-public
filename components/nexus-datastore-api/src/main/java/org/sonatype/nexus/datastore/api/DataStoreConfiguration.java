@@ -19,8 +19,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.transformEntries;
 import static java.util.regex.Pattern.compile;

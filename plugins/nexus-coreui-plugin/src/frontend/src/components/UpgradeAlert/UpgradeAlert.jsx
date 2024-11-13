@@ -15,7 +15,7 @@ import React, {useState} from 'react';
 import PropTypes from "prop-types";
 import axios from 'axios';
 
-import {NxButton, NxButtonBar, NxErrorAlert, NxInfoAlert, NxSuccessAlert, NxLoadingSpinner} from '@sonatype/react-shared-components';
+import {NxButton, NxButtonBar, NxErrorAlert, NxInfoAlert, NxLoadingSpinner, NxSuccessAlert, NxWarningAlert} from '@sonatype/react-shared-components';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../constants/UIStrings';
@@ -24,7 +24,7 @@ import {UpgradeAlertFunctions} from './UpgradeAlertHelper';
 import './UpgradeAlert.scss';
 import UpgradeTriggerModal from './UpgradeTriggerModal';
 
-const {UPGRADE_ALERT: { PENDING, PROGRESS, ERROR, COMPLETE}} = UIStrings;
+const {UPGRADE_ALERT: {PENDING, PROGRESS, ERROR, COMPLETE, WARN}} = UIStrings;
 
 export default function UpgradeAlert({onClose}) {
   const hasUser = ExtJS.useState(UpgradeAlertFunctions.hasUser);
@@ -35,7 +35,7 @@ export default function UpgradeAlert({onClose}) {
 
   function dismissAlert() {
     onClose();
-    axios.delete('/service/rest/clustered/upgrade-database-schema')
+    axios.delete('service/rest/v1/clustered/upgrade-database-schema')
   }
 
   return <>
@@ -57,10 +57,17 @@ export default function UpgradeAlert({onClose}) {
     }
 
     {state === 'versionMismatch' && hasUser && hasPermission &&
-      <NxErrorAlert className="nx-upgrade-alert">
-        <strong>{ERROR.LABEL}&ensp;(1) </strong>
-        {ERROR.TEXT_MISMATCH} {ERROR.CONTACT_SUPPORT}
-      </NxErrorAlert>
+        <NxWarningAlert className="nx-upgrade-alert" role="alert">
+        <NxButtonBar className="upgrade-alert-btn-bar">
+          <div className="alert-text">
+            <div><strong>{WARN.LABEL}&ensp;</strong></div>
+            <div>{WARN.TEXT}</div>
+          </div>
+          <NxButton variant="secondary" onClick={dismissAlert}>
+            {COMPLETE.DISMISS}
+          </NxButton>
+        </NxButtonBar>
+        </NxWarningAlert>
     }
     {state === 'nexusUpgradeInProgress' && hasUser && hasPermission &&
       <NxInfoAlert className="nx-upgrade-alert upgrade-in-progress-alert">

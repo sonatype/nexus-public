@@ -12,49 +12,51 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.validation.ValidationException;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
 import org.sonatype.nexus.blobstore.SelectOption;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.blobstore.s3.internal.capability.CustomS3RegionCapability;
+import org.sonatype.nexus.blobstore.s3.internal.capability.CustomS3RegionCapabilityConfiguration;
+import org.sonatype.nexus.blobstore.s3.internal.capability.CustomS3RegionCapabilityDescriptor;
 import org.sonatype.nexus.blobstore.s3.internal.encryption.KMSEncrypter;
 import org.sonatype.nexus.blobstore.s3.internal.encryption.NoEncrypter;
 import org.sonatype.nexus.blobstore.s3.internal.encryption.S3ManagedEncrypter;
-import org.sonatype.nexus.blobstore.s3.internal.ui.S3Component;
-import org.sonatype.nexus.blobstore.s3.internal.ui.S3RegionXO;
+import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder;
+import org.sonatype.nexus.capability.CapabilityRegistry;
+import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 
 import com.amazonaws.services.s3.model.Region;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_PREFIX_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
-
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
 
 /**
  * A {@link BlobStoreDescriptor} for {@link S3BlobStore}.
@@ -74,7 +76,7 @@ public class S3BlobStoreDescriptor
 
   public static final String TYPE = "S3";
 
-  private final Map<String, List<SelectOption>> s3SelectOptions;
+  private final Provider<CapabilityRegistry> capabilityRegistryProvider;
 
   private interface Messages
       extends MessageBundle
@@ -89,10 +91,11 @@ public class S3BlobStoreDescriptor
 
   @Inject
   public S3BlobStoreDescriptor(final BlobStoreQuotaService quotaService,
-                               final BlobStoreManager blobStoreManager) {
+                               final BlobStoreManager blobStoreManager,
+                               final Provider<CapabilityRegistry> capabilityRegistryProvider) {
     super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
-    s3SelectOptions = intializeSelectOptions();
+    this.capabilityRegistryProvider = checkNotNull(capabilityRegistryProvider);
   }
 
   @Override
@@ -131,28 +134,56 @@ public class S3BlobStoreDescriptor
 
   @Override
   public Map<String, List<SelectOption>> getDropDownValues() {
-    return s3SelectOptions;
+    return initializeSelectOptions();
   }
 
-  private Map<String, List<SelectOption>> intializeSelectOptions() {
+  @Override
+  public List<String> getSensitiveConfigurationFields() {
+    return Collections.singletonList(SECRET_ACCESS_KEY_KEY);
+  }
+
+  private Map<String, List<SelectOption>> initializeSelectOptions() {
     return ImmutableMap
         .of("regions", getRegionOptions(), "encryptionTypes", getEncryptionTypes(), "signerTypes", getSignerTypes());
   }
 
-  private List<SelectOption> getRegionOptions() {
+  protected List<SelectOption> getRegionOptions() {
+    if (isCustomS3RegionCapabilityEnabled()) {
+      return getCustomS3RegionOptions();
+    }
+
     return Stream
         .concat(Stream.of(new SelectOption(AmazonS3Factory.DEFAULT, DEFAULT_LABEL)), Arrays.stream(Region.values())
             .map(region -> new SelectOption(region.toAWSRegion().getName(), region.toAWSRegion().getName())))
         .collect(ImmutableList.toImmutableList());
   }
 
+  protected boolean isCustomS3RegionCapabilityEnabled() {
+    return !capabilityRegistryProvider.get().get(
+        CapabilityReferenceFilterBuilder.capabilities()
+            .withType(CapabilityType.capabilityType(CustomS3RegionCapabilityDescriptor.TYPE_ID))
+            .enabled())
+            .isEmpty();
+  }
+
+  private List<SelectOption> getCustomS3RegionOptions() {
+    return capabilityRegistryProvider.get().get(capabilityReference ->
+        capabilityReference.capability() instanceof CustomS3RegionCapability)
+        .stream()
+        .map(capabilityReference -> capabilityReference.capabilityAs(CustomS3RegionCapability.class))
+        .findFirst()
+        .map(CustomS3RegionCapability::getConfig)
+        .map(CustomS3RegionCapabilityConfiguration::getRegionsList)
+        .orElse(Collections.emptyList());
+  }
+
   private List<SelectOption> getSignerTypes() {
-    return new ImmutableList.Builder<SelectOption>().add(new SelectOption(AmazonS3Factory.DEFAULT, DEFAULT_LABEL))
+    return new Builder<SelectOption>().add(new SelectOption(AmazonS3Factory.DEFAULT, DEFAULT_LABEL))
         .add(new SelectOption(S3_SIGNER, S3_SIGNER)).add(new SelectOption(S3_V4_SIGNER, S3_V4_SIGNER)).build();
   }
 
   private List<SelectOption> getEncryptionTypes() {
-    return new ImmutableList.Builder<SelectOption>().add(new SelectOption(NoEncrypter.ID, NoEncrypter.NAME))
+    return new Builder<SelectOption>().add(new SelectOption(NoEncrypter.ID, NoEncrypter.NAME))
         .add(new SelectOption(S3ManagedEncrypter.ID, S3ManagedEncrypter.NAME))
         .add(new SelectOption(KMSEncrypter.ID, KMSEncrypter.NAME)).build();
   }

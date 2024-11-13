@@ -32,7 +32,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.toInternalToken;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.trim;
-import static org.sonatype.nexus.repository.content.rest.internal.resources.ComponentsResource.PAGE_SIZE;
 
 /**
  * Support class for {@link ComponentsResource} which fetches and returns only components that the user is permitted
@@ -43,7 +42,12 @@ import static org.sonatype.nexus.repository.content.rest.internal.resources.Comp
 abstract class ComponentsResourceSupport
     extends ComponentSupport
 {
-  static final int LIMIT = 100;
+  /**
+   * Limit the number of components returned per page. This value is aligned with AssetsResourceSupport.PAGE_SIZE_LIMIT
+   * and also matches the number of component identifiers that can be passed as input to the Firewall component
+   * evaluation API.
+   */
+  protected static final int PAGE_SIZE_LIMIT = 100;
 
   private final ContentAuthHelper contentAuthHelper;
 
@@ -63,19 +67,19 @@ abstract class ComponentsResourceSupport
     String internalToken = toInternalToken(continuationToken);
     Continuation<FluentComponent> componentContinuation = getComponents(browsedRepository, internalToken);
 
-    while (permittedComponents.size() < PAGE_SIZE && !componentContinuation.isEmpty()) {
+    while (permittedComponents.size() < PAGE_SIZE_LIMIT && !componentContinuation.isEmpty()) {
       permittedComponents.addAll(removeComponentsNotPermitted(browsedRepository, componentContinuation));
       componentContinuation = getComponents(browsedRepository, componentContinuation.nextContinuationToken());
     }
-    return trim(permittedComponents, PAGE_SIZE);
+    return trim(permittedComponents, PAGE_SIZE_LIMIT);
   }
 
   private Continuation<FluentComponent> getComponents(Repository repository, final String continuationToken) {
     if(GroupType.NAME.equals(repository.getType().getValue())) {
       return repository.facet(ContentFacet.class).components().withOnlyGroupMemberContent()
-          .browse(LIMIT, continuationToken);
+          .browse(PAGE_SIZE_LIMIT, continuationToken);
     }
-    return repository.facet(ContentFacet.class).components().browse(LIMIT, continuationToken);
+    return repository.facet(ContentFacet.class).components().browse(PAGE_SIZE_LIMIT, continuationToken);
   }
 
   private List<FluentComponent> removeComponentsNotPermitted(

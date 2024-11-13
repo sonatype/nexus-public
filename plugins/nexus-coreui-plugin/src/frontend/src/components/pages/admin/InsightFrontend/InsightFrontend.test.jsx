@@ -39,19 +39,19 @@ const selectors = {
 
 describe('Render Log4 Visualizer page', function() {
   it('renders empty page', async function() {
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-by-repository-name').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-by-repository-name').mockResolvedValue({
       data: []
     });
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-by-username').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-by-username').mockResolvedValue({
       data: []
     });
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-by-day').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-by-day').mockResolvedValue({
       data: []
     });
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-by-day-non-vulnerable').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-by-day-non-vulnerable').mockResolvedValue({
       data: []
     });
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-total').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-total').mockResolvedValue({
       data: []
     });
 
@@ -63,10 +63,10 @@ describe('Render Log4 Visualizer page', function() {
   });
 
   it('renders the resolved data', async function() {
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-by-repository-name').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-by-repository-name').mockResolvedValue({
       data: []
     });
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-by-username').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-by-username').mockResolvedValue({
       data: [ {
         "identifier" : "admin",
         "downloadCount" : 28
@@ -75,13 +75,13 @@ describe('Render Log4 Visualizer page', function() {
         "downloadCount" : 27
       } ]
     });
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-by-day').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-by-day').mockResolvedValue({
       data: []
     });
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-by-day-non-vulnerable').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-by-day-non-vulnerable').mockResolvedValue({
       data: []
     });
-    when(Axios.get).calledWith('/service/rest/v1/vulnerability/count-total').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/vulnerability/count-total').mockResolvedValue({
       data: 55
     });
 

@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 
 /**
  * Tests whether all assets under a component were last downloaded before the specified offset. If an asset has never

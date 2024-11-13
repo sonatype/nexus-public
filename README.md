@@ -26,23 +26,15 @@ Sonatype Nexus Repository Pro customers can use https://support.sonatype.com/.
  
 ## Build Requirements
 
-Builds use Apache Maven and require Java 8. Apache Maven wrapper scripts are included in the source tree.
-
-All release versioned dependencies should be available from the [Central](https://repo1.maven.org/maven2/) repository.
-
-For SNAPSHOT sources, SNAPSHOT versioned dependencies may only be available from https://repository.sonatype.org/content/groups/sonatype-public-grid repository.
+Builds use Apache Maven and require Java 17. Apache Maven wrapper scripts are included in the source tree.
 
 ### Configuring Maven for SNAPSHOT Dependencies
 
 Following best practices, the nexus-public POM does not include any root `<repositories>` elements.
-    
-Instead you are advised to [configure Apache Maven to point at single repository mirror URL](https://maven.apache.org/guides/mini/guide-mirror-settings.html#using-a-single-repository) that is a group repository containing both Central proxy repository with Release version policy and sonatype-public-grid with a SNAPSHOT version policy. You can use a [repository manager](https://www.sonatype.org/nexus/go/) to set up a group repository that contains both of these remotes.
-
-Alternately, [add a custom profile to a settings.xml](https://maven.apache.org/guides/mini/guide-multiple-repositories.html) for repository manager development that includes both repositories.
 
 ## Building From Source
 
-Released versions are tagged and branched using a name of the form `release-{version}`. For example: `release-3.29.2-02`
+Released versions are tagged and branched using a name of the form `release-{version}`. For example: `release-3.72.0-04`
 
 To build a tagged release, first fetch all tags:
 
@@ -53,16 +45,16 @@ git fetch --tags
 Then checkout the remote branch you want. For example:
 
 ```shell
-git checkout -b release-3.29.2-02 origin/release-3.29.2-02 --
+git checkout -b release-3.72.0-04 origin/release-3.72.0-04 --
 ```
 
 Then build using the included Maven wrapper script. For example:
 
 ```shell
-./mvnw clean install
+./mvnw clean install -Dpublic
 ```
 
-For building SNAPSHOT versions, follow the same process, except your build may require access to [Sonatype Public Grid](https://repository.sonatype.org/content/groups/sonatype-public-grid) to successfully resolve dependencies.
+The `public` property is required outside of Sonatype's internal infrastructure.
 
 ## Running
 

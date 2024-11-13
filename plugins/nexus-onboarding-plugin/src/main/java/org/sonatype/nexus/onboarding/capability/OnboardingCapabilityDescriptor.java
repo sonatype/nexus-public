@@ -30,7 +30,6 @@ import org.sonatype.nexus.formfields.FormField;
 
 import static java.util.Collections.singletonList;
 
-
 @AvailabilityVersion(from = "1.0")
 @Named(OnboardingCapability.TYPE_ID)
 @Singleton

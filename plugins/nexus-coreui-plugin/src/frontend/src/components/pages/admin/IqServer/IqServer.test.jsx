@@ -79,7 +79,7 @@ const DEFAULT_RESPONSE = {
 describe('IqServer', () => {
   beforeEach(() => {
     window.dirty = [];
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/iq').mockResolvedValue({
       data: DEFAULT_RESPONSE
     });
   });
@@ -103,7 +103,7 @@ describe('IqServer', () => {
   });
 
   it('fetches existing settings from the backend and displays them in the form', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/iq').mockResolvedValue({
       data: {
         "enabled": true,
         "showLink": true,
@@ -130,7 +130,7 @@ describe('IqServer', () => {
   });
 
   it('shows contextual error message for empty password', async () => {
-    when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+    when(Axios.get).calledWith('service/rest/v1/iq').mockResolvedValue({
       data: {
         "enabled": true,
         "showLink": true,
@@ -344,10 +344,10 @@ describe('IqServer', () => {
       username: 'user',
     };
 
-    when(Axios.post).calledWith('/service/rest/internal/ui/iq/verify-connection', simpleData).mockResolvedValue({
+    when(Axios.post).calledWith('service/rest/internal/ui/iq/verify-connection', simpleData).mockResolvedValue({
       data: {reason: 'Test App', success: true}
     });
-    when(Axios.put).calledWith('/service/rest/v1/iq', simpleData).mockResolvedValue({data: {}});
+    when(Axios.put).calledWith('service/rest/v1/iq', simpleData).mockResolvedValue({data: {}});
 
     render(<IqServer/>);
 
@@ -371,12 +371,12 @@ describe('IqServer', () => {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
     expect(screen.queryByText(/Test App/i)).toBeInTheDocument();
     expect(Axios.post).toHaveBeenCalledTimes(1);
-    expect(Axios.post).toHaveBeenCalledWith('/service/rest/internal/ui/iq/verify-connection', simpleData);
+    expect(Axios.post).toHaveBeenCalledWith('service/rest/internal/ui/iq/verify-connection', simpleData);
 
     userEvent.click(selectors.querySubmitButton());
     await waitForElementToBeRemoved(selectors.querySavingMask());
     expect(Axios.put).toHaveBeenCalledTimes(1);
-    expect(Axios.put).toHaveBeenCalledWith('/service/rest/v1/iq', simpleData);
+    expect(Axios.put).toHaveBeenCalledWith('service/rest/v1/iq', simpleData);
   });
 
   it('allows for the url to be updated when there is an alert', async () => {
@@ -414,7 +414,7 @@ describe('IqServer', () => {
     it('Shows empty Iq Server page in Read Only mode', async () => {
       ExtJS.checkPermission.mockReturnValueOnce(false);
 
-      when(Axios.get).calledWith('/service/rest/v1/iq').mockResolvedValue({
+      when(Axios.get).calledWith('service/rest/v1/iq').mockResolvedValue({
         data: {
           "enabled": true,
           "showLink": true,

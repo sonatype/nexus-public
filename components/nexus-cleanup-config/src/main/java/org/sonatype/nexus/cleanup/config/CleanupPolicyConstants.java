@@ -34,4 +34,8 @@ public interface CleanupPolicyConstants
   String RETAIN_SORT_BY_KEY = "sortBy";
 
   String REGEX_KEY = "regex";
+
+  String MAVEN2_FORMAT = "maven2";
+
+  String DOCKER_FORMAT = "docker";
 }

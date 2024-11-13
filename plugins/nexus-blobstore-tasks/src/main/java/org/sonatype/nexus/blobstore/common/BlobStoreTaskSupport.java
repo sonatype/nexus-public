@@ -24,8 +24,6 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 
 import com.google.common.collect.Iterables;
 
-import static org.sonatype.nexus.blobstore.metrics.reconcile.RecalculateBlobStoreSizeTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
-
 /**
  * Support for tasks that apply changes to a set of blob stores
  */
@@ -97,7 +95,7 @@ public abstract class BlobStoreTaskSupport
   }
 
   protected String getBlobStoreField() {
-    return getConfiguration().getString(BLOB_STORE_NAME_FIELD_ID);
+    return getConfiguration().getString(BLOBSTORE_NAME_FIELD_ID);
   }
 
   /**

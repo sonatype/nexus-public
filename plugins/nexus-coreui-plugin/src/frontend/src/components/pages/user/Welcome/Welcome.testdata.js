@@ -32,20 +32,8 @@ export const outreachGetProxyDownloadNumbers = data => ({
   result: { success: true, data }
 });
 
-export const showFirewallAlertBasicSuccess = {
-  action: 'outreach_Outreach',
-  method: 'showFirewallAlert',
-  result: { success: true }
-};
-
-export const showFirewallAlertDisclaimer = data => ({
-  ...showFirewallAlertBasicSuccess,
-  result: { success: true, data }
-});
-
 export const simpleSuccessResponse = {
   data: [
-    showFirewallAlertBasicSuccess,
     outreachReadStatusBasicSuccess,
     outreachGetProxyDownloadNumbersBasicSuccess
   ]

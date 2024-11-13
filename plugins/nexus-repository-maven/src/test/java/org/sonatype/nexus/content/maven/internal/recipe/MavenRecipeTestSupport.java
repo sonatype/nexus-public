@@ -142,11 +142,6 @@ public abstract class MavenRecipeTestSupport
   private final Provider<MavenArchetypeCatalogFacet> mavenArchetypeCatalogFacetProvider =
       () -> mavenArchetypeCatalogFacet;
 
-  @Mock
-  protected MavenReplicationFacet mavenReplicationFacet;
-
-  private final Provider<MavenReplicationFacet> mavenReplicationFacetProvider = () -> mavenReplicationFacet;
-
   protected <T extends MavenRecipeSupport> void mockHandlers(T underTest) {
     underTest.setBrowseUnsupportedHandler(browseUnsupportedHandler);
     when(browseUnsupportedHandler.getRoute()).thenReturn(
@@ -178,6 +173,5 @@ public abstract class MavenRecipeTestSupport
     underTest.setRemoveSnapshotsFacet(removeSnapshotsFacetProvider);
     underTest.setMavenMetadataRebuildFacet(mavenMetadataRebuildFacetProvider);
     underTest.setMavenArchetypeCatalogFacet(mavenArchetypeCatalogFacetProvider);
-    underTest.setMavenReplicationFacet(mavenReplicationFacetProvider);
   }
 }

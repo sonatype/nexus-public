@@ -15,8 +15,7 @@ package org.sonatype.nexus.scheduling.events;
 import org.sonatype.nexus.scheduling.TaskInfo;
 
 /**
- * Event fired when a task is stopped, is cleanly done what was it doing (whatever the ending resolution is: finished,
- * cancelled or failed).
+ * Event fired when a task is stopped, is cleanly done what was it doing.
  *
  * @since 2.0
  */

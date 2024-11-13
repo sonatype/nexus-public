@@ -36,6 +36,8 @@ const retainSortByFormat = new Map([
   ['docker', LABELS.EXCLUSION_CRITERIA.SORT_BY.DATE.id]
 ]);
 
+const NOTES_FIELD_MAX_LENGTH = 400;
+
 function isEdit({name}) {
   return ValidationUtils.notBlank(name);
 }
@@ -123,6 +125,7 @@ export default FormUtils.buildFormMachine({
       }) => ({
         name: ValidationUtils.validateNameField(data.name),
         format: ValidationUtils.validateNotBlank(data.format),
+        notes: ValidationUtils.validateLength(data.notes, NOTES_FIELD_MAX_LENGTH),
         criteriaLastDownloaded: validateCriteriaNumberField(
           criteriaLastDownloadedEnabled,
           data.criteriaLastDownloaded

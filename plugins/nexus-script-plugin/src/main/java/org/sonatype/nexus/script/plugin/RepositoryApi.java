@@ -327,45 +327,6 @@ public interface RepositoryApi
                                final String blobStoreName);
 
   /**
-   * Create a Bower hosted repository.
-   * @param name
-   * @param blobStoreName The BlobStore the Repository should use
-   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
-   * @param writePolicy The {@link WritePolicy} for the Repository
-   * @return the newly created Repository
-   */
-  Repository createBowerHosted(final String name,
-                               final String blobStoreName,
-                               final boolean strictContentTypeValidation,
-                               final WritePolicy writePolicy);
-
-  /**
-   * Create a Bower proxy repository.
-   * @param name The name of the new Repository
-   * @param remoteUrl The url of the external proxy for this Repository
-   * @param blobStoreName The BlobStore the Repository should use
-   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
-   * @param rewritePackageUrls
-   * @return the newly created Repository
-   */
-  Repository createBowerProxy(final String name,
-                              final String remoteUrl,
-                              final String blobStoreName,
-                              final boolean strictContentTypeValidation,
-                              final boolean rewritePackageUrls);
-
-  /**
-   * Create a Bower group repository.
-   * @param name The name of the new Repository
-   * @param blobStoreName The BlobStore the Repository should use
-   * @param members The names of the Repositories in the group
-   * @return the newly created Repository
-   */
-  Repository createBowerGroup(final String name,
-                              final List<String> members,
-                              final String blobStoreName);
-
-  /**
    * Create a Ruby gems hosted repository.
    *
    * @param blobStoreName               The BlobStore the Repository should use

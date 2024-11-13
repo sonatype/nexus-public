@@ -12,16 +12,21 @@
  */
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
+import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiAdvancedBucketConnection;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketSecurity;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncryption;
+import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
@@ -30,6 +35,10 @@ import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 
 /**
@@ -72,7 +81,9 @@ public final class S3BlobStoreApiConfigurationMapper
         buildS3BlobStoreBucket(s3BucketAttributes),
         buildS3BlobStoreBucketSecurity(s3BucketAttributes),
         buildS3BlobStoreEncryption(s3BucketAttributes),
-        buildS3BlobStoreAdvancedBucketConnection(s3BucketAttributes));
+        buildS3BlobStoreAdvancedBucketConnection(s3BucketAttributes),
+        buildS3BlobStoreFailoverBuckets(s3BucketAttributes),
+        buildS3BlobStoreActiveRegion(configuration));
   }
 
   private static S3BlobStoreApiBucket buildS3BlobStoreBucket(final NestedAttributesMap attributes) {
@@ -126,6 +137,21 @@ public final class S3BlobStoreApiConfigurationMapper
           maxConnectionPoolSize);
     }
     return null;
+  }
+
+  private static List<S3BlobStoreApiFailoverBucket> buildS3BlobStoreFailoverBuckets(
+      final NestedAttributesMap attributes)
+  {
+    if (attributes.contains(FAILOVER_BUCKETS_KEY)) {
+      return attributes.child(FAILOVER_BUCKETS_KEY).entries().stream()
+          .map(entry -> new S3BlobStoreApiFailoverBucket(entry.getKey(), entry.getValue().toString()))
+          .collect(Collectors.toList());
+    }
+    return Collections.emptyList();
+  }
+
+  private static String buildS3BlobStoreActiveRegion(final BlobStoreConfiguration configuration) {
+    return S3BlobStoreConfigurationHelper.getConfiguredRegion(configuration);
   }
 
   private static boolean anyNonNull(final Object... objects) {

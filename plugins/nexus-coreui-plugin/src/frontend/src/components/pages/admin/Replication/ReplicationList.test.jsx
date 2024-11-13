@@ -45,7 +45,7 @@ describe('ReplicationList', function() {
       }
     ];
 
-    when(axios.get).calledWith('/service/rest/beta/replication/connection').mockResolvedValue({data: rows});
+    when(axios.get).calledWith('service/rest/beta/replication/connection').mockResolvedValue({data: rows});
 
     const {loadingMask, cell} = renderView();
 
@@ -61,7 +61,7 @@ describe('ReplicationList', function() {
   });
 
   it('renders a loading spinner', async function() {
-    when(axios.get).calledWith('/service/rest/beta/replication/connection').mockReturnValue(TestUtils.UNRESOLVED);
+    when(axios.get).calledWith('service/rest/beta/replication/connection').mockReturnValue(TestUtils.UNRESOLVED);
 
     const {loadingMask} = renderView();
 

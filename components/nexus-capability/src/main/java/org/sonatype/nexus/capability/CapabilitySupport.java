@@ -14,7 +14,7 @@ package org.sonatype.nexus.capability;
 
 import java.net.URL;
 import java.util.Map;
-
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
@@ -251,7 +251,13 @@ public abstract class CapabilitySupport<ConfigT>
   }
 
   protected String render(final String template, final TemplateParameters params) {
-    URL url = getClass().getResource(template);
+    // we need to check superclass in case subclass has no template e.g. failure.vm template
+    URL url = Optional.ofNullable(getClass().getResource(template))
+        .orElseGet(() -> getClass().getSuperclass().getResource(template));
+    if (url == null) {
+      log.warn("Template not found: {}. Could not render.", template);
+      return null;
+    }
     return templateHelper.render(url, params);
   }
 

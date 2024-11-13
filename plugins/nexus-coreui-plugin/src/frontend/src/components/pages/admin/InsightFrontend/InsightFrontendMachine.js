@@ -48,12 +48,12 @@ export default createMachine(
       },
       services: {
         fetchData: async () => {
-          const downloadsByRepositoryName = await axios.get('/service/rest/v1/vulnerability/count-by-repository-name');
-          const downloadsByUsername = await axios.get('/service/rest/v1/vulnerability/count-by-username');
-          const downloadsByIp = await axios.get('/service/rest/v1/vulnerability/count-by-ip');
-          const downloadsByDay = await axios.get('/service/rest/v1/vulnerability/count-by-day');
-          const downloadsByDayNonVulnerable = await axios.get('/service/rest/v1/vulnerability/count-by-day-non-vulnerable');
-          const totalDownloads = await axios.get('/service/rest/v1/vulnerability/count-total');
+          const downloadsByRepositoryName = await axios.get('service/rest/v1/vulnerability/count-by-repository-name');
+          const downloadsByUsername = await axios.get('service/rest/v1/vulnerability/count-by-username');
+          const downloadsByIp = await axios.get('service/rest/v1/vulnerability/count-by-ip');
+          const downloadsByDay = await axios.get('service/rest/v1/vulnerability/count-by-day');
+          const downloadsByDayNonVulnerable = await axios.get('service/rest/v1/vulnerability/count-by-day-non-vulnerable');
+          const totalDownloads = await axios.get('service/rest/v1/vulnerability/count-total');
 
           return {
             downloadsByRepositoryName: downloadsByRepositoryName?.data || [],

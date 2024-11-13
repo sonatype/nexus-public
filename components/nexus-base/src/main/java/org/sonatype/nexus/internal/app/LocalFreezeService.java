@@ -30,7 +30,11 @@ import org.sonatype.nexus.common.app.FreezeRequest;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.freeze.event.FreezeForceReleaseEvent;
+import org.sonatype.nexus.freeze.event.FreezeReleaseEvent;
+import org.sonatype.nexus.freeze.event.FreezeRequestEvent;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
@@ -74,14 +78,18 @@ public class LocalFreezeService
 
   private final List<Freezable> freezables;
 
+  private final EventManager eventManager;
+
   @Inject
   public LocalFreezeService(final ApplicationDirectories directories,
                             final ClientInfoProvider clientInfoProvider,
-                            final List<Freezable> freezables)
+                            final List<Freezable> freezables,
+                            final EventManager eventManager)
   {
     this.markerFile = new File(directories.getWorkDirectory("db"), MARKER_FILE);
     this.clientInfoProvider = checkNotNull(clientInfoProvider);
     this.freezables = checkNotNull(freezables);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -115,6 +123,7 @@ public class LocalFreezeService
 
   @Override
   public List<FreezeRequest> cancelAllFreezeRequests() {
+    eventManager.post(new FreezeForceReleaseEvent());
     List<FreezeRequest> canceledRequests = currentFreezeRequests();
     freezeRequests.clear();
     reverse(freezables).forEach(this::tryUnfreeze);
@@ -145,6 +154,7 @@ public class LocalFreezeService
 
   private void addRequest(@Nullable final String token, final String reason) {
     FreezeRequest request = newRequest(token, reason);
+    eventManager.post(new FreezeRequestEvent(reason));
     synchronized (freezeRequests) {
       checkState(!any(freezeRequests, sameToken(token)), "Freeze has already been requested");
       if (token == null) {
@@ -158,6 +168,7 @@ public class LocalFreezeService
   }
 
   private void removeRequest(@Nullable final String token) {
+    eventManager.post(new FreezeReleaseEvent());
     if (token == null) {
       deleteUserFreezeRequest();
     }

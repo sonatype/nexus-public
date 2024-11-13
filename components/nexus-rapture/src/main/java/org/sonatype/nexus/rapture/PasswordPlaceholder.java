@@ -13,7 +13,8 @@
 package org.sonatype.nexus.rapture;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
+
+import org.sonatype.nexus.crypto.secrets.Secret;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -46,6 +47,17 @@ public class PasswordPlaceholder
    */
   @Nullable
   public static String get(@Nullable final String value) {
+    if (value != null) {
+      return VALUE;
+    }
+    return null;
+  }
+
+  /**
+   * Returns fake password placeholder unless value is {@code null}.
+   */
+  @Nullable
+  public static String get(@Nullable final Secret value) {
     if (value != null) {
       return VALUE;
     }

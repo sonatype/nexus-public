@@ -27,7 +27,6 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.quartz.orient.OrientDelegate;
 
 import org.quartz.impl.jdbcjobstore.HSQLDBDelegate;
 import org.quartz.impl.jdbcjobstore.JobStoreTX;
@@ -136,8 +135,6 @@ public class JobStoreJdbcProvider
         return HSQLDBDelegate.class.getName();
       case "PostgreSQL":
         return PostgreSQLDelegate.class.getName();
-      case "OrientDB":
-        return OrientDelegate.class.getName();
       default:
         return StdJDBCDelegate.class.getName();
     }

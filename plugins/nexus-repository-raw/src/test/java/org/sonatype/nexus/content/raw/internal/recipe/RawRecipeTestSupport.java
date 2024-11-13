@@ -99,11 +99,6 @@ public abstract class RawRecipeTestSupport extends TestSupport
 
   private final Provider<BrowseFacet> browseFacetProvider = () -> browseFacet;
 
-  @Mock
-  protected RawReplicationFacet replicationFacet;
-
-  private final Provider<RawReplicationFacet> replicationFacetProvider = () -> replicationFacet;
-
   protected <T extends RawRecipeSupport> void mockHandlers(T underTest) {
     underTest.setExceptionHandler(exceptionHandler);
     underTest.setTimingHandler(timingHandler);
@@ -125,6 +120,5 @@ public abstract class RawRecipeTestSupport extends TestSupport
     underTest.setMaintenanceFacet(maintenanceFacetProvider);
     underTest.setSearchFacet(searchFacetProvider);
     underTest.setBrowseFacet(browseFacetProvider);
-    underTest.setReplicationFacet(replicationFacetProvider);
   }
 }

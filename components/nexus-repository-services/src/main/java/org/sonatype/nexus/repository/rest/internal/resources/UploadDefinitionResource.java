@@ -90,7 +90,7 @@ public class UploadDefinitionResource
 
     UploadDefinition uploadDefinition = uploadManager.getByFormat(format);
 
-    if (uploadDefinition == null) {
+    if (uploadDefinition == null || !uploadDefinition.isApiUpload()) {
       log.debug("Could not find upload definition for format '{}'.", format);
       throw new NotFoundException(format("Unable to locate upload definition for format '%s'", format));
     }
