@@ -75,8 +75,9 @@ public class AnonymousFilter
   protected boolean preHandle(final ServletRequest request, final ServletResponse response) throws Exception {
     Subject subject = SecurityUtils.getSubject();
     AnonymousManager manager = anonymousManager.get();
-   
-    if (subject.getPrincipal() == null && manager.isEnabled()) {
+
+    if ((subject.getPrincipal() == null || isAnonymousUser(manager, subject))
+        && manager.isEnabled()) {
       request.setAttribute(ORIGINAL_SUBJECT, subject);
       subject = manager.buildSubject();
       ThreadContext.bind(subject);
@@ -111,5 +112,12 @@ public class AnonymousFilter
       log.trace("Binding original subject: {}", subject);
       ThreadContext.bind(subject);
     }
+  }
+
+  private boolean isAnonymousUser(AnonymousManager manager, Subject subject) {
+    if (manager == null || manager.getConfiguration() == null || manager.getConfiguration().getUserId() == null) {
+      return false;
+    }
+    return manager.getConfiguration().getUserId().equals(subject.getPrincipals().getPrimaryPrincipal());
   }
 }

@@ -27,7 +27,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.LocalDate;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -40,7 +42,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -64,6 +65,7 @@ import org.sonatype.nexus.blobstore.api.OperationType;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
+import org.sonatype.nexus.blobstore.file.internal.DateBasedWalkFile;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
@@ -94,7 +96,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
-import static java.time.LocalDate.now;
+import static java.time.LocalDateTime.now;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.io.FileUtils.forceDelete;
@@ -143,8 +145,6 @@ public class FileBlobStore
 
   @VisibleForTesting
   public static final String DELETIONS_FILENAME = "deletions.index";
-
-  public static final String CONTENT = "content";
 
   public static final String TMP = "tmp";
 
@@ -258,21 +258,6 @@ public class FileBlobStore
     blobStoreQuotaUsageChecker.start();
   }
 
-  @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(final int sinceDays) {
-    if (sinceDays < 0) {
-      throw new IllegalArgumentException("sinceDays must >= 0");
-    }
-    else {
-      LocalDate sinceDate = now().minusDays(sinceDays);
-      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate);
-    }
-  }
-
-  public String getDeletionsFilename() {
-    return nodeAccess.getId() + "-" + DELETIONS_FILENAME;
-  }
-
   /*
    * Returns a Stream of known deletion index files for the blobstore, this will include entries for other nodes and is
    * only intended for use during database migration.
@@ -366,6 +351,33 @@ public class FileBlobStore
       fileOperations.hardLink(sourceFile, destination);
       return new StreamMetrics(size, sha1.toString());
     }, null);
+  }
+
+  @Override
+  public void createBlobAttributes(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics blobMetrics)
+  {
+    Path attributePath = attributePath(blobId);
+    try {
+      FileBlobAttributes blobAttributes = new FileBlobAttributes(attributePath, headers, blobMetrics);
+      blobAttributes.store();
+    }
+    catch (Exception e) {
+      // Something went wrong, clean up the file we created
+      fileOperations.deleteQuietly(attributePath);
+      throw new BlobStoreException(e, blobId);
+    }
+  }
+
+  @Override
+  public FileBlobAttributes createBlobAttributesInstance(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics blobMetrics)
+  {
+    return new FileBlobAttributes(attributePath(blobId), headers, blobMetrics);
   }
 
   private Blob create(final Map<String, String> headers, final BlobIngester ingester, final BlobId blobId) {
@@ -597,7 +609,7 @@ public class FileBlobStore
 
   @Nullable
   private Long getContentSizeForDeletion(final BlobId blobId) {
-    return Optional.ofNullable(getFileBlobAttributes(blobId))
+    return ofNullable(getFileBlobAttributes(blobId))
         .map(BlobAttributes::getMetrics)
         .map(BlobMetrics::getContentSize)
         .orElse(null);
@@ -668,7 +680,9 @@ public class FileBlobStore
     try {
       Date thresholdDate = DateUtils.addDays(new Date(), -daysOlderThan);
       AgeFileFilter ageFileFilter = new AgeFileFilter(thresholdDate);
-      Iterator<File> filesToDelete = iterateFiles(getAbsoluteBlobDir().resolve(CONTENT).resolve(TMP).toFile(), ageFileFilter, ageFileFilter);
+      Iterator<File> filesToDelete =
+          iterateFiles(getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve(TMP).toFile(), ageFileFilter,
+              ageFileFilter);
       filesToDelete.forEachRemaining(f -> {
             try {
               forceDelete(f);
@@ -679,7 +693,7 @@ public class FileBlobStore
           }
       );
     }
-    catch (UncheckedIOException | NoSuchFileException e ) {
+    catch (UncheckedIOException | NoSuchFileException e) {
       log.debug("Tmp folder is empty: {}", e.getMessage());
     }
     catch (TaskInterruptedException e) {
@@ -731,7 +745,7 @@ public class FileBlobStore
 
     try {
       Path blobDir = getAbsoluteBlobDir();
-      Path content = blobDir.resolve(CONTENT);
+      Path content = blobDir.resolve(CONTENT_PREFIX);
       DirectoryHelper.mkdir(content);
       this.contentDir = content;
       Path reconciliationLogDir = blobDir.resolve("reconciliation");
@@ -768,6 +782,26 @@ public class FileBlobStore
       return false;
     }
     return true;
+  }
+
+  @Override
+  public boolean bytesExists(final BlobId blobId) {
+    checkNotNull(blobId);
+    if (!fileOperations.exists(contentPath(blobId))) {
+      log.debug("Blob {} content (.bytes) was not found during existence check", blobId);
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public boolean isBlobEmpty(final BlobId blobId) {
+    checkNotNull(blobId);
+    if (fileOperations.isBlobZeroLength(contentPath(blobId))) {
+      log.debug("Blob {} content (.bytes) was not found during existence check", blobId);
+      return true;
+    }
+    return false;
   }
 
   private boolean delete(final Path path) throws IOException {
@@ -893,25 +927,23 @@ public class FileBlobStore
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
     for (int counter = 0, numBlobs = blobDeletionIndex.size(); counter < numBlobs; counter++) {
       log.debug("Processing record {} of {}", counter + 1, numBlobs);
-      String oldestDeletedRecord = blobDeletionIndex.readOldestRecord();
-      log.debug("Oldest Deleted Record from deletion index: {}", oldestDeletedRecord);
-      if (Objects.isNull(oldestDeletedRecord)) {
+      BlobId nextAvailableRecord = blobDeletionIndex.getNextAvailableRecord();
+      if (Objects.isNull(nextAvailableRecord)) {
         log.info("Deleted blobs not found");
         return;
       }
-      BlobId oldestDeletedBlobId = new BlobId(oldestDeletedRecord);
-      FileBlob blob = liveBlobs.getIfPresent(oldestDeletedBlobId);
-      log.debug("Oldest Deleted BlobId: {}", oldestDeletedBlobId);
+      FileBlob blob = liveBlobs.getIfPresent(nextAvailableRecord);
+      log.debug("Next available record for compaction: {}", nextAvailableRecord);
       if (Objects.isNull(blob) || blob.isStale()) {
         log.debug("Compacting...");
-        maybeCompactBlob(inUseChecker, oldestDeletedBlobId);
-        blobDeletionIndex.deleteRecord(oldestDeletedBlobId);
+        maybeCompactBlob(inUseChecker, nextAvailableRecord);
+        blobDeletionIndex.deleteRecord(nextAvailableRecord);
       }
       else {
         log.debug("Still in use to deferring");
         // still in use, so move it to end of the queue
-        blobDeletionIndex.deleteRecord(oldestDeletedBlobId);
-        blobDeletionIndex.createRecord(oldestDeletedBlobId);
+        blobDeletionIndex.deleteRecord(nextAvailableRecord);
+        blobDeletionIndex.createRecord(nextAvailableRecord);
       }
 
       progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
@@ -970,11 +1002,13 @@ public class FileBlobStore
           return FileVisitResult.CONTINUE;
         }
 
-        FileBlobAttributes attributes =
-            getFileBlobAttributes(new BlobId(getBlobIdFromAttributeFilePath(new FileAttributesLocation(file))));
+        BlobId blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(file));
+        if (blobId != null) {
+          FileBlobAttributes attributes = getFileBlobAttributes(blobId);
 
-        if (attributes != null && attributes.isDeleted()) {
-          compactByAttributes(attributes, inUseChecker, count, progressLogger);
+          if (attributes != null && attributes.isDeleted()) {
+            compactByAttributes(attributes, inUseChecker, count, progressLogger);
+          }
         }
 
         return FileVisitResult.CONTINUE;
@@ -999,12 +1033,12 @@ public class FileBlobStore
       final AtomicInteger count,
       final ProgressLogIntervalHelper progressLogger)
   {
-    String blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
-    FileBlob blob = liveBlobs.getIfPresent(blobId);
+    BlobId blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
+    FileBlob blob = blobId != null ? liveBlobs.getIfPresent(blobId) : null;
     try {
       if (blob == null || blob.isStale()) {
-        if (!maybeCompactBlob(inUseChecker, new BlobId(blobId))) {
-          blobDeletionIndex.createRecord(new BlobId(blobId));
+        if (!maybeCompactBlob(inUseChecker, blobId)) {
+          blobDeletionIndex.createRecord(blobId);
         }
         else {
           progressLogger.info("Elapsed time: {}, processed: {}", progressLogger.getElapsed(),
@@ -1012,7 +1046,7 @@ public class FileBlobStore
         }
       }
       else {
-        blobDeletionIndex.createRecord(new BlobId(blobId));
+        blobDeletionIndex.createRecord(blobId);
       }
     }
     catch (IOException e) {
@@ -1083,10 +1117,25 @@ public class FileBlobStore
       return getAttributeFilePaths()
           .map(FileAttributesLocation::new)
           .map(this::getBlobIdFromAttributeFilePath)
-          .map(BlobId::new);
+          .filter(Objects::nonNull);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final Duration duration) {
+    if (duration.isNegative()) {
+      throw new IllegalArgumentException("duration must >= 0");
+    }
+    else {
+      // date-based walk files
+      DateBasedWalkFile dateBasedWalkFile = new DateBasedWalkFile(contentDir.toString(), duration);
+      Map<String, OffsetDateTime> dateBasedBlobIds = dateBasedWalkFile.getBlobIdToDateRef();
+
+      LocalDateTime sinceDate = now().minusSeconds(duration.getSeconds());
+      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate, dateBasedBlobIds);
     }
   }
 
@@ -1155,9 +1204,14 @@ public class FileBlobStore
 
   @Override
   public BlobAttributes getBlobAttributes(final FileAttributesLocation attributesFilePath) throws IOException {
-    FileBlobAttributes fileBlobAttributes = new FileBlobAttributes(attributesFilePath.getPath());
-    fileBlobAttributes.load();
-    return fileBlobAttributes;
+    try {
+      FileBlobAttributes fileBlobAttributes = new FileBlobAttributes(attributesFilePath.getPath());
+      return fileBlobAttributes.load() ? fileBlobAttributes : null;
+    }
+    catch (Exception e) {
+      log.error("Unable to load FileBlobAttributes by path: {}", attributesFilePath.getFullPath(), e);
+      throw new IOException(e);
+    }
   }
 
   @Nullable

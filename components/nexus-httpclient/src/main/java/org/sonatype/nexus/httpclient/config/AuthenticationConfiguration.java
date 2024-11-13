@@ -14,6 +14,8 @@ package org.sonatype.nexus.httpclient.config;
 
 import java.util.Map;
 
+import org.sonatype.nexus.crypto.secrets.Secret;
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -47,6 +49,8 @@ public abstract class AuthenticationConfiguration
       BearerTokenAuthenticationConfiguration.TYPE, BearerTokenAuthenticationConfiguration.class
   );
 
+  public static final String AUTHENTICATION_CONFIGURATION = "authentication-config";
+
   private final String type;
 
   private boolean preemptive;
@@ -66,6 +70,8 @@ public abstract class AuthenticationConfiguration
   public void setPreemptive(final boolean preemptive) {
     this.preemptive = preemptive;
   }
+
+  public abstract Secret getSecret();
 
   public AuthenticationConfiguration copy() {
     try {

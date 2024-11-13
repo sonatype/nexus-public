@@ -109,7 +109,7 @@ public abstract class ITSupport
     // been reached at which point the client/test can continue while NX still has to release the upstream connection
     // (cf. ResponseEntityProxy which releases a connection after the last byte has been handed out to the client).
     // So allow for some delay when checking the connection pool.
-    await().atMost(3, TimeUnit.SECONDS)
+    await().atMost(5, TimeUnit.SECONDS)
         .untilAsserted(() -> assertThat(connectionManager.getTotalStats().getLeased(), is(0)));
   }
 

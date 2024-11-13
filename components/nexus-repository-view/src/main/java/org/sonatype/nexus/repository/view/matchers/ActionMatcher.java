@@ -45,4 +45,9 @@ public class ActionMatcher
     final String action = context.getRequest().getAction();
     return allowedActions.contains(action);
   }
+
+  @Override
+  public String toString() {
+    return "ActionMatcher [allowedActions=" + allowedActions + "]";
+  }
 }

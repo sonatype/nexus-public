@@ -49,7 +49,6 @@ const selectors = {
   errorAlert: selectorQuery('alert'),
   errorRetryBtn: selectorQuery('button', { name: 'Retry' }),
   outreachFrame: selectorQuery('document', { name: 'Outreach Frame' }),
-  firewallCapabilityNotice: selectorQuery('region', { name: 'Firewall Capability Notice' }),
   quickAction: (name) => screen.queryByRole('button', {name: new RegExp(`${name}`)}),
   connectModal: () => screen.queryByRole('dialog', {name: CONNECT_MODAL.TITLE}),
   connectModalCloseButton: () => within(selectors.connectModal()).getByRole('button', {name: UIStrings.CLOSE}),
@@ -166,66 +165,9 @@ describe('Welcome', function() {
       await waitFor(() => expect(axios.post).toHaveBeenCalledTimes(2));
       expect(axios.post).toHaveBeenLastCalledWith('service/extdirect', [
         expect.objectContaining({ action: 'outreach_Outreach', method: 'readStatus' }),
-        expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' }),
-        expect.objectContaining({ action: 'outreach_Outreach', method: 'showFirewallAlert' })
+        expect.objectContaining({ action: 'outreach_Outreach', method: 'getProxyDownloadNumbers' })
       ]);
     });
-  });
-
-  describe('firewall alert', function() {
-    beforeEach(function() {
-      user = {administrator: true};
-    });
-
-    function mockFirewallResponse(returnValue) {
-      // NOTE: response array order does not necessarily match request array order
-      jest.spyOn(axios, 'post').mockReturnValue({
-        data: [
-          testData.showFirewallAlertDisclaimer(returnValue),
-          testData.outreachReadStatusBasicSuccess,
-          testData.outreachGetProxyDownloadNumbersBasicSuccess
-        ]
-      });
-    }
-
-    it('renders a region named "Firewall Capability Notice" if the showFirewallAlert call returns true',
-        async function() {
-          mockFirewallResponse(true);
-          render(<Welcome/>);
-          const loadingSpinner = selectors.loadingStatus();
-          await waitForElementToBeRemoved(loadingSpinner);
-          expect(selectors.firewallCapabilityNotice('query')).toBeInTheDocument();
-        }
-    );
-
-    it('does not render the firewall region if showFirewallAlert returns false',
-        async function() {
-          mockFirewallResponse(false);
-          render(<Welcome/>);
-          const loadingSpinner = selectors.loadingStatus();
-          await waitForElementToBeRemoved(loadingSpinner);
-          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
-        });
-
-    it('does not render the firewall region if the user is not an admin',
-        async function() {
-          user = {administrator: false};
-          mockFirewallResponse(false);
-          render(<Welcome/>);
-          const loadingSpinner = selectors.loadingStatus();
-          await waitForElementToBeRemoved(loadingSpinner);
-          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
-        });
-
-    it('does not render the firewall region if the user is not logged in',
-        async function() {
-          user = null;
-          mockFirewallResponse(false);
-          render(<Welcome/>);
-          const loadingSpinner = selectors.loadingStatus();
-          await waitForElementToBeRemoved(loadingSpinner);
-          expect(selectors.firewallCapabilityNotice('query')).not.toBeInTheDocument();
-        });
   });
 
   describe('outreach iframe', function() {

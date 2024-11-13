@@ -210,10 +210,18 @@ public interface AssetDAO
   /**
    * Find assets by their component ids.
    *
-   * @param componentIds a set of component ids.
+   *<p>
+   * Important: Aimed to be used ONLY on HA mode, do not use this method in non-HA methods or classes.
+   *</p>
+   *
+   * @param componentIds      a set of component ids.
+   * @param assetFilter       optional filter to apply.
+   * @param assetFilterParams parameter map for the optional filter.
    * @return collection of {@link AssetInfo}
    */
-  Collection<AssetInfo> findByComponentIds(@Param("componentIds") Set<Integer> componentIds);
+  Collection<AssetInfo> findByComponentIds(@Param("componentIds") Set<Integer> componentIds,
+                                           @Param("assetFilter") final String assetFilter,
+                                           @Param("assetFilterParams") final Map<String, String> assetFilterParams);
 
   /**
    * Updates the kind of the given asset in the content data store.
@@ -368,4 +376,12 @@ public interface AssetDAO
    * @return The component ids for the assets identified by the asset ids.
    */
   int[] selectComponentIds(@Param("assetIds") int[] assetIds);
+
+  /**
+   * Checks for existence of asset in all three: <format>_asset, <format>_asset_blob, <format>_component tables
+   *
+   * @param blobRef the blob reference
+   * @return {@code true} if asset exists in all three: <format>_asset, <format>_asset_blob, <format>_component tables
+   */
+  boolean assetRecordsExist(@Param("blobRef") BlobRef blobRef);
 }

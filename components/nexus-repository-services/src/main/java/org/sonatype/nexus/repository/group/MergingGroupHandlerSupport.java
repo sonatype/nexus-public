@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
@@ -116,9 +115,7 @@ public abstract class MergingGroupHandlerSupport
     }
 
     if (successfulResponses.isEmpty()) {
-      return getCached(context)
-          .map(HttpResponses::ok)
-          .orElse(notFoundResponse(context));
+      return notFoundResponse(context);
     }
     if (successfulResponses.size() == 1 && shouldReturnOnlyRespondingMember(context.getRepository())) {
       // When only a single member responds successfully we return its value and don't bother to persist.

@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -26,8 +25,6 @@ import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.transaction.Transactional;
-
-import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
@@ -53,9 +50,9 @@ public class BrowseNodeManager
   /**
    * Retrieves the browse nodes directly under the given hierarchical display path.
    *
-   * @param displayPath the hierarchical path leading up to the browse nodes
-   * @param limit when positive limits the number of browse nodes returned
-   * @param filter optional filter to apply to the browse nodes
+   * @param displayPath  the hierarchical path leading up to the browse nodes
+   * @param limit        when positive limits the number of browse nodes returned
+   * @param filter       optional filter to apply to the browse nodes
    * @param filterParams parameter map for the optional filter
    * @return browse nodes found directly under the display path
    */
@@ -138,5 +135,36 @@ public class BrowseNodeManager
    */
   public void deleteBrowseNodes() {
     browseNodeStore.deleteBrowseNodes(repositoryId);
+  }
+
+  /**
+   * Deletes a browse node based on internal asset Id and node path.
+   */
+  public Long deleteByAssetIdAndPath(final Integer internalAssetId, final String path) {
+    Long parentNode = browseNodeStore.deleteByAssetIdAndPath(internalAssetId, path);
+    log.debug("Deleted browse node for asset id {} and path {} - Returned parent node {}", internalAssetId, path,
+        parentNode);
+    return parentNode;
+  }
+
+  /**
+   * Retrieves the browse node by its internal id.
+   */
+  public List<BrowseNode> getNodeParents(final Long internalNodeId) {
+    return browseNodeStore.getNodeParents(internalNodeId);
+  }
+
+  /**
+   * Deletes the browse node by its internal id.
+   */
+  public void delete(final Long internalNodeId) {
+    browseNodeStore.delete(internalNodeId);
+  }
+
+  /**
+   * Retrieves the browse node by its request path.
+   */
+  public BrowseNode getByRequestPath(final String requestPath) {
+    return browseNodeStore.getByRequestPath(repositoryId, requestPath);
   }
 }

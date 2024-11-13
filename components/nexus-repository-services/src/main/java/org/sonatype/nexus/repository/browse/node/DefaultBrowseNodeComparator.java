@@ -31,11 +31,9 @@ public class DefaultBrowseNodeComparator
 
   private final VersionComparator versionComparator;
 
-  private static final int TYPE_COMPONENT = 1;
-
-  private static final int TYPE_FOLDER = 2;
-
-  private static final int TYPE_ASSET = 3;
+  public static final int NODE_PRIORITY_COMPONENT = 1;
+  public static final int NODE_PRIORITY_FOLDER = 2;
+  public static final int NODE_PRIORITY_ASSET = 3;
 
   @Inject
   public DefaultBrowseNodeComparator(final VersionComparator versionComparator) {
@@ -44,10 +42,10 @@ public class DefaultBrowseNodeComparator
 
   @Override
   public int compare(final BrowseNode o1, final BrowseNode o2) {
-    int o1Type = getType(o1);
-    int o2Type = getType(o2);
+    int o1Priority = getNodePriorityLevel(o1);
+    int o2Priority = getNodePriorityLevel(o2);
 
-    if (o1Type == TYPE_COMPONENT && o2Type == TYPE_COMPONENT) {
+    if (o1Priority == NODE_PRIORITY_COMPONENT && o2Priority == NODE_PRIORITY_COMPONENT) {
       try {
         return versionComparator.compare(o1.getName(), o2.getName());
       }
@@ -56,22 +54,31 @@ public class DefaultBrowseNodeComparator
       }
     }
 
-    if (o1Type == o2Type) {
+    if (o1Priority == o2Priority) {
       return o1.getName().compareToIgnoreCase(o2.getName());
     }
 
-    return Integer.compare(o1Type, o2Type);
+    return Integer.compare(o1Priority, o2Priority);
   }
 
-  protected int getType(final BrowseNode browseNode) {
+  /**
+   * Returns an integer representing the priority level of the BrowseNode for comparison.
+   * Priority is determined by the presence of component or asset identifiers, with folder nodes
+   * having the highest priority.
+   *
+   * @param browseNode browseNode the node to evaluate for priority
+   * @return an integer indicating the BrowseNode's priority level. A component node has the lowest priority,
+   * followed by asset nodes, then folder nodes.
+   */
+  public static int getNodePriorityLevel(final BrowseNode browseNode) {
     if (browseNode.getComponentId() != null) {
-      return TYPE_COMPONENT;
+      return NODE_PRIORITY_COMPONENT;
     }
 
     if (browseNode.getAssetId() != null) {
-      return TYPE_ASSET;
+      return NODE_PRIORITY_ASSET;
     }
 
-    return TYPE_FOLDER;
+    return NODE_PRIORITY_FOLDER;
   }
 }

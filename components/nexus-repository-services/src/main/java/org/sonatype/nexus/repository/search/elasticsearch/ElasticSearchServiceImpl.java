@@ -139,6 +139,11 @@ public class ElasticSearchServiceImpl
     elasticSearchIndexService.waitForCalm();
   }
 
+  @Override
+  public void waitForReady() {
+    elasticSearchIndexService.waitForReady();
+  }
+
   private String continuationToken(
       final SearchRequest request,
       final QueryBuilder query,

@@ -147,6 +147,9 @@
   <logger name="org.apache.felix" level="WARN"/>
   <logger name="org.apache.karaf" level="WARN"/>
 
+  <logger name="com.amazonaws.internal.InstanceMetadataServiceResourceFetcher" level="ERROR"/>
+  <logger name="com.amazonaws.util.EC2MetadataUtils" level="ERROR"/>
+
   <include file="${karaf.data}/etc/logback/logback-tasklogfile-appender-override.xml" optional="true"/>
 
   <root level="${root.level:-INFO}">

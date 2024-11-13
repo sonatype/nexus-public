@@ -17,12 +17,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.SelectOption;
-import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.formfields.FormField;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class BlobStoreTypesUIResponse
 {

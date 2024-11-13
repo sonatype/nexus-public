@@ -402,14 +402,19 @@ public class ExampleContentTestSupport
     return asset;
   }
 
-  protected AssetBlobData randomAssetBlob() {
+  protected AssetBlobData randomAssetBlob(final OffsetDateTime blobCreated) {
     AssetBlobData assetBlob = new AssetBlobData();
     assetBlob.setBlobRef(new BlobRef("test-node", "test-store", randomUUID().toString()));
     assetBlob.setBlobSize(random.nextInt(1024 * 1024));
     assetBlob.setContentType("text/plain");
     assetBlob.setChecksums(ImmutableMap.of());
-    assetBlob.setBlobCreated(UTC.now().minusMinutes(120));
+    assetBlob.setBlobCreated(blobCreated);
+    assetBlob.setAddedToRepository(blobCreated);
     return assetBlob;
+  }
+  
+  protected AssetBlobData randomAssetBlob(){
+    return randomAssetBlob(UTC.now().minusMinutes(120));
   }
 
   protected NestedAttributesMap newAttributes(final String key) {

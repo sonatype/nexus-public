@@ -19,5 +19,5 @@ package org.sonatype.nexus.distributed.event.service.api;
  */
 public enum EventType
 {
-  CREATED, UPDATED, DELETED
+  CREATED, UPDATED, DELETED, CANCELLED
 }

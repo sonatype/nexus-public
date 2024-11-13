@@ -30,6 +30,8 @@ public class ApiDocConstants
 
   public static final String REPOSITORY_NOT_FOUND = "Repository not found";
 
+  public static final String PROJECT_NOT_FOUND = "Project not found";
+
   public static final String REPOSITORY_CREATED = "Repository created";
 
   public static final String REPOSITORY_UPDATED = "Repository updated";

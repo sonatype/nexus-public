@@ -25,7 +25,6 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Group', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-maven2-group',
   requires: [
-    'NX.coreui.view.repository.facet.ReplicationFacet',
     'NX.coreui.view.repository.facet.Maven2Facet',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.GroupFacet'
@@ -40,7 +39,6 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Group', {
     me.items = [
 
       {xtype: 'nx-coreui-repository-maven2-facet'},
-      {xtype: 'nx-coreui-repository-replication-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-group-facet', format: 'maven2' }
     ];

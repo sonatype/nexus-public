@@ -23,8 +23,14 @@ import UIStrings from '../../../../constants/UIStrings';
 import RolesDetails from './RolesDetails';
 import {TYPES, URL} from './RolesHelper';
 
-const {ROLES: {FORM: LABELS}, SETTINGS} = UIStrings;
-const {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, singleRoleUrl} = URL;
+const { 
+  ROLES: { 
+    FORM: LABELS,
+    FORM: { EXTERNAL_TYPE: { LDAP: { MORE_CHARACTERS, NO_RESULTS } } }
+  },
+  SETTINGS 
+} = UIStrings;
+const {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, singleRoleUrl, getLdapRolesUrl} = URL;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -299,14 +305,55 @@ describe('RolesDetails', function() {
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
   });
 
-  it('creates external role', async function() {
+  it('creates a ldap external role', async function() {
+    const {type, name, queryLoadingMask, description, saveButton, externalRoleType, mappedRole, roleModalButton,
+      privilegeModalButton, selectionModal: {modal, confirmButton}} = selectors;
+    const ldapType = SOURCE_TYPES.LDAP.id;
+    const externalRole = {...ROLE, id: 'testLDAPRoleId'};
+    const combobox = () => container.querySelector('.nx-combobox__alert');
+
+    when(Axios.post).calledWith(rolesUrl, externalRole).mockResolvedValue({data: {}});
+    when(ExtJS.state().getValue).calledWith('nexus.ldap.mapped.role.query.character.limit').mockReturnValue(3);
+    
+    const {container} = renderDetails();
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    userEvent.selectOptions(type(), TYPES.EXTERNAL);
+    userEvent.selectOptions(externalRoleType(), 'LDAP');
+
+    await TestUtils.changeField(mappedRole, 't');
+    expect(combobox()).toHaveTextContent(MORE_CHARACTERS(3));
+
+    await TestUtils.changeField(mappedRole, 'testLDAPRoleId');
+    expect(combobox()).toHaveTextContent(NO_RESULTS);
+
+    await waitFor(() => expect(Axios.get).toHaveBeenCalledWith(getLdapRolesUrl('testLDAPRoleId', ldapType)));
+
+    await TestUtils.changeField(name, testRoleName);
+    await TestUtils.changeField(description, testRoleDescription);
+
+    userEvent.click(privilegeModalButton());
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
+    await act(async () => userEvent.click(confirmButton()));
+
+    userEvent.click(roleModalButton());
+    clickOnCheckboxes(within(modal()).getAllByRole('checkbox'));
+    await act(async () => userEvent.click(confirmButton()));
+
+    expect(saveButton()).not.toHaveClass('disabled');
+    userEvent.click(saveButton());
+
+    await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(rolesUrl, externalRole));
+    expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
+  });
+  
+  it('creates a crowd external role', async function() {
     const {type, name, queryLoadingMask, description, saveButton, externalRoleType, mappedRole, roleModalButton,
       privilegeModalButton, selectionModal: {modal, confirmButton}} = selectors;
     const crowdType = SOURCE_TYPES.Crowd.id;
     const testCrowdRoleId = CROWD_ROLES[0].id;
     const externalRole = {...ROLE, id: testCrowdRoleId};
 
-    when(Axios.get).calledWith(getRolesUrl(crowdType)).mockResolvedValue({data: CROWD_ROLES});
     when(Axios.post).calledWith(rolesUrl, externalRole).mockResolvedValue({data: {}});
 
     renderDetails();
@@ -315,10 +362,7 @@ describe('RolesDetails', function() {
     userEvent.selectOptions(type(), TYPES.EXTERNAL);
     userEvent.selectOptions(externalRoleType(), crowdType);
 
-    await waitFor(() => expect(Axios.get).toHaveBeenCalledWith(getRolesUrl(crowdType)));
-
     await TestUtils.changeField(mappedRole, testCrowdRoleId);
-
     await TestUtils.changeField(name, testRoleName);
     await TestUtils.changeField(description, testRoleDescription);
 

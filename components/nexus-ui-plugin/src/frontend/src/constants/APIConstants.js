@@ -162,8 +162,7 @@ export default {
       ACTION: 'outreach_Outreach',
       METHODS: {
         READ_STATUS: 'readStatus',
-        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers',
-        SHOW_FIREWALL_ALERT: 'showFirewallAlert'
+        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers'
       }
     },
     BROWSE: {
@@ -304,6 +303,12 @@ export default {
       },
       get NODE_ID() {
         return `${this.BASE_URL}system/node`;
+      },
+      get MALICIOUS_RISK_SUMMARY() {
+        return `${this.BASE_URL}malicious-risk/summary`;
+      },
+      get MALICIOUS_RISK_ON_DISK() {
+        return `${this.BASE_URL}malicious-risk/risk-on-disk`;
       },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',

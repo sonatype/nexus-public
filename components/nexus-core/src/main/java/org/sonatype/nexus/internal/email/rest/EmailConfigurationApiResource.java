@@ -23,6 +23,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.rest.Resource;
@@ -63,9 +64,7 @@ public class EmailConfigurationApiResource
   @Validate
   @RequiresPermissions("nexus:settings:update")
   public void setEmailConfiguration(@NotNull @Valid final ApiEmailConfiguration apiEmailConfiguration) {
-    EmailConfiguration emailConfiguration = emailManager.getConfiguration();
-    String password = emailConfiguration != null ? emailConfiguration.getPassword() : null;
-    emailManager.setConfiguration(convert(apiEmailConfiguration, password));
+    emailManager.setConfiguration(convert(apiEmailConfiguration), apiEmailConfiguration.getPassword());
   }
 
   @POST
@@ -100,12 +99,10 @@ public class EmailConfigurationApiResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
   public void deleteEmailConfiguration() {
-    emailManager.setConfiguration(emailManager.newConfiguration());
+    emailManager.setConfiguration(emailManager.newConfiguration(), Strings2.EMPTY);
   }
 
-  private EmailConfiguration convert(ApiEmailConfiguration apiEmailConfiguration, String originalPassword) {
-    String password = apiEmailConfiguration.getPassword();
-    boolean hasPassword = !StringUtils.isBlank(password);
+  private EmailConfiguration convert(ApiEmailConfiguration apiEmailConfiguration) {
 
     EmailConfiguration emailConfiguration = emailManager.newConfiguration();
     emailConfiguration.setEnabled(apiEmailConfiguration.isEnabled());
@@ -118,16 +115,6 @@ public class EmailConfigurationApiResource
     }
     else {
       emailConfiguration.setUsername("");
-    }
-
-    if (hasPassword) {
-      emailConfiguration.setPassword(password);
-    }
-    else if (StringUtils.isNotEmpty(originalPassword)) {
-      emailConfiguration.setPassword(originalPassword);
-    }
-    else {
-      emailConfiguration.setPassword("");
     }
 
     emailConfiguration.setFromAddress(apiEmailConfiguration.getFromAddress());

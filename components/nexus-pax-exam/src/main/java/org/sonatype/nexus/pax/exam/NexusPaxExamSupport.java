@@ -92,6 +92,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENA
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH_NAMED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
@@ -596,11 +597,13 @@ public abstract class NexusPaxExamSupport
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.password", DB_PASSWORD),
             haOption(),
             sqlSearchOption(),
+            withDateBasedBlobstoreLayout(),
             systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
         );
       case H2:
         return combine(null,
             sqlSearchOption(),
+            withDateBasedBlobstoreLayout(),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true")
         );
       default:
@@ -796,6 +799,7 @@ public abstract class NexusPaxExamSupport
     testIndex.recordAndCopyLink("karaf.log", new File(logDir, "karaf.log"));
     testIndex.recordAndCopyLink("nexus.log", new File(logDir, "nexus.log"));
     testIndex.recordAndCopyLink("request.log", new File(logDir, "request.log"));
+    testIndex.recordAndCopyLink("outbound-request.log", new File(logDir, "outbound-request.log"));
     testIndex.recordAndCopyLink("jvm.log", new File(logDir, "jvm.log"));
 
     if ("true".equals(System.getProperty("it.nexus.recordTaskLogs"))) {
@@ -865,6 +869,10 @@ public abstract class NexusPaxExamSupport
 
     return when(ha).useOptions(dsClusteredEnable, jwtEnabled, blobstoreProvisionDefaults, repositoryProvisionDefaults,
         haFormats);
+  }
+
+  public static Option withDateBasedBlobstoreLayout() {
+    return editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATE_BASED_BLOBSTORE_LAYOUT_ENABLED, "true");
   }
 
   protected boolean isSqlHa() {

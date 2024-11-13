@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.types.GroupType;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResource.PAGE_SIZE;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
 
 /**
@@ -40,7 +39,10 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toInternal
 abstract class AssetsResourceSupport
     extends ComponentSupport
 {
-  protected static final int LIMIT = 100;
+  /**
+   * Limit the number of assets returned per page. This value is aligned with ComponentsResourceSupport.PAGE_SIZE_LIMIT.
+   */
+  protected static final int PAGE_SIZE_LIMIT = 100;
 
   private final ContentAuthHelper contentAuthHelper;
 
@@ -53,20 +55,20 @@ abstract class AssetsResourceSupport
     String internalToken = toInternalToken(continuationToken);
     Continuation<FluentAsset> assetContinuation = getAssets(repository, internalToken);
 
-    while (permittedAssets.size() < PAGE_SIZE && !assetContinuation.isEmpty()) {
+    while (permittedAssets.size() < PAGE_SIZE_LIMIT && !assetContinuation.isEmpty()) {
       permittedAssets.addAll(removeAssetsNotPermitted(repository, assetContinuation));
       assetContinuation = getAssets(repository, assetContinuation.nextContinuationToken());
     }
-    return trim(permittedAssets, PAGE_SIZE);
+    return trim(permittedAssets, PAGE_SIZE_LIMIT);
   }
 
   private Continuation<FluentAsset> getAssets(Repository repository, final String continuationToken) {
     // helper for users, if they query by group chances are they want the list of member content
     if (GroupType.NAME.equals(repository.getType().getValue())) {
       return repository.facet(ContentFacet.class).assets().withOnlyGroupMemberContent()
-          .browse(LIMIT, continuationToken);
+          .browse(PAGE_SIZE_LIMIT, continuationToken);
     }
-    return repository.facet(ContentFacet.class).assets().browse(LIMIT, continuationToken);
+    return repository.facet(ContentFacet.class).assets().browse(PAGE_SIZE_LIMIT, continuationToken);
   }
 
   private List<FluentAsset> removeAssetsNotPermitted(
