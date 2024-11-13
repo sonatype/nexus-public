@@ -183,8 +183,7 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cleanup</artifactId>
-        <version>3.75.0-SNAPSHOT</version>
-      </dependency>
+        </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
