@@ -326,7 +326,7 @@ describe('TasksDetails', function() {
     userEvent.click(runButton());
 
     await waitFor(() => {
-      expect(Axios.post).toHaveBeenLastCalledWith('/service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/run');
+      expect(Axios.post).toHaveBeenLastCalledWith('service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/run');
     });
 
     expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(expect.stringContaining('Task started'));
@@ -345,7 +345,7 @@ describe('TasksDetails', function() {
 
     userEvent.click(stopButton());
     await waitFor(() => {
-      expect(Axios.post).toHaveBeenLastCalledWith('/service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/stop');
+      expect(Axios.post).toHaveBeenLastCalledWith('service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/stop');
     });
 
     expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(expect.stringContaining('Task stopped'));
@@ -416,7 +416,7 @@ describe('TasksDetails', function() {
   });
 
   it('uses proper urls', function() {
-    expect(runTaskUrl(testId)).toBe('/service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/run');
-    expect(stopTaskUrl(testId)).toBe('/service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/stop');
+    expect(runTaskUrl(testId)).toBe('service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/run');
+    expect(stopTaskUrl(testId)).toBe('service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/stop');
   });
 });

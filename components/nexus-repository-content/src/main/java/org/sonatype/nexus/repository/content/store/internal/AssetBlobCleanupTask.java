@@ -59,7 +59,7 @@ public class AssetBlobCleanupTask
 
   static final String CRON_SCHEDULE = getString(PROPERTY_PREFIX + "cronSchedule", "0 */30 * * * ?");
 
-  static final int BATCH_SIZE = getInteger(PROPERTY_PREFIX + "batchSize", 100);
+  static final int BATCH_SIZE = getInteger(PROPERTY_PREFIX + "batchSize", 1000);
 
   static final boolean HARD_DELETE = getBoolean(PROPERTY_PREFIX + "hardDelete", false);
 

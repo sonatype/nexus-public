@@ -38,7 +38,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
       requestAuthenticationToken: jest.fn(() => Promise.resolve(mockToken))
     },
     DateUtils: {
-      prettyDateTime: jest.fn()
+      prettyDateTimeLong: jest.fn()
     }
   }
 });
@@ -56,7 +56,7 @@ jest.mock('axios', () => {
           }
         });
       }
-      if (url === '/service/rest/internal/current-user/user-token/attributes') {
+      if (url === 'service/rest/internal/current-user/user-token/attributes') {
         return Promise.resolve({
           data: {
             "expirationTimeTimestamp": "1713498443006",
@@ -162,7 +162,7 @@ describe('UserToken', () => {
   });
 
   it('Renders user token status with correct data', async () => {
-    when(DateUtils.prettyDateTime).calledWith(expect.any(Date)).mockReturnValue('4/18/2024, 20:47:23 GMT-07:00');
+    when(DateUtils.prettyDateTimeLong).calledWith(expect.any(Date)).mockReturnValue('Sunday, July 21, 2024 at 12:32:53 GMT+03:00');
     const service = interpret(UserTokenMachine).start();
     const {
       userTokenStatusText,
@@ -173,7 +173,7 @@ describe('UserToken', () => {
 
     expect(userTokenStatusText()).toBeInTheDocument();
     expect(userTokenStatusDescription()).toBeInTheDocument();
-    expect(timestamp('Expires: 4/18/2024, 20:47:23 GMT-07:00')).toBeInTheDocument();
+    expect(timestamp('Expires: Sunday, July 21, 2024 at 12:32:53 GMT+03:00')).toBeInTheDocument();
   });
 
   it('Renders user token alert with close button when expired', async () => {

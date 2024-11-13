@@ -297,7 +297,7 @@ describe('BrowseList', function() {
     beforeEach(() => {
       canUpdateHealthCheck.mockReturnValue(true);
       when(axios.post).calledWith(
-        '/service/extdirect',
+        'service/extdirect',
         expect.objectContaining({action: 'healthcheck_Status', method: 'read'})
       ).mockResolvedValue({data: TestUtils.makeExtResult(READ_HEALTH_CHECK_DATA)});
     });
@@ -307,7 +307,7 @@ describe('BrowseList', function() {
       await renderView({data:REPOS});
 
       expect(axios.post).not.toHaveBeenCalledWith(
-        '/service/extdirect',
+        'service/extdirect',
         expect.objectContaining({action: 'healthcheck_Status', method: 'read'})
       );
       expect(selectors.healthCheck.columnHeader()).not.toBeInTheDocument();
@@ -331,7 +331,7 @@ describe('BrowseList', function() {
 
     it('renders an error message on API call error', async function() {
       when(axios.post).calledWith(
-        '/service/extdirect',
+        'service/extdirect',
         expect.objectContaining({action: 'healthcheck_Status', method: 'read'})
       ).mockResolvedValue('error');
       await renderView({data:REPOS});
@@ -345,7 +345,7 @@ describe('BrowseList', function() {
     beforeEach(() => {
       canReadFirewallStatus.mockReturnValue(true);
       when(axios.post).calledWith(
-          '/service/extdirect',
+          'service/extdirect',
           expect.objectContaining({action: 'firewall_RepositoryStatus', method: 'read'})
       ).mockResolvedValue({data: TestUtils.makeExtResult(READ_FIREWALL_STATUS_DATA)});
     });
@@ -356,7 +356,7 @@ describe('BrowseList', function() {
           await renderView({data: REPOS});
 
           expect(axios.post).not.toHaveBeenCalledWith(
-              '/service/extdirect',
+              'service/extdirect',
               expect.objectContaining({action: 'firewall_RepositoryStatus', method: 'read'})
           );
           expect(selectors.iqPolicyViolations.columnHeader()).not.toBeInTheDocument();
@@ -404,7 +404,7 @@ describe('BrowseList', function() {
 
     it('renders an error message on API call error', async function() {
       when(axios.post).calledWith(
-        '/service/extdirect',
+        'service/extdirect',
         expect.objectContaining({action: 'firewall_RepositoryStatus', method: 'read'})
       ).mockResolvedValue('error');
       await renderView({data:REPOS});
@@ -415,7 +415,7 @@ describe('BrowseList', function() {
 
     it('renders ExtDirect messages', async function() {
       when(axios.post).calledWith(
-        '/service/extdirect',
+        'service/extdirect',
         expect.objectContaining({ action: 'firewall_RepositoryStatus', method: 'read' })
       ).mockResolvedValue({data: TestUtils.makeExtResult(READ_FIREWALL_STATUS_DATA_WITH_MESSAGE)});
       await renderView({data:REPOS});

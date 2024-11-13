@@ -29,7 +29,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
+import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 /**
@@ -51,7 +53,11 @@ public class JobDescriptionMigrationStep_1_3Test
 
   private JobDescriptionMigrationStep_1_3 upgradeStep;
 
-  private final static String TEXT = "TEXT";
+  private final static String CHARVAR = "character varying";
+
+  private final static String TEXT = "text";
+
+  private final static String ONE_BILLION_CHARACTERS = "1000000000";
 
   @Before
   public void setup() {
@@ -74,13 +80,21 @@ public class JobDescriptionMigrationStep_1_3Test
     String qrtzJobDetailsTableName = "qrtz_job_details";
     String quartzTriggersTableName = "qrtz_triggers";
     String columnName = "description";
+
     if ("H2".equals(session.sqlDialect())) {
       qrtzJobDetailsTableName = qrtzJobDetailsTableName.toUpperCase(Locale.ROOT);
       quartzTriggersTableName = quartzTriggersTableName.toUpperCase(Locale.ROOT);
       columnName = columnName.toUpperCase(Locale.ROOT);
-    }
+      assertThat(dao.getTableColumnType(qrtzJobDetailsTableName, columnName), equalToIgnoringCase(CHARVAR));
+      assertThat(dao.getTableColumnType(quartzTriggersTableName, columnName), equalToIgnoringCase(CHARVAR));
 
-    assertThat(TEXT.equalsIgnoreCase(dao.getTableColumnType(qrtzJobDetailsTableName, columnName))).isTrue();
-    assertThat(TEXT.equalsIgnoreCase(dao.getTableColumnType(quartzTriggersTableName, columnName))).isTrue();
+      // h2 version 2.2.224 no longer supports 'text' data_type, but the max length
+      // of character varying is set high for this column, so we are now testing the length as well
+      assertThat(dao.getColumnCharacterLimit(qrtzJobDetailsTableName, columnName), is(ONE_BILLION_CHARACTERS));
+      assertThat(dao.getColumnCharacterLimit(quartzTriggersTableName, columnName), is(ONE_BILLION_CHARACTERS));
+    } else {
+      assertThat(dao.getTableColumnType(qrtzJobDetailsTableName, columnName), equalToIgnoringCase(TEXT));
+      assertThat(dao.getTableColumnType(quartzTriggersTableName, columnName), equalToIgnoringCase(TEXT));
+    }
   }
 }

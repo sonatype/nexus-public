@@ -131,7 +131,7 @@ export default ListMachineUtils.buildListMachine({
   },
   services: {
     fetchData: ({filter, policyData, repository}) => Axios.post(
-        '/service/rest/internal/cleanup-policies/preview/components', {
+        'service/rest/internal/cleanup-policies/preview/components', {
           criteriaLastBlobUpdated: policyData.criteriaLastBlobUpdated,
           criteriaLastDownloaded: policyData.criteriaLastDownloaded,
           criteriaReleaseType: policyData.criteriaReleaseType,

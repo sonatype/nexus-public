@@ -46,7 +46,7 @@ const UpgradeTriggerMachine = createMachine({
       closeModal: () => ExtJS.state().setValue('dbUpgrade', {currentState: 'nexusUpgradeInProgress'})
     },
     services: {
-      triggerUpdate: () => axios.post('/service/rest/clustered/upgrade-database-schema')
+      triggerUpdate: () => axios.post('service/rest/v1/clustered/upgrade-database-schema')
     }
   });
 

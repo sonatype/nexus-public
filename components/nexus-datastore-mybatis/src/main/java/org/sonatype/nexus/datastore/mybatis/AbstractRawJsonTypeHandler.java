@@ -12,10 +12,7 @@
  */
 package org.sonatype.nexus.datastore.mybatis;
 
-import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import org.sonatype.nexus.security.PasswordHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.type.TypeHandler;
@@ -35,8 +32,4 @@ public abstract class AbstractRawJsonTypeHandler<T>
     return RAW_OBJECT_MAPPER;
   }
 
-  @Override
-  void encryptSensitiveFields(final PasswordHelper passwordHelper, final Predicate<String> attributeFilter) {
-    // don't attempt to process sensitive fields in raw mappers
-  }
 }

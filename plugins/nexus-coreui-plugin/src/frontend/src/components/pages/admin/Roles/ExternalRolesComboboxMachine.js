@@ -19,6 +19,8 @@ import {assign, Machine} from 'xstate';
 
 import {URL} from './RolesHelper';
 
+const {getLdapRolesUrl} = URL;
+
 const EMPTY_CONTEXT = {
   query: '',
   data: [],
@@ -54,15 +56,41 @@ export default Machine(
               actions: ['clearError']
             }
           }
+        },
+        debouncing: {
+          after: {
+            500: {
+              target: 'loading',
+              cond: 'meetsCharacterLimit',
+            }
+          }
         }
       },
       on: {
-        SET_QUERY: {
-          actions: ['setQuery'],
-        },
+        SET_QUERY: [
+          {
+            target: 'debouncing',
+            cond: 'doesNotMeetCharacterLimit' && 'isLdap',
+            actions: ['resetData', 'setQuery'],
+          },
+          {
+            target: 'debouncing',
+            cond: 'meetsCharacterLimit' && 'isLdap',
+            actions: ['setQuery'],
+          },
+          {
+            target: 'loaded',
+            cond: 'isNotLdap',
+            actions: ['setQuery'],
+          }
+        ],
         UPDATE_TYPE: {
-          target: 'loading',
+          target: 'loaded',
           actions: ['updateType'],
+        },
+        UPDATE_LDAP_LIMIT: {
+          target: 'loaded',
+          actions: ['updateLdapCharacterLimit'],
         },
       }
     },
@@ -77,6 +105,9 @@ export default Machine(
           externalRoleType: (_, {externalRoleType}) => externalRoleType,
           ...EMPTY_CONTEXT,
         }),
+        updateLdapCharacterLimit: assign({
+          ldapQueryCharacterLimit: (_, {ldapQueryCharacterLimit}) => ldapQueryCharacterLimit,
+        }),
         resetData: assign({
           data: [],
         }),
@@ -90,8 +121,26 @@ export default Machine(
           error: () => null,
         })
       },
+      guards: {
+        doesNotMeetCharacterLimit: ({ _, query, ldapQueryCharacterLimit}) => {
+          return query.length < ldapQueryCharacterLimit;
+        },
+        meetsCharacterLimit: ({ _, query, ldapQueryCharacterLimit}) => {
+          return query.length >= ldapQueryCharacterLimit;
+        },
+        isLdap: ({ _, externalRoleType}) => {
+          return externalRoleType.toLowerCase() === 'ldap';
+        },
+        isNotLdap: ({ _, externalRoleType}) => {
+          return externalRoleType.toLowerCase() !== 'ldap';
+        },
+      },
       services: {
-        fetchData: ({externalRoleType}) => Axios.get(URL.getRolesUrl(externalRoleType)),
+        fetchData: ({externalRoleType, query}) => {
+          if (externalRoleType.toLowerCase() === 'ldap') {
+            return Axios.get(getLdapRolesUrl(query, externalRoleType));
+          }
+        },
       }
     }
 );

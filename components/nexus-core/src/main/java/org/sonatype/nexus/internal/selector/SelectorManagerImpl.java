@@ -44,6 +44,7 @@ import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilege
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.privilege.Privilege;
@@ -360,19 +361,20 @@ public class SelectorManagerImpl
 
   private User getCurrentUser() throws UserNotFoundException {
     Subject subject = securitySystem.getSubject();
-    if (subject.isAuthenticated()) {
+    User currentUser = null;
+
+    if(subject.isAuthenticated() || AnonymousHelper.isAnonymous(subject)) {
       Cache<String, User> cache = getUserCache();
       String userKey = subject.getPrincipal().toString() + subject.getPrincipals().getRealmNames().toString();
-      User currentUser = cache.get(userKey);
+      currentUser = cache.get(userKey);
       if (currentUser == null) {
         currentUser = securitySystem.currentUser();
         if (currentUser != null) {
           cache.put(userKey, currentUser);
         }
       }
-      return currentUser;
     }
-    return null;
+    return currentUser;
   }
 
   private Cache<String, User> getUserCache() {

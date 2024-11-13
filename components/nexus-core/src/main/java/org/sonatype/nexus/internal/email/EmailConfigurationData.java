@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.email;
 
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.email.EmailConfiguration;
 
 /**
@@ -31,7 +32,7 @@ public class EmailConfigurationData
 
   private String username;
 
-  private String password;
+  private Secret password;
 
   private String fromAddress;
 
@@ -88,12 +89,12 @@ public class EmailConfigurationData
   }
 
   @Override
-  public String getPassword() {
+  public Secret getPassword() {
     return password;
   }
 
   @Override
-  public void setPassword(final String password) {
+  public void setPassword(final Secret password) {
     this.password = password;
   }
 
@@ -184,7 +185,7 @@ public class EmailConfigurationData
         ", host='" + host + '\'' +
         ", port=" + port +
         ", username='" + username + '\'' +
-        ", password='" + Strings2.mask(password) + '\'' +
+        ", password='" + Strings2.MASK + '\'' +
         ", fromAddress='" + fromAddress + '\'' +
         ", subjectPrefix='" + subjectPrefix + '\'' +
         ", startTlsEnabled=" + startTlsEnabled +

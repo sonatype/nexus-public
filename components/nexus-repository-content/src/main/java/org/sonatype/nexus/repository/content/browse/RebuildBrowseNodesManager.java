@@ -48,6 +48,8 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 public class RebuildBrowseNodesManager
     extends StateGuardLifecycleSupport
 {
+  private static final String ALL_REPOSITORIES = "*";
+
   private final TaskScheduler taskScheduler;
 
   private final RepositoryManager repositoryManager;
@@ -79,8 +81,8 @@ public class RebuildBrowseNodesManager
           .collect(Collectors.joining(","));
 
       if (!Strings2.isEmpty(repositoryNames)) {
-        boolean existingTask = taskScheduler.findAndSubmit(RebuildBrowseNodesTaskDescriptor.TYPE_ID,
-            ImmutableMap.of(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, repositoryNames));
+        boolean existingTask = taskScheduler.findWaitingTask(RebuildBrowseNodesTaskDescriptor.TYPE_ID,
+            ImmutableMap.of(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, ALL_REPOSITORIES));
         if (!existingTask) {
           launchNewTask(repositoryNames);
         }

@@ -218,10 +218,10 @@ describe('SslCertificatesForm', function() {
   });
 
   it('uses proper urls', function() {
-    expect(sslCertificatesUrl).toBe('/service/rest/v1/security/ssl/truststore');
-    expect(singleSslCertificatesUrl(testId)).toBe('/service/rest/v1/security/ssl/truststore/F6%3ADB%3A65%3AA4%3A0D%3A38%3A75%3A86%3A90%3A96%3A29%3A5F%3A36%3A44%3A7F%3A3D%3A98%3A4B%3A3A%3A5N');
-    expect(singleSslCertificatesUrl('G33:$($%?)')).toBe('/service/rest/v1/security/ssl/truststore/G33%3A%24(%24%25%3F)');
-    expect(createSslCertificatesUrl).toBe('/service/rest/v1/security/ssl/truststore');
+    expect(sslCertificatesUrl).toBe('service/rest/v1/security/ssl/truststore');
+    expect(singleSslCertificatesUrl(testId)).toBe('service/rest/v1/security/ssl/truststore/F6%3ADB%3A65%3AA4%3A0D%3A38%3A75%3A86%3A90%3A96%3A29%3A5F%3A36%3A44%3A7F%3A3D%3A98%3A4B%3A3A%3A5N');
+    expect(singleSslCertificatesUrl('G33:$($%?)')).toBe('service/rest/v1/security/ssl/truststore/G33%3A%24(%24%25%3F)');
+    expect(createSslCertificatesUrl).toBe('service/rest/v1/security/ssl/truststore');
   });
 });
 

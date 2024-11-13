@@ -49,16 +49,12 @@
     // The standard border color doesn't have enough contrast on the NXRM page background
     border-color: var(--nx-swatch-indigo-60);
   }
+
+  .risk-on-disk-container {
+    padding-bottom: 0;
+  }
 }
 
 .nx-icon-feature-browse-welcome-x16 {
  background-image: url(/static/rapture/resources/icons/x16/sonatype.png)
-}
-
-.nxrm-firewall-onboarding {
-  margin-left: var(--nx-spacing-6x);
-}
-
-.nxrm-firewall-onboarding div.nx-alert {
-  margin-bottom: 0;
 }

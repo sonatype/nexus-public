@@ -93,6 +93,8 @@ public interface LogManager
    */
   void setLoggerLevel(String name, @Nullable LoggerLevel level);
 
+  void setLoggerLevelDirect(String name, @Nullable LoggerLevel level);
+
   /**
    * @since 2.7
    */

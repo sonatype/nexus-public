@@ -49,6 +49,10 @@ public class DefaultContentValidator
 {
   public static final String NAME = "default";
 
+  protected MimeSupport getMimeSupport() {
+    return mimeSupport;
+  }
+
   private final MimeSupport mimeSupport;
 
   @Inject

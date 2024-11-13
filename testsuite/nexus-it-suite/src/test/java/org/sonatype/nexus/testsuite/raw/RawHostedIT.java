@@ -19,7 +19,6 @@ import java.util.function.BiConsumer;
 
 import javax.inject.Inject;
 
-import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -34,7 +33,6 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static java.lang.Thread.sleep;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
@@ -51,7 +49,6 @@ import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.statu
 /**
  * IT for hosted raw repositories
  */
-@Category(OrientAndSQLTestGroup.class)
 public class RawHostedIT
     extends RawITSupport
 {

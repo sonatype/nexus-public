@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.browse;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -62,4 +63,27 @@ public interface BrowseFacet
    * Rebuilds the browse node tree for this repository.
    */
   void rebuildBrowseNodes(Consumer<String> progressUpdater);
+
+  /**
+   * Deletes a browse node by its asset internal id and path.
+   *
+   * @param internalAssetId the asset internal id
+   * @param path            the path
+   */
+  void deleteByAssetIdAndPath(Integer internalAssetId, String path);
+
+  /**
+   * Deletes a browse node by its node id.
+   *
+   * @param nodeId the node id
+   */
+  void deleteByNodeId(Long nodeId);
+
+  /**
+   * Retrieves the browse node by its request path.
+   *
+   * @param requestPath the request path
+   * @return the browse node if found
+   */
+  Optional<BrowseNode> getByRequestPath(String requestPath);
 }

@@ -21,12 +21,9 @@ import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.audit.internal.GlobalAuditWebhook.AuditWebhookPayload.Audit;
 import org.sonatype.nexus.webhooks.GlobalWebhook;
 import org.sonatype.nexus.webhooks.WebhookPayload;
-import org.sonatype.nexus.webhooks.WebhookSubscription;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import groovy.lang.Closure;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 
 /**
  * Global audit {@link Webhook}.

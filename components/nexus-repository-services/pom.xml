@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.70.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-services</artifactId>
@@ -262,7 +262,14 @@
           </instructions>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <excludePackageNames>org.sonatype.nexus.repository.rest.*:org.sonatype.nexus.repository.rest:org.sonatype.nexus.repository.search:org.sonatype.nexus.repository.search.*</excludePackageNames>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
-
 </project>

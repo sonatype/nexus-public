@@ -139,7 +139,7 @@ export default Machine(
       },
       services: {
         retrieve: ({itemId, size}) => Axios.get(`/service/rest/internal/logging/logs/${itemId}`, {params: {bytesCount: size * -1024}}),
-        insertMark: ({mark}) => Axios.post('/service/rest/internal/logging/log/mark', mark, {headers: {'Content-Type': 'text/plain'}})
+        insertMark: ({mark}) => Axios.post('service/rest/internal/logging/log/mark', mark, {headers: {'Content-Type': 'text/plain'}})
       }
     }
 );

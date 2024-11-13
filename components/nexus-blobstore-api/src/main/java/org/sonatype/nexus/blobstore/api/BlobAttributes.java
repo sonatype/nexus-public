@@ -61,4 +61,9 @@ public interface BlobAttributes
    */
   void store() throws IOException;
 
+  /**
+   * Write the attributes in the `propertiesFile`.
+   */
+  void writeProperties();
+
 }

@@ -25,7 +25,6 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Hosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-maven2-hosted',
   requires: [
-    'NX.coreui.view.repository.facet.ReplicationFacet',
     'NX.coreui.view.repository.facet.Maven2Facet',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.StorageFacetHosted',
@@ -39,7 +38,6 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Hosted', {
     var me = this;
 
     me.items = [
-      {xtype: 'nx-coreui-repository-replication-facet'},
       {xtype: 'nx-coreui-repository-maven2-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-storage-hosted-facet'},

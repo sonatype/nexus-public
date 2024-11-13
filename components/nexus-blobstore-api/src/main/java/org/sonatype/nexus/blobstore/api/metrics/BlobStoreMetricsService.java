@@ -24,7 +24,7 @@ import org.sonatype.nexus.blobstore.api.OperationType;
 /**
  * Service for handling metrics for blobstores. They are NOT singletons, there is an instance for each blobstore.
  */
-public interface BlobStoreMetricsService
+public interface BlobStoreMetricsService<B extends BlobStore>
     extends Lifecycle
 {
   /**
@@ -32,10 +32,7 @@ public interface BlobStoreMetricsService
    */
   BlobStoreMetrics getMetrics();
 
-  /**
-   * Set the blobstore to be used by this service.
-   */
-  void setBlobStore(BlobStore blobStore);
+  void init(B blobStore) throws Exception;
 
   /**
    * Record a new blob being added to the blob store.

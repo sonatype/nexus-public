@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-parent</artifactId>
-    <version>3.70.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-components</artifactId>
@@ -28,7 +28,6 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>nexus2-npm-metadata-export</module>
     <module>nexus-audit</module>
     <module>nexus-base</module>
     <module>nexus-blobstore</module>
@@ -59,15 +58,12 @@
     <module>nexus-guice-servlet</module>
     <module>nexus-main</module>
     <module>nexus-mime</module>
-    <module>nexus-orient</module>
-    <module>nexus-orient-console</module>
     <module>nexus-oss-edition</module>
     <module>nexus-pax-exam</module>
     <module>nexus-pax-logging</module>
     <module>nexus-plugin-api</module>
     <module>nexus-quartz</module>
     <module>nexus-rapture</module>
-    <module>nexus-repository</module>
     <module>nexus-repository-config</module>
     <module>nexus-repository-content</module>
     <module>nexus-repository-services</module>
@@ -105,7 +101,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-all</artifactId>
         <type>pom</type>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -113,7 +109,7 @@
         <groupId>org.sonatype.nexus.bundles</groupId>
         <artifactId>nexus-thirdparty-bundles</artifactId>
         <type>pom</type>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 

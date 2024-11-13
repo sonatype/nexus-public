@@ -23,10 +23,10 @@ import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeEventSupport;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeFailedEvent;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
+import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
+import org.sonatype.nexus.common.upgrade.events.UpgradeEventSupport;
+import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
+import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
 
 import com.google.common.eventbus.Subscribe;
 

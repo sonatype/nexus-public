@@ -51,7 +51,7 @@ jest.mock('axios', () => {
   return {
     ...jest.requireActual('axios'),
     get: jest.fn((url) => {
-      if (url === '/service/rest/internal/ui/user') {
+      if (url === 'service/rest/internal/ui/user') {
         return Promise.resolve({data: mockUserAccount});
       }
     }),
@@ -143,7 +143,7 @@ describe('UserAccount', () => {
 
     expect(Axios.put).toHaveBeenCalledTimes(1);
     expect(Axios.put).toHaveBeenCalledWith(
-        '/service/rest/internal/ui/user',
+        'service/rest/internal/ui/user',
         {
           email: 'admin@example.com',
           firstName: 'User',
