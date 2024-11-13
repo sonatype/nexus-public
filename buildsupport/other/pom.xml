@@ -175,7 +175,7 @@
       <dependency>
         <groupId>org.elasticsearch</groupId>
         <artifactId>elasticsearch</artifactId>
-        <version>2.4.3</version>
+        <version>7.17.23</version>
         <exclusions>
           <exclusion>
             <groupId>io.netty</groupId>
