@@ -20,13 +20,16 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.72.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-db</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
+  <properties>
+    <jna.version>5.13.0</jna.version>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -56,19 +59,19 @@
       <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
-        <version>8.5.5</version>
+        <version>8.5.13</version>
       </dependency>
 
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna</artifactId>
-        <version>5.11.0</version>
+        <version>${jna.version}</version>
       </dependency>
 
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna-platform</artifactId>
-        <version>5.11.0</version>
+        <version>${jna.version}</version>
       </dependency>
 
     </dependencies>

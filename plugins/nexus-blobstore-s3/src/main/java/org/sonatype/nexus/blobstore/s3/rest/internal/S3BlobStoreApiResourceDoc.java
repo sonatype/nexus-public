@@ -13,9 +13,6 @@
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
 import javax.validation.Valid;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
@@ -25,8 +22,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.apache.shiro.authz.annotation.RequiresAuthentication;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.API_BLOB_STORE;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;

@@ -13,9 +13,7 @@
 package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
-import java.sql.Statement;
 import java.util.Optional;
-import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;

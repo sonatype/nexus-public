@@ -28,15 +28,24 @@ public class LdapStateContributor
     extends ComponentSupport
     implements StateContributor
 {
-  private final Map<String, Object> state;
+  public boolean featureFlag;
+
+  public int mappedRoleQueryCharacterLimit;
 
   @Inject
-  public LdapStateContributor(@Named("${nexus.react.ldap:-false}") final Boolean featureFlag) {
-    state = ImmutableMap.of("nexus.react.ldap", featureFlag);
+  public LdapStateContributor(
+    @Named("${nexus.react.ldap:-false}") final Boolean featureFlag,
+    @Named("${nexus.ldap.mapped.role.query.character.limit:-3}") final int mappedRoleQueryCharacterLimit) 
+  {
+    this.featureFlag = featureFlag;
+    this.mappedRoleQueryCharacterLimit = mappedRoleQueryCharacterLimit;
   }
 
   @Override
   public Map<String, Object> getState() {
-    return state;
+    return ImmutableMap.of(
+      "nexus.react.ldap", featureFlag,
+      "nexus.ldap.mapped.role.query.character.limit", mappedRoleQueryCharacterLimit
+    );
   }
 }

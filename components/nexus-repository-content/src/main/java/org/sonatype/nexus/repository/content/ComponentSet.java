@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content;
 
-import org.sonatype.nexus.common.entity.ContinuationAware;
-
 /**
  * Each component represents a unique logical coordinate in a repository.
  * Part of the coordinate is the namespace and name, which together form the component 'Set'

@@ -12,14 +12,6 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.types.ProxyType;

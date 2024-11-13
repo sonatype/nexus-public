@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.s3;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -24,10 +26,11 @@ import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 
 /**
  * Builder for S3 BlobStoreConfiguration objects.
@@ -65,6 +68,9 @@ public class S3BlobStoreConfigurationBuilder
 
   private Optional<Boolean> forcePathStyle = Optional.empty();
 
+  // Uses a linkedhashmap to maintain order
+  private Map<String, String> failover = new LinkedHashMap<>();
+
   private S3BlobStoreConfigurationBuilder(final Supplier<BlobStoreConfiguration> configuration, final String name) {
     super(name, configuration);
     super.type(S3BlobStore.TYPE);
@@ -99,6 +105,11 @@ public class S3BlobStoreConfigurationBuilder
    */
   public S3BlobStoreConfigurationBuilder expiration(final String expiration) {
     return expiration(Integer.valueOf(checkNotNull(expiration, "Missing expiration")));
+  }
+
+  public S3BlobStoreConfigurationBuilder failover(final String region, final String bucketName) {
+    this.failover.put(region, bucketName);
+    return this;
   }
 
   /**
@@ -242,6 +253,11 @@ public class S3BlobStoreConfigurationBuilder
     endpoint.ifPresent(set(s3, ENDPOINT_KEY));
     signerType.ifPresent(set(s3, SIGNERTYPE_KEY));
     maxConnectionPool.ifPresent(set(s3, MAX_CONNECTION_POOL_KEY));
+
+    // failover
+    if (!failover.isEmpty()) {
+      s3.set(FAILOVER_BUCKETS_KEY, failover);
+    }
 
     // only set if true
     forcePathStyle.filter(b -> b)

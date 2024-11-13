@@ -44,7 +44,7 @@ import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_
  *
  * @since 3.0
  */
-@Named
+@Named("default")
 @Singleton
 public class GroupHandler
     extends ComponentSupport

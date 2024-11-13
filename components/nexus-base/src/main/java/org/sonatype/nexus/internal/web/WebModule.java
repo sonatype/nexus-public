@@ -25,7 +25,6 @@ import com.google.inject.servlet.ServletModule;
 import org.eclipse.sisu.inject.Sources;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
-import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 
 /**
  * Web module.

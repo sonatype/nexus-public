@@ -134,6 +134,11 @@ public class VersionedAssetDAOTest
     super.testDeleteByPaths();
   }
 
+  @Test
+  public void testAssetRecordsExist() {
+    super.testAssetRecordsExist();
+  }
+
   static int countAssets(final AssetDAO dao, final int repositoryId) {
     return dao.countAssets(repositoryId, null, null, null);
   }

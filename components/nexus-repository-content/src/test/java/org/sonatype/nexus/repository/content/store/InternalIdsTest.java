@@ -35,6 +35,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import static java.util.OptionalInt.empty;
 import static org.hamcrest.Matchers.is;
@@ -167,6 +168,22 @@ public class InternalIdsTest
     for (int numIds = 0; numIds < 1_000_000; numIds++) {
       assertExternalIdRoundTrip(1 + random.nextInt(Integer.MAX_VALUE));
     }
+  }
+
+  @Test
+  public void shouldReturnParsedIdWhenNumberFormatException() {
+    EntityId externalId = Mockito.mock(EntityId.class);
+    when(externalId.getValue()).thenReturn("103562827");
+    int internalId = InternalIds.toInternalId(externalId);
+    assertThat(internalId, is(103562827));
+  }
+
+  @Test
+  public void shouldReturnValidIdWhenBase16ExternalId() {
+    EntityId externalId = Mockito.mock(EntityId.class);
+    when(externalId.getValue()).thenReturn("88d9dabf");
+    int internalId = InternalIds.toInternalId(externalId);
+    assertThat(internalId, is(103562827));
   }
 
   @Ignore("uncomment to test all external ids are reversible and unique")

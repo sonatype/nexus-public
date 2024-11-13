@@ -51,6 +51,7 @@ public class EmailConfigurationStoreImpl
   @Transactional
   @Override
   public void save(final EmailConfiguration configuration) {
+    postCommitEvent(EmailConfigurationChanged::new);
     dao().set((EmailConfigurationData) configuration);
   }
 }

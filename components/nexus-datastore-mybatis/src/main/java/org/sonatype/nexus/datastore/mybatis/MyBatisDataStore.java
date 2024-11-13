@@ -52,7 +52,7 @@ import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StatePrerequisitesInvalidException;
 import org.sonatype.nexus.common.thread.TcclBlock;
-import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
+import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.datastore.DataStoreSupport;
@@ -130,7 +130,7 @@ import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JD
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SCHEMA;
 import static org.sonatype.nexus.datastore.mybatis.PlaceholderTypes.configurePlaceholderTypes;
 import static org.sonatype.nexus.datastore.mybatis.SensitiveAttributes.buildSensitiveAttributeFilter;
-import static org.sonatype.nexus.security.PhraseService.LEGACY_PHRASE_SERVICE;
+import static org.sonatype.nexus.crypto.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * MyBatis {@link DataStore}.
@@ -880,9 +880,7 @@ public class MyBatisDataStore
     if (handler instanceof CipherAwareTypeHandler<?>) {
       ((CipherAwareTypeHandler<?>) handler).setCipher(databaseCipher);
     }
-    if (sensitiveAttributeFilter != null && handler instanceof AbstractJsonTypeHandler<?>) {
-      ((AbstractJsonTypeHandler<?>) handler).encryptSensitiveFields(passwordHelper, sensitiveAttributeFilter);
-    }
+
     registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
     Type handledType = ((BaseTypeHandler) handler).getRawType();
     if (handledType instanceof Class<?>) {

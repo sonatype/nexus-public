@@ -27,6 +27,7 @@ import spock.lang.Specification
 
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.OPTIONAL
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.AUDITLOG
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.DBINFO
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SYSINFO
@@ -44,12 +45,14 @@ class SupportZipGeneratorImplTest
   def mockAuditLogCustomizer = Mock(SupportBundleCustomizer)
   def mockJmxCustomizer = Mock(SupportBundleCustomizer)
   def mockSysInfoCustomizer = Mock(SupportBundleCustomizer)
+  def mockDbInfoCustomizer = Mock(SupportBundleCustomizer)
   def throwExceptionCustomizer = Mock(SupportBundleCustomizer)
   def throwExceptionInMiddleCustomizer = Mock(SupportBundleCustomizer)
   def logContentSource = new TestGeneratedContentSourceSupport(LOG, 'log/nexus.log', OPTIONAL)
   def taskLogContentSource = new TestGeneratedContentSourceSupport(TASKLOG, 'log/tasks/task.log', OPTIONAL)
   def auditLogContentSource = new TestGeneratedContentSourceSupport(AUDITLOG, 'log/audit.log', OPTIONAL)
   def jmxContentSource = new TestGeneratedContentSourceSupport(JMX, 'info/jmx.json', OPTIONAL)
+  def dbInfoContentSource = new TestGeneratedContentSourceSupport(DBINFO, 'info/dbFileInfo.txt', OPTIONAL)
   def sysInfoContentSource = new TestGeneratedContentSourceSupport(SYSINFO, 'info/sysinfo.json', OPTIONAL)
   def throwExceptionSource = new GeneratedContentSourceSupport(JMX, 'info/jmx.json', OPTIONAL) {
     @Override
@@ -70,6 +73,7 @@ class SupportZipGeneratorImplTest
     mockAuditLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << auditLogContentSource }
     mockJmxCustomizer.customize(_) >> { SupportBundle bundle -> bundle << jmxContentSource }
     mockSysInfoCustomizer.customize(_) >> { SupportBundle bundle -> bundle << sysInfoContentSource }
+    mockDbInfoCustomizer.customize(_) >> { SupportBundle bundle -> bundle << dbInfoContentSource }
     throwExceptionCustomizer.customize(_) >> { SupportBundle bundle -> bundle << throwExceptionSource }
     throwExceptionInMiddleCustomizer.customize(_) >> { SupportBundle bundle ->
       bundle.add(logContentSource)
@@ -154,7 +158,7 @@ class SupportZipGeneratorImplTest
       def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
       jmxContentSource.contentSize = 1000
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockJmxCustomizer, throwExceptionCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockJmxCustomizer, mockDbInfoCustomizer, throwExceptionCustomizer],
           ByteSize.bytes(1000000),
           ByteSize.bytes(1000000))
     when:
@@ -194,7 +198,7 @@ class SupportZipGeneratorImplTest
       sysInfoContentSource.contentSize = 50000
       def req = new SupportZipGeneratorRequest(systemInformation: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockSysInfoCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockSysInfoCustomizer, mockDbInfoCustomizer],
           ByteSize.bytes(30000), ByteSize.bytes(50000))
 
     when:
@@ -231,6 +235,38 @@ class SupportZipGeneratorImplTest
       entries.find { it.name == 'prefix/truncated' } != null
   }
 
+  def "Validate log files aren't completely truncated if above file size limit"(){
+    given:
+      logContentSource.contentSize = 40000 // Should only be truncated up until it hits the file size limit
+      taskLogContentSource.contentSize = 40000 // Should only be truncated up until it hits file size limit
+      auditLogContentSource.contentSize = 40000 // Should only be truncated up until it hits file size limit
+      jmxContentSource.contentSize = 50000  // Expected not to be truncated
+      sysInfoContentSource.contentSize = 60000  // Expected not to be truncated
+
+      def req = new SupportZipGeneratorRequest(systemInformation: true, jmx: true, log: true, taskLog: true, auditLog: true, limitFileSizes: true, limitZipSize: true)
+      def out = new ByteArrayOutputStream()
+      def final TRUNCATED_SIZE = "** TRUNCATED **\n".size()
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer, mockSysInfoCustomizer],
+          ByteSize.bytes(30000), ByteSize.bytes(50000))
+
+    when:
+      generator.generate(req, 'prefix', out)
+      def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
+      def entries = []
+      ZipEntry entry
+      while ((entry = zip.getNextEntry()) != null) {
+        entries << entry
+      }
+
+      then:
+        entries.find { it.name == 'prefix/log/nexus.log' && (it.size > TRUNCATED_SIZE && it.size < 40000) } != null //If the size is <= TRUNCATED_SIZE means we truncated the whole file
+        entries.find { it.name == 'prefix/log/tasks/task.log' && (it.size > TRUNCATED_SIZE && it.size < 40000) } != null //If the size is <= TRUNCATED_SIZE means we truncated the whole file
+        entries.find { it.name == 'prefix/log/audit.log' && (it.size > TRUNCATED_SIZE && it.size < 40000) } != null //If the size is <= TRUNCATED_SIZE means we truncated the whole file
+        entries.find { it.name == 'prefix/info/jmx.json' && it.size == 50000 } != null // Expected to not be truncated
+        entries.find { it.name == 'prefix/info/sysinfo.json' && it.size == 60000 } != null // Expected to not be truncated
+        entries.find { it.name == 'prefix/truncated' } != null
+  }
+
   def "Validate log truncation and inclusion of other files without truncation"() {
     given:
       logContentSource.contentSize = 40000  // Expected to be truncated
@@ -242,7 +278,7 @@ class SupportZipGeneratorImplTest
       def req = new SupportZipGeneratorRequest(systemInformation: true, jmx: true, log: true, taskLog: true, auditLog: true, limitFileSizes: true, limitZipSize: true)
       def out = new ByteArrayOutputStream()
 
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer, mockSysInfoCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockAuditLogCustomizer, mockJmxCustomizer, mockSysInfoCustomizer, mockDbInfoCustomizer],
           ByteSize.bytes(30000), ByteSize.bytes(50000))
 
     when:

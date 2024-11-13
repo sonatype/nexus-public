@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHandler;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
@@ -48,6 +49,7 @@ import static java.util.Optional.empty;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -167,6 +169,7 @@ public class MavenRestoreBlobStrategyTest
     when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
     underTest = new MavenRestoreBlobStrategy(dryRunPrefix, repositoryManager, mavenPathParser);
+    underTest.injectDependencies(mock(LastDownloadedAttributeHandler.class));
   }
 
   @SuppressWarnings("deprecation")

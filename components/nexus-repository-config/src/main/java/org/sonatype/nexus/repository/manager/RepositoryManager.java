@@ -45,6 +45,12 @@ public interface RepositoryManager
   @Nullable
   Repository get(String name);
 
+  /**
+   * Returns a stream of the configurations for repositories registered with the manager. The Configuration objects
+   * should not be modified. The associated repositories may not be started if invoked during startup.
+   */
+  Stream<Configuration> getConfigurations();
+
   @Nullable
   Repository softGet(String name);
 

@@ -173,5 +173,10 @@ public class RecalculateBlobStoreSizeTaskTest
     public void store() {
       writeTo(properties);
     }
+
+    @Override
+    public void writeProperties() {
+      writeTo(propertiesFile);
+    }
   }
 }

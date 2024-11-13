@@ -12,11 +12,8 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.hosted;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Facet;

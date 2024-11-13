@@ -200,6 +200,11 @@ public class TaskSchedulerImpl
   }
 
   @Override
+  public boolean findWaitingTask(final String typeId, Map<String, String> config) {
+    return getScheduler().findWaitingTask(typeId, config);
+  }
+
+  @Override
   public boolean findAndSubmit(final String typeId, final Map<String, String> config) {
     return getScheduler().findAndSubmit(typeId, config);
   }

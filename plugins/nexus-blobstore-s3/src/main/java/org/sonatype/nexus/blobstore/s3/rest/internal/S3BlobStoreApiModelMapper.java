@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
+import java.util.List;
+
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationBuilder;
@@ -20,6 +22,7 @@ import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketSecurity;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncryption;
+import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -67,6 +70,11 @@ public final class S3BlobStoreApiModelMapper
       builder.signerType(advanced.getSignerType());
       builder.maxConnectionPool(advanced.getMaxConnectionPoolSize());
       builder.forcePathStyle(advanced.getForcePathStyle());
+    }
+
+    List<S3BlobStoreApiFailoverBucket> failoverBuckets = bucketConfiguration.getFailoverBuckets();
+    if (failoverBuckets != null) {
+      failoverBuckets.forEach(failover -> builder.failover(failover.getRegion(), failover.getBucketName()));
     }
 
     BlobStoreApiSoftQuota softQuota = request.getSoftQuota();
