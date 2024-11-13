@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -41,8 +40,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
-import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
-import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
@@ -50,8 +47,9 @@ import org.sonatype.nexus.repository.rest.api.DefaultComponentXO;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Collections2.transform;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.common.time.DateHelper.offsetToDate;
+import static org.sonatype.nexus.common.time.DateHelper.optionalOffsetToDate;
 
 /**
  * {@link CleanupPreviewHelper} implementation.
@@ -188,6 +186,8 @@ public class CleanupPreviewHelperImpl
           assetXO.setPath(it.path());
           assetXO.setBlobStoreName(it.blobStoreName());
           assetXO.setFileSize(it.assetBlobSize());
+          assetXO.setLastDownloaded(optionalOffsetToDate(it.lastDownloaded()));
+          assetXO.setBlobCreated(offsetToDate(it.created()));
 
           return assetXO;
         })

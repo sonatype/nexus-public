@@ -13,9 +13,9 @@
 package org.sonatype.nexus.internal.httpclient
 
 import org.sonatype.goodies.common.Time
+import org.sonatype.nexus.crypto.secrets.SecretsService
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration
 import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl
-import org.sonatype.nexus.security.PasswordHelper
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
@@ -28,9 +28,9 @@ import spock.lang.Subject
 class HttpClientConfigurationObjectMapperCustomizerTest
     extends Specification
 {
-  PasswordHelper passwordHelper = Mock()
+  SecretsService secretsService = Mock()
 
-  HttpClientConfigurationObjectMapperCustomizer customizer = new HttpClientConfigurationObjectMapperCustomizer(passwordHelper)
+  HttpClientConfigurationObjectMapperCustomizer customizer = new HttpClientConfigurationObjectMapperCustomizer(secretsService)
   
   @Subject
   ObjectMapper objectMapper = new ObjectMapper()

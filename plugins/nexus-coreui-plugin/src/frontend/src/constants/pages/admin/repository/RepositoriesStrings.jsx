@@ -107,8 +107,7 @@ export default {
       DEPLOYMENT_POLICY_OPTIONS: {
         ALLOW: 'Allow redeploy',
         ALLOW_ONCE: 'Disable redeploy',
-        DENY: 'Read-only',
-        REPLICATION_ONLY: 'Deploy by Replication Only'
+        DENY: 'Read-only'
       },
       REDEPLOY_LATEST: {
         LABEL: 'Allow redeploy only on "latest" tag',

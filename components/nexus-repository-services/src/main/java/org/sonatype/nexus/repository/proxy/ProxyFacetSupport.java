@@ -584,7 +584,7 @@ public abstract class ProxyFacetSupport
   /**
    * May throw {@link ProxyServiceException} based on response statuses.
    */
-  private void mayThrowProxyServiceException(final HttpResponse httpResponse) {
+  protected void mayThrowProxyServiceException(final HttpResponse httpResponse) {
     final StatusLine status = httpResponse.getStatusLine();
     if (HttpStatus.SC_UNAUTHORIZED == status.getStatusCode()
         || HttpStatus.SC_PAYMENT_REQUIRED == status.getStatusCode()

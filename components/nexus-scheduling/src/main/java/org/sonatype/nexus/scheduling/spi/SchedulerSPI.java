@@ -140,6 +140,19 @@ public interface SchedulerSPI
    * All entries in {@code config} must match entries in the task's {@link TaskConfiguration} to be
    * considered a match. Any entries of {@code config} with either a null key or null value will be ignored.
    * <p/>
+   * If found, don't submit the task for execution just confirm the waiting/running state with a boolean value
+   *
+   * @param typeId task type ID
+   * @return {@code true} if a task is found waiting or already running, {@code false} otherwise
+   */
+  boolean findWaitingTask(String typeId, Map<String, String> config);
+
+  /**
+   * Find the first task with type ID matching {@code typeId} and {@link TaskConfiguration} matching {@code config}.
+   * <p/>
+   * All entries in {@code config} must match entries in the task's {@link TaskConfiguration} to be
+   * considered a match. Any entries of {@code config} with either a null key or null value will be ignored.
+   * <p/>
    * If found, submit the task for execution if it is not already running.
    *
    * @param typeId task type ID

@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.PerformanceLogger;
-import org.sonatype.nexus.common.template.TemplateParameters;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;

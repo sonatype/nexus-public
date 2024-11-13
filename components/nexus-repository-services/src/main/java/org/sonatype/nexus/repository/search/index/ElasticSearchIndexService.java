@@ -114,4 +114,10 @@ public interface ElasticSearchIndexService
    */
   @VisibleForTesting
   void waitForCalm();
+
+  /**
+   * Wait for the elasticsearch index to be in a queryable state.
+   */
+  @VisibleForTesting
+  void waitForReady();
 }

@@ -28,6 +28,7 @@ import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED;
 
 /**
  * Internal dependencies injected into a repository's {@link ContentFacet}.
@@ -56,6 +57,8 @@ public class ContentFacetDependencies
 
   private final Optional<RepositoryMoveService> maybeMoveService;
 
+  private final boolean dateBasedBlobStoreLayoutEnabled;
+
   @Inject
   public ContentFacetDependencies(final BlobStoreManager blobStoreManager,
                                   final DataSessionSupplier dataSessionSupplier,
@@ -65,7 +68,8 @@ public class ContentFacetDependencies
                                   final AssetBlobValidators assetBlobValidators,
                                   final BlobMetadataStorage blobMetadataStorage,
                                   final VersionNormalizerService versionNormalizerService,
-                                  @Nullable final RepositoryMoveService moveService)
+                                  @Nullable final RepositoryMoveService moveService,
+                                  @Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean dateBasedLayoutEnabled)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
@@ -76,6 +80,7 @@ public class ContentFacetDependencies
     this.blobMetadataStorage = checkNotNull(blobMetadataStorage);
     this.versionNormalizerService = versionNormalizerService;
     this.maybeMoveService = Optional.ofNullable(moveService);
+    this.dateBasedBlobStoreLayoutEnabled = dateBasedLayoutEnabled;
   }
 
   public BlobStoreManager getBlobStoreManager() {
@@ -112,5 +117,9 @@ public class ContentFacetDependencies
 
   public Optional<RepositoryMoveService> getMoveService() {
     return maybeMoveService;
+  }
+
+  public boolean isDateBasedBlobStoreLayoutEnabled() {
+    return dateBasedBlobStoreLayoutEnabled;
   }
 }

@@ -23,6 +23,15 @@ public interface FeatureFlags
   /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
   String FEATURE_GOLANG_HOSTED = "nexus.golang.hosted";
 
+  /* Cargo format is temporarily hidden behind the feature flag. Default value: false */
+  String CARGO_FORMAT_ENABLED = "nexus.format.cargo.enabled";
+
+  /* Hugging Face format is temporarily hidden behind the feature flag. Default value: false */
+  String HUGGING_FACE_FORMAT_ENABLED = "nexus.format.huggingface.enabled";
+
+  /* Composer format is temporarily hidden behind the feature flag. Default value: false */
+  String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
+
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 
@@ -180,13 +189,39 @@ public interface FeatureFlags
   /* For testing purposes only */
   String ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED = "nexus.zdu.future.enabled";
 
-  String MALICIOUS_RISK_ENABLED = "nexus.malicious.risk.enabled";
+  String MALWARE_RISK_ENABLED = "nexus.malware.risk.enabled";
 
-  String MALICIOUS_RISK_ENABLED_NAMED = "${nexus.malicious.risk.enabled:-false}";
+  String MALWARE_RISK_ENABLED_NAMED = "${nexus.malware.risk.enabled:-false}";
+
+  String MALWARE_RISK_ON_DISK_ENABLED = "nexus.malware.risk.on.disk.enabled";
+
+  String MALWARE_RISK_ON_DISK_ENABLED_NAMED = "${nexus.malware.risk.on.disk.enabled:-true}";
 
   String CONAN_V2_ENABLED = "nexus.conan.v2.enabled";
 
   String CONAN_V2_ENABLED_NAMED = "${nexus.conan.v2.enabled:-false}";
 
   String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
+
+  String RECONCILE_PLAN_ENABLED_NAMED = "${nexus.reconcile.plan.enabled:-false}";
+
+  /* properties/env vars used by secrets service */
+  String SECRETS_FILE= "nexus.secrets.file";
+
+  String SECRETS_FILE_ENV = "NEXUS_SECRETS_KEY_FILE";
+
+  String DATE_BASED_BLOBSTORE_LAYOUT_ENABLED = "nexus.blobstore.datebased.layout.enabled";
+
+  String DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED = "${nexus.blobstore.datebased.layout.enabled:-false}";
+
+  String SECRETS_API_ENABLED = "nexus.secrets.api.enabled";
+
+  /* Feature flag to enable/disable s3 logging */
+
+  String S3_LOGGING_ENABLED = "nexus.s3.logging.enabled";
+
+  String S3_LOGGING_ENABLED_ENV = "S3_LOGGING_ENABLED";
+
+  /* OSS registration */
+  String OSS_REGISTRATION_ENABLED_NAMED = "${nexus.license.community:-false}";
 }

@@ -24,7 +24,6 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 
 import static org.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;

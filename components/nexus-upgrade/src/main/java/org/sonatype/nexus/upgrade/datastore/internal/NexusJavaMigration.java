@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.upgrade.datastore.internal;
 
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.sonatype.nexus.upgrade.datastore.DefinedUpgradeRound;
 
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.migration.Context;
@@ -35,7 +39,16 @@ public class NexusJavaMigration implements JavaMigration
 
   public NexusJavaMigration(final DatabaseMigrationStep dbMigrationStep, final Integer round) {
     this.dbMigrationStep = dbMigrationStep;
-    this.round = round;
+
+    if (dbMigrationStep instanceof DefinedUpgradeRound) {
+      if (round != null) {
+        throw new IllegalStateException("Incompatible API, DefinedUpgradeRound cannot be mixd with DependsOn");
+      }
+      this.round = ((DefinedUpgradeRound) dbMigrationStep).getUpgradeRound();
+    }
+    else {
+      this.round = round;
+    }
   }
 
   @Override
@@ -80,5 +93,13 @@ public class NexusJavaMigration implements JavaMigration
   @Override
   public void migrate(final Context context) throws Exception {
     dbMigrationStep.migrate(context.getConnection());
+  }
+
+  /**
+   * Provides a {@link Predicate} which will match the against flyway migration descriptions and also accounts for
+   * a possible round prefix.
+   */
+  public static Predicate<String> nameMatcher(final Class<? extends DatabaseMigrationStep> step) {
+    return Pattern.compile("^(Z_\\d{3}_)?" + step.getSimpleName() + "$").asPredicate();
   }
 }

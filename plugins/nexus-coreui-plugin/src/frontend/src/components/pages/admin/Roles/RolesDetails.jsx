@@ -36,13 +36,15 @@ const {ROLES: {FORM: LABELS}} = UIStrings;
 export default function RolesDetails({itemId, onDone}) {
   const hasDeletePermissions = ExtJS.checkPermission('nexus:roles:delete');
   const hasEditPermissions = ExtJS.checkPermission('nexus:roles:update');
+  const ldapQueryCharacterLimit = ExtJS.state().getValue('nexus.ldap.mapped.role.query.character.limit');
 
   const [current, , service] = useMachine(Machine, {
     context: {
       externalRolesRef: null,
       pristineData: {
         id: decodeURIComponent(itemId),
-      }
+      },
+      ldapQueryCharacterLimit: ldapQueryCharacterLimit
     },
     actions: {
       onSaveSuccess: onDone,

@@ -35,5 +35,6 @@ const sourcesApi = {action: 'coreui_Role', method: 'readSources'};
 const getRolesUrl = (source) => `${rolesUrl}?source=${encodeURIComponent(source)}`;
 const defaultRolesUrl = getRolesUrl('default');
 const singleRoleUrl = (id) => `${rolesUrl}/${encodeURIComponent(id)}`;
+const getLdapRolesUrl = (query, source) => `service/rest/internal/ui/roles?search=${query}&source=${source}`;
 
-export const URL = {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, singleRoleUrl};
+export const URL = {rolesUrl, privilegesUrl, sourcesApi, getRolesUrl, defaultRolesUrl, singleRoleUrl, getLdapRolesUrl};

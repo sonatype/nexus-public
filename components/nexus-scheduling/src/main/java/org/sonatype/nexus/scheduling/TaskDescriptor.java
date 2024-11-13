@@ -84,4 +84,6 @@ public interface TaskDescriptor
   boolean isRecoverable();
 
   boolean allowConcurrentRun();
+
+  boolean isReadOnlyUi();
 }

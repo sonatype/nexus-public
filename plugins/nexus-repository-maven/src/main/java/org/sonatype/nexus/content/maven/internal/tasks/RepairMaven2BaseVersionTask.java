@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.content.maven.internal.tasks;
 
-import java.util.List;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;

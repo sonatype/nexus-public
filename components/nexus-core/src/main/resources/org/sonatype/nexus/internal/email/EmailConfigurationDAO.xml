@@ -37,7 +37,7 @@
   </insert>
 
   <resultMap id="EmailConfigurationData" type="EmailConfigurationData">
-    <result property="password" column="password" typeHandler="EncryptedStringTypeHandler"/>
+    <result property="password" column="password" typeHandler="SecretTypeHandler"/>
     <!-- use automatic mapping for the other parts of the result -->
   </resultMap>
 
@@ -48,18 +48,18 @@
   <insert id="set" parameterType="EmailConfigurationData">
     MERGE INTO email_configuration (id, enabled, host, port, username, password, fromAddress, subjectPrefix,
         startTlsEnabled, startTlsRequired, sslOnConnectEnabled, sslCheckServerIdentityEnabled, nexusTrustStoreEnabled)
-    VALUES (1, #{enabled}, #{host}, #{port}, #{username}, #{password, typeHandler=EncryptedStringTypeHandler}, #{fromAddress}, #{subjectPrefix},
+    VALUES (1, #{enabled}, #{host}, #{port}, #{username}, #{password, typeHandler=SecretTypeHandler}, #{fromAddress}, #{subjectPrefix},
         #{startTlsEnabled}, #{startTlsRequired}, #{sslOnConnectEnabled}, #{sslCheckServerIdentityEnabled}, #{nexusTrustStoreEnabled});
   </insert>
 
   <insert id="set" parameterType="EmailConfigurationData" databaseId="PostgreSQL">
     INSERT INTO email_configuration (id, enabled, host, port, username, password, fromAddress, subjectPrefix,
         startTlsEnabled, startTlsRequired, sslOnConnectEnabled, sslCheckServerIdentityEnabled, nexusTrustStoreEnabled)
-    VALUES (1, #{enabled}, #{host}, #{port}, #{username}, #{password, typeHandler=EncryptedStringTypeHandler}, #{fromAddress}, #{subjectPrefix},
+    VALUES (1, #{enabled}, #{host}, #{port}, #{username}, #{password, typeHandler=SecretTypeHandler}, #{fromAddress}, #{subjectPrefix},
         #{startTlsEnabled}, #{startTlsRequired}, #{sslOnConnectEnabled}, #{sslCheckServerIdentityEnabled}, #{nexusTrustStoreEnabled})
     ON CONFLICT (id) DO UPDATE SET
         enabled = #{enabled}, host = #{host}, port = #{port},
-        username = #{username}, password = #{password, typeHandler=EncryptedStringTypeHandler},
+        username = #{username}, password = #{password, typeHandler=SecretTypeHandler},
         fromAddress = #{fromAddress}, subjectPrefix = #{subjectPrefix},
         startTlsEnabled = #{startTlsEnabled}, startTlsRequired = #{startTlsRequired}, sslOnConnectEnabled = #{sslOnConnectEnabled},
         sslCheckServerIdentityEnabled = #{sslCheckServerIdentityEnabled}, nexusTrustStoreEnabled = #{nexusTrustStoreEnabled};

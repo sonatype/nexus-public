@@ -143,6 +143,8 @@ public interface SearchRecord
 
   Collection<String> getKeywords();
 
+  SearchAssetRecord newAssetRecord();
+
   OffsetDateTime getLastModified();
 
   Collection<String> getMd5();
@@ -180,6 +182,8 @@ public interface SearchRecord
 
   void setEntityVersion(Integer entityVersion);
 
+  Integer getComponentId();
+
   void setFormat(String format);
 
   void setLastModified(OffsetDateTime lastModified);
@@ -193,4 +197,8 @@ public interface SearchRecord
   void setTags(Collection<String> values);
 
   void setVersion(String version);
+
+  Collection<SearchAssetRecord> getSearchAssetRecords();
+
+  void addSearchAssetRecord(SearchAssetRecord searchAssetRecord);
 }

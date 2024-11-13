@@ -19,6 +19,7 @@ import org.sonatype.nexus.capability.CapabilityDescriptor
 import org.sonatype.nexus.capability.CapabilityIdentity
 import org.sonatype.nexus.capability.CapabilityRegistry
 import org.sonatype.nexus.capability.CapabilityType
+import org.sonatype.nexus.crypto.secrets.SecretsService
 import org.sonatype.nexus.httpclient.HttpClientManager
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration
@@ -28,8 +29,21 @@ import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
 import org.sonatype.nexus.internal.app.BaseUrlCapabilityDescriptor
 import org.sonatype.nexus.internal.capability.DefaultCapabilityReference
 import org.sonatype.nexus.internal.httpclient.TestHttpClientConfiguration
+import org.sonatype.nexus.security.UserIdHelper
 
+import org.apache.shiro.SecurityUtils
+import org.apache.shiro.mgt.SecurityManager
+import org.apache.shiro.subject.Subject
+import org.apache.shiro.subject.support.SubjectThreadState
+import org.apache.shiro.web.util.RequestPairSource
+import org.junit.After
+import org.junit.Before
+import org.mockito.Mock
+import org.mockito.MockedStatic
 import spock.lang.Specification
+
+import static org.mockito.Mockito.mockStatic
+import static org.sonatype.nexus.httpclient.config.AuthenticationConfiguration.AUTHENTICATION_CONFIGURATION
 
 /**
  * Tests for {@link CoreApiImpl}
@@ -48,12 +62,32 @@ class CoreApiImplTest
 
   HttpClientManager httpClientManager = Mock()
 
+  SecretsService secretsService = Mock()
+
   CapabilityIdentity identity = new CapabilityIdentity('test')
 
-  CoreApi api = new CoreApiImpl(capabilityRegistry: capabilityRegistry, httpClientManager: httpClientManager)
+  CoreApi api = new CoreApiImpl(capabilityRegistry, httpClientManager, secretsService)
 
   private static final ProxyConfiguration EXISTING_HTTP = new ProxyConfiguration(
       http: new ProxyServerConfiguration(enabled: true, host: 'http', port: 1))
+
+  @Mock
+  Subject subject
+
+  MockedStatic<SecurityUtils> securityUtils
+
+  @Mock
+  SecurityManager securityManager
+
+  def setup() {
+    securityUtils = mockStatic(SecurityUtils.class)
+    securityUtils.when({ -> SecurityUtils.getSubject() }).thenReturn(subject)
+    setSecurityManager(securityManager)
+  }
+
+  def cleanup() {
+    securityUtils.close()
+  }
 
   def 'Can set base url without an existing capability'() {
     given:
@@ -101,7 +135,7 @@ class CoreApiImplTest
       1 * context.descriptor() >> descriptor
       1 * descriptor.type() >> BaseUrlCapabilityDescriptor.TYPE
       1 * reference.id() >> identity
-      1 * capabilityRegistry.remove(identity)  
+      1 * capabilityRegistry.remove(identity)
   }
 
   def 'Can delete when base url capability is not configured'() {
@@ -124,6 +158,7 @@ class CoreApiImplTest
       api.httpProxy('http', 1)
 
     then:
+      0 * secretsService.encryptMaven(_,_,_)
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
       configuration.proxy
@@ -144,6 +179,7 @@ class CoreApiImplTest
       api.httpProxyWithBasicAuth('http', 1, 'user', 'pass')
 
     then:
+      1 * secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION,'pass'.chars, UserIdHelper.get())
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
       configuration.proxy
@@ -154,7 +190,8 @@ class CoreApiImplTest
         http.authentication
         http.authentication instanceof UsernameAuthenticationConfiguration
         http.authentication.username == 'user'
-        http.authentication.password == 'pass'
+        http.authentication.password ==
+            secretsService.encrypt(AUTHENTICATION_CONFIGURATION, 'pass'.toCharArray(), UserIdHelper.get())
         !https
       }
   }
@@ -167,6 +204,7 @@ class CoreApiImplTest
       api.httpProxyWithNTLMAuth('http', 1, 'user', 'pass', 'ntlmHost', 'domain')
 
     then:
+      1 * secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION,'pass'.chars, UserIdHelper.get())
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
       configuration.proxy
@@ -177,7 +215,8 @@ class CoreApiImplTest
         http.authentication
         http.authentication instanceof NtlmAuthenticationConfiguration
         http.authentication.username == 'user'
-        http.authentication.password == 'pass'
+        http.authentication.password ==
+            secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION, 'pass'.toCharArray(), UserIdHelper.get())
         http.authentication.host == 'ntlmHost'
         http.authentication.domain == 'domain'
         !https
@@ -219,6 +258,7 @@ class CoreApiImplTest
       api.httpsProxy('https', 2)
 
     then:
+      0 * secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION,'pass'.chars, UserIdHelper.get())
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
       configuration.proxy
@@ -239,6 +279,7 @@ class CoreApiImplTest
       api.httpsProxyWithBasicAuth('https', 2, 'user', 'pass')
 
     then:
+      1 * secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION,'pass'.chars, UserIdHelper.get())
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
       configuration.proxy
@@ -250,7 +291,9 @@ class CoreApiImplTest
         https.authentication
         https.authentication instanceof UsernameAuthenticationConfiguration
         https.authentication.username == 'user'
-        https.authentication.password == 'pass'
+        https.authentication.password ==
+            secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION, 'pass'.toCharArray(), UserIdHelper.get())
+
       }
   }
 
@@ -262,6 +305,7 @@ class CoreApiImplTest
       api.httpsProxyWithNTLMAuth('https', 2, 'user', 'pass', 'ntlmHost', 'domain')
 
     then:
+      1 * secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION,'pass'.chars, UserIdHelper.get())
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
       configuration.proxy
@@ -273,7 +317,8 @@ class CoreApiImplTest
         https.authentication
         https.authentication instanceof NtlmAuthenticationConfiguration
         https.authentication.username == 'user'
-        https.authentication.password == 'pass'
+        https.authentication.password ==
+            secretsService.encryptMaven(AUTHENTICATION_CONFIGURATION, 'pass'.toCharArray(), UserIdHelper.get())
         https.authentication.host == 'ntlmHost'
         https.authentication.domain == 'domain'
       }
@@ -357,7 +402,7 @@ class CoreApiImplTest
   def 'Can customize user agent'() {
     given:
       HttpClientConfiguration configuration = new TestHttpClientConfiguration()
-    
+
     when:
       api.userAgentCustomization('foo')
 
@@ -378,10 +423,10 @@ class CoreApiImplTest
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
       configuration.proxy.nonProxyHosts == ['foo', 'bar'] as String[]
-    
+
     when:
       api.nonProxyHosts()
-    
+
     then:
       1 * httpClientManager.getConfiguration() >> configuration
       1 * httpClientManager.setConfiguration(_)
