@@ -108,7 +108,7 @@ export default function GoogleBlobStoreSettings({ service }) {
             </NxFormGroup>
         )}
         <NxFieldset label={GOOGLE.ENCRYPTION.LABEL}>
-          <p>GCP provides encryption by default. You can change the encryption type to use KMS</p>
+          <p>Data is encrypted by default. Enable KMS to use a custom encryption key.<br />Note: Encryption settings cannot be changed once the bucket is created</p>
           <NxCheckbox
               checkboxId="encryptionKey"
               name="bucketConfiguration.encryption.encryptionType"

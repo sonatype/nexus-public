@@ -167,10 +167,10 @@ export default {
         LABEL: 'Encryption',
         SUBLABEL: 'Encryption type',
         DEFAULT: 'Default Cloud-managed encryption',
-        KMS_MANAGED: 'KMS managed encryption',
+        KMS_MANAGED: 'Enable KMS managed encryption',
         KEY_NAME: {
-          label: 'KMS key resource name',
-          sublabel: 'Enter the KMS key resource name:'
+          label: 'KMS Key ID',
+          sublabel: 'Enter the KMS Key ID to use for encryption'
         }
       },
       ERROR: {
