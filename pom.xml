@@ -229,12 +229,11 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore-mybatis</artifactId>
-        </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore-mybatis</artifactId>
-        <classifier>features</classifier>
+      <classifier>features</classifier>
         <type>xml</type>
       </dependency>
 
