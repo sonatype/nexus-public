@@ -183,7 +183,6 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cleanup</artifactId>
-        </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
@@ -511,7 +510,6 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-pax-exam</artifactId>
-        </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
