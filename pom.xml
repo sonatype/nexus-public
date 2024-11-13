@@ -513,8 +513,7 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-pax-exam</artifactId>
-        <version>3.75.0-SNAPSHOT</version>
-      </dependency>
+        </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
