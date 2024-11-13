@@ -167,14 +167,12 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-repository-raw</artifactId>
-        <version>3.75.0-SNAPSHOT</version>
-      </dependency>
+ </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-repository-raw</artifactId>
-        <version>3.75.0-SNAPSHOT</version>
-        <classifier>features</classifier>
+  <classifier>features</classifier>
         <type>xml</type>
       </dependency>
 
