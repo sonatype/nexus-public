@@ -12,22 +12,13 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.hosted;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptHostedMetadataFacet;
-import org.sonatype.nexus.repository.apt.internal.hosted.AssetAction;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
-import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
 
 /**

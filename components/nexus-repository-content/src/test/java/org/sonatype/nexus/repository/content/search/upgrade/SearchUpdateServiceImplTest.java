@@ -16,7 +16,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
-import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 

@@ -61,6 +61,7 @@ export default FormUtils.buildFormMachine({
                     'setExternalRoleType',
                     'initExternalRolesActor',
                     'sendDataToActor',
+                    'sendLdapDataToActor'
                 ],
               },
               UPDATE_ROLES: {
@@ -90,8 +91,11 @@ export default FormUtils.buildFormMachine({
           externalRolesRef || spawn(ExternalRolesComboboxMachine, 'externalRolesCombobox'),
     }),
     sendDataToActor: ({externalRoleType, externalRolesRef}) => externalRolesRef.send(
-        {type: 'UPDATE_TYPE', externalRoleType}, {to: 'externalRolesCombobox'}
+        {type: 'UPDATE_TYPE', externalRoleType}, {to: 'externalRolesCombobox'},
     ),
+    sendLdapDataToActor: ({externalRolesRef, ldapQueryCharacterLimit}) => externalRolesRef.send(
+      {type: 'UPDATE_LDAP_LIMIT', ldapQueryCharacterLimit}, {to: 'externalRolesCombobox'},
+  ),
     validate: assign({
       validationErrors: ({data}) => ({
         id: validateId(data?.id),

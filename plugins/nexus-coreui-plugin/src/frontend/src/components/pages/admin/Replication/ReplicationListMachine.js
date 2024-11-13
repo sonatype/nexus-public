@@ -24,6 +24,6 @@ export default ListMachineUtils.buildListMachine({
   sortableFields: ['name', 'sourceRepositoryName', 'destinationInstanceUrl', 'destinationRepositoryName']
 }).withConfig({
   services: {
-    fetchData: () => axios.get('/service/rest/beta/replication/connection')
+    fetchData: () => axios.get('service/rest/beta/replication/connection')
   }
 });

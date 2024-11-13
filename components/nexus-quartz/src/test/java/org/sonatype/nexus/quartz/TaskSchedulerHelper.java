@@ -27,9 +27,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
-import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerProvider;
-import org.sonatype.nexus.quartz.internal.orient.JobStoreImpl;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 import org.sonatype.nexus.testcommon.event.SimpleEventManager;
@@ -39,7 +37,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.name.Names;
 import org.eclipse.sisu.inject.MutableBeanLocator;
 import org.eclipse.sisu.space.BeanScanning;
 import org.eclipse.sisu.space.SpaceModule;
@@ -47,9 +44,7 @@ import org.eclipse.sisu.space.URLClassSpace;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
 import org.quartz.spi.JobFactory;
-import org.quartz.spi.JobStore;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -75,8 +70,8 @@ public class TaskSchedulerHelper
   @Inject
   private SchedulerSPI scheduler;
 
-  @Inject
-  private JobStoreImpl jobStore;
+  //@Inject
+  //private JobStoreImpl jobStore;
 
   @Inject
   private QuartzSchedulerProvider schedulerProvider;
@@ -91,14 +86,14 @@ public class TaskSchedulerHelper
 
   private NodeAccess nodeAccess;
 
-  private final DatabaseInstance databaseInstance;
+  //private final DatabaseInstance databaseInstance;
 
   private DatabaseStatusDelayedExecutor statusDelayedExecutor;
 
   private DatabaseCheck databaseCheck;
 
-  public TaskSchedulerHelper(final DatabaseInstance databaseInstance) {
-    this.databaseInstance = checkNotNull(databaseInstance);
+  public TaskSchedulerHelper(/*final DatabaseInstance databaseInstance*/) {
+    //this.databaseInstance = checkNotNull(databaseInstance);
   }
 
   public void init(@Nullable final Integer poolSize, @Nullable final JobFactory factory) throws Exception {
@@ -129,9 +124,9 @@ public class TaskSchedulerHelper
       binder.bind(BaseUrlManager.class)
           .toInstance(baseUrlManager);
 
-      binder.bind(DatabaseInstance.class)
-          .annotatedWith(Names.named("config"))
-          .toInstance(databaseInstance);
+      //binder.bind(DatabaseInstance.class)
+      //    .annotatedWith(Names.named("config"))
+      //    .toInstance(databaseInstance);
 
       doAnswer(i  -> {
         ((Runnable) i.getArguments()[0]).run();
@@ -152,7 +147,7 @@ public class TaskSchedulerHelper
       when(lastShutdownTimeService.estimateLastShutdownTime()).thenReturn(Optional.empty());
 
       // filtering by feature flag is not supported here yet
-      binder.bind(JobStore.class).to(JobStoreImpl.class);
+      //binder.bind(JobStore.class).to(JobStoreImpl.class);
 
       when(databaseCheck.isAllowedByVersion(any())).thenReturn(true);
       binder.bind(DatabaseCheck.class).toInstance(databaseCheck);
@@ -166,7 +161,7 @@ public class TaskSchedulerHelper
   }
 
   public void start() throws Exception {
-    jobStore.start();
+//    jobStore.start();
     schedulerProvider.start();
     scheduler.start();
     scheduler.resume();
@@ -176,7 +171,7 @@ public class TaskSchedulerHelper
     scheduler.pause();
     scheduler.stop();
     schedulerProvider.stop();
-    jobStore.stop();
+//    jobStore.stop();
 
     locator.clear();
   }

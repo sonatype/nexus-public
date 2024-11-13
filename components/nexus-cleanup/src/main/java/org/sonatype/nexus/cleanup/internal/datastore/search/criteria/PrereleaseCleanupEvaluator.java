@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.utils.PreReleaseEvaluator;
 
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PRERELEASE_KEY;
 
 /**
  * An evaluator which creates a test which determines whether a component and its assets pre-release state matches the

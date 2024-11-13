@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -259,7 +260,12 @@ public class FluentAssetBuilderImpl
   }
 
   private BlobRef blobRef(final Blob blob) {
-    return new BlobRef(facet.nodeName(), facet.stores().blobStoreName, blob.getId().asUniqueString());
+    BlobId blobId = blob.getId();
+    return new BlobRef(
+        facet.nodeName(),
+        facet.stores().blobStoreName,
+        blobId.asUniqueString(),
+        blobId.getBlobCreatedRef());
   }
 
   @Override

@@ -21,17 +21,15 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.metrics.DatastoreBlobStoreMetricsServiceSupport;
-import org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreMetricsService;
+import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.google.common.collect.ImmutableMap;
 
-@Named
+@Named(S3BlobStore.TYPE)
 @Priority(Integer.MAX_VALUE)
 public class DatastoreS3BlobStoreMetricsService
-    extends DatastoreBlobStoreMetricsServiceSupport
-    implements S3BlobStoreMetricsService
+    extends DatastoreBlobStoreMetricsServiceSupport<S3BlobStore>
 {
   private static final ImmutableMap<String, Long> AVAILABLE_SPACE_BY_FILE_STORE = ImmutableMap.of("s3", Long.MAX_VALUE);
 
@@ -55,20 +53,5 @@ public class DatastoreS3BlobStoreMetricsService
         AVAILABLE_SPACE_BY_FILE_STORE,
         true
     );
-  }
-
-  @Override
-  public void setBucket(final String configuredBucket) {
-    //no op - this implementation doesn't require a configuredBucket
-  }
-
-  @Override
-  public void setBucketPrefix(final String bucketPrefix) {
-    //no op - this implementation doesn't require a bucketPrefix
-  }
-
-  @Override
-  public void setS3(final AmazonS3 s3) {
-    //no op - this implementation doesn't require an s3 client
   }
 }

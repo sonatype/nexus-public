@@ -20,7 +20,7 @@ import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
-import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
+import org.sonatype.nexus.cleanup.internal.preview.CsvCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.rest.CleanupPolicyRequestValidator;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
@@ -65,7 +65,7 @@ public class CleanupPolicyResourceTest
   private EventManager eventManager;
 
   @Mock
-  private CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
+  private CsvCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
 
   @Mock
   private CleanupPolicyRequestValidator cleanupPolicyValidator;

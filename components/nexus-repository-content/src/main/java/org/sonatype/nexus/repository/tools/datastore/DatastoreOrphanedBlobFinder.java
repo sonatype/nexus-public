@@ -90,7 +90,7 @@ public class DatastoreOrphanedBlobFinder
     detect(blobStore, blobId -> {
       log.info("Deleting orphaned blob {} from blobstore {}", blobId, blobStore.getBlobStoreConfiguration().getName());
 
-      blobStore.deleteHard(new BlobId(blobId));
+      blobStore.deleteHard(blobId);
     });
   }
 
@@ -101,13 +101,13 @@ public class DatastoreOrphanedBlobFinder
    * @param handler    - callback to handle an orphaned blob
    */
   @Override
-  public void detect(final Repository repository, final Consumer<String> handler) {
+  public void detect(final Repository repository, final Consumer<BlobId> handler) {
     validateRepositoryConfiguration(repository);
 
     detect(getBlobStoreForRepository(repository), handler);
   }
 
-  private void detect(final BlobStore blobStore, final Consumer<String> handler) {
+  private void detect(final BlobStore blobStore, final Consumer<BlobId> handler) {
     Stream<BlobId> blobIds = blobStore.getBlobIdStream();
 
     blobIds.forEach(id -> {
@@ -121,7 +121,7 @@ public class DatastoreOrphanedBlobFinder
     });
   }
 
-  private void checkIfOrphaned(final Consumer<String> handler, final BlobId id, final BlobAttributes attributes) {
+  private void checkIfOrphaned(final Consumer<BlobId> handler, final BlobId id, final BlobAttributes attributes) {
     String repositoryName = attributes.getHeaders().get(REPO_NAME_HEADER);
 
     if (repositoryName != null) {
@@ -132,14 +132,14 @@ public class DatastoreOrphanedBlobFinder
         log.debug("Blob {} considered orphaned because repository with name {} no longer exists", id.asUniqueString(),
             repositoryName);
 
-        handler.accept(id.asUniqueString());
+        handler.accept(id);
       }
       else {
         findAssociatedAsset(assetName, repository).ifPresent(asset -> {
           BlobRef blobRef = asset.blob().map(AssetBlob::blobRef).orElse(null);
           if (blobRef != null && !blobRef.getBlobId().asUniqueString().equals(id.asUniqueString())) {
             if (!attributes.isDeleted()) {
-              handler.accept(id.asUniqueString());
+              handler.accept(id);
             }
             else {
               log.debug("Blob {} in repository {} not considered orphaned because it is already marked soft-deleted",

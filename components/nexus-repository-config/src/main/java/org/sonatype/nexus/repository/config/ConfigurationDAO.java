@@ -27,4 +27,6 @@ public interface ConfigurationDAO
     extends IterableDataAccess.WithName<ConfigurationData>
 {
   Collection<Configuration> readByNames(Set<String> repositoryNames);
+
+  Collection<Configuration> readByRecipe(String recipeName);
 }

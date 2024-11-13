@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Swagger model component.
- * 
+ *
  * @since 3.3
  */
 @Named

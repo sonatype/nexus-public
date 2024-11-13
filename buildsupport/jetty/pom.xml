@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.70.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-jetty</artifactId>
@@ -28,8 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <eclipse-jetty.version>9.4.53.v20231009</eclipse-jetty.version>
-  </properties>
+ </properties>
 
   <dependencyManagement>
     <dependencies>
@@ -97,12 +96,6 @@
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-util-ajax</artifactId>
-        <version>${eclipse-jetty.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-servlets</artifactId>
         <version>${eclipse-jetty.version}</version>
       </dependency>
 

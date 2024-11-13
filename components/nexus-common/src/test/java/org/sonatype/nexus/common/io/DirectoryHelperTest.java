@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.io;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;

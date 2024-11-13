@@ -45,8 +45,7 @@ public class OssNexusEdition
     log.info("Loading OSS Edition");
     properties.put(NEXUS_EDITION, NexusEditionType.OSS.editionString);
     String updatedNexusFeaturesProps = properties.getProperty(NEXUS_FEATURES)
-        .replace(NexusEditionFeature.PRO_FEATURE.featureString, getEditionFeature().featureString)
-        .replace(NexusEditionFeature.PRO_STARTER_FEATURE.featureString, getEditionFeature().featureString);
+        .replace(NexusEditionFeature.PRO_FEATURE.featureString, getEditionFeature().featureString);
 
     properties.put(NEXUS_FEATURES, updatedNexusFeaturesProps);
   }

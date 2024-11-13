@@ -90,7 +90,7 @@ describe('LogViewer', () => {
     userEvent.click(insertButton);
 
     expect(axios.post).toHaveBeenCalledWith(
-      '/service/rest/internal/logging/log/mark',
+      'service/rest/internal/logging/log/mark',
       'testing the mark', {headers: {'Content-Type': 'text/plain'}});
   });
 });

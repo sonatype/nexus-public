@@ -20,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
 
 import static com.google.common.base.Preconditions.checkNotNull;

@@ -135,7 +135,7 @@ describe('AnalyzeApplicationModal', () => {
 
     expect(Axios.post).toHaveBeenCalledTimes(1);
     expect(Axios.post).toHaveBeenCalledWith(
-        '/service/rest/internal/ui/ahc',
+        'service/rest/internal/ui/ahc',
         {
           repositoryName: 'hosted-repo',
           assetId: 'foo',

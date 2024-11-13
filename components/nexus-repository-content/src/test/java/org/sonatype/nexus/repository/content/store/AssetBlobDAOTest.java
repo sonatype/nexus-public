@@ -17,12 +17,15 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.UUID;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 
@@ -37,6 +40,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -162,6 +166,29 @@ public class AssetBlobDAOTest
   }
 
   @Test
+  public void testBrowseWithinDuration() {
+    OffsetDateTime now = UTC.now();
+    OffsetDateTime blobCreated1 = now.minusDays(10);
+    OffsetDateTime blobCreated2 = now.minusDays(5);
+    AssetBlobData assetBlob1 = randomAssetBlob(blobCreated1);
+    AssetBlobData assetBlob2 = randomAssetBlob(blobCreated2);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+
+      dao.createAssetBlob(assetBlob1);
+      dao.createAssetBlob(assetBlob2);
+
+      // blobs created in desired time range
+      Continuation<AssetBlob> assetBlobs = dao.browseAssetBlobsWithinDuration(2, now, now.minusDays(11), null);
+      assertThat(assetBlobs, contains(sameBlob(assetBlob1),sameBlob(assetBlob2)));
+
+      // blobs are not in range
+      assertThat(dao.browseAssetBlobsWithinDuration(2, now.plusDays(20), now.plusDays(11), null), hasSize(0));
+    }
+  }
+
+  @Test
   public void testBlob() {
     AssetBlobData assetBlob1 = randomAssetBlob();
     BlobRef blobRef1 = assetBlob1.blobRef();
@@ -264,6 +291,44 @@ public class AssetBlobDAOTest
       dao.browseAssetsWithLegacyBlobRef(100, null).forEach(dao::updateBlobRef);
 
       assertThat(dao.browseAssetsWithLegacyBlobRef(100, null), empty());
+    }
+  }
+
+  @Test
+  public void testGetRepositoryName() {
+    generateConfiguration();
+    ConfigurationData configurationData = generatedConfigurations().get(0);
+    EntityId repositoryId = configurationData.getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    generateRandomNamespaces(1);
+    generateRandomVersions(1);
+    generateContent(1, false);
+
+    BlobRef blobRef = generatedAssetBlobs().get(0).blobRef();
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      String repoName = dao.getRepositoryName(blobRef);
+      System.out.println(repoName);
+      assertThat(repoName, is("repo-name"));
+    }
+  }
+
+  @Test
+  public void testGetPath() {
+    generateConfiguration();
+    ConfigurationData configurationData = generatedConfigurations().get(0);
+    EntityId repositoryId = configurationData.getRepositoryId();
+    generateSingleRepository(UUID.fromString(repositoryId.getValue()));
+    generateRandomNamespaces(1);
+    generateRandomVersions(1);
+    generateContent(1, false);
+
+    BlobRef blobRef = generatedAssetBlobs().get(0).blobRef();
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      String path = dao.getPathByBlobRef(blobRef);
+      assertNotNull(path);
+      assertFalse(path.isEmpty());
     }
   }
 

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.privilege;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,7 +22,6 @@ import org.sonatype.nexus.security.SecuritySystem;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

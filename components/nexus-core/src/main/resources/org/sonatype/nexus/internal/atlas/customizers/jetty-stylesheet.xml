@@ -1,0 +1,23 @@
+<xsl:stylesheet version="1.0"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output omit-xml-declaration="no"
+              indent="yes"
+              doctype-public="-//Jetty//Configure//EN"
+              doctype-system="http://www.eclipse.org/jetty/configure_9_0.dtd"/>
+
+  <xsl:template match="node()|@*">
+    <xsl:copy>
+      <xsl:apply-templates select="node()|@*"/>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="Set[@name='KeyStorePassword']/text()">
+    <xsl:text></xsl:text>
+  </xsl:template>
+  <xsl:template match="Set[@name='KeyManagerPassword']/text()">
+    <xsl:text></xsl:text>
+  </xsl:template>
+  <xsl:template match="Set[@name='TrustStorePassword']/text()">
+    <xsl:text></xsl:text>
+  </xsl:template>
+</xsl:stylesheet>

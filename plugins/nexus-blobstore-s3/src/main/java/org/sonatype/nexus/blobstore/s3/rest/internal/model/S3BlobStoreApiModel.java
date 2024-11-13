@@ -16,11 +16,11 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiSoftQuota;
-import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 
 /**

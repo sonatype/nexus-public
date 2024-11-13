@@ -20,6 +20,7 @@ import org.sonatype.goodies.common.ByteSize;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
+import org.sonatype.nexus.httpclient.HttpDefaultsCustomizer;
 import org.sonatype.nexus.utils.httpclient.UserAgentGenerator;
 
 import org.apache.http.client.config.CookieSpecs;
@@ -36,7 +37,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class DefaultsCustomizer
   extends ComponentSupport
-  implements HttpClientPlan.Customizer
+  implements HttpDefaultsCustomizer
 {
   private final UserAgentGenerator userAgentGenerator;
 
@@ -48,13 +49,16 @@ public class DefaultsCustomizer
 
   private final ByteSize bufferSize;
 
+  private final int retryCount;
+
   @Inject
   public DefaultsCustomizer(
       final UserAgentGenerator userAgentGenerator,
       @Named("${nexus.httpclient.requestTimeout:-20s}") final Time requestTimeout,
       @Named("${nexus.httpclient.connectionRequestTimeout:-30s}") final Time connectionRequestTimeout,
       @Named("${nexus.httpclient.keepAliveDuration:-30s}") final Time keepAliveDuration,
-      @Named("${nexus.httpclient.bufferSize:-8k}") final ByteSize bufferSize)
+      @Named("${nexus.httpclient.bufferSize:-8k}") final ByteSize bufferSize,
+      @Named("${nexus.httpclient.retryCount:-2}") final int retryCount)
   {
     this.userAgentGenerator = checkNotNull(userAgentGenerator);
 
@@ -69,6 +73,8 @@ public class DefaultsCustomizer
 
     this.bufferSize = checkNotNull(bufferSize);
     log.debug("Buffer-size: {}", bufferSize);
+
+    this.retryCount = checkNotNull(retryCount);
   }
 
   @Override
@@ -78,7 +84,7 @@ public class DefaultsCustomizer
     plan.setUserAgentBase(userAgentGenerator.generate());
 
     plan.getClient().setKeepAliveStrategy(new NexusConnectionKeepAliveStrategy(keepAliveDuration.toMillis()));
-    plan.getClient().setRetryHandler(new StandardHttpRequestRetryHandler(2, false));
+    plan.getClient().setRetryHandler(new StandardHttpRequestRetryHandler(retryCount, false));
 
     plan.getConnection().setBufferSize(bufferSize.toBytesI());
 
@@ -90,5 +96,15 @@ public class DefaultsCustomizer
     plan.getSocket().setSoTimeout(requestTimeoutMillis);
     plan.getRequest().setConnectTimeout(requestTimeoutMillis);
     plan.getRequest().setSocketTimeout(requestTimeoutMillis);
+  }
+
+  @Override
+  public Time getRequestTimeout() {
+    return requestTimeout;
+  }
+
+  @Override
+  public int getRetryCount() {
+    return retryCount;
   }
 }

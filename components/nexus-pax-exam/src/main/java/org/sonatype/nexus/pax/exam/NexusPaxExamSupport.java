@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -91,9 +92,9 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENA
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_TABLE_SEARCH_NAMED;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.ELASTIC_SEARCH_ENABLED_NAMED;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.testcontainers.containers.BindMode.READ_ONLY;
 
 /**
@@ -209,10 +210,6 @@ public abstract class NexusPaxExamSupport
   @Inject
   @Named(DATASTORE_TABLE_SEARCH_NAMED)
   protected Boolean datastoreTableSearch;
-
-  @Inject
-  @Named(ORIENT_ENABLED)
-  private Boolean orientEnabled;
 
   @Inject
   @Named(DATASTORE_CLUSTERED_ENABLED_NAMED)
@@ -475,7 +472,6 @@ public abstract class NexusPaxExamSupport
         vmOption("-XX:+LogVMOutput"),
         vmOption("-XX:LogFile=./nexus3/log/jvm.log"),
         vmOption("-XX:-OmitStackTraceInFastThrow"),
-        vmOption("-Djava.net.preferIPv4Stack=true"),
 
         vmOption("-Djava.io.tmpdir=./nexus3/tmp/"),
 
@@ -535,6 +531,9 @@ public abstract class NexusPaxExamSupport
 
         //configure db, including starting external resources
         when(getValidTestDatabase().isUseContentStore()).useOptions(
+            configureDatabase()
+        ),
+        when(getValidTestDatabase().isUseOrient()).useOptions(
             configureDatabase()
         ),
 
@@ -598,15 +597,15 @@ public abstract class NexusPaxExamSupport
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.datastore.nexus.password", DB_PASSWORD),
             haOption(),
             sqlSearchOption(),
+            withDateBasedBlobstoreLayout(),
             systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
         );
       case H2:
         return combine(null,
             sqlSearchOption(),
+            withDateBasedBlobstoreLayout(),
             editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATASTORE_ENABLED, "true")
         );
-      case ORIENT:
-        return new Option[0];
       default:
         throw new IllegalStateException("No case defined for " + getValidTestDatabase());
     }
@@ -800,6 +799,7 @@ public abstract class NexusPaxExamSupport
     testIndex.recordAndCopyLink("karaf.log", new File(logDir, "karaf.log"));
     testIndex.recordAndCopyLink("nexus.log", new File(logDir, "nexus.log"));
     testIndex.recordAndCopyLink("request.log", new File(logDir, "request.log"));
+    testIndex.recordAndCopyLink("outbound-request.log", new File(logDir, "outbound-request.log"));
     testIndex.recordAndCopyLink("jvm.log", new File(logDir, "jvm.log"));
 
     if ("true".equals(System.getProperty("it.nexus.recordTaskLogs"))) {
@@ -830,15 +830,14 @@ public abstract class NexusPaxExamSupport
 
   /**
    * Get the database type to use for the test instance, based on system property.
-   * Defaults to Orient.
    */
   public static TestDatabase getValidTestDatabase() {
     try {
       return TestDatabase.valueOf(Strings2.upper(System.getProperty(DATABASE_KEY)));
     }
     catch (Exception e) {
-      //fallback to ORIENT if it is invalid
-      return TestDatabase.ORIENT;
+      //fallback to H2 if it is invalid
+      return TestDatabase.H2;
     }
   }
 
@@ -872,8 +871,8 @@ public abstract class NexusPaxExamSupport
         haFormats);
   }
 
-  protected boolean isNewDb() {
-    return !orientEnabled;
+  public static Option withDateBasedBlobstoreLayout() {
+    return editConfigurationFilePut(NEXUS_PROPERTIES_FILE, DATE_BASED_BLOBSTORE_LAYOUT_ENABLED, "true");
   }
 
   protected boolean isSqlHa() {

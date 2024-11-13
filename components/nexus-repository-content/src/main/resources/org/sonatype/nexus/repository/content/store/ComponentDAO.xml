@@ -156,6 +156,8 @@
       <result property="attributes" column="attributes"/>
       <result property="created" column="created"/>
       <result property="lastUpdated" column="last_updated"/>
+      <result property="blobStoreName" column="blob_store_name"/>
+      <result property="assetBlobSize" column="asset_blob_size"/>
     </collection>
   </resultMap>
 

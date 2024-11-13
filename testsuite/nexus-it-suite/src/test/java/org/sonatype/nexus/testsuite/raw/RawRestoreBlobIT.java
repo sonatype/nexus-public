@@ -23,8 +23,6 @@ import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.server.jetty.behaviour.Content;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.net.PortAllocator;
-import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
-import org.sonatype.nexus.content.testsuite.groups.OrientTestGroup;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
@@ -34,7 +32,6 @@ import org.sonatype.nexus.testsuite.testsupport.blobstore.restore.BlobstoreResto
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,7 +42,6 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 import static org.sonatype.nexus.testsuite.testsupport.system.RestTestHelper.hasStatus;
 
-@Category(OrientAndSQLTestGroup.class)
 public class RawRestoreBlobIT
     extends NexusBaseITSupport
 {
@@ -96,13 +92,11 @@ public class RawRestoreBlobIT
     proxyPathsToBlobs = restoreTestHelper.getAssetToBlobIds(proxyRepository);
   }
 
-  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testMetadataRestoreWhenBothAssetsAndComponentsAreMissing() throws Exception {
     verifyMetadataRestored(restoreTestHelper::simulateComponentAndAssetMetadataLoss);
   }
 
-  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testMetadataRestoreWhenOnlyAssetsAreMissing() throws Exception {
     verifyMetadataRestored(restoreTestHelper::simulateAssetMetadataLoss);
@@ -112,7 +106,6 @@ public class RawRestoreBlobIT
    * NEXUS-40244 - if the blobstore has not been compacted it may contain multiple revisions of the same asset. As such
    * we need to ensure that the most recent revision wins.
    */
-  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testRestoresMostRecentAsset() throws Exception {
     // We can't guarantee the order blobs will be processed, so for the test we want to create enough assets that
@@ -129,7 +122,6 @@ public class RawRestoreBlobIT
   /**
    * For Orient this tests restoring newdb assets, for newdb this tests restoring Orient assets
    */
-  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testRestoreFromOtherDatabase() throws Exception {
     verifyMetadataRestored(() -> {
@@ -138,13 +130,6 @@ public class RawRestoreBlobIT
     });
   }
 
-  @Category(OrientTestGroup.class)
-  @Test
-  public void testMetadataRestoreWhenOnlyComponentsAreMissing() throws Exception {
-    verifyMetadataRestored(restoreTestHelper::simulateComponentMetadataLoss);
-  }
-
-  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testDryRunRestore()
   {
@@ -155,7 +140,6 @@ public class RawRestoreBlobIT
     assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
   }
 
-  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testNotDryRunRestore()
   {

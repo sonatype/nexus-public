@@ -12,7 +12,8 @@
  */
 import React from 'react';
 import axios from 'axios';
-import {waitForElementToBeRemoved} from '@testing-library/react'
+import {waitForElementToBeRemoved, within, screen, render} from '@testing-library/react'
+
 import userEvent from '@testing-library/user-event';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
@@ -25,6 +26,7 @@ jest.mock('axios', () => ({
 describe('BlobStoresList', function() {
   const rows = [{
     name: 'test',
+    path: 'default',
     typeName: 'File',
     unavailable: false,
     unlimited: false,
@@ -33,6 +35,7 @@ describe('BlobStoresList', function() {
     availableSpaceInBytes: 42040307712
   }, {
     name: 'test2',
+    path: 'default',
     typeName: 'File',
     unavailable: true,
     unlimited: false,
@@ -42,6 +45,7 @@ describe('BlobStoresList', function() {
   }, {
     name: 'test3',
     typeName: 'S3',
+    path: 'bucket',
     unavailable: false,
     unlimited: true,
     blobCount: 0,
@@ -49,190 +53,252 @@ describe('BlobStoresList', function() {
     availableSpaceInBytes: 0
   }];
 
-  function render() {
-    return TestUtils.render(<BlobStoresList/>, ({container, getByText, getByPlaceholderText}) => ({
-      tableHeader: (text) => getByText(text, {selector: 'thead *'}),
-      filter: () => getByPlaceholderText('Filter by name'),
-      tableRow: (index) => container.querySelectorAll('tbody tr')[index],
-      tableRows: () => container.querySelectorAll('tbody tr')
-    }));
+  const NUM_HEADERS = 1;
+  const NAME = 0;
+  const PATH = 1;
+  const TYPE = 2;
+  const STATE = 3;
+  const BLOB_COUNT = 4;
+  const TOTAL_SIZE = 5;
+  const AVAILABLE_SPACE = 6;
+
+  const selectors = {
+    ...TestUtils.selectors,
+    bodyRows: () => screen.getAllByRole('row').slice(NUM_HEADERS),
+    tableHeader: (text) => screen.getByText(text, {selector: 'thead *'}),
+    blobStoreName: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[NAME],
+    blobStorePath: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[PATH],
+    blobStoreType: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[TYPE],
+    blobStoreState: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[STATE],
+    blobStoreBlobCount: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[BLOB_COUNT],
+    blobStoreTotalSize: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[TOTAL_SIZE],
+    blobStoreAvailableSpace: (row) => within(selectors.bodyRows()[row]).getAllByRole('cell')[AVAILABLE_SPACE],
+    filter: () => screen.getByPlaceholderText('Filter by name')
   }
 
   it('renders the loading spinner', async function() {
     axios.get.mockReturnValue(new Promise(() => {}));
 
-    const {loadingMask} = render();
+    render(<BlobStoresList/>);
 
-    expect(loadingMask()).toBeInTheDocument();
+    expect(selectors.queryLoadingMask()).toBeInTheDocument();
   });
 
   it('renders the resolved empty text', async function() {
     axios.get.mockResolvedValue({data: []});
 
-    const {loadingMask, getByText} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-    expect(getByText('There are no blob stores available')).toBeInTheDocument();
+    expect(screen.getByText('There are no blob stores available')).toBeInTheDocument();
   });
 
   it('renders the rows', async function() {
+    const {
+      blobStoreName,
+      blobStorePath,
+      blobStoreType,
+      blobStoreState,
+      blobStoreBlobCount,
+      blobStoreTotalSize,
+      blobStoreAvailableSpace,
+      queryLoadingMask
+    } = selectors;
+
     axios.get.mockResolvedValue({data: rows});
 
-    const {loadingMask, tableRow} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(queryLoadingMask());
 
-    expect(tableRow(0).cells[0]).toHaveTextContent('test');
-    expect(tableRow(0).cells[1]).toHaveTextContent('File');
-    expect(tableRow(0).cells[2]).toHaveTextContent('Started');
-    expect(tableRow(0).cells[3]).toHaveTextContent('66206');
-    expect(tableRow(0).cells[4]).toHaveTextContent('16.18 GB');
-    expect(tableRow(0).cells[5]).toHaveTextContent('39.15 GB');
+    expect(blobStoreName(0)).toHaveTextContent('test');
+    expect(blobStorePath(0)).toHaveTextContent('default');
+    expect(blobStoreType(0)).toHaveTextContent('File');
+    expect(blobStoreState(0)).toHaveTextContent('Started');
+    expect(blobStoreBlobCount(0)).toHaveTextContent('66206');
+    expect(blobStoreTotalSize(0)).toHaveTextContent('16.18 GB');
+    expect(blobStoreAvailableSpace(0)).toHaveTextContent('39.15 GB');
 
-    expect(tableRow(1).cells[0]).toHaveTextContent('test2');
-    expect(tableRow(1).cells[1]).toHaveTextContent('File');
-    expect(tableRow(1).cells[2]).toHaveTextContent('Failed');
-    expect(tableRow(1).cells[3]).toHaveTextContent('Unavailable');
-    expect(tableRow(1).cells[4]).toHaveTextContent('Unavailable');
-    expect(tableRow(1).cells[5]).toHaveTextContent('Unavailable');
+    expect(blobStoreName(1)).toHaveTextContent('test2');
+    expect(blobStorePath(1)).toHaveTextContent('default');
+    expect(blobStoreType(1)).toHaveTextContent('File');
+    expect(blobStoreState(1)).toHaveTextContent('Failed');
+    expect(blobStoreBlobCount(1)).toHaveTextContent('Unavailable');
+    expect(blobStoreTotalSize(1)).toHaveTextContent('Unavailable');
+    expect(blobStoreAvailableSpace(1)).toHaveTextContent('Unavailable');
 
-    expect(tableRow(2).cells[0]).toHaveTextContent('test3');
-    expect(tableRow(2).cells[1]).toHaveTextContent('S3');
-    expect(tableRow(2).cells[2]).toHaveTextContent('Started');
-    expect(tableRow(2).cells[3]).toHaveTextContent('0');
-    expect(tableRow(2).cells[4]).toHaveTextContent('0.00 Bytes');
-    expect(tableRow(2).cells[5]).toHaveTextContent('Unlimited');
+    expect(blobStoreName(2)).toHaveTextContent('test3');
+    expect(blobStorePath(2)).toHaveTextContent('bucket');
+    expect(blobStoreType(2)).toHaveTextContent('S3');
+    expect(blobStoreState(2)).toHaveTextContent('Started');
+    expect(blobStoreBlobCount(2)).toHaveTextContent('0');
+    expect(blobStoreTotalSize(2)).toHaveTextContent('0.00 Bytes');
+    expect(blobStoreAvailableSpace(2)).toHaveTextContent('Unlimited');
   });
 
   it('sorts the rows by name', async function () {
+    const {blobStoreName, tableHeader, queryLoadingMask} = selectors;
+
     axios.get.mockResolvedValue({data: rows});
 
-    const {loadingMask, tableHeader, tableRow} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(queryLoadingMask());
 
-    expect(tableRow(0).cells[0]).toHaveTextContent('test');
-    expect(tableRow(1).cells[0]).toHaveTextContent('test2');
-    expect(tableRow(2).cells[0]).toHaveTextContent('test3');
+    expect(blobStoreName(0)).toHaveTextContent('test');
+    expect(blobStoreName(1)).toHaveTextContent('test2');
+    expect(blobStoreName(2)).toHaveTextContent('test3');
 
     userEvent.click(tableHeader('Name'));
 
-    expect(tableRow(0).cells[0]).toHaveTextContent('test3');
-    expect(tableRow(1).cells[0]).toHaveTextContent('test2');
-    expect(tableRow(2).cells[0]).toHaveTextContent('test');
+    expect(blobStoreName(0)).toHaveTextContent('test3');
+    expect(blobStoreName(1)).toHaveTextContent('test2');
+    expect(blobStoreName(2)).toHaveTextContent('test');
+  });
+
+  it('sorts the rows by path', async function () {
+    const {blobStorePath, tableHeader, queryLoadingMask} = selectors;
+
+    axios.get.mockResolvedValue({data: rows});
+
+    render(<BlobStoresList/>);
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    expect(blobStorePath(0)).toHaveTextContent('default');
+    expect(blobStorePath(1)).toHaveTextContent('default');
+    expect(blobStorePath(2)).toHaveTextContent('bucket');
+
+    userEvent.click(tableHeader('Path'));
+
+    expect(blobStorePath(0)).toHaveTextContent('bucket');
+    expect(blobStorePath(1)).toHaveTextContent('default');
+    expect(blobStorePath(2)).toHaveTextContent('default');
   });
 
   it('sorts the rows by type', async function () {
+    const {blobStoreType, tableHeader, queryLoadingMask} = selectors;
+
     axios.get.mockResolvedValue({data: rows});
 
-    const {loadingMask, tableHeader, tableRow} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
-
-    userEvent.click(tableHeader('Type'));
-
-    expect(tableRow(0).cells[1]).toHaveTextContent('File');
-    expect(tableRow(1).cells[1]).toHaveTextContent('File');
-    expect(tableRow(2).cells[1]).toHaveTextContent('S3');
+    await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.click(tableHeader('Type'));
 
-    expect(tableRow(0).cells[1]).toHaveTextContent('S3');
-    expect(tableRow(1).cells[1]).toHaveTextContent('File');
-    expect(tableRow(2).cells[1]).toHaveTextContent('File');
+    expect(blobStoreType(0)).toHaveTextContent('File');
+    expect(blobStoreType(1)).toHaveTextContent('File');
+    expect(blobStoreType(2)).toHaveTextContent('S3');
+
+    userEvent.click(tableHeader('Type'));
+
+    expect(blobStoreType(0)).toHaveTextContent('S3');
+    expect(blobStoreType(1)).toHaveTextContent('File');
+    expect(blobStoreType(2)).toHaveTextContent('File');
   });
 
   it('sorts the rows by state', async function () {
+    const {blobStoreState, tableHeader, queryLoadingMask} = selectors;
+
     axios.get.mockResolvedValue({data: rows});
 
-    const {loadingMask, tableHeader, tableRow} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
-
-    userEvent.click(tableHeader('State'));
-
-    expect(tableRow(0).cells[2]).toHaveTextContent('Failed');
-    expect(tableRow(1).cells[2]).toHaveTextContent('Started');
-    expect(tableRow(2).cells[2]).toHaveTextContent('Started');
+    await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.click(tableHeader('State'));
 
-    expect(tableRow(0).cells[2]).toHaveTextContent('Started');
-    expect(tableRow(1).cells[2]).toHaveTextContent('Started');
-    expect(tableRow(2).cells[2]).toHaveTextContent('Failed');
+    expect(blobStoreState(0)).toHaveTextContent('Failed');
+    expect(blobStoreState(1)).toHaveTextContent('Started');
+    expect(blobStoreState(2)).toHaveTextContent('Started');
+
+    userEvent.click(tableHeader('State'));
+
+    expect(blobStoreState(0)).toHaveTextContent('Started');
+    expect(blobStoreState(1)).toHaveTextContent('Started');
+    expect(blobStoreState(2)).toHaveTextContent('Failed');
   });
 
   it('sorts the rows by blob count', async function () {
+    const {blobStoreBlobCount, tableHeader, queryLoadingMask} = selectors;
+
     axios.get.mockResolvedValue({data: rows});
 
-    const {loadingMask, tableHeader, tableRow} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
-
-    userEvent.click(tableHeader('Blob Count'));
-
-    expect(tableRow(0).cells[3]).toHaveTextContent('Unavailable');
-    expect(tableRow(1).cells[3]).toHaveTextContent('0');
-    expect(tableRow(2).cells[3]).toHaveTextContent('66206');
+    await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.click(tableHeader('Blob Count'));
 
-    expect(tableRow(0).cells[3]).toHaveTextContent('66206');
-    expect(tableRow(1).cells[3]).toHaveTextContent('0');
-    expect(tableRow(2).cells[3]).toHaveTextContent('Unavailable');
+    expect(blobStoreBlobCount(0)).toHaveTextContent('Unavailable');
+    expect(blobStoreBlobCount(1)).toHaveTextContent('0');
+    expect(blobStoreBlobCount(2)).toHaveTextContent('66206');
+
+    userEvent.click(tableHeader('Blob Count'));
+
+    expect(blobStoreBlobCount(0)).toHaveTextContent('66206');
+    expect(blobStoreBlobCount(1)).toHaveTextContent('0');
+    expect(blobStoreBlobCount(2)).toHaveTextContent('Unavailable');
   });
 
   it('sorts the rows by total size', async function () {
+    const {blobStoreTotalSize, tableHeader, queryLoadingMask} = selectors;
+
     axios.get.mockResolvedValue({data: rows});
 
-    const {container, loadingMask, tableHeader} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
-
-    userEvent.click(tableHeader('Total Size'));
-
-    expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(5)')).toHaveTextContent('Unavailable');
-    expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(5)')).toHaveTextContent('0.00 Bytes');
-    expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(5)')).toHaveTextContent('16.18 GB');
+    await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.click(tableHeader('Total Size'));
 
-    expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(5)')).toHaveTextContent('16.18 GB');
-    expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(5)')).toHaveTextContent('0.00 Bytes');
-    expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(5)')).toHaveTextContent('Unavailable');
+    expect(blobStoreTotalSize(0)).toHaveTextContent('Unavailable');
+    expect(blobStoreTotalSize(1)).toHaveTextContent('0.00 Bytes');
+    expect(blobStoreTotalSize(2)).toHaveTextContent('16.18 GB');
+
+    userEvent.click(tableHeader('Total Size'));
+
+    expect(blobStoreTotalSize(0)).toHaveTextContent('16.18 GB');
+    expect(blobStoreTotalSize(1)).toHaveTextContent('0.00 Bytes');
+    expect(blobStoreTotalSize(2)).toHaveTextContent('Unavailable');
   });
 
   it('sorts the rows by available space', async function () {
+    const {blobStoreAvailableSpace, tableHeader, queryLoadingMask} = selectors;
+
     axios.get.mockResolvedValue({data: rows});
 
-    const {container, loadingMask, tableHeader} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
-
-    userEvent.click(tableHeader('Available Space'));
-
-    expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(6)')).toHaveTextContent('Unavailable');
-    expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(6)')).toHaveTextContent('39.15 GB');
-    expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(6)')).toHaveTextContent('Unlimited');
+    await waitForElementToBeRemoved(queryLoadingMask());
 
     userEvent.click(tableHeader('Available Space'));
 
-    expect(container.querySelector('tbody tr:nth-child(1) td:nth-child(6)')).toHaveTextContent('Unlimited');
-    expect(container.querySelector('tbody tr:nth-child(2) td:nth-child(6)')).toHaveTextContent('39.15 GB');
-    expect(container.querySelector('tbody tr:nth-child(3) td:nth-child(6)')).toHaveTextContent('Unavailable');
+    expect(blobStoreAvailableSpace(0)).toHaveTextContent('Unavailable');
+    expect(blobStoreAvailableSpace(1)).toHaveTextContent('39.15 GB');
+    expect(blobStoreAvailableSpace(2)).toHaveTextContent('Unlimited');
+
+    userEvent.click(tableHeader('Available Space'));
+
+    expect(blobStoreAvailableSpace(0)).toHaveTextContent('Unlimited');
+    expect(blobStoreAvailableSpace(1)).toHaveTextContent('39.15 GB');
+    expect(blobStoreAvailableSpace(2)).toHaveTextContent('Unavailable');
   });
 
   it('filters by name', async function() {
+    const {blobStoreName, filter, queryLoadingMask} = selectors;
+
     axios.get.mockResolvedValue({data: rows});
 
-    const {filter, loadingMask, tableRow, tableRows} = render();
+    render(<BlobStoresList/>);
 
-    await waitForElementToBeRemoved(loadingMask);
+    await waitForElementToBeRemoved(queryLoadingMask());
 
     await TestUtils.changeField(filter, '2');
 
-    expect(tableRows().length).toBe(1);
-    expect(tableRow(0).cells[0]).toHaveTextContent('test2');
+    expect(selectors.bodyRows().length).toBe(1);
+    expect(blobStoreName(0)).toHaveTextContent('test2');
   });
 });

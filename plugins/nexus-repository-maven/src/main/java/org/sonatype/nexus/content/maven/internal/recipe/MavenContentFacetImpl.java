@@ -27,13 +27,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
 import org.sonatype.nexus.content.maven.store.GAV;
@@ -69,6 +72,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
+import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
@@ -77,6 +81,7 @@ import org.apache.maven.model.Model;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
@@ -216,6 +221,7 @@ public class MavenContentFacetImpl
         .map(FluentAsset::download);
   }
 
+  @Guarded(by = STARTED)
   @Override
   public Content put(final MavenPath mavenPath, final Payload content) throws IOException {
     log.debug("PUT {} : {}", getRepository().getName(), mavenPath);
@@ -257,6 +263,7 @@ public class MavenContentFacetImpl
     return saveAsset(mavenPath, component, content, blob);
   }
 
+  @Transactional
   private FluentComponent createOrGetComponent(final MavenPath mavenPath, final Optional<Model> model)
   {
     Optional<String> optionalKind = model.map(MavenAttributesHelper::getPackaging);
@@ -585,6 +592,7 @@ public class MavenContentFacetImpl
     }
   }
 
+  @Transactional
   @Override
   public FluentComponent copy(final Component source) {
     FluentComponentBuilder componentBuilder = components()
@@ -630,6 +638,18 @@ public class MavenContentFacetImpl
   }
 
   @Override
+  public void updateBaseVersion(final Maven2ComponentData component) {
+    Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
+    componentStore.updateBaseVersion(component);
+  }
+
+  @Override
+  public Iterable<FluentComponent> getComponentsWithMissedBaseVersion() {
+    return Continuations.iterableOf(components()
+        .byFilter("base_version IS NULL", Collections.emptyMap())::browse);
+  }
+
+  @Override
   public Continuation<FluentComponent> findComponentsForBaseVersion(
       final int limit,
       @Nullable final String continuationToken,
@@ -646,6 +666,7 @@ public class MavenContentFacetImpl
   }
 
 
+  @Transactional
   private FluentComponent createOrGetComponent(final Coordinates coordinates) {
     MavenContentFacet facet = getRepository().facet(MavenContentFacet.class);
     final String artifactId = coordinates.getArtifactId();

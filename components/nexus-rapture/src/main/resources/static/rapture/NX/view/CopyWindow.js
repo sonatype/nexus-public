@@ -111,7 +111,6 @@ Ext.define('NX.view.CopyWindow', {
   getHelpText: function (repoFormat) {
     var repoFormatLabels = {
       apt: 'Apt',
-      bower: 'Bower',
       cocoapods: 'CocoaPods',
       conan: 'Conan',
       conda: 'Conda',

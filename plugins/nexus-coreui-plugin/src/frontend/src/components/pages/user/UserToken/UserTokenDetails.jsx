@@ -13,7 +13,7 @@
 import React from 'react';
 import {faKey} from '@fortawesome/free-solid-svg-icons';
 
-import {NxButton, NxFontAwesomeIcon, NxModal, NxCodeSnippet} from '@sonatype/react-shared-components';
+import {NxButton, NxFontAwesomeIcon, NxModal, NxCopyToClipboard} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
 import './UserToken.scss';
@@ -29,25 +29,25 @@ export default function UserTokenDetails({userToken, onCloseClick}) {
     <div className="nx-modal-content">
       <p>{UIStrings.USER_TOKEN.LABELS.USER_TOKEN_NOTE} <strong>{UIStrings.USER_TOKEN.LABELS.KEEP_SECRET_NOTE}</strong>
       </p>
-      <NxCodeSnippet
+      <NxCopyToClipboard
           label={UIStrings.USER_TOKEN.LABELS.USER_TOKEN_NAME_CODE}
           content={userToken.nameCode}
-          inputProps={{rows: 1, name: 'nameCode'}}
+          inputProps={{inputAttributes: {rows: 1, name: 'nameCode'}}}
       />
-      <NxCodeSnippet
+      <NxCopyToClipboard
           label={UIStrings.USER_TOKEN.LABELS.USER_TOKEN_PASS_CODE}
           content={userToken.passCode}
-          inputProps={{rows: 1, name: 'passCode'}}
+          inputProps={{inputAttributes: {rows: 1, name: 'passCode'}}}
       />
-      <NxCodeSnippet
+      <NxCopyToClipboard
           label={UIStrings.USER_TOKEN.LABELS.MAVEN_USAGE}
           content={`<server>\n\t<id>\${server}</id>\n\t<username>${userToken.nameCode}</username>\n\t<password>${userToken.passCode}</password>\n</server>`}
-          inputProps={{rows: 5, name: 'mavenUsage'}}
+          inputProps={{inputAttributes: {rows: 5, name: 'mavenUsage'}}}
       />
-      <NxCodeSnippet
+      <NxCopyToClipboard
           label={UIStrings.USER_TOKEN.LABELS.BASE64_USER_TOKEN}
           content={window.btoa(`${userToken.nameCode}:${userToken.passCode}`)}
-          inputProps={{rows: 1, name: 'base64'}}
+          inputProps={{inputAttributes: {rows: 1, name: 'base64'}}}
       />
       <p>{UIStrings.USER_TOKEN.LABELS.AUTO_HIDE}</p>
     </div>

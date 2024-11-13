@@ -19,7 +19,7 @@ import org.elasticsearch.index.query.RangeQueryBuilder;
 import static java.lang.String.format;
 import static org.elasticsearch.index.query.QueryBuilders.existsQuery;
 import static org.elasticsearch.index.query.QueryBuilders.rangeQuery;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
 
 /**
  * Appends criteria for less than a given time.

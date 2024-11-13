@@ -32,7 +32,7 @@ public class UploadStateContributor
   private final Map<String, Object> state;
 
   @Inject
-  public UploadStateContributor(@Named("${nexus.react.upload:-false}") final boolean featureFlag) {
+  public UploadStateContributor(@Named("${nexus.react.upload:-true}") final boolean featureFlag) {
     state = ImmutableMap.of("nexus.react.upload", featureFlag);
   }
 

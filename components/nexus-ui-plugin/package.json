@@ -2,18 +2,18 @@
   "name": "@sonatype/nexus-ui-plugin",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/index.js",
+  "main": "target/dist/index.js",
   "files": [
-    "dist"
+    "target/dist"
   ],
   "scripts": {
     "build": "npm-run-all build-all",
     "build-all": "npm-run-all compile-js copy-scss copy-package-json",
     "watch": "npm-run-all copy-scss copy-package-json watch-js",
-    "compile-js": "babel src/frontend/src --source-maps inline --out-dir dist",
-    "watch-js": "babel src/frontend/src --out-dir dist --watch --verbose",
-    "copy-scss": "cpx \"src/frontend/src/**/*.scss\" dist",
-    "copy-package-json": "cpx package.json dist",
+    "compile-js": "babel src/frontend/src --source-maps inline --out-dir target/dist",
+    "watch-js": "babel src/frontend/src --out-dir target/dist --watch --verbose",
+    "copy-scss": "cpx \"src/frontend/src/**/*.scss\" target/dist",
+    "copy-package-json": "cpx package.json target/dist",
     "test": "jest --config src/frontend/jest.config.js",
     "test-coverage": "jest --config src/frontend/jest.config.js --coverage",
     "test-watch": "jest --config src/frontend/jest.config.js --watch",
@@ -27,7 +27,7 @@
     "@sonatype/react-shared-components": "13.1.6",
     "classnames": "2.3.1",
     "file-size": "1.0.0",
-    "node-gyp": "8.1.0",
+    "node-gyp": "10.2.0",
     "ramda": "0.28.0",
     "react": "17.0.2",
     "react-dom": "17.0.2"

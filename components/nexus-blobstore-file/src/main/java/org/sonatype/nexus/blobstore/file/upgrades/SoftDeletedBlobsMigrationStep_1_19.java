@@ -38,7 +38,7 @@ public class SoftDeletedBlobsMigrationStep_1_19
 
   private static final String H2 = "" +
       "SELECT * " +
-      "FROM INFORMATION_SCHEMA.CONSTRAINTS " +
+      "FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS " +
       "WHERE TABLE_NAME = 'SOFT_DELETED_BLOBS' AND CONSTRAINT_NAME = 'PK_SOFT_DELETED_BLOBS_BLOB_ID'";
 
   private static final String PSQL = "" +
