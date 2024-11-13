@@ -76,4 +76,9 @@ public class TokenMatcher
     });
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "TokenMatcher [pattern=" + pattern + "]";
+  }
 }

@@ -25,6 +25,8 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.WebSecurityModule;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
+import org.sonatype.nexus.security.config.SecurityConfigurationSource;
+import org.sonatype.nexus.security.config.StaticSecurityConfigurationSource;
 import org.sonatype.nexus.validation.ValidationModule;
 
 import com.google.inject.Binder;
@@ -55,6 +57,7 @@ public class RoleXOTest
     binder.install(new WebSecurityModule(mock(ServletContext.class)));
     binder.bind(EventManager.class).toInstance(mock(EventManager.class));
     binder.bind(AnonymousManager.class).toInstance(mock(AnonymousManager.class));
+    binder.bind(SecurityConfigurationSource.class).to(StaticSecurityConfigurationSource.class);
 
     binder.bind(PasswordService.class).toInstance(mock(PasswordService.class));
 

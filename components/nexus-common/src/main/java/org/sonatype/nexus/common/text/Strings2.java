@@ -38,6 +38,11 @@ public final class Strings2
    */
   public static final String MASK = "****";
 
+  /**
+   * Empty string
+   */
+  public static final String EMPTY = "";
+
   private Strings2() {
     // empty
   }

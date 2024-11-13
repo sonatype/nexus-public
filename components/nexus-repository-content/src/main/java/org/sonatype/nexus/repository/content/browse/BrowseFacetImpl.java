@@ -34,6 +34,7 @@ import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO;
+import org.sonatype.nexus.repository.content.browse.store.BrowseNodeData;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeManager;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeStore;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -157,6 +158,46 @@ public class BrowseFacetImpl
     createAllBrowseNodes(progressUpdater);
   }
 
+  @Guarded(by = STARTED)
+  @Override
+  public void deleteByAssetIdAndPath(
+      final Integer internalAssetId,
+      final String path)
+  {
+    log.debug("Deleting browse nodes for repository = {} and asset path = {}", getRepository().getName(), path);
+    Long parentNodeId = browseNodeManager.deleteByAssetIdAndPath(internalAssetId, path);
+    log.debug("Deleted browse node for path = '{}' - Returned parent node {}", path, parentNodeId);
+
+    if (parentNodeId != null) {
+      List<BrowseNode> parentNodes = browseNodeManager.getNodeParents(parentNodeId);
+      for (BrowseNode parentNode : parentNodes) {
+        if (parentNode == null) {
+          continue;
+        }
+        long assetCount = parentNode.getAssetCount() == null ? 0L : parentNode.getAssetCount();
+        // Once a node has assets, we need to stop the node deletion
+        if (assetCount > 0) {
+          break;
+        }
+
+        BrowseNodeData nodeToDelete = (BrowseNodeData) parentNode;
+        log.debug("Deleting node with id = {} and path = '{}'", nodeToDelete.getNodeId(), nodeToDelete.getPath());
+        deleteByNodeId(nodeToDelete.getNodeId());
+      }
+    }
+  }
+
+  @Override
+  public void deleteByNodeId(final Long nodeId) {
+      log.debug("Deleting browse node for repository = {} and node id = {}", getRepository().getName(), nodeId);
+      browseNodeManager.delete(nodeId);
+  }
+
+  @Override
+  public Optional<BrowseNode> getByRequestPath(final String requestPath) {
+    return Optional.ofNullable(browseNodeManager.getByRequestPath(requestPath));
+  }
+
   /**
    * Create browse nodes for every asset and their components in the repository.
    */
@@ -168,7 +209,7 @@ public class BrowseFacetImpl
       long total = assets.count();
       if (total > 0) {
         // useful for formats that have multiple assets per component
-        Map<Integer,Integer> processedComponents = newComponentCache();
+        Map<Integer, Integer> processedComponents = newComponentCache();
         ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
         Stopwatch sw = Stopwatch.createStarted();
 
@@ -206,7 +247,7 @@ public class BrowseFacetImpl
    * Create browse nodes for an asset and it's component.  Using a cache of component ids to limit component
    * nodes being recreated
    */
-  private void createBrowseNodes(final FluentAsset asset, final Map<Integer,Integer> componentsProcessed) {
+  private void createBrowseNodes(final FluentAsset asset, final Map<Integer, Integer> componentsProcessed) {
     if (browseNodeGenerator.hasMultipleAssetsPerComponent()) {
       createAssetBrowseNodes(asset);
       asset.component().ifPresent(component -> createComponentBrowseNodes(asset, component, componentsProcessed));
@@ -292,7 +333,7 @@ public class BrowseFacetImpl
     return generator;
   }
 
-  private Map<Integer,Integer> newComponentCache() {
+  private Map<Integer, Integer> newComponentCache() {
     return new LinkedHashMap<Integer, Integer>(COMPONENT_ID_CACHE_SIZE, CACHE_MAP_DEFAULT_LOAD_FACTOR,
         CACHE_MAP_RETAIN_ACCESS_ORDER)
     {

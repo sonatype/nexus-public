@@ -14,15 +14,46 @@ package org.sonatype.nexus.crypto.secrets;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.crypto.internal.error.CipherException;
+
 /**
  * Service responsible for storing secrets (e.g. passwords) with reversible encryption.
  */
 public interface SecretsService
+    extends SecretsFactory
 {
+  String SECRETS_MIGRATION_VERSION = "2.2";
+
   /**
    * Encrypts the token using the current key and stores it in the DB.
-   *
-   * Callers are responsible for removing the secrets.
+   * <p>
+   * Callers are responsible for removing the secrets (use {@link SecretsService#remove(Secret)} for this).
+   * @implNote if the system is not ready, will use {@link org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher} to encrypt values
    */
-  Secret encrypt(String purpose, char[] secret, @Nullable String userId);
+  Secret encrypt(String purpose, char[] secret, @Nullable String userId) throws CipherException;
+
+  /**
+   * Encrypts the token using the current key and stores it in the DB.
+   * <p>
+   * Callers are responsible for removing the secrets (use {@link SecretsService#remove(Secret)} for this).
+   * @implNote if the system is not ready, will use {@link org.sonatype.nexus.crypto.maven.MavenCipher} to encrypt values
+   */
+  Secret encryptMaven(String purpose, char[] secret, @Nullable String userid) throws CipherException;
+
+  /**
+   * Removes a previously stored secret, if a legacy secret is sent does nothing.
+   *
+   * @param secret the secret to be removed
+   */
+  void remove(Secret secret);
+
+  /**
+   * Changes the current encryption key to the specified key ID
+   */
+  void reEncrypt(SecretData secretData, String keyId) throws CipherException;
+
+  /**
+   * Checks if there are any secrets that have not been re-encrypted with the default key.
+   */
+  boolean isReEncryptRequired();
 }

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeSet;
 
 import javax.annotation.Nullable;
@@ -248,13 +249,25 @@ public class MetadataBuilder
       );
       snapshots.add(snapshotVersion);
     }
+
+    Optional<Long> timestamp = Optional.ofNullable(latestVersionCoordinates.coordinates.getTimestamp());
+    Optional<Integer> buildNumber = Optional.ofNullable(latestVersionCoordinates.coordinates.getBuildNumber());
+
+    if (!timestamp.isPresent()) {
+      log.warn("Unique timestamp snapshot {}:{}:{} is missing the timestamp and cannot be processed, " +
+              "consider removing it manually.", groupId, artifactId, baseVersion);
+      log.warn("Missing timestamps might be caused by an invalid version," +
+              " check the timestamp in the version {}.", latestVersionCoordinates.version);
+      return null;
+    }
+
     return Maven2Metadata.newVersionLevel(
         DateTime.now(),
         groupId,
         artifactId,
         baseVersion,
-        latestVersionCoordinates.coordinates.getTimestamp(),
-        latestVersionCoordinates.coordinates.getBuildNumber(),
+        timestamp.get(),
+        buildNumber.orElse(0),
         snapshots
     );
   }

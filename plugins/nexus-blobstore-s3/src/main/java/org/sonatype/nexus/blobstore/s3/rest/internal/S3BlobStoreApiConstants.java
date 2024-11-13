@@ -27,4 +27,11 @@ public class S3BlobStoreApiConstants
   public static final String NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT = "No S3 blob store called '%s'";
 
   public static final String BLOB_STORE_TYPE_MISMATCH_ERROR_FORMAT = "Blob store %s is not an S3 blob store";
+
+  static final String DUPLICATE_REGIONS_ERROR_MESSAGE = "More than one failover bucket defined for a single region.";
+
+  static final String FAILOVER_DEFAULT_ERROR_MESSAGE = "Failovers may not contain 'default' as a region";
+
+  static final String MATCHES_PRIMARY_ERROR_MESSAGE = "Failover region duplicates primary region";
+
 }

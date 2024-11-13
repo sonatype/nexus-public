@@ -17,12 +17,12 @@ import {faTrash} from "@fortawesome/free-solid-svg-icons";
 
 import {
   DynamicFormField,
+  FormUtils,
   Page,
   PageActions,
   PageHeader,
   PageTitle,
   Section,
-  FormUtils,
 } from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
@@ -38,8 +38,7 @@ import {
   NxTooltip
 } from '@sonatype/react-shared-components';
 
-import BlobStoresFormMachine,
-  {SPACE_USED_QUOTA_ID, canUseSpaceUsedQuotaOnly} from './BlobStoresFormMachine';
+import BlobStoresFormMachine, {canUseSpaceUsedQuotaOnly, SPACE_USED_QUOTA_ID} from './BlobStoresFormMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import CustomBlobStoreSettings from './CustomBlobStoreSettings';
 import BlobStoreWarning from './BlobStoreWarning';
@@ -76,7 +75,8 @@ export default function BlobStoresForm({itemId, onDone}) {
     quotaTypes,
     repositoryUsage,
     type,
-    types
+    types,
+    bucketRegionMismatch
   } = current.context;
   const hasSoftQuota = path(['softQuota', 'enabled'], data);
   const cannotDelete = blobStoreUsage > 0 || repositoryUsage > 0;
@@ -109,6 +109,10 @@ export default function BlobStoresForm({itemId, onDone}) {
 
   const spaceUsedQuotaName = quotaTypes?.find((it) => it.id === SPACE_USED_QUOTA_ID).name;
 
+  function getErrorTitleMessage() {
+    return bucketRegionMismatch ? UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchTitle : undefined;
+  }
+
   return <Page className="nxrm-blob-stores">
     <PageHeader>
       <PageTitle text={isEdit ? FORM.EDIT_TILE(pristineData.name) : FORM.CREATE_TITLE}
@@ -122,6 +126,7 @@ export default function BlobStoresForm({itemId, onDone}) {
     <Section>
       <NxStatefulForm className="nxrm-blob-stores-form"
         {...FormUtils.formProps(current, send)}
+        submitErrorTitleMessage={getErrorTitleMessage()}
         onCancel={onDone}
         additionalFooterBtns={itemId &&
           <NxTooltip title={deleteTooltip}>
@@ -135,7 +140,7 @@ export default function BlobStoresForm({itemId, onDone}) {
         {isEdit && <NxInfoAlert>{FORM.EDIT_WARNING}</NxInfoAlert>}
         {isCreate &&
         <NxFormGroup label={FORM.TYPE.label} sublabel={FORM.TYPE.sublabel} isRequired>
-          <NxFormSelect id="type" name="type" value={type?.id} onChange={setType} validatable>
+          <NxFormSelect {...FormUtils.selectProps('type', current)} value={type?.id} onChange={setType}>
             <option disabled={isTypeSelected} value=""></option>
             {types.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
           </NxFormSelect>

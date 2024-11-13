@@ -131,6 +131,20 @@ public class SearchRequest
 
     private boolean includeAssets = false;
 
+    public Builder from(final SearchRequest request) {
+      this.checkAuthorization = request.checkAuthorization;
+      this.searchFilters = new ArrayList<>(request.searchFilters);
+      this.repositories = new ArrayList<>(request.repositories);
+      this.sortField = request.sortField;
+      this.continuationToken = request.continuationToken;
+      this.sortDirection = request.sortDirection;
+      this.limit = request.limit;
+      this.offset = request.offset;
+      this.conjunction = request.conjunction;
+      this.includeAssets = request.includeAssets;
+      return this;
+    }
+
     public Builder disableAuthorization() {
       this.checkAuthorization = false;
       return this;

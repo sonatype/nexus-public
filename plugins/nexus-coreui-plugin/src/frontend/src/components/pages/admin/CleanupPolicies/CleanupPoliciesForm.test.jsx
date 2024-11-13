@@ -274,6 +274,26 @@ describe('CleanupPoliciesForm', function () {
     expect(screen.queryByText(LABELS.MESSAGES.NO_CRITERIA_ERROR)).toBeInTheDocument();
   });
 
+  it('does not allow to long value in notes field', async function () {
+    const notesTooLong = 'This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field. This message is to long for the description field.';
+
+    const {name, format, notes, criteriaLastBlobUpdated, getCriteriaLastBlobUpdatedCheckbox} = selectors;
+    await renderView();
+
+    await TestUtils.changeField(name, EDITABLE_ITEM.name);
+    await TestUtils.changeField(format, EDITABLE_ITEM.format);
+
+    userEvent.click(getCriteriaLastBlobUpdatedCheckbox());
+    await TestUtils.changeField(criteriaLastBlobUpdated, `${EDITABLE_ITEM.criteriaLastBlobUpdated}`);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    await TestUtils.changeField(notes, notesTooLong);
+    userEvent.click(selectors.querySubmitButton());
+    expect(
+        selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)
+    ).toBeInTheDocument();
+  });
+
   it('does not allow decimal values in lastBlobUpdated fields', async function () {
     const {name, format, criteriaLastBlobUpdated} = selectors;
     const {container} = await renderView();

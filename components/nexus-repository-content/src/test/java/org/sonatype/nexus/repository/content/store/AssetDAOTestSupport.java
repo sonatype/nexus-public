@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.time.UTC;
@@ -57,7 +58,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -1034,7 +1034,7 @@ public class AssetDAOTestSupport
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
-      Collection<AssetInfo> assets = dao.findByComponentIds(Collections.singleton(1));
+      Collection<AssetInfo> assets = dao.findByComponentIds(Collections.singleton(1), null, Collections.emptyMap());
 
       Optional<AssetInfo> assetOpt = assets.stream().findFirst();
       assertThat(assetOpt.isPresent(), is(true));
@@ -1241,6 +1241,44 @@ public class AssetDAOTestSupport
           entityVersionEnabled ? 6 : null);
       assertEntityVersion(component2.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 5 : null);
+    }
+  }
+
+  public void testAssetRecordsExist() {
+    AssetBlobData assetBlob = randomAssetBlob();
+    AssetBlobData assetBlobWithoutComponent = randomAssetBlob();
+
+    AssetData asset = randomAsset(repositoryId);
+    AssetData assetWithoutComponent = randomAsset(repositoryId);
+
+    ComponentData componentData = randomComponent(repositoryId);
+    componentData.setComponentId(1);
+
+    asset.setComponent(componentData);
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO assetDao = session.access(TestAssetDAO.class);
+      AssetBlobDAO assetBlobDao = session.access(TestAssetBlobDAO.class);
+      ComponentDAO componentDAO = session.access(TestComponentDAO.class);
+
+      assetBlobDao.createAssetBlob(assetBlob);
+      assetBlobDao.createAssetBlob(assetBlobWithoutComponent);
+      componentDAO.createComponent(componentData, entityVersionEnabled);
+      asset.setAssetBlob(assetBlob);
+      assetWithoutComponent.setAssetBlob(assetBlobWithoutComponent);
+      assetDao.createAsset(asset, entityVersionEnabled);
+      assetDao.createAsset(assetWithoutComponent, entityVersionEnabled);
+      session.getTransaction().commit();
+
+      // existing asset + blob + component
+      assertThat(assetDao.assetRecordsExist(assetBlob.blobRef()), is(true));
+
+      // random blob is not exists
+      BlobRef blobRef = new BlobRef("default", UUID.randomUUID().toString());
+      assertThat(assetDao.assetRecordsExist(blobRef), is(false));
+
+      // record still exists without a component
+      assertThat(assetDao.assetRecordsExist(assetBlobWithoutComponent.blobRef()), is(true));
     }
   }
 

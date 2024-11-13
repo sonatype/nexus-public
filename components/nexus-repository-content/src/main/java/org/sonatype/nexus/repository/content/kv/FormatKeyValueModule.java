@@ -14,8 +14,11 @@ package org.sonatype.nexus.repository.content.kv;
 
 import org.sonatype.nexus.repository.content.store.ContentStoreModule;
 
-public abstract class FormatKeyValueModule<DAO extends KeyValueDAO>
-    extends ContentStoreModule<KeyValueStore<DAO>>
+@SuppressWarnings({"rawtypes", "unchecked", "unused"})
+public abstract class FormatKeyValueModule<KEY_VALUE_STORE extends KeyValueStore<?>>
+    extends ContentStoreModule
 {
-  // nothing to add...
+  protected FormatKeyValueModule() {
+    super(FormatKeyValueModule.class);
+  }
 }

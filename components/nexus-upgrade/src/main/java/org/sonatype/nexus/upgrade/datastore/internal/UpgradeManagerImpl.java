@@ -27,13 +27,13 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
+import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
+import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.sonatype.nexus.upgrade.datastore.UpgradeException;
 import org.sonatype.nexus.upgrade.datastore.UpgradeManager;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeFailedEvent;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.flywaydb.core.Flyway;
@@ -275,5 +275,12 @@ public class UpgradeManagerImpl
   private JavaMigration[] getMigrations() {
     return new SimpleDependencyResolver(migrations).resolve().stream()
         .toArray(JavaMigration[]::new);
+  }
+
+  @Override
+  public boolean isMigrationApplied(final Class<? extends DatabaseMigrationStep> step) {
+    return Arrays.stream(createFlyway().info().applied())
+        .map(MigrationInfo::getDescription)
+        .anyMatch(NexusJavaMigration.nameMatcher(step));
   }
 }

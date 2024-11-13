@@ -195,6 +195,9 @@ public class RepositoryManagerImplTest
   @Mock
   private GroupMemberMappingCache groupMemberMappingCache;
 
+  @Mock
+  private HttpAuthenticationPasswordEncoder httpAuthenticationPasswordEncoder;
+
   //Subject of the test
   private RepositoryManagerImpl repositoryManager;
 
@@ -303,7 +306,7 @@ public class RepositoryManagerImplTest
     repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
         defaultRepositoriesContributorList, freezeService, skipDefaultRepositories, blobStoreManager,
-        groupMemberMappingCache, Collections.emptyList());
+        groupMemberMappingCache, Collections.emptyList(), httpAuthenticationPasswordEncoder);
 
     repositoryManager.doStart();
     return repositoryManager;

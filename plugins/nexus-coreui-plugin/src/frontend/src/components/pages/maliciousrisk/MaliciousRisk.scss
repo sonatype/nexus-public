@@ -1,0 +1,100 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+.nxrm-new-tag {
+  background: #FF33AD;
+  border-radius: 30px;
+  color: white;
+  font-weight: 600;
+  font-family: var(--nx-font-family);
+  padding: 5px 10px;
+  text-align: center;
+  font-size: 14px;
+  margin: 10px;
+}
+
+.nxrm-high-risk-ecosystems {
+  margin-top: var(--nx-spacing-6x);
+
+  .nx-status-indicator {
+    vertical-align: middle;
+    margin-left: var(--nx-spacing-2x);
+  }
+
+  .nx-icon {
+    color: var(--nx-swatch-blue-40);
+    margin-left: var(--nx-spacing-2x);
+  }
+
+  .nxrm-public-malicious-components {
+    > h2 {
+      margin: 0
+    }
+
+    > h3 {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.nxrm-malicious-risk {
+  .nx-meter {
+    margin: 0 0 var(--nx-spacing-2x);
+    width: 100%;
+    background: var(--nx-swatch-orange-55);
+
+    &::-webkit-meter-bar{
+      background: var(--nx-swatch-orange-55);
+    }
+
+    &::-webkit-meter-optimum-value,
+    &::-webkit-meter-suboptimum-value,
+    &::-webkit-meter-even-less-good-value {
+      background: var(--nx-swatch-green-40);
+    }
+
+    &::-moz-meter-bar {
+      background: var(--nx-swatch-green-40);
+    }
+  }
+
+  .nxrm-label-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nxrm-label-text-main {
+    font-weight: bold;
+  }
+
+  .nxrm-label-text-info {
+    font-size: small;
+    display: flex;
+    align-items: center;
+  }
+
+  .nxrm-label-text-info > .nx-icon {
+    color: var(--nx-swatch-blue-40);
+  }
+
+  .risk-on-disk-container {
+    padding: 0;
+  }
+
+  .risk-on-disk-alert {
+    margin: var(--nx-spacing-4x) 0 var(--nx-spacing-6x) 0
+  }
+
+  .attack-content-section > h2, .identify-component-section > h2{
+    margin-bottom: 0;
+  }
+}

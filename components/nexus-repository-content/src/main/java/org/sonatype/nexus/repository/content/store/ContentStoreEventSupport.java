@@ -18,11 +18,9 @@ import javax.inject.Inject;
 
 import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.event.EventWithSource;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
-import org.sonatype.nexus.distributed.event.service.api.common.DistributedEventSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 

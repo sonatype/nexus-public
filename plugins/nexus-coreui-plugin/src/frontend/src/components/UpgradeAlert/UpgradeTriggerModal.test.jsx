@@ -25,7 +25,7 @@ describe('UpgradeTriggerModal', () => {
     const {getByText} = render(<UpgradeTriggerModal showModal={true} />);
 
     expect(getByText('Proceed with upgrade?')).toBeInTheDocument();
-    expect(getByText('We highly recommend backing up your data before proceeding.')).toBeInTheDocument();
+    expect(getByText('We highly recommend backing up your database before proceeding.')).toBeInTheDocument();
   });
 
   it('calls setShowModal with false when the cancel button is clicked', () => {

@@ -20,7 +20,7 @@ import java.util.Arrays;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
+import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
 import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentVersionTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;

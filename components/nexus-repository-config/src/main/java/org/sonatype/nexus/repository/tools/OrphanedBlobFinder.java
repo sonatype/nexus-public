@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.tools;
 
 import java.util.function.Consumer;
 
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -41,6 +42,6 @@ public interface OrphanedBlobFinder
    * @param repository - where to look for orphaned blobs
    * @param handler    - callback to handle an orphaned blob
    */
-  void detect(final Repository repository, final Consumer<String> handler);
+  void detect(final Repository repository, final Consumer<BlobId> handler);
 
 }

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,12 +24,11 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
-import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -42,6 +42,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
@@ -258,7 +260,7 @@ public class RestoreMetadataTask
       log.info("Will process all blobs");
       return store.getBlobIdStream()::iterator;
     }
-    return store.getBlobIdUpdatedSinceStream(sinceDays)::iterator;
+    return store.getBlobIdUpdatedSinceStream(Duration.ofDays(sinceDays))::iterator;
   }
 
   private void updateAssets(final Set<Repository> repositories, final boolean updateAssets) {
