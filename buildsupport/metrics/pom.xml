@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <metrics.version>4.1.0</metrics.version>
+    <metrics.version>4.2.25</metrics.version>
     <prometheus.version>0.6.0</prometheus.version>
   </properties>
 
