@@ -107,8 +107,8 @@ export default Machine(
         })
       },
       services: {
-        create: ({params}) => Axios.post('/service/rest/v1/support/supportzippath', params),
-        createHaZips: ({params}) => Axios.post('/service/rest/v1/nodes/supportzips', params)
+        create: ({params}) => Axios.post('service/rest/v1/support/supportzippath', params),
+        createHaZips: ({params}) => Axios.post('service/rest/v1/nodes/supportzips', params)
       }
     }
 );

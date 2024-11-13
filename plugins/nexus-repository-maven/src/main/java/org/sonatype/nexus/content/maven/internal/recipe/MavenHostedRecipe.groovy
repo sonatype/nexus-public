@@ -68,7 +68,6 @@ class MavenHostedRecipe
     repository.attach(mavenMaintenanceFacet.get())
     repository.attach(removeSnapshotsFacet.get())
     repository.attach(mavenPurgeSnapshotsFacet.get())
-    repository.attach(mavenReplicationFacet.get())
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

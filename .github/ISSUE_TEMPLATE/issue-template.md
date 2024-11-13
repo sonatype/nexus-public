@@ -3,7 +3,7 @@ name: Issue Template
 about: Please follow this form to facilitate assistance
 title: ''
 labels: pending
-assignees: nblair
+assignees: mrprescott
 
 ---
 
@@ -13,7 +13,8 @@ Sonatype Nexus Repository Pro customers should not use this form - please go to 
 
 If you believe you have found a security vulnerability, please use our [Bug Bounty Program](https://www.sonatype.com/report-a-security-vulnerability) to disclose responsibly.
 
-If you have a question about or an issue with publishing open source artifacts to Maven Central, please use the [OSSRH Issue Tracker](https://issues.sonatype.org/browse/OSSRH) instead.
+If you have a question about or an issue with publishing open source artifacts to Maven Central, please see https://central.sonatype.org/news/20240109_issues_sonatype_org_deprecation. 
+Users new to publishing via Maven Central will need to register via central.sonatype.com. All other support requests will go through our central-support@sonatype.com email.
 
 Thanks for creating an issue! Please fill out this form so we can be sure to have all the information we need, and to minimize back and forth.
 

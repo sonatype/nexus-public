@@ -76,6 +76,7 @@ public class QuartzDAOTest
       underTest.createSchema();
 
       QuartzTestDAO testDao = session.access(QuartzTestDAO.class);
+
       assertThat(testDao.tables(), hasSize(11));
       assertThat(testDao.primaryKeys(), hasSize(11));
       assertThat(testDao.foreignKeys(), hasSize(5));

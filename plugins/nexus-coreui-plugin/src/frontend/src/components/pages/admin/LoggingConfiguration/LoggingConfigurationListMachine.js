@@ -76,13 +76,13 @@ export default ListMachineUtils.buildListMachine({
     }
   },
   services: {
-    fetchData: () => Axios.get('/service/rest/internal/ui/loggingConfiguration'),
+    fetchData: () => Axios.get('service/rest/internal/ui/loggingConfiguration'),
     confirmReset: () => ExtJS.requestConfirmation({
       title: UIStrings.LOGGING.CONFIRM_RESET_ALL.TITLE,
       message: UIStrings.LOGGING.CONFIRM_RESET_ALL.MESSAGE,
       yesButtonText: UIStrings.LOGGING.CONFIRM_RESET_ALL.CONFIRM_BUTTON,
       noButtonText: UIStrings.SETTINGS.CANCEL_BUTTON_LABEL
     }),
-    reset: () => Axios.post('/service/rest/internal/ui/loggingConfiguration/reset')
+    reset: () => Axios.post('service/rest/internal/ui/loggingConfiguration/reset')
   }
 });

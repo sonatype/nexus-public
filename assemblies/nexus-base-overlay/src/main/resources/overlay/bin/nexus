@@ -278,9 +278,9 @@ checkJvmVersion() {
 
     VERSION=`"${JAVA}" -version 2>&1 | ${AWK} -F '"' '/version/ {print $2}' | sed -e 's/_.*//g; s/^1\.//g; s/\..*//g; s/-.*//g;'`
 
-    # java must be at least version 8
-    if [ "${VERSION}" -lt "8" ]; then
-        die "JVM must be greater than 1.8"
+    # java must be at least version 17
+    if [ "${VERSION}" -lt "17" ]; then
+        die "JVM must be greater than 17"
     fi
 }
 
@@ -323,7 +323,7 @@ setupDefaults() {
         export DIRECT_MAX_MEM
     fi
 
-    DEFAULT_JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} -XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=${KARAF_LOG}/jvm.log -XX:-OmitStackTraceInFastThrow -Djava.net.preferIPv4Stack=true "
+    DEFAULT_JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} -XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=${KARAF_LOG}/jvm.log -XX:-OmitStackTraceInFastThrow "
     #Set the JVM_VENDOR specific JVM flags
     if [ "${JVM_VENDOR}" = "SUN" ]; then
         if [ "${darwin}" = "true" ] && [ `ulimit -n` -gt 10240 ]; then
@@ -563,56 +563,40 @@ run() {
             mkdir -p "${KARAF_DATA}/tmp"
         fi
 
-            if [ "${VERSION}" -gt "8" ]; then
-                launch "${JAVA}" ${JAVA_OPTS} \
-                    --add-reads=java.xml=java.logging \
-                    --add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED \
-                    --patch-module java.base=${KARAF_HOME}/lib/endorsed/org.apache.karaf.specs.locator-4.3.9.jar \
-                    --patch-module java.xml=${KARAF_HOME}/lib/endorsed/org.apache.karaf.specs.java.xml-4.3.9.jar \
-                    --add-opens java.base/java.security=ALL-UNNAMED \
-                    --add-opens java.base/java.net=ALL-UNNAMED \
-                    --add-opens java.base/java.lang=ALL-UNNAMED \
-                    --add-opens java.base/java.util=ALL-UNNAMED \
-                    --add-opens java.naming/javax.naming.spi=ALL-UNNAMED \
-                    --add-opens java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED \
-                    --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED \
-                    --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED \
-                    --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED \
-                    --add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED \
-                    --add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED \
-                    --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED \
-                    -Dkaraf.instances="${KARAF_HOME}/instances" \
-                    -Dkaraf.home="${KARAF_HOME}" \
-                    -Dkaraf.base="${KARAF_BASE}" \
-                    -Dkaraf.data="${KARAF_DATA}" \
-                    -Dkaraf.etc="${KARAF_ETC}" \
-                    -Dkaraf.log="${KARAF_LOG}" \
-                    -Dkaraf.restart.jvm.supported=true \
-                    -Djava.io.tmpdir="${KARAF_DATA}/tmp" \
-                    -Djava.util.logging.config.file="${KARAF_BASE}/etc/java.util.logging.properties" \
-                    ${KARAF_SYSTEM_OPTS} \
-                    ${KARAF_OPTS} \
-                    ${OPTS} \
-                    -classpath "${CLASSPATH}" \
-                    ${MAIN} "$@"
-            else
-                launch "${JAVA}" ${JAVA_OPTS} \
-                    -Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS}" \
-                    -Dkaraf.instances="${KARAF_HOME}/instances" \
-                    -Dkaraf.home="${KARAF_HOME}" \
-                    -Dkaraf.base="${KARAF_BASE}" \
-                    -Dkaraf.data="${KARAF_DATA}" \
-                    -Dkaraf.etc="${KARAF_ETC}" \
-                    -Dkaraf.log="${KARAF_LOG}" \
-                    -Dkaraf.restart.jvm.supported=true \
-                    -Djava.io.tmpdir="${KARAF_DATA}/tmp" \
-                    -Djava.util.logging.config.file="${KARAF_BASE}/etc/java.util.logging.properties" \
-                    ${KARAF_SYSTEM_OPTS} \
-                    ${KARAF_OPTS} \
-                    ${OPTS} \
-                    -classpath "${CLASSPATH}" \
-                    ${MAIN} "$@"
-            fi
+        launch "${JAVA}" ${JAVA_OPTS} \
+            --add-reads=java.xml=java.logging \
+            --add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED \
+            --patch-module java.base=${KARAF_HOME}/lib/endorsed/org.apache.karaf.specs.locator-4.3.9.jar \
+            --patch-module java.xml=${KARAF_HOME}/lib/endorsed/org.apache.karaf.specs.java.xml-4.3.9.jar \
+            --add-opens java.base/java.security=ALL-UNNAMED \
+            --add-opens java.base/java.net=ALL-UNNAMED \
+            --add-opens java.base/java.lang=ALL-UNNAMED \
+            --add-opens java.base/java.util=ALL-UNNAMED \
+            --add-opens java.naming/javax.naming.spi=ALL-UNNAMED \
+            --add-opens java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED \
+            --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED \
+            --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED \
+            --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED \
+            --add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED \
+            --add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED \
+            --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED \
+            --add-exports=java.base/sun.security.x509=ALL-UNNAMED \
+            --add-exports=java.base/sun.security.rsa=ALL-UNNAMED \
+            --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED \
+            -Dkaraf.instances="${KARAF_HOME}/instances" \
+            -Dkaraf.home="${KARAF_HOME}" \
+            -Dkaraf.base="${KARAF_BASE}" \
+            -Dkaraf.data="${KARAF_DATA}" \
+            -Dkaraf.etc="${KARAF_ETC}" \
+            -Dkaraf.log="${KARAF_LOG}" \
+            -Dkaraf.restart.jvm.supported=true \
+            -Djava.io.tmpdir="${KARAF_DATA}/tmp" \
+            -Djava.util.logging.config.file="${KARAF_BASE}/etc/java.util.logging.properties" \
+            ${KARAF_SYSTEM_OPTS} \
+            ${KARAF_OPTS} \
+            ${OPTS} \
+            -classpath "${CLASSPATH}" \
+            ${MAIN} "$@"
 
         KARAF_RC=$?
         if [ ${KARAF_DAEMON} ] ; then

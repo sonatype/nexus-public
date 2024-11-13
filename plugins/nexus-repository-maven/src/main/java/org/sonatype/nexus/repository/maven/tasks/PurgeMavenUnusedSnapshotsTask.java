@@ -12,16 +12,13 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
-import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.VersionPolicy;

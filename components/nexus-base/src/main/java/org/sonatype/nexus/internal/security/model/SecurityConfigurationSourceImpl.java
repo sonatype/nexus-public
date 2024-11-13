@@ -28,9 +28,7 @@ import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
-import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 
 /**
  * Default implementation of {@link SecurityConfigurationSource}.
@@ -60,13 +58,10 @@ public class SecurityConfigurationSourceImpl
 
   @Override
   protected void doStart() throws Exception {
-    // only add defaults if we're not using Orient for config
-    if (!getBoolean(ORIENT_ENABLED, true)) {
-      addDefaultUsers();
-      addDefaultRoles();
-      addDefaultPrivileges();
-      addDefaultUserRoleMappings();
-    }
+    addDefaultUsers();
+    addDefaultRoles();
+    addDefaultPrivileges();
+    addDefaultUserRoleMappings();
   }
 
   private void addDefaultUsers() {

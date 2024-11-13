@@ -126,12 +126,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.Licensing',
-      active: function () {
-        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-licensing-plugin');
-      }
-    },
-    {
       id: 'NX.coreui.controller.Nodes',
       active: function () {
             return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
@@ -156,9 +150,15 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.SearchBower',
-      active: function () {
-        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-bower');
+      id: 'NX.coreui.controller.SearchCargo',
+      active: function() {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-cargo');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.SearchComposer',
+      active: function() {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-composer');
       }
     },
     {
@@ -201,6 +201,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       id: 'NX.coreui.controller.SearchHelm',
       active: function () {
         return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-helm');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.SearchHuggingFace',
+      active: function () {
+        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-huggingface');
       }
     },
     {
@@ -255,12 +261,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
       id: 'NX.coreui.controller.SearchP2',
       active: function () {
         return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-p2');
-      }
-    },
-    {
-      id: 'NX.coreui.controller.SmtpSettings',
-      active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }
     },
     {

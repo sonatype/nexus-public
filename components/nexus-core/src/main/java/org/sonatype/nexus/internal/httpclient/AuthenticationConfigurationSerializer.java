@@ -18,15 +18,12 @@ import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
-import org.sonatype.nexus.security.PasswordHelper;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * {@link AuthenticationConfiguration} serializer.
@@ -38,11 +35,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class AuthenticationConfigurationSerializer
     extends StdSerializer<AuthenticationConfiguration>
 {
-  private final PasswordHelper passwordHelper;
-
-  public AuthenticationConfigurationSerializer(final PasswordHelper passwordHelper) {
+  public AuthenticationConfigurationSerializer() {
     super(AuthenticationConfiguration.class);
-    this.passwordHelper = checkNotNull(passwordHelper);
   }
 
   @Override
@@ -86,18 +80,22 @@ public class AuthenticationConfigurationSerializer
     if (value instanceof UsernameAuthenticationConfiguration) {
       UsernameAuthenticationConfiguration upc = (UsernameAuthenticationConfiguration) value;
       jgen.writeStringField("username", upc.getUsername());
-      jgen.writeStringField("password", passwordHelper.encrypt(upc.getPassword()));
+      if (upc.getPassword() != null) {
+        jgen.writeStringField("password", upc.getPassword().getId());
+      }
     }
     else if (value instanceof NtlmAuthenticationConfiguration) {
       NtlmAuthenticationConfiguration ntc = (NtlmAuthenticationConfiguration) value;
       jgen.writeStringField("username", ntc.getUsername());
-      jgen.writeStringField("password", passwordHelper.encrypt(ntc.getPassword()));
+      if (ntc.getPassword() != null) {
+        jgen.writeStringField("password", ntc.getPassword().getId());
+      }
       jgen.writeStringField("domain", ntc.getDomain());
       jgen.writeStringField("host", ntc.getHost());
     }
     else if (value instanceof BearerTokenAuthenticationConfiguration) {
       BearerTokenAuthenticationConfiguration btac = (BearerTokenAuthenticationConfiguration) value;
-      jgen.writeStringField(BearerTokenAuthenticationConfiguration.TYPE, passwordHelper.encrypt(btac.getBearerToken()));
+      jgen.writeStringField(BearerTokenAuthenticationConfiguration.TYPE, btac.getBearerToken());
     }
     else {
       // be foolproof, if new type added but this class is not updated

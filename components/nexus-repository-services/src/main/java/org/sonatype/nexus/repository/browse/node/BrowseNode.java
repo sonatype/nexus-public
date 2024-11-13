@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.browse.node;
 
+import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -46,4 +47,10 @@ public interface BrowseNode
 
   @Nullable
   EntityId getAssetId();
+
+  @Nullable
+  Long getAssetCount();
+
+  @Nullable
+  OffsetDateTime getLastUpdated();
 }

@@ -18,7 +18,7 @@ import {
   NxButton,
   NxFontAwesomeIcon,
   NxModal,
-  NxCodeSnippet,
+  NxCopyToClipboard,
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -41,16 +41,16 @@ export default function NuGetApiTokenModal({apiKey, onCloseClick}) {
       <p>
         <span> {UIStrings.NUGET_API_KEY.DETAILS.MAIN} <strong> {UIStrings.NUGET_API_KEY.DETAILS.WARNING} </strong> </span> <br/>
       </p>
-      <NxCodeSnippet
+      <NxCopyToClipboard
           label={UIStrings.NUGET_API_KEY.DETAILS.API_KEY_TEXT}
           content={apiKey}
-          inputProps={{rows: 1}}
+          inputProps={{inputAttributes: {rows: 1}}}
           id="nuget-api-key"
       />
-      <NxCodeSnippet
+      <NxCopyToClipboard
           label={UIStrings.NUGET_API_KEY.DETAILS.REGISTER_TEXT}
           content={exampleCode}
-          inputProps={{rows: 1}}
+          inputProps={{inputAttributes: {rows: 2}}}
           id="nuget-example-command"
       />
       <p>

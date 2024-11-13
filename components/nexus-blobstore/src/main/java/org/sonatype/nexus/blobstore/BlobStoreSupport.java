@@ -14,14 +14,19 @@ package org.sonatype.nexus.blobstore;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -42,6 +47,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_PATH_FORMATTER;
+import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
@@ -54,6 +61,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     extends StateGuardLifecycleSupport
     implements BlobStore
 {
+  public static final String CONTENT_PREFIX = "content";
+
   public static final String CONTENT_TMP_PATH = "/content/tmp/";
 
   private final Map<String, Timer> timers = new ConcurrentHashMap<>();
@@ -68,14 +77,22 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   protected BlobStoreConfiguration blobStoreConfiguration;
 
-  protected static final Pattern UUID_PATTERN = Pattern
-      .compile(
-          ".*vol-\\d{2}[/\\\\]chap-\\d{2}[/\\\\]\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b.properties$",
+  private static final Pattern UUID_PATTERN = Pattern.compile(
+          ".*vol-\\d{2}[/\\\\]chap-\\d{2}[/\\\\]\\b([0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b).(properties|bytes)$",
           Pattern.CASE_INSENSITIVE);
+
+  /**
+   * To match "content/2024/01/10/18/13/0c89ccf4-ec5b-44a8-83b2-d08df2599c6e.properties"
+   */
+  private static final Pattern DATE_BASED_PATTERN = Pattern.compile(
+      ".*(\\d{4}([/\\\\]\\d{2}){4})[/\\\\]([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\.(properties|bytes)$",
+      Pattern.CASE_INSENSITIVE);
 
   public static final int MAX_NAME_LENGTH = 255;
 
   public static final int MIN_NAME_LENGTH = 1;
+
+  private boolean dateBasedLayoutEnabled;
 
   public BlobStoreSupport(final BlobIdLocationResolver blobIdLocationResolver,
                           final DryRunPrefix dryRunPrefix)
@@ -87,6 +104,12 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Inject
   public void setMetricRegistry(final MetricRegistry metricRegistry) {
     this.metricRegistry = metricRegistry;
+  }
+
+  @Inject
+  public void setDateBasedLayoutEnabled(
+      @Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean dateBasedLayoutEnabled) {
+    this.dateBasedLayoutEnabled = dateBasedLayoutEnabled;
   }
 
   protected BlobId getBlobId(final Map<String, String> headers, @Nullable final BlobId blobId) {
@@ -262,14 +285,29 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   protected abstract BlobAttributes getBlobAttributes(final T attributesFilePath) throws IOException;
 
-  protected String getBlobIdFromAttributeFilePath(final T attributeFilePath) {
-    if (UUID_PATTERN.matcher(attributeFilePath.getFullPath()).matches()) {
-      String filename = attributeFilePath.getFileName();
-      return filename.substring(0, filename.length() - BLOB_FILE_ATTRIBUTES_SUFFIX.length());
+  protected BlobId getBlobIdFromAttributeFilePath(final T attributeFilePath) {
+    Matcher matcher = UUID_PATTERN.matcher(attributeFilePath.getFullPath());
+    if (matcher.find()) {
+      return new BlobId(matcher.group(1), null);
     }
+
+    matcher = DATE_BASED_PATTERN.matcher(attributeFilePath.getFullPath());
+    if (matcher.find()) {
+      LocalDateTime localDateTime = LocalDateTime.parse(matcher.group(1), DATE_TIME_PATH_FORMATTER);
+      OffsetDateTime blobCreatedRef = localDateTime.atOffset(ZoneOffset.UTC);
+      return new BlobId(matcher.group(3), blobCreatedRef);
+    }
+
     try {
       BlobAttributes fileBlobAttributes = getBlobAttributes(attributeFilePath);
-      return blobIdLocationResolver.fromHeaders(fileBlobAttributes.getHeaders()).asUniqueString();
+      if (fileBlobAttributes != null && fileBlobAttributes.getHeaders() != null) {
+        String id = blobIdLocationResolver.fromHeaders(fileBlobAttributes.getHeaders()).asUniqueString();
+        return new BlobId(id, null);
+      }
+      else {
+        log.error("Broken properties file by path: {}", attributeFilePath.getFullPath());
+        return null;
+      }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -287,6 +325,10 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Override
   public boolean isEmpty() {
     return !getBlobIdStream().findAny().isPresent();
+  }
+
+  public boolean isDateBasedLayoutEnabled() {
+    return dateBasedLayoutEnabled;
   }
 
   /**

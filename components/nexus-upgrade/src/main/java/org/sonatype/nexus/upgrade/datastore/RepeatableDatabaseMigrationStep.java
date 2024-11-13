@@ -14,17 +14,15 @@ package org.sonatype.nexus.upgrade.datastore;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 /**
  * Support class for repeatable migrations
  */
-public abstract class RepeatableDatabaseMigrationStep
-    extends ComponentSupport
-    implements DatabaseMigrationStep
+public interface RepeatableDatabaseMigrationStep
+    extends DatabaseMigrationStep
 {
   @Override
-  public final Optional<String> version() {
+  default Optional<String> version() {
+    // Do not override me.
     return Optional.empty();
   }
 
@@ -34,5 +32,5 @@ public abstract class RepeatableDatabaseMigrationStep
    * Flyway considers the checksum prior to the first run as {@code null}
    */
   @Override
-  public abstract Integer getChecksum();
+  Integer getChecksum();
 }

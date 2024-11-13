@@ -19,7 +19,7 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const {CLEANUP_POLICIES: LABELS} = UIStrings;
 
-const baseUrl = '/service/rest/internal/cleanup-policies';
+const baseUrl = 'service/rest/internal/cleanup-policies';
 const singleCleanupPolicyUrl = (name) => `${baseUrl}/${name}`;
 
 export const isReleaseType = (criteriaReleaseType) =>

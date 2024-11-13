@@ -20,6 +20,7 @@ import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskState;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,6 +32,7 @@ import static org.hamcrest.Matchers.nullValue;
 /**
  * Tests for updating tasks.
  */
+@Ignore("NEXUS-43375")
 public class UpdatingTasksTest
     extends QuartzTestSupport
 {

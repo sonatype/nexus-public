@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>3.70.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-testsupport</artifactId>
@@ -34,12 +34,6 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-pax-exam</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-repository</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -225,6 +219,13 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <excludePackageNames>org.sonatype.nexus.testsuite.testsupport:org.sonatype.nexus.testsuite.testsupport.*</excludePackageNames>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.karaf.tooling</groupId>
         <artifactId>karaf-maven-plugin</artifactId>
         <executions>
@@ -251,12 +252,9 @@
             <!-- mark Pax-Exam imports as optional; not all are needed at test-time -->
             <Import-Package>
               org.ops4j.pax.exam.*;resolution:=optional,
-              com.orientechnologies.orient.*;resolution:=optional,
               org.apache.maven.*;resolution:=optional,
-              org.sonatype.nexus.orient.*;resolution:=optional,
               com.sonatype.nexus.repository.nuget.*;resolution:=optional,
               org.sonatype.nexus.repository.apt.*;resolution:=optional,
-              org.sonatype.nexus.repository.bower.*;resolution:=optional,
               org.sonatype.nexus.repository.docker.*;resolution:=optional,
               org.sonatype.nexus.repository.gitlfs.*;resolution:=optional,
               org.sonatype.nexus.repository.golang.*;resolution:=optional,

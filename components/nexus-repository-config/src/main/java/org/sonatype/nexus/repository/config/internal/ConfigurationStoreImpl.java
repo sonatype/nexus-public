@@ -101,4 +101,10 @@ public class ConfigurationStoreImpl
   public boolean exists(final String repositoryName) {
     return dao().readByName(repositoryName).isPresent();
   }
+
+  @Transactional
+  @Override
+  public Collection<Configuration> readByRecipe(final String recipeName) {
+    return dao().readByRecipe(recipeName);
+  }
 }

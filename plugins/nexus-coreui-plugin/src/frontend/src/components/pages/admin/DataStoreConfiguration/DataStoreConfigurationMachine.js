@@ -61,9 +61,9 @@ export default FormUtils.buildFormMachine({
   },
   services:
       {
-        fetchData: () => Axios.get('/service/rest/internal/ui/datastore'),
+        fetchData: () => Axios.get('service/rest/internal/ui/datastore'),
         saveData: ({data}) => {
-          return Axios.put('/service/rest/internal/ui/datastore', data);
+          return Axios.put('service/rest/internal/ui/datastore', data);
         }
       }
 });

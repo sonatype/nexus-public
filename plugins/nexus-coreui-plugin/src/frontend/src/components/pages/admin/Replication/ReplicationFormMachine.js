@@ -22,9 +22,9 @@ import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-const HOSTED_REPOSITORIES = '/service/rest/internal/ui/replication/repositories';
+const HOSTED_REPOSITORIES = 'service/rest/internal/ui/replication/repositories';
 const REPLICATION_URL = (name) => `/service/rest/beta/replication/connection/${name}`;
-const TEST_URL = '/service/rest/internal/ui/replication/test-connection/';
+const TEST_URL = 'service/rest/internal/ui/replication/test-connection/';
 
 const transformDataFromResponse = (_, event) => {
   const data = event.data[1].data || {};

@@ -23,8 +23,6 @@ public interface ApiKey
 {
   char[] getApiKey();
 
-  String getDomain();
-
   PrincipalCollection getPrincipals();
 
   OffsetDateTime getCreated();
@@ -35,12 +33,4 @@ public interface ApiKey
     }
     return getPrincipals().getPrimaryPrincipal().toString();
   }
-
-  void setApiKey(char[] apiKey);
-
-  void setDomain(String domain);
-
-  void setPrincipals(PrincipalCollection principals);
-
-  void setCreated(OffsetDateTime created);
 }

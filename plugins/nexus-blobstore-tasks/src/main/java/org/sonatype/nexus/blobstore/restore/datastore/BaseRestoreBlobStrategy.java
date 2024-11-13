@@ -18,8 +18,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.Properties;
-
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -31,6 +31,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHandler;
 
 import org.joda.time.DateTime;
 
@@ -51,9 +52,16 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
 
   private final DryRunPrefix dryRunPrefix;
 
+  private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
+
   protected BaseRestoreBlobStrategy(final DryRunPrefix dryRunPrefix)
   {
     this.dryRunPrefix = checkNotNull(dryRunPrefix);
+  }
+
+  @Inject
+  public void injectDependencies(final LastDownloadedAttributeHandler lastDownloadedAttributeHandler) {
+    this.lastDownloadedAttributeHandler = checkNotNull(lastDownloadedAttributeHandler);
   }
 
   @Override
@@ -82,11 +90,19 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
     String assetPath = prependIfMissing(getAssetPath(restoreData), ASSET_PATH_PREFIX);
 
     try {
-      Optional<FluentAsset> asset =
-          restoreData.getRepository().facet(ContentFacet.class).assets().path(assetPath).find();
+      ContentFacet contentFacet = restoreData.getRepository().facet(ContentFacet.class);
+      Optional<FluentAsset> asset = contentFacet.assets().path(assetPath).find();
+
+      OffsetDateTime lastDownloadedAttribute =
+          lastDownloadedAttributeHandler.readLastDownloadedAttribute(blobStoreName, blob);
+      if (lastDownloadedAttribute != null) {
+        restoreData.setLastDownloaded(lastDownloadedAttribute);
+      }
 
       if (asset.isPresent()) {
         FluentAsset fluentAsset = asset.get();
+        fluentAsset.lastDownloaded().ifPresent(restoreData::setLastDownloaded);
+
         if (shouldDeleteAsset(restoreData, fluentAsset)) {
           log.info(
               "{} Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
@@ -99,6 +115,7 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
           log.info(
               "{} Deleting asset as more recent blob will be restored, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
               logPrefix, blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
+
           if (!isDryRun) {
             fluentAsset.delete();
           }
@@ -113,6 +130,14 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
 
       if (!isDryRun) {
         createAssetFromBlob(blob, restoreData);
+        // try to apply lastDownloaded field to created asset
+        if (restoreData.hasLastDownloaded()) {
+          Optional<FluentAsset> createdAsset = contentFacet.assets().path(assetPath).find();
+          if (createdAsset.isPresent()) {
+            FluentAsset fluentAsset = createdAsset.get();
+            fluentAsset.lastDownloaded(restoreData.getLastDownloaded());
+          }
+        }
       }
 
       log.info("{} Restored asset, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",

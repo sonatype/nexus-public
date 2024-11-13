@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -247,16 +248,17 @@ public class TaskComponent
     Date lastRun = externalTaskState.getLastRunStarted();
     Long runDuration = externalTaskState.getLastRunDuration();
 
+    TaskConfiguration configuration = taskInfo.getConfiguration();
     TaskXO result = new TaskXO();
     result.setId(taskInfo.getId());
-    result.setEnabled(taskInfo.getConfiguration().isEnabled());
+    result.setEnabled(configuration.isEnabled());
     result.setName(taskInfo.getName());
-    result.setTypeId(taskInfo.getConfiguration().getTypeId());
-    result.setTypeName(taskInfo.getConfiguration().getTypeName());
+    result.setTypeId(configuration.getTypeId());
+    result.setTypeName(configuration.getTypeName());
     result.setStatus(taskState.name());
-    String statusDescription = taskInfo.getConfiguration().isEnabled() ? taskState.getDescription() : "Disabled";
-    if (taskInfo.getCurrentState().getState().isRunning() && taskInfo.getConfiguration().getProgress() != null) {
-      statusDescription += ": " + taskInfo.getConfiguration().getProgress();
+    String statusDescription = configuration.isEnabled() ? taskState.getDescription() : "Disabled";
+    if (taskInfo.getCurrentState().getState().isRunning() && configuration.getProgress() != null) {
+      statusDescription += ": " + configuration.getProgress();
     }
     result.setStatusDescription(statusDescription);
     result.setSchedule(getSchedule(taskInfo.getSchedule()));
@@ -265,9 +267,9 @@ public class TaskComponent
     result.setNextRun(externalTaskState.getNextFireTime());
     result.setRunnable(taskState.isWaiting());
     result.setStoppable(taskState.isRunning());
-    result.setAlertEmail(taskInfo.getConfiguration().getAlertEmail());
-    result.setNotificationCondition(taskInfo.getConfiguration().getNotificationCondition());
-    result.setProperties(taskInfo.getConfiguration().asMap());
+    result.setAlertEmail(configuration.getAlertEmail());
+    result.setNotificationCondition(configuration.getNotificationCondition());
+    result.setProperties(configuration.asMap());
 
     Schedule schedule = taskInfo.getSchedule();
     if (schedule instanceof Once) {
@@ -297,6 +299,7 @@ public class TaskComponent
       result.setStartDate(((Cron) schedule).getStartAt());
       result.setCronExpression(((Cron) schedule).getCronExpression());
     }
+    result.setIsReadOnlyUi(configuration.getBoolean(".readOnlyUi", false));
     return result;
   }
 

@@ -15,10 +15,9 @@ package org.sonatype.nexus.blobstore.file.internal.datastore;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -56,21 +55,27 @@ public class DatastoreFileBlobDeletionIndex
 
   private final Duration migrationDelay;
 
+  private final int deletedFileCacheLimit;
+
   private FileBlobStore blobStore;
 
   private String blobStoreName;
 
-  private Deque<String> deletedRecordsCache;
+  private Iterator<BlobId> currentBatchIterator;
+
+  private Continuation<SoftDeletedBlobsData> deletionContinuation;
 
   @Inject
   public DatastoreFileBlobDeletionIndex(
       final SoftDeletedBlobsStore softDeletedBlobsStore,
       final PeriodicJobService periodicJobService,
-      @Named("${nexus.file.deletion.migrate.delay:-60s}") final Duration migrationDelay)
+      @Named("${nexus.file.deletion.migrate.delay:-60s}") final Duration migrationDelay,
+      @Named("${nexus.file.deletion.buffer.size:-1000}") final int deletedFileBufferSize)
   {
     this.softDeletedBlobsStore = checkNotNull(softDeletedBlobsStore);
     this.periodicJobService = checkNotNull(periodicJobService);
     this.migrationDelay = checkNotNull(migrationDelay);
+    this.deletedFileCacheLimit = deletedFileBufferSize;
     checkArgument(!migrationDelay.isNegative(), "Non-negative nexus.file.deletion.migrate.delay required");
   }
 
@@ -79,7 +84,6 @@ public class DatastoreFileBlobDeletionIndex
     this.blobStore = blobStore;
     this.blobStoreName = blobStore.getBlobStoreConfiguration().getName();
     scheduleMigrateIndex(metadata);
-    deletedRecordsCache = new ArrayDeque<>();
   }
 
   @Override
@@ -93,20 +97,34 @@ public class DatastoreFileBlobDeletionIndex
   }
 
   private void populateInternalCache() {
-    deletedRecordsCache.addAll(softDeletedBlobsStore.readOldestRecords(blobStoreName));
+    String token = Optional.ofNullable(deletionContinuation)
+        .filter(value -> !value.isEmpty())
+        .map(Continuation::nextContinuationToken)
+        .orElse("0");
+
+    deletionContinuation = softDeletedBlobsStore.readRecords(token,
+        Math.abs(deletedFileCacheLimit), blobStoreName);
+
+    if(!deletionContinuation.isEmpty()) {
+      currentBatchIterator = this.deletionContinuation.stream()
+          .map(value -> new BlobId(value.getBlobId(), value.getDatePathRef()))
+          .iterator();
+    } else {
+      currentBatchIterator = null;
+    }
   }
 
   @Override
-  public final String readOldestRecord() {
-    if (deletedRecordsCache.isEmpty()) {
+  public final BlobId getNextAvailableRecord() {
+    if(Objects.isNull(currentBatchIterator) || !currentBatchIterator.hasNext() ) {
       populateInternalCache();
     }
-    return deletedRecordsCache.pollFirst();
+
+    return Objects.nonNull(this.currentBatchIterator) ? currentBatchIterator.next() : null;
   }
 
   @Override
   public final void deleteRecord(final BlobId blobId) {
-    deletedRecordsCache.remove(blobId.asUniqueString());
     softDeletedBlobsStore.deleteRecord(blobStoreName, blobId);
   }
 
@@ -168,7 +186,8 @@ public class DatastoreFileBlobDeletionIndex
     if (Objects.nonNull(oldDeletionIndex) && !oldDeletionIndex.isEmpty()) {
       log.info("Processing blobstore {}, discovered file-based deletion index. Migrating to DB-based",
           blobStore.getBlobStoreConfiguration().getName());
-      Set<String> persistedRecords = getPersistedBlobIdsForBlobStore(blobStoreName);
+      Set<BlobId> persistedRecords = softDeletedBlobsStore.readAllBlobIds(blobStoreName)
+          .collect(Collectors.toSet());
 
       try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS)) {
         for (int counter = 0, numBlobs = oldDeletionIndex.size(); counter < numBlobs; counter++) {
@@ -178,9 +197,9 @@ public class DatastoreFileBlobDeletionIndex
             break;
           }
           BlobId blobId = new BlobId(new String(bytes, UTF_8));
-          if (!persistedRecords.contains(blobId.toString())) {
+          if (!persistedRecords.contains(blobId)) {
             softDeletedBlobsStore.createRecord(blobId, blobStore.getBlobStoreConfiguration().getName());
-            persistedRecords.add(blobId.toString());
+            persistedRecords.add(blobId);
           } else {
             log.debug("Old deletion index contain duplicate entry with blobId - {} for blobstore - {}, " +
                     "duplicate record will be skipped", blobId, blobStoreName);
@@ -196,18 +215,6 @@ public class DatastoreFileBlobDeletionIndex
     if (oldDeletionIndexFile.exists() && !oldDeletionIndexFile.delete()) {
       log.error("Unable to delete 'deletion index' file, path = {}", oldDeletionIndexFile.getAbsolutePath());
     }
-  }
-
-  private Set<String> getPersistedBlobIdsForBlobStore(final String blobStoreName) {
-    Set<String> persistedRecords = new HashSet<>();
-    Continuation<SoftDeletedBlobsData> page = softDeletedBlobsStore.readRecords(null, blobStoreName);
-    while (!page.isEmpty()) {
-      persistedRecords.addAll(page.stream()
-          .map(SoftDeletedBlobsData::getBlobId)
-          .collect(Collectors.toSet()));
-      page = softDeletedBlobsStore.readRecords(page.nextContinuationToken(), blobStoreName);
-    }
-    return persistedRecords;
   }
 
   private void invoke(final ThrowingRunnable callable) {

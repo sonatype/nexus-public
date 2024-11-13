@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.browse.store;
 
+import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -47,7 +48,7 @@ public class BrowseNodeData
   long parentId; // NOSONAR: internal id
 
   private boolean leaf;
-  
+
   @Nullable
   Integer dbComponentId; // NOSONAR: internal id
 
@@ -56,6 +57,12 @@ public class BrowseNodeData
 
   @Nullable
   private String packageUrl;
+
+  @Nullable
+  private Long assetCount;
+
+  @Nullable
+  private OffsetDateTime lastUpdated;
 
   // BrowseNode API
 
@@ -88,6 +95,19 @@ public class BrowseNodeData
   @Override
   public String getPackageUrl() {
     return packageUrl;
+  }
+
+  @Override
+  public Long getAssetCount() { return assetCount != null ? assetCount : 0L; }
+
+  public Long getNodeId() {
+    return nodeId;
+  }
+
+  @Nullable
+  @Override
+  public OffsetDateTime getLastUpdated() {
+    return lastUpdated;
   }
 
   // MyBatis setters + validation
@@ -133,6 +153,7 @@ public class BrowseNodeData
   public void setComponent(@Nullable final Component component) {
     if (component != null) {
       this.dbComponentId = internalComponentId(component);
+      this.lastUpdated = component.lastUpdated();
     }
     else {
       this.dbComponentId = null;
@@ -145,6 +166,7 @@ public class BrowseNodeData
   public void setAsset(@Nullable final Asset asset) {
     if (asset != null) {
       this.dbAssetId = internalAssetId(asset);
+      this.lastUpdated = asset.lastUpdated();
     }
     else {
       this.dbAssetId = null;
@@ -158,10 +180,16 @@ public class BrowseNodeData
     this.packageUrl = packageUrl;
   }
 
+  /**
+   * Sets the (optional) asset count to node.
+   */
+  public void setAssetCount(@Nullable final Long assetCount) { this.assetCount = assetCount; }
+
   @Override
   public String toString() {
     return "BrowseNode{" + "nodeId='" + nodeId + "', repositoryId='" + repositoryId + "', displayName='" + displayName +
         "', requestPath='" + requestPath + "', leaf='" + leaf + "', parentId='" + parentId + "', packageUrl='" +
-        packageUrl + "', dbComponentId='" + dbComponentId + "', dbAssetId='" + dbAssetId + "}'";
+        packageUrl + "', dbComponentId='" + dbComponentId + "', dbAssetId='" + dbAssetId + "', assetCount='" +
+        assetCount + "', lastUpdated='" + lastUpdated + "'}";
   }
 }

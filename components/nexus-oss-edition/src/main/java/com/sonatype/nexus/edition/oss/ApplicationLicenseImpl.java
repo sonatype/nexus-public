@@ -29,8 +29,9 @@ import org.sonatype.nexus.common.app.ApplicationLicense;
 @Named("OSS")
 @Singleton
 public class ApplicationLicenseImpl
-  implements ApplicationLicense
+    implements ApplicationLicense
 {
+
   /**
    * Always {@code false}.
    */

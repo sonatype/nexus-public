@@ -22,6 +22,7 @@ import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
+import org.sonatype.nexus.scheduling.events.TaskBlockedEvent;
 import org.sonatype.nexus.scheduling.events.TaskDeletedEvent;
 import org.sonatype.nexus.scheduling.events.TaskEvent;
 import org.sonatype.nexus.scheduling.events.TaskEventCanceled;
@@ -56,6 +57,7 @@ public class TaskAuditor
     registerType(TaskEventCanceled.class, "cancel-requested");
     registerType(TaskEventStoppedCanceled.class, "canceled");
     registerType(TaskDeletedEvent.class, DELETED_TYPE);
+    registerType(TaskBlockedEvent.class, "blocked");
   }
 
   @Subscribe

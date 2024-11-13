@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.repository.content.store.internal.migration;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -31,6 +31,8 @@ import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskSupport;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -136,7 +138,8 @@ public class AssetBlobRefMigrationTask
         .map(assetBlob -> (AssetBlobData) assetBlob)
         .forEach(assetBlobData -> {
           BlobRef oldBlobRef = assetBlobData.blobRef();
-          BlobRef newBlobRef = new BlobRef(oldBlobRef.getStore(), UUID.randomUUID().toString());
+          BlobRef newBlobRef = new BlobRef(
+              null, oldBlobRef.getStore(), UUID.randomUUID().toString(), oldBlobRef.getDateBasedRef());
           assetBlobData.setBlobRef(newBlobRef);
         });
   }

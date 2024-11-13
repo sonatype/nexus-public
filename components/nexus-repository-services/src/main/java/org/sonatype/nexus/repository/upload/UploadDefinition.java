@@ -30,6 +30,8 @@ public class UploadDefinition
 
   private final boolean uiUpload;
 
+  private final boolean apiUpload;
+
   private final boolean multipleUpload;
 
   private final String format;
@@ -42,12 +44,14 @@ public class UploadDefinition
 
   public UploadDefinition(final String format,
                           final boolean uiUpload,
+                          final boolean apiUpload,
                           final boolean multipleUpload,
                           final List<UploadFieldDefinition> componentFields,
                           final List<UploadFieldDefinition> assetFields,
                           final UploadRegexMap regexMap)
   {
     this.uiUpload = uiUpload;
+    this.apiUpload = apiUpload;
     this.multipleUpload = multipleUpload;
     this.format = checkNotNull(format);
     this.componentFields = Collections.unmodifiableList(checkNotNull(componentFields));
@@ -57,17 +61,25 @@ public class UploadDefinition
 
   public UploadDefinition(final String format,
                           final boolean uiUpload,
+                          final boolean apiUpload,
                           final boolean multipleUpload,
                           final List<UploadFieldDefinition> componentFields,
                           final List<UploadFieldDefinition> assetFields)
   {
-    this(format, uiUpload, multipleUpload, componentFields, assetFields, null);
+    this(format, uiUpload, apiUpload, multipleUpload, componentFields, assetFields, null);
   }
 
   /**
    * Whether uploads through the UI are allowed by the available handler.
    */
   public boolean isUiUpload() {
+    return uiUpload;
+  }
+
+  /**
+   * Whether uploads through the API are allowed by the available handler.
+   */
+  public boolean isApiUpload() {
     return uiUpload;
   }
 

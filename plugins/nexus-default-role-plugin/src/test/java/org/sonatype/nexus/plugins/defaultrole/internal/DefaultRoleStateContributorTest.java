@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
+import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.role.Role;
 
 import org.apache.shiro.subject.Subject;
@@ -50,6 +51,9 @@ public class DefaultRoleStateContributorTest
   @Mock
   private Subject subject;
 
+  @Mock
+  private RealmManager realmManager;
+
   @InjectMocks
   private DefaultRoleStateContributor underTest;
 
@@ -75,16 +79,20 @@ public class DefaultRoleStateContributorTest
 
   @Test
   public void unauthenticatedUserDoesNotGetDefaultRoleState() {
+    when(realmManager.isRealmEnabled(DefaultRoleRealm.NAME)).thenReturn(true);
     Subject subject = mock(Subject.class);
     when(subject.isAuthenticated()).thenReturn(false);
     when(subject.isRemembered()).thenReturn(false);
     setSubject(subject);
 
-    assertThat(underTest.getState(), is(emptyMap()));
+    Map<String, Object> state = underTest.getState();
+
+    assertThat(state, is(emptyMap()));
   }
 
   @Test
   public void authenticatedUserGetsTheDefaultRoleState() throws NoSuchAuthorizationManagerException {
+    when(realmManager.isRealmEnabled(DefaultRoleRealm.NAME)).thenReturn(true);
     Subject subject = mock(Subject.class);
     when(subject.isAuthenticated()).thenReturn(true);
     setSubject(subject);
@@ -96,6 +104,18 @@ public class DefaultRoleStateContributorTest
 
     assertThat(defaultRoleState.get("id"), is(defaultRole.getRoleId()));
     assertThat(defaultRoleState.get("name"), is(defaultRole.getName()));
+  }
+
+  @Test
+  public void authenticatedUserDoesNotGetTheDefaultRoleWhenDisabled() {
+    when(realmManager.isRealmEnabled(DefaultRoleRealm.NAME)).thenReturn(false);
+    Subject subject = mock(Subject.class);
+    when(subject.isAuthenticated()).thenReturn(true);
+    setSubject(subject);
+
+    Map<String, Object> state = underTest.getState();
+
+    assertThat(state, is(emptyMap()));
   }
 
   private void setSubject(Subject subject) {

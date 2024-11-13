@@ -29,12 +29,14 @@ export default {
       advancedBucketConnection: {
         endpoint: '',
         forcePathStyle: false
-      }
+      },
+      failoverBuckets: [],
+      activeRegion: null,
     }
   }),
 
   validation: (data) => {
-    const {bucket, bucketSecurity, advancedBucketConnection} = data.bucketConfiguration;
+    const {bucket, bucketSecurity, advancedBucketConnection, failoverBuckets} = data.bucketConfiguration;
     const validationErrors = {
       bucketConfiguration: {
         bucket: {
@@ -59,7 +61,8 @@ export default {
                 max: 1000000000
               }) :
               null
-        }
+        },
+        failoverBuckets: []
       }
     };
 
@@ -76,6 +79,15 @@ export default {
       validationErrors.bucketConfiguration.bucketSecurity.secretAccessKey =
           ValidationUtils.validateNotBlank(bucketSecurity?.secretAccessKey);
     }
+
+    validationErrors.bucketConfiguration.failoverBuckets = failoverBuckets?.map(failoverBucket => {
+      return {
+        region: ValidationUtils.validateNotBlank(failoverBucket.region) ||
+            (failoverBucket.region === bucket.region ? 'Replication region is the same as primary region' : null) ||
+            (failoverBucket.region === 'DEFAULT' ? 'Replication region cannot be DEFAULT' : null),
+        bucketName: ValidationUtils.validateNotBlank(failoverBucket.bucketName)
+      };
+    });
 
     return validationErrors;
   }

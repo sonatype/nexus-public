@@ -56,6 +56,7 @@ import BrowseStrings from './pages/browse/browse/BrowseStrings';
 import UpgradeAlertStrings from './UpgradeAlertStrings';
 import UpgradeTriggerModalStrings from './UpgradeTriggerModalStrings';
 import ZDUMarketingModalStrings from './ZDUMarketingModalStrings';
+import MaliciousRiskStrings  from "./pages/maliciousrisk/MaliciousRiskStrings";
 
 export default {
   ...UIStrings,
@@ -110,6 +111,9 @@ export default {
   ...LicensingStrings,
   ...NodesStrings,
   ...SystemInformationStrings,
+
+  // admin/riskvisualizer
+  ...MaliciousRiskStrings,
 
   // user
   ...AccountStrings,
