@@ -17,7 +17,7 @@
 
 export default {
   EXT: {
-    URL: '/service/extdirect',
+    URL: 'service/extdirect',
     REPOSITORY: {
       ACTION: 'coreui_Repository',
       METHODS: {
@@ -162,8 +162,7 @@ export default {
       ACTION: 'outreach_Outreach',
       METHODS: {
         READ_STATUS: 'readStatus',
-        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers',
-        SHOW_FIREWALL_ALERT: 'showFirewallAlert'
+        GET_PROXY_DOWNLOAD_NUMBERS: 'getProxyDownloadNumbers'
       }
     },
     BROWSE: {
@@ -244,7 +243,7 @@ export default {
       }
     },
     PUBLIC: {
-      BASE_URL: '/service/rest/v1/',
+      BASE_URL: 'service/rest/v1/',
       get REPOSITORIES() {
         return `${this.BASE_URL}repositories/`;
       },
@@ -305,10 +304,16 @@ export default {
       get NODE_ID() {
         return `${this.BASE_URL}system/node`;
       },
+      get MALICIOUS_RISK_SUMMARY() {
+        return `${this.BASE_URL}malicious-risk/summary`;
+      },
+      get MALICIOUS_RISK_ON_DISK() {
+        return `${this.BASE_URL}malicious-risk/risk-on-disk`;
+      },
     },
-    SYSTEM_INFORMATION: '/service/rest/atlas/system-information',
-    SYSTEM_INFORMATION_HA: '/service/rest/beta/system/information',
-    USER_TOKEN_TIMESTAMP: '/service/rest/internal/current-user/user-token/attributes',
+    SYSTEM_INFORMATION: 'service/rest/atlas/system-information',
+    SYSTEM_INFORMATION_HA: 'service/rest/beta/system/information',
+    USER_TOKEN_TIMESTAMP: 'service/rest/internal/current-user/user-token/attributes',
   },
   DEBOUNCE_DELAY: 500,
   SORT_DIRECTIONS: {

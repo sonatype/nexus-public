@@ -80,6 +80,13 @@ public interface BlobStoreManager
   boolean exists(String name);
 
   /**
+   * Returns true if a blob store with the provided name already exists in file system. Check is case-insensitive.
+   *
+   * @since 3.69
+   */
+  boolean existBlobFile(BlobId blobId, BlobStore blobStore);
+
+  /**
    * Returns the number of other blob stores that use the named blob store.
    *
    * @since 3.14

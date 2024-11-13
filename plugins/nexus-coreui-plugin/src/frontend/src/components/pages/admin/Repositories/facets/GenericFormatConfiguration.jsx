@@ -20,7 +20,7 @@ import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export const RECIPES_URL = '/service/rest/internal/ui/repositories/recipes';
+export const RECIPES_URL = 'service/rest/internal/ui/repositories/recipes';
 
 export default function GenericFormatConfiguration({parentMachine}) {
   const {current, retry, isLoading} = useSimpleMachine({

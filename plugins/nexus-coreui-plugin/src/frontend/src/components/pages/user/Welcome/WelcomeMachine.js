@@ -15,8 +15,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {assign, createMachine} from 'xstate';
-import { isNil } from 'ramda';
-import { SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS } from '@sonatype/react-shared-components';
 
 import { ExtAPIUtils, ExtJS, APIConstants } from '@sonatype/nexus-ui-plugin';
 
@@ -24,8 +22,7 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const action = APIConstants.EXT.OUTREACH.ACTION,
     outreachStatusMethod = APIConstants.EXT.OUTREACH.METHODS.READ_STATUS,
-    proxyDownloadNumbersMethod = APIConstants.EXT.OUTREACH.METHODS.GET_PROXY_DOWNLOAD_NUMBERS,
-    firewallMethod = APIConstants.EXT.OUTREACH.METHODS.SHOW_FIREWALL_ALERT;
+    proxyDownloadNumbersMethod = APIConstants.EXT.OUTREACH.METHODS.GET_PROXY_DOWNLOAD_NUMBERS;
 
 const welcomeMachine = createMachine({
   id: 'WelcomeMachine',
@@ -73,20 +70,16 @@ const welcomeMachine = createMachine({
           requiresOutreach = edition === 'OSS' || !!user,
           outreachStatusRequest = { action, method: outreachStatusMethod },
           proxyDownloadNumbersRequest = { action, method: proxyDownloadNumbersMethod },
-          firewallRequest = { action, method: firewallMethod },
-          requests = [outreachStatusRequest, proxyDownloadNumbersRequest]
-              .concat(isAdmin ? firewallRequest : []),
+          requests = [outreachStatusRequest, proxyDownloadNumbersRequest],
 
           bulkResponse = await ExtAPIUtils.extAPIBulkRequest(requests),
           outreachStatusResponse = bulkResponse.data.find(({ method }) => method === outreachStatusRequest.method),
           proxyDownloadNumbersResponse = bulkResponse.data
               .find(({ method }) => method === proxyDownloadNumbersRequest.method),
-          firewallResponse = bulkResponse.data.find(({ method }) => method === firewallRequest.method),
 
           // The ExtAPIUtils expect this extra layer of object
           wrappedOutreachStatusResponse = { data: outreachStatusResponse },
-          wrappedProxyDownloadNumbersResponse = { data: proxyDownloadNumbersResponse },
-          wrappedFirewallResponse = { data: firewallResponse };
+          wrappedProxyDownloadNumbersResponse = { data: proxyDownloadNumbersResponse };
 
       ExtAPIUtils.checkForError(wrappedOutreachStatusResponse);
 
@@ -94,13 +87,11 @@ const welcomeMachine = createMachine({
       // be enabled) or null when the iframe should be disabled
       const showOutreachIframe = requiresOutreach &&
               Boolean(outreachStatusResponse?.result?.success) && outreachStatusResponse?.result?.data !== null,
-          proxyDownloadNumberParams = ExtAPIUtils.extractResult(wrappedProxyDownloadNumbersResponse),
-          firewallDisclaimer = isAdmin ? ExtAPIUtils.extractResult(wrappedFirewallResponse) : null;
+          proxyDownloadNumberParams = ExtAPIUtils.extractResult(wrappedProxyDownloadNumbersResponse);
 
       return {
         showOutreachIframe,
         proxyDownloadNumberParams,
-        showFirewallAlert: isNil(firewallDisclaimer) ? false : JSON.parse(firewallDisclaimer),
       };
     }
   }

@@ -168,6 +168,22 @@ public class SecurityRule
     return null;
   }
 
+  public User addRole(final String userId, final String... roleIds)
+      throws UserNotFoundException, NoSuchUserManagerException
+  {
+    User user = getUser(userId);
+    if (user == null) {
+      throw new UserNotFoundException(userId);
+    }
+    Set<RoleIdentifier> roles = Arrays.stream(roleIds)
+        .map(it -> getRole(it))
+        .map(it -> new RoleIdentifier(it.getSource(), it.getRoleId()))
+        .collect(Collectors.toSet());
+    user.setRoles(roles);
+    securitySystemProvider.get().updateUser(user);
+    return user;
+  }
+
   public User getUser(final String userId) {
     try {
       return securitySystemProvider.get().getUser(userId, DEFAULT_SOURCE);

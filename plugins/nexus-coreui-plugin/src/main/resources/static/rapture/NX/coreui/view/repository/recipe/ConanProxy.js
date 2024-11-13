@@ -30,7 +30,8 @@ Ext.define('NX.coreui.view.repository.recipe.ConanProxy', {
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
     'NX.coreui.view.repository.facet.HttpClientFacet',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet',
+    'NX.coreui.view.repository.facet.ConanProxyFacet'
   ],
 
   /**
@@ -40,6 +41,7 @@ Ext.define('NX.coreui.view.repository.recipe.ConanProxy', {
     var me = this;
 
     me.items = [
+      {xtype: 'nx-coreui-repository-conanproxy-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-negativecache-facet'},
@@ -49,5 +51,6 @@ Ext.define('NX.coreui.view.repository.recipe.ConanProxy', {
     ];
 
     me.callParent();
+    me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_ProxyFacet_Conan_Remote_HelpText'));
   }
 });

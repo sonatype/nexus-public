@@ -14,19 +14,23 @@ package org.sonatype.nexus.internal.httpclient
 
 import org.sonatype.goodies.common.Time
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.crypto.secrets.Secret
+import org.sonatype.nexus.crypto.secrets.SecretDeserializer
+import org.sonatype.nexus.crypto.secrets.SecretsFactory
+import org.sonatype.nexus.datastore.mybatis.OverrideIgnoreTypeIntrospector
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
-import org.sonatype.nexus.security.PasswordHelper
 
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
+import com.google.common.collect.ImmutableList
 import groovy.transform.ToString
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
-import static org.mockito.Mockito.*
+import static org.mockito.Mockito.when
 
 /**
  * Tests for {@link AuthenticationConfigurationDeserializer}.
@@ -34,16 +38,20 @@ import static org.mockito.Mockito.*
 class AuthenticationConfigurationDeserializerTest
     extends TestSupport
 {
-  @Mock
-  PasswordHelper passwordHelper
-
   private ObjectMapper objectMapper
+
+  @Mock
+  private Secret secret
+
+  @Mock
+  private SecretsFactory secretsFactory
+
 
   @Before
   void setUp() {
-    when(passwordHelper.encrypt(anyString())).then({ it.arguments[0] != null ? 'encrypted:' + it.arguments[0] : null })
-    when(passwordHelper.tryDecrypt(anyString())).then({ it.arguments[0] ==~ /encrypted:.*/ ? it.arguments[0].substring(10) : it.arguments[0] })
-    objectMapper = new ObjectMapper().registerModule(
+    objectMapper = new ObjectMapper()
+        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(ImmutableList.of(Secret.class)))
+        .registerModule(
         new SimpleModule().addSerializer(
             Time.class,
             new SecondsSerializer()
@@ -52,11 +60,11 @@ class AuthenticationConfigurationDeserializerTest
             new SecondsDeserializer()
         ).addSerializer(
             AuthenticationConfiguration.class,
-            new AuthenticationConfigurationSerializer(passwordHelper)
+            new AuthenticationConfigurationSerializer()
         ).addDeserializer(
             AuthenticationConfiguration.class,
-            new AuthenticationConfigurationDeserializer(passwordHelper)
-        )
+            new AuthenticationConfigurationDeserializer()
+        ).addDeserializer(Secret.class, new SecretDeserializer(secretsFactory))
     )
   }
 
@@ -68,8 +76,11 @@ class AuthenticationConfigurationDeserializerTest
 
   @Test
   void 'read username'() {
+    when(secret.getId()).thenReturn('admin123')
+    when(secretsFactory.from('admin123')).thenReturn(secret)
+
     def example = new AuthContainer(auth:
-        new UsernameAuthenticationConfiguration(username: 'admin', password: 'admin123')
+        new UsernameAuthenticationConfiguration(username: 'admin', password: secret)
     )
 
     def json = objectMapper.writeValueAsString(example)
@@ -78,7 +89,6 @@ class AuthenticationConfigurationDeserializerTest
     assert json.contains('username')
     assert json.contains('admin')
     assert json.contains('password')
-    assert json.contains('encrypted:admin123')
 
     def obj = objectMapper.readValue(json, AuthContainer.class)
     log obj
@@ -90,7 +100,7 @@ class AuthenticationConfigurationDeserializerTest
 
     UsernameAuthenticationConfiguration target = obj.auth as UsernameAuthenticationConfiguration
     assert target.username == 'admin'
-    assert target.password == 'admin123'
+    assert target.password == secret
   }
 
   @Test(expected = JsonMappingException.class)

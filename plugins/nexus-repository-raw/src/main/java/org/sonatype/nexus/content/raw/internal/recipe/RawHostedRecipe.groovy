@@ -63,7 +63,6 @@ class RawHostedRecipe
     repository.attach(maintenanceFacet.get())
     repository.attach(searchFacet.get())
     repository.attach(browseFacet.get())
-    repository.attach(replicationFacet.get())
   }
 
   /**

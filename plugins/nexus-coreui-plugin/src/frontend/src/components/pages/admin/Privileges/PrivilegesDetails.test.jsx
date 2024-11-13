@@ -483,13 +483,13 @@ describe('PrivilegesDetails', function() {
   });
 
   it('uses proper urls', function() {
-    expect(privilegesUrl).toBe('/service/rest/v1/security/privileges');
+    expect(privilegesUrl).toBe('service/rest/v1/security/privileges');
 
-    expect(singlePrivilegeUrl('testId')).toBe('/service/rest/v1/security/privileges/testId');
-    expect(singlePrivilegeUrl('a.b_c-d')).toBe('/service/rest/v1/security/privileges/a.b_c-d');
+    expect(singlePrivilegeUrl('testId')).toBe('service/rest/v1/security/privileges/testId');
+    expect(singlePrivilegeUrl('a.b_c-d')).toBe('service/rest/v1/security/privileges/a.b_c-d');
 
-    expect(updatePrivilegeUrl('repository-admin','test')).toBe('/service/rest/v1/security/privileges/repository-admin/test');
-    expect(createPrivilegeUrl('repository-admin')).toBe('/service/rest/v1/security/privileges/repository-admin');
+    expect(updatePrivilegeUrl('repository-admin','test')).toBe('service/rest/v1/security/privileges/repository-admin/test');
+    expect(createPrivilegeUrl('repository-admin')).toBe('service/rest/v1/security/privileges/repository-admin');
   });
 });
 

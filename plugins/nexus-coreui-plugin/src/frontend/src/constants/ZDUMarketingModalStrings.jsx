@@ -16,7 +16,7 @@ import {NxTextLink} from '@sonatype/react-shared-components';
 export default {
   UPGRADE_MODAL: {
     HEADER: {
-      TITLE: 'New In Nexus Repository 3.69.0',
+      TITLE: 'New In Nexus Repository 3.71.0',
     },
     ABOUT: {
       TITLE: 'Upgrade Without Downtime',
@@ -25,7 +25,7 @@ export default {
     },
     BENEFITS: {
       TITLE: 'Benefits:',
-      NOTES: <>See the <NxTextLink external href="https://links.sonatype.com/products/nexus/releasenotes">Nexus Repository 3.69.0 Release notes</NxTextLink> for full details.</>,
+      NOTES: <>See the <NxTextLink external href="https://links.sonatype.com/products/nexus/releasenotes">Nexus Repository 3.71.0 Release notes</NxTextLink> for full details.</>,
       LIST: {
         ITEM1: 'Fast access to bug fixes and new features when you upgrade to the newest Nexus Repository version',
         ITEM2: 'No downtime means your team can keep working while an upgrade takes place',

@@ -49,4 +49,11 @@ public interface ConfigurationStore
    * Note: Underlying implementations may return {@code false} if unsupported.
    */
   boolean exists(String repositoryName);
+
+  /**
+   * Read all repository configuration by given {@code recipeName}
+   * @param recipeName recipe name for collecting configurations
+   * @return configurations filtered by {@code recipeName}
+   */
+  Collection<Configuration> readByRecipe(String recipeName);
 }

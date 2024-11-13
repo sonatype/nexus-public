@@ -50,6 +50,15 @@
     ORDER BY asset_blob_id LIMIT #{limit};
   </select>
 
+  <select id="browseAssetBlobsWithinDuration" resultType="AssetBlobData">
+    SELECT * FROM ${format}_asset_blob
+    WHERE added_to_repository BETWEEN #{end} AND #{start}
+    <if test="continuationToken != null">
+      AND asset_blob_id > #{continuationToken}
+    </if>
+    ORDER BY asset_blob_id LIMIT #{limit};
+  </select>
+
   <select id="browseUnusedAssetBlobs" resultType="AssetBlobData">
     SELECT B.* FROM ${format}_asset_blob B LEFT JOIN ${format}_asset A
         USING (asset_blob_id)
@@ -123,10 +132,10 @@
     UPDATE ${format}_asset_blob SET checksums = #{checksums}
     WHERE blob_ref = #{blobRef};
   </update>
-  
+
   <select id="browseAssetsWithLegacyBlobRef" resultType="AssetBlobData">
     SELECT * FROM ${format}_asset_blob
-    WHERE blob_ref LIKE '%:%'
+    WHERE blob_ref LIKE '%:%' AND blob_ref NOT LIKE '%@%@%'
     <if test="continuationToken != null">
       AND asset_blob_id > #{continuationToken}
     </if>
@@ -149,6 +158,22 @@
 
   <select id="countNotMigratedAssetBlobs" resultType="int">
     SELECT COUNT(*) FROM ${format}_asset_blob
-    WHERE blob_ref LIKE '%:%'
+    WHERE blob_ref LIKE '%:%' AND blob_ref NOT LIKE '%@%@%'
+  </select>
+
+  <select id="getRepositoryName" resultType="String">
+    SELECT r.name
+    FROM ${format}_asset a
+    JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
+    JOIN ${format}_content_repository cr ON cr.repository_id = a.repository_id
+    JOIN repository r ON r.id = cr.config_repository_id
+    WHERE ab.blob_ref LIKE CONCAT(CAST(#{blobRef} AS VARCHAR), '%');
+  </select>
+
+  <select id="getPathByBlobRef" resultType="String">
+    SELECT a.path
+    FROM ${format}_asset a
+    JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
+    WHERE ab.blob_ref LIKE CONCAT(CAST(#{blobRef} AS VARCHAR), '%');
   </select>
 </mapper>

@@ -12,18 +12,10 @@
  */
 package org.sonatype.nexus.blobstore.file;
 
-import java.io.ByteArrayInputStream;
 import java.time.Duration;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.file.internal.SoftDeletedBlobsStoreImpl;
 import org.sonatype.nexus.blobstore.file.internal.datastore.DatastoreFileBlobDeletionIndex;
-import org.sonatype.nexus.blobstore.file.internal.orient.OrientFileBlobDeletionIndex;
-import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData;
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
 import org.sonatype.nexus.blobstore.file.store.internal.SoftDeletedBlobsDAO;
 import org.sonatype.nexus.common.event.EventManager;
@@ -33,24 +25,16 @@ import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.transaction.TransactionModule;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Provides;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.DIRECT_PATH_BLOB_HEADER;
 
 /**
  * {@link FileBlobStore} integration tests.
@@ -98,45 +82,7 @@ public class DatastoreFileBlobStoreIT
       }).getInstance(SoftDeletedBlobsStoreImpl.class);
     }
 
-    return new DatastoreFileBlobDeletionIndex(store, periodicJobService, Duration.ofSeconds(1));
+    return new DatastoreFileBlobDeletionIndex(store, periodicJobService, Duration.ofSeconds(1), 100);
   }
 
-  @Test
-  public void testDeletedIndexMigrationFromOrient() throws Exception {
-    BlobStore underTest = createBlobStore("migration-test", new OrientFileBlobDeletionIndex());
-
-    // Delete multiple blobs to populate the index
-    byte[] content = randomBytes();
-    Blob blob1 = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
-        CREATED_BY_HEADER, "test",
-        BLOB_NAME_HEADER, "health-check/repositoryName/bundle1.gz",
-        DIRECT_PATH_BLOB_HEADER, "true"
-    ));
-    underTest.delete(blob1.getId(), "deleted");
-
-    Blob blob2 = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
-        CREATED_BY_HEADER, "test",
-        BLOB_NAME_HEADER, "health-check/repositoryName/bundle2.gz",
-        DIRECT_PATH_BLOB_HEADER, "true"
-    ));
-    underTest.delete(blob2.getId(), "deleted");
-
-    underTest.stop();
-
-    // Change the NodeID so the file doesn't match the current node.
-    when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
-
-    // User has upgraded to SQL
-    underTest = createBlobStore("migration-test", fileBlobDeletionIndex());
-
-    List<String> storedBlobIds = store.readRecords(null, "migration-test").stream()
-        .map(SoftDeletedBlobsData::getBlobId)
-        .collect(Collectors.toList());
-
-    assertThat(storedBlobIds, containsInAnyOrder(blob1.getId().toString(), blob2.getId().toString()));
-
-    underTest.stop();
-
-    underTest.remove();
-  }
 }

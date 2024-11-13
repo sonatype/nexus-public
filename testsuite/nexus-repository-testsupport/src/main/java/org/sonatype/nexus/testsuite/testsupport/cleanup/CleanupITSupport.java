@@ -49,10 +49,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PRERELEASE_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
 import static org.sonatype.nexus.scheduling.TaskState.WAITING;
 
 /**
@@ -144,7 +144,7 @@ public class CleanupITSupport
 
   protected void setPolicyToBeRegex(final Repository repository, final String regex) throws Exception {
     String updatedRegex = regex;
-    if (isNewDb() && regex.charAt(0) >= 'a' && regex.charAt(0) <= 'z') {
+    if (regex.charAt(0) >= 'a' && regex.charAt(0) <= 'z') {
       updatedRegex = '/' + regex;
     }
     createOrUpdatePolicyWithCriteria(repository.getFormat().getValue(), ImmutableMap.of(REGEX_KEY, updatedRegex));

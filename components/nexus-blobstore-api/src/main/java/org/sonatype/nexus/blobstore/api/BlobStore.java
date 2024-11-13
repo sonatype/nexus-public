@@ -15,10 +15,12 @@ package org.sonatype.nexus.blobstore.api;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -143,6 +145,25 @@ public interface BlobStore
   Blob create(Path sourceFile, Map<String, String> headers, long size, HashCode sha1);
 
   /**
+   * Creates the new blob attributes
+   *
+   * @param blobId      the blob id
+   * @param headers     the headers of the blob, {@see BlobStore}
+   * @param blobMetrics blob metrics
+   */
+  default void createBlobAttributes(BlobId blobId, Map<String, String> headers, BlobMetrics blobMetrics) { }
+
+
+  /**
+   * Creates the new blob attributes instance
+   *
+   * @param blobId      the blob id
+   * @param headers     the headers of the blob, {@see BlobStore}
+   * @param metrics blob metrics
+   */
+  BlobAttributes createBlobAttributesInstance(BlobId blobId, Map<String, String> headers, BlobMetrics metrics);
+
+  /**
    * Duplicates a blob within the blob store by copying the temp blob but with the provided headers. The blob must be
    * in this blob store; moving blobs between blob stores is not supported.
    *
@@ -182,6 +203,20 @@ public interface BlobStore
   boolean exists(BlobId blobId);
 
   /**
+   * Performs a simple existence check for {@code .bytes} for given {@code blobId}.
+   *
+   * @return {@code true} if it exists and {@code false} if it does not.
+   */
+  boolean bytesExists(BlobId blobId);
+
+  /**
+   * Performs a simple existence and empty size check for {@code .bytes} for given {@code blobId}.
+   *
+   * @return {@code true} if the blobstore is exists and empty {@code false} if it does not.
+   */
+  boolean isBlobEmpty(BlobId blobId);
+
+  /**
    * Removes a blob from the blob store.  This may not immediately delete the blob from the underlying storage
    * mechanism, but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
    *
@@ -204,7 +239,7 @@ public interface BlobStore
    * and, if not supported, expect a {@link UnsupportedOperationException}
    * </p>
    */
-  BlobStoreMetricsService getMetricsService();
+  <B extends BlobStore> BlobStoreMetricsService<B> getMetricsService();
 
   /**
    * Provides an immutable snapshot of metrics about the BlobStore's usage.
@@ -260,11 +295,9 @@ public interface BlobStore
   Stream<BlobId> getBlobIdStream();
 
   /**
-   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated since the given number of days.
-   *
-   * @since 3.31
+   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the provided duration.
    */
-  Stream<BlobId> getBlobIdUpdatedSinceStream(int sinceDays);
+  Stream<BlobId> getBlobIdUpdatedSinceStream(Duration duration);
 
   /**
    * Get a {@link Stream} of direct-path {@link BlobId}s under the specified path prefix.

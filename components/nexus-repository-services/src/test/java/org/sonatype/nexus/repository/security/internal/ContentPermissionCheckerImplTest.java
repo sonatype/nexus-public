@@ -22,7 +22,6 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.JexlSelector;
-import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
@@ -36,6 +35,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -59,11 +59,12 @@ public class ContentPermissionCheckerImplTest
   public void setup() {
     impl = new ContentPermissionCheckerImpl(securityHelper, selectorManager);
 
-    config = new OrientSelectorConfiguration();
-    config.setName("selector");
-    config.setDescription("selector");
-    config.setType(JexlSelector.TYPE);
-    config.setAttributes(Collections.singletonMap("expression", "true"));
+    config = mock(SelectorConfiguration.class);
+    when(config.getName()).thenReturn("selector");
+    when(config.getDescription()).thenReturn("selector");
+    when(config.getType()).thenReturn(JexlSelector.TYPE);
+    when(config.getAttributes()).thenReturn(Collections.singletonMap("expression", "true"));
+
   }
 
   @Test

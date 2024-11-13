@@ -17,14 +17,18 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
 import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.scheduling.Cancelable;
+import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
+import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.ElasticsearchException;
 
 import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTaskDescriptor.REPOSITORY_NAMES_FIELD_ID;
 
 /**
@@ -41,15 +45,28 @@ public class SearchUpdateTask
 
   private final SearchUpdateService searchUpdateService;
 
+  private final TaskScheduler taskScheduler;
+
   @Inject
   public SearchUpdateTask(final RepositoryManager repositoryManager,
-                          final SearchUpdateService searchUpdateService) {
+                          final SearchUpdateService searchUpdateService,
+                          final TaskScheduler taskScheduler) {
     this.repositoryManager = requireNonNull(repositoryManager);
     this.searchUpdateService = requireNonNull(searchUpdateService);
+    this.taskScheduler = taskScheduler;
   }
 
   @Override
   protected Object execute() {
+    if (taskScheduler.findWaitingTask(RebuildIndexTaskDescriptor.TYPE_ID,
+        ImmutableMap.of(RebuildIndexTaskDescriptor.REPOSITORY_NAME_FIELD_ID, ALL_REPOSITORIES))) {
+      log.info("A task of type {} is already scheduled for all repositories, cancelling task {} ",
+          RebuildIndexTaskDescriptor.TYPE_ID, SearchUpdateTaskDescriptor.TYPE_ID);
+      taskScheduler.cancel(SearchUpdateTaskDescriptor.TYPE_ID, true);
+
+      return null;
+    }
+
     String[] repositoryNames = getRepositoryNamesField();
 
     for(String name : repositoryNames) {

@@ -87,7 +87,10 @@ public class UploadManagerImpl
   {
     this.uploadHandlers = checkNotNull(uploadHandlers);
     this.uploadDefinitions = Collections
-        .unmodifiableList(uploadHandlers.values().stream().map(UploadHandler::getDefinition).collect(toList()));
+        .unmodifiableList(uploadHandlers.values().stream()
+            .filter(UploadHandler::supportsApiUpload)
+            .map(UploadHandler::getDefinition)
+            .collect(toList()));
     this.multipartHelper = checkNotNull(multipartHelper);
     this.uploadComponentProcessor = checkNotNull(uploadComponentProcessor);
     this.eventManager = checkNotNull(eventManager);

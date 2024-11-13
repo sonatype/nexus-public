@@ -143,7 +143,7 @@ public class DefaultCapabilityReferenceTest
         capability
     );
 
-    underTest.create(Collections.<String, String>emptyMap());
+    underTest.create(Collections.<String, String>emptyMap(), Collections.emptyMap());
   }
 
   /**
@@ -281,7 +281,7 @@ public class DefaultCapabilityReferenceTest
     assertThat(underTest.isEnabled(), is(true));
     assertThat(underTest.isActive(), is(false));
 
-    underTest.update(properties, previousProperties);
+    underTest.update(properties, previousProperties, properties);
     verify(capability).onUpdate();
     assertThat(underTest.isEnabled(), is(true));
     assertThat(underTest.isActive(), is(false));
@@ -302,7 +302,7 @@ public class DefaultCapabilityReferenceTest
     assertThat(underTest.isEnabled(), is(true));
     assertThat(underTest.isActive(), is(true));
 
-    underTest.update(properties, previousProperties);
+    underTest.update(properties, previousProperties, properties);
     verify(capability).onUpdate();
     assertThat(underTest.isEnabled(), is(true));
     assertThat(underTest.isActive(), is(false));
@@ -333,7 +333,7 @@ public class DefaultCapabilityReferenceTest
         capability
     );
     final HashMap<String, String> properties = new HashMap<String, String>();
-    underTest.load(properties);
+    underTest.load(properties, properties);
 
     verify(capability).onLoad();
   }
@@ -346,7 +346,7 @@ public class DefaultCapabilityReferenceTest
     final HashMap<String, String> properties = new HashMap<String, String>();
     properties.put("p", "p");
     final HashMap<String, String> previousProperties = new HashMap<String, String>();
-    underTest.update(properties, previousProperties);
+    underTest.update(properties, previousProperties, properties);
     verify(capability).onUpdate();
   }
 
@@ -359,7 +359,7 @@ public class DefaultCapabilityReferenceTest
     final HashMap<String, String> properties = new HashMap<String, String>();
     final HashMap<String, String> previousProperties = new HashMap<String, String>();
     doThrow(new AssertionError("Update not expected to be called")).when(capability).onUpdate();
-    underTest.update(properties, previousProperties);
+    underTest.update(properties, previousProperties, properties);
   }
 
   /**

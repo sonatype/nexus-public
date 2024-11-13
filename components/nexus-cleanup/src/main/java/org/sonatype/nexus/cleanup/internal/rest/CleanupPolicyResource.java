@@ -52,7 +52,7 @@ import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyCreatedEvent;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyDeletedEvent;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyUpdatedEvent;
-import org.sonatype.nexus.cleanup.internal.preview.CSVCleanupPreviewContentWriter;
+import org.sonatype.nexus.cleanup.internal.preview.CsvCleanupPreviewContentWriter;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.rest.CleanupPolicyRequestValidator;
 import org.sonatype.nexus.cleanup.rest.CleanupPolicyXO;
@@ -113,11 +113,11 @@ public class CleanupPolicyResource
     extends ComponentSupport
     implements Resource
 {
-  private static final int PREVIEW_ITEM_COUNT = 50;
-
   protected static final String RESOURCE_URI = INTERNAL_API_PREFIX + "/cleanup-policies";
 
   protected static final String MODE_DELETE = "delete";
+
+  private static final int PREVIEW_ITEM_COUNT = 50;
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
@@ -137,7 +137,7 @@ public class CleanupPolicyResource
 
   private final boolean isPreviewEnabled;
 
-  private final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
+  private final CsvCleanupPreviewContentWriter csvCleanupPreviewContentWriter;
 
   private final Collection<CleanupPolicyRequestValidator> cleanupPolicyValidators;
 
@@ -150,7 +150,7 @@ public class CleanupPolicyResource
       final RepositoryManager repositoryManager,
       final EventManager eventManager,
       @Named(CLEANUP_PREVIEW_ENABLED_NAMED) final boolean isPreviewEnabled,
-      final CSVCleanupPreviewContentWriter csvCleanupPreviewContentWriter,
+      final CsvCleanupPreviewContentWriter csvCleanupPreviewContentWriter,
       final Collection<CleanupPolicyRequestValidator> cleanupPolicyValidators)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
@@ -175,7 +175,7 @@ public class CleanupPolicyResource
         ? cleanupPolicyStorage.getAll()
         : cleanupPolicyStorage.getAllByFormat(format);
     return policies.stream().map(cleanupPolicy -> CleanupPolicyXO.fromCleanupPolicy(cleanupPolicy,
-        (int) repositoryManager.browseForCleanupPolicy(cleanupPolicy.getName()).count()))
+            (int) repositoryManager.browseForCleanupPolicy(cleanupPolicy.getName()).count()))
         .sorted(Comparator.comparing(CleanupPolicyXO::getName)).collect(toList());
   }
 
@@ -185,14 +185,16 @@ public class CleanupPolicyResource
   @Validate(groups = {Create.class, Default.class})
   public CleanupPolicyXO add(@Valid final CleanupPolicyXO cleanupPolicyXO) {
     if (!this.formatNames.contains(cleanupPolicyXO.getFormat())) {
-      throw new ValidationErrorsException("format", "specified format " + cleanupPolicyXO.getFormat() + " is not valid.");
+      throw new ValidationErrorsException("format",
+          "specified format " + cleanupPolicyXO.getFormat() + " is not valid.");
     }
 
     for (CleanupPolicyRequestValidator validator : cleanupPolicyValidators) {
       validator.validate(cleanupPolicyXO);
     }
 
-    CleanupPolicyXO cleanupXO = CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.add(toCleanupPolicy(cleanupPolicyXO)), 0);
+    CleanupPolicyXO cleanupXO =
+        CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.add(toCleanupPolicy(cleanupPolicyXO)), 0);
     eventManager.post(new CleanupPolicyCreatedEvent(toCleanupPolicy(cleanupXO)));
     return cleanupXO;
   }
@@ -228,7 +230,8 @@ public class CleanupPolicyResource
     }
 
     if (!this.formatNames.contains(cleanupPolicyXO.getFormat())) {
-      throw new ValidationErrorsException("format", "specified format " + cleanupPolicyXO.getFormat() + " is not valid.");
+      throw new ValidationErrorsException("format",
+          "specified format " + cleanupPolicyXO.getFormat() + " is not valid.");
     }
 
     int inUseCount = (int) repositoryManager.browseForCleanupPolicy(name).count();
@@ -246,7 +249,8 @@ public class CleanupPolicyResource
     cleanupPolicy.setFormat(cleanupPolicyXO.getFormat());
     cleanupPolicy.setCriteria(toCriteriaMap(cleanupPolicyXO));
 
-    CleanupPolicyXO cleanupXO = CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.update(cleanupPolicy), inUseCount);
+    CleanupPolicyXO cleanupXO =
+        CleanupPolicyXO.fromCleanupPolicy(cleanupPolicyStorage.update(cleanupPolicy), inUseCount);
     eventManager.post(new CleanupPolicyUpdatedEvent(cleanupPolicy));
     return cleanupXO;
   }
@@ -319,7 +323,8 @@ public class CleanupPolicyResource
       PagedResponse<ComponentXO> response = cleanupPreviewHelper.get().getSearchResults(xo, repository, options);
 
       return new PageResult<>(response.getTotal(), new ArrayList<>(response.getData()));
-    } catch (IllegalArgumentException e) {
+    }
+    catch (IllegalArgumentException e) {
       throw new ValidationErrorsException("filter", e.getMessage());
     }
   }
@@ -331,14 +336,14 @@ public class CleanupPolicyResource
   @Produces(APPLICATION_OCTET_STREAM)
   @Timed
   public Response previewContentCsv(
-          @QueryParam("name") @Nullable String name,
-          @QueryParam("repository") String repositoryName,
-          @QueryParam("criteriaLastBlobUpdated") @Nullable Integer criteriaLastBlobUpdated,
-          @QueryParam("criteriaLastDownloaded") @Nullable Integer criteriaLastDownloaded,
-          @QueryParam("criteriaReleaseType") @Nullable CleanupPolicyReleaseType criteriaReleaseType,
-          @QueryParam("criteriaAssetRegex") @Nullable String criteriaAssetRegex,
-          @QueryParam("criteriaRetain") @Nullable Integer criteriaRetain,
-          @QueryParam("criteriaSortBy") @Nullable String criteriaSortBy
+      @QueryParam("name") @Nullable String name,
+      @QueryParam("repository") String repositoryName,
+      @QueryParam("criteriaLastBlobUpdated") @Nullable Integer criteriaLastBlobUpdated,
+      @QueryParam("criteriaLastDownloaded") @Nullable Integer criteriaLastDownloaded,
+      @QueryParam("criteriaReleaseType") @Nullable CleanupPolicyReleaseType criteriaReleaseType,
+      @QueryParam("criteriaAssetRegex") @Nullable String criteriaAssetRegex,
+      @QueryParam("criteriaRetain") @Nullable Integer criteriaRetain,
+      @QueryParam("criteriaSortBy") @Nullable String criteriaSortBy
   )
   {
 
@@ -462,7 +467,7 @@ public class CleanupPolicyResource
       }
       else {
         throw new BadRequestException(
-            "Specified format " + format + " does not support the '" + keyText + "' criteria.");
+            String.format("Specified format %s does not support the '%s' criteria.", format, keyText));
       }
     }
   }

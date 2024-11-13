@@ -158,7 +158,7 @@ public class ConfiguredUsersUserManager
   }
 
   @Override
-  public boolean isRealmConfigured() {
+  public boolean isConfigured() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 }

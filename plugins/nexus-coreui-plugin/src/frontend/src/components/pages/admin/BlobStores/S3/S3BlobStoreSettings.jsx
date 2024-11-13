@@ -13,27 +13,37 @@
 import React from 'react';
 import {useService} from '@xstate/react';
 
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import {
   NxAccordion,
+  NxButton,
   NxCheckbox,
   NxFieldset,
+  NxFontAwesomeIcon,
   NxFormGroup,
   NxFormSelect,
+  NxReadOnly,
   NxStatefulAccordion,
-  NxTextInput
+  NxTextInput,
+  NxWarningAlert
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings'
 
 import './S3BlobStoreSettings.scss';
+import {faExclamationCircle, faPlus} from '@fortawesome/free-solid-svg-icons';
+import S3FailoverBucket from './S3FailoverBucket';
 
 const FIELDS = UIStrings.S3_BLOBSTORE_CONFIGURATION;
+const MAX_REPLICATION_BUCKETS = 5;
 
 export default function S3BlobStoreSettings({service}) {
   const [current, send] = useService(service);
   const {bucketConfiguration} = current.context.data;
+  const pristineBucketConfig = current.context.pristineData.bucketConfiguration;
+  const activeRegion = pristineBucketConfig.activeRegion;
+  const hasActiveRegion = Boolean(activeRegion);
   const {dropDownValues} = current.context.type;
   const hasAuthenticationSettings = Boolean(bucketConfiguration.bucketSecurity?.accessKeyId);
   const hasEncryptionSettings =
@@ -43,6 +53,11 @@ export default function S3BlobStoreSettings({service}) {
       Boolean(bucketConfiguration.advancedBucketConnection?.endpoint) ||
       Boolean(bucketConfiguration.advancedBucketConnection?.signerType) ||
       bucketConfiguration.advancedBucketConnection?.forcePathStyle;
+  const hasFailoverBucketSettings =
+      Boolean(bucketConfiguration.failoverBuckets?.length > 0);
+  const isPrimaryRegionActive = activeRegion === pristineBucketConfig.bucket?.region;
+  const isFailoverAvailable = ExtJS.state().getValue('S3FailoverEnabled', false);
+  const showPrimaryRegionInactiveMessage = hasActiveRegion && isFailoverAvailable && !isPrimaryRegionActive;
 
   function bucketField(field) {
     return `bucketConfiguration.bucket.${field}`;
@@ -60,18 +75,63 @@ export default function S3BlobStoreSettings({service}) {
     return `bucketConfiguration.advancedBucketConnection.${field}`;
   }
 
+  function failoverBucketsField(index, field) {
+    return ['bucketConfiguration', 'failoverBuckets', index, field];
+  }
+
+  function handleAddFailoverBucket() {
+    send({
+      type: 'UPDATE',
+      name: 'bucketConfiguration.failoverBuckets',
+      value: bucketConfiguration.failoverBuckets.concat({})
+    });
+  }
+
+  function handleDeleteFailoverBucket(index) {
+    send({
+      type: 'UPDATE',
+      name: 'bucketConfiguration.failoverBuckets',
+      value: bucketConfiguration.failoverBuckets.filter((_, i) => i !== index)
+    });
+  }
+
+  function getSelectedRegions() {
+    const principalRegion = current.context.data.bucketConfiguration?.bucket?.region;
+    const failoverRegions = current.context.data.bucketConfiguration?.failoverBuckets?.map(bucket => bucket.region);
+    return [principalRegion, ...failoverRegions];
+  }
+
   return <div className="nxrm-s3-blobstore">
+    { (isFailoverAvailable && hasActiveRegion) &&
+        <NxReadOnly>
+          <NxReadOnly.Label>{FIELDS.S3BlobStore_RegionStatus_FieldLabel}</NxReadOnly.Label>
+          <div className="nxrm-active-region-section">
+            <NxReadOnly.Data>{FIELDS.S3BlobStore_RegionStatus_InUseText}</NxReadOnly.Data>
+            <NxReadOnly.Data className="s3-in-use-region">{activeRegion}</NxReadOnly.Data>
+            <NxReadOnly.Data>
+              {isPrimaryRegionActive ? FIELDS.S3BlobStore_RegionStatus_PrimaryRegionText : FIELDS.S3BlobStore_RegionStatus_FailoverRegionText}
+            </NxReadOnly.Data>
+          </div>
+        </NxReadOnly>
+    }
     <NxFormGroup
         label={FIELDS.S3BlobStore_Region_FieldLabel}
         sublabel={FIELDS.S3BlobStore_Region_HelpText}
+        className={showPrimaryRegionInactiveMessage ? "nxrm-s3-region-select-message": ""}
     >
       <NxFormSelect {...FormUtils.fieldProps(bucketField('region'), current)}
-              onChange={FormUtils.handleUpdate(bucketField('region'), send)}>
+                    onChange={FormUtils.handleUpdate(bucketField('region'), send)}>
         {dropDownValues?.regions?.map(region =>
             <option key={region.id} value={region.id}>{region.name}</option>
         )}
       </NxFormSelect>
     </NxFormGroup>
+    {showPrimaryRegionInactiveMessage &&
+        <NxReadOnly id="nxrm-inactive-region" className="nxrm-inactive-region-message">
+          <NxFontAwesomeIcon icon={faExclamationCircle}/>
+          <NxReadOnly.Data>{FIELDS.S3BlobStore_Region_PrimaryRegionInactiveText}</NxReadOnly.Data>
+        </NxReadOnly>
+    }
     <NxFormGroup
         label={FIELDS.S3BlobStore_Bucket_FieldLabel}
         sublabel={FIELDS.S3BlobStore_Bucket_HelpText}
@@ -192,5 +252,37 @@ export default function S3BlobStoreSettings({service}) {
         </NxCheckbox>
       </NxFieldset>
     </NxStatefulAccordion>
+    {isFailoverAvailable &&
+        <NxStatefulAccordion defaultOpen={hasFailoverBucketSettings}>
+          <NxAccordion.Header>
+            <h2 className="nx-accordion__header-title">{FIELDS.S3BlobStore_ReplicationBucketsSettings_Title}</h2>
+          </NxAccordion.Header>
+          {bucketConfiguration.failoverBuckets?.map((bucket, index) =>
+              <S3FailoverBucket
+                  key={`failover-bucket-${index}`}
+                  index={index}
+                  activeRegion={activeRegion}
+                  mainRegionProps={FormUtils.fieldProps(bucketField('region'), current)}
+                  regionProps={FormUtils.fieldProps(failoverBucketsField(index, 'region'), current, [])}
+                  onRegionChange={FormUtils.handleUpdate(failoverBucketsField(index, 'region'), send)}
+                  dropDownValues={dropDownValues}
+                  selectedRegions={getSelectedRegions()}
+                  bucketNameProps={FormUtils.fieldProps(failoverBucketsField(index, 'bucketName'), current, [])}
+                  onBucketNameChange={FormUtils.handleUpdate(failoverBucketsField(index, 'bucketName'), send)}
+                  onDelete={handleDeleteFailoverBucket}/>)
+          }
+          {bucketConfiguration.failoverBuckets.length < MAX_REPLICATION_BUCKETS ? (
+                  <div id="add-failover-bucket">
+                    <NxButton
+                        type="button"
+                        className="nxrm-replication-bucket-button"
+                        onClick={handleAddFailoverBucket}>
+                      <NxFontAwesomeIcon icon={faPlus}/>
+                      <span>{FIELDS.S3BlobStore_ReplicationBucketsSettings_AddFailoverBucket}</span>
+                    </NxButton>
+                  </div>) :
+              <NxWarningAlert>{FIELDS.S3BlobStore_ReplicationBucketsSettings_MaxFailoverBucketsWarning}</NxWarningAlert>
+          }
+        </NxStatefulAccordion>}
   </div>;
 }

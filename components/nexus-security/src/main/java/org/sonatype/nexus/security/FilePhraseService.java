@@ -20,6 +20,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.crypto.AbstractPhraseService;
+import org.sonatype.nexus.crypto.PhraseService;
+
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;

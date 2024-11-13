@@ -20,11 +20,9 @@ import java.sql.ResultSet;
 import java.util.function.Consumer;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.H2TestGroup;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 
@@ -44,7 +42,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@Category(H2TestGroup.class)
 public class H2TaskSupportTest
     extends TestSupport
 {

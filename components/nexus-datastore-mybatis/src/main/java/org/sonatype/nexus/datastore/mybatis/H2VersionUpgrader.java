@@ -76,10 +76,14 @@ public class H2VersionUpgrader
 
   private boolean validateH2SqlFileExists(Optional<Path> sqlFile) throws Exception {
     if (!sqlFile.isPresent()) {
-      log.error("You are trying to start Nexus Repository with an outdated H2 database, " +
-          "please use Nexus with version 3.69, run the 'Export H2 database to SQL file' task, " +
-          "put the Sql file into the database work-directory, go to Nexus version 3.70 " +
-          "and start Nexus repository again");//TODO replace for the correct message when NEXUS-42220 is done
+      StringBuilder buf = new StringBuilder();
+      buf.append("\n-------------------------------------------------------------------------------------------" + 
+      "----------------------------------------------------------------------------------\n\n");
+      buf.append("Your H2 database version is no longer supported. Upgrade to a supported version using upgrade " +
+      "instructions at https://links.sonatype.com/products/nxrm3/docs/upgrade-h2.html.");
+      buf.append("\n\n-----------------------------------------------------------------------------------------" + 
+      "------------------------------------------------------------------------------------\n\n");
+      log.error(buf.toString());
       managedLifecycleManager.shutdownWithExitCode(1);
       return false;
     }

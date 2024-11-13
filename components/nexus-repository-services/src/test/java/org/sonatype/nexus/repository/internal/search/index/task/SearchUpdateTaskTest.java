@@ -18,6 +18,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.elasticsearch.cluster.metadata.ProcessClusterEventTimeoutException;
 import org.elasticsearch.common.unit.TimeValue;
@@ -50,6 +51,9 @@ public class SearchUpdateTaskTest
   @Mock
   private SearchIndexFacet searchIndexFacet2;
 
+  @Mock
+  private TaskScheduler taskScheduler;
+
   private final TaskConfiguration configuration = new TaskConfiguration();
 
   private SearchUpdateTask underTest;
@@ -66,7 +70,7 @@ public class SearchUpdateTaskTest
     configuration.setId("test");
     configuration.setTypeId("test");
 
-    underTest = new SearchUpdateTask(repositoryManager, searchUpdateService);
+    underTest = new SearchUpdateTask(repositoryManager, searchUpdateService, taskScheduler);
   }
 
   @Test

@@ -27,6 +27,8 @@ public class BlobStoreUIResponse
 
   private final String typeName;
 
+  private final String path;
+
   private final boolean unavailable;
 
   private final long blobCount;
@@ -40,7 +42,8 @@ public class BlobStoreUIResponse
   public BlobStoreUIResponse(
       final String typeId,
       final BlobStoreConfiguration configuration,
-      @Nullable final BlobStoreMetrics metrics)
+      @Nullable final BlobStoreMetrics metrics,
+      final String path)
   {
     if (metrics != null) {
       unavailable = metrics.isUnavailable();
@@ -61,6 +64,7 @@ public class BlobStoreUIResponse
 
     this.typeId = checkNotNull(typeId);
     typeName = configuration.getType();
+    this.path = checkNotNull(path);
   }
 
   public String getName() {
@@ -73,6 +77,10 @@ public class BlobStoreUIResponse
 
   public String getTypeName() {
     return typeName;
+  }
+
+  public String getPath() {
+    return path;
   }
 
   public boolean isUnavailable() {

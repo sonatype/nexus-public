@@ -30,6 +30,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.events.TaskEvent;
+import org.sonatype.nexus.scheduling.events.TaskEventCanceled;
 import org.sonatype.nexus.scheduling.events.TaskEventStarted;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedDone;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedFailed;
@@ -143,6 +144,22 @@ public class TaskTestSystem
    */
   public long eventFailed(final String typeId, final Map<String, String> configuration) {
     return events(TaskEventStoppedFailed.class, typeId)
+        .filter(taskInfo -> taskInfo.getConfiguration().asMap().equals(configuration))
+        .count();
+  }
+
+  /**
+   * Count the number of tasks that have been canceled since the current test started, or {@code clear} was called.
+   */
+  public long eventCanceled(final String typeId) {
+    return events(TaskEventCanceled.class, typeId).count();
+  }
+
+  /**
+   * Count the number of tasks that have been canceled since the current test started, or {@code clear} was called.
+   */
+  public long eventCanceled(final String typeId, final Map<String, String> configuration) {
+    return events(TaskEventCanceled.class, typeId)
         .filter(taskInfo -> taskInfo.getConfiguration().asMap().equals(configuration))
         .count();
   }

@@ -221,7 +221,7 @@ if not exist "%JAVA_HOME%\bin\server\jvm.dll" (
         echo For more details see http://java.sun.com/products/hotspot/whitepaper.html#client
     )
 )
-set DEFAULT_JAVA_OPTS=-Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=%KARAF_LOG%\jvm.log -XX:-OmitStackTraceInFastThrow -Djava.net.preferIPv4Stack=true
+set DEFAULT_JAVA_OPTS=-Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=%KARAF_LOG%\jvm.log -XX:-OmitStackTraceInFastThrow
 
 if "%JAVA_OPTS%" == "" set JAVA_OPTS=%DEFAULT_JAVA_OPTS%
 
@@ -357,52 +357,37 @@ if "%KARAF_PROFILER%" == "" goto :RUN
         popd
     )
 
-        rem If major version is greater than 1 (meaning Java 9 or 10), we don't use endorsed lib but module
-        rem If major version is 1 (meaning Java 1.6, 1.7, 1.8), we use endorsed lib
-        if %JAVA_VERSION% GTR 8 (
-            "%JAVA%" %JAVA_OPTS% %OPTS% ^
-                --add-reads=java.xml=java.logging ^
-                --add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED ^
-                --patch-module java.base=%KARAF_HOME%\lib\endorsed\org.apache.karaf.specs.locator-4.3.9.jar ^
-                --patch-module java.xml=%KARAF_HOME%\lib\endorsed\org.apache.karaf.specs.java.xml-4.3.9.jar ^
-                --add-opens java.base/java.security=ALL-UNNAMED ^
-                --add-opens java.base/java.net=ALL-UNNAMED ^
-                --add-opens java.base/java.lang=ALL-UNNAMED ^
-                --add-opens java.base/java.util=ALL-UNNAMED ^
-                --add-opens java.naming/javax.naming.spi=ALL-UNNAMED ^
-                --add-opens java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED ^
-                --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED ^
-                --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED ^
-                --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED ^
-                --add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED ^
-                --add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED ^
-                --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED ^
-                -classpath "%CLASSPATH%" ^
-                -Dkaraf.instances="%KARAF_HOME%\instances" ^
-                -Dkaraf.home="%KARAF_HOME%" ^
-                -Dkaraf.base="%KARAF_BASE%" ^
-                -Dkaraf.etc="%KARAF_ETC%" ^
-                -Dkaraf.log="%KARAF_LOG%" ^
-                -Dkaraf.restart.jvm.supported=true ^
-                -Djava.io.tmpdir="%KARAF_DATA%\tmp" ^
-                -Dkaraf.data="%KARAF_DATA%" ^
-                -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" ^
-                %KARAF_SYSTEM_OPTS% %KARAF_OPTS% %MAIN% %ARGS%
-        ) else (
-            "%JAVA%" %JAVA_OPTS% %OPTS% ^
-                -classpath "%CLASSPATH%" ^
-                -Djava.endorsed.dirs="%JAVA_HOME%\jre\lib\endorsed;%JAVA_HOME%\lib\endorsed;%KARAF_HOME%\lib\endorsed" ^
-                -Dkaraf.instances="%KARAF_HOME%\instances" ^
-                -Dkaraf.home="%KARAF_HOME%" ^
-                -Dkaraf.base="%KARAF_BASE%" ^
-                -Dkaraf.etc="%KARAF_ETC%" ^
-                -Dkaraf.log="%KARAF_LOG%" ^
-                -Dkaraf.restart.jvm.supported=true ^
-                -Djava.io.tmpdir="%KARAF_DATA%\tmp" ^
-                -Dkaraf.data="%KARAF_DATA%" ^
-                -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" ^
-                %KARAF_SYSTEM_OPTS% %KARAF_OPTS% %MAIN% %ARGS%
-        )
+    "%JAVA%" %JAVA_OPTS% %OPTS% ^
+        --add-reads=java.xml=java.logging ^
+        --add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED ^
+        --patch-module java.base=%KARAF_HOME%\lib\endorsed\org.apache.karaf.specs.locator-4.3.9.jar ^
+        --patch-module java.xml=%KARAF_HOME%\lib\endorsed\org.apache.karaf.specs.java.xml-4.3.9.jar ^
+        --add-opens java.base/java.security=ALL-UNNAMED ^
+        --add-opens java.base/java.net=ALL-UNNAMED ^
+        --add-opens java.base/java.lang=ALL-UNNAMED ^
+        --add-opens java.base/java.util=ALL-UNNAMED ^
+        --add-opens java.naming/javax.naming.spi=ALL-UNNAMED ^
+        --add-opens java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED ^
+        --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED ^
+        --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED ^
+        --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED ^
+        --add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED ^
+        --add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED ^
+        --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED ^
+        --add-exports=java.base/sun.security.x509=ALL-UNNAMED ^
+        --add-exports=java.base/sun.security.rsa=ALL-UNNAMED ^
+        --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED ^
+        -classpath "%CLASSPATH%" ^
+        -Dkaraf.instances="%KARAF_HOME%\instances" ^
+        -Dkaraf.home="%KARAF_HOME%" ^
+        -Dkaraf.base="%KARAF_BASE%" ^
+        -Dkaraf.etc="%KARAF_ETC%" ^
+        -Dkaraf.log="%KARAF_LOG%" ^
+        -Dkaraf.restart.jvm.supported=true ^
+        -Djava.io.tmpdir="%KARAF_DATA%\tmp" ^
+        -Dkaraf.data="%KARAF_DATA%" ^
+        -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" ^
+        %KARAF_SYSTEM_OPTS% %KARAF_OPTS% %MAIN% %ARGS%
 
     rem If KARAF_DAEMON is defined, auto-restart is bypassed and control given
     rem back to the operating system

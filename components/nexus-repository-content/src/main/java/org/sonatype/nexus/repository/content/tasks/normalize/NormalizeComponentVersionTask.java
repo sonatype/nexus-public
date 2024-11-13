@@ -24,9 +24,9 @@ import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.logging.task.TaskLogType;
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
-import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
-import org.sonatype.nexus.repository.content.kv.global.ValueType;
+import org.sonatype.nexus.kv.GlobalKeyValueStore;
+import org.sonatype.nexus.kv.NexusKeyValue;
+import org.sonatype.nexus.kv.ValueType;
 import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
@@ -120,7 +120,7 @@ public class NormalizeComponentVersionTask
       //once normalization is done set state as true
       setNormalizationState(format, true);
       //publish an event to let interested know the format has been normalized
-      eventManager.post(new FormatVersionNormalizedEvent(format));
+      eventManager.post(new FormatVersionNormalizedEvent(format.getValue()));
 
       int currentCount = processedCount.incrementAndGet();
 

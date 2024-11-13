@@ -67,4 +67,16 @@ public interface S3BlobStoreApiResourceDoc
   })
   S3BlobStoreApiModel getBlobStore(
       @ApiParam(value = "Name of the blob store configuration to fetch") String blobStoreName);
+
+
+  @ApiOperation("Delete an S3 blob store with an empty name")
+  @ApiResponses(value = {
+      @ApiResponse(code = 204, message = "Blob store deleted"),
+      @ApiResponse(code = 400, message = "Unknown S3 blob store"),
+      @ApiResponse(code = 401, message = "Authentication required"),
+      @ApiResponse(code = 403, message = "Insufficient permissions"),
+      @ApiResponse(code = 404, message = "Blob store not found"),
+  })
+  Response deleteBlobStoreWithEmptyName();
 }
+

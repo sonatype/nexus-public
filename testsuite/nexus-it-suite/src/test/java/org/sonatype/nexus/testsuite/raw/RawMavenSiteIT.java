@@ -14,7 +14,6 @@ package org.sonatype.nexus.testsuite.raw;
 
 import java.net.URL;
 
-import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testsuite.testsupport.maven.MavenDeployment;
@@ -25,7 +24,6 @@ import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
 import org.apache.http.HttpResponse;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,7 +35,6 @@ import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.statu
 /**
  * Tests deployment of a maven site to a raw hosted repository.
  */
-@Category(OrientAndSQLTestGroup.class)
 public class RawMavenSiteIT
     extends RawITSupport
 {

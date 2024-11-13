@@ -51,7 +51,7 @@ public class BlobStoreResourceUtil
   {
     return new WebApplicationMessageException(
         NOT_FOUND,
-        String.format("\"Unable to find %s '%s' blobstore\"", blobStoreType, blobStoreName),
+        String.format("Unable to find %s '%s' blobstore", blobStoreType, blobStoreName),
         APPLICATION_JSON
     );
   }

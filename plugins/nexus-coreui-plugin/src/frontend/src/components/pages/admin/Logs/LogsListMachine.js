@@ -32,7 +32,7 @@ export default ListMachineUtils.buildListMachine({
     })
   },
   services: {
-    fetchData: () => axios.get('/service/rest/internal/logging/logs')
+    fetchData: () => axios.get('service/rest/internal/logging/logs')
   }
 });
 

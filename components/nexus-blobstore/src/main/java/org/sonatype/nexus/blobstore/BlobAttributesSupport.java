@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,6 +33,7 @@ import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_A
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_REASON_ATTRIBUTE;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_DATETIME_ATTRIBUTE;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.LAST_DOWNLOADED_ATTRIBUTE;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.SHA1_HASH_ATTRIBUTE;
 
 /**
@@ -130,6 +132,11 @@ public abstract class BlobAttributesSupport<T extends Properties>
         properties.getProperty(SHA1_HASH_ATTRIBUTE),
         Long.parseLong(properties.getProperty(CONTENT_SIZE_ATTRIBUTE)));
 
+    OffsetDateTime lastDownloaded = Optional.ofNullable(properties.getProperty(LAST_DOWNLOADED_ATTRIBUTE))
+        .map(OffsetDateTime::parse)
+        .orElse(null);
+    metrics.setLastDownloaded(lastDownloaded);
+
     deleted = properties.containsKey(DELETED_ATTRIBUTE);
     deletedReason = properties.getProperty(DELETED_REASON_ATTRIBUTE);
     deletedDateTime = Optional.ofNullable(properties.getProperty(DELETED_DATETIME_ATTRIBUTE))
@@ -145,6 +152,10 @@ public abstract class BlobAttributesSupport<T extends Properties>
     properties.setProperty(SHA1_HASH_ATTRIBUTE, blobMetrics.getSha1Hash());
     properties.setProperty(CONTENT_SIZE_ATTRIBUTE, Long.toString(blobMetrics.getContentSize()));
     properties.setProperty(CREATION_TIME_ATTRIBUTE, Long.toString(blobMetrics.getCreationTime().getMillis()));
+
+    if (blobMetrics.getLastDownloaded() != null) {
+      properties.setProperty(LAST_DOWNLOADED_ATTRIBUTE, blobMetrics.getLastDownloaded().toString());
+    }
 
     if (deleted) {
       properties.put(DELETED_ATTRIBUTE, Boolean.toString(deleted));

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.authc;
 
-import java.util.Arrays;
 import java.util.Collections;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;

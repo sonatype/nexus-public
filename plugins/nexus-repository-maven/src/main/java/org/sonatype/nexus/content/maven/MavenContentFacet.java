@@ -192,6 +192,24 @@ public interface MavenContentFacet
   Collection<String> getBaseVersions(String namespace, String name);
 
   /**
+   * Find components with missed base version.
+   *
+   * @param namespace the namespace
+   * @param name artifact name
+   *
+   * @return collection of component data
+   */
+  public Iterable<FluentComponent> getComponentsWithMissedBaseVersion();
+
+
+  /**
+   * Updates the maven base_version of the given component in the content data store.
+   *
+   * @param component the component to update
+   */
+  public void updateBaseVersion(final Maven2ComponentData component);
+
+  /**
    * Find snapshots to delete for which a release version exists
    *
    * @param gracePeriod an optional period to keep snapshots around.

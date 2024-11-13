@@ -21,7 +21,7 @@ import {ExtJS, FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-const baseUrl = '/service/rest/v1/security/content-selectors';
+const baseUrl = 'service/rest/v1/security/content-selectors';
 const url = (name) => `${baseUrl}/${name}`;
 
 function isEdit({name}) {

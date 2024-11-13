@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
