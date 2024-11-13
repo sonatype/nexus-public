@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.70.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-blobstore-tasks</artifactId>
@@ -44,13 +44,6 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-blobstore-file</artifactId>
       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-repository</artifactId>
-      <scope>provided</scope>
-      <optional>true</optional>
     </dependency>
 
     <dependency>
@@ -81,6 +74,12 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-testsupport</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-test-db</artifactId>
       <scope>test</scope>
     </dependency>
 

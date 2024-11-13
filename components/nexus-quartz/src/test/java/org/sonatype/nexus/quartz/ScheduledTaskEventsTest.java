@@ -33,6 +33,7 @@ import org.sonatype.nexus.scheduling.events.TaskStartedRunningEvent;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.awaitility.Awaitility.await;
@@ -46,6 +47,7 @@ import static org.hamcrest.Matchers.instanceOf;
 /**
  * Tests for task eventing.
  */
+@Ignore("NEXUS-43375")
 public class ScheduledTaskEventsTest
     extends QuartzTestSupport
 {

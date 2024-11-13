@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
+import org.sonatype.nexus.repository.task.DeletionProgress;
 import org.sonatype.nexus.repository.types.GroupType;
 
 import com.google.common.collect.ImmutableList;
@@ -55,13 +55,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.streamContains;
 
 @RunWith(Parameterized.class)

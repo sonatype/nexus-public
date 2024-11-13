@@ -21,12 +21,11 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class DockerSubdomainRequestCustomizerTest
@@ -41,19 +40,31 @@ public class DockerSubdomainRequestCustomizerTest
   private HttpConfiguration httpConfig;
 
   @Mock
+  private HttpURI httpURI;
+
+  @Mock
   private Request request;
 
   @Before
   public void setUp() throws Exception {
     underTest = new DockerSubdomainRequestCustomizer("nexus", 8081, 8443);
     when(request.getHeader("Host")).thenReturn("test");
+    when(request.getHttpURI()).thenReturn(httpURI);
+  }
+
+  @Test
+  public void testNullPath() {
+    when(httpURI.getPath()).thenReturn(null);
+
+    underTest.customize(connector, httpConfig, request);
+
+    verify(request).getHttpURI();
+    verifyNoMoreInteractions(request, connector, httpConfig);
   }
 
   @Test
   public void testCheckForLocalPortAndNotExternal() {
-    HttpURI httpURI = mock(HttpURI.class);
     when(httpURI.getPath()).thenReturn("/v2/");
-    when(request.getHttpURI()).thenReturn(httpURI);
 
     underTest.customize(connector, httpConfig, request);
 
@@ -63,9 +74,7 @@ public class DockerSubdomainRequestCustomizerTest
 
   @Test
   public void testProcessOnlyRequestOnJettyPort() {
-    HttpURI httpURI = mock(HttpURI.class);
     when(httpURI.getPath()).thenReturn("/v2/");
-    when(request.getHttpURI()).thenReturn(httpURI);
     when(connector.getLocalPort()).thenReturn(-1);
 
     underTest.customize(connector, httpConfig, request);

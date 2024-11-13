@@ -135,8 +135,8 @@ export default Machine(
         logLoadError: (_, event) => console.error(event.data.message)
       },
       services: {
-        fetchRepositories: () => Axios.get('/service/rest/internal/ui/repositories?withAll=true&withFormats=true'),
-        preview: ({repositories}, {selectorType, expression}) => Axios.post('/service/rest/internal/ui/content-selectors/preview', {
+        fetchRepositories: () => Axios.get('service/rest/internal/ui/repositories?withAll=true&withFormats=true'),
+        preview: ({repositories}, {selectorType, expression}) => Axios.post('service/rest/internal/ui/content-selectors/preview', {
           repository: repositories,
           type: selectorType,
           expression

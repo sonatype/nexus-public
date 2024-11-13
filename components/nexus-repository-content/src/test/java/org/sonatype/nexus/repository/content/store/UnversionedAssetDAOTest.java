@@ -130,4 +130,9 @@ public class UnversionedAssetDAOTest
   public void testDeleteByPaths() {
     super.testDeleteByPaths();
   }
+
+  @Test
+  public void testAssetRecordsExist() {
+    super.testAssetRecordsExist();
+  }
 }

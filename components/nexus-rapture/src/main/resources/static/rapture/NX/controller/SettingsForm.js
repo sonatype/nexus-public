@@ -137,6 +137,7 @@ Ext.define('NX.controller.SettingsForm', {
         failure: function(basicForm , action){
           //show a default error popup in case of submit error
           NX.Messages.error(NX.I18n.get('SettingsForm_Save_Error'));
+          action.result && action.result.errors && form.fireEvent('remotevalidation', action.result.errors);
         }
       });
     }
@@ -258,5 +259,4 @@ Ext.define('NX.controller.SettingsForm', {
       discardButton.setDisabled(!dirty);
     }
   }
-
 });

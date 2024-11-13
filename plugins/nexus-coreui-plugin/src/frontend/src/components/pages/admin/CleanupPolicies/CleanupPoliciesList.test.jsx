@@ -44,10 +44,10 @@ describe('CleanupPoliciesList', function() {
     ];
 
     axios.get.mockImplementation((url) => {
-      if (url === '/service/rest/internal/cleanup-policies') {
+      if (url === 'service/rest/internal/cleanup-policies') {
         return Promise.resolve({data: rows});
       }
-      else if (url === '/service/rest/internal/cleanup-policies/criteria/formats') {
+      else if (url === 'service/rest/internal/cleanup-policies/criteria/formats') {
         return Promise.resolve({
           data: [{
             'id' : 'testformat',

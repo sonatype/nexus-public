@@ -14,9 +14,6 @@ package org.sonatype.nexus.repository.security;
 
 import java.util.Map;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
@@ -29,7 +26,6 @@ import org.sonatype.nexus.selector.VariableSourceBuilder;
 import org.elasticsearch.search.lookup.SourceLookup;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * Adapts different contexts to variable resolvers
@@ -43,14 +39,10 @@ public abstract class VariableResolverAdapterSupport
   protected static final String PATH = "path";
   protected static final String FORMAT = "format";
 
-  @Inject
-  @Named(ORIENT_ENABLED)
-  public Boolean orientEnabled;
-
   @Override
   public VariableSource fromRequest(final Request request, final Repository repository) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    String path = orientEnabled ? request.getPath().substring(1) : request.getPath();
+    String path = request.getPath();
     builder.addResolver(new ConstantVariableResolver(path, PATH));
     builder.addResolver(new ConstantVariableResolver(repository.getFormat().getValue(), FORMAT));
     addFromRequest(builder, request);

@@ -152,6 +152,39 @@ public class MetadataBuilderTest
   }
 
   @Test
+  public void wrongSimpleSnapshot() {
+    String artifactId = "artifactId";
+    String groupId = "groupId";
+    String baseVersion = "baseVersion-SNAPSHOT-test-SNAPSHOT";
+    String wrongVersion = "artifactId-baseVersion-20240910.132746-1-test-20240910.132746-1.jar";
+
+    testSubject.onEnterGroupId(groupId);
+    testSubject.onEnterArtifactId(artifactId);
+    testSubject.onEnterBaseVersion(baseVersion);
+    testSubject.addArtifactVersion(
+        mavenPathParser.parsePath(String.join("/", groupId, artifactId, baseVersion, wrongVersion)));
+    testSubject.addPlugin("prefix", "artifact", "name");
+
+    final Maven2Metadata vmd = testSubject.onExitBaseVersion();
+    assertThat(vmd, nullValue());
+
+    final Maven2Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getGroupId(), equalTo(groupId));
+    assertThat(amd.getArtifactId(), equalTo(artifactId));
+    assertThat(amd.getBaseVersions(), notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(1));
+    assertThat(amd.getBaseVersions().getLatest(), equalTo(baseVersion));
+    assertThat(amd.getBaseVersions().getRelease(), nullValue());
+    assertThat(amd.getBaseVersions().getVersions(), contains(baseVersion));
+
+    final Maven2Metadata gmd = testSubject.onExitGroupId();
+    assertThat(gmd, notNullValue());
+    assertThat(gmd.getGroupId(), nullValue());
+    assertThat(gmd.getPlugins(), hasSize(1));
+  }
+
+  @Test
   public void nonUniqueSnapshot() {
     testSubject.onEnterGroupId("group");
     testSubject.onEnterArtifactId("artifact");

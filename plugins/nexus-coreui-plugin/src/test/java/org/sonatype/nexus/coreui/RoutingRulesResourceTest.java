@@ -21,13 +21,12 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.routing.internal.RoutingRuleData;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
 import org.junit.Before;
@@ -176,13 +175,9 @@ public class RoutingRulesResourceTest
   }
 
   private RoutingRule routingRule(String name) {
-    OrientRoutingRule routingRule = new OrientRoutingRule().name(name).mode(RoutingMode.ALLOW).matchers(Collections.singletonList(".*"));
-
-    EntityMetadata entityMetadata = mock(EntityMetadata.class);
-    when(entityMetadata.getId()).thenReturn(new DetachedEntityId(name));
-
-    routingRule.setEntityMetadata(entityMetadata);
-
+    RoutingRuleData routingRule = new RoutingRuleData().name(name).mode(RoutingMode.ALLOW).matchers(Collections.singletonList(".*"));
+    EntityId entityId = new DetachedEntityId(name);
+    routingRule.setId(entityId);
     return routingRule;
   }
 

@@ -89,6 +89,8 @@ public class HttpClientFacetImpl
 
   private final Map<String, TargetAuthenticationStrategy> authenticationStrategies;
 
+  private String unencryptedPassword;
+
   @VisibleForTesting
   static class Config
   {
@@ -179,7 +181,11 @@ public class HttpClientFacetImpl
     if (config.authentication instanceof UsernameAuthenticationConfiguration) {
       UsernameAuthenticationConfiguration userAuth = (UsernameAuthenticationConfiguration) config.authentication;
 
-      String auth = format("%1$s:%2$s", userAuth.getUsername(), userAuth.getPassword());
+      if (unencryptedPassword == null) {
+        unencryptedPassword = new String(userAuth.getPassword().decrypt());
+      }
+
+      String auth = format("%1$s:%2$s", userAuth.getUsername(), unencryptedPassword);
 
       byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(ISO_8859_1));
 

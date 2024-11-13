@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
-import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -29,12 +28,6 @@ import org.sonatype.nexus.repository.query.QueryOptions;
  */
 public interface CleanupComponentBrowse
 {
-  /**
-   * @param format
-   * @return true if the service applies to the format taking into account other conditions such as licensing restrictions
-   */
-  boolean isApplicableTo(Format format);
-
   Stream<FluentComponent> browse(CleanupPolicy policy, Repository repository);
 
   Stream<FluentComponent> browseIncludingAssets(CleanupPolicy policy, Repository repository);

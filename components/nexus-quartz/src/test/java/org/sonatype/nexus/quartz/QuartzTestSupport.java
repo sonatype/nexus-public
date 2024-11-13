@@ -15,7 +15,6 @@ package org.sonatype.nexus.quartz;
 import java.util.Date;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -25,7 +24,6 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 
 import static org.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -42,14 +40,14 @@ public abstract class QuartzTestSupport
   
   public static final String RESULT = "This is the expected result";
 
-  @Rule
-  public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
+  //@Rule
+  //public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
 
   private TaskSchedulerHelper taskSchedulerHelper;
 
   @Before
   public void before() throws Exception {
-    taskSchedulerHelper = new TaskSchedulerHelper(database.getInstance());
+    //taskSchedulerHelper = new TaskSchedulerHelper(database.getInstance());
     taskSchedulerHelper.init(null, null);
     taskSchedulerHelper.start();
   }

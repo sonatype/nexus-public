@@ -20,6 +20,7 @@ import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
+import static org.sonatype.nexus.blobstore.common.BlobStoreTaskSupport.BLOBSTORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.common.app.FeatureFlags.RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 
@@ -34,8 +35,6 @@ public class RecalculateBlobStoreSizeTaskDescriptor
 {
   public static final String TYPE_ID = "blobstore.metrics.reconcile";
 
-  public static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
-
   @Inject
   public RecalculateBlobStoreSizeTaskDescriptor(
       @Named(RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED) final boolean taskEnabled)
@@ -46,7 +45,7 @@ public class RecalculateBlobStoreSizeTaskDescriptor
         VISIBLE,
         taskEnabled,
         new ComboboxFormField<String>(
-            BLOB_STORE_NAME_FIELD_ID,
+            BLOBSTORE_NAME_FIELD_ID,
             "Blob store",
             "Select the blob store(s) to recalculate",
             MANDATORY

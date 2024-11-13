@@ -270,6 +270,132 @@ describe('FormUtils', () => {
     });
   });
 
+  describe('updateFormDataDefaultAction', () => {
+    it('updates form data text field', () => {
+      const form = {
+        data: {
+          prop: 'initialValue'
+        }
+      };
+      const event = {
+        name: 'prop',
+        value: 'newValue'
+      };
+
+      const updated = FormUtils.updateFormDataDefaultAction(form, event);
+      expect(updated.prop).toBe('newValue');
+    });
+
+    it('updates form data nested field', () => {
+      const form = {
+        data: {
+          prop: {
+            nested: 'initialValue'
+          }
+        }
+      };
+      const event = {
+        name: 'prop.nested',
+        value: 'newValue'
+      };
+
+      const updated = FormUtils.updateFormDataDefaultAction(form, event);
+      expect(updated.prop.nested).toBe('newValue');
+    });
+
+    it('updates form data nested field array', () => {
+      const form = {
+        data: {
+          prop: {
+            nested: [{name: 'initialValue', priority: 1}]
+          }
+        }
+      };
+      const event1 = {
+        name: ['prop', 'nested', 0, 'name'],
+        value: 'newValue'
+      };
+
+      const updated = FormUtils.updateFormDataDefaultAction(form, event1);
+      expect(updated.prop.nested[0].name).toBe('newValue');
+      expect(updated.prop.nested[0].priority).toBe(1);
+
+      const form2 = {
+        data: updated
+      };
+      const event2 = {
+        name: ['prop', 'nested', 0, 'priority'],
+        value: 5
+      };
+
+      const updated2 = FormUtils.updateFormDataDefaultAction(form2, event2);
+      expect(updated2.prop.nested[0].name).toBe('newValue');
+      expect(updated2.prop.nested[0].priority).toBe(5);
+    });
+
+    it('updates form data nested object', () => {
+      const form = {
+        data: {
+          prop: {
+            nested: {
+              name: 'initialValue',
+              other: 'notTouched'
+            }
+          }
+        }
+      };
+      const event = {
+        name: 'prop.nested.name',
+        value: 'newValue'
+      };
+
+      const updated = FormUtils.updateFormDataDefaultAction(form, event);
+      expect(updated.prop.nested.name).toBe('newValue');
+      expect(updated.prop.nested.other).toBe('notTouched');
+    });
+
+    it('updates form data event data', () => {
+      const form = {
+        data: {
+          prop: {
+            nested: {
+              name: 'initialValue',
+              other: 'notTouched'
+            }
+          }
+        }
+      };
+      const event = {
+        data: {
+          newProp: 'addedProp',
+          otherProp: 10
+        }
+      };
+
+      const updated = FormUtils.updateFormDataDefaultAction(form, event);
+      expect(updated.prop.nested.name).toBe('initialValue');
+      expect(updated.prop.nested.other).toBe('notTouched');
+      expect(updated.newProp).toBe('addedProp');
+      expect(updated.otherProp).toBe(10);
+    });
+
+    it('should log error if event data is empty', () => {
+      const form = {
+        data: {
+          prop: 'initialValue'
+        }
+      };
+      const event = {
+        invalid: 'noNameNoData'
+      };
+
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      FormUtils.updateFormDataDefaultAction(form, event);
+      expect(consoleErrorSpy).toHaveBeenCalledWith('update event must have a name and value or a data object', event);
+      consoleErrorSpy.mockRestore();
+    });
+  })
+
   describe('machine', () => {
     it('When delete service is finish successfully, the dirty flag should be removed', (done) => {
       const machineId = 'mock';

@@ -14,6 +14,12 @@ package org.sonatype.nexus.cleanup.storage;
 
 public enum SortType
 {
-  VERSION,
-  DATE
+  VERSION("version"),
+  DATE("date");
+
+  public final String value;
+
+  SortType(final String value) {
+    this.value = value;
+  }
 }

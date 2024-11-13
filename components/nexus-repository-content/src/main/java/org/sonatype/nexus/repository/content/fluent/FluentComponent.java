@@ -43,6 +43,11 @@ public interface FluentComponent
   Collection<FluentAsset> assets();
 
   /**
+   * List the assets under this component; returns an immutable collection.
+   */
+  Collection<FluentAsset> assets(boolean useCache);
+
+  /**
    * Update this component to have the given kind.
    *
    * @since 3.25

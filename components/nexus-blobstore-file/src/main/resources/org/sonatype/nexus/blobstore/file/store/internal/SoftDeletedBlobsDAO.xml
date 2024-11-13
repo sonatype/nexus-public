@@ -26,19 +26,28 @@
       CONSTRAINT pk_soft_deleted_blobs_record_id PRIMARY KEY (record_id)
     );
 
+    ALTER TABLE soft_deleted_blobs ADD COLUMN IF NOT EXISTS date_path_ref TIMESTAMP WITH TIME ZONE;
+
     CREATE INDEX IF NOT EXISTS idx_soft_deleted_blobs_source_blob_store_name
         ON soft_deleted_blobs (source_blob_store_name, blob_id);
+
+    /*
+    -- See SoftDeletedBlobsByBlobStoreIndexMigrationStep_2_7.java
+    CREATE INDEX IF NOT EXISTS idx_soft_deleted_blobs_by_source_blob_store_name_record_id"
+    ON soft_deleted_blobs (source_blob_store_name, record_id);
+     */
   </insert>
 
   <insert id="createRecord">
-    INSERT INTO soft_deleted_blobs (blob_id, source_blob_store_name)
-        VALUES (#{blobId}, #{sourceBlobStoreName});
+    INSERT INTO soft_deleted_blobs (blob_id, source_blob_store_name, date_path_ref)
+        VALUES (#{blobId}, #{sourceBlobStoreName}, #{datePathRef});
   </insert>
 
   <select id="readRecords" resultType="org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData" >
     SELECT * FROM soft_deleted_blobs
     WHERE source_blob_store_name = #{sourceBlobStoreName}
     <if test="continuationToken != null"> AND record_id > #{continuationToken}</if>
+    ORDER BY record_id LIMIT #{limit};
   </select>
 
   <delete id="deleteRecord">
@@ -70,8 +79,8 @@
     WHERE source_blob_store_name = #{sourceBlobStoreName};
   </select>
 
-  <select id="readOldestRecords" resultType="java.lang.String">
-    SELECT blob_id FROM soft_deleted_blobs
+  <select id="readOldestRecords" resultType="org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData">
+    SELECT * FROM soft_deleted_blobs
     WHERE source_blob_store_name = #{sourceBlobStoreName}
     ORDER BY deleted_date ASC LIMIT 20
   </select>

@@ -365,6 +365,22 @@ public class LogbackLogManager
     eventManager.post(new LoggerLevelChangedEvent(name, level));
   }
 
+  /**
+   * Directly set a logger level without interpreting customisations or overrides.
+   * Useful when needing to force a level and not interact with persistence.
+   */
+  @Override
+  @Guarded(by = STARTED)
+  public void setLoggerLevelDirect(final String name, @Nullable final LoggerLevel level) {
+    if (level == null) {
+      unsetLogger(name);
+      return;
+    }
+
+    log.debug("Set logger level direct: {}={}", name, level);
+    setLogbackLoggerLevel(name, LogbackLevels.convert(level));
+  }
+
   @Override
   @Guarded(by = STARTED)
   public void unsetLoggerLevel(final String name) {
@@ -400,7 +416,7 @@ public class LogbackLogManager
   /**
    * Helper to set a named logback logger level.
    */
-  private void setLogbackLoggerLevel(final String name, @Nullable final Level level) {
+  public void setLogbackLoggerLevel(final String name, @Nullable final Level level) {
     log.trace("Set logback logger level: {}={}", name, level);
     loggerContext().getLogger(name).setLevel(level);
   }

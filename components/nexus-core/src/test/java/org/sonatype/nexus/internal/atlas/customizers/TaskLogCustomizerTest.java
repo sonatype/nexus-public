@@ -18,8 +18,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.ContentSourceSupport;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -34,7 +32,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -43,7 +40,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.io.DirectoryHelper.mkdir;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG;
@@ -67,12 +63,6 @@ public class TaskLogCustomizerTest
 
   @Rule
   public TemporaryFolder temporaryWorkDirectory = new TemporaryFolder();
-
-  @Mock
-  private LogManager mockLogManager;
-
-  @Mock
-  private ApplicationDirectories mockApplicationDirectories;
 
   private File tasksHome;
 
@@ -106,7 +96,8 @@ public class TaskLogCustomizerTest
     // hourly up to 23:00
     for (long i = 0; i <= TIME_2300; i += ONE_HOUR) {
       assertThat(list,
-          hasItem(containsLogSource(FileContentSourceSupport.class, format("log/tasks/task%s.log", i), DEFAULT, TASKLOG)));
+          hasItem(
+              containsLogSource(FileContentSourceSupport.class, format("log/tasks/task%s.log", i), DEFAULT, TASKLOG)));
     }
     // includes 23:59
     assertThat(list,
@@ -127,15 +118,13 @@ public class TaskLogCustomizerTest
   }
 
   private void setupTestDirectories() throws IOException {
-    when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory.getRoot());
-
     File logDir = mkdir(temporaryWorkDirectory.getRoot(), "log");
     tasksHome = mkdir(logDir, "tasks");
     mkdir(tasksHome, "extrasubfolder");
   }
 
   private void initializeSystemUnderTest() {
-    underTest = new TaskLogCustomizer(mockLogManager, mockApplicationDirectories)
+    underTest = new TaskLogCustomizer()
     {
       @Override
       public String getTaskLogHome() {
@@ -150,10 +139,11 @@ public class TaskLogCustomizerTest
     file.setLastModified(ZonedDateTime.now().minusMinutes(minutesOld).toInstant().toEpochMilli());
   }
 
-  private Matcher<Iterable<ContentSource>> containsLogSource(final Class<? extends ContentSource> clazz,
-                                                             final String path,
-                                                             final Priority priority,
-                                                             final Type type)
+  private Matcher<Iterable<ContentSource>> containsLogSource(
+      final Class<? extends ContentSource> clazz,
+      final String path,
+      final Priority priority,
+      final Type type)
   {
     return new BaseMatcher<Iterable<ContentSource>>()
     {
@@ -164,8 +154,8 @@ public class TaskLogCustomizerTest
         }
         ContentSourceSupport contentSourceSupport = (ContentSourceSupport) item;
         return contentSourceSupport.getPath().equals(path) &&
-            contentSourceSupport.getPriority().equals(priority) &&
-            contentSourceSupport.getType().equals(type);
+               contentSourceSupport.getPriority().equals(priority) &&
+               contentSourceSupport.getType().equals(type);
       }
 
       @Override

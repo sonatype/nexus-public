@@ -67,4 +67,16 @@ public interface NexusTestDistribution
         javaVMCompositeOption()
     );
   }
+
+  static boolean isBase(final Distribution dist) {
+    return Distribution.BASE.equals(dist);
+  }
+
+  static boolean isOss(final Distribution dist) {
+    return Distribution.OSS.equals(dist) || Distribution.PRO_STARTER.equals(dist);
+  }
+
+  static boolean isPro(final Distribution dist) {
+    return Distribution.PRO.equals(dist);
+  }
 }

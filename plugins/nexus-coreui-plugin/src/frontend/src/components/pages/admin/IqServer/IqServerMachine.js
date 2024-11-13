@@ -20,7 +20,7 @@ import {mergeDeepRight} from 'ramda';
 import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
-const IQ_API = '/service/rest/v1/iq';
+const IQ_API = 'service/rest/v1/iq';
 
 const PASSWORD_PLACEHOLDER = '#~NXRM~PLACEHOLDER~PASSWORD~#';
 
@@ -149,7 +149,7 @@ export default FormUtils.buildFormMachine({
   services: {
     fetchData: () => Axios.get(IQ_API),
     saveData: ({data}) => Axios.put(IQ_API, data),
-    verifyConnection: ({data}) => Axios.post('/service/rest/internal/ui/iq/verify-connection', data)
+    verifyConnection: ({data}) => Axios.post('service/rest/internal/ui/iq/verify-connection', data)
   }
 });
 

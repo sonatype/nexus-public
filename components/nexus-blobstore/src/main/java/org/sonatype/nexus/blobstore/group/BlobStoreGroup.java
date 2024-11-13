@@ -37,6 +37,7 @@ import org.sonatype.nexus.blobstore.MemoryBlobSession;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobSession;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -117,10 +118,12 @@ public class BlobStoreGroup
   private Cache<BlobId, String> locatedBlobs;
 
   @Inject
-  public BlobStoreGroup(final BlobStoreManager blobStoreManager,
-                        final Map<String, Provider<FillPolicy>> fillPolicyProviders,
-                        final Provider<CacheHelper> cacheHelperProvider,
-                        @Named("${nexus.blobstore.group.blobId.cache.timeToLive:-2d}") final Time blobIdCacheTimeout) {
+  public BlobStoreGroup(
+      final BlobStoreManager blobStoreManager,
+      final Map<String, Provider<FillPolicy>> fillPolicyProviders,
+      final Provider<CacheHelper> cacheHelperProvider,
+      @Named("${nexus.blobstore.group.blobId.cache.timeToLive:-2d}") final Time blobIdCacheTimeout)
+  {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.fillPolicyProviders = checkNotNull(fillPolicyProviders);
     this.cacheHelperProvider = checkNotNull(cacheHelperProvider);
@@ -204,6 +207,28 @@ public class BlobStoreGroup
   }
 
   @Override
+  public void createBlobAttributes(final BlobId blobId, Map<String, String> headers, final BlobMetrics metrics) {
+    BlobStore result = fillPolicy.chooseBlobStore(this, headers);
+    if (result == null) {
+      throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create properties", null);
+    }
+    result.createBlobAttributes(blobId, headers, metrics);
+  }
+
+  @Override
+  public BlobAttributes createBlobAttributesInstance(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics metrics)
+  {
+    BlobStore result = fillPolicy.chooseBlobStore(this, headers);
+    if (result == null) {
+      throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create properties", null);
+    }
+    return result.createBlobAttributesInstance(blobId, headers, metrics);
+  }
+
+  @Override
   @Guarded(by = STARTED)
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
     BlobStore target = locate(blobId)
@@ -280,7 +305,7 @@ public class BlobStoreGroup
 
   @Override
   @Guarded(by = STARTED)
-  public BlobStoreMetricsService getMetricsService() {
+  public BlobStoreMetricsService<BlobStoreGroup> getMetricsService() {
     throw new UnsupportedOperationException("metrics service is not available at a group level");
   }
 
@@ -406,6 +431,18 @@ public class BlobStoreGroup
   }
 
   @Override
+  public boolean bytesExists(final BlobId blobId) {
+    return members.get().stream()
+        .anyMatch((BlobStore member) -> member.bytesExists(blobId));
+  }
+
+  @Override
+  public boolean isBlobEmpty(final BlobId blobId) {
+    return members.get().stream()
+            .anyMatch((BlobStore member) -> member.isBlobEmpty(blobId));
+  }
+
+  @Override
   @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     // no-op
@@ -419,11 +456,11 @@ public class BlobStoreGroup
   }
 
   @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(final int sinceDays) {
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final java.time.Duration duration) {
     return members
         .get()
         .stream()
-        .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(sinceDays));
+        .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(duration));
   }
 
   @Override

@@ -21,6 +21,6 @@ import org.sonatype.nexus.repository.content.kv.FormatKeyValueModule;
 @Named(AptFormat.NAME)
 @Singleton
 public class AptKeyValueModule
-    extends FormatKeyValueModule<AptKeyValueDAO>
+    extends FormatKeyValueModule<AptKeyValueStore>
 {
 }
