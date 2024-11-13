@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>public-parent</artifactId>
-    <version>44</version>
+    <version>48</version>
     <relativePath/>
   </parent>
 
@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.70.0-SNAPSHOT</version>
+  <version>3.75.0-SNAPSHOT</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -54,7 +54,7 @@
 
   <prerequisites>
     <!-- Mostly meaningless, though site plugin uses this; Minimum version controlled by enforcer plugin -->
-    <maven>3.3.3</maven>
+    <maven>3.9.6</maven>
   </prerequisites>
 
   <properties>
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.70.0-SNAPSHOT</nexus.version>
+    <nexus.version>3.75.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <karaf.version>4.3.9</karaf.version>
@@ -81,8 +81,9 @@
     <!--
     Default compile support for Java8+
     -->
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
 
     <!--
     Sonar configuration.
@@ -110,7 +111,6 @@
       org.sonatype.goodies.testsupport.group.Perf,
       org.sonatype.goodies.testsupport.group.External,
       org.sonatype.goodies.testsupport.group.Unstable,
-      org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
       org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
     </it.excludedGroups>
     <clm.skip>false</clm.skip>
@@ -141,103 +141,102 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-audit</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-base</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-blobstore</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-blobstore-api</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-blobstore-file</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-bootstrap</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-capability</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cleanup</artifactId>
-        <version>3.70.0-03</version>
-      </dependency>
+        </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cleanup-config</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-commands</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-common</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-core</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-crypto</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore-api</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore-mybatis</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-datastore-mybatis</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -245,123 +244,97 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-distributed-event-service-api</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-orient</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-orient</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus2-npm-metadata-export</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-orient-console</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cache</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-elasticsearch</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-email</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-extdirect</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-extender</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-features</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-httpclient</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-jmx</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-scheduling</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-formfields</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-guice-servlet</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-main</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-mime</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-oss-edition</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-oss-edition</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -369,184 +342,170 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-pax-logging</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-plugin-api</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-quartz</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rapture</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rapture</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <classifier>sources</classifier>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-repository</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-repository</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-config</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-content</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-services</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-view</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rest</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rest-client</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rest-jackson2</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-script</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-security</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-selector</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-servlet</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-siesta</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-ssl</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-supportzip-api</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-swagger</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-task-logging</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-thread</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-transaction</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-ui-plugin</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-upgrade</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-validation</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-webhooks</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-webresources-api</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <!-- testsupport -->
@@ -554,25 +513,25 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-pax-exam</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-test-common</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-test-db</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-testsupport</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
       </dependency>
 
       <!-- assemblies -->
@@ -580,7 +539,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-startup-feature</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -588,7 +547,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-boot-feature</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -596,7 +555,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-feature</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -604,7 +563,6 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-core-feature</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
@@ -612,14 +570,14 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-overlay</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <type>zip</type>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-template</artifactId>
-        <version>3.70.0-SNAPSHOT</version>
+        <version>3.75.0-SNAPSHOT</version>
         <type>zip</type>
       </dependency>
 
@@ -633,18 +591,10 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <dependencies>
-            <!--
-            Keep versions in sync with buildsupport/groovy/pom.xml
-            -->
             <dependency>
               <groupId>org.codehaus.groovy</groupId>
               <artifactId>groovy-eclipse-compiler</artifactId>
               <version>3.7.0</version>
-            </dependency>
-            <dependency>
-              <groupId>org.codehaus.groovy</groupId>
-              <artifactId>groovy-eclipse-batch</artifactId>
-              <version>3.0.8-01</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -662,14 +612,12 @@
           </configuration>
         </plugin>
 
-        <!--
-        Turn off strict javadoc checks in Java8.
-        -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.6.3</version>
           <configuration>
-            <additionalparam>-Xdoclint:none</additionalparam>
+            <doclint>none</doclint>
           </configuration>
         </plugin>
 
@@ -870,7 +818,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.buildsupport</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.70.0-SNAPSHOT</version>
+          <version>3.75.0-SNAPSHOT</version>
           <executions>
             <execution>
               <goals>
@@ -1030,6 +978,12 @@
               <exclude>**/src/test/it-resources/**</exclude>
 
               <!--
+              Exclude XML stylesheet template so header doesn't alter expected output
+              -->
+              <exclude>**/nexus-core/**/jetty-stylesheet.xml</exclude>
+              <exclude>**/nexus-core/**/hazelcast-stylesheet.xml</exclude>
+
+              <!--
               Exclude rapture configuration, generated and thirdparty resources.
               -->
               <exclude>**/nexus-rapture/src/main/baseapp/**</exclude>
@@ -1092,10 +1046,10 @@
               <fail>true</fail>
               <rules>
                 <!--
-                Require Maven 3.3.3+
+                Require Maven 3.9.6+ for java17 support
                 -->
                 <requireMavenVersion>
-                  <version>[3.3.3,)</version>
+                  <version>[3.9.6,)</version>
                 </requireMavenVersion>
 
                 <!--
@@ -1306,10 +1260,77 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Enable CLM maven plugin -->
+      <plugin>
+        <groupId>com.sonatype.clm</groupId>
+        <artifactId>clm-maven-plugin</artifactId>
+        <configuration>
+          <skip>${clm.skip}</skip>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>index</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
   <profiles>
+    <profile>
+      <id>sonatype</id>
+      <activation>
+        <property>
+          <name>!public</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <dependencies>
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-eclipse-batch</artifactId>
+                <version>3.0.13-02</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>public</id>
+      <activation>
+        <property>
+          <name>public</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <dependencies>
+              <!--
+                To support building nexus-public, we have to select the last version of groovy-eclipse-batch available
+                in Maven Central. This comes with a downside, as this compiler won't support the use of the parallel
+                build options in maven (e.g. `-T 1C`).
+               -->
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-eclipse-batch</artifactId>
+                <version>3.0.8-01</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
    <profile>
       <id>surefire-jdk8</id>
       <activation>
@@ -1454,6 +1475,9 @@
           --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
           --add-opens=java.base/java.net=ALL-UNNAMED
           --add-opens=java.base/java.util=ALL-UNNAMED
+          --add-exports=java.base/sun.security.x509=ALL-UNNAMED
+          --add-exports=java.base/sun.security.rsa=ALL-UNNAMED
+          --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED
         </argLine>
       </properties>
       <id>surefire-jdk17</id>
@@ -1536,14 +1560,9 @@
       <id>external-resources</id>
       <properties>
         <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf
         </it.excludedGroups>
@@ -1578,10 +1597,7 @@
         </it.includedGroups>
         <it.excludedGroups>
           org.sonatype.goodies.testsupport.group.External,
-          org.sonatype.goodies.testsupport.group.Unstable,
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
+          org.sonatype.goodies.testsupport.group.Unstable
         </it.excludedGroups>
       </properties>
       <build>
@@ -1609,9 +1625,7 @@
         </it.includedGroups>
         <it.excludedGroups>
           org.sonatype.goodies.testsupport.group.External,
-          org.sonatype.goodies.testsupport.group.Unstable,
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
+          org.sonatype.goodies.testsupport.group.Unstable
         </it.excludedGroups>
       </properties>
       <build>
@@ -1663,8 +1677,8 @@
       <id>postgres-unit-tests</id>
       <properties>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+          org.sonatype.nexus.content.testsuite.groups.OSSTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf,
           org.sonatype.goodies.testsupport.group.External
@@ -1675,13 +1689,7 @@
     <profile>
       <id>h2-integration-tests</id>
       <properties>
-        <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.H2TestGroup
-        </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf,
@@ -1693,14 +1701,9 @@
     <profile>
       <id>postgres-integration-tests</id>
       <properties>
-        <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
-        </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+          org.sonatype.nexus.content.testsuite.groups.OSSTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf,
           org.sonatype.goodies.testsupport.group.External
@@ -1712,13 +1715,9 @@
       <id>h2-external-resources</id>
       <properties>
         <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf
@@ -1730,14 +1729,11 @@
       <id>postgres-external-resources</id>
       <properties>
         <it.includedGroups>
-          org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
           org.sonatype.goodies.testsupport.group.External
         </it.includedGroups>
         <it.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
           org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+          org.sonatype.nexus.content.testsuite.groups.OSSTestGroup,
           org.sonatype.goodies.testsupport.group.Unstable,
           org.sonatype.goodies.testsupport.group.Perf
         </it.excludedGroups>
@@ -2245,32 +2241,6 @@
             </plugin>
           </plugins>
         </pluginManagement>
-      </build>
-    </profile>
-
-    <!-- Enable CLM maven plugin on supported JDK -->
-    <profile>
-      <id>clm</id>
-      <activation>
-        <jdk>(,11]</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.sonatype.clm</groupId>
-            <artifactId>clm-maven-plugin</artifactId>
-            <configuration>
-              <skip>${clm.skip}</skip>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>index</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
       </build>
     </profile>
 

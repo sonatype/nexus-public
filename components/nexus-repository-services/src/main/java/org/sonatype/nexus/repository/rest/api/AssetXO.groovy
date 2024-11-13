@@ -68,6 +68,8 @@ class AssetXO
 
   Date blobCreated
 
+  String blobStoreName
+
   @JsonIgnore
   Map attributes
 

@@ -584,14 +584,14 @@ describe('UsersDetails', function() {
   });
 
   it('uses proper urls', function() {
-    expect(singleUserUrl('testId')).toBe('/service/rest/v1/security/users/testId');
-    expect(singleUserUrl('test>?* %$@&Id ')).toBe('/service/rest/v1/security/users/test%3E%3F*%20%25%24%40%26Id%20');
+    expect(singleUserUrl('testId')).toBe('service/rest/v1/security/users/testId');
+    expect(singleUserUrl('test>?* %$@&Id ')).toBe('service/rest/v1/security/users/test%3E%3F*%20%25%24%40%26Id%20');
 
-    expect(findUsersUrl('test?')).toBe('/service/rest/v1/security/users?source=default&userId=test%3F');
-    expect(findUsersUrl('test>', 'Crowd')).toBe('/service/rest/v1/security/users?source=Crowd&userId=test%3E');
+    expect(findUsersUrl('test?')).toBe('service/rest/v1/security/users?source=default&userId=test%3F');
+    expect(findUsersUrl('test>', 'Crowd')).toBe('service/rest/v1/security/users?source=Crowd&userId=test%3E');
 
-    expect(defaultRolesUrl).toBe('/service/rest/v1/security/roles?source=default');
-    expect(createUserUrl).toBe('/service/rest/v1/security/users');
+    expect(defaultRolesUrl).toBe('service/rest/v1/security/roles?source=default');
+    expect(createUserUrl).toBe('service/rest/v1/security/users');
   });
 
   describe('Change Password', () => {

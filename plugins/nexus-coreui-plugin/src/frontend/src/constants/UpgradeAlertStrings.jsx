@@ -40,7 +40,9 @@ export default {
     WARN: {
       LABEL: 'Mixed Mode detected.',
       TEXT: 'Nexus Repository detected that 1 or more node(s) are running different Nexus Repository versions. ' +
-        'If you are in the process of upgrading your nodes, you can ignore this alert. Otherwise, ensure all nodes are on the same version as soon as possible.'
+        'This is not supported except briefly during the upgrade process. ' +
+        'Remaining in mixed mode outside of an active upgrade process can result in unexpected behavior and Nexus Repository becoming unstable. ' + 
+        'Ensure all nodes are on the same version as soon as possible.'
     },
 
     ERROR: {

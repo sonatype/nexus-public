@@ -20,13 +20,13 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
+import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.sonatype.nexus.upgrade.datastore.UpgradeException;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
 
 import org.flywaydb.core.api.MigrationVersion;
 import org.junit.Before;
@@ -37,24 +37,34 @@ import org.mockito.Mock;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class UpgradeManagerImplTest
     extends TestSupport
 {
+  private static final String SELECT_FROM_FLYWAY_SCHEMA_HISTORY = "SELECT * FROM \"flyway_schema_history\"";
+
+  private static final String SELECT_FROM_EXAMPLE = "SELECT * FROM example";
+
+  private static final String SELECT_FROM_SKIPPED = "SELECT * FROM skipped";
+
   @Rule
   public DataSessionRule dataSessionRule = new DataSessionRule();
 
   @Mock
-  DataStoreManager dataStoreManager;
+  private DataStoreManager dataStoreManager;
 
   @Mock
   private PostStartupUpgradeAuditor auditor;
@@ -69,24 +79,19 @@ public class UpgradeManagerImplTest
   @Test
   public void testNoUpgrades() throws Exception {
     UpgradeManagerImpl upgradeManager = new UpgradeManagerImpl(dataStoreManager, auditor, emptyList());
-
     upgradeManager.migrate();
 
-    try (Connection conn = getConnection()) {
-      try (Statement stmt = conn.createStatement()) {
-        // check the flyway schema history
-        try (ResultSet results = stmt.executeQuery("SELECT * FROM \"flyway_schema_history\"")) {
-          if (migrationStep.isH2(conn)) {
-            // for H2 flyway inserts an initial null version
-            assertThat(results.next(), equalTo(true));
-            assertThat(results.getString("version"), nullValue());
-          }
-          // assert there is no history of schema upgrades
-          assertThat(results.next(), equalTo(false));
-        }
+    try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+      Exception exception = assertThrows(Exception.class,
+          () -> stmt.executeQuery(SELECT_FROM_FLYWAY_SCHEMA_HISTORY));
+
+      if ("PostgreSQL".equals(conn.getMetaData().getDatabaseProductName())) {
+        assertThat(exception.getMessage(), containsString("relation \"flyway_schema_history\" does not exist"));
+      }
+      else {
+        assertThat(exception.getMessage(), containsString("Table \"flyway_schema_history\" not found"));
       }
     }
-
     // No changes should fire no events
     verifyNoInteractions(auditor);
   }
@@ -97,27 +102,27 @@ public class UpgradeManagerImplTest
 
     upgradeManager.migrate();
 
-    try (Connection conn = getConnection()) {
-      try (Statement stmt = conn.createStatement()) {
-        // check the flyway schema history
-        try (ResultSet results = stmt.executeQuery("SELECT * FROM \"flyway_schema_history\"")) {
-          if (migrationStep.isH2(conn)) {
-            // for H2 flyway inserts an initial null version
-            assertThat(results.next(), equalTo(true));
-            assertThat(results.getString("version"), nullValue());
-          }
-          // assert there is history of one schema upgrade
-          assertThat(results.next(), equalTo(true));
-          assertThat(results.getString("version"), equalTo("1.0"));
-          assertThat(results.next(), equalTo(false));
+    try (Connection conn = getConnection();
+         Statement stmt = conn.createStatement()) {
+      try (ResultSet results = stmt.executeQuery(SELECT_FROM_FLYWAY_SCHEMA_HISTORY)) {
+        if (migrationStep.isH2(conn)) {
+          // for H2 flyway inserts an initial null version
+          assertTrue(results.next());
+          assertNull(results.getString("version"));
         }
+        // assert there is history of one schema upgrade
+        assertForExampleTable(results, "version", "1.0");
+      }
+      catch (Exception exception) {
+        fail(exception.getMessage());
+      }
 
-        // check for the result of the upgrade step
-        try (ResultSet results = stmt.executeQuery("SELECT * FROM example")) {
-          assertThat(results.next(), equalTo(true));
-          assertThat(results.getString("name"), equalTo("fawkes"));
-          assertThat(results.next(), equalTo(false));
-        }
+      // check for the result of the upgrade step
+      try (ResultSet results = stmt.executeQuery(SELECT_FROM_EXAMPLE)) {
+        assertForExampleTable(results, "name", "fawkes");
+      }
+      catch (Exception exception) {
+        fail(exception.getMessage());
       }
     }
 
@@ -125,6 +130,12 @@ public class UpgradeManagerImplTest
     verify(auditor).post(any(UpgradeStartedEvent.class));
     verify(auditor).post(any(UpgradeCompletedEvent.class));
     verifyNoMoreInteractions(auditor);
+  }
+
+  private static void assertForExampleTable(ResultSet results, String name, String fawkes) throws SQLException {
+    assertTrue(results.next());
+    assertThat(results.getString(name), equalTo(fawkes));
+    assertFalse(results.next());
   }
 
   @Test(expected = UpgradeException.class)
@@ -135,30 +146,31 @@ public class UpgradeManagerImplTest
         Arrays.asList(migrationStep, futureMigrationStep));
     upgradeManagerWithFutureMigration.migrate();
 
-    UpgradeManagerImpl upgradeManagerWithoutFuture = new UpgradeManagerImpl(dataStoreManager, auditor, singletonList(migrationStep));
+    UpgradeManagerImpl upgradeManagerWithoutFuture =
+        new UpgradeManagerImpl(dataStoreManager, auditor, singletonList(migrationStep));
     upgradeManagerWithoutFuture.migrate();
   }
 
   @Test
-  public void testUpgradeSkippedStep() throws SQLException, UpgradeException  {
+  public void testUpgradeSkippedStep() throws UpgradeException {
     FutureMigrationStep futureMigrationStep = new FutureMigrationStep();
-    UpgradeManagerImpl
-        upgradeManager = new UpgradeManagerImpl(dataStoreManager, auditor, Arrays.asList(migrationStep, futureMigrationStep));
+    UpgradeManagerImpl upgradeManager =
+        new UpgradeManagerImpl(dataStoreManager, auditor, Arrays.asList(migrationStep, futureMigrationStep));
     upgradeManager.migrate();
 
     SkippedMigrationStep skippedMigrationStep = new SkippedMigrationStep();
-    UpgradeManagerImpl upgradeManagerWithSkipped = new UpgradeManagerImpl(dataStoreManager, auditor, Arrays.asList(migrationStep, futureMigrationStep, skippedMigrationStep));
+    UpgradeManagerImpl upgradeManagerWithSkipped
+        = new UpgradeManagerImpl(dataStoreManager, auditor,
+        Arrays.asList(migrationStep, futureMigrationStep, skippedMigrationStep));
     upgradeManagerWithSkipped.migrate();
 
-    try (Connection conn = getConnection()) {
-      try (Statement stmt = conn.createStatement()) {
-        // check for the result of the upgrade step
-        try (ResultSet results = stmt.executeQuery("SELECT * FROM skipped")) {
-          assertThat(results.next(), equalTo(true));
-          assertThat(results.getString("name"), equalTo("fawkes"));
-          assertThat(results.next(), equalTo(false));
-        }
-      }
+    try (Connection conn = getConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet results = stmt.executeQuery(SELECT_FROM_SKIPPED)) {
+      assertForExampleTable(results, "name", "fawkes");
+    }
+    catch (Exception exception) {
+      fail(exception.getMessage());
     }
   }
 
@@ -168,7 +180,7 @@ public class UpgradeManagerImplTest
 
     UpgradeManagerImpl upgradeManagerWithFutureMigration = new UpgradeManagerImpl(dataStoreManager, auditor,
         Arrays.asList(new NullVersionMigration(), migrationStep, futureMigrationStep));
-
+    assertTrue(upgradeManagerWithFutureMigration.getMaxMigrationVersion().isPresent());
     assertThat(upgradeManagerWithFutureMigration.getMaxMigrationVersion().get().getVersion(), equalTo("4.5.6"));
   }
 
@@ -176,13 +188,14 @@ public class UpgradeManagerImplTest
   public void testGetBaselineWorksAsExpected() {
     TestBaselineMigrationStep baselineMigrationStep = new TestBaselineMigrationStep();
     FutureMigrationStep futureMigrationStep = new FutureMigrationStep();
-
-    UpgradeManagerImpl upgradeManager = new UpgradeManagerImpl(dataStoreManager, auditor,
+    UpgradeManagerImpl upgradeManager
+        = new UpgradeManagerImpl(dataStoreManager, auditor,
         Arrays.asList(migrationStep, baselineMigrationStep, futureMigrationStep));
 
     Optional<String> baseline = upgradeManager.getBaseline(MigrationVersion.fromVersion("2.0"));
 
     assertTrue(baseline.isPresent());
+    assertTrue(baselineMigrationStep.version().isPresent());
     assertThat(baseline.get(), equalTo(baselineMigrationStep.version().get()));
   }
 
@@ -209,6 +222,7 @@ public class UpgradeManagerImplTest
     }
 
     @Override
-    public void migrate(final Connection connection) throws Exception { }
+    public void migrate(final Connection connection) {
+    }
   }
 }

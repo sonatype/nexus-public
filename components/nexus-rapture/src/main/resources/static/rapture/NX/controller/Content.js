@@ -49,6 +49,12 @@ Ext.define('NX.controller.Content', {
       controller: {
         '#Menu': {
           featureselected: me.onFeatureSelected
+        },
+        '#State': {
+          userchanged: me.onUpdate
+        },
+        '#Permissions': {
+          changed: me.onUpdate
         }
       },
       component: {
@@ -122,6 +128,8 @@ Ext.define('NX.controller.Content', {
     // Update the breadcrumb
     content.showRoot();
 
+    content.maybeShowMaliciousRiskOnDisk();
+
     // install new feature view
     content.add(cmp);
 
@@ -131,6 +139,13 @@ Ext.define('NX.controller.Content', {
     //<if debug>
     me.logInfo('Content changed to:', text, 'class:', cmp.self.getName());
     //</if>
+  },
+
+  onUpdate: function () {
+    const me = this;
+    const content = me.getFeatureContent();
+
+    content.maybeShowMaliciousRiskOnDisk();
   }
 
 });

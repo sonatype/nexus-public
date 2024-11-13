@@ -110,6 +110,14 @@ public class FluentAssetImpl
   }
 
   @Override
+  public String blobStoreName() {
+    return asset.blobStoreName();
+  }
+
+  @Override
+  public long assetBlobSize() { return asset.assetBlobSize(); }
+
+  @Override
   public NestedAttributesMap attributes() {
     return asset.attributes();
   }

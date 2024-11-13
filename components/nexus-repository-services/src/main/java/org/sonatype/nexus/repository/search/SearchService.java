@@ -43,4 +43,8 @@ public interface SearchService
   default void waitForCalm() {
     // not required for default
   }
+
+  default void waitForReady() {
+    // not required for default
+  }
 }

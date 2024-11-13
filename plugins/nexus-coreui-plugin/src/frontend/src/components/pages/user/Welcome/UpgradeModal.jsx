@@ -30,13 +30,13 @@ export default function UpgradeModal() {
   const zeroDowntimeMarketingModalClosed = ExtJS.useState(() => ExtJS.state().getValue('zeroDowntimeMarketingModalClosed'));
   const onboarding = !ExtJS.useState(() => ExtJS.state().getValue('onboarding.required'));
   const showModalFlag = ExtJS.state().getValue('zero.downtime.marketing.modal');
-  const isHA = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
+  const isZDU = ExtJS.state().getValue('nexus.zero.downtime.enabled');
   const hasUser = ExtJS.useUser() ?? false;
   const hasPermissions = ExtJS.usePermission(() => ExtJS.checkPermission('nexus:*'), [hasUser])
   const modalCloseHandler = () => send({ type: 'CLOSE_AND_SAVE' });
 
   useEffect(() => {
-    if (showModalFlag && onboarding && isHA && hasPermissions && hasUser && zeroDowntimeMarketingModalClosed === false) {
+    if (showModalFlag && onboarding && isZDU && hasPermissions && hasUser && zeroDowntimeMarketingModalClosed === false) {
       send({ type: 'OPEN_MODAL' });
     } else {
       send({ type: 'CLOSE_MODAL' });
@@ -51,7 +51,7 @@ export default function UpgradeModal() {
       </header>
       <div className="nx-modal-content">
         <img className="modal-logo"
-                 src="/static/rapture/resources/images/sonatype-repository-logo.svg"
+                 src={ExtJS.urlOf("static/rapture/resources/images/sonatype-repository-logo.svg")}
                  alt="Sonatype Nexus Repository logo"/>
         <NxH3>{ABOUT.TITLE}</NxH3>
         <p>{ABOUT.DESCRIPTION}</p>

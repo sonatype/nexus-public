@@ -212,6 +212,13 @@ Ext.define('NX.State', {
     return this.getValue('sqlSearchEnabled');
   },
 
+  /**
+   * Return whether or not conan V2 is enabled.
+   */
+  isConanV2Enabled: function() {
+    return this.getValue('conanV2Enabled');
+  },
+
   getValue: function (key, defaultValue) {
     return this.controller().getValue(key, defaultValue);
   },

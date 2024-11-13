@@ -16,8 +16,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
-import org.sonatype.nexus.security.PasswordHelper;
 
 import org.apache.ibatis.type.TypeHandler;
 
@@ -32,7 +32,7 @@ public class ProxyConfigurationHandler
     extends HttpClientConfigurationHandler<ProxyConfiguration>
 {
   @Inject
-  public ProxyConfigurationHandler(final PasswordHelper passwordHelper) {
-    super(passwordHelper);
+  public ProxyConfigurationHandler(final SecretsFactory secretsFactory) {
+    super(secretsFactory);
   }
 }

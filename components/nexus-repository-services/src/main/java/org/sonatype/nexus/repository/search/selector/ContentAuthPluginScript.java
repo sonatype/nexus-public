@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
-import static org.sonatype.nexus.security.BreadActions.BROWSE;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**

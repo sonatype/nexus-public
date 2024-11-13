@@ -62,7 +62,6 @@ export const DOCKER_INDEX_TYPES = {
 
 // temp
 const isCapabilityEnabled = false;
-const replicationFacet = isCapabilityEnabled ? ReplicationConfiguration : () => null;
 const replicationDefaultValue = isCapabilityEnabled ? {replication: {enabled: false}} : null;
 
 const genericFacets = {
@@ -117,16 +116,6 @@ const repositoryFormats = {
       }
     })
   },
-  bower_proxy: {
-    facets: [RewritePackageUrlsConfiguration, ...genericFacets.proxy],
-    defaultValues: {
-      ...genericDefaultValues.proxy,
-      bower: {rewritePackageUrls: true}
-    },
-    validators: (data) => ({
-      ...genericValidators.proxy(data)
-    })
-  },
   yum_hosted: {
     facets: [RepodataDepthConfiguration, RpmDeployPolicyConfiguration, ...genericFacets.hosted],
     defaultValues: {
@@ -141,7 +130,7 @@ const repositoryFormats = {
     })
   },
   raw_proxy: {
-    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.proxy],
+    facets: [ContentDespositionConfiguration, ...genericFacets.proxy],
     defaultValues: {
       ...genericDefaultValues.proxy,
       ...replicationDefaultValue,
@@ -152,7 +141,7 @@ const repositoryFormats = {
     })
   },
   raw_hosted: {
-    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.hosted],
+    facets: [ContentDespositionConfiguration, ...genericFacets.hosted],
     defaultValues: {
       ...mergeDeepRight(genericDefaultValues.hosted, {
         storage: {strictContentTypeValidation: false}
@@ -165,7 +154,7 @@ const repositoryFormats = {
     })
   },
   raw_group: {
-    facets: [replicationFacet, ContentDespositionConfiguration, ...genericFacets.group],
+    facets: [ContentDespositionConfiguration, ...genericFacets.group],
     defaultValues: {
       ...genericDefaultValues.group,
       ...replicationDefaultValue,
@@ -177,7 +166,6 @@ const repositoryFormats = {
   },
   maven2_proxy: {
     facets: [
-      replicationFacet,
       VersionPolicyConfiguration,
       LayoutPolicyConfiguration,
       ContentDespositionConfiguration,
@@ -208,7 +196,6 @@ const repositoryFormats = {
   },
   maven2_hosted: {
     facets: [
-      replicationFacet,
       VersionPolicyConfiguration,
       LayoutPolicyConfiguration,
       ContentDespositionConfiguration,
@@ -229,7 +216,6 @@ const repositoryFormats = {
   },
   maven2_group: {
     facets: [
-      replicationFacet,
       VersionPolicyConfiguration,
       LayoutPolicyConfiguration,
       ContentDespositionConfiguration,

@@ -248,7 +248,6 @@ describe('RepositoriesForm', () => {
   const RECIPES_RESPONSE = [
     {format: 'apt', type: 'hosted'},
     {format: 'apt', type: 'proxy'},
-    {format: 'bower', type: 'proxy'},
     {format: 'docker', type: 'proxy'},
     {format: 'docker', type: 'hosted'},
     {format: 'docker', type: 'group'},
@@ -798,52 +797,6 @@ describe('RepositoriesForm', () => {
       userEvent.click(selectors.getCreateButton());
 
       await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(url, repo));
-    });
-
-    it('creates bower proxy repository', async () => {
-      const repo = {
-        format: 'bower',
-        type: 'proxy',
-        name: 'bower-proxy-1',
-        online: true,
-        routingRule: '',
-        storage: {
-          blobStoreName: 'default',
-          strictContentTypeValidation: true
-        },
-        cleanup: null,
-        proxy: {
-          remoteUrl: 'https://repo123.net',
-          contentMaxAge: 1440,
-          metadataMaxAge: 1440
-        },
-        negativeCache: {
-          enabled: true,
-          timeToLive: 1440
-        },
-        httpClient: {
-          blocked: false,
-          autoBlock: true,
-          connection: null,
-          authentication: null
-        },
-        replication: {
-          preemptivePullEnabled: false,
-          assetPathRegex: ''
-        },
-        bower: {rewritePackageUrls: false}
-      };
-
-      await renderViewAndSetRequiredFields(repo);
-
-      await TestUtils.changeField(selectors.getBlobStoreSelect, repo.storage.blobStoreName);
-      await TestUtils.changeField(selectors.getRemoteUrlInput, repo.proxy.remoteUrl);
-
-      userEvent.click(selectors.getRewritePackageUrlsCheckbox());
-
-      userEvent.click(selectors.getCreateButton());
-
-      await waitFor(() => expect(Axios.post).toHaveBeenCalledWith(getSaveUrl(repo), repo));
     });
 
     it('edits raw proxy repositories', async function () {

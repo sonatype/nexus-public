@@ -68,6 +68,5 @@ public class MavenHostedRecipeTest
     verify(mavenHostedRepository).attach(mavenMaintenanceFacet);
     verify(mavenHostedRepository).attach(removeSnapshotsFacet);
     verify(mavenHostedRepository).attach(purgeUnusedSnapshotsFacet);
-    verify(mavenHostedRepository).attach(mavenReplicationFacet);
   }
 }

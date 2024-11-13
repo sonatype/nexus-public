@@ -14,24 +14,24 @@ package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
 import java.net.URL;
+
 import javax.cache.CacheManager;
 import javax.inject.Inject;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.nexus.common.net.PortAllocator;
-import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testsuite.proxy.DefaultCacheSettingsTester;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
+import org.sonatype.nexus.testsuite.testsupport.system.RestTestHelper;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -44,7 +44,6 @@ import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.statu
 /**
  * IT for proxy raw repositories
  */
-@Category(OrientAndSQLTestGroup.class)
 public class RawProxyOfHostedIT
     extends RawITSupport
 {
@@ -66,6 +65,9 @@ public class RawProxyOfHostedIT
 
   @Inject
   private CacheManager cacheManager;
+
+  @Inject
+  private RestTestHelper restTestHelper;
 
   @Before
   public void setUpRepositories() throws Exception {
@@ -258,6 +260,65 @@ public class RawProxyOfHostedIT
       server.stop();
     }
     assertThat(status(proxyClient.get(TEST_PATH)), is(200));
+  }
+
+  @Test
+  public void proxyNarrowNoBreakSpaceNNBSP() {
+    assertThat(
+        restTestHelper
+            .put(
+                "/repository/" + hostedRepo.getName() + "/some/folder/begin\u202Fend.txt",
+                "content",
+                "admin",
+                "admin123"
+            ).getStatus(),
+        is(201)
+    );
+
+    assertThat(
+        componentAssetTestHelper.countComponents(proxyRepo),
+        is(0)
+    );
+    assertThat(
+        componentAssetTestHelper.countAssets(proxyRepo),
+        is(0)
+    );
+    assertThat(
+        componentAssetTestHelper.countComponents(hostedRepo),
+        is(1)
+    );
+    assertThat(
+        componentAssetTestHelper.countAssets(hostedRepo),
+        is(1)
+    );
+
+    assertThat(
+        restTestHelper
+            .get(
+                "/repository/" + proxyRepo.getName() + "/some/folder/begin\u202Fend.txt",
+                "admin",
+                "admin123"
+            ).getStatus(),
+        is(200)
+    );
+
+    assertThat(
+        componentAssetTestHelper.countComponents(proxyRepo),
+        is(1)
+    );
+    assertThat(
+        componentAssetTestHelper.countAssets(proxyRepo),
+        is(1)
+    );
+    assertThat(
+        componentAssetTestHelper.componentExists(
+            proxyRepo,
+            "/some/folder",
+            "/some/folder/begin\u202Fend.txt",
+            ""
+        ),
+        is(true)
+    );
   }
 
   private void responseViaGroupProduces(final int upstreamStatus, final int downstreamStatus) throws Exception {

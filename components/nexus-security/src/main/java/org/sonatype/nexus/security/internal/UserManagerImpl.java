@@ -307,12 +307,8 @@ public class UserManagerImpl
   }
 
   @Override
-  public boolean isRealmConfigured() {
-    throw new UnsupportedOperationException("Not supported yet.");
-  }
-
-  private SecuritySystem getSecuritySystem() {
-    return this.securitySystem;
+  public boolean isConfigured() {
+    return true;
   }
 
   private String hashPassword(String clearPassword) {

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.file.store;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -37,7 +37,9 @@ public interface SoftDeletedBlobsStore
    * @param sourceBlobStoreName the blobstore name these records are related to
    * @return all records related to provided sourceBlobStoreName
    */
-  Continuation<SoftDeletedBlobsData> readRecords(String continuationToken, String sourceBlobStoreName);
+  Continuation<SoftDeletedBlobsData> readRecords(String continuationToken, int limit, String sourceBlobStoreName);
+
+  Stream<BlobId> readAllBlobIds(String sourceBlobStoreName);
 
   /**
    * Delete single record by provided 'blobId' related to specified blobstore name
@@ -61,12 +63,4 @@ public interface SoftDeletedBlobsStore
    * @return amount of soft deleted blobs
    */
   int count(String sourceBlobStoreName);
-
-  /**
-   * Returns a list of the oldest 20 blob_ids in the soft_deleted_blobs table related to the provided blobstore.
-   *
-   * @param sourceBlobStoreName the blobstore name these records are related to
-   * @return oldest 20 blob_id strings
-   */
-  List<String> readOldestRecords(String sourceBlobStoreName);
 }

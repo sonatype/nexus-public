@@ -59,11 +59,11 @@ public class GroupFacetImpl
     extends FacetSupport
     implements GroupFacet
 {
-  private final RepositoryManager repositoryManager;
+  protected final RepositoryManager repositoryManager;
 
   private final Type groupType;
 
-  private final ConstraintViolationFactory constraintViolationFactory;
+  protected final ConstraintViolationFactory constraintViolationFactory;
 
   public static final String CONFIG_KEY = "group";
 
@@ -103,16 +103,30 @@ public class GroupFacetImpl
   protected void doValidate(final Configuration configuration) throws Exception {
     facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class);
 
-    if (getStateGuard().is(STARTED)) {
-      Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+    Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+    Set<ConstraintViolation<?>> violations = new HashSet<>();
 
-      Set<ConstraintViolation<?>> violations = new HashSet<>();
+    maybeAdd(violations, validateFormat(configToValidate));
+
+    if (getStateGuard().is(STARTED)) {
       maybeAdd(violations, validateGroupDoesNotContainItself(configuration.getRepositoryName(), configToValidate));
-      maybePropagate(violations, log);
     }
+
+    maybePropagate(violations, log);
   }
 
-  private boolean containsGroup(Repository root, String repositoryName, Set<Repository> checkedGroups) {
+  /**
+   * A method subclasses can override to perform format specific validation if necessary
+   *
+   * @param groupConfig the group's config object
+   * @return the validation failures or null
+   */
+  protected ConstraintViolation<?> validateFormat(final Config groupConfig) {
+    // empty for subclasses to optionally override
+    return null;
+  }
+
+  private boolean containsGroup(final Repository root, final String repositoryName, final Set<Repository> checkedGroups) {
     return root.facet(GroupFacet.class).members().stream().anyMatch((repository) -> {
       return checkedGroups.add(repository) &&
           (repository.getName().equals(repositoryName) ||
@@ -120,7 +134,7 @@ public class GroupFacetImpl
     });
   }
 
-  ConstraintViolation<?> validateGroupDoesNotContainItself(String repositoryName, Config config) {
+  ConstraintViolation<?> validateGroupDoesNotContainItself(final String repositoryName, final Config config) {
     Set<Repository> checkedGroups = new HashSet<>();
     for (String memberName : config.memberNames) {
       Repository repository = repositoryManager.get(memberName);

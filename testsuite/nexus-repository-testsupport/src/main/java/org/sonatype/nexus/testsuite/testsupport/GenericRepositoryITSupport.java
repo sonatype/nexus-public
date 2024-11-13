@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.index.ElasticSearchIndexService;
 import org.sonatype.nexus.security.SecuritySystem;
-import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
+import org.sonatype.nexus.security.authc.apikey.ApiKeyService;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.realm.RealmManager;
@@ -89,7 +89,7 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   protected RepositoryManager repositoryManager;
 
   @Inject
-  protected ApiKeyStore keyStore;
+  protected ApiKeyService keyStore;
 
   @Inject
   protected RealmManager realmManager;

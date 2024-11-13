@@ -51,7 +51,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.LIMIT;
+import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.toInternalToken;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.trim;
 
@@ -60,7 +60,8 @@ public class AssetsResourceSupportTest
 {
   private static final String A_FORMAT = "A_Format";
 
-  private static final int NUMBER_OF_ASSETS = 12;
+  // tests assume we've stored more assets than the page limit
+  private static final int NUMBER_OF_ASSETS = PAGE_SIZE_LIMIT + 2; ;
 
   private static final String ASSET_PATH = "/junit/junit/4.12/junit-4.12.jar";
 
@@ -119,7 +120,7 @@ public class AssetsResourceSupportTest
     List<FluentAsset> assets = underTest.browse(repository, null);
 
     assertThat(assets, empty());
-    verify(fluentAssets).browse(LIMIT, null);
+    verify(fluentAssets).browse(PAGE_SIZE_LIMIT, null);
     verify(contentAuthHelper, never()).checkPathPermissions(ASSET_PATH, A_FORMAT, REPOSITORY_NAME);
   }
 
@@ -131,7 +132,7 @@ public class AssetsResourceSupportTest
     List<FluentAsset> assets = underTest.browse(repository, null);
 
     assertThat(assets, empty());
-    verify(fluentAssets, times(2)).browse(LIMIT, null);
+    verify(fluentAssets, times(2)).browse(PAGE_SIZE_LIMIT, null);
     verify(contentAuthHelper, times(NUMBER_OF_ASSETS)).checkPathPermissions(ASSET_PATH, A_FORMAT, REPOSITORY_NAME);
   }
 
@@ -147,7 +148,7 @@ public class AssetsResourceSupportTest
     List<FluentAsset> assets = underTest.browse(repository, null);
 
     assertThat(assets, hasSize(numberOfPermittedAssets));
-    verify(fluentAssets, times(2)).browse(LIMIT, null);
+    verify(fluentAssets, times(2)).browse(PAGE_SIZE_LIMIT, null);
     verify(contentAuthHelper, times(NUMBER_OF_ASSETS)).checkPathPermissions(ASSET_PATH, A_FORMAT, REPOSITORY_NAME);
   }
 
@@ -158,7 +159,7 @@ public class AssetsResourceSupportTest
 
     List<FluentAsset> assets = underTest.browse(repository, null);
 
-    assertThat(assets, hasSize(AssetsResource.PAGE_SIZE));
+    assertThat(assets, hasSize(AssetsResource.PAGE_SIZE_LIMIT));
     verify(contentAuthHelper, times(NUMBER_OF_ASSETS)).checkPathPermissions(ASSET_PATH, A_FORMAT, REPOSITORY_NAME);
   }
 
@@ -201,7 +202,7 @@ public class AssetsResourceSupportTest
   }
 
   private void mockFluentAssets() {
-    when(fluentAssets.browse(LIMIT, null))
+    when(fluentAssets.browse(PAGE_SIZE_LIMIT, null))
         .thenReturn(new FluentContinuation<>(assetContinuation, asset -> aFluentAsset()));
 
     List<FluentAsset> assets = range(0, NUMBER_OF_ASSETS).mapToObj(i -> aFluentAsset()).collect(toList());

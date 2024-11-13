@@ -38,6 +38,8 @@ Ext.define('NX.coreui.view.repository.RepositorySettingsForm', {
     var me = this,
         permittedCondition;
 
+    me.addListener('remotevalidation', me.handleRemoteValidationError);
+
     me.settingsFormSuccessMessage = function(data) {
       return NX.I18n.get('Repository_RepositorySettingsForm_Update_Success') + data['name'];
     };
@@ -170,5 +172,20 @@ Ext.define('NX.coreui.view.repository.RepositorySettingsForm', {
     };
 
     process(values);
+  },
+
+  handleRemoteValidationError: function(validationMap) {
+    Object.keys(validationMap).forEach(function (key) {
+      const errorMsg = validationMap[key];
+
+      if (!key.startsWith("attributes.")) {
+        key = "attributes." + key;
+      }
+
+      Ext.ComponentQuery.query('form[settingsForm=true] [name=' + key + ']')
+        .forEach(function(component) {
+          component.markInvalid(errorMsg);
+        });
+    });
   }
 });

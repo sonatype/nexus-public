@@ -206,6 +206,6 @@ describe('Licensing', () => {
   });
 
   it('uses proper url', function() {
-    expect(licenseUrl).toBe('/service/rest/v1/system/license');
+    expect(licenseUrl).toBe('service/rest/v1/system/license');
   });
 });

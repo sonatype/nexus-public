@@ -161,4 +161,38 @@ class ConfigurationDAOTest
       names.contains(configuration1.name)
       names.contains(configuration3.name)
   }
+
+  def 'read by recipe'() {
+    given: 'a Configuration'
+      def conanProxyConfig1 = new ConfigurationData(name: 'conan-proxy-1', recipeName: 'conan-proxy', online: true,
+          attributes: [baz: [buzz: 'booz']], routingRuleId: id1)
+      def conanProxyConfig2 = new ConfigurationData(name: 'conan-proxy-2', recipeName: 'conan-proxy', online: true,
+          attributes: [baz: [buzz: 'booz']], routingRuleId: id1)
+      def conanProxyConfig3 = new ConfigurationData(name: 'conan-proxy-3', recipeName: 'conan-proxy', online: true,
+          attributes: [baz: [buzz: 'booz']], routingRuleId: id1)
+      def conanProxyConfig4 = new ConfigurationData(name: 'conan-proxy-4', recipeName: 'conan-proxy', online: true,
+          attributes: [baz: [buzz: 'booz']], routingRuleId: id1)
+
+      def anotherConfig1 = new ConfigurationData(name: 'foo', recipeName: 'foo', online: true,
+          attributes: [baz: [buzz: 'booz']], routingRuleId: id1)
+      def anotherConfig2 = new ConfigurationData(name: 'barr', recipeName: 'barr', online: true,
+          attributes: [bar: [burr: 'foo']], routingRuleId: id2)
+      def anotherConfig3 = new ConfigurationData(name: 'bazz', recipeName: 'bazz', online: true,
+          attributes: [baz: [bazz: 'bar']], routingRuleId: id3)
+
+    when: 'configurations are stored'
+      dao.create(conanProxyConfig1)
+      dao.create(conanProxyConfig2)
+      dao.create(conanProxyConfig3)
+      dao.create(conanProxyConfig4)
+      dao.create(anotherConfig1)
+      dao.create(anotherConfig2)
+      dao.create(anotherConfig3)
+
+    and: 'it is read back'
+      def results = dao.readByRecipe('conan-proxy')
+
+    then: 'the result contains only configurations with given recipe'
+      results.size() == 4
+  }
 }

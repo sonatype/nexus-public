@@ -27,7 +27,7 @@ import UIStrings from '../../../../../constants/UIStrings';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
-export const ROUTING_RULES_URL = '/service/rest/internal/ui/routing-rules';
+export const ROUTING_RULES_URL = 'service/rest/internal/ui/routing-rules';
 
 export default function GenericOptionsConfiguration({parentMachine}) {
   const {current, retry, isLoading} = useSimpleMachine({

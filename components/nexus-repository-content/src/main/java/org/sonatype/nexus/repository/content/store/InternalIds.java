@@ -55,7 +55,12 @@ public class InternalIds
   }
 
   public static int toInternalId(final EntityId externalId) {
-    return (int) (parseUnsignedInt(externalId.getValue(), 16) * TO_INTERNAL); // NOSONAR: we want truncation
+    try {
+      return (int) (parseUnsignedInt(externalId.getValue(), 16) * TO_INTERNAL); // NOSONAR: we want truncation
+    } catch (NumberFormatException e) {
+      // likely a big internal id that was passed as an external id, attempt to parse it directly
+      return Integer.parseInt(externalId.getValue());
+    }
   }
 
   public static Optional<Integer> contentRepositoryId(final Repository repository) {

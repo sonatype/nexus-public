@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.config;
 
-import org.sonatype.nexus.repository.ReplicationMarker;
-
 /**
  * Write policy.
  *
@@ -38,32 +36,26 @@ public enum WritePolicy
    * Asset cannot be re-linked with another blob.
    * Asset cannot be unlinked from a blob.
    */
-  DENY,
-  /**
-   * Asset can be linked with a blob only by replication.
-   * Asset can be re-linked with another blob only by replication.
-   * Asset can be unlinked from a blob only by replication.
-   */
-  REPLICATION_ONLY;
+  DENY;
 
   /**
    * Returns {@code true} if Create allowed with this policy.
    */
   public boolean checkCreateAllowed() {
-    return this == ALLOW || this == ALLOW_ONCE || (this == REPLICATION_ONLY && ReplicationMarker.get());
+    return this == ALLOW || this == ALLOW_ONCE;
   }
 
   /**
    * Returns {@code true} if Update allowed with this policy.
    */
   public boolean checkUpdateAllowed() {
-    return this == ALLOW || (this == REPLICATION_ONLY && ReplicationMarker.get());
+    return this == ALLOW;
   }
 
   /**
    * Returns {@code true} if Delete allowed with this policy.
    */
   public boolean checkDeleteAllowed() {
-    return this == ALLOW || this == ALLOW_ONCE || (this == REPLICATION_ONLY && ReplicationMarker.get());
+    return this == ALLOW || this == ALLOW_ONCE;
   }
 }
