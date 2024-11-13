@@ -28,6 +28,16 @@ const getNode = async (nodeId, params) => {
   );
 };
 
+const generateForNode = async (nodeId, params, ctx) => {
+  const node = ctx.nxrmNodes.find(node => node.nodeId === nodeId);
+  node.machineRef.send({
+    type: 'UPDATE_STATUS',
+    status: 'CREATING',
+  });
+
+  return getNode(nodeId, params);
+};
+
 const sharedEvents = {
   CREATE_SUPPORT_ZIP_FOR_NODE: {
     target: 'createSingleNodeSupportZip',
@@ -183,7 +193,7 @@ export default FormUtils.buildFormMachine({
         };
 
         if (ctx.isBlobStoreConfigured) {
-          return getNode(node.nodeId, params);
+          return generateForNode(node.nodeId, params, ctx);
         }
 
         return Promise.resolve();

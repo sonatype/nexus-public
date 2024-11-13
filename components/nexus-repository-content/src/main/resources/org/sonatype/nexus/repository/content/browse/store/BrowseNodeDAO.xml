@@ -59,6 +59,7 @@
     <!-- non-standard field mappings -->
     <result property="dbComponentId" column="component_id"/>
     <result property="dbAssetId" column="asset_id"/>
+    <result property="lastUpdated" column="last_updated"/>
   </resultMap>
 
   <sql id="hasChild">
@@ -74,11 +75,15 @@
   </select>
 
   <select id="getByDisplayPath" resultMap="browseNodeResult">
-    SELECT B.*, NOT EXISTS (<include refid="hasChild"/>) as leaf FROM
+    SELECT B.*,
+        CASE WHEN C.last_updated IS NULL THEN A.last_updated ELSE C.last_updated END AS last_updated,
+        NOT EXISTS (<include refid="hasChild"/>) as leaf FROM
         <foreach collection="displayPath" index="i">
         ${format}_browse_node B${i},
         </foreach>
         ${format}_browse_node B
+    LEFT JOIN ${format}_component C ON B.component_id = C.component_id
+    LEFT JOIN ${format}_asset A ON B.asset_id = A.asset_id
     WHERE 0 = <foreach collection="displayPath" index="i" item="name">
               B${i}.parent_id AND B${i}.repository_id = #{repositoryId} AND B${i}.display_name = #{name} AND B${i}.node_id =
               </foreach>
@@ -154,5 +159,48 @@
         repository_id = #{repositoryId}
         <if test="limit gt 0"> LIMIT #{limit})</if>;
   </delete>
+  <select id="deleteByAssetIdAndPath" resultType="Long" databaseId="PostgreSQL">
+    DELETE FROM ${format}_browse_node WHERE
+        asset_id = #{internalAssetId} AND request_path = #{path}
+    RETURNING parent_id;
+  </select>
+  <select id="getNodeParents" resultMap="browseNodeResult" databaseId="PostgreSQL">
+    WITH total as (
+      WITH RECURSIVE parent_nodes AS (
+        SELECT *
+        FROM ${format}_browse_node
+        WHERE node_id = #{internalNodeId}
+        UNION ALL
+        SELECT t.*
+        FROM ${format}_browse_node t
+        INNER JOIN parent_nodes pn ON t.node_id = pn.parent_id
+      )
+      SELECT *
+      FROM parent_nodes
+      WHERE parent_id IS NOT NULL
+    )
+    select  parent.node_id, parent.repository_id,
+            parent.parent_id, parent.display_name,
+            parent.request_path, parent.component_id,
+            parent.asset_id, parent.package_url,
+            SUM(CASE WHEN children.asset_id IS NOT NULL THEN 1 ELSE 0 END) AS asset_count
+    from    total parent
+            left join ${format}_browse_node children on
+            parent.node_id = children.parent_id
+    group by parent.node_id, parent.repository_id,
+             parent.parent_id, parent.display_name,
+             parent.request_path, parent.component_id,
+             parent.asset_id, parent.package_url
+    order by parent.request_path desc;
+  </select>
+  <delete id="delete">
+    DELETE FROM ${format}_browse_node WHERE
+        node_id = #{internalNodeId};
+  </delete>
+
+  <select id="getByRequestPath" resultMap="browseNodeResult">
+    SELECT * FROM ${format}_browse_node C WHERE
+        C.repository_id = #{repositoryId} AND C.request_path = #{requestPath};
+  </select>
 
 </mapper>

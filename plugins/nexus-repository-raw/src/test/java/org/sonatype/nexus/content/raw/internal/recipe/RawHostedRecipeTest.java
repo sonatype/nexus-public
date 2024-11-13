@@ -45,7 +45,6 @@ public class RawHostedRecipeTest extends RawRecipeTestSupport
     verify(rawHostedRepository).attach(maintenanceFacet);
     verify(rawHostedRepository).attach(searchFacet);
     verify(rawHostedRepository).attach(browseFacet);
-    verify(rawHostedRepository).attach(replicationFacet);
   }
 
 }

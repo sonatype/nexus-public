@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.handlers;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -48,9 +47,16 @@ public class LastDownloadedHandler
 {
   private final GlobalRepositorySettings globalSettings;
 
+  private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
+
   @Inject
   public LastDownloadedHandler(final GlobalRepositorySettings globalSettings) {
     this.globalSettings = checkNotNull(globalSettings);
+  }
+
+  @Inject
+  public void injectExtraDependencies(final LastDownloadedAttributeHandler lastDownloadedPropertyHandler) {
+    this.lastDownloadedAttributeHandler = checkNotNull(lastDownloadedPropertyHandler);
   }
 
   @Override
@@ -77,7 +83,9 @@ public class LastDownloadedHandler
   protected void maybeUpdateLastDownloaded(@Nullable final Asset asset) {
     if (asset != null && !isNextUpdateInFuture(asset.lastDownloaded())) {
       if (asset instanceof FluentAsset) {
-        ((FluentAsset) asset).markAsDownloaded();
+        FluentAsset fluentAsset = (FluentAsset) asset;
+        fluentAsset.markAsDownloaded();
+        lastDownloadedAttributeHandler.writeLastDownloadedAttribute(fluentAsset);
       }
       else {
         log.debug("Cannot mark read-only asset {} as downloaded", asset.path());

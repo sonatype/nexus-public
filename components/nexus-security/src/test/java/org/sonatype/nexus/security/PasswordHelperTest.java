@@ -17,6 +17,8 @@ import java.security.GeneralSecurityException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.crypto.AbstractPhraseService;
+import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 
@@ -34,7 +36,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.fail;
-import static org.sonatype.nexus.security.PhraseService.LEGACY_PHRASE_SERVICE;
+import static org.sonatype.nexus.crypto.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * UT for {@link PasswordHelper}.

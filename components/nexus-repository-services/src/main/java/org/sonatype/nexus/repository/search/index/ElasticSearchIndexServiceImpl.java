@@ -30,31 +30,28 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.slf4j.Logger;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Loggers;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -64,9 +61,11 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
+import org.elasticsearch.cluster.health.ClusterIndexHealth;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
+import org.slf4j.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -74,6 +73,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.stream.Collectors.toList;
+import static org.elasticsearch.cluster.health.ClusterHealthStatus.GREEN;
 import static org.elasticsearch.index.query.QueryBuilders.idsQuery;
 import static org.sonatype.nexus.repository.search.index.IndexSettingsContributor.MAPPING_JSON;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.TYPE;
@@ -546,6 +546,30 @@ public class ElasticSearchIndexServiceImpl
     catch (InterruptedException e) { // NOSONAR: we want to swallow interrupt here
       throw new RuntimeException("Waiting for calm period has been interrupted", e);
     }
+  }
+
+  @Override
+  public void waitForReady() {
+    try {
+      waitFor(this::allIndicesReady);
+    }
+    catch (InterruptedException e) { // NOSONAR: we want to swallow interrupt here
+      throw new RuntimeException("Waiting for index shards to move to GREEN state has been interrupted", e);
+    }
+  }
+
+  private boolean allIndicesReady() {
+    Map<String, ClusterIndexHealth>
+        indexHealth =
+        client.get().admin().cluster().health(new ClusterHealthRequest()).actionGet().getIndices();
+    for (ClusterIndexHealth health : indexHealth.values()) {
+      if (health.getStatus() != GREEN) {
+        log.info("Index {} is not ready: {}", health.getIndex(), health.getStatus());
+        return false;
+      }
+      log.debug("Index {} is ready: {}", health.getIndex(), health.getStatus());
+    }
+    return true;
   }
 
   private void waitFor(final Callable<Boolean> function)

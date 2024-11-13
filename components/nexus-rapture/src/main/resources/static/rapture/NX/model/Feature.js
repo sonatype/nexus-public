@@ -32,6 +32,7 @@ Ext.define('NX.model.Feature', {
     { name: 'id' },
     { name: 'path' },
     { name: 'text' },
+    { name: 'textComplement', defaultValue: '' },
     {
       /**
        * Mode name.

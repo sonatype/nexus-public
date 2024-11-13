@@ -121,7 +121,7 @@ public class FileBlobStoreConcurrencyIT
     blobStoreQuotaUsageChecker = spy(
         new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(), QUOTA_CHECK_INTERVAL, quotaService));
 
-    this.underTest = new FileBlobStore(content, new DefaultBlobIdLocationResolver(), new SimpleFileOperations(),
+    this.underTest = new FileBlobStore(content, new DefaultBlobIdLocationResolver(true), new SimpleFileOperations(),
         metricsStore, config, applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger, 0L,
         blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     underTest.start();

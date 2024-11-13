@@ -20,3 +20,45 @@
 .nxrm-s3-blobstore-prefix-text {
   margin-left: 5px;
 }
+
+.nxrm-replication-bucket-button {
+  margin-left: 0px;
+}
+
+.nxrm-active-region-section {
+  > * {
+    margin-bottom: 0px;
+  }
+
+  .s3-in-use-region {
+    font-weight: bold;
+  }
+}
+
+.nxrm-inactive-region-message {
+  display: flex;
+  align-items: center;
+
+  .nx-icon {
+    color: var(--nx-swatch-red-40);
+    margin-left: 0;
+  }
+}
+
+.nxrm-active-failover-region-message {
+  display: flex;
+  align-items: center;
+
+  .nx-icon {
+    color: var(--nx-color-validation-valid);
+    margin-left: 0;
+  }
+
+  &.invalid {
+    margin-top: 30px;
+  }
+}
+
+.nxrm-s3-region-select-message {
+  margin-bottom: 0px;
+}

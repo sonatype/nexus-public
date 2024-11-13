@@ -56,14 +56,6 @@ export default {
       FIRST_STEP_TEXT: <>In the <em>Repositories</em> table, select the <em>Copy</em> button for the repository you wish to connect.</>,
       SECOND_STEP_TEXT: 'A modal with the repository\'s direct URL will appear; copy this URL to use as needed. The modal also contains a link to our help documentation to get more information on how to connect to your repository.'
     },
-    FIREWALL_ALERT_CONTENT: (
-        <>
-          You haven't configured your repository protection. Sonatype Repository Firewall combines
-          over 60 different signals used to identify potentially malicious activity and block risks before
-          download. Automatically block malware from entering your code repositories.
-        </>
-    ),
-    FIREWALL_ENABLE_BUTTON_CONTENT : 'Enable Capability',
     USAGE: {
       MENU: {
         TEXT: 'Usage'

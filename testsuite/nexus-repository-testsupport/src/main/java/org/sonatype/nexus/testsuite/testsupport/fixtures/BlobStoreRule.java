@@ -32,6 +32,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
+import org.sonatype.nexus.blobstore.quota.internal.SpaceUsedQuota;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 
@@ -91,6 +93,24 @@ public class BlobStoreRule
     else {
       this.defaultBlobstoreCreator = this::createFile;
     }
+  }
+
+  public BlobStore createGoogle(final String blobStoreName, final String bucketName) throws Exception {
+    BlobStoreManager blobStoreManager = blobStoreManagerProvider.get();
+
+    BlobStoreConfiguration configuration = blobStoreManager.newConfiguration();
+    configuration.setName(blobStoreName);
+    configuration.setType("Google Cloud Storage");
+    NestedAttributesMap configMap = configuration.attributes("google cloud storage");
+    configMap.set("bucket", bucketName);
+    configMap.set("location", "us-central1");
+    NestedAttributesMap quotaMap = configuration.attributes(BlobStoreQuotaSupport.ROOT_KEY);
+    quotaMap.set(BlobStoreQuotaSupport.TYPE_KEY, SpaceUsedQuota.ID);
+    quotaMap.set(BlobStoreQuotaSupport.LIMIT_KEY, 512000L);
+
+    BlobStore blobStore = blobStoreManager.create(configuration);
+    blobStoreGroupNames.add(blobStore.getBlobStoreConfiguration().getName());
+    return blobStore;
   }
 
   public BlobStore createFile(final String name) {

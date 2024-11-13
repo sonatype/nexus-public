@@ -13,8 +13,10 @@
 package org.sonatype.nexus.httpclient.config;
 
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.crypto.secrets.Secret;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 /**
  * Username(+password) authentication configuration.
@@ -29,8 +31,8 @@ public class UsernameAuthenticationConfiguration
   @NotBlank
   private String username;
 
-  @NotBlank
-  private String password;
+  @NotNull
+  private Secret password;
 
   public UsernameAuthenticationConfiguration() {
     super(TYPE);
@@ -44,19 +46,24 @@ public class UsernameAuthenticationConfiguration
     this.username = username;
   }
 
-  public String getPassword() {
+  public Secret getPassword() {
     return password;
   }
 
-  public void setPassword(final String password) {
+  public void setPassword(final Secret password) {
     this.password = password;
+  }
+
+  @Override
+  public Secret getSecret() {
+    return getPassword();
   }
 
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
         "username='" + username + '\'' +
-        ", password='" + Strings2.mask(password) + '\'' +
+        ", password='" + Strings2.MASK + '\'' +
         '}';
   }
 }

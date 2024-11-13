@@ -74,6 +74,9 @@ class ComponentComponent
   @Inject
   ComponentHelper componentHelper
 
+  @Inject
+  Map<String, AssetAttributeTransformer> formatTransformations;
+
   @DirectMethod
   @Timed
   @ExceptionMetered
@@ -188,7 +191,10 @@ class ComponentComponent
   @Nullable
   AssetXO readAsset(@NotEmpty String assetId, @NotEmpty String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
-    return componentHelper.readAsset(repository, new DetachedEntityId(assetId))
+    AssetXO assetXO = componentHelper.readAsset(repository, new DetachedEntityId(assetId))
+    Optional.ofNullable(formatTransformations.get(assetXO.format))
+        .ifPresent {transformation -> transformation.transform(assetXO) }
+    return assetXO;
   }
 
   @DirectMethod

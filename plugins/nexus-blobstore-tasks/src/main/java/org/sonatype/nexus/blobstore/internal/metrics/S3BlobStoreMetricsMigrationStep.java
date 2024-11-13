@@ -28,9 +28,9 @@ import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
-import org.sonatype.nexus.repository.content.kv.global.GlobalKeyValueStore;
-import org.sonatype.nexus.repository.content.kv.global.NexusKeyValue;
-import org.sonatype.nexus.repository.content.kv.global.ValueType;
+import org.sonatype.nexus.kv.GlobalKeyValueStore;
+import org.sonatype.nexus.kv.NexusKeyValue;
+import org.sonatype.nexus.kv.ValueType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

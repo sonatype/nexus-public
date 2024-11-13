@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.PreemptiveAuthHttpRequestInterceptor;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
@@ -50,6 +51,7 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
 import static org.apache.http.client.config.AuthSchemes.BASIC;
 import static org.apache.http.client.config.AuthSchemes.DIGEST;
 import static org.apache.http.client.config.AuthSchemes.NTLM;
@@ -272,12 +274,15 @@ public class ConfigurationCustomizer
     if (authentication instanceof UsernameAuthenticationConfiguration) {
       UsernameAuthenticationConfiguration auth = (UsernameAuthenticationConfiguration) authentication;
       authSchemes = ImmutableList.of(DIGEST, BASIC);
-      credentials = new UsernamePasswordCredentials(auth.getUsername(), auth.getPassword());
+      credentials = new UsernamePasswordCredentials(auth.getUsername(),
+          ofNullable(auth.getPassword()).map(Secret::decrypt).map(String::new).orElse(null));
     }
     else if (authentication instanceof NtlmAuthenticationConfiguration) {
       NtlmAuthenticationConfiguration auth = (NtlmAuthenticationConfiguration) authentication;
       authSchemes = ImmutableList.of(NTLM, DIGEST, BASIC);
-      credentials = new NTCredentials(auth.getUsername(), auth.getPassword(), auth.getHost(), auth.getDomain());
+      credentials = new NTCredentials(auth.getUsername(),
+          ofNullable(auth.getPassword()).map(Secret::decrypt).map(String::new).orElse(null), auth.getHost(),
+          auth.getDomain());
     }
     else if (authentication instanceof BearerTokenAuthenticationConfiguration) {
       credentials = null;

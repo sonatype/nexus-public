@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sonatype.nexus.internal.security.apikey.store.ApiKeyDAO">
+
+  <insert id="createSchema">
+    CREATE TABLE IF NOT EXISTS api_key (
+      primary_principal VARCHAR(200)   NOT NULL,
+      domain            VARCHAR(200)   NOT NULL,
+      token             VARCHAR(200)   NOT NULL,
+      principals        ${BINARY_TYPE} NOT NULL,
+      created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+      <!--
+      Optimization: put the primary principal before the domain in the primary key,
+      so the PK index can be re-used when querying for a principal over all domains
+      -->
+      CONSTRAINT pk_api_key_primaryprincipal_domain_principals PRIMARY KEY (primary_principal, domain, principals),
+      CONSTRAINT uk_api_key_domain_token UNIQUE (domain, token)
+    );
+
+    ALTER TABLE api_key ADD COLUMN IF NOT EXISTS created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
+  </insert>
+
+  <select id="browsePrincipals" resultType="org.apache.shiro.subject.PrincipalCollection">
+    SELECT principals FROM api_key;
+  </select>
+
+  <select id="findApiKeys" resultType="ApiKeyData">
+    SELECT * FROM api_key
+     WHERE primary_principal = #{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
+       AND domain = #{domain};
+  </select>
+
+  <select id="findApiKeysForPrimary" resultType="ApiKeyData">
+    SELECT * FROM api_key
+     WHERE primary_principal = #{primaryPrincipal, typeHandler=EncryptedStringTypeHandler};
+  </select>
+
+  <select id="findPrincipals" resultType="ApiKeyData">
+    SELECT * FROM api_key WHERE domain = #{domain} AND token = #{token};
+  </select>
+
+  <insert id="save" parameterType="ApiKeyData">
+    INSERT INTO api_key (primary_principal, domain, token, principals<if test="created != null">, created</if>)
+        VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler},
+                #{domain}, #{token}, #{principals}<if test="created != null">, #{created}</if>);
+  </insert>
+
+  <delete id="deleteDomainKey">
+    DELETE FROM api_key
+        WHERE primary_principal = #{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
+        AND domain = #{domain};
+  </delete>
+
+  <delete id="deleteKey">
+    DELETE FROM api_key
+        WHERE domain = #{domain}
+          AND token = #{token};
+  </delete>
+
+  <delete id="deleteKeys">
+    DELETE FROM api_key
+        WHERE primary_principal = #{primaryPrincipal, typeHandler=EncryptedStringTypeHandler};
+  </delete>
+
+  <select id="browse" resultType="ApiKeyData">
+    SELECT *
+      FROM api_key
+    WHERE domain = #{domain}
+    ORDER BY created;
+  </select>
+
+  <select id="browseByCreatedDate" resultType="ApiKeyData">
+    SELECT *
+      FROM api_key
+    WHERE domain = #{domain}
+      AND created > #{created}
+    ORDER BY created;
+  </select>
+
+  <select id="count" resultType="java.lang.Integer">
+    SELECT count(*)
+      FROM api_key
+     WHERE domain = #{domain};
+  </select>
+
+  <delete id="deleteApiKeysByDomain">
+    DELETE FROM api_key
+     WHERE domain = #{domain};
+  </delete>
+
+  <delete id="deleteApiKeyByExpirationDate">
+    DELETE FROM api_key
+    WHERE created &lt; #{expiration};
+  </delete>
+
+  <update id="update" parameterType="ApiKeyData" databaseId="PostgreSQL">
+    INSERT INTO api_key (primary_principal
+                        , domain
+                        , token
+                        , principals
+                        <if test="created != null">, created</if>)
+    VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
+            , #{domain}
+            , #{token}
+            , #{principals}
+            <if test="created != null">, #{created}</if>)
+    ON CONFLICT (domain, token)
+    DO UPDATE SET
+      token = #{token}
+      , primary_principal = #{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
+      , principals = #{principals}
+      <if test="created != null">, created = #{created}</if>;
+  </update>
+
+  <update id="update" parameterType="ApiKeyData" databaseId="H2">
+     MERGE INTO api_key (primary_principal, domain, token,
+                         principals <if test="created != null">, created</if>)
+       KEY (domain, token)
+    VALUES (#{primaryPrincipal, typeHandler=EncryptedStringTypeHandler}
+            , #{domain}
+            , #{token}
+            , #{principals}
+            <if test="created != null">, #{created}</if>);
+  </update>
+
+  <select id="browsePaginated" resultType="ApiKeyData">
+    SELECT *
+    FROM api_key
+    WHERE domain = #{domain}
+    ORDER BY created
+    LIMIT #{limit}
+    OFFSET #{skip};
+  </select>
+
+  <select id="browseAllSince" resultType="ApiKeyData">
+    SELECT *
+      FROM api_key
+     WHERE created > #{created}
+  ORDER BY created
+     LIMIT #{limit};
+  </select>
+
+</mapper>

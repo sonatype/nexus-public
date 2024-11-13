@@ -39,7 +39,7 @@ public interface UserApiResourceDoc
 
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
 
-  @ApiOperation("Retrieve a list of users. Note if the source is not 'default' the response is limited to 100 users.")
+  @ApiOperation("Retrieve a list of users.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
   Collection<ApiUser> getUsers(

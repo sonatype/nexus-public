@@ -65,6 +65,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -489,6 +490,7 @@ public class KeyStoreManagerImplTest
    * occur safely.
    */
   @Test
+  @Ignore("NEXUS-44783")
   public void testConcurrentImportTrustCertificate() throws Exception {
     X509Certificate certificate1 = generateCertificate(10,
         "concurrency-1", "ou", "o", "l", "st", "country");

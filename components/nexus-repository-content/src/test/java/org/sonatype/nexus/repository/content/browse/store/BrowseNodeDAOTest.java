@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.content.browse.store;
 
 import java.util.List;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.VersionComparator;
@@ -43,10 +42,15 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
+import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
+import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getString;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
@@ -305,6 +309,7 @@ public class BrowseNodeDAOTest
 
   @Test
   public void testRepositoryDeleteCascades() {
+    assumeFalse(isPostgreSQL());
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
 
@@ -348,6 +353,45 @@ public class BrowseNodeDAOTest
     }
   }
 
+  @Test
+  public void testGetByRequestPath() {
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      List<BrowseNode> nodes = dao.getByRequestPath(1, "/g/1/a");
+      assertThat(nodes.isEmpty(), is(false));
+      assertThat(nodes.get(0).getPath(), equalTo("/g/1/a"));
+    }
+  }
+
+  @Test
+  public void testDeleteByAssetIdAndPath() {
+    assumeTrue(isPostgreSQL());
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+      Long deleted = dao.deleteByAssetIdAndPath(internalAssetId(asset1), "/g/1/a");
+      assertThat(deleted, greaterThan(0L));
+
+      List<BrowseNode> nodes = dao.getByRequestPath(1, "/g/1/a");
+      assertThat(nodes.isEmpty(), is(true));
+    }
+  }
+
+  @Test
+  public void testGetNodeParents() {
+    assumeTrue(isPostgreSQL());
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+      List<BrowseNode> nodes = dao.getByRequestPath(1, "/g/1/a");
+      BrowseNodeData nodeData = (BrowseNodeData) nodes.get(0);
+      List<BrowseNode> nodeParents = dao.getNodeParents(nodeData.getNodeId());
+      assertThat(nodeParents.size(), is(3));
+      assertThat(nodeParents.get(0).getPath(), equalTo("/g/1/a"));
+      assertThat(nodeParents.get(1).getPath(), equalTo("/g/1/"));
+      assertThat(nodeParents.get(2).getPath(), equalTo("/g/"));
+    }
+  }
+
   private List<BrowseNode> getListing(final BrowseNodeDAO dao, final String... paths) {
     List<BrowseNode> listing = dao.getByDisplayPath(1, asList(paths), 100, null, null);
     listing.sort(byName);
@@ -382,5 +426,10 @@ public class BrowseNodeDAOTest
       node.setParentId(parent.nodeId);
     }
     return node;
+  }
+
+  private boolean isPostgreSQL() {
+    return getBoolean("test.postgres", false) ||
+        getString("test.jdbcUrl", "").contains("postgresql");
   }
 }
