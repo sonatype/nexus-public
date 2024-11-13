@@ -84,7 +84,7 @@ export default Utils.buildFormMachine({
     })
   },
   services: {
-    fetchData: ({componentModel}) => Axios.get(applicationHealthCheckUrl, {params: {component: componentModel}}),
+    fetchData: ({componentModel}) => Axios.get(applicationHealthCheckUrl, {params: {component: JSON.stringify(componentModel)}}),
     analyze: (context) => {
       let message = {
         repositoryName: context.componentModel.repositoryName,

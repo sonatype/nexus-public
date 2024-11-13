@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
 /**
@@ -28,7 +29,8 @@ import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 @Named
 @Singleton
 public class DistributedEventsUpgrade
-    extends RepeatableDatabaseMigrationStep
+    extends ComponentSupport
+    implements RepeatableDatabaseMigrationStep
 {
   private final boolean clusterEnabled;
 

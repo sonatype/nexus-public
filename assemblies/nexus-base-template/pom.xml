@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.70.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -135,34 +135,10 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-orient</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-datastore-mybatis</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
-    </dependency>
-
-    <!--
-      Included to get access to nexus-orient-console. This provides a convenience
-      jar for starting up the orientdb console app.
-    -->
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-orient-console</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus2-npm-metadata-export</artifactId>
-      <scope>provided</scope>
     </dependency>
 
   </dependencies>
@@ -243,7 +219,6 @@
                 Note: Enabling remote access is not recommended or supported.
                 -->
                 <!-- <feature>ssh</feature> -->
-                <feature>nexus-orient</feature>
                 <feature>nexus-datastore-mybatis</feature>
                 <feature>nexus-core-feature</feature>
                 <feature>nexus-oss-edition</feature>

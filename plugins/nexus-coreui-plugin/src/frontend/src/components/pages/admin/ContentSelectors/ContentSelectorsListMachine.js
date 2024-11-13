@@ -30,6 +30,6 @@ export default ListMachineUtils.buildListMachine({
     })
   },
   services: {
-    fetchData: () => Axios.get('/service/rest/v1/security/content-selectors')
+    fetchData: () => Axios.get('service/rest/v1/security/content-selectors')
   }
 });

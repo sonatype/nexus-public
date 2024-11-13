@@ -63,7 +63,8 @@ public class DefaultBlobStoreUsageChecker
         .map(repository -> (ContentFacetSupport) repository.facet(ContentFacet.class))
         .flatMap(contentFacetSupport -> {
           String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
-          BlobRef blobRef = new BlobRef(contentFacetSupport.nodeName(), blobStoreName, blobId.asUniqueString());
+          BlobRef blobRef = new BlobRef(
+              contentFacetSupport.nodeName(), blobStoreName, blobId.asUniqueString(), blobId.getBlobCreatedRef());
           return contentFacetSupport.stores().assetBlobStore.readAssetBlob(blobRef);
         })
         .isPresent();

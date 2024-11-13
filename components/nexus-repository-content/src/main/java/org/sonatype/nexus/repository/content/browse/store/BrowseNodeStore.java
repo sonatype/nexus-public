@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.browse.store;
 
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -36,9 +35,10 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
     extends ContentStoreSupport<T>
 {
   @Inject
-  public BrowseNodeStore(final DataSessionSupplier sessionSupplier,
-                         @Assisted final String contentStoreName,
-                         @Assisted final Class<T> daoClass)
+  public BrowseNodeStore(
+      final DataSessionSupplier sessionSupplier,
+      @Assisted final String contentStoreName,
+      @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
   }
@@ -47,9 +47,9 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    * Retrieves the browse nodes directly under the given hierarchical display path.
    *
    * @param repositoryId the repository containing the browse nodes
-   * @param displayPath the hierarchical path leading up to the browse nodes
-   * @param limit when positive limits the number of browse nodes returned
-   * @param filter optional filter to apply to the browse nodes
+   * @param displayPath  the hierarchical path leading up to the browse nodes
+   * @param limit        when positive limits the number of browse nodes returned
+   * @param filter       optional filter to apply to the browse nodes
    * @param filterParams parameter map for the optional filter
    * @return browse nodes found directly under the display path
    */
@@ -124,5 +124,53 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
     }
     log.debug("Deleted all browse nodes in repository {}", repositoryId);
     return deleted;
+  }
+
+  /**
+   * Deletes a browse node based on its internal asset Id and node path.
+   *
+   * @param internalAssetId the internal Id of the asset
+   * @param path            the path of the node
+   * @return the parent node id of the deleted node
+   */
+  @Transactional
+  public Long deleteByAssetIdAndPath(final Integer internalAssetId, final String path) {
+    return dao().deleteByAssetIdAndPath(internalAssetId, path);
+  }
+
+  /**
+   * Retrieves a list of parent nodes for the given node.
+   *
+   * @param internalNodeId the internal Id of current node
+   * @return list of parent nodes
+   */
+  @Transactional
+  public List<BrowseNode> getNodeParents(final Long internalNodeId) {
+    return dao().getNodeParents(internalNodeId);
+  }
+
+  /**
+   * Deletes a browse node based on its internal node Id.
+   *
+   * @param internalNodeId the internal Id of the node
+   */
+  @Transactional
+  public void delete(final Long internalNodeId) {
+    dao().delete(internalNodeId);
+  }
+
+  /**
+   * Retrieves a browse node by its request path.
+   *
+   * @param repositoryId the repository containing the browse node
+   * @param requestPath  the request path of the node
+   * @return the browse node or {@code null} if not found
+   */
+  @Transactional
+  public BrowseNode getByRequestPath(final int repositoryId, final String requestPath) {
+    return dao().getByRequestPath(repositoryId, requestPath)
+        .stream()
+        .findFirst()
+        .orElse(null);
   }
 }

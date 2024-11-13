@@ -493,13 +493,14 @@ public class FormatStoreManagerTest
     asset.setLastUpdated(OffsetDateTime.now());
     assetStore.createAsset(asset);
 
-    Collection<AssetInfo> assets = assetStore.findByComponentIds(Collections.singleton(1));
+    Collection<AssetInfo> assets = assetStore.findByComponentIds(Collections.singleton(1),
+        null, Collections.emptyMap());
     assertThat(assets.size(), is(1));
 
-    assets = assetStore.findByComponentIds(Collections.emptySet());
+    assets = assetStore.findByComponentIds(Collections.emptySet(), null, Collections.emptyMap());
     assertThat(assets.size(), is(0));
 
-    assets = assetStore.findByComponentIds(null);
+    assets = assetStore.findByComponentIds(null, null, Collections.emptyMap());
     assertThat(assets.size(), is(0));
   }
 

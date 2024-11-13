@@ -14,11 +14,11 @@ package org.sonatype.nexus.blobstore.restore;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.blobstore.restore.datastore.RestoreMetadataTask;
 import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
-import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
@@ -45,12 +45,12 @@ public abstract class BaseRestoreMetadataTaskDescriptor
 
   private static final Messages messages = I18N.create(Messages.class);
 
-  public BaseRestoreMetadataTaskDescriptor(final Class<? extends TaskSupport> restoreMetadataTaskClass) {
+  public BaseRestoreMetadataTaskDescriptor(final boolean exposed) {
     super(TYPE_ID,
-        restoreMetadataTaskClass,
+        RestoreMetadataTask.class,
         messages.name(),
         VISIBLE,
-        EXPOSED,
+        exposed,
         new ComboboxFormField<String>(
             BLOB_STORE_NAME_FIELD_ID,
             messages.blobstoreNameLabel(),

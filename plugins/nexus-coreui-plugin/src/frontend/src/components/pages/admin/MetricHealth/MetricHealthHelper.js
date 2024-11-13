@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
-const baseUrl = '/service/rest/beta/status/check';
+const baseUrl = 'service/rest/beta/status/check';
 const nodesUrl = `${baseUrl}/cluster`;
 const singleNodeUrl = (nodeId) => `${baseUrl}/${nodeId}`;
 

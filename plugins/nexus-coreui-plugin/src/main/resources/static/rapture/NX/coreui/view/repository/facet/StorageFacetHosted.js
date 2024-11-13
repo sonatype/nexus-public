@@ -64,8 +64,7 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacetHosted', {
             store: [
               ['ALLOW', NX.I18n.get('Repository_Facet_StorageFacetHosted_Deployment_AllowItem')],
               ['ALLOW_ONCE', NX.I18n.get('Repository_Facet_StorageFacetHosted_Deployment_DisableItem')],
-              ['DENY', NX.I18n.get('Repository_Facet_StorageFacetHosted_Deployment_ReadOnlyItem')],
-              ['REPLICATION_ONLY', NX.I18n.get('Repository_Facet_StorageFacetHosted_Deployment_ReplicationOnlyItem')]
+              ['DENY', NX.I18n.get('Repository_Facet_StorageFacetHosted_Deployment_ReadOnlyItem')]
             ],
             value: me.writePolicy,
             queryMode: 'local'

@@ -28,8 +28,8 @@ import org.mockito.Mock
 import static org.mockito.ArgumentMatchers.isNotNull
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.never
-import static org.mockito.Mockito.when
 import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.when
 
 /**
  * Tests {@link NexusTaskNotificationEmailSender}
@@ -53,6 +53,8 @@ class NexusTaskNotificationEmailSenderTest
     def taskNotificationMessageGenerators = [DEFAULT: defaultTaskNotificationMessageGenerator, CUSTOM: customTaskNotificationMessageGenerator]
     when(defaultTaskNotificationMessageGenerator.completed(isNotNull())).thenReturn("completed message");
     when(defaultTaskNotificationMessageGenerator.failed(isNotNull(), isNotNull())).thenReturn("failure message");
+    when(emailManager.constructMessage("completed message")).thenReturn("completed message")
+    when(emailManager.constructMessage("failure message")).thenReturn("failure message")
     underTest = new NexusTaskNotificationEmailSender({ -> emailManager}, taskNotificationMessageGenerators)
   }
 

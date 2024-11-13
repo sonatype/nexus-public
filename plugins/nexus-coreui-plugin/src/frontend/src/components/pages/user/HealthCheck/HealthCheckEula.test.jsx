@@ -47,7 +47,7 @@ describe('HealthCheckEula', () => {
     await act(async () => userEvent.click(acceptButton()));
 
     expect(Axios.put).toHaveBeenCalledTimes(1);
-    expect(Axios.put).toHaveBeenCalledWith(`/service/rest/internal/ui/ahc`);
+    expect(Axios.put).toHaveBeenCalledWith(`service/rest/internal/ui/ahc`);
   });
 
   it('does not send accept eula message', async () => {

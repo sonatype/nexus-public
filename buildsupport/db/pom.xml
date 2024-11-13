@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.70.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-db</artifactId>
@@ -28,110 +28,10 @@
   <packaging>pom</packaging>
 
   <properties>
-    <orientdb.version>2.2.37</orientdb.version>
+    <jna.version>5.13.0</jna.version>
   </properties>
-
   <dependencyManagement>
     <dependencies>
-
-      <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-core</artifactId>
-        <version>${orientdb.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.xerial.snappy</groupId>
-            <artifactId>snappy-java</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-enterprise</artifactId>
-        <version>${orientdb.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-tools</artifactId>
-        <version>${orientdb.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-client</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-object</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-object</artifactId>
-        <version>${orientdb.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-server</artifactId>
-        <version>${orientdb.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-distributed</artifactId>
-        <version>${orientdb.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast-all</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-graphdb</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-client</artifactId>
-        <version>${orientdb.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.orientechnologies</groupId>
-        <artifactId>orientdb-jdbc</artifactId>
-        <version>${orientdb.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-graphdb</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
       <dependency>
         <groupId>org.mybatis</groupId>
         <artifactId>mybatis</artifactId>
@@ -147,7 +47,7 @@
       <dependency>
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
-        <version>1.4.200</version>
+        <version>2.2.224</version>
       </dependency>
 
       <dependency>
@@ -159,19 +59,19 @@
       <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
-        <version>8.5.5</version>
+        <version>8.5.13</version>
       </dependency>
 
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna</artifactId>
-        <version>5.11.0</version>
+        <version>${jna.version}</version>
       </dependency>
 
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna-platform</artifactId>
-        <version>5.11.0</version>
+        <version>${jna.version}</version>
       </dependency>
 
     </dependencies>

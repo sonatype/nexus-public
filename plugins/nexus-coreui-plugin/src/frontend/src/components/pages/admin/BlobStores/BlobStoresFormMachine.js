@@ -17,9 +17,9 @@
 
 import axios from 'axios';
 import {assign} from 'xstate';
-import {map, omit, propOr, replace, clone} from 'ramda';
+import {clone, map, omit, propOr, replace} from 'ramda';
 
-import {ExtJS, FormUtils, ValidationUtils, UnitUtil} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils, UnitUtil, ValidationUtils} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 import {URLs} from './BlobStoresHelper';
@@ -52,7 +52,42 @@ function deriveDynamicFieldData(type) {
 export const SPACE_USED_QUOTA_ID = 'spaceUsedQuota';
 
 export const canUseSpaceUsedQuotaOnly = (storeType) =>
-  ['azure', 's3'].includes(storeType.id);
+  ['azure', 's3', 'google'].includes(storeType.id);
+
+function extractErrorMessage(event) {
+  let saveErrors = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
+  let errorMessage = '';
+  // try to extract error message from errors from response
+  if (Array.isArray(saveErrors)) {
+    let error = saveErrors[0];
+    if (error) {
+      errorMessage = error.message;
+    }
+  } else if (typeof saveErrors === 'object') {
+    errorMessage = saveErrors.message;
+  } else {
+    errorMessage = saveErrors;
+  }
+  return errorMessage ? errorMessage : UIStrings.ERROR.SAVE_ERROR;
+}
+
+const bucketRegionMismatchException = UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchException;
+
+function transformIfNecessary(context, errorMessage) {
+  if (errorMessage && errorMessage.includes(bucketRegionMismatchException)) {
+    context.bucketRegionMismatch = true;
+    return 'Error cause' + errorMessage.substring(
+        errorMessage.indexOf(bucketRegionMismatchException) + bucketRegionMismatchException.length);
+  }
+  return errorMessage;
+}
+
+function messageToShow(errorMessage) {
+  if (errorMessage && errorMessage.includes(bucketRegionMismatchException)) {
+    return UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchMessage;
+  }
+  return errorMessage;
+}
 
 export default FormUtils.buildFormMachine({
   id: 'BlobStoresFormMachine',
@@ -63,7 +98,8 @@ export default FormUtils.buildFormMachine({
     context: {
       ...config.context,
       type: '',
-      types: []
+      types: [],
+      bucketRegionMismatch: false
     },
 
     states: {
@@ -102,6 +138,11 @@ export default FormUtils.buildFormMachine({
 
           MODAL_CONVERT_TO_GROUP_OPEN: {
             target: 'modalConvertToGroup'
+          },
+
+          SET_FILES: {
+            target: 'loaded',
+            actions: ['setFile']
           }
         }
       },
@@ -109,7 +150,10 @@ export default FormUtils.buildFormMachine({
         invoke: {
           src: 'confirmSave',
           onDone: 'saving',
-          onError: 'loaded'
+          onError: {
+            target: 'loaded',
+            actions: ['setSaveError', 'logSaveError']
+          }
         }
       },
       modalConvertToGroup: {
@@ -226,7 +270,7 @@ export default FormUtils.buildFormMachine({
         const isCreate = !ValidationUtils.notBlank(pristineData.name);
         const Actions = type && window.BlobStoreTypes[type.id]?.Actions;
         const validationErrors = {
-          ...(Actions?.validation(data) || {}),
+          ...(Actions?.validation(data, pristineData) || {}),
           type: ValidationUtils.validateNotBlank(type),
           name: isCreate ? ValidationUtils.validateNameField(data.name) : null,
         };
@@ -269,24 +313,36 @@ export default FormUtils.buildFormMachine({
       }
     }),
 
+    setFile: assign({
+      data: ({data}, {file}) => {
+        return {
+          ...data,
+          bucketConfiguration: {
+            ...data.bucketConfiguration,
+            bucketSecurity: {
+              ...data.bucketConfiguration.bucketSecurity,
+              file: file
+            }
+          }
+        };
+      },
+    }),
+
+    setSaveError: assign({
+      saveErrorData: ({data}) => data,
+      saveError: (context, event) => {
+        let errorMessage = extractErrorMessage(event);
+
+        return errorMessage ? transformIfNecessary(context, errorMessage) : UIStrings.ERROR.SAVE_ERROR;
+      }
+    }),
+    
     onDeleteError: (_, event) => ExtJS.showErrorMessage(event.data?.message),
 
     logSaveError: (_, event) => {
-      let saveErrors = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
-      var errorMessage = '';
+      let errorMessage = extractErrorMessage(event);
 
-      // try to extract error message from errors from response
-      if (Array.isArray(saveErrors)) {
-        let error = saveErrors[0];
-        if (error) {
-          errorMessage = error.message;
-        }
-      } else {
-        errorMessage = saveErrors;
-      }
-
-      errorMessage = errorMessage ? errorMessage : UIStrings.ERROR.SAVE_ERROR;
-      ExtJS.showErrorMessage(errorMessage);
+      ExtJS.showErrorMessage(messageToShow(errorMessage));
       console.log(`Save Error: ${errorMessage}`);
     }
   },
@@ -318,12 +374,30 @@ export default FormUtils.buildFormMachine({
       }
     },
 
-    saveData: ({data, pristineData, type}) => {
+    saveData: async ({data, pristineData, type}) => {
       let saveData = data.softQuota.enabled ? clone(data) : omit(['softQuota'], data);
       saveData = map((value) => typeof value === 'string' ? value.trim() : value, saveData);
       if (saveData.softQuota?.limit) {
         saveData.softQuota.limit = UnitUtil.megaBytesToBytes(saveData.softQuota.limit);
       }
+
+      if (type.id == "google") {
+        const fileList = data.bucketConfiguration.bucketSecurity?.file;
+    
+        if (fileList && fileList.length > 0) {
+          const file = fileList.item(0);
+          try {
+            const accountKey = await file.text();
+            saveData.bucketConfiguration.bucketSecurity.accountKey = accountKey;
+          } catch (error) {
+            console.error('Error reading or parsing file:', error);
+          }
+        } else if (saveData.bucketConfiguration?.bucketSecurity?.accountKey == "present-and-encrypted") {
+          let {bucketConfiguration : {bucketSecurity , ...bucket} , ...otherData} = saveData;
+          saveData = {bucketConfiguration: {...bucket} , ...otherData};
+        }
+      }
+
       if (ValidationUtils.notBlank(pristineData.name)) {
         return axios.put(URLs.singleBlobStoreUrl(type.id, data.name), saveData);
       }

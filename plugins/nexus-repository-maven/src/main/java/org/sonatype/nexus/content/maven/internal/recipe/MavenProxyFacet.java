@@ -41,7 +41,6 @@ import com.google.common.net.HttpHeaders;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 /**
  * Maven specific implementation of {@link ProxyFacetSupport}.
@@ -53,6 +52,7 @@ public class MavenProxyFacet
     extends ContentProxyFacetSupport
 {
   private static final String MAVEN_CENTRAL_HOST = "repo1.maven.org";
+  public static final String P_ATTRIBUTES = "attributes";
 
   final ConstraintViolationFactory constraintViolationFactory;
 

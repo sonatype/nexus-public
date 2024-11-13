@@ -15,17 +15,21 @@ package org.sonatype.nexus.internal.httpclient.handlers;
 import java.util.function.Supplier;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretDeserializer;
+import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.datastore.mybatis.AbstractJsonTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.OverrideIgnoreTypeIntrospector;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.internal.httpclient.AuthenticationConfigurationDeserializer;
 import org.sonatype.nexus.internal.httpclient.AuthenticationConfigurationSerializer;
 import org.sonatype.nexus.internal.httpclient.SecondsDeserializer;
 import org.sonatype.nexus.internal.httpclient.SecondsSerializer;
-import org.sonatype.nexus.security.PasswordHelper;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.collect.ImmutableList;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
@@ -40,8 +44,9 @@ public abstract class HttpClientConfigurationHandler<T>
   // this guarantees the constructor and buildObjectMapper work on the same mapper, regardless which runs first
   private static final ThreadLocal<ObjectMapper> constructingMapper = ThreadLocal.withInitial(ObjectMapper::new);
 
-  protected HttpClientConfigurationHandler(final PasswordHelper passwordHelper) {
+  protected HttpClientConfigurationHandler(final SecretsFactory secretsFactory) {
     constructingMapper.get().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(ImmutableList.of(Secret.class)))
       // register custom serializers and deserializers
       // - goodies Time is our internal Time representation
       // - AuthenticationConfiguration needs a tiny bit of logic for resolving the proper impl and encryption
@@ -57,12 +62,14 @@ public abstract class HttpClientConfigurationHandler<T>
               )
               .addSerializer(
                   AuthenticationConfiguration.class,
-                  new AuthenticationConfigurationSerializer(passwordHelper)
+                  new AuthenticationConfigurationSerializer()
               )
               .addDeserializer(
                   AuthenticationConfiguration.class,
-                  new AuthenticationConfigurationDeserializer(passwordHelper)
+                  new AuthenticationConfigurationDeserializer()
               )
+              .addDeserializer(Secret.class, new SecretDeserializer(secretsFactory))
+
       );
   }
 

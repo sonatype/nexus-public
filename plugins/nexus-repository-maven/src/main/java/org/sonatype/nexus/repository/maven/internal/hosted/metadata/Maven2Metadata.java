@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;

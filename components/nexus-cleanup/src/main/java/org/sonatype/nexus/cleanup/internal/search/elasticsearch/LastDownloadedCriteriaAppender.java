@@ -14,7 +14,7 @@ package org.sonatype.nexus.cleanup.internal.search.elasticsearch;
 
 import javax.inject.Named;
 
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 
 /**
  * Appends criteria for querying on lastDownloaded.

@@ -129,6 +129,14 @@ public class FluentComponentImpl
   }
 
   @Override
+  public Collection<FluentAsset> assets(boolean useCache) {
+    if(useCache && component instanceof ComponentData && ((ComponentData) component).getAssets() != null){
+      return transform(((ComponentData) component).getAssets(), asset -> new FluentAssetImpl(facet, asset));
+    }
+    return assets();
+  }
+
+  @Override
   public FluentComponent kind(final String kind) {
     if (!Objects.equals(kind, component.kind())) {
       ((ComponentData) component).setKind(kind);

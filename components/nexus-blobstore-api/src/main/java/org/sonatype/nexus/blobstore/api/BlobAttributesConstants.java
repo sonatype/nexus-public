@@ -35,5 +35,7 @@ public final class BlobAttributesConstants
 
   public static final String COMPONENT_ATTRIBUTE_HEADER_PREFIX = "attributes.component.";
 
+  public static final String LAST_DOWNLOADED_ATTRIBUTE = "lastDownloaded";
+
   private BlobAttributesConstants() {}
 }

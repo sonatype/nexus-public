@@ -14,7 +14,6 @@ package org.sonatype.nexus.transaction;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * Implementation of {@link Transactional} that follows the behaviour specified in {@link Annotation}.

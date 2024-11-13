@@ -71,6 +71,8 @@ public abstract class TaskDescriptorSupport
 
   private final List<FormField> formFields;
 
+  private boolean isReadOnlyUi;
+
   public TaskDescriptorSupport(final String id,
                                final Class<? extends Task> type,
                                final String name,
@@ -180,4 +182,12 @@ public abstract class TaskDescriptorSupport
     return true;
   }
 
+  public void setReadOnlyUi(final boolean readOnlyUi) {
+    this.isReadOnlyUi = readOnlyUi;
+  }
+
+  @Override
+  public boolean isReadOnlyUi() {
+    return isReadOnlyUi;
+  }
 }

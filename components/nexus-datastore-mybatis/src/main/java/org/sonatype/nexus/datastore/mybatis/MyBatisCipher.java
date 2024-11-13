@@ -16,10 +16,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.crypto.PbeCipherFactory;
-import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
+import org.sonatype.nexus.crypto.LegacyCipherFactory;
+import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
-import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl;
+import org.sonatype.nexus.crypto.internal.LegacyCipherFactoryImpl;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -44,12 +44,12 @@ final class MyBatisCipher
   private PbeCipher pbeCipher;
 
   @Inject
-  MyBatisCipher(final PbeCipherFactory pbeCipherFactory,
+  MyBatisCipher(final LegacyCipherFactory legacyCipherFactory,
       @Named("${nexus.mybatis.cipher.password:-changeme}") final String password,
       @Named("${nexus.mybatis.cipher.salt:-changeme}") final String salt,
       @Named("${nexus.mybatis.cipher.iv:-0123456789ABCDEF}") final String iv) throws Exception
   {
-    this.pbeCipher = pbeCipherFactory.create(password, salt, iv);
+    this.pbeCipher = legacyCipherFactory.create(password, salt, iv);
   }
 
   /**
@@ -57,7 +57,7 @@ final class MyBatisCipher
    */
   @VisibleForTesting
   MyBatisCipher() throws Exception {
-    this(new PbeCipherFactoryImpl(new CryptoHelperImpl()), "changeme", "changeme", "0123456789ABCDEF");
+    this(new LegacyCipherFactoryImpl(new CryptoHelperImpl()), "changeme", "changeme", "0123456789ABCDEF");
   }
 
   @Override

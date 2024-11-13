@@ -141,7 +141,7 @@ public class DataSessionRule
       if (getBoolean("test.postgres", false)) {
         url = startPostgres();
       }
-      else  {
+      else {
         url = "jdbc:h2:mem:${storeName}";
       }
     }
@@ -220,7 +220,8 @@ public class DataSessionRule
 
   @Override
   public Connection openConnection(final String storeName) throws SQLException {
-    return ofNullable(stores.get(storeName)).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openConnection();
+    return ofNullable(stores.get(storeName)).orElseThrow(() -> new DataStoreNotFoundException(storeName))
+        .openConnection();
   }
 
   public Optional<DataStore<?>> getDataStore(final String storeName) {
@@ -244,6 +245,7 @@ public class DataSessionRule
 
     postgres = new PostgreSQLContainer<>(DockerImageName.parse("docker-all.repo.sonatype.com/postgres:11.9")
         .asCompatibleSubstituteFor("postgres"));
+
     postgres.withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("postgres")))
         .withCommand("postgres", "-c", "max_connections=110");
     postgres.start();
