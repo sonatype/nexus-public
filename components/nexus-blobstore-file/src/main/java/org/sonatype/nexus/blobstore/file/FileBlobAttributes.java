@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import org.sonatype.nexus.blobstore.BlobAttributesSupport;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.common.property.PropertiesFile;
 
@@ -63,5 +64,10 @@ public class FileBlobAttributes
   public void store() throws IOException {
     writeTo(propertiesFile);
     propertiesFile.store();
+  }
+
+  @Override
+  public void writeProperties(){
+    writeTo(propertiesFile);
   }
 }

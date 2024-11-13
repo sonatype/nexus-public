@@ -21,6 +21,8 @@ import javax.validation.constraints.NotNull
 
 import org.sonatype.goodies.common.Time
 import org.sonatype.nexus.common.text.Strings2
+import org.sonatype.nexus.crypto.secrets.Secret
+import org.sonatype.nexus.crypto.secrets.SecretsService
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.httpclient.HttpClientManager
@@ -32,6 +34,7 @@ import org.sonatype.nexus.httpclient.config.ProxyConfiguration
 import org.sonatype.nexus.httpclient.config.ProxyServerConfiguration
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
 import org.sonatype.nexus.rapture.PasswordPlaceholder
+import org.sonatype.nexus.security.UserIdHelper
 import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered
@@ -59,6 +62,9 @@ class HttpSettingsComponent
 {
   @Inject
   HttpClientManager httpClientManager
+
+  @Inject
+  SecretsService secretsService
 
   /**
    * Retrieves HTTP system settings
@@ -141,14 +147,21 @@ class HttpSettingsComponent
   @Validate
   HttpSettingsXO update(final @NotNull @Valid HttpSettingsXO settings) {
     def previous = httpClientManager.configuration
-    def model = convert(settings)
-    replacePasswordPlaceholders(previous, model)
+    def model = null
+    try {
+      model = convert(settings, previous)
+    }
+    catch (Exception e) {
+      removeSecrets(previous, model)
+      throw e
+    }
     httpClientManager.configuration = model
+    removeSecrets(previous, model)
     return read()
   }
 
   @PackageScope
-  HttpClientConfiguration convert(final HttpSettingsXO value) {
+  HttpClientConfiguration convert(final HttpSettingsXO value, final HttpClientConfiguration previous) {
     def result = httpClientManager.newConfiguration()
 
     // convert connection configuration
@@ -189,7 +202,8 @@ class HttpSettingsComponent
               value.httpAuthUsername,
               value.httpAuthPassword,
               value.httpAuthNtlmHost,
-              value.httpAuthNtlmDomain
+              value.httpAuthNtlmDomain,
+              previous?.proxy?.http?.authentication?.secret
           )
       )
     }
@@ -205,7 +219,8 @@ class HttpSettingsComponent
               value.httpsAuthUsername,
               value.httpsAuthPassword,
               value.httpsAuthNtlmHost,
-              value.httpsAuthNtlmDomain
+              value.httpsAuthNtlmDomain,
+              previous?.proxy?.https?.authentication?.secret
           )
       )
     }
@@ -225,7 +240,8 @@ class HttpSettingsComponent
                                    final String username,
                                    final String password,
                                    final String host,
-                                   final String domain)
+                                   final String domain,
+                                   final Secret previous)
   {
     if (!enabled) {
       return null
@@ -235,7 +251,7 @@ class HttpSettingsComponent
     if (host || domain) {
       return new NtlmAuthenticationConfiguration(
           username: username,
-          password: password,
+          password: encrypt(password, previous),
           host: host,
           domain: domain
       )
@@ -243,21 +259,40 @@ class HttpSettingsComponent
     else {
       return new UsernameAuthenticationConfiguration(
           username: username,
-          password: password
+          password: encrypt(password, previous)
       )
     }
   }
 
-  /**
-   * Replace password placeholders updated model with values from previous module.
-   */
-  @PackageScope
-  void replacePasswordPlaceholders(final HttpClientConfiguration previous, final HttpClientConfiguration updated) {
-    if (PasswordPlaceholder.is(updated?.proxy?.http?.authentication?.password)) {
-      updated.proxy.http.authentication.password = previous?.proxy?.http?.authentication?.password
+  private Secret encrypt(String password, Secret previous) {
+    if (Strings2.isBlank(password) || PasswordPlaceholder.is(password)) {
+      previous
     }
-    if (PasswordPlaceholder.is(updated?.proxy?.https?.authentication?.password)) {
-      updated.proxy.https.authentication.password = previous?.proxy?.https?.authentication?.password
+    else {
+      secretsService.encryptMaven(AuthenticationConfiguration.AUTHENTICATION_CONFIGURATION, password.toCharArray(),
+          UserIdHelper.get())
+    }
+  }
+
+  private void removeSecrets(HttpClientConfiguration previous, HttpClientConfiguration newConfig) {
+    if (previous?.proxy?.http?.authentication?.secret?.id != newConfig?.proxy?.http?.authentication?.secret?.id) {
+      removeSecret(previous?.proxy?.http?.authentication)
+    }
+    if (previous?.proxy?.https?.authentication?.secret?.id != newConfig?.proxy?.https?.authentication?.secret?.id) {
+      removeSecret(previous?.proxy?.https?.authentication)
+    }
+  }
+
+  private void removeSecret(authConfig) {
+    if (authConfig != null) {
+      if (NtlmAuthenticationConfiguration.TYPE == authConfig.type) {
+        def nltmAuth = (NtlmAuthenticationConfiguration) authConfig
+        secretsService.remove(nltmAuth.password)
+      }
+      else {
+        def userNameAuth = (UsernameAuthenticationConfiguration) authConfig
+        secretsService.remove(userNameAuth.password)
+      }
     }
   }
 }

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.email;
 
+import org.sonatype.nexus.crypto.secrets.Secret;
+
 /**
  * Email configuration.
  *
@@ -35,9 +37,9 @@ public interface EmailConfiguration
 
   void setUsername(String username);
 
-  String getPassword();
+  Secret getPassword();
 
-  void setPassword(String password);
+  void setPassword(Secret password);
 
   String getFromAddress();
 

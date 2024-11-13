@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -26,20 +25,17 @@ import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
-import org.sonatype.nexus.blobstore.file.FileBlobStoreMetricsService;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.metrics.DatastoreBlobStoreMetricsServiceSupport;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 
 import com.google.common.collect.ImmutableMap;
 
-@Named
+@Named(FileBlobStore.TYPE)
 @Priority(Integer.MAX_VALUE)
 public class DatastoreFileBlobStoreMetricsService
-    extends DatastoreBlobStoreMetricsServiceSupport
-    implements FileBlobStoreMetricsService
+    extends DatastoreBlobStoreMetricsServiceSupport<FileBlobStore>
 {
-  private Path storageDirectory;
-
   @Inject
   public DatastoreFileBlobStoreMetricsService(
       @Named("${nexus.blobstore.metrics.flushInterval:-2}") final int metricsFlushPeriodSeconds,
@@ -59,7 +55,7 @@ public class DatastoreFileBlobStoreMetricsService
     }
 
     try {
-      FileStore fileStore = Files.getFileStore(storageDirectory);
+      FileStore fileStore = Files.getFileStore(blobStore.getAbsoluteBlobDir());
 
       ImmutableMap<String, Long> availableSpace = ImmutableMap
           .of("fileStore:" + fileStore.name(), fileStore.getUsableSpace());
@@ -74,10 +70,5 @@ public class DatastoreFileBlobStoreMetricsService
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-  }
-
-  @Override
-  public void setStorageDir(final Path storageDir) {
-    this.storageDirectory = storageDir;
   }
 }

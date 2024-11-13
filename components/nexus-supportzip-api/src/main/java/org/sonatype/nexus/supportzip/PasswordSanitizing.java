@@ -16,7 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -46,8 +45,10 @@ public class PasswordSanitizing<T extends Map<String, ?>>
       "systemPassword",
       "keyStorePassword",
       "secret",
+      "accessKeyId",
       "secretAccessKey",
       "sessionToken",
+      "auth_account_key",
       "aptSigning",
       "bearerToken",
       "yumSigning",

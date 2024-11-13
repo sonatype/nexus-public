@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.datastore.mybatis;
 
-import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
+import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.TypeHandler;

@@ -33,9 +33,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Base class for {@link BlobStoreMetricsService} implementations.
  */
-public abstract class DatastoreBlobStoreMetricsServiceSupport
+public abstract class DatastoreBlobStoreMetricsServiceSupport<B extends BlobStore>
     extends StateGuardLifecycleSupport
-    implements BlobStoreMetricsService
+    implements BlobStoreMetricsService<B>
 {
   private final int metricsFlushPeriodSeconds;
 
@@ -47,7 +47,7 @@ public abstract class DatastoreBlobStoreMetricsServiceSupport
 
   protected final BlobStoreMetricsStore blobStoreMetricsStore;
 
-  protected BlobStore blobStore;
+  protected B blobStore;
 
   protected DatastoreBlobStoreMetricsServiceSupport(
       final int metricsFlushPeriodSeconds,
@@ -85,8 +85,9 @@ public abstract class DatastoreBlobStoreMetricsServiceSupport
   }
 
   @Override
-  public void setBlobStore(final BlobStore blobStore) {
+  public void init(final B blobStore) throws Exception {
     this.blobStore = blobStore;
+    this.start();
   }
 
   @Override

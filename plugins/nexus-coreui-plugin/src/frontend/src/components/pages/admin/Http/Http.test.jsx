@@ -39,6 +39,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     checkPermission: jest.fn(),
     showErrorMessage: jest.fn(),
     showSuccessMessage: jest.fn(),
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn(),
+    }),
   },
 }));
 
@@ -192,6 +195,14 @@ describe('Http', () => {
       .calledWith('nexus:settings:update')
       .mockReturnValue(true);
 
+    when(ExtJS.state().getValue)
+      .calledWith('requestTimeout')
+      .mockReturnValue({value: 20});
+
+    when(ExtJS.state().getValue)
+      .calledWith('retryCount')
+      .mockReturnValue(2);
+
     mockResponse();
 
     when(Axios.post)
@@ -208,6 +219,14 @@ describe('Http', () => {
     expect(userAgent()).toBeInTheDocument();
     expect(timeout()).toBeInTheDocument();
     expect(retries()).toBeInTheDocument();
+  });
+
+  it('has the correct placeholders for timeout and retries', async () => {
+    const {timeoutInput, retriesInput} = selectors;
+    await renderAndWaitForLoad();
+
+    expect(timeoutInput().getAttribute('placeholder')).toBe('20');
+    expect(retriesInput().getAttribute('placeholder')).toBe('2');
   });
 
   it('connection timeout should be greater than 0, less than or equal to 3600', async () => {

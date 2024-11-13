@@ -44,6 +44,7 @@ export default function configurePlugins() {
  *   mode: 'browse' || 'admin',
  *   path: '/somepath',
  *   text: 'menu label',
+ *   textComplement: 'text complement for menu label'
  *   description: 'description used for the header when visiting the feature',
  *   view: <reactViewReference>,
  *   iconCls: 'x-fa fa-icon-type',
@@ -72,6 +73,7 @@ function registerFeature(feature) {
     mode: feature.mode,
     path: feature.path,
     text: feature.text,
+    textComplement: feature.textComplement,
     description: feature.description,
     weight: feature.weight,
     view: {

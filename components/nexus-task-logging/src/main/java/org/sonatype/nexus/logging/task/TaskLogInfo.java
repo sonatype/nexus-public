@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**

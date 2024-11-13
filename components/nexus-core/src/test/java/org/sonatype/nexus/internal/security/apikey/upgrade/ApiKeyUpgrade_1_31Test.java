@@ -16,7 +16,7 @@ import java.sql.Connection;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
-import org.sonatype.nexus.internal.security.apikey.ApiKeyDAO;
+import org.sonatype.nexus.internal.security.apikey.store.ApiKeyDAO;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Rule;

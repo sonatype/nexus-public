@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository;
 
 import javax.annotation.Nonnull;
 
+import org.sonatype.nexus.repository.config.Configuration;
+
 /**
  * Repository recipe.
  *
@@ -26,6 +28,10 @@ public interface Recipe
   Format getFormat();
 
   void apply(@Nonnull Repository repository) throws Exception;
+
+  default void apply(@Nonnull Repository repository, Configuration configuration) throws Exception {
+    apply(repository);
+  }
 
   boolean isFeatureEnabled();
 }

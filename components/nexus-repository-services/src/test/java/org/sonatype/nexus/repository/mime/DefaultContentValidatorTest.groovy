@@ -289,4 +289,17 @@ class DefaultContentValidatorTest
     )
     assertThat(type, equalTo(ContentTypes.APPLICATION_OCTET_STREAM))
   }
+
+  @Test(expected = InvalidContentException)
+  void 'binary content strict'() {
+    byte[] binary_file = [01, 02, 03, 04, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]
+
+    def type = testSubject.determineContentType(
+        true,
+        supplier(binary_file),
+        MimeRulesSource.NOOP,
+        'vim',
+        null
+    )
+  }
 }

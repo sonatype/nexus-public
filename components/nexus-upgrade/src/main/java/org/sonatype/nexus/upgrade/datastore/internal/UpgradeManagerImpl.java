@@ -27,13 +27,13 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
+import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
+import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.sonatype.nexus.upgrade.datastore.UpgradeException;
 import org.sonatype.nexus.upgrade.datastore.UpgradeManager;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeCompletedEvent;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeFailedEvent;
-import org.sonatype.nexus.upgrade.datastore.events.UpgradeStartedEvent;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.flywaydb.core.Flyway;
@@ -78,7 +78,8 @@ public class UpgradeManagerImpl
   }
 
   @Override
-  public void migrate(@Nullable final String user, final Collection<String> nodeIds) throws UpgradeException {
+  public void migrate(@Nullable final String user, final Collection<String> nodeIds) throws UpgradeException
+  {
     Flyway flyway = createFlyway();
 
     // Compute current state
@@ -157,7 +158,7 @@ public class UpgradeManagerImpl
    * @return a String {@link Optional} indicating the baseline version if found
    */
   @VisibleForTesting
-  Optional<String> getBaseline(MigrationVersion target) {
+  Optional<String> getBaseline(final MigrationVersion target) {
     return migrations.stream()
         .map(NexusJavaMigration::new)
         .map(NexusJavaMigration::getVersion)
@@ -198,10 +199,10 @@ public class UpgradeManagerImpl
       log.error("Missing migrations: {}", missingMigrations);
     }
 
-   if (!missingMigrations.isEmpty()) {
-     log.error("Missing migrations: {}", missingMigrations);
-     throw new UpgradeException("The database appears to be from a later version of Nexus Repository");
-   }
+    if (!missingMigrations.isEmpty()) {
+      log.error("Missing migrations: {}", missingMigrations);
+      throw new UpgradeException("The database appears to be from a later version of Nexus Repository");
+    }
   }
 
   private void emitStarted(@Nullable final String user, final MigrationInfoService info) {
@@ -215,7 +216,11 @@ public class UpgradeManagerImpl
     auditor.post(new UpgradeFailedEvent(user, flyway.info().getInfoResult().schemaVersion, errorMessage));
   }
 
-  private void emitCompleted(@Nullable final String user, final Collection<String> nodeIds, final MigrateResult result) {
+  private void emitCompleted(
+      @Nullable final String user,
+      final Collection<String> nodeIds,
+      final MigrateResult result)
+  {
     if (result.migrationsExecuted > 0) {
       auditor.post(new UpgradeCompletedEvent(user, result.targetSchemaVersion, nodeIds, result.migrations.stream()
           .map(m -> m.description)
@@ -230,11 +235,11 @@ public class UpgradeManagerImpl
     checkNotNull(migrations);
 
     List<String> failures = migrations.stream()
-      .filter(migration -> migration.version().isPresent())
-      .map(Object::getClass)
-      .map(Class::getName)
-      .filter(className -> !className.startsWith("org.sonatype"))
-      .collect(Collectors.toList());
+        .filter(migration -> migration.version().isPresent())
+        .map(Object::getClass)
+        .map(Class::getName)
+        .filter(className -> !className.startsWith("org.sonatype"))
+        .collect(Collectors.toList());
 
     if (!failures.isEmpty()) {
       throw new IllegalArgumentException(
@@ -268,6 +273,14 @@ public class UpgradeManagerImpl
   }
 
   private JavaMigration[] getMigrations() {
-    return migrations.stream().map(NexusJavaMigration::new).toArray(JavaMigration[]::new);
+    return new SimpleDependencyResolver(migrations).resolve().stream()
+        .toArray(JavaMigration[]::new);
+  }
+
+  @Override
+  public boolean isMigrationApplied(final Class<? extends DatabaseMigrationStep> step) {
+    return Arrays.stream(createFlyway().info().applied())
+        .map(MigrationInfo::getDescription)
+        .anyMatch(NexusJavaMigration.nameMatcher(step));
   }
 }

@@ -17,7 +17,7 @@
 import Axios from 'axios';
 import {assign, Machine} from "xstate";
 
-export const applicationHealthCheckUrl = '/service/rest/internal/ui/ahc';
+export const applicationHealthCheckUrl = 'service/rest/internal/ui/ahc';
 
 export default Machine({
   id: 'analyzeApplicationMachine',
@@ -77,6 +77,6 @@ export default Machine({
     })
   },
   services: {
-    fetchData: ({componentModel}) => Axios.get(applicationHealthCheckUrl, {params: {component: componentModel}})
+    fetchData: ({componentModel}) => Axios.get(applicationHealthCheckUrl, {params: {component: JSON.stringify(componentModel)}})
   }
 });

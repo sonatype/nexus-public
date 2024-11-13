@@ -102,7 +102,7 @@ export function UserTokenForm({service}) {
               <NxReadOnly.Data>
                 {USER_TOKEN_STATUS.TIMESTAMP_TEXT(isExpired)}
                 {isExpired && isOpen && <NxErrorAlert onClose={dismiss}>{error}</NxErrorAlert>}
-                {!isExpired && DateUtils.prettyDateTime(new Date(parseInt(expirationTimestamp)))}
+                {!isExpired && DateUtils.prettyDateTimeLong(new Date(parseInt(expirationTimestamp)))}
               </NxReadOnly.Data>
             </NxReadOnly>
           }

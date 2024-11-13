@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.search.sql;
 
 import java.util.Optional;
 
+import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 
@@ -30,4 +31,8 @@ public interface SqlSearchQueryContribution
    * Creates {@link Expresion}(s) for the specified SearchFilter
    */
   Optional<Expression> createPredicate(SearchFilter filter);
+
+  default SearchRequest modifyRequest(SearchRequest request) {
+    return request;
+  }
 }

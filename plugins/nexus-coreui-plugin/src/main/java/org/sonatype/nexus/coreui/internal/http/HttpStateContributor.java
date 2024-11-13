@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
+import org.sonatype.nexus.httpclient.HttpDefaultsCustomizer;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -28,15 +29,24 @@ public class HttpStateContributor
     extends ComponentSupport
     implements StateContributor
 {
-  private final Map<String, Object> state;
+  private final HttpDefaultsCustomizer customizer;
+
+  private boolean featureFlag;
 
   @Inject
-  public HttpStateContributor(@Named("${nexus.react.httpSettings:-true}") final Boolean featureFlag) {
-    state = ImmutableMap.of("nexus.react.httpSettings", featureFlag);
+  public HttpStateContributor(
+    @Named("${nexus.react.httpSettings:-true}") final Boolean featureFlag,
+    final HttpDefaultsCustomizer customizer) {
+    this.customizer = customizer;
+    this.featureFlag = featureFlag;
   }
 
   @Override
   public Map<String, Object> getState() {
-    return state;
+    return ImmutableMap.of(
+      "nexus.react.httpSettings", featureFlag,
+      "requestTimeout", customizer.getRequestTimeout(),
+      "retryCount", customizer.getRetryCount()
+    );
   }
 }

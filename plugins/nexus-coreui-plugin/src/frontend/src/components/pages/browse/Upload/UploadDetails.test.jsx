@@ -186,12 +186,12 @@ describe('UploadDetails', function() {
     jest.spyOn(axios, 'post');
 
     when(axios.post).calledWith(
-        '/service/extdirect',
+        'service/extdirect',
         expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
     ).mockResolvedValue(testData.sampleRepoSettings);
 
     when(axios.post).calledWith(
-        '/service/extdirect',
+        'service/extdirect',
         expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
     ).mockResolvedValue(testData.sampleUploadDefinitions);
   });
@@ -211,7 +211,7 @@ describe('UploadDetails', function() {
   describe('initial loading', function() {
     it('renders a loading spinner before the readReferences call completes', function() {
       when(axios.post).calledWith(
-          '/service/extdirect',
+          'service/extdirect',
           expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
       ).mockReturnValue(new Promise(() => {}));
 
@@ -224,7 +224,7 @@ describe('UploadDetails', function() {
 
     it('renders a loading spinner before the getUploadDefinitions call completes', function() {
       when(axios.post).calledWith(
-          '/service/extdirect',
+          'service/extdirect',
           expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
       ).mockReturnValue(new Promise(() => {}));
 
@@ -247,7 +247,7 @@ describe('UploadDetails', function() {
     it('renders an error alert with a Retry button if the readReferences call fails at the HTTP level',
         async function() {
           when(axios.post).calledWith(
-              '/service/extdirect',
+              'service/extdirect',
               expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
           ).mockRejectedValue({ message: 'foobar' });
 
@@ -266,7 +266,7 @@ describe('UploadDetails', function() {
     it('renders an error alert with a Retry button if the readReferences call fails at the extdirect level',
         async function() {
           when(axios.post).calledWith(
-              '/service/extdirect',
+              'service/extdirect',
               expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
           ).mockResolvedValue({ data: { result: { success: false, message: 'foobar' } } });
 
@@ -285,7 +285,7 @@ describe('UploadDetails', function() {
     it('renders an error alert with a Retry button if the getUploadDefinitions call fails at the HTTP level',
         async function() {
           when(axios.post).calledWith(
-              '/service/extdirect',
+              'service/extdirect',
               expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
           ).mockRejectedValue({ message: 'foobar' });
 
@@ -304,7 +304,7 @@ describe('UploadDetails', function() {
     it('renders an error alert with a Retry button if the getUploadDefinitions call fails at the extdirect level',
         async function() {
           when(axios.post).calledWith(
-              '/service/extdirect',
+              'service/extdirect',
               expect.objectContaining({ action: 'coreui_Upload', method: 'getUploadDefinitions' })
           ).mockResolvedValue({ data: { result: { success: false, message: 'foobar' } } });
 
@@ -324,7 +324,7 @@ describe('UploadDetails', function() {
         async function() {
           when(axios.post)
               .calledWith(
-                  '/service/extdirect',
+                  'service/extdirect',
                   expect.objectContaining({ action: 'coreui_Repository', method: 'readReferences' })
               )
               .mockRejectedValueOnce({ message: 'foobar' })

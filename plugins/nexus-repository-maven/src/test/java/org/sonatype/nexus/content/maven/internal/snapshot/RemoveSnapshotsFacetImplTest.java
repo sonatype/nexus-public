@@ -26,7 +26,6 @@ import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.store.GAV;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.maven.tasks.RemoveSnapshotsConfig;
@@ -41,7 +40,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -50,9 +48,9 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.content.maven.internal.recipe.MavenProxyFacet.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 public class RemoveSnapshotsFacetImplTest
     extends TestSupport

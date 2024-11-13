@@ -53,12 +53,14 @@ export default function BlobStoresList({onCreate, onEdit}) {
   const {data, error, filter: filterText} = current.context;
 
   const nameSortDir = ListMachineUtils.getSortDirection('name', current.context);
+  const pathSortDir = ListMachineUtils.getSortDirection('path', current.context);
   const typeSortDir = ListMachineUtils.getSortDirection('typeName', current.context);
   const stateSortDir = ListMachineUtils.getSortDirection('available', current.context);
   const countSortDir = ListMachineUtils.getSortDirection('blobCount', current.context);
   const sizeSortDir = ListMachineUtils.getSortDirection('totalSizeInBytes', current.context);
   const spaceSortDir = ListMachineUtils.getSortDirection('availableSpaceInBytes', current.context);
   const sortByName = () => send('SORT_BY_NAME');
+  const sortByPath = () => send('SORT_BY_PATH');
   const sortByType = () => send('SORT_BY_TYPE_NAME');
   const sortByState = () => send('SORT_BY_AVAILABLE');
   const sortByCount = () => send('SORT_BY_BLOB_COUNT');
@@ -88,6 +90,7 @@ export default function BlobStoresList({onCreate, onEdit}) {
           <NxTableHead>
             <NxTableRow>
               <NxTableCell onClick={sortByName} isSortable sortDir={nameSortDir}>{COLUMNS.NAME}</NxTableCell>
+              <NxTableCell onClick={sortByPath} isSortable sortDir={pathSortDir}>{COLUMNS.PATH}</NxTableCell>
               <NxTableCell onClick={sortByType} isSortable sortDir={typeSortDir}>{COLUMNS.TYPE}</NxTableCell>
               <NxTableCell onClick={sortByState} isSortable sortDir={stateSortDir}>{COLUMNS.STATE}</NxTableCell>
               <NxTableCell onClick={sortByCount} isSortable sortDir={countSortDir} isNumeric>
@@ -102,9 +105,10 @@ export default function BlobStoresList({onCreate, onEdit}) {
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error} emptyMessage={BLOB_STORES.LIST.EMPTY_LIST}>
             {data.map(
-                ({name, typeId, typeName, available, unavailable, blobCount, totalSizeInBytes, availableSpaceInBytes, unlimited}) => (
+                ({name, path, typeId, typeName, available, unavailable, blobCount, totalSizeInBytes, availableSpaceInBytes, unlimited}) => (
                     <NxTableRow key={name} onClick={() => onEdit(`${encodeURIComponent(typeId)}/${encodeURIComponent(name)}`)} isClickable>
                       <NxTableCell>{name}</NxTableCell>
+                      <NxTableCell className="blob-store-path">{path}</NxTableCell>
                       <NxTableCell>{typeName}</NxTableCell>
                       <NxTableCell>
                         <NxFontAwesomeIcon className={available ? 'available' : 'unavailable'}

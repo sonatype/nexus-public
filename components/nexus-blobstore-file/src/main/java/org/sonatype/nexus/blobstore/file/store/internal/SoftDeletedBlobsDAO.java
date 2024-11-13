@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.file.store.internal;
 
-import java.util.List;
+import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -33,10 +33,12 @@ public interface SoftDeletedBlobsDAO
    *
    * @param sourceBlobStoreName the blobstore name this record is related to
    * @param blobId              string representation of {@link BlobId}
+   * @param datePathRef         the {@link OffsetDateTime} of the blob creation
    */
   void createRecord(
       @Param("sourceBlobStoreName") String sourceBlobStoreName,
-      @Param("blobId") String blobId);
+      @Param("blobId") String blobId,
+      @Param("datePathRef") OffsetDateTime datePathRef);
 
   /**
    * Return all records stored in DB, the continuationToken to be used when amount more than single page (>1000 rows)
@@ -47,6 +49,7 @@ public interface SoftDeletedBlobsDAO
    */
   Continuation<SoftDeletedBlobsData> readRecords(
       @Nullable @Param("continuationToken") String continuationToken,
+      @Param("limit") int limit,
       @Param("sourceBlobStoreName") String sourceBlobStoreName);
 
   /**
@@ -77,12 +80,4 @@ public interface SoftDeletedBlobsDAO
    * @return amount of soft deleted blobs
    */
   int count(@Param("sourceBlobStoreName") String sourceBlobStoreName);
-
-  /**
-   * Returns a list of the oldest 20 blob_ids in the soft_deleted_blobs table related to the provided blobstore.
-   *
-   * @param sourceBlobStoreName the blobstore name these records are related to
-   * @return oldest 20 blob_id strings
-   */
-  List<String> readOldestRecords(@Param("sourceBlobStoreName") String sourceBlobStoreName);
 }

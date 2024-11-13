@@ -12,36 +12,15 @@
  */
 package org.sonatype.nexus.cleanup.content.search;
 
-import java.util.Map;
-
-import javax.inject.Inject;
-
 import org.sonatype.nexus.repository.Format;
 
-public class CleanupBrowseServiceFactory
+public interface CleanupBrowseServiceFactory
 {
-  public static final String DEFAULT_BROWSE_SERVICE = "DataStoreCleanupComponentBrowse";
-
-  protected final CleanupComponentBrowse defaultBrowseService;
-
-  /**
-   * Allow subclasses to re-use the functionality of this class by making the constructor more generic
-   */
-  @Inject
-  public CleanupBrowseServiceFactory(final Map<String, CleanupComponentBrowse> browseServices) {
-    defaultBrowseService = browseServices.get(DEFAULT_BROWSE_SERVICE);
-  }
-
   /**
    * @param format to browse
    * @return the browse service to use
    */
-  @SuppressWarnings("unused")
-  public CleanupComponentBrowse get(Format format) {
-    return defaultBrowseService;
-  }
+  CleanupComponentBrowse get(Format format);
 
-  public CleanupComponentBrowse getPreviewService() {
-    return defaultBrowseService;
-  }
+  CleanupComponentBrowse getPreviewService();
 }

@@ -24,4 +24,11 @@ public interface DatabaseCheck
    * @return true if the class is allowed to start based on current database schema
    */
   boolean isAllowedByVersion(Class<?> annotatedClass);
+
+  /**
+   * To be used at runtime, to execute code paths according to the schema version
+   * @param version the version to verify against
+   * @return true if the database schema version is >= than the argument
+   */
+  boolean isAtLeast(final String version);
 }

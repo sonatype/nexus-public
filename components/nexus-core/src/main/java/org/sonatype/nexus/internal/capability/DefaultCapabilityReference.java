@@ -65,6 +65,8 @@ public class DefaultCapabilityReference
 
   private final ReentrantReadWriteLock stateLock;
 
+  private Map<String, String> encryptedProperties;
+
   private Map<String, String> capabilityProperties;
 
   private State state;
@@ -99,6 +101,7 @@ public class DefaultCapabilityReference
     capability.init(this);
   }
 
+  @Override
   public Capability capability() {
     return capability;
   }
@@ -244,10 +247,10 @@ public class DefaultCapabilityReference
    *
    * @param properties capability configuration
    */
-  public void create(final Map<String, String> properties) {
+  public void create(final Map<String, String> properties, final Map<String, String> encryptedProperties) {
     try {
       stateLock.writeLock().lock();
-      state.create(properties);
+      state.create(properties, encryptedProperties);
     }
     finally {
       stateLock.writeLock().unlock();
@@ -259,10 +262,10 @@ public class DefaultCapabilityReference
    *
    * @param properties capability configuration
    */
-  public void load(final Map<String, String> properties) {
+  public void load(final Map<String, String> properties, final Map<String, String> encryptedProperties) {
     try {
       stateLock.writeLock().lock();
-      state.load(properties);
+      state.load(properties, encryptedProperties);
     }
     finally {
       stateLock.writeLock().unlock();
@@ -274,12 +277,39 @@ public class DefaultCapabilityReference
    *
    * @param properties         capability configuration
    * @param previousProperties previous capability configuration
+   * @param encryptedProperties capability configuration with encrypted properties
    */
-  public void update(final Map<String, String> properties, final Map<String, String> previousProperties) {
-    if (!sameProperties(previousProperties, properties)) {
+  public void update(
+      final Map<String, String> properties,
+      final Map<String, String> previousProperties,
+      final Map<String, String> encryptedProperties)
+  {
+    update(properties, previousProperties, encryptedProperties, false);
+  }
+
+  /**
+   * Updates encrypted properties.
+   *
+   * @param properties          capability configuration
+   * @param encryptedProperties encrypted capability configuration
+   */
+  public void updateEncrypted(
+      final Map<String, String> properties,
+      final Map<String, String> encryptedProperties)
+  {
+    update(properties, properties, encryptedProperties, true);
+  }
+
+  private void update(
+      final Map<String, String> properties,
+      final Map<String, String> previousProperties,
+      final Map<String, String> encryptedProperties,
+      final boolean force)
+  {
+    if (force || !sameProperties(previousProperties, properties)) {
       try {
         stateLock.writeLock().lock();
-        state.update(properties, previousProperties);
+        state.update(properties, previousProperties, encryptedProperties);
       }
       finally {
         stateLock.writeLock().unlock();
@@ -305,6 +335,16 @@ public class DefaultCapabilityReference
     try {
       stateLock.readLock().lock();
       return capabilityProperties;
+    }
+    finally {
+      stateLock.readLock().unlock();
+    }
+  }
+
+  public Map<String, String> encryptedProperties() {
+    try {
+      stateLock.readLock().lock();
+      return encryptedProperties;
     }
     finally {
       stateLock.readLock().unlock();
@@ -396,15 +436,19 @@ public class DefaultCapabilityReference
       throw new IllegalStateException("State '" + toString() + "' does not permit 'passivate' operation");
     }
 
-    public void create(final Map<String, String> properties) {
+    public void create(final Map<String, String> properties, final Map<String, String> encryptedProperties) {
       throw new IllegalStateException("State '" + toString() + "' does not permit 'create' operation");
     }
 
-    public void load(final Map<String, String> properties) {
+    public void load(final Map<String, String> properties, final Map<String, String> encryptedProperties) {
       throw new IllegalStateException("State '" + toString() + "' does not permit 'load' operation");
     }
 
-    public void update(final Map<String, String> properties, final Map<String, String> previousProperties) {
+    public void update(
+        final Map<String, String> properties,
+        final Map<String, String> previousProperties,
+        final Map<String, String> encryptedProperties)
+    {
       throw new IllegalStateException("State '" + toString() + "' does not permit 'update' operation");
     }
 
@@ -428,10 +472,11 @@ public class DefaultCapabilityReference
   {
 
     @Override
-    public void create(final Map<String, String> properties) {
+    public void create(final Map<String, String> properties, final Map<String, String> encryptedProperties) {
       try {
         log.debug("Creating capability {} ({})", capability, id);
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
+        DefaultCapabilityReference.this.encryptedProperties = encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
         eventManager.post(new CapabilityEvent.Created(capabilityRegistry, DefaultCapabilityReference.this));
         capability.onCreate();
         resetFailure();
@@ -447,10 +492,11 @@ public class DefaultCapabilityReference
     }
 
     @Override
-    public void load(final Map<String, String> properties) {
+    public void load(final Map<String, String> properties, final Map<String, String> encryptedProperties) {
       try {
         log.debug("Loading capability {} ({})", capability, id);
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
+        DefaultCapabilityReference.this.encryptedProperties = encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
         eventManager.post(new CapabilityEvent.Created(capabilityRegistry, DefaultCapabilityReference.this));
         capability.onLoad();
         resetFailure();
@@ -499,7 +545,11 @@ public class DefaultCapabilityReference
     }
 
     @Override
-    public void update(final Map<String, String> properties, final Map<String, String> previousProperties) {
+    public void update(
+        final Map<String, String> properties,
+        final Map<String, String> previousProperties,
+        final Map<String, String> encryptedProperties)
+    {
       try {
         log.debug("Updating capability {} ({})", capability, id);
         eventManager.post(
@@ -508,6 +558,7 @@ public class DefaultCapabilityReference
             )
         );
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
+        DefaultCapabilityReference.this.encryptedProperties = encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
         capability.onUpdate();
         resetFailure();
         log.debug("Updated capability {} ({})", capability, id);

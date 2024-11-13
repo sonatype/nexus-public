@@ -22,12 +22,12 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
 import com.google.common.collect.ImmutableMap;
 
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PRERELEASE_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SORT_BY_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
 
 /**
  * Defines which cleanup policy fields to display for maven.

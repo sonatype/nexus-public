@@ -44,6 +44,9 @@ import org.rauschig.jarchivelib.ArchiveFormat
 import org.rauschig.jarchivelib.ArchiverFactory
 import com.google.common.base.Stopwatch
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import groovy.xml.XmlNodePrinter
 
 import static com.aestasit.infrastructure.ssh.DefaultSsh.*
 import static java.time.ZoneId.systemDefault
@@ -59,9 +62,10 @@ TARGET_DIR = "target"
 LOCK_FILE = "$TARGET_DIR/sonatype-work/nexus3/lock"
 SONATYPE_WORK = "$TARGET_DIR/sonatype-work"
 SONATYPE_WORK_BACKUP = System.getProperty("java.io.tmpdir") + "/nxrm-sonatype-work"
-TAKARI_SMART_BUILD_VERSION = "0.5.0"
-TAKARI_LOCAL_REPO_VERSION = "0.11.2"
+TAKARI_SMART_BUILD_VERSION = "0.6.6"
+TAKARI_LOCAL_REPO_VERSION = "0.11.3"
 TAKARI_FILE_MANAGER_VERSION = "0.8.3"
+MAVEN_BUILD_CACHE_VERSION = "1.2.0"
 
 env = System.getenv()
 changedProjects = [] as Set
@@ -70,7 +74,7 @@ cliOptions = null
 positionalOptions = null
 buildLog = new File("build.log")
 
-// test projects - generated with command: for i in `find -name pom.xml`; do cd `dirname $i`; xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml; cd -; done 
+// test projects - generated with command: for i in `find -name pom.xml`; do cd `dirname $i`; xmllint --xpath "//*[local-name()='project']/*[local-name()='artifactId']/text()" pom.xml; cd -; done
 testProjects = [':functional-testsuite', ':nexus-analytics-testsupport', ':nexus-contributedhandler-testsupport', ':nexus-docker-testsupport-internal', ':nexus-ldap-testsupport', ':nexus-migration-testsupport', ':nexus-repository-testsupport-internal', ':nexus-saml-testsupport', ':nexus-stress-testsuite', ':nexus-testlm-edition', ':nexus-testsuite-data', ':nexus-upgrade-testsupport', ':nexuspro-fabric-testsuite', ':nexuspro-migration-testsuite', ':nexuspro-modern-testsuite', ':nexuspro-performance-testsuite', ':nexuspro-sql-fabric-testsuite', ':nexuspro-testsuite', ':nxrm-pro-image', ':pax-exam-spock', ':selenide-functional-tests' ]
 
 /**
@@ -83,10 +87,10 @@ testProjects = [':functional-testsuite', ':nexus-analytics-testsupport', ':nexus
    karafSshPort=8023
    javaDebugPort=5006
    ssl=true
-   orient=true
    elastic=false
    takari=false
    deploy=true
+   caching=false
    //backup=false
    //restore=false
    //tests="custom Maven test arguments here"
@@ -103,9 +107,9 @@ configDefaults = [
     karafSshPort : 8022,
     javaDebugPort: 5005,
     ssl          : true,   // SSL is enabled by default
-    orient       : true,   // Orient access (binary/Studio) is enabled by default
     elastic      : false,  // Elastic is disabled by default
     takari       : false,  // Takari is disabled by default
+    caching      : false,  // Maven build caching disabled by default
     deploy       : true,   // Deployment is performed by default
     backup       : false,   // Backup sonatype-work disabled by default
     restore      : false,   // Restore backup of sonatype-work disabled by default
@@ -216,7 +220,6 @@ ConfigObject processRcConfigFile() {
   config.javaDebugPort = cliOptions.'java-debug-port' ?: config.javaDebugPort
 
   config.ssl = assign('ssl', 'no-ssl', config.ssl)
-  config.orient = assign('orient', 'no-orient', config.orient)
   config.elastic = assign('elastic', 'no-elastic', config.elastic)
   config.takari = assign('takari', 'no-takari', config.takari)
   config.deploy = assign('deploy', 'no-deploy', config.deploy)
@@ -362,8 +365,6 @@ def processCliOptions(args) {
     _ longOpt: 'ssl', 'Enable SSL (if disabled by config)'
     _ longOpt: 'no-ssl', 'Disable SSL (enabled by default)'
     _ longOpt: 'ssl-ip', args: 1, 'Provide the ip address of this machine to generate an SSL certificate for use with Docker'
-    _ longOpt: 'orient', 'Enable Orient (if disabled by config)'
-    _ longOpt: 'no-orient', 'Disable Orient (enabled by default)'
     _ longOpt: 'elastic', 'Enable Elastic plugins (disabled by default)'
     _ longOpt: 'no-elastic', 'Disable Elastic plugins (if enabled by config)'
     _ longOpt: 'takari', 'Enable Takari (disabled by default)'
@@ -609,48 +610,64 @@ def processSourceArgs() {
 }
 
 def processBuilder() {
+  def mvnDir = Paths.get('.mvn/')
+  def extensionsPath = mvnDir.resolve('extensions.xml')
+
+  if (Files.notExists(mvnDir)) {
+    Files.createDirectories(mvnDir)
+  }
+
+  if (Files.notExists(extensionsPath)) {
+    Files.createFile(extensionsPath).write """<extensions
+  xmlns="http://maven.apache.org/EXTENSIONS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/EXTENSIONS/1.0.0 http://maven.apache.org/xsd/core-extensions-1.0.0.xsd">
+</extensions>"""
+  }
+
+  def extensionsXml = new XmlParser(false, false).parse(extensionsPath.toFile())
+
   if (rcConfig.takari) {
     rcConfig.builder = "--builder smart -T 1C"
 
-    File file = new File('.mvn/extensions.xml')
-    if (file.exists() && file.text.contains("takari-smart-builder")) {
-      debug("Takari enabled and detected in .mvn/extensions.xml")
-    }
-    else {
-      error("Takari enabled but not detected in .mvn/extensions.xml")
-      warn("Installing Takari now")
-      if (file.exists()) {
-        error(".mvn/extensions.xml already exists. Unable to install Takari")
-        rcConfig.builder = ""
+    if (!extensionsXml.'**'.artifactId*.children()*.first()*.trim().contains('takari-smart-builder')) {
+      error('Takari enabled but not detected in .mvn/extensions.xml')
+      warn('Installing Takari now')
+
+      extensionsXml.children() << new NodeBuilder().extension {
+        groupId('io.takari.maven')
+        artifactId('takari-smart-builder')
+        version(TAKARI_SMART_BUILD_VERSION)
+      } << new NodeBuilder().extension {
+        groupId('io.takari.aether')
+        artifactId('takari-local-repository')
+        version(TAKARI_LOCAL_REPO_VERSION)
+      } << new NodeBuilder().extension {
+        groupId('io.takari')
+        artifactId('takari-filemanager')
+        version(TAKARI_FILE_MANAGER_VERSION)
       }
-      else {
-        file.write """<extensions xmlns="http://maven.apache.org/EXTENSIONS/1.0.0" xmlns:xsi="http://www.w3
-.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/EXTENSIONS/1.0.0 http://maven.apache.org/xsd/core-extensions-1.0.0
-	.xsd">
-	<extension>
-		<groupId>io.takari.maven</groupId>
-		<artifactId>takari-smart-builder</artifactId>
-		<version>${TAKARI_SMART_BUILD_VERSION}</version>
-	</extension>
-	<extension>
-		<groupId>io.takari.aether</groupId>
-		<artifactId>takari-local-repository</artifactId>
-		<version>${TAKARI_LOCAL_REPO_VERSION}</version>
-	</extension>
-	<extension>
-		<groupId>io.takari</groupId>
-		<artifactId>takari-filemanager</artifactId>
-		<version>${TAKARI_FILE_MANAGER_VERSION}</version>
-	</extension>
-</extensions>"""
-        info("Takari enabled!")
-      }
-      sleep(3000)
+
+      new XmlNodePrinter(new PrintWriter(Files.newBufferedWriter(extensionsPath))).print(extensionsXml)
     }
   }
   else if (cliOptions['single-threaded']) {
     rcConfig.builder = ''
+  }
+
+  if (rcConfig.caching) {
+    if (!extensionsXml.'**'.artifactId*.children()*.first()*.trim().contains('maven-build-cache-extension')) {
+      error('Maven Build Cache Extension enabled but not detected in .mvn/extensions.xml')
+      warn('Installing Maven Build Cache Extension now')
+
+      extensionsXml.children() << new NodeBuilder().extension {
+        groupId('org.apache.maven.extensions')
+        artifactId('maven-build-cache-extension')
+        version(MAVEN_BUILD_CACHE_VERSION)
+      }
+
+      new XmlNodePrinter(new PrintWriter(Files.newBufferedWriter(extensionsPath))).print(extensionsXml)
+    }
   }
 }
 
@@ -972,22 +989,6 @@ def checkSSH() {
 
 }
 
-def checkOrient() {
-  if (rcConfig.orient) {
-    debug("Enabling Orient")
-
-    // Update nexus.properties (and default files)
-    List<String> files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/nexus*.properties")
-    files.each {
-      ensurePresentInFile(new File(it), "nexus.orient.binaryListenerEnabled=true")
-      ensurePresentInFile(new File(it), "nexus.orient.dynamicPlugins=true")
-    }
-  }
-  else {
-    debug('Skipping Orient config')
-  }
-}
-
 def checkElastic() {
   if (rcConfig.elastic) {
     debug("Enabling Elastic")
@@ -1050,7 +1051,6 @@ def runNxrm() {
   checkRestore()
   checkSSL()
   checkSSH()
-  checkOrient()
   checkElastic()
   checkPorts()
 

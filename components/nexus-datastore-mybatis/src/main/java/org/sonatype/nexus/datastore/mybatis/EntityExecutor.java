@@ -74,14 +74,7 @@ final class EntityExecutor
       return delegate.update(ms, parameter);
     }
     catch (SQLException e) {
-      switch (e.getSQLState()) {
-        case DuplicateKeyException.SQL_STATE:
-          throw new DuplicateKeyException(e);
-        case SerializedAccessException.SQL_STATE:
-          throw new SerializedAccessException(e);
-        default:
-          throw e;
-      }
+      throw mapException(e);
     }
   }
 
@@ -94,7 +87,12 @@ final class EntityExecutor
                            final BoundSql boundSql)
       throws SQLException
   {
-    return delegate.query(ms, parameter, rowBounds, resultHandler, cacheKey, boundSql);
+    try {
+      return delegate.query(ms, parameter, rowBounds, resultHandler, cacheKey, boundSql);
+    }
+    catch (SQLException e) {
+      throw mapException(e);
+    }
   }
 
   @Override
@@ -104,7 +102,12 @@ final class EntityExecutor
                            final ResultHandler resultHandler)
       throws SQLException
   {
-    return delegate.query(ms, parameter, rowBounds, resultHandler);
+    try {
+      return delegate.query(ms, parameter, rowBounds, resultHandler);
+    }
+    catch (SQLException e) {
+      throw mapException(e);
+    }
   }
 
   @Override
@@ -113,12 +116,22 @@ final class EntityExecutor
                                    final RowBounds rowBounds)
       throws SQLException
   {
-    return delegate.queryCursor(ms, parameter, rowBounds);
+    try {
+      return delegate.queryCursor(ms, parameter, rowBounds);
+    }
+    catch (SQLException e) {
+      throw mapException(e);
+    }
   }
 
   @Override
   public List<BatchResult> flushStatements() throws SQLException {
-    return delegate.flushStatements();
+    try {
+      return delegate.flushStatements();
+    }
+    catch (SQLException e) {
+      throw mapException(e);
+    }
   }
 
   @Override
@@ -129,6 +142,11 @@ final class EntityExecutor
     }
     catch (RuntimeException | SQLException | Error e) {
       rollbackEntityIds();
+
+      if (e instanceof SQLException) {
+        throw mapException((SQLException) e);
+      }
+
       throw e;
     }
   }
@@ -136,7 +154,12 @@ final class EntityExecutor
   @Override
   public void rollback(final boolean required) throws SQLException {
     rollbackEntityIds();
-    delegate.rollback(required);
+    try {
+      delegate.rollback(required);
+    }
+    catch (SQLException e) {
+      throw mapException(e);
+    }
   }
 
   @Override
@@ -222,5 +245,22 @@ final class EntityExecutor
       generatedEntityIds.forEach(HasEntityId::clearId);
       generatedEntityIds = null;
     }
+  }
+
+  private static RuntimeException mapException(final SQLException e) throws SQLException {
+    SQLException ex = e;
+    do {
+      String state = ex.getSQLState();
+      if (DuplicateKeyException.SQL_STATE.equals(state)) {
+        return new DuplicateKeyException(ex);
+      }
+      if (SerializedAccessException.SQL_STATE.equals(state)) {
+        return new SerializedAccessException(e);
+      }
+      ex = ex.getNextException();
+    }
+    while (ex != null);
+
+    throw e;
   }
 }

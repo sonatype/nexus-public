@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -49,6 +48,8 @@ import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.common.time.DateHelper.offsetToDate;
+import static org.sonatype.nexus.common.time.DateHelper.optionalOffsetToDate;
 
 /**
  * {@link CleanupPreviewHelper} implementation.
@@ -169,7 +170,7 @@ public class CleanupPreviewHelperImpl
   private static ComponentXO convert(final FluentComponent component, final Repository repository) {
     ComponentXO componentXO = convert((Component) component, repository);
 
-    List<AssetXO> assetXOS = convert(component.assets());
+    List<AssetXO> assetXOS = convert(component.assets(true));
 
     componentXO.setAssets(assetXOS);
 
@@ -183,6 +184,10 @@ public class CleanupPreviewHelperImpl
           AssetXO assetXO = new AssetXO();
 
           assetXO.setPath(it.path());
+          assetXO.setBlobStoreName(it.blobStoreName());
+          assetXO.setFileSize(it.assetBlobSize());
+          assetXO.setLastDownloaded(optionalOffsetToDate(it.lastDownloaded()));
+          assetXO.setBlobCreated(offsetToDate(it.created()));
 
           return assetXO;
         })

@@ -12,11 +12,15 @@
  */
 package org.sonatype.nexus.blobstore.restore.datastore;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.RECONCILE_PLAN_ENABLED_NAMED;
 
 /**
  * @since 3.4
@@ -27,7 +31,11 @@ import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 public class RestoreMetadataTaskDescriptor
     extends BaseRestoreMetadataTaskDescriptor
 {
- public RestoreMetadataTaskDescriptor() {
-   super(RestoreMetadataTask.class);
- }
+  @Inject
+  public RestoreMetadataTaskDescriptor(
+      @Named(RECONCILE_PLAN_ENABLED_NAMED) final boolean isReconcilePlanEnabled,
+      ApplicationVersion applicationVersion)
+  {
+    super(!(isReconcilePlanEnabled && applicationVersion.getEdition().equals("PRO")));
+  }
 }

@@ -66,4 +66,9 @@ public interface UpgradeManager
   Optional<MigrationVersion> getMaxMigrationVersion();
 
   void checkBaseline(final String target);
+
+  /**
+   * Checks whether the provided upgrade step has been applied
+   */
+  boolean isMigrationApplied(Class<? extends DatabaseMigrationStep> step);
 }

@@ -19,7 +19,7 @@ import UIStrings from '../../constants/UIStrings';
 import UpgradeAlert from './UpgradeAlert';
 import {UpgradeAlertFunctions} from './UpgradeAlertHelper';
 
-const {UPGRADE_ALERT: {PENDING, PROGRESS, ERROR, COMPLETE}} = UIStrings;
+const {UPGRADE_ALERT: {PENDING, PROGRESS, ERROR, COMPLETE, WARN}} = UIStrings;
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'),
@@ -66,7 +66,7 @@ describe('Upgrade Alert', () => {
         .mockReturnValue(true);
 
     return render(<UpgradeAlert onClose={onClose}/>);
-  };
+  }
 
   it('renders the upgrade alert for pending upgrade', async () => {
     const {getCompleteUpgradeButton} = selectors;
@@ -84,10 +84,9 @@ describe('Upgrade Alert', () => {
     const {getAlert} = selectors;
     await renderView('versionMismatch');
 
-    const alertMessage = ERROR.LABEL + ' (1) ' + ERROR.TEXT_MISMATCH;
-
     expect(getAlert()).toBeInTheDocument();
-    expect(getAlert()).toHaveTextContent(alertMessage);
+    expect(getAlert()).toHaveTextContent(WARN.LABEL);
+    expect(getAlert()).toHaveTextContent(WARN.TEXT);
   });
 
   it('renders the upgrade alert for upgrade in progress', async () => {

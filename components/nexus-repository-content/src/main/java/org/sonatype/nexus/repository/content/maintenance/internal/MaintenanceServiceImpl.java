@@ -14,20 +14,22 @@ package org.sonatype.nexus.repository.content.maintenance.internal;
 
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -64,18 +66,22 @@ public class MaintenanceServiceImpl
 
   private final ExecutorService executorService;
 
+  private final DatabaseCheck databaseCheck;
+
   @Inject
   public MaintenanceServiceImpl(
       final ContentPermissionChecker contentPermissionChecker,
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final RepositoryPermissionChecker repositoryPermissionChecker,
       final DeleteFolderService deleteFolderService,
-      final ExecutorService executorService)
+      final ExecutorService executorService,
+      final DatabaseCheck databaseCheck)
   {
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
     this.deleteFolderService = checkNotNull(deleteFolderService);
+    this.databaseCheck = checkNotNull(databaseCheck);
 
     this.executorService = forCurrentSubject(newSingleThreadExecutor(
         new NexusThreadFactory("delete-path", "Delete path in Tree Browse View", MIN_PRIORITY)));
@@ -89,6 +95,8 @@ public class MaintenanceServiceImpl
     if (!canDeleteAsset(repository, asset)) {
       throw new AuthorizationException();
     }
+
+    deleteBrowseNode(repository, asset);
 
     return maintenanceFacet(repository).deleteAsset(asset);
   }
@@ -170,5 +178,18 @@ public class MaintenanceServiceImpl
       throw new IllegalOperationException(format("Deleting from repository %s of type %s is not supported",
           repository.getName(), repository.getFormat()), e);
     }
+  }
+
+  private void deleteBrowseNode(final Repository repository, final Asset asset) {
+    if (isPostgresql()) {
+      Integer internalAssetId = InternalIds.internalAssetId(asset);
+
+      repository.optionalFacet(BrowseFacet.class).ifPresent(facet ->
+          facet.deleteByAssetIdAndPath(internalAssetId, asset.path()));
+    }
+  }
+
+  private boolean isPostgresql() {
+    return this.databaseCheck.isPostgresql();
   }
 }

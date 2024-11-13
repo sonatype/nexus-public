@@ -91,7 +91,7 @@ public abstract class MockUserManagerSupport
   }
 
   @Override
-  public boolean isRealmConfigured() {
+  public boolean isConfigured() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 }
