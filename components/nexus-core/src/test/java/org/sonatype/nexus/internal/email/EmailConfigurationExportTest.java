@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 
+import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
@@ -76,7 +77,7 @@ public class EmailConfigurationExportTest
     configuration.setHost("localhost");
     configuration.setPort(90);
     configuration.setUsername("admin");
-    configuration.setPassword("admin123");
+    configuration.setPassword(mock(Secret.class));
     configuration.setFromAddress("address");
     configuration.setSubjectPrefix("subject_prefix");
     configuration.setStartTlsEnabled(true);

@@ -95,6 +95,17 @@ public class HttpValidationITRule
   }
 
   /**
+   * Reset expected counts, making sure that any previous requests aren't interfering with the current test.
+   */
+  public HttpValidationITRule reset() {
+    resetExecutionCounts();
+    expectedUpstreamExecutionCount = -1;
+    expectedProxyExecutionCount = -1;
+
+    return this;
+  }
+
+  /**
    * Create a {@link ValidatingProxyServer} that will be used by the rule.
    * 
    * @param validators The validator(s) to use with the {@link ValidatingProxyServer}.

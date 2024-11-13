@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
@@ -105,7 +106,7 @@ public class HttpClientConfigurationExportTest
 
     UsernameAuthenticationConfiguration authenticationConfiguration = new UsernameAuthenticationConfiguration();
     authenticationConfiguration.setUsername("admin");
-    authenticationConfiguration.setPassword("admin123");
+    authenticationConfiguration.setPassword(mock(Secret.class));
 
     configuration.setConnection(connectionConfiguration);
     configuration.setProxy(proxyConfiguration);

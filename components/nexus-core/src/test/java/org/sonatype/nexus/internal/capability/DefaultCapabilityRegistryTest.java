@@ -15,10 +15,10 @@ package org.sonatype.nexus.internal.capability;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
-
 import javax.inject.Provider;
 import javax.validation.ValidationException;
 import javax.validation.Validator;
@@ -36,22 +36,27 @@ import org.sonatype.nexus.capability.CapabilityNotFoundException;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemData;
-import org.sonatype.nexus.security.PasswordHelper;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -68,11 +73,12 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -111,15 +117,29 @@ public class DefaultCapabilityRegistryTest
 
   private ArgumentCaptor<CapabilityEvent> rec;
 
+  private Map<Integer, Secret> secrets = new HashMap<>();
+
   @Mock
-  private PasswordHelper passwordHelper;
+  private SecretsService secretsService;
+
+  private MockedStatic<SecurityUtils> mockStatic;
 
   @Before
   public final void setUpCapabilityRegistry() throws Exception {
-    when(passwordHelper.encrypt(anyString())).thenAnswer(invoc -> "encrypted:" + invoc.getArguments()[0]);
-    when(passwordHelper.tryDecrypt(anyString()))
-        .thenAnswer(invoc -> invoc.getArguments()[0].toString().startsWith("encrypted:")
-            ? invoc.getArguments()[0].toString().substring(10) : invoc.getArguments()[0]);
+    mockStatic = mockStatic(SecurityUtils.class);
+    Subject subject = subject("testuser");
+    mockStatic.when(() -> SecurityUtils.getSubject()).thenReturn(subject);
+
+    when(secretsService.encryptMaven(any(), any(), any())).thenAnswer(invocation -> {
+      Secret secret = mock(Secret.class);
+      when(secret.getId()).thenReturn("" + secrets.size());
+      when(secret.decrypt()).thenReturn(invocation.getArgument(1, char[].class));
+      secrets.put(secrets.size(), secret);
+      return secret;
+    });
+    when(secretsService.from(any()))
+        .thenAnswer(invocation -> secrets.get(Integer.valueOf(invocation.getArgument(0, String.class))));
+
     final CapabilityFactory factory = mock(CapabilityFactory.class);
     when(factory.create()).thenAnswer(new Answer<Capability>()
     {
@@ -180,11 +200,16 @@ public class DefaultCapabilityRegistryTest
         eventManager,
         achf,
         vchf,
-        passwordHelper,
+        secretsService,
         validatorProvider
     );
 
     rec = ArgumentCaptor.forClass(CapabilityEvent.class);
+  }
+
+  @After
+  public void teardown() {
+    mockStatic.close();
   }
 
   /**
@@ -440,23 +465,15 @@ public class DefaultCapabilityRegistryTest
   public void createWithEncryptedProperty()
       throws Exception
   {
-    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
-    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
-    when(descriptor.formFields()).thenReturn(Arrays.<FormField>asList(
-        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)
-    ));
-
-    Map<String, String> properties = Maps.newHashMap();
-    properties.put("foo", "bar");
-    underTest.add(CAPABILITY_TYPE, true, null, properties);
-
+    createCapabilityWithSecret("bar");
     ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
 
     verify(capabilityStorage).add(csiRec.capture());
     CapabilityStorageItem item = csiRec.getValue();
     assertThat(item, is(notNullValue()));
     String fooValue = item.getProperties().get("foo");
-    assertThat(fooValue, is("encrypted:bar"));
+    assertThat(fooValue, is("0"));
+    verify(secretsService).encryptMaven("capabilities", "bar".toCharArray(), "testuser");
   }
 
   /**
@@ -467,7 +484,7 @@ public class DefaultCapabilityRegistryTest
       throws Exception
   {
     Map<String, String> properties = Maps.newHashMap();
-    properties.put("foo", "encrypted:bar");
+    properties.put("foo", secretsService.encryptMaven("", "bar".toCharArray(), "").getId());
 
     final CapabilityStorageItem item = new CapabilityStorageItemData();
     item.setVersion(0);
@@ -594,9 +611,6 @@ public class DefaultCapabilityRegistryTest
 
   @Test
   public void refreshReferencesOnDemand() {
-    when(passwordHelper.decrypt("admin123")).thenReturn("*****");
-    when(passwordHelper.tryDecrypt("*****")).thenReturn("admin123");
-
     CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
     when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
@@ -606,7 +620,7 @@ public class DefaultCapabilityRegistryTest
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
-    oldProps.put("password", passwordHelper.decrypt("admin123"));
+    oldProps.put("password", secretsService.encryptMaven("", "admin123".toCharArray(), "").getId());
 
     final CapabilityStorageItem item = new CapabilityStorageItemData();
     item.setVersion(0);
@@ -632,5 +646,67 @@ public class DefaultCapabilityRegistryTest
     assertEquals("v1a", properties.get("p1"));
     assertEquals("v2a", properties.get("p2"));
     assertEquals("admin123", properties.get("password"));
+  }
+
+  @Test
+  public void migrateCapabilityWithSecrets() {
+    CapabilityReference reference = createCapabilityWithSecret("my-secret");
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+
+    verify(capabilityStorage).add(csiRec.capture());
+    CapabilityStorageItem initial = csiRec.getValue();
+    assertThat(initial, is(notNullValue()));
+    String foo = initial.getProperties().get("foo");
+    assertThat(foo, is("0"));
+    verify(secretsService).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
+
+    //re encrypting the reference and force to re encrypt the secret
+    underTest.migrateSecrets(reference, (secret) -> true);
+
+    verify(capabilityStorage).update(any(CapabilityIdentity.class), csiRec.capture());
+    CapabilityStorageItem updated = csiRec.getAllValues().get(csiRec.getAllValues().size() -1); // get the last value
+
+    //verify we only modified secrets
+    assertThat(updated, is(notNullValue()));
+    assertThat(updated.getType() , is(initial.getType()));
+    assertThat(updated.getNotes(), is(initial.getNotes()));
+    assertThat(updated.isEnabled(), is(initial.isEnabled()));
+
+    foo = updated.getProperties().get("foo");
+    assertThat(foo, is("1")); // we re-encrypted the secret
+    verify(secretsService, times(2)).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
+
+    //re encrypt again but this time force to not re encrypt anything
+    underTest.migrateSecrets(reference, (secret) -> false);
+
+    //we didn't update this time, since maps are equal
+    verify(capabilityStorage).update(any(CapabilityIdentity.class), csiRec.capture());
+    CapabilityStorageItem nonUpdated = csiRec.getAllValues().get(csiRec.getAllValues().size() -1); // get the last value
+
+    assertThat(nonUpdated, is(notNullValue()));
+
+    foo = updated.getProperties().get("foo");
+    assertThat(foo, is("1")); //  we did not re-encrypt the secret
+    verify(secretsService, times(2)).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
+  }
+
+  private CapabilityReference createCapabilityWithSecret(final String secretValue) {
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)
+    ));
+
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put("foo", secretValue);
+
+    return underTest.add(CAPABILITY_TYPE, true, null, properties);
+  }
+
+  private static Subject subject(final String principal) {
+    Subject subject = mock(Subject.class);
+    when(subject.getPrincipal()).thenReturn(principal);
+    return subject;
   }
 }

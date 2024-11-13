@@ -38,6 +38,7 @@ import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.pax.exam.distribution.NexusTestDistribution.Distribution;
 import org.sonatype.nexus.pax.exam.distribution.NexusTestDistributionService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.tools.DeadBlobFinder;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
@@ -135,6 +136,9 @@ public abstract class NexusITSupport
   @Inject
   private AnonymousManager anonymousManager;
 
+  @Inject
+  private SearchService searchService;
+
   @Rule
   public SecurityRule securityRule = new SecurityRule(() -> securitySystem, () -> selectorManager, () -> anonymousManager);
 
@@ -156,6 +160,7 @@ public abstract class NexusITSupport
   @Before
   public void waitForNexus() throws Exception {
     waitFor(responseFrom(nexusUrl));
+    searchService.waitForReady();
   }
 
   /**

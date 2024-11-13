@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.blobstore.s3.rest.internal;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -23,6 +26,7 @@ import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketSecurity;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiEncryption;
+import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiModel;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
@@ -36,10 +40,12 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
+import static org.sonatype.nexus.blobstore.s3.rest.internal.model.S3BlobStoreApiBucketConfiguration.ACTIVE_REGION;
 
 public class S3BlobStoreApiModelMapperTest
     extends TestSupport
@@ -90,6 +96,7 @@ public class S3BlobStoreApiModelMapperTest
     assertBucketSecurityIsNotSet(s3BucketAttributes);
     assertBucketEncryptionIsNotSet(s3BucketAttributes);
     assertBucketAdvancedConnectionIsNotSet(s3BucketAttributes);
+    assertBucketFailoversIsNotSet(s3BucketAttributes);
     assertThat(configuration.getType(), is(TYPE));
     assertThat(configuration.getName(), is(BLOB_STORE_NAME));
     assertThat(softQuotaAttributes.get(TYPE_KEY), nullValue());
@@ -110,13 +117,15 @@ public class S3BlobStoreApiModelMapperTest
     assertBucketSecurityDetails(s3BucketAttributes);
     assertBucketEncryptionDetails(s3BucketAttributes);
     assertBucketAdvancedConnectionDetails(s3BucketAttributes);
+    assertBucketFailover(s3BucketAttributes);
+    assertActiveRegion(s3BucketAttributes);
   }
 
   private static S3BlobStoreApiModel aMinimalS3BlobStoreApiModel() {
     return new S3BlobStoreApiModel(BLOB_STORE_NAME,
         null,
         new S3BlobStoreApiBucketConfiguration(anS3BlobStoreBucket(),
-            null, null, null));
+            null, null, null, null, null));
   }
 
   private static S3BlobStoreApiBucket anS3BlobStoreBucket() {
@@ -134,7 +143,9 @@ public class S3BlobStoreApiModelMapperTest
     return new S3BlobStoreApiBucketConfiguration(anS3BlobStoreBucket(),
         anS3BlobStoreBucketSecurity(),
         anS3BlobStoreEncryption(),
-        anAdvancedBucketConnection()
+        anAdvancedBucketConnection(),
+        anS3FailoverBuckets(),
+        mainRegion()
     );
   }
 
@@ -153,6 +164,14 @@ public class S3BlobStoreApiModelMapperTest
         FORCE_PATH_STYLE,
         MAX_CONNECTION_POOL_SIZE
     );
+  }
+
+  private static List<S3BlobStoreApiFailoverBucket> anS3FailoverBuckets() {
+    return Arrays.asList(new S3BlobStoreApiFailoverBucket("us-east-1", "my-bucket"));
+  }
+
+  private static String mainRegion() {
+    return AWS_REGION;
   }
 
   private static void assertGeneralBucketDetails(final NestedAttributesMap attributes) {
@@ -178,6 +197,10 @@ public class S3BlobStoreApiModelMapperTest
     assertThat(getAttribute(ENDPOINT_KEY, attributes), nullValue());
     assertThat(getAttribute(SIGNERTYPE_KEY, attributes), nullValue());
     assertThat(getAttribute(FORCE_PATH_STYLE_KEY, attributes), nullValue());
+  }
+
+  private static void assertBucketFailoversIsNotSet(final NestedAttributesMap attributes) {
+    assertThat(getAttribute(FAILOVER_BUCKETS_KEY, attributes), nullValue());
   }
 
   private static void assertSoftQuota(final BlobStoreConfiguration configuration) {
@@ -207,5 +230,14 @@ public class S3BlobStoreApiModelMapperTest
     assertThat(getAttribute(SIGNERTYPE_KEY, attributes), is(S3_SIGNER_TYPE));
     assertThat(parseBoolean(getAttribute(FORCE_PATH_STYLE_KEY, attributes)), is(FORCE_PATH_STYLE));
     assertThat(parseInt(getAttribute(MAX_CONNECTION_POOL_KEY, attributes)), is(MAX_CONNECTION_POOL_SIZE));
+  }
+
+  private static void assertBucketFailover(final NestedAttributesMap attributes) {
+    assertThat(attributes.get(FAILOVER_BUCKETS_KEY), is(Collections.singletonMap("us-east-1", "my-bucket")));
+  }
+
+  private static void assertActiveRegion(final NestedAttributesMap attributes) {
+    // active region is not set in the attributes, it's calculated at runtime when requested
+    assertThat(attributes.get(ACTIVE_REGION), is(nullValue()));
   }
 }

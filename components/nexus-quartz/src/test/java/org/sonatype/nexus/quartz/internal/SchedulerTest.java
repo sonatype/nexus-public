@@ -28,7 +28,6 @@ import org.sonatype.nexus.quartz.TaskSchedulerHelper;
 import com.google.common.base.Throwables;
 import org.junit.After;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
 import org.quartz.Job;
 import org.quartz.JobBuilder;

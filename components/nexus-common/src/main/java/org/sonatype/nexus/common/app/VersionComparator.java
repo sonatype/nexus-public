@@ -70,8 +70,12 @@ public class VersionComparator
       return v1.compareTo(v2);
     }
     else {
-      return o1.compareTo(o2);
+      return compareNotVersionLikeStrings(o1, o2);
     }
+  }
+
+  protected int compareNotVersionLikeStrings(final String o1, final String o2) {
+    return o1.compareTo(o2);
   }
 
   protected boolean isVersionLike(final String version) {

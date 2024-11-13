@@ -13,7 +13,6 @@
 package org.sonatype.nexus.httpclient;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.common.ByteSize;
 
 public interface HttpDefaultsCustomizer
   extends HttpClientPlan.Customizer {

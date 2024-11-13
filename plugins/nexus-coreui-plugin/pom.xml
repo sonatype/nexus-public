@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.72.0-SNAPSHOT</version>
+    <version>3.75.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-coreui-plugin</artifactId>
@@ -139,6 +139,15 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <!-- org.sonatype.nexus.coreui.internal.content:org.sonatype.nexus.coreui.internal.capability -->
+          <excludePackageNames>org.sonatype.nexus.coreui:org.sonatype.nexus.coreui.internal:org.sonatype.nexus.coreui.internal.*:org.sonatype.nexus.coreui.service</excludePackageNames>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>extjs-maven-plugin</artifactId>

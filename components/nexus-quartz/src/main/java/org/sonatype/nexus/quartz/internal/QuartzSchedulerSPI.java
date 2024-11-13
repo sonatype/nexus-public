@@ -924,7 +924,7 @@ public abstract class QuartzSchedulerSPI
 
   @Nullable
   @Override
-  public TaskInfo getTaskByTypeId(final String typeId,  final Map<String, String> config) {
+  public TaskInfo getTaskByTypeId(final String typeId, final Map<String, String> config) {
     checkNotNull(typeId);
     checkNotNull(config);
     return listsTasks().stream()
@@ -937,6 +937,15 @@ public abstract class QuartzSchedulerSPI
   @Override
   public boolean findAndSubmit(final String typeId) {
     return findAndSubmit(typeId, emptyMap());
+  }
+
+  public boolean findWaitingTask(final String typeId, final Map<String, String> config) {
+    TaskInfo taskInfo = getTaskByTypeId(typeId, config);
+    if (taskInfo == null) {
+      return false;
+    } else {
+      return taskInfo.getCurrentState().getState().isWaiting() || taskInfo.getCurrentState().getState().isRunning();
+    }
   }
 
   @Override

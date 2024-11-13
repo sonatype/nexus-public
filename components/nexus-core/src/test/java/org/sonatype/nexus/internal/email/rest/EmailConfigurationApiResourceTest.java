@@ -13,6 +13,8 @@
 package org.sonatype.nexus.internal.email.rest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailManager;
 
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.when;
 public class EmailConfigurationApiResourceTest
     extends TestSupport
 {
+
   @Mock
   private EmailManager emailManager;
 
@@ -64,7 +67,7 @@ public class EmailConfigurationApiResourceTest
 
   @Test
   public void getEmailConfigurationObfuscatesThePassword() {
-    when(emailConfiguration.getPassword()).thenReturn("testpassword");
+    when(emailConfiguration.getPassword()).thenReturn(mock(Secret.class));
     when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
 
     ApiEmailConfiguration response = underTest.getEmailConfiguration();
@@ -75,35 +78,33 @@ public class EmailConfigurationApiResourceTest
   @Test
   public void setEmailConfigurationSetsTheNewConfiguration() {
     EmailConfiguration newConfiguration = mock(EmailConfiguration.class);
+    String newPassword = "testPassword";
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
-    request.setPassword("testPassword");
+    request.setPassword(newPassword);
 
     when(emailManager.newConfiguration()).thenReturn(newConfiguration);
 
     underTest.setEmailConfiguration(request);
 
-    verify(newConfiguration).setPassword(request.getPassword());
+    verify(emailManager).setConfiguration(newConfiguration, newPassword);
     verify(newConfiguration).setEnabled(true);
-    verify(emailManager).setConfiguration(newConfiguration);
   }
 
   @Test
   public void setEmailConfigurationKeepsTheOriginalPassword() {
     EmailConfiguration newConfiguration = mock(EmailConfiguration.class);
-    when(emailConfiguration.getPassword()).thenReturn("testpassword");
     when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
     when(emailManager.newConfiguration()).thenReturn(newConfiguration);
 
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
-    request.setPassword("");
+    request.setPassword(Strings2.EMPTY);
 
     underTest.setEmailConfiguration(request);
 
-    verify(newConfiguration).setPassword(emailConfiguration.getPassword());
     verify(newConfiguration).setEnabled(true);
-    verify(emailManager).setConfiguration(newConfiguration);
+    verify(emailManager).setConfiguration(newConfiguration, Strings2.EMPTY);
   }
 
   @Test

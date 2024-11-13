@@ -21,9 +21,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import org.sonatype.goodies.common.ComponentSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

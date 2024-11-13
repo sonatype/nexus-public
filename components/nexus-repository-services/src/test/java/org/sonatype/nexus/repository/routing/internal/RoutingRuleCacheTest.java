@@ -14,9 +14,6 @@ package org.sonatype.nexus.repository.routing.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
-import org.sonatype.nexus.common.entity.DetachedEntityMetadata;
-import org.sonatype.nexus.common.entity.DetachedEntityVersion;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;

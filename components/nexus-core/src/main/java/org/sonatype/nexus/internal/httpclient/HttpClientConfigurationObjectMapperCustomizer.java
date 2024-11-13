@@ -16,13 +16,18 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretDeserializer;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.datastore.mybatis.OverrideIgnoreTypeIntrospector;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.repository.config.ConfigurationObjectMapperCustomizer;
-import org.sonatype.nexus.security.PasswordHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,40 +36,43 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * with {@link ObjectMapper}.
  *
  * @see AuthenticationConfigurationDeserializer
- * @since 3.0
  */
 @Named
 @Singleton
 public class HttpClientConfigurationObjectMapperCustomizer
+    extends ComponentSupport
     implements ConfigurationObjectMapperCustomizer
 {
-  private final PasswordHelper passwordHelper;
+  private final SecretsService secretsService;
 
   @Inject
-  public HttpClientConfigurationObjectMapperCustomizer(final PasswordHelper passwordHelper) {
-    this.passwordHelper = checkNotNull(passwordHelper);
+  public HttpClientConfigurationObjectMapperCustomizer(final SecretsService secretsService) {
+    this.secretsService = checkNotNull(secretsService);
   }
 
   @Override
   public void customize(final ObjectMapper objectMapper) {
-    objectMapper.registerModule(
-        new SimpleModule()
-            .addSerializer(
-                Time.class,
-                new SecondsSerializer()
-            )
-            .addDeserializer(
-                Time.class,
-                new SecondsDeserializer()
-            )
-            .addSerializer(
-                AuthenticationConfiguration.class,
-                new AuthenticationConfigurationSerializer(passwordHelper)
-            )
-            .addDeserializer(
-                AuthenticationConfiguration.class,
-                new AuthenticationConfigurationDeserializer(passwordHelper)
-            )
-    );
+    objectMapper
+        .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(ImmutableList.of(Secret.class)))
+        .registerModule(
+            new SimpleModule()
+                .addSerializer(
+                    Time.class,
+                    new SecondsSerializer()
+                )
+                .addDeserializer(
+                    Time.class,
+                    new SecondsDeserializer()
+                )
+                .addSerializer(
+                    AuthenticationConfiguration.class,
+                    new AuthenticationConfigurationSerializer()
+                )
+                .addDeserializer(
+                    AuthenticationConfiguration.class,
+                    new AuthenticationConfigurationDeserializer()
+                )
+                .addDeserializer(Secret.class, new SecretDeserializer(secretsService))
+        );
   }
 }

@@ -14,6 +14,7 @@ package org.sonatype.nexus.coreui.internal.blobstore;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -25,7 +26,11 @@ import javax.ws.rs.PathParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
+
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -57,6 +62,14 @@ public class BlobStoreInternalResource
     implements Resource
 {
   static final String RESOURCE_PATH = "/internal/ui/blobstores";
+
+  public static final String GOOGLE_CONFIG = "google cloud storage";
+
+  public static final String GOOGLE_TYPE = "google";
+
+  public static final String GOOGLE_BUCKET_KEY = "bucketName";
+
+  public static final String PREFIX_KEY = "prefix";
 
   public static final String AZURE_CONFIG = "azure cloud storage";
 
@@ -99,13 +112,23 @@ public class BlobStoreInternalResource
 
     return store.list().stream()
         .map(configuration -> {
-            final String typeId = blobStoreDescriptorProvider.get().get(configuration.getType()).getId();
+          String blobStoreType = configuration.getType();
+          BlobStoreDescriptor blobStoreDescriptor = Optional.ofNullable(blobStoreDescriptorProvider.get())
+              .map(it -> it.get(blobStoreType))
+              .orElse(null);
+          if (blobStoreDescriptor == null) {
+            return null;
+          }
+          String typeId = blobStoreDescriptor.getId();
+
             final String path = getPath(typeId.toLowerCase(), configuration);
             BlobStoreMetrics metrics = Optional.ofNullable(blobStoreManager.get(configuration.getName()))
                 .map(BlobStoreInternalResource::getBlobStoreMetrics)
                 .orElse(null);
             return new BlobStoreUIResponse(typeId, configuration, metrics, path);
-        }).collect(toList());
+        })
+        .filter(Objects::nonNull)
+        .collect(toList());
   }
 
   // If a blobstore hasn't started due to an error we still want to return it from the api.
@@ -135,6 +158,13 @@ public class BlobStoreInternalResource
     }
     else if (typeId.equals(BlobStoreGroup.TYPE.toLowerCase())) {
       return "N/A";
+    }
+    else if (typeId.equals(GOOGLE_TYPE)) {
+      final String prefix = Optional.ofNullable(configuration.attributes(GOOGLE_CONFIG).get(PREFIX_KEY, String.class))
+        .filter(Predicates.not(Strings::isNullOrEmpty))
+        .map(s -> s.replaceFirst("/$", "") + "/")
+        .orElse("");
+      return prefix + configuration.attributes(GOOGLE_CONFIG).get(GOOGLE_BUCKET_KEY, String.class);
     }
     logger.warn("blob store type {} unknown, defaulting to N/A for path", typeId);
     return "N/A";

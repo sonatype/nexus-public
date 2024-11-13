@@ -25,15 +25,34 @@ import org.slf4j.LoggerFactory;
 public class NexusLogActivator
     extends org.ops4j.pax.logging.logback.internal.Activator
 {
+  static NexusLogActivator INSTANCE;
+
+  private BundleContext context;
+
+  public BundleContext getContext() {
+    return context;
+  }
+
   @Override
   public void start(final BundleContext bundleContext) throws Exception {
     super.start(bundleContext);
+    this.context = bundleContext;
     LoggerFactory.getLogger(NexusLogActivator.class).info("start");
+    setInstance(this);
   }
 
   @Override
   public void stop(final BundleContext bundleContext) throws Exception {
     ProgressTaskLogger.shutdown();
+    clearInstance();
     super.stop(bundleContext);
+  }
+
+  private static void setInstance(NexusLogActivator instance) {
+    INSTANCE = instance;
+  }
+
+  private static void clearInstance() {
+    INSTANCE = null;
   }
 }
