@@ -93,13 +93,13 @@ describe('ReplicationForm', function() {
   ];
   const REPLICATION_URL = (name) => `/service/rest/beta/replication/connection/${name}`;
   const REPLICATION_CREATE_URL = '/service/rest/beta/replication/connection/';
-  const TEST_URL = '/service/rest/internal/ui/replication/test-connection/';
+  const TEST_URL = 'service/rest/internal/ui/replication/test-connection/';
 
   function renderView(itemId = '') {
     return render(<ReplicationForm itemId={itemId} onDone={onDone}/>);
   }
 
-  when(axios.get).calledWith(expect.stringContaining('/service/rest/internal/ui/replication/repositories')).mockResolvedValue({
+  when(axios.get).calledWith(expect.stringContaining('service/rest/internal/ui/replication/repositories')).mockResolvedValue({
     data: HOSTED_REPOSITORIES
   });
 

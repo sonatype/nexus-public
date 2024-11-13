@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal;
 import java.util.List;
 
 import org.sonatype.nexus.repository.apt.datastore.internal.browse.AptBrowseNodeGenerator;
-import org.sonatype.nexus.repository.browse.BrowseTestSupport;
+import org.sonatype.nexus.repository.content.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.ComponentData;

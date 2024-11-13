@@ -20,10 +20,10 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT;
 
 /**
@@ -39,8 +39,10 @@ public class PasswordSanitizingTest
           "systemPassword",
           "keyStorePassword",
           "secret",
+          "accessKeyId",
           "secretAccessKey",
           "sessionToken",
+          "auth_account_key",
           "aptSigning",
           "bearerToken",
           "yumSigning",

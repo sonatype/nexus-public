@@ -79,7 +79,26 @@ public class DefaultRoleCapability
 
   @Override
   protected void onPassivate(final DefaultRoleCapabilityConfiguration defaultRoleCapabilityConfiguration) {
-    realmManager.disableRealm(DefaultRoleRealm.NAME);
-    defaultRoleRealm.setRole(null);
+    if (isShuttingDown()) {
+      log.info("Skipping DefaultRole realm disable during shutdown");
+    }
+    else {
+      disableDefaultRoleRealm();
+      defaultRoleRealm.setRole(null);
+    }
+  }
+
+  private void disableDefaultRoleRealm() {
+    try {
+      log.info("Attempting to disable DefaultRole realm");
+      realmManager.disableRealm(DefaultRoleRealm.NAME);
+    }
+    catch (Exception e) {
+      log.warn("Failed to disable DefaultRole realm", e);
+    }
+  }
+
+  private boolean isShuttingDown() {
+    return Thread.currentThread().getName().contains("FelixStartLevel");
   }
 }

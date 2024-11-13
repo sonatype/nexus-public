@@ -17,6 +17,7 @@ import javax.validation.Validator
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventManager
+import org.sonatype.nexus.crypto.secrets.Secret
 import org.sonatype.nexus.httpclient.HttpClientManager
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration
 import org.sonatype.nexus.repository.Repository
@@ -66,7 +67,7 @@ class HttpClientFacetImplConfigTest
     def violations = validator.validate(new HttpClientFacetImpl.Config(
         authentication: new UsernameAuthenticationConfiguration(
             username: null,
-            password: 'pass'
+            password: mock(Secret.class)
         )
     ))
     assert violations.size() == 1
@@ -79,7 +80,7 @@ class HttpClientFacetImplConfigTest
     def violations = validator.validate(new HttpClientFacetImpl.Config(
         authentication: new UsernameAuthenticationConfiguration(
             username: ' ',
-            password: ' '
+            password: null
         )
     ))
     assert violations.size() == 2

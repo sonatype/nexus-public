@@ -44,6 +44,6 @@ export default ListMachineUtils.buildListMachine({
     })
   },
   services: {
-    fetchData: () => Axios.get('/service/rest/internal/ui/routing-rules?includeRepositoryNames=true')
+    fetchData: () => Axios.get('service/rest/internal/ui/routing-rules?includeRepositoryNames=true')
   }
 });

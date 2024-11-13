@@ -70,6 +70,9 @@ public class LastDownloadedHandlerTest
   @Mock
   private GlobalRepositorySettings globalSettings;
 
+  @Mock
+  private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
+
   private AttributesMap attributes;
 
   private LastDownloadedHandler underTest;
@@ -79,6 +82,7 @@ public class LastDownloadedHandlerTest
     configureHappyPath();
 
     underTest = new LastDownloadedHandler(globalSettings);
+    underTest.injectExtraDependencies(lastDownloadedAttributeHandler);
   }
 
   @Test

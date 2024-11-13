@@ -68,9 +68,9 @@ const userAccountMachine = FormUtils.buildFormMachine({
   },
 
   services: {
-    fetchData: () => Axios.get('/service/rest/internal/ui/user'),
+    fetchData: () => Axios.get('service/rest/internal/ui/user'),
     saveData: ({data}) => {
-      return Axios.put('/service/rest/internal/ui/user', data);
+      return Axios.put('service/rest/internal/ui/user', data);
     }
   }
 });

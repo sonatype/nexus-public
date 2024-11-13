@@ -22,6 +22,7 @@ import java.util.Optional;
 import javax.inject.Provider;
 
 import org.sonatype.nexus.capability.CapabilityContext;
+import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
@@ -47,6 +48,15 @@ public class CapabilitiesRule
 
   public void disableOutreach() {
     disable(OUTREACH);
+  }
+
+  public Collection<CapabilityReference> getAll() {
+    //noinspection unchecked
+    return (Collection<CapabilityReference>) capabilityRegistryProvider.get().getAll();
+  }
+
+  public void removeById(final CapabilityIdentity id) {
+    capabilityRegistryProvider.get().remove(id);
   }
 
   @Override
@@ -112,7 +122,10 @@ public class CapabilitiesRule
    */
   protected void disable(final String capabilityType) {
     // We don't handle missing capabilities here intentionally
-    capabilityRegistryProvider.get().disable(find(capabilityType).get().context().id());
+    find(capabilityType)
+        .ifPresent(capability ->
+            capabilityRegistryProvider.get().disable(capability.context().id())
+        );
   }
 
   /**

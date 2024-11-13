@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.upgrade.datastore.internal;
 
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -21,6 +25,7 @@ import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.upgrade.UpgradeService;
+import org.sonatype.nexus.upgrade.datastore.DeploymentValidator;
 import org.sonatype.nexus.upgrade.datastore.UpgradeManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -32,22 +37,28 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
  * @since 3.29
  */
 @Named
-@FeatureFlag(name = FeatureFlags.DATASTORE_CLUSTERED_ENABLED, inverse = true, enabledByDefault = true)
+@FeatureFlag(name = FeatureFlags.CLUSTERED_ZERO_DOWNTIME_ENABLED, inverse = true, enabledByDefault = true)
+@Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = UPGRADE)
 @Singleton
 public class UpgradeServiceImpl
     extends StateGuardLifecycleSupport
     implements UpgradeService
 {
+  private final Optional<DeploymentValidator> deploymentValidator;
+
   private final UpgradeManager upgradeManager;
 
   @Inject
-  public UpgradeServiceImpl(final UpgradeManager upgradeManager) {
+  public UpgradeServiceImpl(@Nullable final DeploymentValidator deploymentValidator, final UpgradeManager upgradeManager) {
     this.upgradeManager = checkNotNull(upgradeManager);
+    this.deploymentValidator = Optional.ofNullable(deploymentValidator);
   }
 
   @Override
   protected void doStart() throws Exception {
+    deploymentValidator.ifPresent(DeploymentValidator::validate);
+
     upgradeManager.migrate();
   }
 }

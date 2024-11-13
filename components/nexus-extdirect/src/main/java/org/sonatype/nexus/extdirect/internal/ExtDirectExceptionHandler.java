@@ -80,8 +80,7 @@ public class ExtDirectExceptionHandler
     String exceptionName = e.getClass().getName();
     if (e instanceof SQLException
         || exceptionName.contains("org.apache.ibatis")
-        || exceptionName.contains("org.sonatype.nexus.datastore")
-        || exceptionName.contains("com.orientechnologies")) {
+        || exceptionName.contains("org.sonatype.nexus.datastore")) {
       return error(new Exception("A database error occurred"));
     }
 

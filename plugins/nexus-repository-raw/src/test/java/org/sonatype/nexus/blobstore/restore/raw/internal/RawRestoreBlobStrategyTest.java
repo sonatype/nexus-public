@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHandler;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.joda.time.DateTime;
@@ -45,6 +46,7 @@ import static java.util.Optional.of;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -144,6 +146,7 @@ public class RawRestoreBlobStrategyTest
     properties.put(HEADER_PREFIX + CONTENT_TYPE_HEADER, "testContentType");
 
     underTest = new RawRestoreBlobStrategy(dryRunPrefix, repositoryManager);
+    underTest.injectDependencies(mock(LastDownloadedAttributeHandler.class));
   }
 
   @Test

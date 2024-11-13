@@ -37,7 +37,6 @@ public class ProNexusEdition
   @Override
   protected boolean doesApply(final Properties properties, final Path workDirPath) {
     return !properties.getProperty(NEXUS_FEATURES, "").contains(NexusEditionFeature.OSS_FEATURE.featureString) &&
-        !properties.getProperty(NEXUS_FEATURES, "").contains(NexusEditionFeature.PRO_STARTER_FEATURE.featureString) &&
         !shouldSwitchToOss(workDirPath);
   }
 
@@ -53,9 +52,6 @@ public class ProNexusEdition
     boolean switchToOss;
     if (hasNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)) {
       switchToOss = isNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME);
-    } else
-    if (hasNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME)) {
-      switchToOss = isNexusLoadAs(NEXUS_LOAD_AS_PRO_STARTER_PROP_NAME);
     }
     else if (proEditionMarker.exists()) {
       switchToOss = false;

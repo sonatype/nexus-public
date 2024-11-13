@@ -29,7 +29,6 @@ import org.mockito.MockitoAnnotations;
 import java.io.File;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class H2VersionUpgraderTest

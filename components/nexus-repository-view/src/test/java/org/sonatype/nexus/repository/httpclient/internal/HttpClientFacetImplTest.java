@@ -17,6 +17,7 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
@@ -44,6 +45,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.CONFIG_KEY;
@@ -142,7 +144,9 @@ public class HttpClientFacetImplTest
     when(unknownFormat.getValue()).thenReturn("unknown");
 
     usernameAuthentication.setUsername(USERNAME);
-    usernameAuthentication.setPassword(PASSWORD);
+    final Secret secret = mock(Secret.class);
+    when(secret.decrypt()).thenReturn(PASSWORD.toCharArray());
+    usernameAuthentication.setPassword(secret);
   }
 
   @Test

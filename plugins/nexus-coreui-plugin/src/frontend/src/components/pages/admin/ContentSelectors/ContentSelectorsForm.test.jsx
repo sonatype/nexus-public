@@ -110,7 +110,7 @@ describe('ContentSelectorsForm', function() {
     const itemId = 'test';
 
     axios.get.mockImplementation((url) => {
-      if (url === `/service/rest/v1/security/content-selectors/${itemId}`) {
+      if (url === `service/rest/v1/security/content-selectors/${itemId}`) {
         return Promise.resolve({
           data: {
             'name' : 'content-selector-name',
@@ -120,7 +120,7 @@ describe('ContentSelectorsForm', function() {
           }
         });
       }
-      else if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+      else if (url === 'service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
         return Promise.resolve({data: []});
       }
     });
@@ -190,7 +190,7 @@ describe('ContentSelectorsForm', function() {
   });
 
   it('shows errors from the backend on the correct field', async function() {
-    when(axios.post).calledWith('/service/rest/v1/security/content-selectors', expect.anything()).mockRejectedValue({
+    when(axios.post).calledWith('service/rest/v1/security/content-selectors', expect.anything()).mockRejectedValue({
       response: {
         data: [
           {
@@ -234,7 +234,7 @@ describe('ContentSelectorsForm', function() {
   it('requests confirmation when delete is requested', async function() {
     const itemId = 'test';
     axios.get.mockImplementation((url) => {
-      if (url === `/service/rest/v1/security/content-selectors/${itemId}`) {
+      if (url === `service/rest/v1/security/content-selectors/${itemId}`) {
         return Promise.resolve({
           data: {
             'name' : itemId,
@@ -244,7 +244,7 @@ describe('ContentSelectorsForm', function() {
           }
         });
       }
-      else if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+      else if (url === 'service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
         return Promise.resolve({data: []});
       }
     });
@@ -262,13 +262,13 @@ describe('ContentSelectorsForm', function() {
     userEvent.click(deleteButton());
 
     expect(selectors.queryFormError()).not.toBeInTheDocument();
-    await waitFor(() => expect(axios.delete).toBeCalledWith(`/service/rest/v1/security/content-selectors/${itemId}`));
+    await waitFor(() => expect(axios.delete).toBeCalledWith(`service/rest/v1/security/content-selectors/${itemId}`));
     expect(onDone).toBeCalled();
   });
 
   it('loads xss and escapes the values', () => {
     axios.get.mockImplementation((url) => {
-      if (url === `/service/rest/v1/security/content-selectors/${itemId}`) {
+      if (url === `service/rest/v1/security/content-selectors/${itemId}`) {
         return Promise.resolve({
           data: {
             'name' : itemId,
@@ -278,7 +278,7 @@ describe('ContentSelectorsForm', function() {
           }
         });
       }
-      else if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+      else if (url === 'service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
         return Promise.resolve({data: []});
       }
     });
@@ -307,7 +307,7 @@ describe('ContentSelectorsForm', function() {
     await waitForElementToBeRemoved(selectors.querySavingMask());
 
     expect(axios.post).toHaveBeenCalledWith(
-        '/service/rest/v1/security/content-selectors',
+        'service/rest/v1/security/content-selectors',
         {name: 'test', description: 'description', expression: 'format == "raw"'}
     );
     expect(window.dirty).toEqual([]);
@@ -319,7 +319,7 @@ describe('ContentSelectorsForm', function() {
 
       const itemId = 'test';
       axios.get.mockImplementation((url) => {
-        if (url === `/service/rest/v1/security/content-selectors/${itemId}`) {
+        if (url === `service/rest/v1/security/content-selectors/${itemId}`) {
           return Promise.resolve({
             data: {
               'name' : itemId,
@@ -329,7 +329,7 @@ describe('ContentSelectorsForm', function() {
             }
           });
         }
-        else if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+        else if (url === 'service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
           return Promise.resolve({data: [
             {id: "*", name: "(All Repositories)"}
           ]});
@@ -364,7 +364,7 @@ describe('ContentSelectorsForm', function() {
     it('shows preview error API message', async function () {
       const itemId = 'test';
       axios.get.mockImplementation((url) => {
-        if (url === `/service/rest/v1/security/content-selectors/${itemId}`) {
+        if (url === `service/rest/v1/security/content-selectors/${itemId}`) {
           return Promise.resolve({
             data: {
               'name' : itemId,
@@ -374,7 +374,7 @@ describe('ContentSelectorsForm', function() {
             }
           });
         }
-        else if (url === '/service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+        else if (url === 'service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
           return Promise.resolve({data: [
             {id: "*", name: "(All Repositories)"}
           ]});
@@ -411,7 +411,7 @@ describe('ContentSelectorsForm', function() {
       .mockReturnValue(false);
 
       axios.get.mockImplementation((url) => {
-        if (url === '/service/rest/v1/security/content-selectors/itemId') {
+        if (url === 'service/rest/v1/security/content-selectors/itemId') {
           return Promise.resolve({
             data: {
               'name' : 'test',

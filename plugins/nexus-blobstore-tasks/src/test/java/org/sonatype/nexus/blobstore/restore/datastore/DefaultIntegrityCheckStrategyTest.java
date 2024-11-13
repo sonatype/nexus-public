@@ -70,7 +70,6 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.restore.datastore.DefaultIntegrityCheckStrategy.*;
-import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_BLOB_REF;
 
 public class DefaultIntegrityCheckStrategyTest
     extends TestSupport
@@ -184,7 +183,7 @@ public class DefaultIntegrityCheckStrategyTest
     when(assets.browse(anyInt(), nullable(String.class))).thenReturn(continuation)
         .thenReturn(new ContinuationArrayList<>());
     // throw an unexpected error
-    NullPointerException ex = new NullPointerException(format("Missing property: %s", P_BLOB_REF));
+    NullPointerException ex = new NullPointerException(format("Missing property: %s", "blob_ref"));
     when(mockAsset.blob()).thenThrow(ex);
 
     defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, SINCE_NO_DAYS, checkFailedHandler);

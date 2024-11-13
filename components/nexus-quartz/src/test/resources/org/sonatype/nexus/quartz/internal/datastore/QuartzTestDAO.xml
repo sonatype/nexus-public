@@ -42,22 +42,22 @@
   </select>
 
   <select id="expectedIndexes" resultType="Integer" databaseId="H2">
-    SELECT 54 as count
+    SELECT 20 as count
   </select>
 
   <select id="expectedIndexes" resultType="Integer" databaseId="PostgreSQL">
     SELECT 31 as count
   </select>
 
-  <select id="getTableColumnType" resultType="String" databaseId="PostgreSQL">
+  <select id="getTableColumnType" resultType="String">
     SELECT data_type
     FROM information_schema.columns
     WHERE table_name = #{table_name}
       AND column_name = #{column_name}
   </select>
 
-  <select id="getTableColumnType" resultType="String" databaseId="H2">
-    SELECT column_type
+  <select id="getColumnCharacterLimit" resultType="String" databaseId="H2">
+    SELECT CHARACTER_MAXIMUM_LENGTH
     FROM information_schema.columns
     WHERE table_name = #{table_name}
       AND column_name = #{column_name}

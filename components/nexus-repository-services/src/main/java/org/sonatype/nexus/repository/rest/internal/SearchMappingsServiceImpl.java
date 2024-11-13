@@ -63,7 +63,7 @@ public class SearchMappingsServiceImpl
   }
 
   @Override
-  public Iterable<SearchMapping> getAllMappings() {
+  public Collection<SearchMapping> getAllMappings() {
     return searchMappings;
   }
 }

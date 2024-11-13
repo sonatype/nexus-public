@@ -13,9 +13,12 @@
 package org.sonatype.nexus.bootstrap.osgi;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.sonatype.nexus.bootstrap.Launcher;
@@ -90,16 +93,22 @@ public class LauncherActivator
         Files.createDirectories(parentDir.toPath());
       }
 
-      // copy defaults across, but commented
+      // Get list of default properties, commented out
+      List<String> defaultProperties = getDefaultPropertiesCommentedOut(defaultsFile.toPath());
+
       Files.write(
           propertiesFile.toPath(),
-          Files.readAllLines(defaultsFile.toPath(), ISO_8859_1)
-              .stream()
-              .filter(l -> !l.startsWith("##"))
-              .map(l -> l.startsWith("#") || l.isEmpty() ? l : "# " + l)
-              .collect(Collectors.toList()),
+          defaultProperties,
           ISO_8859_1);
     }
+  }
+
+  private static List<String> getDefaultPropertiesCommentedOut(final Path defaultPropertiesPath) throws IOException {
+    return Files.readAllLines(defaultPropertiesPath, ISO_8859_1)
+        .stream()
+        .filter(l -> !l.startsWith("##"))
+        .map(l -> l.startsWith("#") || l.isEmpty() ? l : "# " + l)
+        .collect(Collectors.toList());
   }
 
   private static String checkProperty(final BundleContext bundleContext, final String name) {
@@ -139,6 +148,7 @@ public class LauncherActivator
       // proceed to exit
     }
     catch (Throwable e) {
+      System.err.println("Unexpected error while stopping");
       e.printStackTrace();
     }
     finally {

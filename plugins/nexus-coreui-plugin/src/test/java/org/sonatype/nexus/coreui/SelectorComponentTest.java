@@ -26,7 +26,6 @@ import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.inject.Binder;
-import com.google.inject.name.Names;
 import org.eclipse.sisu.space.BeanScanning;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,7 +40,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.common.app.FeatureFlags.ORIENT_ENABLED;
 
 /**
  * Tests {@link SelectorComponent}.
@@ -63,7 +61,6 @@ public class SelectorComponentTest
 
   @Override
   public void configure(final Binder binder) {
-    binder.bind(Boolean.class).annotatedWith(Names.named(ORIENT_ENABLED)).toInstance(true);
     ConstraintViolationFactory constraintViolationFactory = mock(ConstraintViolationFactory.class);
     ConstraintViolation constraintViolation = mock(ConstraintViolation.class);
     SecuritySystem securitySystem = mock(SecuritySystem.class);

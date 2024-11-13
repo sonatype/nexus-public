@@ -43,6 +43,8 @@ import org.sonatype.nexus.capability.CapabilityRegistryEvent.AfterLoad;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
@@ -50,7 +52,7 @@ import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemCreatedEvent;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemDeletedEvent;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemUpdatedEvent;
-import org.sonatype.nexus.security.PasswordHelper;
+import org.sonatype.nexus.security.UserIdHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
@@ -62,6 +64,8 @@ import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableCollection;
+import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE;
+import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE_NON_EXPOSED;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 
 /**
@@ -86,13 +90,13 @@ public class DefaultCapabilityRegistry
 
   private final ValidityConditionHandlerFactory validityConditionHandlerFactory;
 
-  private final PasswordHelper passwordHelper;
-
   private final Provider<Validator> validatorProvider;
 
   private final Map<CapabilityIdentity, DefaultCapabilityReference> references;
 
   private final ReentrantReadWriteLock lock;
+
+  private final SecretsService secretsService;
 
   @Inject
   DefaultCapabilityRegistry(final CapabilityStorage capabilityStorage,
@@ -101,7 +105,7 @@ public class DefaultCapabilityRegistry
                             final EventManager eventManager,
                             final ActivationConditionHandlerFactory activationConditionHandlerFactory,
                             final ValidityConditionHandlerFactory validityConditionHandlerFactory,
-                            final PasswordHelper passwordHelper,
+                            final SecretsService secretsService,
                             final Provider<Validator> validatorProvider)
   {
     this.capabilityStorage = checkNotNull(capabilityStorage);
@@ -110,7 +114,7 @@ public class DefaultCapabilityRegistry
     this.eventManager = checkNotNull(eventManager);
     this.activationConditionHandlerFactory = checkNotNull(activationConditionHandlerFactory);
     this.validityConditionHandlerFactory = checkNotNull(validityConditionHandlerFactory);
-    this.passwordHelper = checkNotNull(passwordHelper);
+    this.secretsService = checkNotNull(secretsService);
     this.validatorProvider = checkNotNull(validatorProvider);
 
     references = new HashMap<>();
@@ -123,6 +127,23 @@ public class DefaultCapabilityRegistry
                                  @Nullable final String notes,
                                  @Nullable final Map<String, String> properties)
   {
+    return validateAndAdd(type, enabled, notes, properties, CREATE);
+  }
+
+  @Override
+  public CapabilityReference addNonExposed(final CapabilityType type,
+                                 final boolean enabled,
+                                 @Nullable final String notes,
+                                 @Nullable final Map<String, String> properties)
+  {
+    return validateAndAdd(type, enabled, notes, properties, CREATE_NON_EXPOSED);
+  }
+
+  private CapabilityReference validateAndAdd(final CapabilityType type,
+                                             final boolean enabled,
+                                             @Nullable final String notes,
+                                             @Nullable final Map<String, String> properties,
+                                             final ValidationMode validationMode) {
     checkNotNull(type);
 
     try {
@@ -134,15 +155,22 @@ public class DefaultCapabilityRegistry
 
       final CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
 
-      descriptor.validate(null, props, ValidationMode.CREATE);
+      descriptor.validate(null, props, validationMode);
 
-      final Map<String, String> encryptedProps = encryptValuesIfNeeded(descriptor, props);
+      final Map<String, String> encryptedProps = encryptValuesIfNeeded(descriptor, props, Collections.emptyMap());
 
       final CapabilityStorageItem item = capabilityStorage.newStorageItem(
           descriptor.version(), type.toString(), enabled, notes, encryptedProps
       );
 
-      final CapabilityIdentity generatedId = capabilityStorage.add(item);
+      final CapabilityIdentity generatedId;
+      try {
+        generatedId = capabilityStorage.add(item);
+      }
+      catch(Exception e) {
+        pruneSecretsIfNeeded(descriptor, Collections.emptyMap(), encryptedProps);
+        throw e;
+      }
 
       return doAdd(generatedId, type, descriptor, item, props);
     }
@@ -154,8 +182,6 @@ public class DefaultCapabilityRegistry
   @Subscribe
   public void on(final CapabilityStorageItemCreatedEvent event) {
     if (!event.isLocal()) {
-      pullAndRefreshReferencesFromDB();
-
       CapabilityIdentity id = event.getCapabilityId();
       if (references.containsKey(id)) {
         log.debug("Capability {} already loaded and registered. Skipping it.", id);
@@ -207,7 +233,7 @@ public class DefaultCapabilityRegistry
     DefaultCapabilityReference reference = create(id, type, descriptor);
 
     reference.setNotes(item.getNotes());
-    reference.create(decryptedProps);
+    reference.create(decryptedProps, item.getProperties());
     if (item.isEnabled()) {
       reference.enable();
       reference.activate();
@@ -222,6 +248,8 @@ public class DefaultCapabilityRegistry
                                     @Nullable final String notes,
                                     @Nullable final Map<String, String> properties)
   {
+    final DefaultCapabilityReference reference;
+    final Map<String, String> encryptedProps;
     try {
       lock.writeLock().lock();
 
@@ -229,17 +257,24 @@ public class DefaultCapabilityRegistry
 
       validateId(id);
 
-      final DefaultCapabilityReference reference = get(id);
+      reference = get(id);
 
       reference.descriptor().validate(id, props, ValidationMode.UPDATE);
 
-      final Map<String, String> encryptedProps = encryptValuesIfNeeded(reference.descriptor(), props);
+      encryptedProps = encryptValuesIfNeeded(reference.descriptor(), props, reference.encryptedProperties());
 
       final CapabilityStorageItem item = capabilityStorage.newStorageItem(
           reference.descriptor().version(), reference.type().toString(), enabled, notes, encryptedProps
       );
 
-      capabilityStorage.update(id, item);
+      try {
+        capabilityStorage.update(id, item);
+      }
+      catch (Exception e) {
+        pruneSecretsIfNeeded(reference.descriptor(), reference.encryptedProperties(), encryptedProps);
+        throw e;
+      }
+      pruneSecretsIfNeeded(reference.descriptor(), encryptedProps, reference.encryptedProperties());
 
       return doUpdate(reference, item, props);
     }
@@ -250,7 +285,9 @@ public class DefaultCapabilityRegistry
 
   @Subscribe
   public void on(final CapabilityStorageItemUpdatedEvent event) {
+    log.debug("Received {} capability updated event", event.getCapabilityId());
     if (!event.isLocal()) {
+      log.debug("capability updated event {} is not local", event.getCapabilityId());
       CapabilityIdentity id = event.getCapabilityId();
       CapabilityStorageItem item = capabilityStorage.getAll().get(id);
 
@@ -272,21 +309,24 @@ public class DefaultCapabilityRegistry
     }
   }
 
-  private CapabilityReference doUpdate(final DefaultCapabilityReference reference,
-                                       final CapabilityStorageItem item,
-                                       @Nullable final Map<String, String> decryptedProps)
+  private CapabilityReference doUpdate(
+      final DefaultCapabilityReference reference,
+      final CapabilityStorageItem item,
+      @Nullable final Map<String, String> decryptedProps)
   {
     log.debug("Updated capability '{}' of type '{}' with properties '{}'",
         reference.id(), reference.type(), item.getProperties());
 
     if (reference.isEnabled() && !item.isEnabled()) {
       reference.disable();
+      log.debug("Disabled capability '{}' for type '{}'", reference.id(), reference.type());
     }
     reference.setNotes(item.getNotes());
-    reference.update(decryptedProps, reference.properties());
+    reference.update(decryptedProps, reference.properties(), item.getProperties());
     if (!reference.isEnabled() && item.isEnabled()) {
       reference.enable();
       reference.activate();
+      log.debug("Enabled and activated capability '{}' for type '{}'", reference.id(), reference.type());
     }
 
     return reference;
@@ -299,7 +339,37 @@ public class DefaultCapabilityRegistry
 
       validateId(id);
 
+      DefaultCapabilityReference reference = get(id);
+
       capabilityStorage.remove(id);
+
+      pruneSecretsIfNeeded(reference.descriptor(), Collections.emptyMap(), reference.encryptedProperties());
+
+      return doRemove(id);
+    }
+    finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public CapabilityReference removeNonExposed(final CapabilityIdentity id) {
+    try {
+      lock.writeLock().lock();
+
+      validateId(id);
+
+      DefaultCapabilityReference reference = get(id);
+
+      final Map<String, String> props = reference.properties();
+
+      final CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(reference.type());
+
+      descriptor.validate(null, props, ValidationMode.DELETE_NON_EXPOSED);
+
+      capabilityStorage.remove(id);
+
+      pruneSecretsIfNeeded(reference.descriptor(), Collections.emptyMap(), reference.encryptedProperties());
 
       return doRemove(id);
     }
@@ -431,7 +501,7 @@ public class DefaultCapabilityRegistry
             log.debug(
                 "Converted capability '{}' properties '{}' (version '{}') to '{}' (version '{}')",
                 id, item.getProperties(), item.getVersion(),
-                encryptValuesIfNeeded(descriptor, properties), descriptor.version()
+                encryptValuesIfNeeded(descriptor, properties, properties), descriptor.version()
             );
           }
         }
@@ -458,7 +528,7 @@ public class DefaultCapabilityRegistry
       reference = create(id, capabilityType(item.getType()), descriptor);
 
       reference.setNotes(item.getNotes());
-      reference.load(properties);
+      reference.load(properties, item.getProperties());
 
       try {
         // validate after initial load, so properties are filled in for fixing
@@ -481,20 +551,48 @@ public class DefaultCapabilityRegistry
 
   @Override
   public void pullAndRefreshReferencesFromDB() {
-   Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
-   references.forEach((capabilityIdentity, capabilityReference) ->
-       Optional.ofNullable(refreshedCapabilities.get(capabilityIdentity)) // When working in HA mode it could be null
-           .ifPresent(value -> {
-             DefaultCapabilityReference reference = get(capabilityIdentity);
-             Map<String, String> decryptedProps = decryptValuesIfNeeded(reference.descriptor(), value.getProperties());
-             capabilityReference.update(decryptedProps, capabilityReference.properties());
+    Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
+    references.forEach((capabilityIdentity, capabilityReference) ->
+        Optional.ofNullable(refreshedCapabilities.get(capabilityIdentity)) // When working in HA mode it could be null
+            .ifPresent(value -> {
+              DefaultCapabilityReference reference = get(capabilityIdentity);
+              Map<String, String> decryptedProps = decryptValuesIfNeeded(reference.descriptor(), value.getProperties());
+              doUpdate(capabilityReference, value, decryptedProps);
+            }));
+  }
 
-             if (value.isEnabled()) {
-               enable(capabilityIdentity);
-             } else {
-               disable(capabilityIdentity);
-             }
-           }));
+  @Override
+  public void migrateSecrets(final CapabilityReference capabilityReference, final Predicate<Secret> shouldMigrate) {
+    try {
+      lock.writeLock().lock();
+
+      DefaultCapabilityReference reference = (DefaultCapabilityReference) capabilityReference;
+
+      Map<String, String> reEncryptedProps =
+          migrateValues(reference.descriptor(), reference.encryptedProperties(), shouldMigrate);
+
+      if (reEncryptedProps.equals(reference.encryptedProperties())) {
+        return;
+      }
+
+      final CapabilityStorageItem item = capabilityStorage.newStorageItem(
+          reference.descriptor().version(), reference.type().toString(), reference.isEnabled(), reference.notes(),
+          reEncryptedProps
+      );
+
+      try {
+        capabilityStorage.update(reference.id(), item);
+      }
+      catch (Exception e) {
+        pruneSecretsIfNeeded(reference.descriptor(), reference.encryptedProperties(), reEncryptedProps);
+        throw e;
+      }
+      reference.updateEncrypted(reference.properties(), reEncryptedProps);
+      pruneSecretsIfNeeded(reference.descriptor(), reEncryptedProps, reference.encryptedProperties());
+    }
+    finally {
+      lock.writeLock().unlock();
+    }
   }
 
   private DefaultCapabilityReference create(final CapabilityIdentity id,
@@ -540,16 +638,58 @@ public class DefaultCapabilityRegistry
   }
 
   /**
-   * Encrypts value of properties marked to be stored encrypted.
+   * Re encrypts the secrets of the capability (executed by the migration task).
    *
-   * @since 2.7
+   * @param descriptor    capability descriptor
+   * @param props         capability already encrypted properties
+   * @param shouldMigrate predicate to determine if the secret should be re-encrypted
+   * @return the re-encrypted properties
    */
-  private Map<String, String> encryptValuesIfNeeded(final CapabilityDescriptor descriptor,
-                                                    final Map<String, String> props)
+  private Map<String, String> migrateValues(
+      final CapabilityDescriptor descriptor,
+      final Map<String, String> props,
+      final Predicate<Secret> shouldMigrate
+  )
   {
     if (props == null || props.isEmpty()) {
       return props;
     }
+
+    Map<String, String> encrypted = Maps.newHashMap(props);
+    List<FormField> formFields = descriptor.formFields();
+
+    if (formFields != null) {
+      for (FormField formField : formFields) {
+        if (formField instanceof Encrypted) {
+          String value = encrypted.get(formField.getId());
+          if (value != null) {
+            Secret oldSecret = secretsService.from(value);
+            if (shouldMigrate.apply(oldSecret)) {
+              encrypted.put(formField.getId(),
+                  secretsService.encryptMaven("capabilities", oldSecret.decrypt(), UserIdHelper.get()).getId());
+            }
+          }
+        }
+      }
+    }
+
+    return encrypted;
+  }
+
+  /**
+   * Encrypts value of properties marked to be stored encrypted.
+   *
+   * @since 2.7
+   */
+  private Map<String, String> encryptValuesIfNeeded(
+      final CapabilityDescriptor descriptor,
+      final Map<String, String> props,
+      final Map<String, String> oldProperties)
+  {
+    if (props == null || props.isEmpty()) {
+      return props;
+    }
+
     Map<String, String> encrypted = Maps.newHashMap(props);
     List<FormField> formFields = descriptor.formFields();
     if (formFields != null) {
@@ -557,19 +697,64 @@ public class DefaultCapabilityRegistry
         if (formField instanceof Encrypted) {
           String value = encrypted.get(formField.getId());
           if (value != null) {
-            try {
-              encrypted.put(formField.getId(), passwordHelper.encrypt(value));
+            String oldSecret = safelyLoadSecret(oldProperties.get(formField.getId()));
+
+            if (Objects.equals(oldSecret, value)) {
+              // existing secret matches
+              encrypted.put(formField.getId(), oldProperties.get(formField.getId()));
             }
-            catch (Exception e) {
-              throw new RuntimeException(
-                  "Could not encrypt value of '" + formField.getType() + "' due to " + e.getMessage(), e
-              );
+            else {
+              encrypted.put(formField.getId(),
+                  secretsService.encryptMaven("capabilities", value.toCharArray(), UserIdHelper.get()).getId());
             }
           }
         }
       }
     }
     return encrypted;
+  }
+
+  /*
+   * Attempts to remove secrets which are not used by the persisted capability
+   */
+  private void pruneSecretsIfNeeded(
+      final CapabilityDescriptor descriptor,
+      final Map<String, String> persisted,
+      final Map<String, String> toBePruned)
+  {
+    List<FormField> formFields = descriptor.formFields();
+    if (formFields != null) {
+      for (FormField formField : formFields) {
+        if (formField instanceof Encrypted) {
+          String pruneCandidate = toBePruned.get(formField.getId());
+          String persistedSecret = Optional.ofNullable(persisted)
+              .map(m -> m.get(formField.getId()))
+              .orElse(null);
+
+          if (pruneCandidate != null && !pruneCandidate.equals(persistedSecret)) {
+            try {
+              secretsService.remove(secretsService.from(pruneCandidate));
+            }
+            catch (Exception e) {
+              log.warn("Failed to cleanup secret for {} field {}.", descriptor.type(), formField.getId(), e);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private String safelyLoadSecret(@Nullable final String secret) {
+    try {
+      return Optional.ofNullable(secret)
+          .map(secretsService::from)
+          .map(Secret::decrypt)
+          .map(String::valueOf)
+          .orElse(null);
+    }
+    catch (Exception e) {
+      return null;
+    }
   }
 
   /**
@@ -591,7 +776,7 @@ public class DefaultCapabilityRegistry
           String value = decrypted.get(formField.getId());
           if (value != null) {
             try {
-              decrypted.put(formField.getId(), passwordHelper.tryDecrypt(value));
+              decrypted.put(formField.getId(), String.valueOf(secretsService.from(value).decrypt()));
             }
             catch (Exception e) {
               throw new RuntimeException(

@@ -117,20 +117,20 @@ export default FormUtils.buildFormMachine({
 
   services: {
     fetchData: () => {
-      return Axios.get('/service/rest/v1/security/atlassian-crowd');
+      return Axios.get('service/rest/v1/security/atlassian-crowd');
     },
     saveData: ({data}) => {
-      return Axios.put('/service/rest/v1/security/atlassian-crowd', {
+      return Axios.put('service/rest/v1/security/atlassian-crowd', {
         ...data
       });
     },
     verifyConnection: ({data}) => {
-      return Axios.post('/service/rest/v1/security/atlassian-crowd/verify-connection', {
+      return Axios.post('service/rest/v1/security/atlassian-crowd/verify-connection', {
         ...data
       });
     },
     clearCache: () => {
-      return Axios.post('/service/rest/v1/security/atlassian-crowd/clear-cache');
+      return Axios.post('service/rest/v1/security/atlassian-crowd/clear-cache');
     }
   }
 });

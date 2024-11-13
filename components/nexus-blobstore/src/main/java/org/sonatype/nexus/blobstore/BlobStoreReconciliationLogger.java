@@ -17,7 +17,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -68,7 +71,8 @@ public class BlobStoreReconciliationLogger
   public void logBlobCreated(final Path reconciliationLogPath, final BlobId blobId) {
     if (isNotTemporaryBlob(blobId)) {
       MDC.put(BLOBSTORE, reconciliationLogPath.toString());
-      reconciliationLogger.info(blobId.asUniqueString());
+      // blobId.getBlobCreatedRef() != null means the blob was stored under the date-based layout
+      reconciliationLogger.info("{},{}", blobId.asUniqueString(), blobId.getBlobCreatedRef() != null);
       MDC.remove(BLOBSTORE);
     }
   }
@@ -81,10 +85,15 @@ public class BlobStoreReconciliationLogger
    * Stream blob ids of blobs created in a blob store since specified date (inclusive).
    *
    * @param reconciliationLogPath The path to the blob store's reconciliation log directory
-   * @param sinceDate for which retrieve newly created blob ids
+   * @param sinceDate             for which retrieve newly created blob ids
+   * @param dateBasedBlobIds      date-based blob ids
    * @return stream of BlobId
    */
-  public Stream<BlobId> getBlobsCreatedSince(final Path reconciliationLogPath, final LocalDate sinceDate) {
+  public Stream<BlobId> getBlobsCreatedSince(
+      final Path reconciliationLogPath,
+      final LocalDateTime sinceDate,
+      final Map<String, OffsetDateTime> dateBasedBlobIds)
+  {
     return getLogFilesToProcess(reconciliationLogPath, sinceDate)
         .flatMap(this::readLines)
         .map(line -> {
@@ -92,13 +101,23 @@ public class BlobStoreReconciliationLogger
           if (split.length == 2) {
             return split[1];
           }
+          else if (split.length == 3) {
+            String blobId = split[1];
+            if (Boolean.parseBoolean(split[2])) {
+              // we already have date-based blob ids, so we can skip them
+              return dateBasedBlobIds.get(blobId) != null ? blobId : null;
+            }
+            else {
+              return blobId;
+            }
+          }
           else {
             LOGGER.info("Cannot find blob id on line, skipping: {}", line);
             return null;
           }
         })
         .filter(Objects::nonNull)
-        .map(BlobId::new);
+        .map(id -> new BlobId(id, dateBasedBlobIds.get(id) != null ? dateBasedBlobIds.get(id) : null));
   }
 
   private Stream<String> readLines(final File file) {
@@ -111,7 +130,7 @@ public class BlobStoreReconciliationLogger
     }
   }
 
-  private Stream<File> getLogFilesToProcess(final Path reconciliationLogPath, final LocalDate sinceDate) {
+  private Stream<File> getLogFilesToProcess(final Path reconciliationLogPath, final LocalDateTime sinceDate) {
     File reconciliationLogDirectory = applicationDirectories.getWorkDirectory(reconciliationLogPath.toString());
     File[] logs = reconciliationLogDirectory.listFiles();
     if (Objects.nonNull(logs)) {
@@ -125,11 +144,11 @@ public class BlobStoreReconciliationLogger
     }
   }
 
-  private Predicate<File> isFileNameOlderOrSameAs(final LocalDate sinceDate) {
+  private Predicate<File> isFileNameOlderOrSameAs(final LocalDateTime sinceDate) {
     return file -> {
       try {
         LocalDate logFileDate = LocalDate.parse(file.getName());
-        return !sinceDate.isAfter(logFileDate);
+        return !sinceDate.toLocalDate().isAfter(logFileDate);
       }
       catch (DateTimeParseException e) {
         return false;

@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.net.URL;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,8 +23,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
-import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -39,6 +38,8 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
+import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskUtils;
@@ -55,10 +56,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
@@ -164,7 +161,7 @@ public class RestoreMetadataTaskTest
     blobAttributes.load();
     blobId = new BlobId("86e20baa-0bca-4915-a7dc-9a4f34e72321");
     when(blobStore.getBlobIdStream()).thenReturn(Stream.of(blobId));
-    when(blobStore.getBlobIdUpdatedSinceStream(anyInt())).thenReturn(Stream.of(blobId));
+    when(blobStore.getBlobIdUpdatedSinceStream(any(Duration.class))).thenReturn(Stream.of(blobId));
     when(blobStoreManager.get(BLOBSTORE_NAME)).thenReturn(blobStore);
 
     when(blobStore.get(blobId, true)).thenReturn(blob);
@@ -620,7 +617,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(blobStore, never()).getBlobIdUpdatedSinceStream(anyInt());
+    verify(blobStore, never()).getBlobIdUpdatedSinceStream(any(Duration.class));
     verify(blobStore).getBlobIdStream();
   }
 
@@ -633,7 +630,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(blobStore, never()).getBlobIdUpdatedSinceStream(anyInt());
+    verify(blobStore, never()).getBlobIdUpdatedSinceStream(any(Duration.class));
     verify(blobStore).getBlobIdStream();
   }
 
@@ -644,11 +641,11 @@ public class RestoreMetadataTaskTest
     configuration.setBoolean(INTEGRITY_CHECK, false);
     configuration.setInteger(SINCE_DAYS, 2);
     underTest.configure(configuration);
-    when(blobStore.getBlobIdUpdatedSinceStream(2)).thenReturn(Stream.empty());
+    when(blobStore.getBlobIdUpdatedSinceStream(Duration.ofDays(2L))).thenReturn(Stream.empty());
 
     underTest.execute();
 
-    verify(blobStore).getBlobIdUpdatedSinceStream(2);
+    verify(blobStore).getBlobIdUpdatedSinceStream(Duration.ofDays(2L));
     verify(blobStore, never()).getBlobIdStream();
   }
 }

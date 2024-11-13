@@ -71,7 +71,8 @@ trait ConfigurationRecipes
                             final String remoteUrl,
                             final boolean strictContentTypeValidation = true,
                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                            final Map<String, Object> authentication = [:])
+                            final Map<String, Object> authentication = [:],
+                            final String conanVersion = "V1")
   {
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-proxy'))
@@ -91,6 +92,9 @@ trait ConfigurationRecipes
         negativeCache: [
             enabled   : true,
             timeToLive: 1440
+        ] as Map<String, Object>,
+        conan        : [
+            conanVersion: conanVersion
         ] as Map<String, Object>,
         storage      : [
             blobStoreName              : blobStoreName,

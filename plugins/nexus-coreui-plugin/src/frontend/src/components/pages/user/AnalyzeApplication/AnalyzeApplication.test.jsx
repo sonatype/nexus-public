@@ -52,7 +52,7 @@ describe('AnalyzeApplication', () => {
     await waitForElementToBeRemoved(loadingMask());
 
     expect(Axios.get).toHaveBeenCalledTimes(1);
-    expect(Axios.get).toHaveBeenCalledWith(`/service/rest/internal/ui/ahc`, {params: {component: componentName}});
+    expect(Axios.get).toHaveBeenCalledWith(`service/rest/internal/ui/ahc`, {params: {component: JSON.stringify(componentName)}});
   });
 
   it('show eula if eula never accepted', async () => {

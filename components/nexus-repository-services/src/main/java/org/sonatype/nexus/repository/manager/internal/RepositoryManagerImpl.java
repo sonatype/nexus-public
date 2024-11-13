@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -123,6 +124,8 @@ public class RepositoryManagerImpl
 
   private final List<ConfigurationValidator> configurationValidators;
 
+  private final HttpAuthenticationPasswordEncoder httpAuthenticationPasswordEncoder;
+
   @Inject
   public RepositoryManagerImpl(final EventManager eventManager,
                                final ConfigurationStore store,
@@ -135,7 +138,8 @@ public class RepositoryManagerImpl
                                @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
                                final BlobStoreManager blobStoreManager,
                                final GroupMemberMappingCache groupMemberMappingCache,
-                               final List<ConfigurationValidator> configurationValidators)
+                               final List<ConfigurationValidator> configurationValidators,
+                               final HttpAuthenticationPasswordEncoder httpAuthenticationPasswordEncoder)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -149,6 +153,7 @@ public class RepositoryManagerImpl
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.groupMemberMappingCache = checkNotNull(groupMemberMappingCache);
     this.configurationValidators = checkNotNull(configurationValidators);
+    this.httpAuthenticationPasswordEncoder = checkNotNull(httpAuthenticationPasswordEncoder);
   }
 
   /**
@@ -183,7 +188,7 @@ public class RepositoryManagerImpl
     repository.attach(configFacet.get());
 
     // apply recipe to repository
-    recipe.apply(repository);
+    recipe.apply(repository, configuration);
 
     // verify required facets
     repository.facet(ViewFacet.class);
@@ -336,6 +341,13 @@ public class RepositoryManagerImpl
     return isRepositoryLoaded(name) || store.exists(name);
   }
 
+  @Override
+  public Stream<Configuration> getConfigurations() {
+    return repositories.values()
+        .stream()
+        .map(Repository::getConfiguration);
+  }
+
   @Nullable
   @Override
   @Guarded(by = STARTED)
@@ -385,14 +397,24 @@ public class RepositoryManagerImpl
 
     log.info("Creating repository: {} -> {}", repositoryName, configuration);
 
-    validateConfiguration(configuration);
+    Repository repository;
 
-    Repository repository = newRepository(configuration);
+    try {
+      if (!EventHelper.isReplicating()) {
+        httpAuthenticationPasswordEncoder.encodeHttpAuthPassword(configuration.getAttributes());
+      }
+      validateConfiguration(configuration);
 
-    if (!EventHelper.isReplicating()) {
-      store.create(configuration);
+      repository = newRepository(configuration);
+
+      if (!EventHelper.isReplicating()) {
+        store.create(configuration);
+      }
     }
-
+    catch (Exception e) {
+      httpAuthenticationPasswordEncoder.removeSecret(configuration.getAttributes());
+      throw e;
+    }
     repository.start();
 
     track(repository);
@@ -414,14 +436,25 @@ public class RepositoryManagerImpl
 
     Repository repository = repository(repositoryName);
 
-    // ensure configuration sanity
-    repository.validate(configuration);
+    final Configuration oldConfiguration = repository.getConfiguration().copy();
+    try {
+      if (!EventHelper.isReplicating()) {
+        httpAuthenticationPasswordEncoder.encodeHttpAuthPassword(oldConfiguration.getAttributes(),
+            configuration.getAttributes());
+      }
 
-    if (!EventHelper.isReplicating()) {
-      store.update(configuration);
+      // ensure configuration sanity
+      repository.validate(configuration);
+
+      if (!EventHelper.isReplicating()) {
+        store.update(configuration);
+        httpAuthenticationPasswordEncoder.removeSecret(oldConfiguration.getAttributes(), configuration.getAttributes());
+      }
     }
-
-    Configuration oldConfiguration = repository.getConfiguration().copy();
+    catch (Exception e) {
+      httpAuthenticationPasswordEncoder.removeSecret(configuration.getAttributes(), oldConfiguration.getAttributes());
+      throw e;
+    }
 
     repository.stopSafe();
     repository.update(configuration);
@@ -458,6 +491,7 @@ public class RepositoryManagerImpl
     repository.destroy();
 
     if (!EventHelper.isReplicating()) {
+      httpAuthenticationPasswordEncoder.removeSecret(configuration.getAttributes());
       store.delete(configuration);
     }
 

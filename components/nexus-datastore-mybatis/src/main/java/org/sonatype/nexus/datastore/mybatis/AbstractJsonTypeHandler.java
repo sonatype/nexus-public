@@ -18,16 +18,12 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.security.PasswordHelper;
-
 import com.fasterxml.jackson.core.Base64Variant;
 import com.fasterxml.jackson.core.Base64Variants;
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -58,7 +54,7 @@ public abstract class AbstractJsonTypeHandler<T>
   private final JavaType jsonType;
 
   protected AbstractJsonTypeHandler() {
-    this.objectMapper = buildObjectMapper(() -> new ObjectMapper(new SensitiveJsonFactory()));
+    this.objectMapper = buildObjectMapper(() -> new ObjectMapper());
     this.jsonType = objectMapper.constructType(getJsonType()); // NOSONAR
   }
 
@@ -115,16 +111,6 @@ public abstract class AbstractJsonTypeHandler<T>
     }
     catch (IOException e) {
       throw new SQLException(e);
-    }
-  }
-
-  /**
-   * Enables automatic encryption of sensitive JSON fields, identified using the given filter.
-   */
-  void encryptSensitiveFields(final PasswordHelper passwordHelper, final Predicate<String> attributeFilter) {
-    JsonFactory jsonFactory = objectMapper.getFactory();
-    if (jsonFactory instanceof SensitiveJsonFactory) {
-      ((SensitiveJsonFactory) jsonFactory).encryptSensitiveFields(passwordHelper, attributeFilter);
     }
   }
 

@@ -160,6 +160,8 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
       settingsFieldSet.importProperties(model.get('properties'), formFields);
       scheduleFieldSet.setRecurringDays(model.get('recurringDays'));
       scheduleFieldSet.setStartDate(model.get('startDate'));
+
+      this.maybeMakeReadOnly(model);
     }
   },
 
@@ -182,6 +184,59 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
    */
   markInvalid: function(errors) {
     this.down('nx-coreui-formfield-settingsfieldset').markInvalid(errors);
-  }
+  },
 
+  /**
+   * Make task setting UI read-only based on the task settings.
+   */
+  maybeMakeReadOnly: function(model) {
+    const readOnly = this.shouldMakeUiReadOnly(model);
+    const me = this,
+      taskComponent = me.up('nx-coreui-task-feature');
+
+    if (taskComponent) {
+      const deleteButton = taskComponent.down('button[action=delete]'),
+          runButton = taskComponent.down('button[action=run]');
+      if (deleteButton && runButton) {
+        Ext.defer(function() {
+          if (readOnly) {
+            deleteButton.disable();
+            runButton.disable();
+          } else {
+            deleteButton.enable();
+            // check current task state before enabling run button
+            const taskReadyToRun = model.get('runnable');
+            if (taskReadyToRun === true) {
+              runButton.enable();
+            }
+          }
+        }, 100);
+      }
+
+      const editables = me.query('field'),
+          itemSelectors = me.query('nx-itemselector');
+
+      Ext.each(editables, function(editable) {
+        if (readOnly) {
+          editable.disable();
+        } else {
+          editable.enable();
+        }
+      });
+      Ext.each(itemSelectors, function(itemSelector) {
+        if (readOnly) {
+          itemSelector.disable();
+        } else {
+          itemSelector.enable();
+        }
+      });
+    }
+  },
+
+  /**
+   * Decide make UI read-only for given task
+   */
+  shouldMakeUiReadOnly: function(model) {
+    return model.get('isReadOnlyUi') === true;
+  }
 });

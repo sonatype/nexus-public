@@ -76,4 +76,29 @@ export default class DateUtils {
       return null;
     }
   }
+
+  /**
+   * @param {Date} date a Date
+   * @returns {string|null} a human-friendly date time string with long format
+   */
+  static prettyDateTimeLong(date) {
+    try {
+      const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZoneName: 'longOffset'
+      };
+      return date.toLocaleString("en-US", options);
+    }
+    catch (e) {
+      console.debug(ERROR_MESSAGE(date));
+      return null;
+    }
+  }
 }

@@ -38,6 +38,7 @@ public class SupportBundle
     enum Type
     {
       SYSINFO,
+      DBINFO,
       THREAD,
       METRICS,
       CONFIG,

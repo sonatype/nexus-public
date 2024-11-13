@@ -94,6 +94,6 @@ export default Machine({
     canLoadRepositories: (_, {format}) => Boolean(format)
   },
   services: {
-    fetchRepositories: (_, {format}) => Axios.get('/service/rest/internal/ui/repositories', {params: {format}})
+    fetchRepositories: (_, {format}) => Axios.get('service/rest/internal/ui/repositories', {params: {format}})
   }
 });
