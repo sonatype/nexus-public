@@ -27,20 +27,15 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.eclipse.sisu.Description;
 
 @Singleton
-@Named("MockRealmB")
-@Description("MockRealmB")
-public class MockRealmB
-    extends AuthorizingRealm
+@Named("MockRealmC")
+@Description("MockRealmC")
+public class MockRealmC extends AuthorizingRealm
 {
-  public MockRealmB() {
-    this.setAuthenticationTokenClass(UsernamePasswordToken.class);
-  }
-
   @Override
   protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-    // only allow jcool/jcool
+    // only allow goku/goku
     UsernamePasswordToken userpass = (UsernamePasswordToken) token;
-    if ("jcool".equals(userpass.getUsername()) && "jcool".equals(new String(userpass.getPassword()))) {
+    if ("goku".equals(userpass.getUsername()) && "goku".equals(new String(userpass.getPassword()))) {
       return new SimpleAuthenticationInfo(userpass.getUsername(), new String(userpass.getPassword()), this.getName());
     }
 
@@ -49,9 +44,9 @@ public class MockRealmB
 
   @Override
   protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
-    // make sure the user is jcool, (its just for testing)
+    // make sure the user is goku, (its just for testing)
 
-    if (principals.asList().get(0).toString().equals("jcool")) {
+    if (principals.asList().get(0).toString().equals("goku")) {
       SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
 
       info.addRole("test-role1");
@@ -67,6 +62,6 @@ public class MockRealmB
 
   @Override
   public String getName() {
-    return "MockRealmB";
+    return "MockRealmC";
   }
 }

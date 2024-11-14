@@ -442,7 +442,8 @@ public class RealmManagerImpl
   @Override
   @Guarded(by = STARTED)
   public List<String> getConfiguredRealmIds() {
-    return getConfiguredRealmIds(false);
+    List<String> availableRealmIds = getAvailableRealms().stream().map(SecurityRealm::getId).collect(toList());
+    return getConfiguredRealmIds(false).stream().filter(availableRealmIds::contains).collect(toList());
   }
 
   @Override
