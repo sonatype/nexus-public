@@ -10,36 +10,48 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture
-
-import java.nio.charset.StandardCharsets
-
-import org.sonatype.goodies.testsupport.TestSupport
-
-import com.google.common.hash.Hashing
-import com.google.gson.GsonBuilder
-import org.junit.Test
+package org.sonatype.nexus.rapture.internal.state;
 
 /**
- * Hashing trials.
+ * State value exchange object.
+ *
+ * @since 3.0
  */
-class HashingTrial
-    extends TestSupport
+public class StateValueXO
 {
-  @Test
-  void 'test gson hash'() {
-    def gson = new GsonBuilder().create()
-    def data = ['a', 'b', 'c']
-    def hash = Hashing.sha1().hashString(gson.toJson(data), StandardCharsets.UTF_8).toString()
-    log hash
-    assert hash == 'e13460afb1e68af030bb9bee8344c274494661fa'
+  private String hash;
+
+  private Object value;
+
+  public StateValueXO() {
   }
 
-  @Test
-  void 'test object hash'() {
-    def data = ['a', 'b', 'c']
-    log data.hashCode()
-    data << 'd'
-    log data.hashCode()
+  public StateValueXO(String hash, Object value) {
+    this.hash = hash;
+    this.value = value;
+  }
+
+  public String getHash() {
+    return hash;
+  }
+
+  public void setHash(String hash) {
+    this.hash = hash;
+  }
+
+  public Object getValue() {
+    return value;
+  }
+
+  public void setValue(Object value) {
+    this.value = value;
+  }
+
+  @Override
+  public String toString() {
+    return "StateValueXO{" +
+        "hash='" + hash + '\'' +
+        ", value=" + value +
+        '}';
   }
 }

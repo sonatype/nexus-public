@@ -10,20 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture
-
-import groovy.transform.ToString
+package org.sonatype.nexus.rapture;
 
 /**
  *
  * @since 3.31
  */
-@ToString(includePackage = false, includeNames = true)
-class CapabilityEnabledXO
+public class CapabilityEnabledXO
 {
-  Boolean enabled
+  private boolean enabled;
 
-  CapabilityEnabledXO(final Boolean enabled) {
-    this.enabled = enabled
+  public CapabilityEnabledXO(Boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  @Override
+  public String toString() {
+    return "CapabilityEnabledXO{" +
+        "enabled=" + enabled +
+        '}';
   }
 }
