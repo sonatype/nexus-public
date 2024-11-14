@@ -14,7 +14,6 @@ package org.sonatype.nexus.proxy.item;
 
 import java.io.InputStreamReader;
 import java.io.StringWriter;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;

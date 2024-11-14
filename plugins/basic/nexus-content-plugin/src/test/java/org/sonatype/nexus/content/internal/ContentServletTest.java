@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.configuration.application.NexusConfiguration;
+import org.sonatype.nexus.content.csp.ContentSecurityPolicy;
 import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.router.RepositoryRouter;
 import org.sonatype.nexus.web.WebUtils;
@@ -25,12 +26,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class ContentServletTest
-{
+public class ContentServletTest {
   @Mock
   private NexusConfiguration nexusConfiguration;
 
@@ -51,13 +50,16 @@ public class ContentServletTest
 
   @Mock
   private StorageFileItem storageFileItem;
-  
+
+  @Mock
+  private ContentSecurityPolicy contentSecurityPolicy;
+
   private ContentServlet underTest;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    underTest = new ContentServlet(nexusConfiguration, repositoryRouter, contentRenderer, webUtils);
+    underTest = new ContentServlet(nexusConfiguration, repositoryRouter, contentRenderer, webUtils, contentSecurityPolicy);
   }
 
   @Test

@@ -15,7 +15,8 @@ package org.sonatype.nexus.restlet1x.internal;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Enumeration;
-
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -23,6 +24,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.sonatype.nexus.content.csp.ContentSecurityPolicy;
 import org.sonatype.plexus.rest.PlexusServerServlet;
 import org.sonatype.sisu.goodies.common.Throwables2;
 
@@ -43,6 +45,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author adreghiciu
  */
 @Singleton
+@Named
 class RestletServlet
     extends PlexusServerServlet
 {
@@ -55,7 +58,11 @@ class RestletServlet
    */
   private DelegatingServletConfig servletConfig;
 
-  RestletServlet() {
+  private final ContentSecurityPolicy contentSecurityPolicy;
+
+  @Inject
+  public RestletServlet(final ContentSecurityPolicy contentSecurityPolicy) {
+    this.contentSecurityPolicy = contentSecurityPolicy;
     servletConfig = new DelegatingServletConfig();
   }
 
@@ -77,6 +84,7 @@ class RestletServlet
   {
     checkNotNull(request);
     checkNotNull(response);
+    contentSecurityPolicy.apply(request, response);
 
     // Log the request URI+URL muck
     String uri = request.getRequestURI();

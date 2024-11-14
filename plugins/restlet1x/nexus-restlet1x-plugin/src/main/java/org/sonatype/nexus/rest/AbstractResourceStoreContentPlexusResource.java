@@ -15,6 +15,7 @@ package org.sonatype.nexus.rest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,7 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
@@ -62,7 +62,6 @@ import org.sonatype.nexus.rest.model.NotFoundReasoning;
 import org.sonatype.nexus.rest.repositories.AbstractRepositoryPlexusResource;
 import org.sonatype.nexus.security.filter.authc.NexusHttpAuthenticationFilter;
 import org.sonatype.nexus.web.BaseUrlHolder;
-import org.sonatype.nexus.web.Constants;
 import org.sonatype.nexus.web.ErrorStatusRuntimeException;
 import org.sonatype.plexus.rest.representation.VelocityRepresentation;
 import org.sonatype.security.SecuritySystem;
@@ -261,7 +260,6 @@ public abstract class AbstractResourceStoreContentPlexusResource
   }
 
   protected String parsePathFromUri(String parsedPath) {
-
     // get rid of query part
     if (parsedPath.contains("?")) {
       parsedPath = parsedPath.substring(0, parsedPath.indexOf('?'));
@@ -272,8 +270,12 @@ public abstract class AbstractResourceStoreContentPlexusResource
       parsedPath = parsedPath.substring(0, parsedPath.indexOf('#'));
     }
 
-    if (StringUtils.isEmpty(parsedPath)) {
-      parsedPath = "/";
+    // Remove all leading `/`es at the front to prevent SECREP-418
+    parsedPath = parsedPath.replaceAll("^/+", "");
+
+    // and then make sure request is again prefixed with a single '/' as paths are expectedd to start with '/'
+    if (!parsedPath.startsWith("/")) {
+      parsedPath = "/" + parsedPath;
     }
 
     return parsedPath;

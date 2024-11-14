@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>2.15.1-02</version>
+    <version>2.15.2-03</version>
   </parent>
 
   <artifactId>nexus-plugins-security</artifactId>

@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.configuration.application.NexusConfiguration;
+import org.sonatype.nexus.content.csp.ContentSecurityPolicy;
 import org.sonatype.nexus.proxy.AccessDeniedException;
 import org.sonatype.nexus.proxy.IllegalOperationException;
 import org.sonatype.nexus.proxy.IllegalRequestException;
@@ -141,16 +142,20 @@ public class ContentServlet
 
   private final WebUtils webUtils;
 
+  private final ContentSecurityPolicy contentSecurityPolicy;
+
   @Inject
   public ContentServlet(final NexusConfiguration nexusConfiguration,
                         final RepositoryRouter repositoryRouter,
                         final ContentRenderer contentRenderer,
-                        final WebUtils webUtils)
+                        final WebUtils webUtils,
+                        final ContentSecurityPolicy contentSecurityPolicy)
   {
     this.nexusConfiguration = checkNotNull(nexusConfiguration);
     this.repositoryRouter = checkNotNull(repositoryRouter);
     this.contentRenderer = checkNotNull(contentRenderer);
     this.webUtils = checkNotNull(webUtils);
+    this.contentSecurityPolicy = checkNotNull(contentSecurityPolicy);
     logger.debug("dereferenceLinks={}", DEREFERENCE_LINKS);
   }
 
@@ -342,12 +347,12 @@ public class ContentServlet
   }
 
   // service
-
   @Override
   protected void service(final HttpServletRequest request, final HttpServletResponse response)
       throws ServletException, IOException
   {
     response.setHeader("Accept-Ranges", "bytes");
+    contentSecurityPolicy.apply(request, response);
 
     final String method = request.getMethod();
     switch (method) {

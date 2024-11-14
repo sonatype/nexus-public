@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.configuration.ConfigurationLoadEvent;
 import org.sonatype.nexus.configuration.application.ApplicationConfiguration;
 import org.sonatype.nexus.configuration.application.GlobalRemoteConnectionSettings;
 import org.sonatype.nexus.proxy.events.NexusStoppedEvent;
@@ -33,6 +34,7 @@ import com.google.common.primitives.Ints;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -88,6 +90,19 @@ public class Hc4ProviderImpl
    * Default pool idle time: 30 seconds.
    */
   private static final long CONNECTION_POOL_IDLE_TIME_DEFAULT = TimeUnit.SECONDS.toMillis(30);
+
+  /**
+   * Key for customizing period of inactivity after which persistent connections must be re-validated
+   * prior to being leased to the consumer.
+   * Value is milliseconds.
+   */
+  private static final String CONNECTION_POOL_VALIDATE_AFTER_INACTIVITY_TIME_KEY =
+      "nexus.apacheHttpClient4x.validateAfterInactivityTime";
+
+  /**
+   * Default period of inactivity: 2 seconds.
+   */
+  private static final long CONNECTION_POOL_VALIDATE_AFTER_INACTIVITY_TIME_DEFAULT = TimeUnit.SECONDS.toMillis(2);
 
   /**
    * Key for customizing connection pool timeout. In other words, how long should a HTTP request execution be blocked
@@ -150,12 +165,14 @@ public class Hc4ProviderImpl
     this.eventBus.register(this);
     this.jmxInstaller.register(sharedConnectionManager);
     log.info(
-        "Started (connectionPoolMaxSize {}, connectionPoolSize {}, connectionPoolIdleTime {} ms, connectionPoolTimeout {} ms, keepAliveMaxDuration {} ms)",
+        "Started (connectionPoolMaxSize {}, connectionPoolSize {}, connectionPoolIdleTime {} ms, " +
+            "connectionPoolTimeout {} ms, keepAliveMaxDuration {} ms, validateAfterInactivityTime {} ms)",
         getConnectionPoolMaxSize(),
         getConnectionPoolSize(),
         getConnectionPoolIdleTime(),
         getConnectionPoolTimeout(),
-        getKeepAliveMaxDuration()
+        getKeepAliveMaxDuration(),
+        getValidateAfterInactivityTime()
     );
   }
 
@@ -180,6 +197,16 @@ public class Hc4ProviderImpl
    */
   protected long getConnectionPoolIdleTime() {
     return SystemPropertiesHelper.getLong(CONNECTION_POOL_IDLE_TIME_KEY, CONNECTION_POOL_IDLE_TIME_DEFAULT);
+  }
+
+  /**
+   * Get period of inactivity in milliseconds after which persistent connections must be re-validated
+   * prior to being leased to the consumer.
+   */
+  protected long getValidateAfterInactivityTime() {
+    return SystemPropertiesHelper.getLong(
+        CONNECTION_POOL_VALIDATE_AFTER_INACTIVITY_TIME_KEY,
+        CONNECTION_POOL_VALIDATE_AFTER_INACTIVITY_TIME_DEFAULT);
   }
 
   /**
@@ -290,12 +317,24 @@ public class Hc4ProviderImpl
     return connManager;
   }
 
+  @Subscribe
+  public void on(final ConfigurationLoadEvent event) {
+    RemoteStorageContext storageContext = event.getApplicationConfiguration().getGlobalRemoteStorageContext();
+    if (storageContext != null) {
+      sharedConnectionManager.setConnectionTimeout(getConnectionTimeout(storageContext));
+    }
+  }
+
   private class ManagedClientConnectionManager
       extends PoolingHttpClientConnectionManager
   {
-
     public ManagedClientConnectionManager(final Registry<ConnectionSocketFactory> schemeRegistry) {
       super(schemeRegistry);
+      setValidateAfterInactivity((int) getValidateAfterInactivityTime());
+    }
+
+    public void setConnectionTimeout(final int connectionTimeout) {
+      setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(connectionTimeout).build());
     }
 
     @Override

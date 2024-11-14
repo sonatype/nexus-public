@@ -84,18 +84,4 @@ public class BasicJerseyNexusClientIT
     factory.createFor(BaseUrl.baseUrlFrom("https://foobar123.sonatype.org/"));
   }
 
-  /**
-   * Test formerly (erroneously) expected a different exception that was actually caused by requesting https from a
-   * non-secured server. It started failing when that site was secured. Leaving in place for legacy NX2 but
-   * should serve as a lesson - do not depend on publicly hosted websites for internal testing ;)
-   */
-  @Test(expected = NexusClientNotFoundException.class)
-  public void createWithWrongBaseUrlNotANexus()
-      throws MalformedURLException
-  {
-    final NexusClientFactory factory = new JerseyNexusClientFactory();
-    // this will fail, remoteUrl works but is not a Nexus
-    factory.createFor(BaseUrl.baseUrlFrom("https://example.com"));
-  }
-
 }

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>2.15.1-02</version>
+    <version>2.15.2-03</version>
   </parent>
 
   <artifactId>nexus-buildsupport-maven</artifactId>
@@ -31,7 +31,7 @@
     <apache-maven.version>3.0.5</apache-maven.version>
     <aether.version>1.13.1</aether.version>
     <wagon.version>2.4</wagon.version>
-    <maven-indexer.version>5.1.2-bf3d48b</maven-indexer.version>
+    <maven-indexer.version>5.1.2-202109</maven-indexer.version>
     <sonatype-indexer.version>1.5</sonatype-indexer.version>
   </properties>
 
