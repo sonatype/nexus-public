@@ -1341,7 +1341,6 @@
             <artifactId>spotless-maven-plugin</artifactId>
             <executions>
               <execution>
-                <phase>compile</phase>
                 <goals>
                   <goal>apply</goal>
                 </goals>
