@@ -84,7 +84,7 @@ Ext.define('NX.controller.AnalyticsOptOut', {
             'Sonatype will start to collect anonymous, non-sensitive usage metrics ' +
             'and performance information to shape the future of Nexus Repository.  ' +
             '<a class="nx-coreui-component-analyticsoptout-banner-text-link" ' +
-            'href="https://help.sonatype.com/repomanager3/system-configuration/capabilities/in-product-analytics-capability">Learn more</a> ' +
+            'href="https://help.sonatype.com/en/in-product-analytics-capability.html">Learn more</a> ' +
             'about the information we collect or '+
             '<span><a id="nx-analytics-opt-out-button" class="nx-coreui-component-analyticsoptout-banner-text-link">decline</a></span>.</div>',
       listeners: {
