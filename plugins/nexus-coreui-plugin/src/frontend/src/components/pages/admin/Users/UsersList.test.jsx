@@ -167,7 +167,7 @@ describe('UsersList', function() {
   });
 
   it('filters by User Source', async function() {
-    const {sourceFilter, filter, rows} = selectors;
+    const {sourceFilter, filter, rows, queryLoadingMask} = selectors;
     const filterString = 'test';
     const source = 'Crowd';
 
@@ -175,10 +175,16 @@ describe('UsersList', function() {
 
     when(Axios.post).calledWith(URL, USERS_REQUEST).mockResolvedValue({data: TestUtils.makeExtResult(ROWS.CROWD)});
 
+    expect(rows()).toHaveLength(2);
+
     expect(sourceFilter()).toHaveValue('default');
     expect(sourceFilter().options).toHaveLength(5);
 
     userEvent.selectOptions(sourceFilter(), source);
+
+    await waitForElementToBeRemoved(queryLoadingMask());
+
+    expect(rows()).toHaveLength(ROWS.CROWD.length);
 
     await TestUtils.changeField(filter, filterString);
 

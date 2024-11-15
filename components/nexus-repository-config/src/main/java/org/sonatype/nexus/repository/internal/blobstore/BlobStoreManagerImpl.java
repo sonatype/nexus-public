@@ -178,7 +178,7 @@ public class BlobStoreManagerImpl
         blobStore.init(configuration);
       }
       catch (Exception e) {
-        log.error("Unable to restore BlobStore {}", configuration, e);
+        log.error("Unable to restore BlobStore {}", configuration.getName(), e);
       }
       finally {
         if(blobStore != null) {

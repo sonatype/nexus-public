@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {
   NxButton,
   NxFontAwesomeIcon,
@@ -40,13 +40,13 @@ const getLabels = (frozen, frozenManually) => {
 };
 
 export default function FreezeActionModal({service}) {
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
 
   const {frozen} = state.context;
 
   const frozenManually = ExtJS.state().getValue('frozenManually');
 
-  const close = () => send('CANCEL');
+  const close = () => send({type: 'CANCEL'});
   const EVENT_TYPE = !frozenManually && frozen ? 'FORCE_RELEASE' : 'TOGGLE';
   const action = () => send(EVENT_TYPE);
 

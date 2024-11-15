@@ -87,9 +87,9 @@ export default function PrivilegesSelectionModal({
   const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
   const descriptionSortDir = ListMachineUtils.getSortDirection('description', state.context);
 
-  const sortBySelect = () => send('SORT_BY_SELECT');
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByDescription = () => send('SORT_BY_DESCRIPTION');
+  const sortBySelect = () => send({type: 'SORT_BY_SELECT'});
+  const sortByName = () => send({type: 'SORT_BY_NAME'});
+  const sortByDescription = () => send({type: 'SORT_BY_DESCRIPTION'});
 
   const counterClasses = classNames('nx-pull-right', {
     'nx-counter--active': tempSelectedPrivileges.length > 0

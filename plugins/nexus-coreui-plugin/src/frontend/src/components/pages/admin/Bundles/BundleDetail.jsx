@@ -13,13 +13,13 @@
 import React from 'react';
 import {NxBackButton, NxH3, NxLoadWrapper} from '@sonatype/react-shared-components';
 import {ContentBody, Page, Section} from '@sonatype/nexus-ui-plugin';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import './BundleDetail.scss';
 import UIStrings from '../../../../constants/UIStrings';
 
 
 export default function BundleDetail({itemId, service}) {
-  const [current] = useService(service);
+  const [current] = useActor(service);
   const isLoading = current.matches('loading');
   const data = current.context.data.find(v => v.id == itemId);
   const error = current.context.error;

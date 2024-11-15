@@ -117,7 +117,7 @@ export default function BlobStoresForm({itemId, onDone}) {
     <PageHeader>
       <PageTitle text={isEdit ? FORM.EDIT_TILE(pristineData.name) : FORM.CREATE_TITLE}
                  description={isEdit ? FORM.EDIT_DESCRIPTION(type?.name || pristineData.type) : null}/>
-      {isEdit && type?.id !== 'group' && types.some(type => type.id === 'group') &&
+      {isEdit && type?.id !== 'group' && types?.some(type => type.id === 'group') &&
       <PageActions>
         <NxButton variant="primary" onClick={modalConvertToGroupOpen}>{FORM.CONVERT_TO_GROUP_BUTTON}</NxButton>
       </PageActions>
@@ -142,7 +142,7 @@ export default function BlobStoresForm({itemId, onDone}) {
         <NxFormGroup label={FORM.TYPE.label} sublabel={FORM.TYPE.sublabel} isRequired>
           <NxFormSelect {...FormUtils.selectProps('type', current)} value={type?.id} onChange={setType}>
             <option disabled={isTypeSelected} value=""></option>
-            {types.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
+            {types?.map(({id, name}) => <option key={id} value={id}>{name}</option>)}
           </NxFormSelect>
         </NxFormGroup>
         }

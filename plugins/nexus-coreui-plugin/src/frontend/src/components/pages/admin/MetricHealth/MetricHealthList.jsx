@@ -74,21 +74,21 @@ export default function MetricHealthList({onEdit}) {
               <NxTable.Row>
                 <NxTable.Cell hasIcon />
                 <NxTable.Cell
-                  onClick={() => send('SORT_BY_NAME')}
+                  onClick={() => send({type: 'SORT_BY_NAME'})}
                   isSortable
                   sortDir={nameSortDir}
                 >
                   {METRIC_HEALTH.NAME_HEADER}
                 </NxTable.Cell>
                 <NxTable.Cell
-                  onClick={() => send('SORT_BY_ERROR')}
+                  onClick={() => send({type: 'SORT_BY_ERROR'})}
                   isSortable
                   sortDir={errorSortDir}
                 >
                   {METRIC_HEALTH.ERROR_HEADER}
                 </NxTable.Cell>
                 <NxTable.Cell
-                  onClick={() => send('SORT_BY_MESSAGE')}
+                  onClick={() => send({type: 'SORT_BY_MESSAGE'})}
                   isSortable
                   sortDir={messageSortDir}
                 >

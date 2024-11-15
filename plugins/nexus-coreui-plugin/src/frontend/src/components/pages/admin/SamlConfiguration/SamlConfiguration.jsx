@@ -45,7 +45,7 @@ export default function SamlConfiguration() {
   const {data: settings, isPristine} = current.context;
 
   function discard() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   return <Page>

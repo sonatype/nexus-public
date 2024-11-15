@@ -55,9 +55,9 @@ export default function RolesList({onCreate, onEdit}) {
   const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
   const descriptionSortDir = ListMachineUtils.getSortDirection('description', state.context);
 
-  const sortById = () => send('SORT_BY_ID');
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByDescription = () => send('SORT_BY_DESCRIPTION');
+  const sortById = () => send({type: 'SORT_BY_ID'});
+  const sortByName = () => send({type: 'SORT_BY_NAME'});
+  const sortByDescription = () => send({type: 'SORT_BY_DESCRIPTION'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
   const canCreate = ExtJS.checkPermission(Permissions.ROLES.CREATE);

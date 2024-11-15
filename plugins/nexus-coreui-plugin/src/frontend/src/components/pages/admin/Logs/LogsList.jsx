@@ -66,13 +66,13 @@ export default function LogsList({onEdit}) {
         <NxTable>
           <NxTableHead>
             <NxTableRow>
-              <NxTableCell onClick={() => send('SORT_BY_FILE_NAME')} isSortable sortDir={fileNameSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_FILE_NAME'})} isSortable sortDir={fileNameSortDir}>
                 {UIStrings.LOGS.LIST.FILE_NAME_LABEL}
               </NxTableCell>
-              <NxTableCell onClick={() => send('SORT_BY_SIZE')} isSortable sortDir={sizeSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_SIZE'})} isSortable sortDir={sizeSortDir}>
                 {UIStrings.LOGS.LIST.SIZE_LABEL}
               </NxTableCell>
-              <NxTableCell onClick={() => send('SORT_BY_LAST_MODIFIED')} isSortable sortDir={lastModifiedSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_LAST_MODIFIED'})} isSortable sortDir={lastModifiedSortDir}>
                 {UIStrings.LOGS.LIST.LAST_MODIFIED_LABEL}
               </NxTableCell>
               <NxTableCell chevron/>

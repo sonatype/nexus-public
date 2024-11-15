@@ -61,8 +61,8 @@ public class BrandingCapabilityConfiguration
   public String toString() {
     return getClass().getSimpleName()
         + "{"
-        + "headerEnabled=" + getHeaderEnabled()
-        + ", footerEnabled=" + getFooterEnabled()
+        + "headerEnabled=" + isHeaderEnabled()
+        + ", footerEnabled=" + isFooterEnabled()
         + "}";
   }
 }

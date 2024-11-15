@@ -105,7 +105,8 @@ export default class TestUtils {
       } else {
         return screen.queryByText(new RegExp(TestUtils.SAVE_ERROR), options);
       }
-    }
+    },
+    querySaveErrorAlert: () => screen.queryByLabelText("form saving errors")
   };
 
   static tableSelectors = {

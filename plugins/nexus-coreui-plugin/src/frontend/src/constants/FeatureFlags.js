@@ -17,5 +17,6 @@
 
 export default {
   MALWARE_RISK_ENABLED: 'nexus.malware.risk.enabled',
-  MALWARE_RISK_ON_DISK_ENABLED: 'nexus.malware.risk.on.disk.enabled'
+  MALWARE_RISK_ON_DISK_ENABLED: 'nexus.malware.risk.on.disk.enabled',
+  MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED: 'nexus.malware.risk.on.disk.nonadmin.override.enabled'
 };

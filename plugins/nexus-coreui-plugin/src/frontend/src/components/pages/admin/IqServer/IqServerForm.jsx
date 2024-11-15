@@ -44,11 +44,11 @@ export default function IqServerForm() {
   const canOpenIqServerDashboard = pristineData.enabled && ValidationUtils.isUrl(pristineData.url);
 
   function verifyConnection() {
-    send('VERIFY_CONNECTION');
+    send({type: 'VERIFY_CONNECTION'});
   }
 
   function discard() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   function handleUrlChange(url) {
@@ -61,7 +61,7 @@ export default function IqServerForm() {
   }
 
   function dismissValidationMessage() {
-    send('DISMISS');
+    send({type: 'DISMISS'});
   }
 
   function handleAuthTypeChange(value) {

@@ -35,7 +35,7 @@ export default function AnonymousSettingsForm() {
   const {data, isPristine, realms} = current.context;
 
   function discard() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   return <NxStatefulForm

@@ -35,10 +35,10 @@ export default function RealmsForm() {
   const showLocalRealmRemovalModal = 
     state.matches('showLocalRealmRemovalModal');
 
-  const discard = () => send('RESET');
-  const checkLocalRealmRemoval = () => send('CHECK_LOCAL_REALM_REMOVAL');
-  const save = () => send('SAVE');
-  const closeModal = () => send('CLOSE');
+  const discard = () => send({type: 'RESET'});
+  const checkLocalRealmRemoval = () => send({type: 'CHECK_LOCAL_REALM_REMOVAL'});
+  const save = () => send({type: 'SAVE'});
+  const closeModal = () => send({type: 'CLOSE'});
 
   const available =
     data?.available?.map(({ id, name: displayName }) => ({

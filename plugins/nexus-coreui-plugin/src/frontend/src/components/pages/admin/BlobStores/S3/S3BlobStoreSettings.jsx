@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
 
@@ -39,7 +39,7 @@ const FIELDS = UIStrings.S3_BLOBSTORE_CONFIGURATION;
 const MAX_REPLICATION_BUCKETS = 5;
 
 export default function S3BlobStoreSettings({service}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
   const {bucketConfiguration} = current.context.data;
   const pristineBucketConfig = current.context.pristineData.bucketConfiguration;
   const activeRegion = pristineBucketConfig.activeRegion;

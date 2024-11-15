@@ -85,24 +85,24 @@ export default forwardRef(({actor, onDone}, ref) => {
     (changingPassword && !changingPasswordMessage);
   const confirmingDelete = state.matches('confirmingDelete');
 
-  const next = () => send('NEXT');
+  const next = () => send({type: 'NEXT'});
 
   const verify = () => {
     if (canVerify) {
-      send('VERIFY_CONNECTION');
+      send({type: 'VERIFY_CONNECTION'});
     }
   };
 
   const onDelete = () => {
     if (canDelete()) {
-      send('DELETE_CONNECTION');
+      send({type: 'DELETE_CONNECTION'});
     }
   };
 
   const updateProtocol = (value) =>
     send({type: 'UPDATE_PROTOCOL', value});
 
-  const onChangePassword = () => send('CHANGE_PASSWORD');
+  const onChangePassword = () => send({type: 'CHANGE_PASSWORD'});
 
   const validations = () => {
     if (isEdit && isPristine) {
@@ -323,7 +323,7 @@ export default forwardRef(({actor, onDone}, ref) => {
       </NxStatefulForm>
       {askingPassword && (
         <LdapServersModalPassword
-          onCancel={() => send('CANCEL')}
+          onCancel={() => send({type: 'CANCEL'})}
           onSubmit={({value}) =>
             send({type: 'DONE', name: 'authPassword', value})
           }
@@ -341,10 +341,10 @@ export default forwardRef(({actor, onDone}, ref) => {
           </NxModal.Content>
           <NxFooter>
             <NxButtonBar>
-              <NxButton onClick={() => send('CANCEL')}>
+              <NxButton onClick={() => send({type: 'CANCEL'})}>
                 {SETTINGS.CANCEL_BUTTON_LABEL}
               </NxButton>
-              <NxButton onClick={() => send('ACCEPT')} variant="primary">
+              <NxButton onClick={() => send({type: 'ACCEPT'})} variant="primary">
                 {LABELS.MODAL_DELETE.CONFIRM}
               </NxButton>
             </NxButtonBar>

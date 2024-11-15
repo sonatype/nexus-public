@@ -101,7 +101,7 @@ export default function UploadDetails({ itemId }) {
         */}
       <div className="nx-tile">
         <NxStatefulForm { ...FormUtils.formProps(state, send) }
-                        onCancel={() => send('CANCEL')}
+                        onCancel={() => send({type: 'CANCEL'})}
                         submitBtnText={UploadStrings.UPLOAD.DETAILS.SUBMIT_BTN_LABEL}
                         aria-labelledby="upload-details-title"
                         aria-describedby="upload-details-description">
@@ -146,7 +146,7 @@ export default function UploadDetails({ itemId }) {
                 { multipleUpload &&
                   <NxFormRow className="nxrm-upload-details__add-asset-row">
                     <NxButtonBar>
-                      <NxButton type="button" variant="tertiary" onClick={() => send('ADD_ASSET')}>
+                      <NxButton type="button" variant="tertiary" onClick={() => send({type: 'ADD_ASSET'})}>
                         <NxFontAwesomeIcon icon={faPlus} />
                         <span>{UploadStrings.UPLOAD.DETAILS.ADD_ANOTHER_ASSET_BTN_LABEL}</span>
                       </NxButton>

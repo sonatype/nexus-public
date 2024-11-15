@@ -10,19 +10,48 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture.internal.state
-
-import groovy.transform.ToString
+package org.sonatype.nexus.rapture.internal.state;
 
 /**
- * State value exchange object.
+ * Command exchange object.
  *
  * @since 3.0
  */
-@ToString(includePackage = false, includeNames = true)
-class StateValueXO
+public class CommandXO
 {
-  String hash
+  private String type;
 
-  Object value
+  private Object data;
+
+  public CommandXO() {
+  }
+
+  public CommandXO(String type, Object data) {
+    this.type = type;
+    this.data = data;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
+
+  public Object getData() {
+    return data;
+  }
+
+  public void setData(Object data) {
+    this.data = data;
+  }
+
+  @Override
+  public String toString() {
+    return "CommandXO{" +
+        "type='" + type + '\'' +
+        ", data=" + data +
+        '}';
+  }
 }

@@ -99,13 +99,13 @@ export default function RoutingRulesList({onCreate, onEdit}) {
         <NxTable>
           <NxTableHead>
             <NxTableRow>
-              <NxTableCell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_NAME'})} isSortable sortDir={nameSortDir}>
                 {LABELS.NAME_LABEL}
               </NxTableCell>
-              <NxTableCell onClick={() => send('SORT_BY_DESCRIPTION')} isSortable sortDir={descriptionSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_DESCRIPTION'})} isSortable sortDir={descriptionSortDir}>
                 {LABELS.DESCRIPTION_LABEL}
               </NxTableCell>
-              <NxTableCell onClick={() => send('SORT_BY_ASSIGNED_REPOSITORY_COUNT')} isSortable sortDir={usedBySortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_ASSIGNED_REPOSITORY_COUNT'})} isSortable sortDir={usedBySortDir}>
                 {LABELS.USED_BY_LABEL}
               </NxTableCell>
               <NxTableCell chevron/>

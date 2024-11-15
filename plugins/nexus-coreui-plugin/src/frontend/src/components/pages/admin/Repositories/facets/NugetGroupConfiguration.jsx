@@ -39,7 +39,7 @@ export default function NugetGroupConfiguration({parentMachine}) {
   const [groupVersion, setGroupVersion] = useState('');
 
   useEffect(() => {
-    !allRepositories?.length && repositoriesSend('LOAD');
+    !allRepositories?.length && repositoriesSend({type: 'LOAD'});
   }, []);
 
   const [parentState, sendParent] = parentMachine;

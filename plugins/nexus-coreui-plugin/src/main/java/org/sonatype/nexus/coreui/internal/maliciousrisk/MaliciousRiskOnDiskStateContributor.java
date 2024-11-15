@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableMap;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_ENABLED_NAMED;
+import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED_NAMED;
 
 @Named
 @Singleton
@@ -33,9 +35,14 @@ public class MaliciousRiskOnDiskStateContributor
 
   @Inject
   public MaliciousRiskOnDiskStateContributor(
-      @Named(MALWARE_RISK_ON_DISK_ENABLED_NAMED) final boolean maliciousRiskOnDiskEnabled)
+      @Named(MALWARE_RISK_ON_DISK_ENABLED_NAMED) final boolean maliciousRiskOnDiskEnabled,
+      @Named(MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED_NAMED)
+      final boolean maliciousRiskOnDiskNoneAdminOverrideEnabled)
   {
-    this.state = ImmutableMap.of(MALWARE_RISK_ON_DISK_ENABLED, maliciousRiskOnDiskEnabled);
+    this.state = ImmutableMap.of(
+        MALWARE_RISK_ON_DISK_ENABLED, maliciousRiskOnDiskEnabled,
+        MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED, maliciousRiskOnDiskNoneAdminOverrideEnabled
+    );
   }
 
   @Override

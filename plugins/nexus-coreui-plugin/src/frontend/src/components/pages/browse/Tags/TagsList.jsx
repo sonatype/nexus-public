@@ -48,9 +48,9 @@ export default function TagsList({onEdit}) {
   const idSortDir = ListMachineUtils.getSortDirection('id', state.context);
   const firstCreatedSortDir = ListMachineUtils.getSortDirection('firstCreatedTime', state.context);
   const lastUpdatedSortDir = ListMachineUtils.getSortDirection('lastUpdatedTime', state.context);
-  const sortById = () => send('SORT_BY_ID');
-  const sortByFirstCreated = () => send('SORT_BY_FIRST_CREATED_TIME');
-  const sortByLastUpdated = () => send('SORT_BY_LAST_UPDATED_TIME');
+  const sortById = () => send({type: 'SORT_BY_ID'});
+  const sortByFirstCreated = () => send({type: 'SORT_BY_FIRST_CREATED_TIME'});
+  const sortByLastUpdated = () => send({type: 'SORT_BY_LAST_UPDATED_TIME'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 

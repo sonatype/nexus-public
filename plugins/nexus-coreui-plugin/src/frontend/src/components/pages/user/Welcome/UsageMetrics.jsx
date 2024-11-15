@@ -44,7 +44,7 @@ export default function UsageMetrics() {
   const isCircuitBEnabled = ExtJS.state().getValue('nexus.circuitb.enabled');
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   };
 
   return !isHa && <div className={`nxrm-usage-metrics${isCircuitBEnabled ? '-circuit-b' : ''} nxrm-metrics-section`}>

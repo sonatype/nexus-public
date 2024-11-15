@@ -28,7 +28,7 @@ export default function GenericGroupConfiguration({parentMachine}) {
   const repositories = repositoriesState.context.data;
 
   useEffect(() => {
-    !repositories?.length && repositoriesSend('LOAD');
+    !repositories?.length && repositoriesSend({type: 'LOAD'});
   }, []);
 
   const [parentState, sendParent] = parentMachine;

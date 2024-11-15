@@ -28,7 +28,7 @@ import org.sonatype.nexus.extdirect.model.Response;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.softwarementors.extjs.djn.api.RegisteredMethod;
-import org.apache.commons.collections.ListUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.UnauthenticatedException;
@@ -49,7 +49,7 @@ public class ExtDirectExceptionHandler
 {
   private static final Logger log = LoggerFactory.getLogger(ExtDirectExceptionHandler.class);
 
-  private static final List<Class<Throwable>> SUPPRESSED_EXCEPTIONS = ListUtils.unmodifiableList(
+  private static final List<Class<? extends RuntimeException>> SUPPRESSED_EXCEPTIONS = ListUtils.unmodifiableList(
       Arrays.asList(UnauthenticatedException.class, AuthenticationException.class, ValidationErrorsException.class));
 
   public Response handleException(final RegisteredMethod method, final Throwable e) {

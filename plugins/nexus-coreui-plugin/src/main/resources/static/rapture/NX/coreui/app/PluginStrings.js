@@ -652,7 +652,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreFeature_Confirm_Warning: 'Warning: This operation cannot be undone',
     Blobstore_BlobstoreFeature_Promote_Success: 'Blob store: {0} promoted to blob store group',
     Blobstore_BlobstoreFeature_Update_Title: 'Update Blob Store?',
-    Blobstore_BlobstoreFeature_Update_Warning: 'Warning: The blob store will be temporarily unavailable for a short period.  This function does not migrate data to a new location.',
+    Blobstore_BlobstoreFeature_Update_Warning: 'Warning: The blob store will be temporarily unavailable for a short period.  This function does not migrate data to a new location. Previously created data will not be available',
     Blobstore_BlobstoreSettings_Title: 'Settings',
     Blobstore_BlobstoreAdd_Type_FieldLabel: 'Type',
     Blobstore_BlobstoreAdd_Type_EmptyText: 'Select a type',

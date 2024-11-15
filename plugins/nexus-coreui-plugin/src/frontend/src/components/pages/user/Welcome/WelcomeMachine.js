@@ -26,6 +26,7 @@ const action = APIConstants.EXT.OUTREACH.ACTION,
 
 const welcomeMachine = createMachine({
   id: 'WelcomeMachine',
+  predictableActionArguments: true,
 
   initial: 'loaded',
 

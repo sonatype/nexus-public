@@ -61,11 +61,11 @@ export default function SslCertificatesDetailsForm({itemId, onDone}) {
   const {data = {}, loadError} = state.context;
   const isLoading = state.matches('loading');
 
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   const confirmDelete = () => {
     if (canDelete) {
-      send('CONFIRM_DELETE');
+      send({type: 'CONFIRM_DELETE'});
     }
   };
 

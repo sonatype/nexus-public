@@ -23,7 +23,7 @@ export default {
     MESSAGES: {
       CONFIRM_SAVE: {
         TITLE: 'Update Blob Store',
-        MESSAGE: 'Warning: The blob store will be temporarily unavailable for a short period.  This function does not migrate data to a new location.',
+        MESSAGE: 'Warning: The blob store will be temporarily unavailable for a short period.  This function does not migrate data to a new location. Previously created data will not be available',
         YES: 'Update',
         NO: 'Cancel'
       },
@@ -161,6 +161,16 @@ export default {
         JSON_PATH: {
           label: 'JSON Credential File Path',
           sublabel: 'Upload a .json file (maximum size: 4KB).'
+        }
+      },
+      ENCRYPTION: {
+        LABEL: 'Encryption',
+        SUBLABEL: 'Encryption type',
+        DEFAULT: 'Default Cloud-managed encryption',
+        KMS_MANAGED: 'Enable KMS managed encryption',
+        KEY_NAME: {
+          label: 'KMS Key ID',
+          sublabel: 'Enter the KMS Key ID to use for encryption'
         }
       },
       ERROR: {

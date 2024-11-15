@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {
   FormUtils,
@@ -34,7 +34,7 @@ import TasksSummary from './TasksSummary';
 const {TASKS: {FORM: LABELS}} = UIStrings;
 
 export default function TasksForm({service, onDone}) {
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
 
   const {
     data,
@@ -48,9 +48,9 @@ export default function TasksForm({service, onDone}) {
   const isEdit = !isCreate;
   const isTypeSelected = Boolean(data.typeId);
 
-  const confirmDelete = () => send('CONFIRM_DELETE');
-  const confirmRun = () => send('CONFIRM_RUN');
-  const confirmStop = () => send('CONFIRM_STOP');
+  const confirmDelete = () => send({type: 'CONFIRM_DELETE'});
+  const confirmRun = () => send({type: 'CONFIRM_RUN'});
+  const confirmStop = () => send({type: 'CONFIRM_STOP'});
   const cancel = () => onDone();
 
   return (

@@ -56,7 +56,7 @@ export default function ContentSelectorsList({onCreate, onEdit}) {
   const descriptionSortDir = ListMachineUtils.getSortDirection('description', state.context);
 
   function filter(value) {
-    send('FILTER', {filter: value});
+    send({type: 'FILTER', filter: value});
   }
 
   const canCreate = ExtJS.checkPermission('nexus:selectors:create');
@@ -83,13 +83,13 @@ export default function ContentSelectorsList({onCreate, onEdit}) {
         <NxTable>
           <NxTableHead>
             <NxTableRow>
-              <NxTableCell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_NAME'})} isSortable sortDir={nameSortDir}>
                 {LABELS.NAME_LABEL}
               </NxTableCell>
-              <NxTableCell onClick={() => send('SORT_BY_TYPE')} isSortable sortDir={typeSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_TYPE'})} isSortable sortDir={typeSortDir}>
                 {LABELS.TYPE_LABEL}
               </NxTableCell>
-              <NxTableCell onClick={() => send('SORT_BY_DESCRIPTION')} isSortable sortDir={descriptionSortDir}>
+              <NxTableCell onClick={() => send({type: 'SORT_BY_DESCRIPTION'})} isSortable sortDir={descriptionSortDir}>
                 {LABELS.DESCRIPTION_LABEL}
               </NxTableCell>
               <NxTableCell chevron/>

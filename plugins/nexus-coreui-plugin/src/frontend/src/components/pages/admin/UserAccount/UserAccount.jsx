@@ -37,7 +37,7 @@ export default function UserAccount() {
   const userId = state.context.data?.userId;
 
   function discard() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   return (

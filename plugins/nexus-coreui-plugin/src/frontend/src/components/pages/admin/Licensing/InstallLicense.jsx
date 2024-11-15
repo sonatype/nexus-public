@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {
   FormUtils,
@@ -38,7 +38,7 @@ import UIStrings from '../../../../constants/UIStrings';
 const {LICENSING: LABELS, SETTINGS} = UIStrings;
 
 export default function InstallLicense({service}) {
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
   const canEdit = ExtJS.checkPermission(Permissions.LICENSING.CREATE);
 
   const {
@@ -52,14 +52,14 @@ export default function InstallLicense({service}) {
   const isSaving = state.matches('saving');
   const isShowAgreementModal = state.matches('agreement');
 
-  const showAgreementModal = () => send('SHOW_AGREEMENT_MODAL');
-  const reset = () => send('RESET');
-  const onAccept = () => send('ACCEPT');
-  const onDecline = () => send('DECLINE');
+  const showAgreementModal = () => send({type: 'SHOW_AGREEMENT_MODAL'});
+  const reset = () => send({type: 'RESET'});
+  const onAccept = () => send({type: 'ACCEPT'});
+  const onDecline = () => send({type: 'DECLINE'});
 
   const setFiles = (fileList) => {
     if (canEdit) {
-      send('SET_FILES', {data: {files: fileList}});
+      send({type: 'SET_FILES', data: {files: fileList}});
     }
   }
 

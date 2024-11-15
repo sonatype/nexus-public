@@ -82,9 +82,9 @@ export default function LdapServersList({onCreate, onEdit}) {
   const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
   const urlSortDir = ListMachineUtils.getSortDirection('url', state.context);
 
-  const sortByOrder = () => send('SORT_BY_ORDER');
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByUrl = () => send('SORT_BY_URL');
+  const sortByOrder = () => send({type: 'SORT_BY_ORDER'});
+  const sortByName = () => send({type: 'SORT_BY_NAME'});
+  const sortByUrl = () => send({type: 'SORT_BY_URL'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 
@@ -95,11 +95,11 @@ export default function LdapServersList({onCreate, onEdit}) {
   };
 
   const change = () => send({type: 'TOGGLE_ORDER_MODAL', value: true});
-  const clear = () => send('CLEAR_CACHE');
+  const clear = () => send({type: 'CLEAR_CACHE'});
 
   const onReorder = (id, direction) => send({type: 'REORDER', id, direction});
   const onCancelOrder = () => send({type: 'TOGGLE_ORDER_MODAL', value: false});
-  const onSaveOrder = () => send('SAVE_ORDER');
+  const onSaveOrder = () => send({type: 'SAVE_ORDER'});
   const filterOrder = (value) =>
     send({
       type: 'FILTER_ORDER_LIST',

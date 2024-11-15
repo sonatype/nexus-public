@@ -28,6 +28,34 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>bundle</packaging>
 
+  <!--
+  dependencyManagement blocks are typically reserved for the POMs found within buildsupport.
+  We have defined one here specifically to help eliminate the use of commons-collections 3.x
+  and commons-beanutils from the Nexus Repository project.
+  The shiro-guice dependency used by the nexus-security module is the only remaining dependency
+  to have a transitive dependency on commons-collections 3.x and commons-beanutils.
+  -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.2</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.9.4</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>com.auth0</groupId>
@@ -105,14 +133,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jcl-over-slf4j</artifactId>
-    </dependency>
-
-    <!--
-    Shiro requires beanutils, ensure we get the right version.
-    -->
-    <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
     </dependency>
 
     <dependency>

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {
   NxH2,
@@ -29,12 +29,12 @@ const {
 } = UIStrings;
 
 export default function UserTokensResetModal({service}) {
-  const [state, send] = useService(service);
+  const [state, send] = useActor(service);
 
   const {confirmationString, confirmationStringValidationError} = state.context;
 
-  const resetUserTokens = () => send('DELETE');
-  const cancelResetConfirmation = () => send('CANCEL_RESET_CONFIRMATION');
+  const resetUserTokens = () => send({type: 'DELETE'});
+  const cancelResetConfirmation = () => send({type: 'CANCEL_RESET_CONFIRMATION'});
   const setConfirmationString = (value) => send({type: 'SET_CONFIRMATION_STRING', value});
 
   return (

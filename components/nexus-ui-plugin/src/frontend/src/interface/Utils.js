@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {useRef, useState} from 'react';
-import {assign, Machine} from "xstate";
+import {assign, createMachine} from "xstate";
 import ExtJS from "./ExtJS";
 import UIStrings from "../constants/UIStrings";
 import {__, any, hasPath, is, join, map, path, pathOr, whereEq} from 'ramda';
@@ -349,7 +349,7 @@ export default class Utils {
       }
     };
 
-    return Machine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
+    return createMachine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
   }
 
   /**

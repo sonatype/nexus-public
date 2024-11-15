@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {useState} from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {
   FormUtils,
@@ -45,7 +45,7 @@ import PrivilegesSelectionModal from './PrivilegesSelectionModal';
 const {ROLES: {FORM: LABELS}} = UIStrings;
 
 export default function RolesForm({roleId, service, onDone}) {
-  const stateMachine = useService(service);
+  const stateMachine = useActor(service);
   const [state, send] = stateMachine;
 
   const {
@@ -77,7 +77,7 @@ export default function RolesForm({roleId, service, onDone}) {
 
   const cancel = () => onDone();
 
-  const confirmDelete = () => send('CONFIRM_DELETE');
+  const confirmDelete = () => send({type: 'CONFIRM_DELETE'});
 
   const setRoleType = (roleType) => send({type: 'SET_ROLE_TYPE', roleType});
 

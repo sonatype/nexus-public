@@ -63,8 +63,13 @@ Ext.define('NX.view.feature.Content', {
     const isCurrentTitleInTitles = titles.includes(me.currentTitle);
     const user = NX.State.getUser();
     const isRiskOnDiskEnabled = NX.State.getValue(NX.constants.FeatureFlags.MALWARE_RISK_ON_DISK_ENABLED);
+    const isRiskOnDiskNoneAdminOverrideEnabled = NX.State.getValue(
+        NX.constants.FeatureFlags.MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED);
 
-    if (isRiskOnDiskEnabled && isCurrentTitleInTitles && user) {
+    const isAdmin = user && user.administrator;
+    const shouldHideForNonAdmin = isRiskOnDiskNoneAdminOverrideEnabled && !isAdmin;
+
+    if (isRiskOnDiskEnabled && isCurrentTitleInTitles && user && !shouldHideForNonAdmin) {
       maliciousRiskOnDisk.setHeight(285);
       maliciousRiskOnDisk.show();
       maliciousRiskOnDisk.rerender();

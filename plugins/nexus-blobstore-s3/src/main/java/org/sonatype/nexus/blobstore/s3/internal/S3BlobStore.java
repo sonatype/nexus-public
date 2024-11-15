@@ -788,6 +788,12 @@ public class S3BlobStore
     }
   }
 
+  @Override
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(final String prefix, final OffsetDateTime fromDateTime) {
+    String fullPrefix = getContentPrefix() + prefix;
+    return  getBlobIdStream(fullPrefix, fromDateTime).distinct();
+  }
+
   private Stream<BlobId> getBlobIdStream(final String prefix, OffsetDateTime fromDateTime) {
     Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), prefix);
     return stream(summaries.spliterator(), false)

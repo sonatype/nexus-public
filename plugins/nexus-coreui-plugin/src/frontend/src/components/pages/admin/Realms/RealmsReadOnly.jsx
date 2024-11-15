@@ -37,7 +37,7 @@ export default function RealmsReadOnly() {
   const isLoading = current.matches('loading');
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   return (

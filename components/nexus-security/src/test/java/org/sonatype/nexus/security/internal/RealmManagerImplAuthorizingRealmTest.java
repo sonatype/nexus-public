@@ -13,7 +13,6 @@
 package org.sonatype.nexus.security.internal;
 
 import java.util.Collection;
-
 import javax.inject.Inject;
 
 import org.sonatype.nexus.security.AbstractSecurityTest;
@@ -47,24 +46,23 @@ public class RealmManagerImplAuthorizingRealmTest
   @Test
   public void testGetAvailableRealms() {
     assertThat(underTest.getAvailableRealms().stream().map(SecurityRealm::getId).collect(toList()),
-        is(asList(AuthenticatingRealmImpl.NAME, "MockRealmA", "MockRealmB")));
+        is(asList(AuthenticatingRealmImpl.NAME, "MockRealmA", "MockRealmB", "MockRealmC")));
     assertThat(underTest.getAvailableRealms(true).stream().map(SecurityRealm::getId).collect(toList()),
-        is(asList(AuthenticatingRealmImpl.NAME, AuthorizingRealmImpl.NAME, "MockRealmA", "MockRealmB")));
+        is(asList(AuthenticatingRealmImpl.NAME, AuthorizingRealmImpl.NAME, "MockRealmA", "MockRealmB", "MockRealmC")));
   }
 
   @Test
   public void testGetAndSetConfiguredRealmIds() {
-    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmB")));
+    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmB", "MockRealmC")));
 
-    underTest.setConfiguredRealmIds(singletonList("MockRealmA"));
+    underTest.setConfiguredRealmIds(asList("MockRealmA", "InvalidMockRealm"));
     assertThat(underTest.getConfiguredRealmIds(), is(singletonList("MockRealmA")));
 
     underTest.enableRealm("MockRealmC");
     underTest.enableRealm("MockRealmD");
-    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmC", "MockRealmD")));
+    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmC")));
 
     underTest.disableRealm("MockRealmA");
-    underTest.disableRealm("MockRealmD");
     assertThat(underTest.getConfiguredRealmIds(), is(singletonList("MockRealmC")));
 
     underTest.disableRealm("MockRealmC");
@@ -74,7 +72,7 @@ public class RealmManagerImplAuthorizingRealmTest
   @Test
   public void testGetAndSetConfiguredRealmIdsWithHiddenItems() {
     assertThat(underTest.getConfiguredRealmIds(true),
-        is(asList("MockRealmA", "MockRealmB", AuthorizingRealmImpl.NAME)));
+        is(asList("MockRealmA", "MockRealmB", "MockRealmC", AuthorizingRealmImpl.NAME)));
 
     underTest.setConfiguredRealmIds(singletonList("MockRealmA"));
     assertThat(underTest.getConfiguredRealmIds(true), is(asList("MockRealmA", AuthorizingRealmImpl.NAME)));
@@ -96,23 +94,23 @@ public class RealmManagerImplAuthorizingRealmTest
   public void testInstallAlwaysIncludesAuthorizingRealmLast() {
     // "initial" from AbstractSecurityTest only lists "MockRealmA" and "MockRealmB"
     assertThat(realmSecurityManager.getRealms().stream().map(Realm::getName).collect(toList()),
-        is(asList("MockRealmA", "MockRealmB", AuthorizingRealmImpl.NAME)));
+        is(asList("MockRealmA", "MockRealmB", "MockRealmC", AuthorizingRealmImpl.NAME)));
 
     // add another realm last, and watch it magically not actually be last ;)
     underTest.enableRealm("MockRealmC");
     assertThat(realmSecurityManager.getRealms().stream().map(Realm::getName).collect(toList()),
-        is(asList("MockRealmA", "MockRealmB", AuthorizingRealmImpl.NAME)));
+        is(asList("MockRealmA", "MockRealmB", "MockRealmC", AuthorizingRealmImpl.NAME)));
 
     // try adding the realm in another position and watch it magically go back to the end :)
     underTest.enableRealm(AuthorizingRealmImpl.NAME, 0);
     assertThat(realmSecurityManager.getRealms().stream().map(Realm::getName).collect(toList()),
-        is(asList("MockRealmA", "MockRealmB", AuthorizingRealmImpl.NAME)));
+        is(asList("MockRealmA", "MockRealmB", "MockRealmC", AuthorizingRealmImpl.NAME)));
   }
 
   @Test
   public void testEnableRealmWithIndex() {
     // default config
-    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmB")));
+    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmB", "MockRealmC")));
 
     // validate adding to beginning of list
     underTest.enableRealm("MockRealmC", 0);
@@ -160,7 +158,7 @@ public class RealmManagerImplAuthorizingRealmTest
 
   @Test
   public void testDisablingAuthorizingRealmImpl() {
-    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmB")));
+    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmB", "MockRealmC")));
     underTest.enableRealm(AuthorizingRealmImpl.NAME);
 
     assertAuthorizingRealmImplEnabled();
@@ -171,9 +169,22 @@ public class RealmManagerImplAuthorizingRealmTest
     assertAuthorizingRealmImplEnabled();
   }
 
+  @Test
+  public void testGetConfiguredRealmIdsOnlyReturnsValidRealms() {
+
+    underTest.setConfiguredRealmIds(asList("MockRealmA", "MockRealmC", "InvalidMockRealmA", "InvalidMockRealmB"));
+    assertThat(underTest.getConfiguredRealmIds(), is(asList("MockRealmA", "MockRealmC")));
+
+    underTest.disableRealm("MockRealmA");
+    underTest.enableRealm("MockRealmC");
+    underTest.enableRealm("InvalidMockRealmA");
+    underTest.enableRealm("InvalidMockRealmX");
+    assertThat(underTest.getConfiguredRealmIds(), is(singletonList("MockRealmC")));
+  }
+
   private void assertAuthorizingRealmImplEnabled() {
     Collection<Realm> realms = realmSecurityManager.getRealms();
-    assertThat(realms.stream().map(Realm::getName).collect(toList()), is(asList("MockRealmA", "MockRealmB",
-        AuthorizingRealmImpl.NAME)));
+    assertThat(realms.stream().map(Realm::getName).collect(toList()),
+        is(asList("MockRealmA", "MockRealmB", "MockRealmC", AuthorizingRealmImpl.NAME)));
   }
 }

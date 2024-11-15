@@ -1140,6 +1140,15 @@ public class FileBlobStore
   }
 
   @Override
+  public Stream<BlobId> getBlobIdUpdatedSinceStream(String prefix, OffsetDateTime fromDateTime) {
+    DateBasedWalkFile dateBasedWalkFile = new DateBasedWalkFile(contentDir.toString(), fromDateTime);
+    Map<String, OffsetDateTime> dateBasedBlobIds =
+        dateBasedWalkFile.getBlobIdToDateRef(contentDir.resolve(prefix).toString());
+    return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, fromDateTime.toLocalDateTime(),
+        dateBasedBlobIds);
+  }
+
+  @Override
   public Stream<BlobId> getDirectPathBlobIdStream(final String prefix) {
     checkArgument(!prefix.contains(".."), "path traversal not allowed");
     try {

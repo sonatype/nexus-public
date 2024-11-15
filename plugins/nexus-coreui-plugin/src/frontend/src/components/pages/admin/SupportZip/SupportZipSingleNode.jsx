@@ -51,12 +51,12 @@ export default function SupportZipSingleNode() {
 
   function submit(event) {
     event.preventDefault();
-    send('CREATE_SUPPORT_ZIPS');
+    send({type: 'CREATE_SUPPORT_ZIPS'});
   }
 
   function hazips(event) {
     event.preventDefault();
-    send('CREATE_HA_SUPPORT_ZIPS');
+    send({type: 'CREATE_HA_SUPPORT_ZIPS'});
   }
 
   function download(event, filename) {

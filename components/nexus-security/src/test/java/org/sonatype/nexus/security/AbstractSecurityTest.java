@@ -87,7 +87,7 @@ public abstract class AbstractSecurityTest
 
         RealmConfiguration realmConfiguration = new TestRealmConfiguration();
         realmConfiguration.setRealmNames(
-            new ArrayList<>(Arrays.asList("MockRealmA", "MockRealmB", AuthorizingRealmImpl.NAME)));
+            new ArrayList<>(Arrays.asList("MockRealmA", "MockRealmB", "MockRealmC", AuthorizingRealmImpl.NAME)));
         bind(RealmConfiguration.class).annotatedWith(Names.named("initial")).toInstance(realmConfiguration);
 
         bind(ApplicationDirectories.class).toInstance(mock(ApplicationDirectories.class));

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 
 import {
   FormUtils,
@@ -46,7 +46,7 @@ import './Users.scss';
 const {USERS: {FORM: LABELS, MODAL}} = UIStrings;
 
 export default function UsersForm({service, onDone}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
 
   const {
     data: {externalRoles = [], source, roles = []},
@@ -67,14 +67,14 @@ export default function UsersForm({service, onDone}) {
 
   const cancel = onDone;
 
-  const confirmDelete = () => send('CONFIRM_DELETE');
+  const confirmDelete = () => send({type: 'CONFIRM_DELETE'});
 
   const changePassword = () => {
     if (canChangePassword) {
-      send('CHANGE_PASSWORD');
+      send({type: 'CHANGE_PASSWORD'});
     }
   }
-  const cancelChangePassword = () => send('CANCEL_CHANGE_PASSWORD');
+  const cancelChangePassword = () => send({type: 'CANCEL_CHANGE_PASSWORD'});
 
   const showDeleteButton = isEdit && hasDeletePermission && !isExternal && !isAnonymousUser(userId) && !isCurrentUser(userId);
   const showChangePassword = isEdit && !isExternal && !isAnonymousUser(userId);

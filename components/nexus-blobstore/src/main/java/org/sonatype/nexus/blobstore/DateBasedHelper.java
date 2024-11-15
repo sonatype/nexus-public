@@ -12,12 +12,17 @@
  */
 package org.sonatype.nexus.blobstore;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Helper class to build date-based prefix based on the given date range.
- * For more details, see {@link DateBasedLocationStrategy}
+ * Helper class to build date-based prefix based on the given date range. For more details, see
+ * {@link DateBasedLocationStrategy}
  */
 public class DateBasedHelper
 {
@@ -49,5 +54,54 @@ public class DateBasedHelper
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(datePathPrefix.toString());
 
     return toDateTime.format(dateTimeFormatter);
+  }
+
+  public static List<String> generatePrefixes(final OffsetDateTime now, final Duration duration) {
+    OffsetDateTime utcDateTime = now.withOffsetSameInstant(ZoneOffset.UTC); // Convert to UTC
+
+    List<String> prefixes = new ArrayList<>();
+    OffsetDateTime startTime = utcDateTime.minus(duration).truncatedTo(ChronoUnit.MINUTES);
+    OffsetDateTime endTime = utcDateTime.truncatedTo(ChronoUnit.MINUTES);
+
+    if (duration.toDays() > 0) {
+      while (isApplicable(startTime, endTime, ChronoUnit.DAYS)) {
+        prefixes.add(startTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))); // Only days
+        startTime = startTime.plusDays(1);
+      }
+    }
+    else if (duration.toHours() > 0) {
+      while (isApplicable(startTime, endTime, ChronoUnit.HOURS)) {
+        prefixes.add(startTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd/HH")));
+        startTime = startTime.plusHours(1);
+      }
+    }
+    else {
+      while (isApplicable(startTime, endTime, ChronoUnit.MINUTES)) {
+        // Check if we need to round up minutes to the next hour
+        if (duration.toMinutes() > 30) {
+          // Add the remaining minutes as an hour if > 30 minutes
+          startTime = startTime.plusHours(1);
+          prefixes.add(startTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd/HH")));
+          break;
+        }
+        else {
+          prefixes.add(startTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd/HH/mm")));
+          startTime = startTime.plusMinutes(1);
+        }
+      }
+    }
+
+    return prefixes;
+  }
+
+  private static boolean isApplicable(
+      final OffsetDateTime startTime, final OffsetDateTime endTime,
+      final ChronoUnit granularity)
+  {
+
+    if (startTime.truncatedTo(granularity).equals(endTime.truncatedTo(granularity))) {
+      return true;
+    }
+    return startTime.isBefore(endTime) || startTime.equals(endTime);
   }
 }

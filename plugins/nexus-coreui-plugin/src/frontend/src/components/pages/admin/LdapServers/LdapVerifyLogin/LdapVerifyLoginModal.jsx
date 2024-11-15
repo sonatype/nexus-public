@@ -54,7 +54,7 @@ export default function LdapVerifyUserMappingModal({ldapConfig, onCancel}) {
   const {protocol, host, port} = ldapConfig;
   const serverUrl = `${protocol?.toLowerCase()}://${host}:${port}`;
 
-  const verifyLogin = () => send('VERIFY');
+  const verifyLogin = () => send({type: 'VERIFY'});
 
   return (
     <NxModal aria-labelledby="modal-form-header">

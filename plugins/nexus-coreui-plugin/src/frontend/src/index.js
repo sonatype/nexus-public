@@ -56,7 +56,6 @@ import Licensing from './components/pages/admin/Licensing/Licensing';
 import UserTokens from './components/pages/admin/UserTokens/UserTokens';
 import CrowdSettings from "./components/pages/admin/CrowdSettings/CrowdSettings";
 import SamlConfiguration from "./components/pages/admin/SamlConfiguration/SamlConfiguration";
-import Replication from "./components/pages/admin/Replication/Replication";
 import DataStoreConfiguration from "./components/pages/admin/DataStoreConfiguration/DataStoreConfiguration";
 import UserToken from "./components/pages/user/UserToken/UserToken";
 import Welcome from './components/pages/user/Welcome/Welcome';
@@ -555,24 +554,6 @@ window.plugins.push({
         }],
         permissions: ['nexus:*'],
         editions: ['PRO']
-      }
-    },
-    {
-      mode: 'admin',
-      text: UIStrings.REPLICATION.MENU.text,
-      description: UIStrings.REPLICATION.MENU.description,
-      path: '/Repository/Replication',
-      view: Replication,
-      iconCls: 'x-fa fa-copy',
-      visibility: {
-        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        statesEnabled: [
-          {
-            key: 'replicationCapabilityState',
-            defaultValue: {enabled: false}
-          }
-        ],
-        permissions: ['nexus:replication:read']
       }
     },
     {

@@ -31,7 +31,7 @@ export default function ProprietaryRepositoriesReadOnly() {
   const isLoading = current.matches('loading');
 
   function retry() {
-    send('RETRY');
+    send({type: 'RETRY'});
   }
 
   return <>

@@ -55,7 +55,7 @@ export default function UserTokens() {
 
   const {loadError, data} = state.context;
 
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   return (
     <Page>

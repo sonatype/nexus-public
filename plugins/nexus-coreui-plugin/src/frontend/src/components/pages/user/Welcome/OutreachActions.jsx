@@ -123,7 +123,7 @@ export default function OutreachActions() {
   const [state, send] = useMachine(OutreachActionsMachine, {devTools: true});
   const showConnectModal = state.matches('showingConnectModal');
   const activeActions = getActiveActions(state.context);
-  const closeConnectModal = () => send('CLOSE_MODAL');
+  const closeConnectModal = () => send({type: 'CLOSE_MODAL'});
 
   return (
       <>

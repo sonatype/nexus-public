@@ -58,7 +58,7 @@ export default function SslCertificatesAddForm({onDone}) {
   const submitMaskMessage = showAddForm ? UIStrings.LOADING : UIStrings.SAVING;
 
   const updateSource = (value) => send({type: 'SET_SOURCE', value});
-  const onSubmit = () => showAddForm ? send('LOAD_DETAILS') : send('ADD_CERTIFICATE');
+  const onSubmit = () => showAddForm ? send({type: 'LOAD_DETAILS'}) : send({type: 'ADD_CERTIFICATE'});
 
   return (
     <Page className="nxrm-ssl-certificate">

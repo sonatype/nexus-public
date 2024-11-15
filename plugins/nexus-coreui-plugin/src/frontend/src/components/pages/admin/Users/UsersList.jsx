@@ -58,17 +58,16 @@ export default function UsersList({onCreate, onEdit}) {
   const emailSortDir = ListMachineUtils.getSortDirection('email', current.context);
   const statusSortDir = ListMachineUtils.getSortDirection('status', current.context);
 
-  const sortById = () => send('SORT_BY_USER_ID');
-  const sortByRealms = () => send('SORT_BY_REALM');
-  const sortByFirstName = () => send('SORT_BY_FIRST_NAME');
-  const sortByLastName = () => send('SORT_BY_LAST_NAME');
-  const sortByEmail = () => send('SORT_BY_EMAIL');
-  const sortByStatus = () => send('SORT_BY_STATUS');
+  const sortById = () => send({type: 'SORT_BY_USER_ID'});
+  const sortByRealms = () => send({type: 'SORT_BY_REALM'});
+  const sortByFirstName = () => send({type: 'SORT_BY_FIRST_NAME'});
+  const sortByLastName = () => send({type: 'SORT_BY_LAST_NAME'});
+  const sortByEmail = () => send({type: 'SORT_BY_EMAIL'});
+  const sortByStatus = () => send({type: 'SORT_BY_STATUS'});
 
   const onUserIdFilterChange = (value) => send({type: 'FILTER', filter: value});
   const onSourceFilterChange = (value) => send({type: 'FILTER_BY_SOURCE', filter: value});
   const canCreate = ExtJS.checkPermission('nexus:users:create');
-
 
   const create = () => {
     if (canCreate) {

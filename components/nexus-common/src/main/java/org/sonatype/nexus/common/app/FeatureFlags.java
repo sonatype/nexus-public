@@ -197,6 +197,11 @@ public interface FeatureFlags
 
   String MALWARE_RISK_ON_DISK_ENABLED_NAMED = "${nexus.malware.risk.on.disk.enabled:-true}";
 
+  String MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED = "nexus.malware.risk.on.disk.nonadmin.override.enabled";
+
+  String MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED_NAMED =
+      "${nexus.malware.risk.on.disk.nonadmin.override.enabled:-false}";
+
   String CONAN_V2_ENABLED = "nexus.conan.v2.enabled";
 
   String CONAN_V2_ENABLED_NAMED = "${nexus.conan.v2.enabled:-false}";

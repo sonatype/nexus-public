@@ -60,19 +60,19 @@ export default function HttpForm() {
   const isHttpAuthEnabled =  httpEnabled && httpAuthEnabled;
   const isHttpsAuthEnabled =  httpsEnabled && httpsAuthEnabled;
 
-  const discard = () => send('RESET');
+  const discard = () => send({type: 'RESET'});
 
   const removeNonProxyHost = (index) =>
     send({type: 'REMOVE_NON_PROXY_HOST', index});
 
-  const addNonProxyHost = () => send('ADD_NON_PROXY_HOST');
+  const addNonProxyHost = () => send({type: 'ADD_NON_PROXY_HOST'});
 
   const toggleAuthentication = (name, value) =>
     send({type: 'TOGGLE_AUTHENTICATION', name, value});
 
-  const handleHttpCheckbox = () => send('TOGGLE_HTTP_PROXY');
+  const handleHttpCheckbox = () => send({type: 'TOGGLE_HTTP_PROXY'});
 
-  const handleHttpsCheckbox = () => send('TOGGLE_HTTPS_PROXY');
+  const handleHttpsCheckbox = () => send({type: 'TOGGLE_HTTPS_PROXY'});
 
   const handleEnter = (event) => {
     if (event.key === 'Enter') {

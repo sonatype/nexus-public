@@ -64,19 +64,45 @@ public class DateBasedWalkFile
 
   private final Duration duration;
 
+  private final OffsetDateTime fromDateTime;
+
   public DateBasedWalkFile(final String contentDir, final Duration duration) {
+    this.fromDateTime = null;
     checkNotNull(contentDir);
     this.contentDir = StringUtils.appendIfMissing(contentDir, File.separator);
     this.duration = checkNotNull(duration);
   }
 
+  public DateBasedWalkFile(final String contentDir, final OffsetDateTime fromDateTime) {
+    this.duration = null;
+    this.fromDateTime = checkNotNull(fromDateTime);
+    checkNotNull(contentDir);
+    this.contentDir = StringUtils.appendIfMissing(contentDir, File.separator);
+  }
+
   public Map<String, OffsetDateTime> getBlobIdToDateRef() {
     OffsetDateTime now = UTC.now();
-    OffsetDateTime fromDateTime = now.minusSeconds(duration.getSeconds());
-    String datePathPrefix = contentDir + DateBasedHelper.getDatePathPrefix(fromDateTime, now);
+    OffsetDateTime from;
+
+    if (duration != null) {
+      from = now.minusSeconds(duration.getSeconds());
+    }
+    else {
+      from = this.fromDateTime;
+    }
+    String datePathPrefix = contentDir + DateBasedHelper.getDatePathPrefix(from, now);
 
     try {
-      return getAllFiles(datePathPrefix, fromDateTime);
+      return getAllFiles(datePathPrefix, from);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  public Map<String, OffsetDateTime> getBlobIdToDateRef(String datePathPrefix) {
+    try {
+      return getAllFiles(datePathPrefix, this.fromDateTime);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);

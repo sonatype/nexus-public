@@ -37,7 +37,7 @@ export default function PasswordChangeForm({userId}) {
   }
 
   function discard() {
-    send('RESET');
+    send({type: 'RESET'});
   }
 
   return <Section className="user-account-settings">

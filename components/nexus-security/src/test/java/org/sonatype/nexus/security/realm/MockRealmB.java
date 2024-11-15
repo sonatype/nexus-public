@@ -28,7 +28,7 @@ import org.eclipse.sisu.Description;
 
 @Singleton
 @Named("MockRealmB")
-@Description("MockRealmA")
+@Description("MockRealmB")
 public class MockRealmB
     extends AuthorizingRealm
 {

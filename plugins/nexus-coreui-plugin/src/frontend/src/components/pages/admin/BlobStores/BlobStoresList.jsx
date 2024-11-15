@@ -59,13 +59,13 @@ export default function BlobStoresList({onCreate, onEdit}) {
   const countSortDir = ListMachineUtils.getSortDirection('blobCount', current.context);
   const sizeSortDir = ListMachineUtils.getSortDirection('totalSizeInBytes', current.context);
   const spaceSortDir = ListMachineUtils.getSortDirection('availableSpaceInBytes', current.context);
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByPath = () => send('SORT_BY_PATH');
-  const sortByType = () => send('SORT_BY_TYPE_NAME');
-  const sortByState = () => send('SORT_BY_AVAILABLE');
-  const sortByCount = () => send('SORT_BY_BLOB_COUNT');
-  const sortBySize = () => send('SORT_BY_TOTAL_SIZE_IN_BYTES');
-  const sortBySpace = () => send('SORT_BY_AVAILABLE_SPACE_IN_BYTES');
+  const sortByName = () => send({type: 'SORT_BY_NAME'});
+  const sortByPath = () => send({type: 'SORT_BY_PATH'});
+  const sortByType = () => send({type: 'SORT_BY_TYPE_NAME'});
+  const sortByState = () => send({type: 'SORT_BY_AVAILABLE'});
+  const sortByCount = () => send({type: 'SORT_BY_BLOB_COUNT'});
+  const sortBySize = () => send({type: 'SORT_BY_TOTAL_SIZE_IN_BYTES'});
+  const sortBySpace = () => send({type: 'SORT_BY_AVAILABLE_SPACE_IN_BYTES'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 

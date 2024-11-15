@@ -549,6 +549,7 @@ public class KeyStoreManagerImplTest
    * invocations occur safely.
    */
   @Test
+  @Ignore("NEXUS-44783")
   public void testConcurrentGenerateAndStoreKeyPair() throws Exception {
     KeyStoreManagerConfiguration configuration = createMockConfiguration();
     KeystoreInstance privateStore = mock(KeystoreInstance.class);

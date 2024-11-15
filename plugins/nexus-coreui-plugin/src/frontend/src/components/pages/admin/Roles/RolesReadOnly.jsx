@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {useService} from '@xstate/react';
+import {useActor} from '@xstate/react';
 import {indexBy, prop} from 'ramda';
 
 import {
@@ -31,7 +31,7 @@ import UIStrings from '../../../../constants/UIStrings';
 const {ROLES: {FORM: LABELS}} = UIStrings;
 
 export default function RolesReadOnly({service, onDone}) {
-  const [current, send] = useService(service);
+  const [current, send] = useActor(service);
 
   const {
     data: {id, name, description, readOnly:isDefaultRole = true, roles:selectedRoles, privileges},
@@ -45,7 +45,7 @@ export default function RolesReadOnly({service, onDone}) {
 
   const cancel = () => onDone();
 
-  const retry = () => send('RETRY');
+  const retry = () => send({type: 'RETRY'});
 
   return <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
     <NxTile.Content>

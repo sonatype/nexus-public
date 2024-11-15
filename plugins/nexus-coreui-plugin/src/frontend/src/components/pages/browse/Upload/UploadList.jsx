@@ -46,8 +46,8 @@ export default function UploadList({onEdit, copyUrl = doCopyUrl}) {
 
   const nameSortDir = ListMachineUtils.getSortDirection('name', state.context);
   const formatSortDir = ListMachineUtils.getSortDirection('format', state.context);
-  const sortByName = () => send('SORT_BY_NAME');
-  const sortByFormat = () => send('SORT_BY_FORMAT');
+  const sortByName = () => send({type: 'SORT_BY_NAME'});
+  const sortByFormat = () => send({type: 'SORT_BY_FORMAT'});
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 

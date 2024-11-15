@@ -32,11 +32,11 @@ export default function HealthCheckEula(props) {
   const iframe = `<iframe style="width: 100%" src=${ExtJS.urlOf('/static/healthcheck-tos.html')}></iframe>`;
 
   function handleEulaAccept() {
-    send('ACCEPT');
+    send({type: 'ACCEPT'});
   }
 
   function handleEulaDecline() {
-    send('DECLINE');
+    send({type: 'DECLINE'});
   }
 
   return <div>
