@@ -18,12 +18,14 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -45,6 +47,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
+import org.sonatype.nexus.blobstore.api.PaginatedResult;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
@@ -61,6 +64,8 @@ import com.amazonaws.services.s3.iterable.S3Objects;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.ObjectTagging;
 import com.amazonaws.services.s3.model.S3Object;
@@ -313,9 +318,10 @@ public class S3BlobStore
   }
 
   @Override
-  public void createBlobAttributes(final BlobId blobId,
-                                   final Map<String, String> headers,
-                                   final BlobMetrics blobMetrics)
+  public void createBlobAttributes(
+      final BlobId blobId,
+      final Map<String, String> headers,
+      final BlobMetrics blobMetrics)
   {
     String attributePath = attributePath(blobId);
     try {
@@ -552,16 +558,14 @@ public class S3BlobStore
     return new SetObjectTaggingRequest(
         getConfiguredBucket(),
         key,
-        new ObjectTagging(singletonList(DELETED_TAG))
-    );
+        new ObjectTagging(singletonList(DELETED_TAG)));
   }
 
   private SetObjectTaggingRequest untagAsDeleted(final String key) {
     return new SetObjectTaggingRequest(
         getConfiguredBucket(),
         key,
-        new ObjectTagging(emptyList())
-    );
+        new ObjectTagging(emptyList()));
   }
 
   @Override
@@ -651,7 +655,8 @@ public class S3BlobStore
       bucketManager.setS3(s3);
       bucketManager.prepareStorageLocation(blobStoreConfiguration);
       S3BlobStoreConfigurationHelper.setConfiguredBucket(blobStoreConfiguration, getConfiguredBucket());
-      rawObjectAccess = new S3RawObjectAccess(getConfiguredBucket(), getBucketPrefix(), s3, performanceLogger, uploader);
+      rawObjectAccess =
+          new S3RawObjectAccess(getConfiguredBucket(), getBucketPrefix(), s3, performanceLogger, uploader);
     }
     catch (AmazonS3Exception e) {
       throw buildException(e);
@@ -789,9 +794,31 @@ public class S3BlobStore
   }
 
   @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(final String prefix, final OffsetDateTime fromDateTime) {
+  public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
+      final String prefix,
+      final OffsetDateTime fromDateTime,
+      @Nullable final String continuationToken,
+      final int pageSize)
+  {
     String fullPrefix = getContentPrefix() + prefix;
-    return  getBlobIdStream(fullPrefix, fromDateTime).distinct();
+    ListObjectsV2Request request = new ListObjectsV2Request()
+        .withBucketName(getConfiguredBucket())
+        .withPrefix(fullPrefix)
+        .withMaxKeys(pageSize)
+        .withContinuationToken(continuationToken);
+    ListObjectsV2Result result = s3.listObjectsV2(request);
+    List<BlobId> blobIds = result.getObjectSummaries()
+        .stream()
+        .filter(o -> o.getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) || o.getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX))
+        .filter(this::isNotTempBlob)
+        .filter(s3Obj -> s3Obj.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(fromDateTime))
+        .map(S3AttributesLocation::new)
+        .map(this::getBlobIdFromAttributeFilePath)
+        .filter(Objects::nonNull)
+        .distinct()
+        .collect(Collectors.toList());
+    String nextContinuationToken = result.isTruncated() ? result.getNextContinuationToken() : null;
+    return new PaginatedResult<>(blobIds, nextContinuationToken);
   }
 
   private Stream<BlobId> getBlobIdStream(final String prefix, OffsetDateTime fromDateTime) {
@@ -905,7 +932,7 @@ public class S3BlobStore
   }
 
   /**
-   * This is a simple existence check resulting from NEXUS-16729.  This allows clients to perform a simple check
+   * This is a simple existence check resulting from NEXUS-16729. This allows clients to perform a simple check
    * primarily intended for use in directpath scenarios.
    */
   @Override
@@ -959,7 +986,8 @@ public class S3BlobStore
   public Future<Boolean> asyncDelete(final BlobId blobId) {
     if (preferAsyncCleanup) {
       return executorService.submit(() -> this.deleteHard(blobId));
-    } else {
+    }
+    else {
       return CompletableFuture.completedFuture(this.deleteHard(blobId));
     }
   }
@@ -983,8 +1011,7 @@ public class S3BlobStore
         .substring((getBucketPrefix() + DIRECT_PATH_PREFIX).length() + 1);
     Map<String, String> headers = ImmutableMap.of(
         BLOB_NAME_HEADER, blobName,
-        DIRECT_PATH_BLOB_HEADER, "true"
-    );
+        DIRECT_PATH_BLOB_HEADER, "true");
     return blobIdLocationResolver.fromHeaders(headers);
   }
 

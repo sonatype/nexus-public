@@ -48,6 +48,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
+import org.sonatype.nexus.blobstore.api.PaginatedResult;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.UnimplementedRawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
@@ -155,8 +156,7 @@ public class BlobStoreGroup
     return new MutableConfiguration<BlobId, String>()
         .setStoreByValue(false)
         .setExpiryPolicyFactory(
-            CreatedExpiryPolicy.factoryOf(new Duration(blobIdCacheTimeout.unit(), blobIdCacheTimeout.value()))
-        )
+            CreatedExpiryPolicy.factoryOf(new Duration(blobIdCacheTimeout.unit(), blobIdCacheTimeout.value())))
         .setManagementEnabled(true)
         .setStatisticsEnabled(true);
   }
@@ -256,7 +256,8 @@ public class BlobStoreGroup
   public Blob get(final BlobId blobId, final boolean includeDeleted) {
     if (includeDeleted) {
       // check directly without using cache
-      return members.get().stream()
+      return members.get()
+          .stream()
           .filter((BlobStore member) -> member.exists(blobId))
           .map((BlobStore member) -> member.get(blobId, true))
           .filter(Objects::nonNull)
@@ -265,8 +266,8 @@ public class BlobStoreGroup
     }
     else {
       return locate(blobId)
-        .map((BlobStore target) -> target.get(blobId, false))
-        .orElse(null);
+          .map((BlobStore target) -> target.get(blobId, false))
+          .orElse(null);
     }
   }
 
@@ -274,7 +275,8 @@ public class BlobStoreGroup
   @Guarded(by = STARTED)
   public boolean delete(final BlobId blobId, final String reason) {
     locatedBlobs.remove(blobId);
-    List<BlobStore> locations = members.get().stream()
+    List<BlobStore> locations = members.get()
+        .stream()
         .filter((BlobStore member) -> member.exists(blobId))
         .collect(toList());
 
@@ -291,7 +293,8 @@ public class BlobStoreGroup
   @Guarded(by = STARTED)
   public boolean deleteHard(final BlobId blobId) {
     locatedBlobs.remove(blobId);
-    List<BlobStore> locations = members.get().stream()
+    List<BlobStore> locations = members.get()
+        .stream()
         .filter((BlobStore member) -> member.exists(blobId))
         .collect(toList());
 
@@ -313,19 +316,19 @@ public class BlobStoreGroup
   @Override
   @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
-    Iterable<BlobStoreMetrics> membersMetrics = members.get().stream()
+    Iterable<BlobStoreMetrics> membersMetrics = members.get()
+        .stream()
         .filter(BlobStore::isStarted)
-        .map(BlobStore::getMetrics)
-        ::iterator;
+        .map(BlobStore::getMetrics)::iterator;
     return new BlobStoreGroupMetrics(membersMetrics);
   }
 
   @Override
   public Map<OperationType, OperationMetrics> getOperationMetricsByType() {
     Map<OperationType, OperationMetrics> result = new EnumMap<>(OperationType.class);
-    Iterable<Map<OperationType, OperationMetrics>> metrics = members.get().stream()
-        .map(BlobStore::getOperationMetricsByType)
-        ::iterator;
+    Iterable<Map<OperationType, OperationMetrics>> metrics = members.get()
+        .stream()
+        .map(BlobStore::getOperationMetricsByType)::iterator;
     for (Map<OperationType, OperationMetrics> metric : metrics) {
       for (Entry<OperationType, OperationMetrics> metricsEntry : metric.entrySet()) {
         OperationType type = metricsEntry.getKey();
@@ -346,9 +349,9 @@ public class BlobStoreGroup
   @Override
   public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {
     Map<OperationType, OperationMetrics> result = new EnumMap<>(OperationType.class);
-    Iterable<Map<OperationType, OperationMetrics>> metrics = members.get().stream()
-        .map(BlobStore::getOperationMetricsDelta)
-        ::iterator;
+    Iterable<Map<OperationType, OperationMetrics>> metrics = members.get()
+        .stream()
+        .map(BlobStore::getOperationMetricsDelta)::iterator;
     for (Map<OperationType, OperationMetrics> metric : metrics) {
       for (Entry<OperationType, OperationMetrics> metricsEntry : metric.entrySet()) {
         OperationType type = metricsEntry.getKey();
@@ -384,12 +387,14 @@ public class BlobStoreGroup
   }
 
   @Override
-  public boolean undelete(@Nullable final BlobStoreUsageChecker inUseChecker,
-                          final BlobId blobId,
-                          final BlobAttributes attributes,
-                          final boolean isDryRun)
+  public boolean undelete(
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final BlobId blobId,
+      final BlobAttributes attributes,
+      final boolean isDryRun)
   {
-    return members.get().stream()
+    return members.get()
+        .stream()
         .map((BlobStore member) -> member.undelete(inUseChecker, blobId, attributes, isDryRun))
         .anyMatch((Boolean deleted) -> deleted);
   }
@@ -427,20 +432,23 @@ public class BlobStoreGroup
 
   @Override
   public boolean exists(final BlobId blobId) {
-    return members.get().stream()
+    return members.get()
+        .stream()
         .anyMatch((BlobStore member) -> member.exists(blobId));
   }
 
   @Override
   public boolean bytesExists(final BlobId blobId) {
-    return members.get().stream()
+    return members.get()
+        .stream()
         .anyMatch((BlobStore member) -> member.bytesExists(blobId));
   }
 
   @Override
   public boolean isBlobEmpty(final BlobId blobId) {
-    return members.get().stream()
-            .anyMatch((BlobStore member) -> member.isBlobEmpty(blobId));
+    return members.get()
+        .stream()
+        .anyMatch((BlobStore member) -> member.isBlobEmpty(blobId));
   }
 
   @Override
@@ -451,7 +459,8 @@ public class BlobStoreGroup
 
   @Override
   public Stream<BlobId> getBlobIdStream() {
-    return members.get().stream()
+    return members.get()
+        .stream()
         .map((BlobStore member) -> member.getBlobIdStream())
         .flatMap(identity());
   }
@@ -465,16 +474,19 @@ public class BlobStoreGroup
   }
 
   @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(final String prefix, final OffsetDateTime fromDateTime) {
-    return members
-        .get()
-        .stream()
-        .flatMap((BlobStore member) -> member.getBlobIdUpdatedSinceStream(prefix, fromDateTime));
+  public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
+      final String prefix,
+      final OffsetDateTime fromDateTime,
+      @Nullable final String continuationToken,
+      final int pageSize)
+  {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public Stream<BlobId> getDirectPathBlobIdStream(final String prefix) {
-    return members.get().stream()
+    return members.get()
+        .stream()
         .map((BlobStore member) -> member.getDirectPathBlobIdStream(prefix))
         .flatMap(identity());
   }
@@ -505,7 +517,9 @@ public class BlobStoreGroup
   /**
    * Supplier for thread-safe lazy initialization of members.
    */
-  private class MembersSupplier implements Supplier<List<BlobStore>> {
+  private class MembersSupplier
+      implements Supplier<List<BlobStore>>
+  {
     public List<BlobStore> get() {
       List<BlobStore> memberList = new ArrayList<>();
       for (String name : BlobStoreGroupConfigurationHelper.memberNames(blobStoreConfiguration)) {
@@ -539,11 +553,12 @@ public class BlobStoreGroup
 
   private BlobStore search(BlobId blobId) {
     log.trace("Searching for {} in {}", blobId, members);
-    return members.get().stream()
-      .sorted(Comparator.comparing(BlobStore::isWritable).reversed())
-      .filter((BlobStore member) -> member.exists(blobId))
-      .findAny()
-      .orElse(null);
+    return members.get()
+        .stream()
+        .sorted(Comparator.comparing(BlobStore::isWritable).reversed())
+        .filter((BlobStore member) -> member.exists(blobId))
+        .findAny()
+        .orElse(null);
   }
 
   @Override
@@ -561,7 +576,8 @@ public class BlobStoreGroup
    * @since 3.14
    */
   @FunctionalInterface
-  private interface CreateBlobFunction {
+  private interface CreateBlobFunction
+  {
     Blob create(BlobStore blobStore);
   }
 }
