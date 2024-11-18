@@ -37,11 +37,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MavenProxyRepositoryApiRequest
     extends ProxyRepositoryApiRequest
 {
+  @Valid
   @NotNull
   protected final MavenAttributes maven;
 
-  @NotNull
   @Valid
+  @NotNull
   protected final HttpClientAttributesWithPreemptiveAuth httpClient;
 
   @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
@@ -56,10 +57,11 @@ public class MavenProxyRepositoryApiRequest
       @JsonProperty("httpClient") final HttpClientAttributesWithPreemptiveAuth httpClient,
       @JsonProperty("routingRule") final String routingRule,
       @JsonProperty("maven") final MavenAttributes maven,
-      @JsonProperty("replication") @JsonInclude(value= Include.NON_EMPTY, content=Include.NON_NULL)
+      @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_NULL)
       final ReplicationAttributes replication)
   {
-    super(name, Maven2Format.NAME, online, storage, cleanup, proxy, negativeCache, httpClient, routingRule, replication);
+    super(name, Maven2Format.NAME, online, storage, cleanup, proxy, negativeCache, httpClient, routingRule,
+        replication);
     this.maven = maven;
     this.httpClient = httpClient;
   }
