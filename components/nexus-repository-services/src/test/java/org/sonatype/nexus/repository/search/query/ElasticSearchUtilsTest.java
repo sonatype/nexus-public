@@ -75,9 +75,10 @@ public class ElasticSearchUtilsTest
 
     Map<String, SearchMappings> searchMappings = ImmutableMap.of(
         "default", () -> ImmutableList.of(
-            new SearchMapping(SHA1_ALIAS, VALID_SHA1_ATTRIBUTE_NAME, "", SearchField.SHA1)
-        )
-    );
+            new SearchMapping(SHA1_ALIAS, VALID_SHA1_ATTRIBUTE_NAME, "", SearchField.SHA1)),
+        "testFormat", () -> ImmutableList.of(
+            new SearchMapping("format.custom", "attributes.format.custom", "", SearchField.FORMAT_FIELD_1),
+            new SearchMapping("format.test", "attributes.format.test", "", SearchField.FORMAT_FIELD_2)));
 
     Map<String, ElasticSearchContribution> searchContributions = new HashMap<>();
     searchContributions.put(DefaultElasticSearchContribution.NAME, new DefaultElasticSearchContribution());
@@ -133,7 +134,7 @@ public class ElasticSearchUtilsTest
   }
 
   @Test
-  public void testGetSortBuilders_byGroupDescending() throws Exception{
+  public void testGetSortBuilders_byGroupDescending() throws Exception {
     List<SortBuilder> sortBuilders = underTest.getSortBuilders("group", "desc");
     assertThat(sortBuilders.size(), is(3));
     assertSearchBuilder(sortBuilders.get(0), "group.case_insensitive", "desc");
@@ -160,7 +161,7 @@ public class ElasticSearchUtilsTest
   }
 
   @Test
-  public void testGetSortBuilders_byNameDescending() throws Exception{
+  public void testGetSortBuilders_byNameDescending() throws Exception {
     List<SortBuilder> sortBuilders = underTest.getSortBuilders("name", "desc");
     assertThat(sortBuilders.size(), is(3));
     assertSearchBuilder(sortBuilders.get(0), "name.case_insensitive", "desc");
@@ -185,7 +186,7 @@ public class ElasticSearchUtilsTest
   }
 
   @Test
-  public void testGetSortBuilders_byRepositoryDescending() throws Exception{
+  public void testGetSortBuilders_byRepositoryDescending() throws Exception {
     List<SortBuilder> sortBuilders = underTest.getSortBuilders("repository", "desc");
     assertThat(sortBuilders.size(), is(1));
     assertSearchBuilder(sortBuilders.get(0), "repository_name", "desc");
@@ -206,7 +207,7 @@ public class ElasticSearchUtilsTest
   }
 
   @Test
-  public void testGetSortBuilders_byRepositoryNameDescending() throws Exception{
+  public void testGetSortBuilders_byRepositoryNameDescending() throws Exception {
     List<SortBuilder> sortBuilders = underTest.getSortBuilders("repositoryName", "desc");
     assertThat(sortBuilders.size(), is(1));
     assertSearchBuilder(sortBuilders.get(0), "repository_name", "desc");
@@ -227,7 +228,7 @@ public class ElasticSearchUtilsTest
   }
 
   @Test
-  public void testGetSortBuilders_byVersionDescending() throws Exception{
+  public void testGetSortBuilders_byVersionDescending() throws Exception {
     List<SortBuilder> sortBuilders = underTest.getSortBuilders("version", "desc");
     assertThat(sortBuilders.size(), is(1));
     assertSearchBuilder(sortBuilders.get(0), "normalized_version", "desc");
@@ -248,7 +249,7 @@ public class ElasticSearchUtilsTest
   }
 
   @Test
-  public void testGetSortBuilders_byOtherFieldDescending() throws Exception{
+  public void testGetSortBuilders_byOtherFieldDescending() throws Exception {
     List<SortBuilder> sortBuilders = underTest.getSortBuilders("otherfield", "desc");
     assertThat(sortBuilders.size(), is(1));
     assertSearchBuilder(sortBuilders.get(0), "otherfield", "desc");
@@ -264,7 +265,7 @@ public class ElasticSearchUtilsTest
 
     List<SearchFilter> forwards = newArrayList(a1, a2, b1, b2, c1);
     List<SearchFilter> backward = newArrayList(c1, b2, b1, a2, a1);
-    List<SearchFilter> mixed = newArrayList(a1, c1 ,b1, b2, a2);
+    List<SearchFilter> mixed = newArrayList(a1, c1, b1, b2, a2);
 
     String forwardQuery = underTest.buildQuery(forwards).toString();
     String backwardQuery = underTest.buildQuery(backward).toString();
@@ -275,17 +276,35 @@ public class ElasticSearchUtilsTest
   }
 
   @Test
-  public void buildSearchRequestFromSearchFilters(){
+  public void buildSearchRequestFromSearchFilters() {
     Collection<SearchFilter> searchFilters = new ArrayList<>();
     searchFilters.add(new SearchFilter("keyword", "org.junit"));
     searchFilters.add(new SearchFilter("repository", "maven_central"));
     searchFilters.add(new SearchFilter("format", "maven"));
+    // alias should be mapped to full attribute name
+    searchFilters.add(new SearchFilter("format.custom", "testAlias"));
+    // attribute name should also be included in query
+    searchFilters.add(new SearchFilter("attributes.format.test", "testAttribute"));
+    // filters without mapping also included
+    searchFilters.add(new SearchFilter("new.prop", "aProp"));
 
     QueryBuilder queryBuilder = underTest.buildQuery(searchFilters);
 
     assertThat(queryBuilder.toString(), is("{\n" +
         "  \"bool\" : {\n" +
         "    \"must\" : [ {\n" +
+        "      \"query_string\" : {\n" +
+        "        \"query\" : \"testAlias\",\n" +
+        "        \"fields\" : [ \"attributes.format.custom\" ],\n" +
+        "        \"lowercase_expanded_terms\" : false\n" +
+        "      }\n" +
+        "    }, {\n" +
+        "      \"query_string\" : {\n" +
+        "        \"query\" : \"testAttribute\",\n" +
+        "        \"fields\" : [ \"attributes.format.test\" ],\n" +
+        "        \"lowercase_expanded_terms\" : false\n" +
+        "      }\n" +
+        "    }, {\n" +
         "      \"query_string\" : {\n" +
         "        \"query\" : \"maven\",\n" +
         "        \"fields\" : [ \"format\" ],\n" +
@@ -298,6 +317,12 @@ public class ElasticSearchUtilsTest
         "      }\n" +
         "    }, {\n" +
         "      \"query_string\" : {\n" +
+        "        \"query\" : \"aProp\",\n" +
+        "        \"fields\" : [ \"new.prop\" ],\n" +
+        "        \"lowercase_expanded_terms\" : false\n" +
+        "      }\n" +
+        "    }, {\n" +
+        "      \"query_string\" : {\n" +
         "        \"query\" : \"maven_central\",\n" +
         "        \"fields\" : [ \"repository\" ],\n" +
         "        \"lowercase_expanded_terms\" : false\n" +
@@ -307,9 +332,13 @@ public class ElasticSearchUtilsTest
         "}"));
   }
 
-  private static void assertSearchBuilder(final SortBuilder sortBuilder, final String field, final String order) throws Exception {
-    //see https://github.com/elastic/elasticsearch/issues/20853 as to why i can't do something simple like
-//    assertThat(sortBuilder.toString(), is("somejson"));
+  private static void assertSearchBuilder(
+      final SortBuilder sortBuilder,
+      final String field,
+      final String order) throws Exception
+  {
+    // see https://github.com/elastic/elasticsearch/issues/20853 as to why i can't do something simple like
+    // assertThat(sortBuilder.toString(), is("somejson"));
 
     assertThat(fieldNameField.get(sortBuilder), is(field));
     assertThat(orderField.get(sortBuilder).toString(), is(order));
