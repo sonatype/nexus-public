@@ -17,31 +17,57 @@
 /*global Ext, NX*/
 
 /**
- * Repository "Settings" form for a cargo Group repository.
+ * Configuration for availability of Docker V1 api.
  *
  * @since 3.0
  */
-Ext.define('NX.coreui.view.repository.recipe.CargoGroup', {
-  extend: 'NX.coreui.view.repository.RepositorySettingsForm',
-  alias: 'widget.nx-coreui-repository-cargo-group',
+Ext.define('NX.coreui.view.repository.facet.CargoRequireAuthenticationFacet', {
+  extend: 'Ext.form.FieldContainer',
+  alias: 'widget.nx-coreui-repository-cargo-require-authentication-facet',
   requires: [
-    'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.GroupFacet',
-    'NX.coreui.view.repository.facet.CargoRequireAuthenticationFacet'
+    'NX.I18n'
   ],
 
   /**
    * @override
    */
   initComponent: function() {
-    var me = this;
+    const me = this;
 
     me.items = [
-      {xtype: 'nx-coreui-repository-cargo-require-authentication-facet'},
-      {xtype: 'nx-coreui-repository-storage-facet'},
-      {xtype: 'nx-coreui-repository-group-facet', format: 'cargo'}
+      {
+        xtype: 'fieldset',
+        itemId: 'cargoAuth',
+        cls: 'nx-form-section',
+        title: NX.I18n.get('Repository_Facet_CargoRequire_Authentication_Title'),
+        items: [
+          {
+            xtype: 'label',
+            text: NX.I18n.get('Repository_Facet_CargoRequire_Authentication_Enabled'),
+            style: {
+              fontWeight: 'bold',
+              display: 'block',
+            }
+          },
+          {
+            xtype: 'label',
+            text: NX.I18n.get('Repository_Facet_CargoRequire_Authentication_HelpText'),
+            style: {
+              fontStyle: 'italic'
+            }
+          },
+          {
+            xtype: 'checkbox',
+            name: 'attributes.cargo.requireAuthentication',
+            itemId: 'authrequired',
+            helpText: NX.I18n.get('Repository_Facet_CargoRequire_Authentication_Help'),
+            value: false
+          }
+        ]
+      }
     ];
 
     me.callParent();
   }
+
 });
