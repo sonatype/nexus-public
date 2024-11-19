@@ -30,6 +30,9 @@
   <properties>
     <aws-java-sdk.version>1.12.658</aws-java-sdk.version>
     <woodstox-core.version>6.5.0</woodstox-core.version>
+
+    <keycloak.version>25.0.6</keycloak.version>
+    <keycloak.adapter.version>25.0.3</keycloak.adapter.version>
   </properties>
 
   <dependencyManagement>
@@ -378,10 +381,48 @@
         </exclusions>
       </dependency>
 
+      <!--
+        The keycloak-saml-servlet-filter-adapter is no longer supported, we mix in newer versions of 25.x in order to 
+        avoid CVEs.
+       -->
+      <dependency>
+        <groupId>org.keycloak.bom</groupId>
+        <artifactId>keycloak-adapter-bom</artifactId>
+        <version>${keycloak.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.keycloak.bom</groupId>
+        <artifactId>keycloak-spi-bom</artifactId>
+        <version>${keycloak.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-common</artifactId>
+        <version>${keycloak.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-core</artifactId>
+        <version>${keycloak.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-saml-core</artifactId>
+        <version>${keycloak.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>org.keycloak</groupId>
         <artifactId>keycloak-saml-servlet-filter-adapter</artifactId>
-        <version>18.0.2</version>
+        <version>${keycloak.adapter.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.bouncycastle</groupId>
@@ -410,6 +451,26 @@
           <exclusion>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>saaj-impl</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>jakarta.xml.soap-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>jakarta.xml.ws-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

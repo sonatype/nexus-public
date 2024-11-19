@@ -769,6 +769,10 @@
               <id>bcpkix-jdk15to18</id>
               <id>bcpg-jdk15to18</id>
               <id>bcutil-jdk15to18</id>
+              <id>bcprov-jdk18on</id>
+              <id>bcpkix-jdk18on</id>
+              <id>bcpg-jdk18on</id>
+              <id>bcutil-jdk18on</id>
               <id>directjngine</id>
               <id>validation-api</id>
               <!--
