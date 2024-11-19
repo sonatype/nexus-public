@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.75.1-01</version>
+    <version>3.76.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -188,7 +188,7 @@
               <!-- disable include of target/classes, we use overlay instead -->
               <includeBuildOutputDirectory>false</includeBuildOutputDirectory>
               <!-- override expected osgi.ee to match compilation target -->
-              <javase>1.8</javase>
+              <javase>${maven.compiler.release}</javase>
               <!-- install startup jars 'by-reference' which avoids copying -->
               <useReferenceUrls>true</useReferenceUrls>
               <startupFeatures>

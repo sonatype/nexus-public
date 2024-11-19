@@ -24,7 +24,6 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.repository.content.AssetBlob;
-import org.sonatype.nexus.repository.content.AssetReconcileData;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -66,20 +65,18 @@ public interface AssetBlobDAO
   /**
    * Browse asset blobs in the content data store in a paged fashion.
    *
-   * @param limit maximum number of asset blobs to return
-   * @param start start date
-   * @param end end date
+   * @param limit             maximum number of asset blobs to return
+   * @param start             start date
+   * @param end               end date
    * @param continuationToken optional token to continue from a previous request
    * @return collection of asset blobs and the next continuation token
    * @see Continuation#nextContinuationToken()
    */
-  Continuation<AssetReconcileData> browseAssetBlobsWithinDuration(
+  Continuation<AssetBlob> browseAssetBlobsWithinDuration(
       @Param("limit") int limit,
       @Param("start") OffsetDateTime start,
       @Param("end") OffsetDateTime end,
       @Param("continuationToken") @Nullable String continuationToken);
-
-  int countAssetBlobsWithinDuration(@Param("start") OffsetDateTime start, @Param("end") OffsetDateTime end);
 
   /**
    * Creates the given asset blob in the content data store.
@@ -122,9 +119,7 @@ public interface AssetBlobDAO
   /**
    * Sets added to repository on the asset blob.
    */
-  void setAddedToRepository(
-      @Param("blobRef") BlobRef blobRef,
-      @Param("addedToRepository") OffsetDateTime addedToRepository);
+  void setAddedToRepository(@Param("blobRef") BlobRef blobRef, @Param("addedToRepository") OffsetDateTime addedToRepository);
 
   /**
    * Sets the content type on the asset

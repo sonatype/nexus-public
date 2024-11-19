@@ -78,8 +78,7 @@ public class ElasticSearchUtilsTest
             new SearchMapping(SHA1_ALIAS, VALID_SHA1_ATTRIBUTE_NAME, "", SearchField.SHA1)),
         "testFormat", () -> ImmutableList.of(
             new SearchMapping("format.custom", "attributes.format.custom", "", SearchField.FORMAT_FIELD_1),
-            new SearchMapping("format.test", "attributes.format.test", "", SearchField.FORMAT_FIELD_2),
-            new SearchMapping("name", "name.raw", "", SearchField.NAME)));
+            new SearchMapping("format.test", "attributes.format.test", "", SearchField.FORMAT_FIELD_2)));
 
     Map<String, ElasticSearchContribution> searchContributions = new HashMap<>();
     searchContributions.put(DefaultElasticSearchContribution.NAME, new DefaultElasticSearchContribution());
@@ -326,60 +325,6 @@ public class ElasticSearchUtilsTest
         "      \"query_string\" : {\n" +
         "        \"query\" : \"maven_central\",\n" +
         "        \"fields\" : [ \"repository\" ],\n" +
-        "        \"lowercase_expanded_terms\" : false\n" +
-        "      }\n" +
-        "    } ]\n" +
-        "  }\n" +
-        "}"));
-  }
-
-  @Test
-  public void buildSearchRequestNameGroupFiltersNotConvertedToRaw() {
-    Collection<SearchFilter> searchFilters = new ArrayList<>();
-    searchFilters.add(new SearchFilter("name", "name.test"));
-    searchFilters.add(new SearchFilter("group", "group.test"));
-
-    QueryBuilder queryBuilder = underTest.buildQuery(searchFilters);
-
-    assertThat(queryBuilder.toString(), is("{\n" +
-        "  \"bool\" : {\n" +
-        "    \"must\" : [ {\n" +
-        "      \"query_string\" : {\n" +
-        "        \"query\" : \"group.test\",\n" +
-        "        \"fields\" : [ \"group\" ],\n" +
-        "        \"lowercase_expanded_terms\" : false\n" +
-        "      }\n" +
-        "    }, {\n" +
-        "      \"query_string\" : {\n" +
-        "        \"query\" : \"name.test\",\n" +
-        "        \"fields\" : [ \"name\" ],\n" +
-        "        \"lowercase_expanded_terms\" : false\n" +
-        "      }\n" +
-        "    } ]\n" +
-        "  }\n" +
-        "}"));
-  }
-
-  @Test
-  public void buildSearchRequestRawNameGroupFiltersAreKept() {
-    Collection<SearchFilter> searchFilters = new ArrayList<>();
-    searchFilters.add(new SearchFilter("name.raw", "name.test"));
-    searchFilters.add(new SearchFilter("group.raw", "group.test"));
-
-    QueryBuilder queryBuilder = underTest.buildQuery(searchFilters);
-
-    assertThat(queryBuilder.toString(), is("{\n" +
-        "  \"bool\" : {\n" +
-        "    \"must\" : [ {\n" +
-        "      \"query_string\" : {\n" +
-        "        \"query\" : \"group.test\",\n" +
-        "        \"fields\" : [ \"group.raw\" ],\n" +
-        "        \"lowercase_expanded_terms\" : false\n" +
-        "      }\n" +
-        "    }, {\n" +
-        "      \"query_string\" : {\n" +
-        "        \"query\" : \"name.test\",\n" +
-        "        \"fields\" : [ \"name.raw\" ],\n" +
         "        \"lowercase_expanded_terms\" : false\n" +
         "      }\n" +
         "    } ]\n" +

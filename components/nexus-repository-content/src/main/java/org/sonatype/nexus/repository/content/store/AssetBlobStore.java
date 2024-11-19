@@ -24,7 +24,6 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AssetBlob;
-import org.sonatype.nexus.repository.content.AssetReconcileData;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -40,10 +39,9 @@ public class AssetBlobStore<T extends AssetBlobDAO>
     extends ContentStoreSupport<T>
 {
   @Inject
-  public AssetBlobStore(
-      final DataSessionSupplier sessionSupplier,
-      @Assisted final String contentStoreName,
-      @Assisted final Class<T> daoClass)
+  public AssetBlobStore(final DataSessionSupplier sessionSupplier,
+                        @Assisted final String contentStoreName,
+                        @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
   }
@@ -58,11 +56,8 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<AssetBlob> browseUnusedAssetBlobs(
-      final int limit,
-      final int blobCreatedDelayMinute,
-      @Nullable final String continuationToken)
-  {
+  public Continuation<AssetBlob> browseUnusedAssetBlobs(final int limit,
+      final int blobCreatedDelayMinute, @Nullable final String continuationToken) {
     return dao().browseUnusedAssetBlobs(limit, blobCreatedDelayMinute, continuationToken);
   }
 
@@ -81,7 +76,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   }
 
   /**
-   * Browse asset blobs in the content data store in a paged fashion by provided date range.
+   * Browse asset blobs in the content data store in a paged fashion.
    *
    * @param limit maximum number of asset blobs to return
    * @param continuationToken optional token to continue from a previous request
@@ -90,7 +85,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<AssetReconcileData> browseAssetBlobsWithinDuration(
+  public Continuation<AssetBlob> browseAssetBlobsWithinDuration(
       final int limit,
       OffsetDateTime start,
       OffsetDateTime end,
@@ -99,13 +94,6 @@ public class AssetBlobStore<T extends AssetBlobDAO>
     return dao().browseAssetBlobsWithinDuration(limit, start, end, continuationToken);
   }
 
-  /**
-   * Return count of asset blobs matched with provided date range
-   */
-  @Transactional
-  public int countAssetBlobsWithinDuration(OffsetDateTime start, OffsetDateTime end) {
-    return dao().countAssetBlobsWithinDuration(start, end);
-  }
 
   /**
    * Creates the given asset blob in the content data store.
@@ -203,10 +191,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @return collection of asset blobs and the next continuation token
    */
   @Transactional
-  public Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(
-      final int limit,
-      @Nullable final String continuationToken)
-  {
+  public Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(final int limit, @Nullable final String continuationToken) {
     return dao().browseAssetsWithLegacyBlobRef(limit, continuationToken);
   }
 

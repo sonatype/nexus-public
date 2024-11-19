@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
+import javax.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
@@ -21,7 +23,8 @@ public class CargoAttributes
   public static final String REQUIRE_AUTHENTICATION = "requireAuthentication";
 
   @ApiModelProperty(value = "Indicates if this repository requires authentication overriding anonymous access.",
-      example = "false")
+      example = "true", required = true)
+  @NotNull
   protected final Boolean requireAuthentication;
 
   @JsonCreator

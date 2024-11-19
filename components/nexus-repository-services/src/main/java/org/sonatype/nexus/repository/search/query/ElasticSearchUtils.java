@@ -34,7 +34,6 @@ import org.sonatype.nexus.repository.search.BlankValueSearchQueryFilter;
 import org.sonatype.nexus.repository.search.SearchRequest;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -73,8 +72,6 @@ public class ElasticSearchUtils
   private static final String ASSET_PREFIX = "assets.";
 
   private static final String CI_SUFFIX = ".case_insensitive";
-
-  private static final List<String> FIELDS_WITH_RAW_MAPPING = ImmutableList.of("name", "group");
 
   private final RepositoryManagerRESTAdapter repoAdapter;
 
@@ -210,15 +207,9 @@ public class ElasticSearchUtils
         .collect(toSet());
   }
 
-  private Collection<SearchFilter> convertFilters(final Collection<SearchFilter> originalFilters) {
-    return originalFilters.stream().map(filter -> {
-      String originalProperty = filter.getProperty();
-      if (hasRawMapping(originalProperty)) {
-        // Skip processing for fields with raw mapping to preserve full-text search
-        // e.g. avoid name -> name.raw conversion
-        return filter;
-      }
-      String key = searchParams.getOrDefault(originalProperty, originalProperty);
+  private Collection<SearchFilter> convertFilters(final Collection<SearchFilter> rawFilters) {
+    return rawFilters.stream().map(filter -> {
+      String key = searchParams.getOrDefault(filter.getProperty(), filter.getProperty());
       return new SearchFilter(key, filter.getValue());
     }).collect(toSet());
   }
@@ -226,10 +217,6 @@ public class ElasticSearchUtils
   @VisibleForTesting
   boolean isFullAssetAttributeName(final String assetSearchParam) {
     return assetSearchParam.startsWith(ASSET_PREFIX);
-  }
-
-  private boolean hasRawMapping(final String key) {
-    return FIELDS_WITH_RAW_MAPPING.contains(key);
   }
 
   public String getFullAssetAttributeName(final String key) {
