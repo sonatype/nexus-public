@@ -27,7 +27,6 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -313,6 +312,35 @@ public class DatastoreBlobstoreRestoreTestHelper
   }
 
   @Override
+  public boolean assertReconcilePlanExists(String type, String action, List<BlobId> blobIds) {
+    for (BlobId blobId : blobIds) {
+      if (!assertReconcilePlanExistWithParameterForProvidedBlobIds(blobId.asUniqueString(), type, action)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean assertPropertyFilesExist(String blobStorageName) {
+    try {
+      BlobStore blobstore = blobstoreManager.get(blobStorageName);
+      String absoluteBlobDir = String.valueOf(((FileBlobStore) blobstore).getAbsoluteBlobDir());
+      List<BlobId> blobIds = getAssetBlobId();
+      for (BlobId blobId : blobIds) {
+        String filePath = getFileAbsolutePathForBlobIdRef(blobId, ".properties", absoluteBlobDir);
+        if (!isFileExist(filePath)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public List<BlobId> getAssetBlobId() {
     List<BlobId> blobIds = new ArrayList<>();
     manager.browse().forEach(repo -> {
@@ -353,6 +381,11 @@ public class DatastoreBlobstoreRestoreTestHelper
     catch (SQLException e) {
       throw new RuntimeException("Error managing the connection: " + e.getMessage(), e);
     }
+  }
+
+  private boolean isFileExist(String filePath) {
+    File file = new File(filePath);
+    return file.exists() && file.isFile();
   }
 
   private void deleteFile(String filePath) {

@@ -62,11 +62,28 @@ public interface BlobstoreRestoreTestHelper
   void simulateFileLoss(String blobStorageName, String extension);
 
   /**
-   * Asserts that the reconcile plan exists with specific set of parameters
+   * Asserts that the reconcile plan exists with specific type and action
    *
-   * @param mapParam map of parameters to check
+   * @param type the type of the plan
+   * @param action the action of the plan
    */
   boolean assertReconcilePlanExists(String type, String action);
+
+  /**
+   * Asserts that the reconcile plan exists with specific set of parameters
+   *
+   * @param type the type of the plan
+   * @param action the action of the plan
+   * @param blobIds list of blob ids to check
+   */
+  boolean assertReconcilePlanExists(String type, String action, List<BlobId> blobIds);
+
+  /**
+   * Asserts that the property files exist for the specified blobstore
+   *
+   * @param blobStorageName the name of the blobstore
+   */
+  boolean assertPropertyFilesExist(String blobStorageName);
 
   /**
    * Run the reconcile task with the specified wait for task timeout
