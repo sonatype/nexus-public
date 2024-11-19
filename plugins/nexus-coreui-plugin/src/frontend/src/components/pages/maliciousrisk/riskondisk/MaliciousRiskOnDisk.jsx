@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useEffect} from 'react';
 import {useMachine} from "@xstate/react";
 
 import {
@@ -42,22 +42,31 @@ const {
 function MaliciousRiskOnDiskContent({user, props}) {
   const [state, send] = useMachine(MaliciousRiskOnDiskMachine, {devtools: true});
   const {maliciousRiskOnDisk, loadError} = state.context;
-  const isLoading = state.matches('loading');
+  const isLoading = state.matches('chooseInitialState') || state.matches('loading');
+  const closeMalwareBanner = state.matches('close');
 
   const isAdmin = user?.administrator;
   const isProEdition = ExtJS.isProEdition();
 
   const riskOnDiskCount = maliciousRiskOnDisk?.totalCount ?? 0;
-  const showWarningAlert = riskOnDiskCount > 0;
+  const showWarningAlert = riskOnDiskCount > 0 && !closeMalwareBanner;
 
-  setTimeout(() => {
-    if (window.location.hash.includes('#browse/browse') || window.location.hash.includes('#browse/search')) {
-      props.rerender(riskOnDiskCount);
-    }
-  }, 100);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (window.location.hash.includes('#browse/browse') || window.location.hash.includes('#browse/search')) {
+        props.rerender(riskOnDiskCount, closeMalwareBanner);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [riskOnDiskCount, closeMalwareBanner]);
 
   function retry() {
     send({type: 'RETRY'});
+  }
+
+  function dismiss() {
+    send({type: 'DISMISS'});
   }
 
   function getFirewallContactSonatype() {
@@ -67,7 +76,7 @@ function MaliciousRiskOnDiskContent({user, props}) {
   return (
       <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
         {showWarningAlert && <div className="risk-on-disk-container">
-          <NxErrorAlert className="risk-on-disk-alert">
+          <NxErrorAlert className="risk-on-disk-alert" onClose={dismiss}>
             <div className="risk-on-disk-content">
               <div className="risk-on-disk-alert-title">
                 <NxFontAwesomeIcon icon={faExclamationTriangle}/>

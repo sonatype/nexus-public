@@ -14,6 +14,7 @@ import React from "react";
 import {when} from "jest-when";
 import axios from "axios";
 import {render, screen, waitForElementToBeRemoved} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {act} from "react-dom/test-utils";
 
 import {APIConstants, ExtJS} from '@sonatype/nexus-ui-plugin';
@@ -171,6 +172,43 @@ describe('MaliciousRiskOnDisk', () => {
     expect(selectors.queryAlert()).toBeInTheDocument();
     await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
         showContactSonatypeBtn, isProEdition);
+  });
+
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('renders a close button and set the cookie when button clicked', async (page) => {
+    const isAdmin = true;
+    const isProEdition = true;
+
+    const setCookie = jest.fn();
+    Object.defineProperty(document, 'cookie', {
+      get: () => '',
+      set: setCookie,
+      configurable: true,
+    });
+
+    await renderView(isAdmin, isProEdition, page);
+
+    const closeButton = selectors.queryButton('Close');
+    expect(closeButton).toBeInTheDocument();
+
+    userEvent.click(closeButton);
+    expect(setCookie).toHaveBeenCalledWith('MALWARE_BANNER=close; path=/');
+  });
+
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('does not render the banner if cookie "MALWARE_BANNER" is close', async (page) => {
+    const getCookie = jest.fn(() => 'MALWARE_BANNER=close');
+    Object.defineProperty(document, 'cookie', {
+      get: getCookie,
+      set: jest.fn(),
+      configurable: true,
+    });
+
+    await act(async () => {
+      render(<MaliciousRiskOnDisk/>);
+    });
+    expect(getCookie).toHaveBeenCalled();
+    expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
   async function expectAlertToRender(page, count, title, description, showContactSonatypeBtn, isProEdition) {

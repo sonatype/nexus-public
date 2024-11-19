@@ -22,13 +22,24 @@ const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
 
 export default createMachine({
   id: 'MaliciousRiskOnDiskMachine',
-  initial: 'loading',
+  initial: 'chooseInitialState',
 
   context: {
     maliciousRiskOnDisk: {}
   },
 
   states: {
+    chooseInitialState: {
+      always: [
+        {
+          cond: 'shouldOpenAndLoad',
+          target: 'loading'
+        },
+        {
+          target: 'close'
+        }
+      ]
+    },
     loading: {
       invoke: {
         src: 'fetchData',
@@ -43,6 +54,7 @@ export default createMachine({
       }
     },
     loaded: {},
+    close: {},
     loadError: {
       on: {
         'RETRY': {
@@ -50,6 +62,12 @@ export default createMachine({
           actions: 'clearError'
         }
       }
+    }
+  },
+  on: {
+    DISMISS: {
+      target: 'close',
+      actions: 'setCookie'
     }
   },
 },
@@ -65,7 +83,12 @@ export default createMachine({
 
     clearError: assign({
       loadError: () => null
-    })
+    }),
+
+    setCookie: () => document.cookie = 'MALWARE_BANNER=close; path=/'
+  },
+  guards: {
+    shouldOpenAndLoad: () => document.cookie.match(/MALWARE_BANNER=([^;]*)/)?.[1] !== 'close'
   },
   services: {
     fetchData: () => Axios.get(MALICIOUS_RISK_ON_DISK)

@@ -32,13 +32,13 @@ Ext.define('NX.view.MaliciousRiskOnDisk', {
         xtype: 'nx-secondary-container',
         reactView: window.ReactComponents.MaliciousRiskOnDisk,
         reactViewProps: {
-          rerender: function(count) {
-            if (count === 0) {
+          rerender: function(count, hide) {
+            if (count === 0 || hide) {
               me.hide();
             } else {
               me.show();
             }
-          }
+          },
         }
       }
     ];
