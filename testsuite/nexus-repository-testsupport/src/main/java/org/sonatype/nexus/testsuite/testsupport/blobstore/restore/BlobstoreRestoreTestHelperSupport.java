@@ -39,7 +39,24 @@ public abstract class BlobstoreRestoreTestHelperSupport
     config.setBoolean(UNDELETE_BLOBS, false);
     config.setBoolean(INTEGRITY_CHECK, false);
     TaskInfo taskInfo = taskScheduler.submit(config);
-    await().atMost(timeout, SECONDS).until(() ->
-        taskInfo.getLastRunState() != null && taskInfo.getLastRunState().getEndState().equals(OK));
+    await().atMost(timeout, SECONDS)
+        .until(() -> taskInfo.getLastRunState() != null && taskInfo.getLastRunState().getEndState().equals(OK));
+  }
+
+  @Override
+  public void runReconcileTaskWithTimeout(final String blobstoreName, final long timeout) {
+    TaskConfiguration planingConfig = taskScheduler.createTaskConfigurationInstance(PLAN_RECONCILE_TYPE_ID);
+    planingConfig.setString(BLOB_STORE_NAME_FIELD_ID, blobstoreName);
+    TaskInfo plabningTaskInfo = taskScheduler.submit(planingConfig);
+    await().atMost(timeout, SECONDS)
+        .until(() -> plabningTaskInfo.getLastRunState() != null
+            && plabningTaskInfo.getLastRunState().getEndState().equals(OK));
+
+    TaskConfiguration executeConfig = taskScheduler.createTaskConfigurationInstance(EXECUTE_RECONCILE_TYPE_ID);
+    executeConfig.setString(BLOB_STORE_NAME_FIELD_ID, blobstoreName);
+    TaskInfo executeTaskInfo = taskScheduler.submit(executeConfig);
+    await().atMost(timeout, SECONDS)
+        .until(() -> executeTaskInfo.getLastRunState() != null
+            && executeTaskInfo.getLastRunState().getEndState().equals(OK));
   }
 }
