@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -65,7 +64,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.http.protocol.HttpDateGenerator.PATTERN_RFC1123;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.repository.apt.internal.AptFacetHelper.normalizeAssetPath;
@@ -78,6 +76,7 @@ import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG;
+import static org.sonatype.nexus.repository.date.DateTimeUtils.formatDateTime;
 
 /**
  * Apt metadata facet. Holds the logic for metadata recalculation.
@@ -305,7 +304,7 @@ public class AptHostedMetadataFacet
       final String md5,
       final String sha256)
   {
-    String date = DateFormatUtils.format(new Date(), PATTERN_RFC1123, TimeZone.getTimeZone("GMT"));
+    String date = DateFormatUtils.formatDateTime(new Date());
     Paragraph p = new Paragraph(Arrays.asList(
         new ControlFile.ControlField("Suite", distribution),
         new ControlFile.ControlField("Codename", distribution), new ControlFile.ControlField("Components", "main"),
