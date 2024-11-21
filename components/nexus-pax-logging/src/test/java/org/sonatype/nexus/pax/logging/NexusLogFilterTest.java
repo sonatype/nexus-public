@@ -95,7 +95,7 @@ public class NexusLogFilterTest
   private ILoggingEvent eventWithMarkerOf(final Marker marker) {
     LoggingEvent event = new LoggingEvent();
     event.setMessage("Test Message");
-    event.addMarker(marker);
+    event.setMarker(marker);
     return event;
   }
 }
