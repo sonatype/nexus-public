@@ -188,7 +188,7 @@
               <!-- disable include of target/classes, we use overlay instead -->
               <includeBuildOutputDirectory>false</includeBuildOutputDirectory>
               <!-- override expected osgi.ee to match compilation target -->
-              <javase>${maven.compiler.release}</javase>
+              <javase>1.8</javase>
               <!-- install startup jars 'by-reference' which avoids copying -->
               <useReferenceUrls>true</useReferenceUrls>
               <startupFeatures>
