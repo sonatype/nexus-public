@@ -16,18 +16,18 @@ import java.io.File;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Handler;
+
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.bootstrap.internal.LogbackContextProvider;
 import org.sonatype.nexus.bootstrap.internal.ShutdownHelper;
 import org.sonatype.nexus.bootstrap.internal.TemporaryDirectory;
 import org.sonatype.nexus.bootstrap.jetty.JettyServer;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.impl.StaticLoggerBinder;
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
 
 /**
@@ -64,8 +64,7 @@ public class Launcher
   public Launcher(
       final File defaultsFile,
       @Nullable final File propertiesFile,
-      @Nullable final File nodeNamePropertiesFile)
-      throws Exception
+      @Nullable final File nodeNamePropertiesFile) throws Exception
   {
 
     configureLogging();
@@ -186,8 +185,9 @@ public class Launcher
    */
   private void configureInitialLoggingOverrides(final Map<String, String> props) {
     LoggerContext loggerContext = loggerContext();
-    if (props != null) {
-      props.entrySet().stream()
+    if (props != null && loggerContext != null) {
+      props.entrySet()
+          .stream()
           .map(Property::new)
           .filter(p -> p.key.startsWith(LOGGING_OVERRIDE_PREFIX))
           .filter(p -> !p.value.isEmpty())
@@ -201,11 +201,7 @@ public class Launcher
     loggerContext.getLogger(logger).setLevel(Level.valueOf(level));
   }
 
-  private LoggerContext loggerContext() {
-    ILoggerFactory factory = LoggerFactory.getILoggerFactory();
-    if (factory instanceof LoggerContext) {
-      return (LoggerContext) factory;
-    }
-    return (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
+  private static LoggerContext loggerContext() {
+    return LogbackContextProvider.get();
   }
 }
