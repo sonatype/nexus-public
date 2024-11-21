@@ -20,7 +20,7 @@ import java.util.Arrays;
  *
  * @since 3.2
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings({"rawtypes", "unchecked"})
 final class TransactionalImpl
     implements Transactional
 {

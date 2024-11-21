@@ -42,7 +42,7 @@ public class AuditDTOTest
 
   @Test
   public void testToString_withData() {
-    //Setting Thread name is required because AuditData provides thread name for AuditDTO.
+    // Setting Thread name is required because AuditData provides thread name for AuditDTO.
     Thread.currentThread().setName("quartz-7-thread-1");
     underTest = new AuditDTO(makeAuditData());
 

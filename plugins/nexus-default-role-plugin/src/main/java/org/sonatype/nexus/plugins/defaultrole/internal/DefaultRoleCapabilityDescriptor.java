@@ -69,8 +69,7 @@ public class DefaultRoleCapabilityDescriptor
         P_ROLE,
         messages.roleLabel(),
         messages.roleHelp(),
-        FormField.MANDATORY
-    ).withStoreApi("coreui_Role.read");
+        FormField.MANDATORY).withStoreApi("coreui_Role.read");
   }
 
   @Override

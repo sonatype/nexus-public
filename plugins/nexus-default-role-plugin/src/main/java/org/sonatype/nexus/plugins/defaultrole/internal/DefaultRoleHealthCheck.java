@@ -63,8 +63,11 @@ public class DefaultRoleHealthCheck
       return Result.unhealthy("Default Role Realm is enabled but not configured.");
     }
 
-    Role matched = securitySystem.listRoles(DEFAULT_SOURCE).stream()
-        .filter(role -> role.getRoleId().equals(defaultRoleRealm.getRole())).findFirst().orElse(null);
+    Role matched = securitySystem.listRoles(DEFAULT_SOURCE)
+        .stream()
+        .filter(role -> role.getRoleId().equals(defaultRoleRealm.getRole()))
+        .findFirst()
+        .orElse(null);
 
     if (matched == null) {
       return Result

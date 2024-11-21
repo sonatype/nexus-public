@@ -44,8 +44,7 @@ public class RepositoryRemoteConnectionStatusEvent
       @JsonProperty("remoteConnectionStatusTypeOrdinal") final int remoteConnectionStatusTypeOrdinal,
       @JsonProperty("reason") final String reason,
       @JsonProperty("blockedUntilMillis") final long blockedUntilMillis,
-      @JsonProperty("requestUrl") final String requestUrl
-  )
+      @JsonProperty("requestUrl") final String requestUrl)
   {
     super(UPDATED);
     this.repositoryName = checkNotNull(repositoryName);

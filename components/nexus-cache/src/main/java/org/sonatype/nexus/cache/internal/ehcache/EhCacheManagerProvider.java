@@ -77,8 +77,7 @@ public class EhCacheManagerProvider
   private CacheManager create(@Nullable final URI config) {
     CachingProvider provider = Caching.getCachingProvider(
         EhcacheCachingProvider.class.getName(),
-        EhcacheCachingProvider.class.getClassLoader()
-    );
+        EhcacheCachingProvider.class.getClassLoader());
 
     log.info("Creating cache-manager with configuration: {}", config);
     CacheManager manager = provider.getCacheManager(config, getClass().getClassLoader());

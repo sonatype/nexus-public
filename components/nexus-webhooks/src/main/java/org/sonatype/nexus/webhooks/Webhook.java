@@ -130,7 +130,7 @@ public abstract class Webhook
     checkNotNull(subscription);
 
     synchronized (subscriptions) {
-      //noinspection SuspiciousMethodCalls
+      // noinspection SuspiciousMethodCalls
       subscriptions.remove(subscription);
       log.debug("Removed subscription: {}", subscription);
 

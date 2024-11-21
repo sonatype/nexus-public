@@ -58,7 +58,8 @@ public class DataStoreConfigurationManager
     Set<String> configuredStores = new TreeSet<>(CASE_INSENSITIVE_ORDER);
     // only attempt to load a named store once from the first store that has it
     // (if the first attempt fails then that store is considered not available)
-    return configurationSources.values().stream()
+    return configurationSources.values()
+        .stream()
         .filter(DataStoreConfigurationSource::isEnabled)
         .sorted(comparingInt(this::getPriority).reversed())
         .flatMap(source -> stream(source.browseStoreNames())
@@ -68,11 +69,12 @@ public class DataStoreConfigurationManager
         .collect(toImmutableList());
   }
 
-  private int getPriority(final DataStoreConfigurationSource configSource){
+  private int getPriority(final DataStoreConfigurationSource configSource) {
     if (configSource.getClass().isAnnotationPresent(Priority.class)) {
       Priority priority = configSource.getClass().getAnnotation(Priority.class);
       return priority.value();
-    } else {
+    }
+    else {
       log.warn("Loaded config source {} without priority, assuming last", configSource.getName());
       return Integer.MIN_VALUE;
     }

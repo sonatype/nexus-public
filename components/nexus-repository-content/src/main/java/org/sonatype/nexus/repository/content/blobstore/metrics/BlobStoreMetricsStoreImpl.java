@@ -76,7 +76,7 @@ public class BlobStoreMetricsStoreImpl
     }
     catch (DuplicateKeyException e) {
       log.debug("Failed to initialize blobstore metrics as they are already initialized.",
-          e); //this is likely an HA race condition between multiple nodes - this is not a problem
+          e); // this is likely an HA race condition between multiple nodes - this is not a problem
     }
   }
 }

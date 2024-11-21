@@ -28,10 +28,7 @@ public class UiUtil
    * @return the path to the requested file
    */
   public static String getPathForFile(final String filename, final ClassSpace space) {
-    for (
-        Enumeration<URL> e = space.findEntries("static", filename, true);
-        e.hasMoreElements();
-    ) {
+    for (Enumeration<URL> e = space.findEntries("static", filename, true); e.hasMoreElements();) {
       URL url = e.nextElement();
       return url.getPath();
     }

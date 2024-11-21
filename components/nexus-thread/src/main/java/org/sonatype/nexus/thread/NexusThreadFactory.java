@@ -41,10 +41,11 @@ public class NexusThreadFactory
     this(poolId, threadGroupName, threadPriority, false);
   }
 
-  public NexusThreadFactory(final String poolId,
-                            final String threadGroupName,
-                            final int threadPriority,
-                            final boolean daemonThread)
+  public NexusThreadFactory(
+      final String poolId,
+      final String threadGroupName,
+      final int threadPriority,
+      final boolean daemonThread)
   {
     int poolNum = poolNumber.getAndIncrement();
     this.schedulerThreadGroup = new ThreadGroup(threadGroupName + " #" + poolNum);

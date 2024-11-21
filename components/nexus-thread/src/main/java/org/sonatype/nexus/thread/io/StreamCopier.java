@@ -74,9 +74,10 @@ public class StreamCopier<T>
    * @param service - {@link ExecutorService} instead of the default common one.
    * @see #StreamCopier(Consumer, Function)
    */
-  public StreamCopier(final Consumer<OutputStream> write,
-                      final Function<InputStream, T> read,
-                      final ExecutorService service)
+  public StreamCopier(
+      final Consumer<OutputStream> write,
+      final Function<InputStream, T> read,
+      final ExecutorService service)
   {
     this.write = checkNotNull(write);
     this.read = checkNotNull(read);
@@ -101,8 +102,7 @@ public class StreamCopier<T>
    * @param timeoutMilliseconds - the maximum time to wait
    * @see #read()
    */
-  public T read(final long timeoutMilliseconds)
-  {
+  public T read(final long timeoutMilliseconds) {
     try {
 
       return service.submit(() -> {

@@ -29,7 +29,7 @@ import org.apache.maven.plugin.logging.Log;
  * @since 3.0
  */
 public class OmissionFileAppender
-  extends FileAppender
+    extends FileAppender
 {
   public static final String IF_START_PREFIX = "//<if ";
 
@@ -37,11 +37,12 @@ public class OmissionFileAppender
 
   public static final String IF_END = "//</if>";
 
-  private final Map<String,Boolean> flags = new HashMap<>();
+  private final Map<String, Boolean> flags = new HashMap<>();
 
-  public OmissionFileAppender(final Log log,
-                              final Writer output,
-                              @Nullable final Map<String,String> rawFlags)
+  public OmissionFileAppender(
+      final Log log,
+      final Writer output,
+      @Nullable final Map<String, String> rawFlags)
   {
     super(log, output);
     if (rawFlags != null) {
@@ -53,8 +54,8 @@ public class OmissionFileAppender
     return flags;
   }
 
-  private void parseFlags(final Map<String,String> rawFlags) {
-    for (Entry<String,String> entry : rawFlags.entrySet()) {
+  private void parseFlags(final Map<String, String> rawFlags) {
+    for (Entry<String, String> entry : rawFlags.entrySet()) {
       boolean flag = Boolean.parseBoolean(entry.getValue());
       flags.put(entry.getKey(), flag);
     }

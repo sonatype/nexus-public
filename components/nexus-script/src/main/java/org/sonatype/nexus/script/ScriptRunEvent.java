@@ -24,4 +24,3 @@ public class ScriptRunEvent
     super(script);
   }
 }
-

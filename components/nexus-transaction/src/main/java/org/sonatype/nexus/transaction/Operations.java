@@ -190,9 +190,10 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   /**
    * Custom settings.
    */
-  protected Operations(final Transactional spec,
-                       @Nullable final Class<E> throwing,
-                       @Nullable final TransactionalStore<?> store)
+  protected Operations(
+      final Transactional spec,
+      @Nullable final Class<E> throwing,
+      @Nullable final TransactionalStore<?> store)
   {
     this.spec = checkNotNull(spec);
     this.throwing = throwing;
@@ -202,9 +203,10 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   /**
    * Copies the given settings into a new fluent step.
    */
-  protected <X extends Exception> Operations<X, ?> copy(final Transactional spec,
-                                                        @Nullable final Class<X> throwing,
-                                                        @Nullable final TransactionalStore<?> store)
+  protected <X extends Exception> Operations<X, ?> copy(
+      final Transactional spec,
+      @Nullable final Class<X> throwing,
+      @Nullable final TransactionalStore<?> store)
   {
     return new Operations<>(spec, throwing, store);
   }

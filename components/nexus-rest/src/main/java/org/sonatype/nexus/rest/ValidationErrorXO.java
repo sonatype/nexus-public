@@ -62,7 +62,7 @@ public class ValidationErrorXO
   /**
    * Creates a validation error for a specific value.
    *
-   * @param id      identifier of value failing validation.
+   * @param id identifier of value failing validation.
    * @param message validation description
    */
   public ValidationErrorXO(final String id, final String message) {
@@ -71,7 +71,7 @@ public class ValidationErrorXO
   }
 
   /**
-   * @return identifier of value failing validation (never null).  A value of "*" denotes that validation does
+   * @return identifier of value failing validation (never null). A value of "*" denotes that validation does
    *         not applies to a specific value.
    */
   public String getId() {

@@ -108,8 +108,7 @@ public class PurgeUnusedIT
     assertThat(assets,
         hasItems(
             path(equalTo("/0day")),
-            path(equalTo("/1day"))
-        ));
+            path(equalTo("/1day"))));
   }
 
   @Test
@@ -130,16 +129,14 @@ public class PurgeUnusedIT
     assertThat(components,
         hasItems(
             name(equalTo("/0day")),
-            name(equalTo("/1day"))
-        ));
+            name(equalTo("/1day"))));
 
     Continuation<FluentAsset> assets = browseAssets();
     assertThat(assets, iterableWithSize(2));
     assertThat(assets,
         hasItems(
             path(equalTo("/0day0")),
-            path(equalTo("/1day0"))
-        ));
+            path(equalTo("/1day0"))));
   }
 
   @Test
@@ -163,8 +160,7 @@ public class PurgeUnusedIT
     assertThat(assets,
         hasItems(
             path(equalTo("/0day-3days0")),
-            path(equalTo("/0day-3days1"))
-        ));
+            path(equalTo("/0day-3days1"))));
   }
 
   private Continuation<FluentAsset> browseAssets() {

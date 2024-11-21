@@ -34,7 +34,7 @@ public interface NexusCache<K, V>
    * Associates the specified value with the specified key in the cache. If the {@link NexusCache} previously
    * contained a mapping for the key, the old value is replaced by the specified value.
    *
-   * @param key   key with which the specified value is to be associated
+   * @param key key with which the specified value is to be associated
    * @param value value to be associated with the specified key
    */
   void put(final K key, final V value);

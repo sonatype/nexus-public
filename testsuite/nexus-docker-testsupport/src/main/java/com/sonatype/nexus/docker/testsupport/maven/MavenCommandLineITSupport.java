@@ -37,39 +37,43 @@ public class MavenCommandLineITSupport
     super(dockerContainerConfig);
   }
 
-  public Optional<List<String>> cleanInstall(final String directory,
-                                             final String url)
+  public Optional<List<String>> cleanInstall(
+      final String directory,
+      final String url)
   {
     return cleanInstall(directory, url, randomUUID().toString(), randomUUID().toString(), "1.0.0");
   }
 
-  public Optional<List<String>> cleanInstall(final String directory,
-                                             final String repositoryUrl,
-                                             final String groupId,
-                                             final String artifactId,
-                                             final String version)
+  public Optional<List<String>> cleanInstall(
+      final String directory,
+      final String repositoryUrl,
+      final String groupId,
+      final String artifactId,
+      final String version)
   {
     updatePom(directory, repositoryUrl, groupId, artifactId, version);
 
     return exec(CD + directory + " && " + MVN + "clean install");
   }
 
-  public Optional<List<String>> deploy(final String directory,
-                                       final String repositoryUrl,
-                                       final String groupId,
-                                       final String artifactId,
-                                       final String version)
+  public Optional<List<String>> deploy(
+      final String directory,
+      final String repositoryUrl,
+      final String groupId,
+      final String artifactId,
+      final String version)
   {
     updatePom(directory, repositoryUrl, groupId, artifactId, version);
 
     return exec(CD + directory + " && " + MVN + "clean deploy -Dmaven.test.skip=true");
   }
 
-  private void updatePom(final String directory,
-                         final String repositoryUrl,
-                         final String groupId,
-                         final String artifactId,
-                         final String version)
+  private void updatePom(
+      final String directory,
+      final String repositoryUrl,
+      final String groupId,
+      final String artifactId,
+      final String version)
   {
     String pomTemplate = directory + "/pom-template.xml";
     String pom = directory + "/pom.xml";

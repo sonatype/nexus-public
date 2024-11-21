@@ -23,8 +23,9 @@ import org.eclipse.sisu.Mediator;
 final class FilterPipelineMediator
     implements Mediator<Annotation, FilterPipeline, DynamicFilterPipeline>
 {
-  public void add(final BeanEntry<Annotation, FilterPipeline> entry, final DynamicFilterPipeline watcher)
-      throws Exception
+  public void add(
+      final BeanEntry<Annotation, FilterPipeline> entry,
+      final DynamicFilterPipeline watcher) throws Exception
   {
     // initialize pipeline before exposing via cache
     final FilterPipeline pipeline = entry.getValue();
@@ -32,8 +33,9 @@ final class FilterPipelineMediator
     watcher.refreshCache();
   }
 
-  public void remove(final BeanEntry<Annotation, FilterPipeline> entry, final DynamicFilterPipeline watcher)
-      throws Exception
+  public void remove(
+      final BeanEntry<Annotation, FilterPipeline> entry,
+      final DynamicFilterPipeline watcher) throws Exception
   {
     // remove pipeline from cache before disposing
     final FilterPipeline pipeline = entry.getValue();

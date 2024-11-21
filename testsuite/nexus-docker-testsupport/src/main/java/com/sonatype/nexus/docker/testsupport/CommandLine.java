@@ -33,7 +33,7 @@ public interface CommandLine
    * Download a file from the container.
    *
    * @param fromContainerPath the file to download in the container.
-   * @param toLocal           {@link File} host path to download to
+   * @param toLocal {@link File} host path to download to
    */
   void download(String fromContainerPath, File toLocal);
 

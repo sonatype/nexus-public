@@ -41,8 +41,10 @@ public class CacheHelper
   private final Provider<CacheBuilder> cacheBuilderProvider;
 
   @Inject
-  public CacheHelper(final Provider<CacheManager> cacheManagerProvider,
-                     final Provider<CacheBuilder> cacheBuilderProvider) {
+  public CacheHelper(
+      final Provider<CacheManager> cacheManagerProvider,
+      final Provider<CacheBuilder> cacheBuilderProvider)
+  {
     this.cacheManagerProvider = checkNotNull(cacheManagerProvider);
     this.cacheBuilderProvider = checkNotNull(cacheBuilderProvider);
   }
@@ -52,12 +54,14 @@ public class CacheHelper
   }
 
   @SuppressWarnings("unchecked")
-  public <K,V> CacheBuilder<K,V> builder() {
+  public <K, V> CacheBuilder<K, V> builder() {
     return cacheBuilderProvider.get();
   }
 
-  public synchronized <K, V> Cache<K, V> maybeCreateCache(final String name,
-                                                          final MutableConfiguration<K, V> mutableConfiguration) {
+  public synchronized <K, V> Cache<K, V> maybeCreateCache(
+      final String name,
+      final MutableConfiguration<K, V> mutableConfiguration)
+  {
     checkNotNull(name);
     checkNotNull(mutableConfiguration);
 
@@ -75,7 +79,7 @@ public class CacheHelper
     return cache;
   }
 
-  public synchronized <K, V> Cache<K, V> getOrCreate(final CacheBuilder<K,V> builder) {
+  public synchronized <K, V> Cache<K, V> getOrCreate(final CacheBuilder<K, V> builder) {
     checkNotNull(builder);
 
     Cache<K, V> cache = manager().getCache(builder.getName(), builder.getKeyType(), builder.getValueType());
@@ -91,16 +95,18 @@ public class CacheHelper
     return cache;
   }
 
-  public synchronized <K, V> Cache<K, V> maybeCreateCache(final String name,
-                                                          final Factory<? extends ExpiryPolicy> expiryPolicyFactory)
+  public synchronized <K, V> Cache<K, V> maybeCreateCache(
+      final String name,
+      final Factory<? extends ExpiryPolicy> expiryPolicyFactory)
   {
     return maybeCreateCache(name, null, null, expiryPolicyFactory);
   }
 
-  public synchronized <K, V> Cache<K, V> maybeCreateCache(final String name,
-                                                          @Nullable final Class<K> keyType,
-                                                          @Nullable final Class<V> valueType,
-                                                          final Factory<? extends ExpiryPolicy> expiryPolicyFactory)
+  public synchronized <K, V> Cache<K, V> maybeCreateCache(
+      final String name,
+      @Nullable final Class<K> keyType,
+      @Nullable final Class<V> valueType,
+      final Factory<? extends ExpiryPolicy> expiryPolicyFactory)
   {
     return maybeCreateCache(name, createCacheConfig(keyType, valueType, expiryPolicyFactory));
   }

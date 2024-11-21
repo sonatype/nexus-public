@@ -70,21 +70,27 @@ public class RawRestoreBlobIT
     testData.addDirectory(resolveBaseFile("target/it-resources/raw"));
     blobStoreName = testName.getMethodName();
     nexus.blobStores().create(blobStoreName);
-    hostedRepository = nexus.repositories().raw().hosted(repoName("hosted"))
+    hostedRepository = nexus.repositories()
+        .raw()
+        .hosted(repoName("hosted"))
         .withBlobstore(blobStoreName)
         .create();
 
     proxyServer = Server.withPort(PortAllocator.nextFreePort()).start();
     proxyServer.serve("/" + TEST_CONTENT).withBehaviours(resolveFile(TEST_CONTENT));
 
-    proxyRepository = nexus.repositories().raw().proxy(repoName("proxy"))
+    proxyRepository = nexus.repositories()
+        .raw()
+        .proxy(repoName("proxy"))
         .withRemoteUrl("http://localhost:" + proxyServer.getPort() + "/")
         .withBlobstore(blobStoreName)
         .create();
 
     File testFile = resolveTestFile(TEST_CONTENT);
-    assertThat(nexus.rest().put(path(hostedRepository, TEST_CONTENT),
-        FileUtils.readFileToString(testFile, StandardCharsets.UTF_8), "admin", "admin123"), hasStatus(HttpStatus.CREATED));
+    assertThat(nexus.rest()
+        .put(path(hostedRepository, TEST_CONTENT),
+            FileUtils.readFileToString(testFile, StandardCharsets.UTF_8), "admin", "admin123"),
+        hasStatus(HttpStatus.CREATED));
 
     assertThat(nexus.rest().get(path(proxyRepository, TEST_CONTENT)), hasStatus(OK));
 
@@ -110,7 +116,7 @@ public class RawRestoreBlobIT
   public void testRestoresMostRecentAsset() throws Exception {
     // We can't guarantee the order blobs will be processed, so for the test we want to create enough assets that
     // there is a low chance that the last blob is processed last which would mean our test verifies nothing.
-    for (int i=0; i<20; i++) {
+    for (int i = 0; i < 20; i++) {
       assertThat(nexus.rest().put(path(hostedRepository, TEST_CONTENT), "test" + i, "admin", "admin123"),
           hasStatus(HttpStatus.CREATED));
     }
@@ -131,8 +137,7 @@ public class RawRestoreBlobIT
   }
 
   @Test
-  public void testDryRunRestore()
-  {
+  public void testDryRunRestore() {
     assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
     restoreTestHelper.simulateComponentAndAssetMetadataLoss();
     assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
@@ -141,8 +146,7 @@ public class RawRestoreBlobIT
   }
 
   @Test
-  public void testNotDryRunRestore()
-  {
+  public void testNotDryRunRestore() {
     assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
     restoreTestHelper.simulateComponentAndAssetMetadataLoss();
     assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
@@ -186,9 +190,15 @@ public class RawRestoreBlobIT
         || componentAssetTestHelper.componentExists(repository, prependIfMissing(name, "/"));
   }
 
-  private boolean assetWithComponentExists(final Repository repository, final String path, final String group, final String name) {
+  private boolean assetWithComponentExists(
+      final Repository repository,
+      final String path,
+      final String group,
+      final String name)
+  {
     return componentAssetTestHelper.assetWithComponentExists(repository, path, group, name)
-        || componentAssetTestHelper.assetWithComponentExists(hostedRepository, prependIfMissing(path, "/"), group, prependIfMissing(name, "/"));
+        || componentAssetTestHelper.assetWithComponentExists(hostedRepository, prependIfMissing(path, "/"), group,
+            prependIfMissing(name, "/"));
   }
 
   private Content resolveFile(final String filename) {

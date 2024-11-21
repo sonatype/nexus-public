@@ -275,10 +275,11 @@ public class RetryControllerTest
     assertThat(underTest.excessiveRetriesInLastHour(), is(2L)); // bump
   }
 
-  private void verifyBackoff(final int retriesSoFar,
-                             final Exception cause,
-                             final long minBackoff,
-                             final long maxBackoff)
+  private void verifyBackoff(
+      final int retriesSoFar,
+      final Exception cause,
+      final long minBackoff,
+      final long maxBackoff)
   {
     underTest.allowRetry(retriesSoFar, cause);
 

@@ -41,9 +41,10 @@ public class RestClientConfiguration
 
   private final boolean useTrustStore;
 
-  private RestClientConfiguration(@Nullable final Supplier<HttpClient> httpClient,
-                                  @Nullable final Customizer customizer,
-                                  final boolean useTrustStore)
+  private RestClientConfiguration(
+      @Nullable final Supplier<HttpClient> httpClient,
+      @Nullable final Customizer customizer,
+      final boolean useTrustStore)
   {
     this.httpClient = httpClient;
     this.customizer = customizer;

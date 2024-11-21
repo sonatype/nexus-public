@@ -29,6 +29,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 /**
  * Adds the {@link TaskLogCleanupTask} to the quartz cron definition in the database
+ * 
  * @since 3.5
  */
 @Named
@@ -42,8 +43,9 @@ public class TaskLogCleanupQuartz
   private final String taskLogCleanupCron;
 
   @Inject
-  public TaskLogCleanupQuartz(final TaskScheduler taskScheduler,
-                              @Named("${nexus.tasks.log.cleanup.cron:-0 0 0 * * ?}") final String taskLogCleanupCron)
+  public TaskLogCleanupQuartz(
+      final TaskScheduler taskScheduler,
+      @Named("${nexus.tasks.log.cleanup.cron:-0 0 0 * * ?}") final String taskLogCleanupCron)
   {
     this.taskScheduler = checkNotNull(taskScheduler);
     this.taskLogCleanupCron = checkNotNull(taskLogCleanupCron);
@@ -51,7 +53,8 @@ public class TaskLogCleanupQuartz
 
   @Override
   protected void doStart() throws Exception {
-    if (!taskScheduler.listsTasks().stream()
+    if (!taskScheduler.listsTasks()
+        .stream()
         .anyMatch((info) -> TaskLogCleanupTaskDescriptor.TYPE_ID.equals(info.getConfiguration().getTypeId()))) {
       TaskConfiguration configuration = taskScheduler.createTaskConfigurationInstance(
           TaskLogCleanupTaskDescriptor.TYPE_ID);

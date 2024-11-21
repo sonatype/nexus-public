@@ -55,9 +55,10 @@ public class AuditRecorderImpl
   private volatile boolean enabled = false;
 
   @Inject
-  public AuditRecorderImpl(final EventManager eventManager,
-                           final NodeAccess nodeAccess,
-                           final InitiatorProvider initiatorProvider)
+  public AuditRecorderImpl(
+      final EventManager eventManager,
+      final NodeAccess nodeAccess,
+      final InitiatorProvider initiatorProvider)
   {
     this.eventManager = eventManager;
     this.nodeAccess = nodeAccess;

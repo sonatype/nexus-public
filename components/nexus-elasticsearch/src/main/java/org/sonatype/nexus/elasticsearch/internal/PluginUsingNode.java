@@ -33,4 +33,3 @@ public class PluginUsingNode
     super(InternalSettingsPreparer.prepareEnvironment(preparedSettings, null), Version.CURRENT, plugins);
   }
 }
-

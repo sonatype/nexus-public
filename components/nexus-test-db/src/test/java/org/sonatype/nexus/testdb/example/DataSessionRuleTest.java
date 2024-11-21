@@ -54,7 +54,7 @@ public class DataSessionRuleTest
   /**
    * Intercepts MyBatis commits so we can arbitrarily fail them.
    */
-  @Intercepts({ @Signature(type = Executor.class, method = "commit", args = { boolean.class }) })
+  @Intercepts({@Signature(type = Executor.class, method = "commit", args = {boolean.class})})
   static class CommitInterceptor
       implements Interceptor
   {

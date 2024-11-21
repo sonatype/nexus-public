@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Rapture UI plugin descriptor.
  *
- * Using component priority to determine inclusion order.  Ordering is important to properly load the UI.
+ * Using component priority to determine inclusion order. Ordering is important to properly load the UI.
  *
  * @since 3.20
  */

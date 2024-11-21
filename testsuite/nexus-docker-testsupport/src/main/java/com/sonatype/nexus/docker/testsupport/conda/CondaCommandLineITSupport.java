@@ -74,8 +74,7 @@ public class CondaCommandLineITSupport
    *
    * @return List of {@link String} of output from execution
    */
-  public List<String> condaSearchPackages(final String name)
-  {
+  public List<String> condaSearchPackages(final String name) {
     return clearTerminalOutputHeader(condaExec("search " + name));
   }
 
@@ -85,16 +84,14 @@ public class CondaCommandLineITSupport
    * @param name name of the package
    * @return terminal output
    */
-  public List<String> removePackage(final String name)
-  {
+  public List<String> removePackage(final String name) {
     return condaExec("remove -y --name " + name);
   }
 
   /**
    * Clean Conda client cache
    */
-  public List<String> clearClientCache()
-  {
+  public List<String> clearClientCache() {
     return condaExec("clean -a -y"); // -a = all ; -y - do not ask accept
   }
 

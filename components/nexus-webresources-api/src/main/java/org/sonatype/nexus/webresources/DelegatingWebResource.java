@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 2.8
  */
 public class DelegatingWebResource
-  implements WebResource
+    implements WebResource
 {
   private final WebResource delegate;
 

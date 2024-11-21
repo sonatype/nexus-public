@@ -168,7 +168,8 @@ public class RawProxyOfHostedIT
   @Test
   public void remoteHasNoContent() throws Exception {
     Server server = Server.withPort(PortAllocator.nextFreePort())
-        .serve("/*").withBehaviours(Behaviours.error(HttpStatus.NOT_FOUND))
+        .serve("/*")
+        .withBehaviours(Behaviours.error(HttpStatus.NOT_FOUND))
         .start();
     try {
       proxyClient = rawClient(repos.createRawProxy(testName.getMethodName(), server.getUrl().toExternalForm()));
@@ -210,7 +211,9 @@ public class RawProxyOfHostedIT
 
   private void responseViaProxyProduces(final int upstreamStatus, final int downstreamStatus) throws Exception {
     Server server =
-        Server.withPort(PortAllocator.nextFreePort()).serve("/*").withBehaviours(Behaviours.error(upstreamStatus))
+        Server.withPort(PortAllocator.nextFreePort())
+            .serve("/*")
+            .withBehaviours(Behaviours.error(upstreamStatus))
             .start();
     try {
       proxyClient = rawClient(repos.createRawProxy("raw-test-proxy-" + upstreamStatus + "-" + downstreamStatus,
@@ -249,7 +252,8 @@ public class RawProxyOfHostedIT
 
   @Test
   public void retrieveRawWhenRemoteOffline() throws Exception {
-    Server server = Server.withPort(PortAllocator.nextFreePort()).serve("/*")
+    Server server = Server.withPort(PortAllocator.nextFreePort())
+        .serve("/*")
         .withBehaviours(content("Response"))
         .start();
     try {
@@ -270,60 +274,52 @@ public class RawProxyOfHostedIT
                 "/repository/" + hostedRepo.getName() + "/some/folder/begin\u202Fend.txt",
                 "content",
                 "admin",
-                "admin123"
-            ).getStatus(),
-        is(201)
-    );
+                "admin123")
+            .getStatus(),
+        is(201));
 
     assertThat(
         componentAssetTestHelper.countComponents(proxyRepo),
-        is(0)
-    );
+        is(0));
     assertThat(
         componentAssetTestHelper.countAssets(proxyRepo),
-        is(0)
-    );
+        is(0));
     assertThat(
         componentAssetTestHelper.countComponents(hostedRepo),
-        is(1)
-    );
+        is(1));
     assertThat(
         componentAssetTestHelper.countAssets(hostedRepo),
-        is(1)
-    );
+        is(1));
 
     assertThat(
         restTestHelper
             .get(
                 "/repository/" + proxyRepo.getName() + "/some/folder/begin\u202Fend.txt",
                 "admin",
-                "admin123"
-            ).getStatus(),
-        is(200)
-    );
+                "admin123")
+            .getStatus(),
+        is(200));
 
     assertThat(
         componentAssetTestHelper.countComponents(proxyRepo),
-        is(1)
-    );
+        is(1));
     assertThat(
         componentAssetTestHelper.countAssets(proxyRepo),
-        is(1)
-    );
+        is(1));
     assertThat(
         componentAssetTestHelper.componentExists(
             proxyRepo,
             "/some/folder",
             "/some/folder/begin\u202Fend.txt",
-            ""
-        ),
-        is(true)
-    );
+            ""),
+        is(true));
   }
 
   private void responseViaGroupProduces(final int upstreamStatus, final int downstreamStatus) throws Exception {
     Server server =
-        Server.withPort(PortAllocator.nextFreePort()).serve("/*").withBehaviours(Behaviours.error(upstreamStatus))
+        Server.withPort(PortAllocator.nextFreePort())
+            .serve("/*")
+            .withBehaviours(Behaviours.error(upstreamStatus))
             .start();
     try {
       Repository proxy = repos.createRawProxy("raw-test-proxy-" + upstreamStatus + "-" + downstreamStatus,

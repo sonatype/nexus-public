@@ -15,7 +15,8 @@ package org.sonatype.nexus.thread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ExceptionAwareThreadFactory extends NexusThreadFactory
+public class ExceptionAwareThreadFactory
+    extends NexusThreadFactory
 {
 
   private static final Logger log = LoggerFactory.getLogger(ExceptionAwareThreadFactory.class);
@@ -41,9 +42,8 @@ public class ExceptionAwareThreadFactory extends NexusThreadFactory
   public Thread newThread(final Runnable r) {
     Thread tr = super.newThread(r);
     tr.setUncaughtExceptionHandler((t, e) -> {
-      log.error("Uncaught Exception occurred on thread: {}, Exception message: {}",t.getName(), e.getMessage());
+      log.error("Uncaught Exception occurred on thread: {}, Exception message: {}", t.getName(), e.getMessage());
     });
     return tr;
   }
 }
-

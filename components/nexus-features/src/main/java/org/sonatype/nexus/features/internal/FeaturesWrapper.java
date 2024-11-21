@@ -66,7 +66,7 @@ public class FeaturesWrapper
       new Hashtable<>(singletonMap(SERVICE_RANKING, MAX_VALUE)); // NOSONAR: registerService API wants a Dictionary
 
   private final FeaturesService wrapper = (FeaturesService) newProxyInstance(FeaturesService.class.getClassLoader(),
-      new Class<?>[] { FeaturesService.class }, this);
+      new Class<?>[]{FeaturesService.class}, this);
 
   private volatile FeaturesService delegate;
 

@@ -50,7 +50,7 @@ public class DockerContainerConfig
 
   private DockerContainerConfig(@Nullable final String image, @Nullable final Path dockerfile) {
     checkArgument(!(image == null && dockerfile == null), "Image name or Dockerfile should be presented");
-    checkArgument(!(image !=null && dockerfile != null), "Image name and Dockerfile should not be presented both");
+    checkArgument(!(image != null && dockerfile != null), "Image name and Dockerfile should not be presented both");
     this.image = image;
     this.dockerfile = dockerfile;
   }

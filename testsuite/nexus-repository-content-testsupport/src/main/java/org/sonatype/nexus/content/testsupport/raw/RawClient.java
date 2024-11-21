@@ -38,9 +38,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class RawClient
     extends FormatClientSupport
 {
-  public RawClient(final CloseableHttpClient httpClient,
-                   final HttpClientContext httpClientContext,
-                   final URI repositoryBaseUri)
+  public RawClient(
+      final CloseableHttpClient httpClient,
+      final HttpClientContext httpClientContext,
+      final URI repositoryBaseUri)
   {
     super(httpClient, httpClientContext, repositoryBaseUri);
   }
@@ -72,7 +73,8 @@ public class RawClient
 
   public CloseableHttpResponse mkcol(final String path) throws Exception {
     HttpUriRequest mkcolRequest = RequestBuilder.create(HttpMethods.MKCOL)
-        .setUri(resolve(path)).build();
+        .setUri(resolve(path))
+        .build();
     return execute(mkcolRequest);
   }
 }

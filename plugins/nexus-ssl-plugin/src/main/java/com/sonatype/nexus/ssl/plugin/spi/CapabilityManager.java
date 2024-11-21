@@ -24,7 +24,6 @@ public interface CapabilityManager
 
   CapabilityReference get(String id);
 
-  CapabilityReference enable(String id, boolean enabled)
-      throws Exception;
+  CapabilityReference enable(String id, boolean enabled) throws Exception;
 
 }

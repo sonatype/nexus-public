@@ -40,8 +40,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class ObjectMapperResolver
-  extends ComponentSupport
-  implements ContextResolver<ObjectMapper>, Component
+    extends ComponentSupport
+    implements ContextResolver<ObjectMapper>, Component
 {
   private final javax.inject.Provider<ObjectMapper> mapperProvider;
 

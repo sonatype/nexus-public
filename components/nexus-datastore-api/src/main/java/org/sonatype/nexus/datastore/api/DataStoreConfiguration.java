@@ -96,7 +96,10 @@ public class DataStoreConfiguration
         '}';
   }
 
-  public static Map<String, Map<String, String>> diff(final DataStoreConfiguration left, final DataStoreConfiguration right) {
+  public static Map<String, Map<String, String>> diff(
+      final DataStoreConfiguration left,
+      final DataStoreConfiguration right)
+  {
     Map<String, Map<String, String>> results = new HashMap<>();
     diff("name", left, right, DataStoreConfiguration::getName, results);
     diff("source", left, right, DataStoreConfiguration::getSource, results);
@@ -105,17 +108,20 @@ public class DataStoreConfiguration
     Stream.concat(left.getAttributes().keySet().stream(), right.getAttributes().keySet().stream())
         .distinct()
         .forEach(attributeKey -> {
-          Function<DataStoreConfiguration, String> getAttribute = (config -> config.getAttributes().getOrDefault(attributeKey, null));
+          Function<DataStoreConfiguration, String> getAttribute =
+              (config -> config.getAttributes().getOrDefault(attributeKey, null));
           diff("attributes->" + attributeKey, left, right, getAttribute, results);
         });
     return results;
   }
 
-  private static void diff(final String fieldName,
-                           final DataStoreConfiguration a,
-                           final DataStoreConfiguration b,
-                           final Function<DataStoreConfiguration, String> fieldFunction,
-                           Map<String, Map<String, String>> results) {
+  private static void diff(
+      final String fieldName,
+      final DataStoreConfiguration a,
+      final DataStoreConfiguration b,
+      final Function<DataStoreConfiguration, String> fieldFunction,
+      Map<String, Map<String, String>> results)
+  {
     String aField = fieldFunction.apply(a);
     String bField = fieldFunction.apply(b);
 
@@ -133,7 +139,8 @@ public class DataStoreConfiguration
   protected Map<String, String> maybeRedact(final Map<String, String> attributes) {
     if (attributes == null || attributes.isEmpty()) {
       return attributes;
-    } else {
+    }
+    else {
       return transformEntries(attributes, DataStoreConfiguration::maybeRedact);
     }
   }

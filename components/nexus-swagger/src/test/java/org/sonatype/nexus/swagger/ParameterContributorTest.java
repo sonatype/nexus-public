@@ -106,16 +106,16 @@ public class ParameterContributorTest
         hasEntry("GET-" + TEST_PATH_1, result),
         hasEntry("POST-" + TEST_PATH_1, result),
         hasEntry("GET-" + TEST_PATH_2, result),
-        hasEntry("POST-" + TEST_PATH_2, result)
-    ));
+        hasEntry("POST-" + TEST_PATH_2, result)));
   }
 
   private class TestParameterContributor
       extends ParameterContributor<QueryParameter>
   {
-    TestParameterContributor(final Collection<HttpMethod> httpMethods,
-                             final Collection<String> paths,
-                             final Collection<QueryParameter> params)
+    TestParameterContributor(
+        final Collection<HttpMethod> httpMethods,
+        final Collection<String> paths,
+        final Collection<QueryParameter> params)
     {
       super(httpMethods, paths, params);
     }

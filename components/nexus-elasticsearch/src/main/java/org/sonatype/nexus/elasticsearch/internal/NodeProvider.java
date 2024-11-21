@@ -67,7 +67,7 @@ public class NodeProvider
   private final ApplicationDirectories directories;
 
   private final NodeAccess nodeAccess;
-  
+
   private final List<String> plugins;
 
   private final List<PluginLocator> pluginLocators;
@@ -75,10 +75,11 @@ public class NodeProvider
   private Node node;
 
   @Inject
-  public NodeProvider(final ApplicationDirectories directories,
-                      final NodeAccess nodeAccess,
-                      @Nullable @Named("${nexus.elasticsearch.plugins}") final String plugins,
-                      @Nullable final List<PluginLocator> pluginLocators)
+  public NodeProvider(
+      final ApplicationDirectories directories,
+      final NodeAccess nodeAccess,
+      @Nullable @Named("${nexus.elasticsearch.plugins}") final String plugins,
+      @Nullable final List<PluginLocator> pluginLocators)
   {
     this.directories = checkNotNull(directories);
     this.nodeAccess = checkNotNull(nodeAccess);

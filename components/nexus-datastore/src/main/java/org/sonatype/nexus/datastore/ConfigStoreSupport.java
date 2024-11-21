@@ -40,7 +40,7 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
 
   private EventManager eventManager;
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   protected ConfigStoreSupport(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier, DEFAULT_DATASTORE_NAME);
 

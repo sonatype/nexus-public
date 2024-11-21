@@ -34,16 +34,15 @@ public class InfoProviderMediator
     implements Mediator<Named, InfoProvider, BundleContext>
 {
   @Override
-  public void add(final BeanEntry<Named, InfoProvider> beanEntry, final BundleContext bundleContext)
-      throws Exception
-  {
+  public void add(final BeanEntry<Named, InfoProvider> beanEntry, final BundleContext bundleContext) throws Exception {
     log.debug("Adding: {}", beanEntry);
     bundleContext.registerService(InfoProvider.class, beanEntry.getValue(), null);
   }
 
   @Override
-  public void remove(final BeanEntry<Named, InfoProvider> beanEntry, final BundleContext bundleContext)
-      throws Exception
+  public void remove(
+      final BeanEntry<Named, InfoProvider> beanEntry,
+      final BundleContext bundleContext) throws Exception
   {
     // TODO: implement remove
   }

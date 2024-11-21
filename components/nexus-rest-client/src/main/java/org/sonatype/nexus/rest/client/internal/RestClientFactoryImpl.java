@@ -52,8 +52,9 @@ public class RestClientFactoryImpl
     implements RestClientFactory
 {
   private final LoadingCache<ClassLoader, ClassLoader> bridgeClassLoaderCache =
-      CacheBuilder.newBuilder().build(from(
-          (loader) -> new BridgeClassLoader(loader, ProxyBuilder.class.getClassLoader())));
+      CacheBuilder.newBuilder()
+          .build(from(
+              (loader) -> new BridgeClassLoader(loader, ProxyBuilder.class.getClassLoader())));
 
   private final Provider<HttpClient> httpClient;
 
@@ -69,7 +70,7 @@ public class RestClientFactoryImpl
     try (TcclBlock tccl = TcclBlock.begin(ResteasyClientBuilder.class)) {
       HttpContext httpContext = new BasicHttpContext();
       if (configuration.getUseTrustStore()) {
-          httpContext.setAttribute(SSLContextSelector.USE_TRUST_STORE, true);
+        httpContext.setAttribute(SSLContextSelector.USE_TRUST_STORE, true);
       }
       HttpClient client;
       if (configuration.getHttpClient() != null) {

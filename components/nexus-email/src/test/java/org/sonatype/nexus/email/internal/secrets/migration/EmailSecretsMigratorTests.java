@@ -42,7 +42,7 @@ public class EmailSecretsMigratorTests
 
   @Test
   public void testMigrate() {
-    Secret notMigrated = getMockSecret("legacy","legacyPassword");
+    Secret notMigrated = getMockSecret("legacy", "legacyPassword");
     when(emailConfiguration.getPassword()).thenReturn(notMigrated);
     when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
 

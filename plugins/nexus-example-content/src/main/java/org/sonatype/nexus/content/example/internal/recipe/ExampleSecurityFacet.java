@@ -29,9 +29,10 @@ public class ExampleSecurityFacet
     extends SecurityFacetSupport
 {
   @Inject
-  public ExampleSecurityFacet(final ExampleFormatSecurityContributor securityContributor,
-                              @Named("simple") final VariableResolverAdapter variableResolverAdapter,
-                              final ContentPermissionChecker contentPermissionChecker)
+  public ExampleSecurityFacet(
+      final ExampleFormatSecurityContributor securityContributor,
+      @Named("simple") final VariableResolverAdapter variableResolverAdapter,
+      final ContentPermissionChecker contentPermissionChecker)
   {
     super(securityContributor, variableResolverAdapter, contentPermissionChecker);
   }

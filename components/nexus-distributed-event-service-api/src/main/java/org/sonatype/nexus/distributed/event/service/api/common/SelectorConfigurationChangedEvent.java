@@ -28,8 +28,7 @@ public class SelectorConfigurationChangedEvent
   public static final String NAME = "SelectorConfigurationChangedEvent";
 
   @JsonCreator
-  public SelectorConfigurationChangedEvent(@JsonProperty("eventType") final EventType eventType)
-  {
+  public SelectorConfigurationChangedEvent(@JsonProperty("eventType") final EventType eventType) {
     super(eventType);
   }
 }

@@ -61,18 +61,18 @@ public class ReplicationTaskLoggerTest
     mockingTaskLogsHome(() -> {
       underTest.start();
 
-      //details of run on replication log
+      // details of run on replication log
       verifyLogInfoCalled(TASK_LOG_ONLY, "Replication run info:");
       verifyLogInfoCalled(TASK_LOG_ONLY, " Task ID: {}", taskLogInfo.getId());
       verifyLogInfoCalled(TASK_LOG_ONLY, " Type: {}", taskLogInfo.getTypeId());
       verifyLogInfoCalled(TASK_LOG_ONLY, " Name: {}", taskLogInfo.getName());
       verifyLogInfoCalled(TASK_LOG_ONLY, " Description: {}", taskLogInfo.getMessage());
 
-      //verify info log was printed on nexus log
+      // verify info log was printed on nexus log
       verify(mockLogger).info(NEXUS_LOG_ONLY, REPLICATION_LOG_LOCATION_PREFIX, "repositoryName",
           testPath + "/replication-repositoryName.log");
 
-      //verify MDC has discriminator
+      // verify MDC has discriminator
       assertThat(MDC.get(REPLICATION_DISCRIMINATOR_ID), notNullValue());
       assertThat(MDC.get(REPLICATION_DISCRIMINATOR_ID), is("repositoryName"));
     });

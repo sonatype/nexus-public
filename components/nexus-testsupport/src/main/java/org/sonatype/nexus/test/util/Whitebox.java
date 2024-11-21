@@ -28,7 +28,7 @@ public final class Whitebox
     try {
       Class<?> clazz = object.getClass();
       Field field = getDeclaredField(clazz, fieldName)
-                   .orElseGet(() -> getField(clazz, fieldName));
+          .orElseGet(() -> getField(clazz, fieldName));
       field.setAccessible(true);
       field.set(object, value);
     }

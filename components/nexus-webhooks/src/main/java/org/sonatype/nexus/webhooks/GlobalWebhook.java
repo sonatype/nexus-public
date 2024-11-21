@@ -20,7 +20,9 @@ package org.sonatype.nexus.webhooks;
 public abstract class GlobalWebhook
     extends Webhook
 {
-  public static final WebhookType TYPE = new WebhookType("global") {};
+  public static final WebhookType TYPE = new WebhookType("global")
+  {
+  };
 
   public final WebhookType getType() {
     return TYPE;

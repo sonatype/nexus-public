@@ -50,5 +50,7 @@ public class TaskLoggerFactory
   }
 
   @TaskLogging(BOTH)
-  private static final class TaskLoggingDefault { }
+  private static final class TaskLoggingDefault
+  {
+  }
 }

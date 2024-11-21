@@ -79,7 +79,7 @@ public class RawGroupIT
     File testFile = resolveTestFile(TEST_CONTENT);
     hosted1.put(TEST_PATH, ContentType.TEXT_PLAIN, testFile);
 
-    assertThat(string(groupClient.get(TEST_PATH)),  is(new String(Files.readAllBytes(testFile.toPath()))));
+    assertThat(string(groupClient.get(TEST_PATH)), is(new String(Files.readAllBytes(testFile.toPath()))));
   }
 
   /**
@@ -91,7 +91,7 @@ public class RawGroupIT
     hosted1.put(TEST_PATH, ContentType.TEXT_PLAIN, testFile);
     hosted2.put(TEST_PATH, ContentType.TEXT_PLAIN, resolveTestFile(TEST_CONTENT2));
 
-    assertThat(string(groupClient.get(TEST_PATH)),  is(new String(Files.readAllBytes(testFile.toPath()))));
+    assertThat(string(groupClient.get(TEST_PATH)), is(new String(Files.readAllBytes(testFile.toPath()))));
   }
 
   /**
