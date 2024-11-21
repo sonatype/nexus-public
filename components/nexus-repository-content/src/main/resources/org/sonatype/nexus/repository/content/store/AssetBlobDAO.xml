@@ -103,6 +103,17 @@
     DELETE FROM ${format}_asset_blob WHERE blob_ref = ANY(#{blobRefIds});
   </delete>
 
+  <delete id="deleteAssetBlobWithAsset">
+    DELETE
+    FROM ${format}_asset
+    WHERE asset_blob_id = (SELECT asset_blob_id
+                           FROM ${format}_asset_blob
+                           WHERE blob_ref = #{blobRef});
+    DELETE
+    FROM ${format}_asset_blob
+    WHERE blob_ref = #{blobRef};
+  </delete>
+
   <update id="setBlobCreated">
     UPDATE ${format}_asset_blob SET blob_created = #{blobCreated}
      WHERE blob_ref = #{blobRef};

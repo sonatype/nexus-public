@@ -39,9 +39,10 @@ public class AssetBlobStore<T extends AssetBlobDAO>
     extends ContentStoreSupport<T>
 {
   @Inject
-  public AssetBlobStore(final DataSessionSupplier sessionSupplier,
-                        @Assisted final String contentStoreName,
-                        @Assisted final Class<T> daoClass)
+  public AssetBlobStore(
+      final DataSessionSupplier sessionSupplier,
+      @Assisted final String contentStoreName,
+      @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
   }
@@ -56,8 +57,11 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<AssetBlob> browseUnusedAssetBlobs(final int limit,
-      final int blobCreatedDelayMinute, @Nullable final String continuationToken) {
+  public Continuation<AssetBlob> browseUnusedAssetBlobs(
+      final int limit,
+      final int blobCreatedDelayMinute,
+      @Nullable final String continuationToken)
+  {
     return dao().browseUnusedAssetBlobs(limit, blobCreatedDelayMinute, continuationToken);
   }
 
@@ -93,7 +97,6 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   {
     return dao().browseAssetBlobsWithinDuration(limit, start, end, continuationToken);
   }
-
 
   /**
    * Creates the given asset blob in the content data store.
@@ -136,6 +139,16 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Transactional
   public boolean deleteAssetBlobBatch(final String[] blobRefIds) {
     return dao().deleteAssetBlobBatch(blobRefIds);
+  }
+
+  /**
+   * Deletes an asset blob along with asset.
+   *
+   * @param blobRef the blob reference
+   */
+  @Transactional
+  public void deleteAssetBlobWithAsset(final BlobRef blobRef) {
+    dao().deleteAssetBlobWithAsset(blobRef);
   }
 
   /**
@@ -191,7 +204,10 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @return collection of asset blobs and the next continuation token
    */
   @Transactional
-  public Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(final int limit, @Nullable final String continuationToken) {
+  public Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(
+      final int limit,
+      @Nullable final String continuationToken)
+  {
     return dao().browseAssetsWithLegacyBlobRef(limit, continuationToken);
   }
 

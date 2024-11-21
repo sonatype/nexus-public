@@ -51,6 +51,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
@@ -122,6 +123,36 @@ public class DatastoreBlobstoreRestoreTestHelper
         .filter(asset -> pathFilter.test(asset.path()))
         .filter(asset -> asset.blob().isPresent())
         .collect(Collectors.toMap(Asset::path, DatastoreBlobstoreRestoreTestHelper::toBlobId));
+  }
+
+  @Override
+  public void deleteAssetBlob(final Repository repository, final BlobStore blobStore, final BlobId blobId) {
+    AssetBlobStore<?> assetBlobStore = getAssetBlobStore(repository);
+    assetBlobStore.deleteAssetBlobWithAsset(createBlobRef(blobStore, repository, blobId));
+  }
+
+  @Override
+  public boolean assetBlobExists(
+      final Repository repository,
+      final BlobStore blobStore,
+      final BlobId blobId)
+  {
+    AssetBlobStore<?> assetBlobStore = getAssetBlobStore(repository);
+    return assetBlobStore.readAssetBlob(createBlobRef(blobStore, repository, blobId)).isPresent();
+  }
+
+  private BlobRef createBlobRef(final BlobStore blobStore, final Repository repository, final BlobId blobId) {
+    ContentFacetSupport contentFacetSupport = (ContentFacetSupport) repository.facet(ContentFacet.class);
+    String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
+    return new BlobRef(
+        contentFacetSupport.nodeName(),
+        blobStoreName,
+        blobId.asUniqueString(),
+        blobId.getBlobCreatedRef());
+  }
+
+  private AssetBlobStore<?> getAssetBlobStore(final Repository repository) {
+    return storeManagers.get(repository.getFormat().getValue()).assetBlobStore(getContentStore(repository));
   }
 
   private static BlobId toBlobId(final Asset asset) {

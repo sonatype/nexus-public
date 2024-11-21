@@ -65,9 +65,9 @@ public interface AssetBlobDAO
   /**
    * Browse asset blobs in the content data store in a paged fashion.
    *
-   * @param limit             maximum number of asset blobs to return
-   * @param start             start date
-   * @param end               end date
+   * @param limit maximum number of asset blobs to return
+   * @param start start date
+   * @param end end date
    * @param continuationToken optional token to continue from a previous request
    * @return collection of asset blobs and the next continuation token
    * @see Continuation#nextContinuationToken()
@@ -110,6 +110,13 @@ public interface AssetBlobDAO
   boolean deleteAssetBlobBatch(@Param("blobRefIds") String[] blobRefIds);
 
   /**
+   * Deletes an asset blob along with asset.
+   *
+   * @param blobRef the blob reference
+   */
+  void deleteAssetBlobWithAsset(@Param("blobRef") BlobRef blobRef);
+
+  /**
    * Generally it is recommended that this method not be called and let stores manage this value.
    *
    * @since 3.29
@@ -119,7 +126,9 @@ public interface AssetBlobDAO
   /**
    * Sets added to repository on the asset blob.
    */
-  void setAddedToRepository(@Param("blobRef") BlobRef blobRef, @Param("addedToRepository") OffsetDateTime addedToRepository);
+  void setAddedToRepository(
+      @Param("blobRef") BlobRef blobRef,
+      @Param("addedToRepository") OffsetDateTime addedToRepository);
 
   /**
    * Sets the content type on the asset

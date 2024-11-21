@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -47,6 +48,26 @@ public interface BlobstoreRestoreTestHelper
    * Get the blob ids of the assets
    */
   List<BlobId> getAssetBlobId();
+
+  /**
+   * Deletes asset blob
+   *
+   * @param repository the name of the repository
+   * @param blobStore blobStore where blob is stored
+   * @param blobId blobId to delete
+   */
+  void deleteAssetBlob(Repository repository, BlobStore blobStore, BlobId blobId);
+
+  /**
+   * Verifies existence of asset blob
+   *
+   * @param repository the name of the blobstore
+   * @param blobStore blobStore where blob is stored
+   * @param blobId blobId to read
+   *
+   * @return {@code true} if the asset blob exists
+   */
+  boolean assetBlobExists(Repository repository, BlobStore blobStore, BlobId blobId);
 
   /**
    * Clean tables from previous data
