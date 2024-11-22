@@ -25,8 +25,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.20
  */
 public abstract class UiPluginDescriptorSupport
-  extends ComponentSupport
-  implements UiPluginDescriptor
+    extends ComponentSupport
+    implements UiPluginDescriptor
 {
   private final String name;
 

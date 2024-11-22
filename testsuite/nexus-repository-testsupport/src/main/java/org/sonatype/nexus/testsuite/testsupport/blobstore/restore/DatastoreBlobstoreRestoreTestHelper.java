@@ -12,13 +12,21 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.blobstore.restore;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -29,8 +37,10 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -41,6 +51,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
@@ -58,6 +69,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_PATH_FORMATTER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_ENABLED;
@@ -81,6 +93,9 @@ public class DatastoreBlobstoreRestoreTestHelper
 
   @Inject
   private BlobStoreManager blobstoreManager;
+
+  @Inject
+  private DataSessionSupplier sessionSupplier;
 
   @Override
   public void simulateComponentAndAssetMetadataLoss() {
@@ -110,6 +125,36 @@ public class DatastoreBlobstoreRestoreTestHelper
         .collect(Collectors.toMap(Asset::path, DatastoreBlobstoreRestoreTestHelper::toBlobId));
   }
 
+  @Override
+  public void deleteAssetBlob(final Repository repository, final BlobStore blobStore, final BlobId blobId) {
+    AssetBlobStore<?> assetBlobStore = getAssetBlobStore(repository);
+    assetBlobStore.deleteAssetBlobWithAsset(createBlobRef(blobStore, repository, blobId));
+  }
+
+  @Override
+  public boolean assetBlobExists(
+      final Repository repository,
+      final BlobStore blobStore,
+      final BlobId blobId)
+  {
+    AssetBlobStore<?> assetBlobStore = getAssetBlobStore(repository);
+    return assetBlobStore.readAssetBlob(createBlobRef(blobStore, repository, blobId)).isPresent();
+  }
+
+  private BlobRef createBlobRef(final BlobStore blobStore, final Repository repository, final BlobId blobId) {
+    ContentFacetSupport contentFacetSupport = (ContentFacetSupport) repository.facet(ContentFacet.class);
+    String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
+    return new BlobRef(
+        contentFacetSupport.nodeName(),
+        blobStoreName,
+        blobId.asUniqueString(),
+        blobId.getBlobCreatedRef());
+  }
+
+  private AssetBlobStore<?> getAssetBlobStore(final Repository repository) {
+    return storeManagers.get(repository.getFormat().getValue()).assetBlobStore(getContentStore(repository));
+  }
+
   private static BlobId toBlobId(final Asset asset) {
     return asset.blob()
         .map(AssetBlob::blobRef)
@@ -120,8 +165,10 @@ public class DatastoreBlobstoreRestoreTestHelper
   @Override
   public void simulateAssetMetadataLoss() {
     manager.browse().forEach(repo -> {
-      repo.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null)
-        .forEach(asset -> asset.delete());
+      repo.facet(ContentFacet.class)
+          .assets()
+          .browse(Integer.MAX_VALUE, null)
+          .forEach(asset -> asset.delete());
     });
   }
 
@@ -142,7 +189,8 @@ public class DatastoreBlobstoreRestoreTestHelper
   @Override
   public void assertAssetMatchesBlob(final Repository repo, final String... paths) {
     stream(paths)
-        .map(path -> assets(repo).path(prependIfMissing(path, "/")).find()
+        .map(path -> assets(repo).path(prependIfMissing(path, "/"))
+            .find()
             .orElseThrow(() -> new AssertionError("Missing asset: " + path)))
         .forEach(a -> assetMatch(a, getBlobStore(repo)));
   }
@@ -185,7 +233,7 @@ public class DatastoreBlobstoreRestoreTestHelper
         .version(version)
         .namespace(namespace)
         .find();
-    assertThat("Missing component " + namespace +":" + name + ":" + version, component.isPresent(), is(true));
+    assertThat("Missing component " + namespace + ":" + name + ":" + version, component.isPresent(), is(true));
   }
 
   @Override
@@ -224,7 +272,7 @@ public class DatastoreBlobstoreRestoreTestHelper
       componentBuilder = componentBuilder.namespace(namespace);
     }
     Optional<FluentComponent> component = componentBuilder.find();
-    assertThat("Missing component " + namespace +":" + name + ":" + version, component.isPresent(), is(true));
+    assertThat("Missing component " + namespace + ":" + name + ":" + version, component.isPresent(), is(true));
 
     for (String path : paths) {
       Optional<FluentAsset> asset = component.get().asset(prependIfMissing(path, "/")).find();
@@ -239,7 +287,9 @@ public class DatastoreBlobstoreRestoreTestHelper
         return;
       }
       ContentFacet content = repo.facet(ContentFacet.class);
-      content.assets().browse(Integer.MAX_VALUE, null).stream()
+      content.assets()
+          .browse(Integer.MAX_VALUE, null)
+          .stream()
           .map(Asset::blob)
           .filter(Optional::isPresent)
           .map(Optional::get)
@@ -258,10 +308,167 @@ public class DatastoreBlobstoreRestoreTestHelper
               }
             }
             else {
-              fail("Found missing name or unexpected name: " + name + " in repository: " + headers.get(REPO_NAME_HEADER));
+              fail("Found missing name or unexpected name: " + name + " in repository: "
+                  + headers.get(REPO_NAME_HEADER));
             }
           });
     });
+  }
+
+  @Override
+  public boolean assertReconcilePlanExists(String type, String action) {
+    List<BlobId> blobIds = getAssetBlobId();
+    for (BlobId blobId : blobIds) {
+      if (!assertReconcilePlanExistWithParameterForProvidedBlobIds(blobId.asUniqueString(), type, action)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void simulateFileLoss(String blobStorageName, String extension) {
+    try {
+      BlobStore blobstore = blobstoreManager.get(blobStorageName);
+      String absoluteBlobDir = String.valueOf(((FileBlobStore) blobstore).getAbsoluteBlobDir());
+      List<BlobId> blobIds = getAssetBlobId();
+      blobIds.forEach(blobId -> {
+        String filePath = getFileAbsolutePathForBlobIdRef(blobId, extension, absoluteBlobDir);
+        deleteFile(filePath);
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public boolean assertReconcilePlanExists(String type, String action, List<BlobId> blobIds) {
+    for (BlobId blobId : blobIds) {
+      if (!assertReconcilePlanExistWithParameterForProvidedBlobIds(blobId.asUniqueString(), type, action)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean assertPropertyFilesExist(String blobStorageName) {
+    try {
+      BlobStore blobstore = blobstoreManager.get(blobStorageName);
+      String absoluteBlobDir = String.valueOf(((FileBlobStore) blobstore).getAbsoluteBlobDir());
+      List<BlobId> blobIds = getAssetBlobId();
+      for (BlobId blobId : blobIds) {
+        String filePath = getFileAbsolutePathForBlobIdRef(blobId, ".properties", absoluteBlobDir);
+        if (!isFileExist(filePath)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public List<BlobId> getAssetBlobId() {
+    List<BlobId> blobIds = new ArrayList<>();
+    manager.browse().forEach(repo -> {
+      repo.facet(ContentFacet.class)
+          .assets()
+          .browse(Integer.MAX_VALUE, null)
+          .forEach(asset -> {
+            BlobId blobId = toBlobId(asset);
+            blobIds.add(blobId);
+          });
+    });
+    return blobIds;
+  }
+
+  @Override
+  public void truncateTables() {
+    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME)) {
+      connection.setAutoCommit(false);
+
+      try (
+          PreparedStatement ps1 = connection.prepareStatement("TRUNCATE TABLE reconcile_plan CASCADE;");
+          PreparedStatement ps2 = connection.prepareStatement("TRUNCATE TABLE reconcile_plan_details CASCADE;");
+          PreparedStatement ps3 = connection.prepareStatement("TRUNCATE TABLE raw_asset CASCADE;");
+          PreparedStatement ps4 = connection.prepareStatement("TRUNCATE TABLE raw_asset_blob CASCADE;");
+          PreparedStatement ps5 = connection.prepareStatement("TRUNCATE TABLE raw_component CASCADE;")) {
+        ps1.executeUpdate();
+        ps2.executeUpdate();
+        ps3.executeUpdate();
+        ps4.executeUpdate();
+        ps5.executeUpdate();
+
+        connection.commit();
+      }
+      catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException("Error managing the connection: " + e.getMessage(), e);
+    }
+  }
+
+  private boolean isFileExist(String filePath) {
+    File file = new File(filePath);
+    return file.exists() && file.isFile();
+  }
+
+  private void deleteFile(String filePath) {
+    File file = new File(filePath);
+    if (file.exists() && file.isFile()) {
+      if (!file.delete()) {
+        throw new RuntimeException("Failed to delete file: " + filePath);
+      }
+    }
+  }
+
+  private String getFileAbsolutePathForBlobIdRef(BlobId blobId, String extension, String absolutePath) {
+    OffsetDateTime blobCreationTime = blobId.getBlobCreatedRef();
+    String datePath = blobCreationTime.format(DATE_TIME_PATH_FORMATTER);
+    String pathInContentDirectory =
+        datePath + "/" + Pattern.compile("[.\\\\:/]").matcher(blobId.asUniqueString()).replaceAll("-");
+    return absolutePath + "/content/" + pathInContentDirectory + extension;
+  }
+
+  private boolean assertReconcilePlanExistWithParameterForProvidedBlobIds(String blobId, String type, String action) {
+    try {
+      PreparedStatement ps = null;
+      try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME)) {
+        String sql = "SELECT rpd.* FROM reconcile_plan_details rpd \n" +
+            "join reconcile_plan rp on rp.id = rpd.plan_id \n" +
+            "WHERE rpd.blob_id = ? \n" +
+            "order by rp.started desc limit 1;";
+
+        ps = connection.prepareStatement(sql);
+        ps.setString(1, blobId);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+          assertThat(rs.getString("type"), equalTo(type));
+          assertThat(rs.getString("action"), equalTo(action));
+          assertThat(rs.getString("state"), equalTo("EXECUTED"));
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+      catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        ps.close();
+      }
+    }
+    catch (SQLException ex) {
+      throw new RuntimeException("Script generation failed", ex);
+    }
   }
 
   private FluentAssets assets(final Repository repo) {

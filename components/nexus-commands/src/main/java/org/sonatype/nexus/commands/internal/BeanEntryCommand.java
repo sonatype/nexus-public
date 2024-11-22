@@ -48,7 +48,7 @@ public class BeanEntryCommand
 
   @Override
   protected Completer getCompleter(final Class<?> clazz) {
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     Iterator<? extends BeanEntry<?, Completer>> itr = beanLocator.locate(Key.get((Class) clazz)).iterator();
     if (itr.hasNext()) {
       return itr.next().getValue();

@@ -34,6 +34,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,6 +42,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -62,6 +64,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
+import org.sonatype.nexus.blobstore.api.PaginatedResult;
 import org.sonatype.nexus.blobstore.api.RawObjectAccess;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
@@ -214,7 +217,7 @@ public class FileBlobStore
 
   @VisibleForTesting
   public FileBlobStore(
-      final Path contentDir, //NOSONAR
+      final Path contentDir, // NOSONAR
       final BlobIdLocationResolver blobIdLocationResolver,
       final FileOperations fileOperations,
       final BlobStoreMetricsService<FileBlobStore> metricsService,
@@ -334,7 +337,10 @@ public class FileBlobStore
 
   @Override
   @MonitoringBlobStoreMetrics(operationType = UPLOAD)
-  protected Blob doCreate(final InputStream blobData, final Map<String, String> headers, @Nullable final BlobId blobId)
+  protected Blob doCreate(
+      final InputStream blobData,
+      final Map<String, String> headers,
+      @Nullable final BlobId blobId)
   {
     return create(headers, destination -> fileOperations.create(destination, blobData), blobId);
   }
@@ -651,8 +657,8 @@ public class FileBlobStore
           Boolean.parseBoolean(metadata.getProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "false"));
 
       if (deletedBlobIndexRebuildRequired) {
-        //this is a multi node task, i.e. it will run on all nodes simultaneously, so make sure walking the blobstore
-        //is only done on one node
+        // this is a multi node task, i.e. it will run on all nodes simultaneously, so make sure walking the blobstore
+        // is only done on one node
         if (!nodeAccess.isOldestNode()) {
           log.info("Skipping compact without deleted blob index on this node because this is not the oldest node.");
           return;
@@ -684,14 +690,13 @@ public class FileBlobStore
           iterateFiles(getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve(TMP).toFile(), ageFileFilter,
               ageFileFilter);
       filesToDelete.forEachRemaining(f -> {
-            try {
-              forceDelete(f);
-            }
-            catch (UncheckedIOException | IOException e) {
-              log.error("Unable to delete temp file {}. Message was {}.", f, e.getMessage());
-            }
-          }
-      );
+        try {
+          forceDelete(f);
+        }
+        catch (UncheckedIOException | IOException e) {
+          log.error("Unable to delete temp file {}. Message was {}.", f, e.getMessage());
+        }
+      });
     }
     catch (UncheckedIOException | NoSuchFileException e) {
       log.debug("Tmp folder is empty: {}", e.getMessage());
@@ -704,8 +709,7 @@ public class FileBlobStore
     }
   }
 
-  private boolean maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId)
-  {
+  private boolean maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId) {
     Optional<FileBlobAttributes> attributesOption = ofNullable((FileBlobAttributes) getBlobAttributes(blobId));
     if (!attributesOption.isPresent() || !undelete(inUseChecker, blobId, attributesOption.get(), false)) {
       // attributes file is missing or blob id not in use, so it's safe to delete the file
@@ -771,7 +775,7 @@ public class FileBlobStore
   }
 
   /**
-   * This is a simple existence check resulting from NEXUS-16729.  This allows clients to perform a simple check and is
+   * This is a simple existence check resulting from NEXUS-16729. This allows clients to perform a simple check and is
    * primarily intended for use in directpath scenarios.
    */
   @Override
@@ -949,7 +953,7 @@ public class FileBlobStore
       progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
           counter + 1, numBlobs);
     }
-    //once done removing stuff, clean any empty directories left around in the directpath area
+    // once done removing stuff, clean any empty directories left around in the directpath area
     pruneEmptyDirectories(progressLogger, contentDir.resolve(DIRECT_PATH_ROOT));
     progressLogger.flush();
   }
@@ -975,17 +979,17 @@ public class FileBlobStore
   @VisibleForTesting
   void doCompactWithoutDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) throws IOException {
     log.info("Begin deleted blobs processing without deleted blob index");
-    //clear the deleted blob index ahead of time, so we won't lose deletes that may occur while the compact is being
-    //performed
+    // clear the deleted blob index ahead of time, so we won't lose deletes that may occur while the compact is being
+    // performed
     blobDeletionIndex.deleteAllRecords();
 
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, INTERVAL_IN_SECONDS);
     AtomicInteger count = new AtomicInteger(0);
 
-    //rather than using the blobId stream here, need to use a different means of walking the file tree, as
-    //we are deleting items on the way through, and apparently on *nix systems, deleting files that you are about to
-    //walk over causes a FileNotFoundException to be thrown and the walking stops.  Overridding the visitFileFailed
-    //method allows us to get past that
+    // rather than using the blobId stream here, need to use a different means of walking the file tree, as
+    // we are deleting items on the way through, and apparently on *nix systems, deleting files that you are about to
+    // walk over causes a FileNotFoundException to be thrown and the walking stops. Overridding the visitFileFailed
+    // method allows us to get past that
     Files.walkFileTree(contentDir, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>()
     {
       @Override
@@ -1021,7 +1025,7 @@ public class FileBlobStore
       }
     });
 
-    //Do this check one final time, to preserve the functionality of throwing an exception when interrupted
+    // Do this check one final time, to preserve the functionality of throwing an exception when interrupted
     checkCancellation();
 
     progressLogger.flush();
@@ -1140,12 +1144,19 @@ public class FileBlobStore
   }
 
   @Override
-  public Stream<BlobId> getBlobIdUpdatedSinceStream(String prefix, OffsetDateTime fromDateTime) {
+  public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
+      String prefix,
+      OffsetDateTime fromDateTime,
+      @Nullable final String continuationToken,
+      final int pageSize)
+  {
     DateBasedWalkFile dateBasedWalkFile = new DateBasedWalkFile(contentDir.toString(), fromDateTime);
     Map<String, OffsetDateTime> dateBasedBlobIds =
         dateBasedWalkFile.getBlobIdToDateRef(contentDir.resolve(prefix).toString());
-    return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, fromDateTime.toLocalDateTime(),
-        dateBasedBlobIds);
+    List<BlobId> blobIds =
+        reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, fromDateTime.toLocalDateTime(),
+            dateBasedBlobIds).collect(Collectors.toList());
+    return new PaginatedResult<>(blobIds, null);
   }
 
   @Override
@@ -1180,7 +1191,8 @@ public class FileBlobStore
     try {
       String pathStr = contentDir.resolve(DIRECT_PATH_ROOT)
           .relativize(path) // just the relative path part under DIRECT_PATH_ROOT
-          .toString().replace(File.separatorChar, '/'); // guarantee we return unix-style paths
+          .toString()
+          .replace(File.separatorChar, '/'); // guarantee we return unix-style paths
       return removeEnd(pathStr, BLOB_FILE_ATTRIBUTES_SUFFIX); // drop the .properties suffix
     }
     catch (Exception ex) {
@@ -1237,8 +1249,7 @@ public class FileBlobStore
   private BlobId toBlobId(final String blobName) {
     Map<String, String> headers = ImmutableMap.of(
         BLOB_NAME_HEADER, blobName,
-        DIRECT_PATH_BLOB_HEADER, "true"
-    );
+        DIRECT_PATH_BLOB_HEADER, "true");
     return blobIdLocationResolver.fromHeaders(headers);
   }
 

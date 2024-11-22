@@ -23,6 +23,7 @@ public interface SwaggerContributor
 {
   /**
    * Call after JAX-RS resource has been scanned.
+   * 
    * @param swagger the swagger definition
    */
   void contribute(Swagger swagger);

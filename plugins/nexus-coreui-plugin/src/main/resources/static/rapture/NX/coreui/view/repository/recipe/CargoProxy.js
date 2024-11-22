@@ -30,7 +30,8 @@ Ext.define('NX.coreui.view.repository.recipe.CargoProxy', {
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
     'NX.coreui.view.repository.facet.BearerHttpClientFacet',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
-    'NX.coreui.view.repository.facet.CleanupPolicyFacet'
+    'NX.coreui.view.repository.facet.CleanupPolicyFacet',
+    'NX.coreui.view.repository.facet.CargoRequireAuthenticationFacet'
   ],
 
   /**
@@ -40,6 +41,7 @@ Ext.define('NX.coreui.view.repository.recipe.CargoProxy', {
     var me = this;
 
     me.items = [
+      {xtype: 'nx-coreui-repository-cargo-require-authentication-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},

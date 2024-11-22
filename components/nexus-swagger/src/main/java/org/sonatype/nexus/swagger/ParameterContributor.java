@@ -52,9 +52,10 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
 
   private boolean allContributed;
 
-  public ParameterContributor(final Collection<HttpMethod> httpMethods,
-                              final Collection<String> paths,
-                              final Collection<T> params)
+  public ParameterContributor(
+      final Collection<HttpMethod> httpMethods,
+      final Collection<String> paths,
+      final Collection<T> params)
   {
     this.httpMethods = checkNotNull(httpMethods);
     this.paths = checkNotNull(paths);
@@ -80,10 +81,11 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
     allContributed = contributed.entrySet().stream().allMatch(Entry::getValue);
   }
 
-  private boolean contributeGetParameters(final Swagger swagger,
-                                          final HttpMethod httpMethod,
-                                          final String path,
-                                          final Collection<T> parameters)
+  private boolean contributeGetParameters(
+      final Swagger swagger,
+      final HttpMethod httpMethod,
+      final String path,
+      final Collection<T> parameters)
   {
     boolean contrib = false;
     Optional<Operation> operation = getOperation(swagger, httpMethod, path);
@@ -104,7 +106,8 @@ public abstract class ParameterContributor<T extends AbstractSerializableParamet
   private Optional<Operation> getOperation(final Swagger swagger, final HttpMethod httpMethod, final String path) {
     return Optional.ofNullable(swagger.getPaths())
         .orElseGet(Collections::emptyMap)
-        .entrySet().stream()
+        .entrySet()
+        .stream()
         .filter(e -> path.equals(e.getKey()))
         .findFirst()
         .map(Entry::getValue)

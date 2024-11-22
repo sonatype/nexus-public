@@ -51,7 +51,7 @@ public abstract class ContainerCommandLineITSupport
    * Constructor that creates and run the container with the corresponding commands based on provided configuration.
    *
    * @param dockerContainerConfig parameters to run a container.
-   * @param commands              to be run for docker container.
+   * @param commands to be run for docker container.
    */
   protected ContainerCommandLineITSupport(final DockerContainerConfig dockerContainerConfig, final String commands) {
     dockerContainerClient = new DockerContainerClient(dockerContainerConfig);

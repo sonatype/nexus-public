@@ -33,11 +33,11 @@ import static org.apache.maven.plugins.annotations.LifecyclePhase.PROCESS_RESOUR
  *
  * @since 3.0
  */
-@Mojo(name="aggregate-js", defaultPhase = PROCESS_RESOURCES)
+@Mojo(name = "aggregate-js", defaultPhase = PROCESS_RESOURCES)
 public class AggregateJsMojo
     extends AbstractMojo
 {
-  private static final String[] DEFAULT_INCLUDES = { "**/*.js" };
+  private static final String[] DEFAULT_INCLUDES = {"**/*.js"};
 
   @Parameter(required = true)
   private File sourceDirectory;
@@ -67,10 +67,10 @@ public class AggregateJsMojo
   private boolean omit;
 
   /**
-   * Omission flags.  When named flag is enabled, sections matching those omission tokens will be commented out.
+   * Omission flags. When named flag is enabled, sections matching those omission tokens will be commented out.
    */
   @Parameter
-  private Map<String,String> omitFlags;
+  private Map<String, String> omitFlags;
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {

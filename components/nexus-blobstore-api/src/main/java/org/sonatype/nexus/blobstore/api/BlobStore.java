@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -34,7 +33,7 @@ import org.slf4j.Logger;
 
 /**
  * A generic storage bin for binary objects of all sizes.
- *
+ * <p>
  * In general, most methods can throw {@link BlobStoreException} for conditions such as network connectivity problems,
  * or file IO issues, blob store misconfiguration, or internal corruption.
  *
@@ -77,6 +76,7 @@ public interface BlobStore
 
   /**
    * Header whose presence indicates a temporary blob (may be handled differently by the underlying implementation).
+   *
    * @since 3.1
    */
   String TEMPORARY_BLOB_HEADER = "BlobStore.temporary-blob";
@@ -86,16 +86,16 @@ public interface BlobStore
    * {@link BlobId} reflecting a path like structure. If the create methods in this class are called with a header with
    * this key and a value of "true", the blob will be stored in the blob store using a direct file system path, using
    * {@link #BLOB_NAME_HEADER} header for the tail.
-   *
+   * <p>
    * For example, if the {@link #BLOB_NAME_HEADER} contains a value like "path/to/index.html", the blob will be stored
-   * on disk within the blob store at a path that terminates in "path/to/index.html.bytes". Note: direct-path
-   * blobs only use the unix-style path separator ('/'), even if the underlying filesystem is not.
-   *
+   * on disk within the blob store at a path that terminates in "path/to/index.html.bytes". Note: direct-path blobs only
+   * use the unix-style path separator ('/'), even if the underlying filesystem is not.
+   * <p>
    * Use this feature for Blobs that:
    *
    * <ul>
-   *   <li>will not or cannot have a database table mapping generated {@link BlobId} to paths</li>
-   *   <li>can be overwritten on "disk" without side effects</li>
+   * <li>will not or cannot have a database table mapping generated {@link BlobId} to paths</li>
+   * <li>can be overwritten on "disk" without side effects</li>
    * </ul>
    *
    * @since 3.8
@@ -104,7 +104,7 @@ public interface BlobStore
 
   /**
    * An associated repository name for disaster recovery purposes (which isn't required to be strictly unique)
-   *
+   * <p>
    * (uses 'Bucket' prefix for legacy compatibility reasons)
    *
    * @since 3.25
@@ -118,11 +118,11 @@ public interface BlobStore
    * <li>{@link #BLOB_NAME_HEADER}</li>
    * <li>{@link #CREATED_BY_HEADER}</li>
    * </ul>
-   *
+   * <p>
    * Note: if headers contains an entry with key {@link #DIRECT_PATH_BLOB_HEADER} and value true, and the
    * {@link #BLOB_NAME_HEADER} matches a direct-path blob that already exists, the blob will be overwritten.
    *
-   * @throws BlobStoreException       (or a subclass) if the input stream can't be read correctly
+   * @throws BlobStoreException (or a subclass) if the input stream can't be read correctly
    * @throws IllegalArgumentException if mandatory headers are missing
    */
   Blob create(InputStream blobData, Map<String, String> headers);
@@ -135,9 +135,9 @@ public interface BlobStore
   Blob create(InputStream blobData, Map<String, String> headers, @Nullable BlobId blobId);
 
   /**
-   * Imports a blob by creating a hard link, throwing {@link BlobStoreException} if that's not supported
-   * from the source file's location.
-   *
+   * Imports a blob by creating a hard link, throwing {@link BlobStoreException} if that's not supported from the source
+   * file's location.
+   * <p>
    * Otherwise similar to {@link #create(InputStream, Map)} with the difference that a known file size and sha1 are
    * already provided.
    *
@@ -148,25 +148,25 @@ public interface BlobStore
   /**
    * Creates the new blob attributes
    *
-   * @param blobId      the blob id
-   * @param headers     the headers of the blob, {@see BlobStore}
+   * @param blobId the blob id
+   * @param headers the headers of the blob, {@see BlobStore}
    * @param blobMetrics blob metrics
    */
-  default void createBlobAttributes(BlobId blobId, Map<String, String> headers, BlobMetrics blobMetrics) { }
-
+  default void createBlobAttributes(BlobId blobId, Map<String, String> headers, BlobMetrics blobMetrics) {
+  }
 
   /**
    * Creates the new blob attributes instance
    *
-   * @param blobId      the blob id
-   * @param headers     the headers of the blob, {@see BlobStore}
+   * @param blobId the blob id
+   * @param headers the headers of the blob, {@see BlobStore}
    * @param metrics blob metrics
    */
   BlobAttributes createBlobAttributesInstance(BlobId blobId, Map<String, String> headers, BlobMetrics metrics);
 
   /**
-   * Duplicates a blob within the blob store by copying the temp blob but with the provided headers. The blob must be
-   * in this blob store; moving blobs between blob stores is not supported.
+   * Duplicates a blob within the blob store by copying the temp blob but with the provided headers. The blob must be in
+   * this blob store; moving blobs between blob stores is not supported.
    *
    * @since 3.1
    */
@@ -182,23 +182,23 @@ public interface BlobStore
   }
 
   /**
-   * Returns the corresponding {@link Blob}, or {@code null} if the  blob does not exist or has been {@link #delete
-   * deleted}.
+   * Returns the corresponding {@link Blob}, or {@code null} if the blob does not exist or has been
+   * {@link #delete deleted}.
    */
   @Nullable
   Blob get(BlobId blobId);
 
   /**
-   * Returns the corresponding {@link Blob}, or {@code null} if the  blob does not exist, or has been {@link #delete
-   * deleted} and {@code includeDeleted} is {@code false}).
+   * Returns the corresponding {@link Blob}, or {@code null} if the blob does not exist, or has been
+   * {@link #delete deleted} and {@code includeDeleted} is {@code false}).
    */
   @Nullable
   Blob get(BlobId blobId, boolean includeDeleted);
 
   /**
-   * Performs a simple existence check using the attributes path returning {@code true} if it exists and
-   * {@code false} if it does not.
-   *
+   * Performs a simple existence check using the attributes path returning {@code true} if it exists and {@code false}
+   * if it does not.
+   * <p>
    * This was introduced to allow existence checking of direct-path blobs in support of edge cases such as RHC.
    */
   boolean exists(BlobId blobId);
@@ -218,7 +218,7 @@ public interface BlobStore
   boolean isBlobEmpty(BlobId blobId);
 
   /**
-   * Removes a blob from the blob store.  This may not immediately delete the blob from the underlying storage
+   * Removes a blob from the blob store. This may not immediately delete the blob from the underlying storage
    * mechanism, but will make it immediately unavailable to future calls to {@link BlobStore#get(BlobId)}.
    *
    * @return {@code true} if the blob has been deleted, {@code false} if no blob was found by that ID.
@@ -236,8 +236,8 @@ public interface BlobStore
   /**
    * Provides access to the blob store's metrics service instance
    * <p>
-   * Note: this method may not be available for all the blob store implementations
-   * and, if not supported, expect a {@link UnsupportedOperationException}
+   * Note: this method may not be available for all the blob store implementations and, if not supported, expect a
+   * {@link UnsupportedOperationException}
    * </p>
    */
   <B extends BlobStore> BlobStoreMetricsService<B> getMetricsService();
@@ -296,15 +296,20 @@ public interface BlobStore
   Stream<BlobId> getBlobIdStream();
 
   /**
-   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the provided duration.
+   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the
+   * provided duration.
    */
   Stream<BlobId> getBlobIdUpdatedSinceStream(Duration duration);
 
   /**
-   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the provided from date
-   * and under the specified path prefix.
+   * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the
+   * provided from date and under the specified path prefix.
    */
-  Stream<BlobId>  getBlobIdUpdatedSinceStream(String prefix, OffsetDateTime fromDateTime);
+  PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
+      String prefix,
+      OffsetDateTime fromDateTime,
+      @Nullable String continuationToken,
+      int pageSize);
 
   /**
    * Get a {@link Stream} of direct-path {@link BlobId}s under the specified path prefix.
@@ -330,10 +335,15 @@ public interface BlobStore
    * @return {@code true} if the blob has been successfully undeleted.
    * @since 3.12
    */
-  boolean undelete(@Nullable BlobStoreUsageChecker inUseChecker, BlobId blobId, BlobAttributes attributes, boolean isDryRun);
+  boolean undelete(
+      @Nullable BlobStoreUsageChecker inUseChecker,
+      BlobId blobId,
+      BlobAttributes attributes,
+      boolean isDryRun);
 
   /**
    * Identifies if the storage backed by the instance is available to be written to
+   *
    * @return {@code true} if the blob store can be written to
    * @since 3.14
    */
@@ -345,7 +355,9 @@ public interface BlobStore
    * @return {@code true} if the blob store can be a member of a group
    * @since 3.14
    */
-  default boolean isGroupable() { return true; }
+  default boolean isGroupable() {
+    return true;
+  }
 
   /**
    * Identifies if the instance is writable. The writable state is a configuration option and not representative of the
@@ -392,9 +404,8 @@ public interface BlobStore
   }
 
   /**
-   * Deletes the blob if it is indeed a Temporary blob
-   * Note: This method should only called with a BlobId known to have been created as a TempBlob, implementations may
-   * perform no checks if they provide no special handling.
+   * Deletes the blob if it is indeed a Temporary blob Note: This method should only called with a BlobId known to have
+   * been created as a TempBlob, implementations may perform no checks if they provide no special handling.
    *
    * @since 3.37
    */
@@ -407,11 +418,12 @@ public interface BlobStore
 
   /**
    * Flush blobstore metrics to disk, forgoing the typical wait period
+   *
    * @throws IOException
    */
   @VisibleForTesting
   default void flushMetrics() throws IOException {
-    //default impl does nothing
+    // default impl does nothing
   }
 
   /**

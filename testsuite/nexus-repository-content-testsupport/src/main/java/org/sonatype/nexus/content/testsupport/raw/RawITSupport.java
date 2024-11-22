@@ -64,12 +64,12 @@ public class RawITSupport
     checkNotNull(repository);
     return rawClient(repositoryBaseUrl(repository));
   }
+
   protected RawClient rawClient(final URL repositoryUrl) throws Exception {
     return new RawClient(
         clientBuilder(repositoryUrl).build(),
         clientContext(),
-        repositoryUrl.toURI()
-    );
+        repositoryUrl.toURI());
   }
 
   protected void uploadAndDownload(final RawClient rawClient, final String file) throws Exception {
@@ -81,6 +81,7 @@ public class RawITSupport
 
     MatcherAssert.assertThat(FormatClientSupport.status(rawClient.delete(file)), Matchers.is(HttpStatus.NO_CONTENT));
 
-    assertThat("content should be deleted", FormatClientSupport.status(rawClient.get(file)), Matchers.is(HttpStatus.NOT_FOUND));
+    assertThat("content should be deleted", FormatClientSupport.status(rawClient.get(file)),
+        Matchers.is(HttpStatus.NOT_FOUND));
   }
 }

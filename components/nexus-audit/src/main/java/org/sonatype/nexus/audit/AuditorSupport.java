@@ -76,7 +76,7 @@ public abstract class AuditorSupport
   /**
    * Mapping of class to simple type names for auditing.
    */
-  private Map<Class,String> typeLookup = new HashMap<>();
+  private Map<Class, String> typeLookup = new HashMap<>();
 
   @Inject
   public void setAuditRecorder(final Provider<AuditRecorder> auditRecorder) {

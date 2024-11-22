@@ -27,14 +27,14 @@ public interface CacheManager<K, V>
   /**
    * Creates the {@link NexusCache}. It may be a distributed or a local cache depending on a Nexus mode.
    *
-   * @param cacheName   the name of the cache.
-   * @param keyType     the expected key type.
-   * @param valueType   the expected value type.
+   * @param cacheName the name of the cache.
+   * @param keyType the expected key type.
+   * @param valueType the expected value type.
    * @param expiryAfter the expiration policy of the cache.
    * @return the newly created {@link NexusCache}
    */
   NexusCache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType, Duration expiryAfter);
-  
+
   /**
    * Destroys the {@link NexusCache} specified by cacheName.
    */

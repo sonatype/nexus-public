@@ -52,8 +52,9 @@ public class KeyStoreStorageImpl
   }
 
   @Override
-  public void load(final KeyStore keyStore, final char[] password)
-      throws NoSuchAlgorithmException, CertificateException, IOException
+  public void load(
+      final KeyStore keyStore,
+      final char[] password) throws NoSuchAlgorithmException, CertificateException, IOException
   {
     try (ByteArrayInputStream in = storage.load(keyStoreName)) {
       keyStore.load(in, password);
@@ -61,8 +62,9 @@ public class KeyStoreStorageImpl
   }
 
   @Override
-  public void save(final KeyStore keyStore, final char[] password)
-      throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException
+  public void save(
+      final KeyStore keyStore,
+      final char[] password) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException
   {
     try (ByteArrayOutputStream out = new ByteArrayOutputStream(16 * 1024)) {
       keyStore.store(out, password);

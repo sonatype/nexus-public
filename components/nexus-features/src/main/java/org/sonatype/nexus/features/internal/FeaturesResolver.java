@@ -87,7 +87,8 @@ public class FeaturesResolver
       else if (installedFeatures.add(id)) {
         log.debug("Resolving feature {}", id);
         return Stream.concat(
-            feature.getDependencies().stream()
+            feature.getDependencies()
+                .stream()
                 .flatMap(d -> resolve(d.getName() + '/' + d.getVersion())),
             feature.getBundles().stream());
       }

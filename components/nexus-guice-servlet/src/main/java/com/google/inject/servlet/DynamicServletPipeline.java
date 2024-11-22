@@ -89,8 +89,9 @@ final class DynamicServletPipeline
       if (servletDefinition.shouldServe(path)) {
         return new RequestDispatcher()
         {
-          public void forward(ServletRequest servletRequest, ServletResponse servletResponse)
-              throws ServletException, IOException
+          public void forward(
+              ServletRequest servletRequest,
+              ServletResponse servletResponse) throws ServletException, IOException
           {
             checkState(!servletResponse.isCommitted(),
                 "Response has been committed--you can only call forward before"
@@ -98,21 +99,23 @@ final class DynamicServletPipeline
 
             servletResponse.resetBuffer();
 
-            ServletRequest requestToProcess = servletRequest instanceof HttpServletRequest ?
-                wrapRequest((HttpServletRequest) servletRequest, path) :
-                servletRequest;
+            ServletRequest requestToProcess =
+                servletRequest instanceof HttpServletRequest ? wrapRequest((HttpServletRequest) servletRequest, path)
+                    : servletRequest;
 
             doServiceImpl(requestToProcess, servletResponse);
           }
 
-          public void include(ServletRequest servletRequest, ServletResponse servletResponse)
-              throws ServletException, IOException
+          public void include(
+              ServletRequest servletRequest,
+              ServletResponse servletResponse) throws ServletException, IOException
           {
             doServiceImpl(servletRequest, servletResponse);
           }
 
-          private void doServiceImpl(ServletRequest servletRequest, ServletResponse servletResponse)
-              throws ServletException, IOException
+          private void doServiceImpl(
+              ServletRequest servletRequest,
+              ServletResponse servletResponse) throws ServletException, IOException
           {
             servletRequest.setAttribute(REQUEST_DISPATCHER_REQUEST, Boolean.TRUE);
             try {

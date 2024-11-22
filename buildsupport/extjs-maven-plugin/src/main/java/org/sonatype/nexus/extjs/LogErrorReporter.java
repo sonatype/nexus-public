@@ -24,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class LogErrorReporter
-  implements ErrorReporter
+    implements ErrorReporter
 {
   private final Log log;
 
@@ -32,22 +32,46 @@ public class LogErrorReporter
     this.log = checkNotNull(log);
   }
 
-  private String format(final String message, final String sourceName, final int line, final String lineSource, final int lineOffset) {
+  private String format(
+      final String message,
+      final String sourceName,
+      final int line,
+      final String lineSource,
+      final int lineOffset)
+  {
     return String.format("%s (%s#%d:%d): %s", message, sourceName, line, lineOffset, lineSource);
   }
 
   @Override
-  public void warning(final String message, final String sourceName, final int line, final String lineSource, final int lineOffset) {
+  public void warning(
+      final String message,
+      final String sourceName,
+      final int line,
+      final String lineSource,
+      final int lineOffset)
+  {
     log.warn(format(message, sourceName, line, lineSource, lineOffset));
   }
 
   @Override
-  public void error(final String message, final String sourceName, final int line, final String lineSource, final int lineOffset){
+  public void error(
+      final String message,
+      final String sourceName,
+      final int line,
+      final String lineSource,
+      final int lineOffset)
+  {
     log.error(format(message, sourceName, line, lineSource, lineOffset));
   }
 
   @Override
-  public EvaluatorException runtimeError(final String message, final String sourceName, final int line, final String lineSource, final int lineOffset) {
+  public EvaluatorException runtimeError(
+      final String message,
+      final String sourceName,
+      final int line,
+      final String lineSource,
+      final int lineOffset)
+  {
     return new EvaluatorException(message, sourceName, line, lineSource, lineOffset);
   }
 }

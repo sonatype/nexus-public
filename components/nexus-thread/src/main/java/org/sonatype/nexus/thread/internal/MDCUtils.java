@@ -36,7 +36,7 @@ public class MDCUtils
     final boolean inheritable = MDC.get(CONTEXT_NON_INHERITABLE_KEY) == null;
     Map<String, String> result = null;
     if (inheritable) {
-      //noinspection unchecked
+      // noinspection unchecked
       result = MDC.getCopyOfContextMap();
     }
     if (result == null) {

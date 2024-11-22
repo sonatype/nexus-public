@@ -176,18 +176,22 @@ File searchUp(File directory) {
 
 def getChangedProjects() {
   def grgit = Grgit.open()
-  def changes = grgit.status().staged.getAllChanges() + grgit.status().unstaged.getAllChanges()
-
-  // for all changes, search up for a pom.xml, and get artifactId out
-  MavenXpp3Reader reader = new MavenXpp3Reader()
   def projects = [] as Set
-  changes.each {
-    File pom = searchUp(new File(it).getParentFile())
-    // note: this ignores files in the project root
-    if (pom) {
-      Model model = reader.read(new FileReader(pom))
-      projects.add(":" + model.getArtifactId())
+  try {
+    def changes = grgit.status().staged.getAllChanges() + grgit.status().unstaged.getAllChanges()
+
+    // for all changes, search up for a pom.xml, and get artifactId out
+    MavenXpp3Reader reader = new MavenXpp3Reader()
+    changes.each {
+      File pom = searchUp(new File(it).getParentFile())
+      // note: this ignores files in the project root
+      if (pom) {
+        Model model = reader.read(new FileReader(pom))
+        projects.add(":" + model.getArtifactId())
+      }
     }
+  } catch (e) {
+    debug("Unable to determine changed projects: ${e}")
   }
   return projects
 }

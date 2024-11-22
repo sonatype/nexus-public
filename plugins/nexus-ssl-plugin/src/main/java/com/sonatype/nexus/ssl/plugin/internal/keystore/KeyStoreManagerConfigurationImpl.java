@@ -34,13 +34,16 @@ public class KeyStoreManagerConfigurationImpl
   // Using terse names for password constants for a little more security by obscurity
 
   private static final char[] PKSP /* PRIVATE_KEY_STORE_PASSWORD */ = "QePgCbrDbQiNdT6X".toCharArray();
-      // unobfuscate(new long[]{0xC83937B59BD4E1B3L, 0xE67FF6D75DDC56E6L, 0xAD210BF881D932F2L}).toCharArray(); /* => "QePgCbrDbQiNdT6X" */
+  // unobfuscate(new long[]{0xC83937B59BD4E1B3L, 0xE67FF6D75DDC56E6L, 0xAD210BF881D932F2L}).toCharArray(); /* =>
+  // "QePgCbrDbQiNdT6X" */
 
   private static final char[] TKSP /* TRUSTED_KEY_STORE_PASSWORD */ = "xfWHLzWxDF14OUW6".toCharArray();
-      // unobfuscate(new long[]{0xC23B2AC13724F4EAL, 0xF9510B04CA4340EEL, 0x98D2647891CB6F66L}).toCharArray(); /* => "xfWHLzWxDF14OUW6" */
+  // unobfuscate(new long[]{0xC23B2AC13724F4EAL, 0xF9510B04CA4340EEL, 0x98D2647891CB6F66L}).toCharArray(); /* =>
+  // "xfWHLzWxDF14OUW6" */
 
   private static final char[] PKP /* PRIVATE_KEY_PASSWORD */ = "Xw5JCuS5aDZ14oZG".toCharArray();
-      // unobfuscate(new long[]{0xD39F439CFB22319FL, 0xE48AAB6E5D073A6BL, 0xA14EE96195DA105AL}).toCharArray(); /* => "Xw5JCuS5aDZ14oZG" */
+  // unobfuscate(new long[]{0xD39F439CFB22319FL, 0xE48AAB6E5D073A6BL, 0xA14EE96195DA105AL}).toCharArray(); /* =>
+  // "Xw5JCuS5aDZ14oZG" */
 
   @Inject
   public KeyStoreManagerConfigurationImpl(

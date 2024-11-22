@@ -45,7 +45,7 @@ public class ReplicationTaskLogger
   }
 
   private void logReplicationRunInfo() {
-    //show task details on replication log
+    // show task details on replication log
     log.info(TASK_LOG_ONLY, "Replication run info:");
     log.info(TASK_LOG_ONLY, " Task ID: {}", taskLogInfo.getId());
     log.info(TASK_LOG_ONLY, " Type: {}", taskLogInfo.getTypeId());

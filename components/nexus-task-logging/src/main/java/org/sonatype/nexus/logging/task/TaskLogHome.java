@@ -36,7 +36,9 @@ public class TaskLogHome
 {
   private static final Logger log = LoggerFactory.getLogger(TaskLogHome.class);
 
-  private TaskLogHome() { throw new IllegalAccessError("Utility class"); }
+  private TaskLogHome() {
+    throw new IllegalAccessError("Utility class");
+  }
 
   /**
    * Get the home (absolute path) of the task logs on disk

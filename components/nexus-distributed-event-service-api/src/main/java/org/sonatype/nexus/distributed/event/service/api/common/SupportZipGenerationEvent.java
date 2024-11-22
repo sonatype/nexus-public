@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Contains the 'request' object which holds all properties for 'support zip' creation and nodeID of target node
  */
 public class SupportZipGenerationEvent
-  extends DistributedEventSupport
+    extends DistributedEventSupport
 {
   public static final String NAME = "SupportZipGenerationEvent";
 
@@ -36,7 +36,8 @@ public class SupportZipGenerationEvent
   @JsonCreator
   public SupportZipGenerationEvent(
       @JsonProperty("recipientNodeId") final String recipientNodeId,
-      @JsonProperty("request") final SupportZipGeneratorRequest request) {
+      @JsonProperty("request") final SupportZipGeneratorRequest request)
+  {
     super(EventType.CREATED);
     this.recipientNodeId = checkNotNull(recipientNodeId);
     this.request = checkNotNull(request);

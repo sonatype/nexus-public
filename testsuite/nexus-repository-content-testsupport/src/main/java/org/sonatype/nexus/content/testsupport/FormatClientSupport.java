@@ -58,8 +58,10 @@ public class FormatClientSupport
 
   protected final URI repositoryBaseUri;
 
-  public FormatClientSupport(final CloseableHttpClient httpClient, final HttpClientContext httpClientContext,
-                             final URI repositoryBaseUri)
+  public FormatClientSupport(
+      final CloseableHttpClient httpClient,
+      final HttpClientContext httpClientContext,
+      final URI repositoryBaseUri)
   {
     this.httpClient = checkNotNull(httpClient);
     this.httpClientContext = checkNotNull(httpClientContext);
@@ -113,8 +115,10 @@ public class FormatClientSupport
     return response;
   }
 
-  protected CloseableHttpResponse execute(final HttpUriRequest request, String username, String password)
-      throws IOException
+  protected CloseableHttpResponse execute(
+      final HttpUriRequest request,
+      String username,
+      String password) throws IOException
   {
     log.debug("Authorizing request for {} using credentials provided for username: {}",
         request.getURI(), username);

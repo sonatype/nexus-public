@@ -43,12 +43,15 @@ public class TaskLoggerFactoryTest
 
   @Test
   public void testReplicationLogging() {
-    TaskLogger taskLogger = TaskLoggerFactory.create(new ReplicationLogging(), mock(Logger.class), mock(TaskLogInfo.class));
+    TaskLogger taskLogger =
+        TaskLoggerFactory.create(new ReplicationLogging(), mock(Logger.class), mock(TaskLogInfo.class));
     assertThat(taskLogger, instanceOf(ReplicationTaskLogger.class));
   }
+
   @Test
   public void testTaskLogWithProgress() {
-    TaskLogger taskLogger = TaskLoggerFactory.create(new TaskLogWithProgress(), mock(Logger.class), mock(TaskLogInfo.class));
+    TaskLogger taskLogger =
+        TaskLoggerFactory.create(new TaskLogWithProgress(), mock(Logger.class), mock(TaskLogInfo.class));
     assertThat(taskLogger, instanceOf(TaskLogWithProgressLogger.class));
   }
 
@@ -65,17 +68,27 @@ public class TaskLoggerFactoryTest
   }
 
   @TaskLogging(BOTH)
-  private static final class Both { }
+  private static final class Both
+  {
+  }
 
   @TaskLogging(TASK_LOG_ONLY)
-  private static final class TaskLogOnly { }
+  private static final class TaskLogOnly
+  {
+  }
 
   @TaskLogging(REPLICATION_LOGGING)
-  private static final class ReplicationLogging { }
+  private static final class ReplicationLogging
+  {
+  }
 
   @TaskLogging(TASK_LOG_ONLY_WITH_PROGRESS)
-  private static final class TaskLogWithProgress { }
+  private static final class TaskLogWithProgress
+  {
+  }
 
   @TaskLogging(NEXUS_LOG_ONLY)
-  private static final class NexusLogOnly { }
+  private static final class NexusLogOnly
+  {
+  }
 }

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.content.testsupport.rest;
 
-
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -46,8 +45,9 @@ public class TestSuiteObjectMapperResolver
   private final ObjectMapper objectMapper;
 
   @Inject
-  public TestSuiteObjectMapperResolver(final ComponentXOFactory componentXOFactory,
-                                       final Set<ComponentXODeserializerExtension> componentXODeserializerExtensions)
+  public TestSuiteObjectMapperResolver(
+      final ComponentXOFactory componentXOFactory,
+      final Set<ComponentXODeserializerExtension> componentXODeserializerExtensions)
   {
     this.objectMapper = new ObjectMapper();
 
@@ -57,8 +57,7 @@ public class TestSuiteObjectMapperResolver
     this.objectMapper.registerModule(new SimpleModule()
         // add the deserializer for the ComponentXO class
         .addDeserializer(ComponentXO.class, new ComponentXODeserializer(componentXOFactory, objectMapper,
-            componentXODeserializerExtensions))
-    );
+            componentXODeserializerExtensions)));
   }
 
   @Override

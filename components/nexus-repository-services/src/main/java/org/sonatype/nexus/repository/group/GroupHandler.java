@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.group;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -95,7 +94,8 @@ public class GroupHandler
     switch (method) {
       case GET:
       case HEAD: {
-        final DispatchedRepositories dispatched = context.getRequest().getAttributes()
+        final DispatchedRepositories dispatched = context.getRequest()
+            .getAttributes()
             .getOrCreate(DispatchedRepositories.class);
         return doGet(context, dispatched);
       }
@@ -108,9 +108,9 @@ public class GroupHandler
   /**
    * Method that actually performs group GET. Override if needed.
    */
-  protected Response doGet(@Nonnull final Context context,
-                           @Nonnull final DispatchedRepositories dispatched)
-      throws Exception
+  protected Response doGet(
+      @Nonnull final Context context,
+      @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
     final GroupFacet groupFacet = context.getRepository().facet(GroupFacet.class);
     return getFirst(context, groupFacet.members(), dispatched);
@@ -120,10 +120,10 @@ public class GroupHandler
    * Returns the first OK response from member repositories or {@link HttpResponses#notFound()} if none of the members
    * responded with OK.
    */
-  protected Response getFirst(@Nonnull final Context context,
-                              @Nonnull final List<Repository> members,
-                              @Nonnull final DispatchedRepositories dispatched)
-      throws Exception
+  protected Response getFirst(
+      @Nonnull final Context context,
+      @Nonnull final List<Repository> members,
+      @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
     final Request request = context.getRequest();
     for (Repository member : members) {
@@ -148,10 +148,10 @@ public class GroupHandler
   /**
    * Returns all responses from all members as a linked map, where order is group member order.
    */
-  protected LinkedHashMap<Repository, Response> getAll(@Nonnull final Context context,
-                                                       @Nonnull final Iterable<Repository> members,
-                                                       @Nonnull final DispatchedRepositories dispatched)
-      throws Exception
+  protected LinkedHashMap<Repository, Response> getAll(
+      @Nonnull final Context context,
+      @Nonnull final Iterable<Repository> members,
+      @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
     return getAll(context.getRequest(), context, members, dispatched);
   }
@@ -161,18 +161,18 @@ public class GroupHandler
    * different request then provided by the {@link Context#getRequest()} while still using the
    * same {@link Context} to execute the request in.
    *
-   * @param request  {@link Request} that could be different then the {@link Context#getRequest()}
-   * @param context  {@link Context}
-   * @param members  {@link Repository}'s
+   * @param request {@link Request} that could be different then the {@link Context#getRequest()}
+   * @param context {@link Context}
+   * @param members {@link Repository}'s
    * @param dispatched {@link DispatchedRepositories}
    * @return LinkedHashMap of all responses from all members where order is group member order.
    * @throws Exception throw for any issues dispatching the request
    */
-  protected LinkedHashMap<Repository, Response> getAll(@Nonnull final Request request,
-                                                       @Nonnull final Context context,
-                                                       @Nonnull final Iterable<Repository> members,
-                                                       @Nonnull final DispatchedRepositories dispatched)
-      throws Exception
+  protected LinkedHashMap<Repository, Response> getAll(
+      @Nonnull final Request request,
+      @Nonnull final Context context,
+      @Nonnull final Iterable<Repository> members,
+      @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
     final LinkedHashMap<Repository, Response> responses = Maps.newLinkedHashMap();
     for (Repository member : members) {
@@ -192,7 +192,6 @@ public class GroupHandler
     }
     return responses;
   }
-
 
   /**
    * Returns standard 404 with no message. Override for format specific messaging.

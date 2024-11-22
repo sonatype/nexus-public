@@ -241,7 +241,7 @@ public class DataSessionRule
   }
 
   protected String startPostgres() {
-    //11.9 is the minimum support version
+    // 11.9 is the minimum support version
 
     postgres = new PostgreSQLContainer<>(DockerImageName.parse("docker-all.repo.sonatype.com/postgres:11.9")
         .asCompatibleSubstituteFor("postgres"));

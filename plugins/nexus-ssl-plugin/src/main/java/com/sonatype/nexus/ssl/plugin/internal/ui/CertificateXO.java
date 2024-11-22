@@ -23,17 +23,29 @@ import groovy.transform.ToString;
 public class CertificateXO
 {
   private final String id;
+
   private final String fingerprint;
+
   private final String pem;
+
   private String serialNumber;
+
   private String subjectCommonName;
+
   private String subjectOrganization;
+
   private String subjectOrganizationalUnit;
+
   private String issuerCommonName;
+
   private String issuerOrganization;
+
   private String issuerOrganizationalUnit;
+
   private long issuedOn;
+
   private long expiresOn;
+
   private boolean inTrustStore;
 
   public CertificateXO(

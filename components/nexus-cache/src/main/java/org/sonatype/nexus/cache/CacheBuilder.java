@@ -21,6 +21,7 @@ import javax.cache.expiry.ExpiryPolicy;
 
 /**
  * Abstracts cache configurations to make using different underlying implementations easier
+ * 
  * @since 3.14
  */
 public interface CacheBuilder<K, V>

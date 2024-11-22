@@ -27,6 +27,6 @@ public class NonResettableLogManager
     // overridden to be a noop
     // reset() is called on several occasions where its standard behavior has undesired effects:
     // - shortly after pax-logging has configured Logback, thereby undoing the efforts of LevelChangePropagator
-    // - during JVM shutdown, thereby disabling shutdown logging from components using JUL 
+    // - during JVM shutdown, thereby disabling shutdown logging from components using JUL
   }
 }

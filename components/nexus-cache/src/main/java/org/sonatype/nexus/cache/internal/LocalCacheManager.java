@@ -59,7 +59,7 @@ public class LocalCacheManager<K, V>
     return new LocalCache<>(
         cacheHelper.maybeCreateCache(cacheName, keyType, valueType, CreatedExpiryPolicy.factoryOf(expiryAfter)));
   }
-  
+
   @Override
   public void destroyCache(final String cacheName) {
     cacheHelper.maybeDestroyCache(cacheName);

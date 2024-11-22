@@ -135,7 +135,8 @@ public class DataStoreSupportTest
     verify(underTest).doStart(eq("testStore"), captor.capture());
 
     assertThat((Map<String, String>) captor.getValue(), hasEntry("jdbcUrl", "jdbc:h2:/tmp/example/db/testStore"));
-    assertThat(underTest.getConfiguration().getAttributes(), hasEntry("jdbcUrl", "jdbc:h2:${karaf.data}/db/${storeName}"));
+    assertThat(underTest.getConfiguration().getAttributes(),
+        hasEntry("jdbcUrl", "jdbc:h2:${karaf.data}/db/${storeName}"));
   }
 
   @Test

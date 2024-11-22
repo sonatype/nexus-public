@@ -57,9 +57,9 @@ public class TransactionSupportTest
     doNothing().when(tx).doRollback();
 
     when(spec.reason()).thenReturn(DEFAULT_REASON);
-    when(spec.commitOn()).thenReturn(new Class[] {});
-    when(spec.retryOn()).thenReturn(new Class[] { UncheckedIOException.class });
-    when(spec.swallow()).thenReturn(new Class[] {});
+    when(spec.commitOn()).thenReturn(new Class[]{});
+    when(spec.retryOn()).thenReturn(new Class[]{UncheckedIOException.class});
+    when(spec.swallow()).thenReturn(new Class[]{});
 
     txWrapper = new TransactionalWrapper(spec, aspect);
   }

@@ -88,7 +88,8 @@ public class DataStoreConfigurationTest
   public void attributesDiffer() {
     Map<String, Map<String, String>> diffMap = DataStoreConfiguration.diff(configurationA, configurationC);
     assertThat(diffMap.keySet(), hasSize(5));
-    assertThat(diffMap.keySet(), containsInAnyOrder("name", "source", "attributes->entry-2", "attributes->entry-3", "attributes->entry-4"));
+    assertThat(diffMap.keySet(),
+        containsInAnyOrder("name", "source", "attributes->entry-2", "attributes->entry-3", "attributes->entry-4"));
     assertThat(diffMap.get("name").values(), containsInAnyOrder("configA", "configC"));
     assertThat(diffMap.get("source").get("configA"), equalTo("sourceA"));
     assertThat(diffMap.get("source").get("configC"), equalTo("sourceC"));
@@ -116,7 +117,6 @@ public class DataStoreConfigurationTest
     assertThat(diffMap.get("attributes->key-2").values(), containsInAnyOrder(REDACTED, REDACTED));
     assertThat(diffMap.get("attributes->jdbcUrl").values(), containsInAnyOrder(
         format("localhost:5432/nexus?username=user&password=%s", REDACTED),
-        format("localhost:5432/nexus?password=%s&username=user", REDACTED))
-    );
+        format("localhost:5432/nexus?password=%s&username=user", REDACTED)));
   }
 }

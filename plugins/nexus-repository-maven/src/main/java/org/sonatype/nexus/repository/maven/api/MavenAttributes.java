@@ -15,7 +15,9 @@ package org.sonatype.nexus.repository.maven.api;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
 
 /**
  * REST API model for describing maven specific repository properties.
@@ -28,17 +30,19 @@ public class MavenAttributes
       allowableValues = "RELEASE,SNAPSHOT,MIXED",
       example = "MIXED")
   @NotEmpty
+  @Pattern(regexp = "RELEASE|SNAPSHOT|MIXED", message = "must be one of RELEASE, SNAPSHOT, MIXED")
   protected final String versionPolicy;
 
   @ApiModelProperty(value = "Validate that all paths are maven artifact or metadata paths",
       allowableValues = "STRICT,PERMISSIVE",
       example = "STRICT")
   @NotEmpty
+  @Pattern(regexp = "STRICT|PERMISSIVE", message = "must be one of STRICT, PERMISSIVE")
   protected final String layoutPolicy;
 
   @ApiModelProperty(value = "Content Disposition",
       allowableValues = "INLINE,ATTACHMENT", example = "ATTACHMENT")
-  @NotEmpty
+  @Pattern(regexp = "INLINE|ATTACHMENT", message = "must be one of INLINE, ATTACHMENT")
   private final String contentDisposition;
 
   @JsonCreator

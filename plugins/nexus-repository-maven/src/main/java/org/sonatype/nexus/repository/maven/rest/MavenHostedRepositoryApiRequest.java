@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.rest;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.maven.api.MavenAttributes;
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MavenHostedRepositoryApiRequest
     extends HostedRepositoryApiRequest
 {
+  @Valid
   @NotNull
   protected final MavenAttributes maven;
 

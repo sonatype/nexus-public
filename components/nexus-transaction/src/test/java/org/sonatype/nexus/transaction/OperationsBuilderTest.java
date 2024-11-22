@@ -43,17 +43,19 @@ public class OperationsBuilderTest
     @Transactional(commitOn = IOException.class)
     void customCommitOn();
 
-    @Transactional(retryOn = { InvocationTargetException.class, IllegalStateException.class })
+    @Transactional(retryOn = {InvocationTargetException.class, IllegalStateException.class})
     void customRetryOn();
 
-    @Transactional(swallow = { RuntimeException.class, MalformedURLException.class })
+    @Transactional(swallow = {RuntimeException.class, MalformedURLException.class})
     void customSwallow();
 
-    @Transactional(commitOn = IllegalStateException.class, retryOn = RuntimeException.class, swallow = IOException.class)
+    @Transactional(commitOn = IllegalStateException.class, retryOn = RuntimeException.class,
+        swallow = IOException.class)
     void customValues();
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Transactional(commitOn = IllegalStateException.class, retryOn = RuntimeException.class, swallow = IOException.class)
+    @Transactional(commitOn = IllegalStateException.class, retryOn = RuntimeException.class,
+        swallow = IOException.class)
     @interface Stereotype
     {
       // meta-annotated with @Transactional
@@ -152,7 +154,9 @@ public class OperationsBuilderTest
         sample("customSwallow"));
 
     assertBehaviour(
-        new Operations().commitOn(IllegalStateException.class).retryOn(RuntimeException.class).swallow(IOException.class).spec,
+        new Operations().commitOn(IllegalStateException.class)
+            .retryOn(RuntimeException.class)
+            .swallow(IOException.class).spec,
         sample("customValues"));
 
     assertBehaviour(

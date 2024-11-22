@@ -194,7 +194,8 @@ public class LogbackLogManager
   public File getLogFile(final String fileName) {
     final String filePrefix = allowedFilePrefixes.stream()
         .filter(fileName::startsWith)
-        .findAny().orElse("");
+        .findAny()
+        .orElse("");
 
     return requireNonNull(getAllLogFiles(fileName)).stream()
         .filter(file -> fileName.equals(filePrefix + file.getName()))
@@ -206,7 +207,7 @@ public class LogbackLogManager
   }
 
   @VisibleForTesting
-  void logFileNotFound (String fileName) {
+  void logFileNotFound(String fileName) {
     log.info("Unable to find log file: {}", fileName);
   }
 
@@ -218,7 +219,7 @@ public class LogbackLogManager
 
     boolean containsPathSeparator = fileName.contains(File.pathSeparator) || fileName.contains("/");
     boolean startsWithAllowedPrefix = allowedFilePrefixes.stream().anyMatch(fileName::startsWith);
-     if (!startsWithAllowedPrefix && containsPathSeparator) {
+    if (!startsWithAllowedPrefix && containsPathSeparator) {
       log.warn("Cannot retrieve log files with path separators in their name, unless it is a task or replication log");
       return null;
     }
@@ -495,8 +496,7 @@ public class LogbackLogManager
   }
 
   private void applyOverrides() {
-    overrides.forEach(entry ->
-        setLogbackLoggerLevel(entry.getKey(), LogbackLevels.convert(entry.getValue())));
+    overrides.forEach(entry -> setLogbackLoggerLevel(entry.getKey(), LogbackLevels.convert(entry.getValue())));
   }
 
   //

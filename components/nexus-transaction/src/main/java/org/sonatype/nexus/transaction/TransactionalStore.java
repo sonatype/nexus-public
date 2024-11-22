@@ -31,7 +31,7 @@ public interface TransactionalStore<S extends TransactionalSession<?>>
    * @param isolationLevel the isolation level to use for the transaction
    */
   default S openSession(final TransactionIsolation isolationLevel) {
-    switch(isolationLevel) {
+    switch (isolationLevel) {
       case STANDARD:
         return openSession();
       default:

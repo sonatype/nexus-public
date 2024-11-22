@@ -69,8 +69,7 @@ public abstract class ExceptionMapperSupport<E extends Throwable>
         response.getStatus(),
         entity == null ? "(no entity/body)" : String.format("'%s'", entity),
         exception,
-        log.isDebugEnabled() ? exception : null
-    );
+        log.isDebugEnabled() ? exception : null);
 
     return response;
   }
@@ -83,7 +82,7 @@ public abstract class ExceptionMapperSupport<E extends Throwable>
    * Convert the given exception into a response.
    *
    * @param exception The exception to convert.
-   * @param id        The unique identifier generated for this fault.
+   * @param id The unique identifier generated for this fault.
    */
   protected abstract Response convert(final E exception, final String id);
 

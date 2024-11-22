@@ -64,8 +64,7 @@ public class Launcher
   public Launcher(
       final File defaultsFile,
       @Nullable final File propertiesFile,
-      @Nullable final File nodeNamePropertiesFile)
-      throws Exception
+      @Nullable final File nodeNamePropertiesFile) throws Exception
   {
 
     configureLogging();
@@ -187,7 +186,8 @@ public class Launcher
   private void configureInitialLoggingOverrides(final Map<String, String> props) {
     LoggerContext loggerContext = loggerContext();
     if (props != null) {
-      props.entrySet().stream()
+      props.entrySet()
+          .stream()
           .map(Property::new)
           .filter(p -> p.key.startsWith(LOGGING_OVERRIDE_PREFIX))
           .filter(p -> !p.value.isEmpty())

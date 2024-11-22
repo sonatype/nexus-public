@@ -116,7 +116,10 @@ public class CertificateApiResource
   @RequiresPermissions("nexus:ssl-truststore:read")
   public List<ApiCertificate> getTrustStoreCertificates() {
     try {
-      return trustStore.getTrustedCertificates().stream().map(this::convertOrNull).filter(Objects::nonNull)
+      return trustStore.getTrustedCertificates()
+          .stream()
+          .map(this::convertOrNull)
+          .filter(Objects::nonNull)
           .collect(Collectors.toList());
     }
     catch (KeystoreException e) {

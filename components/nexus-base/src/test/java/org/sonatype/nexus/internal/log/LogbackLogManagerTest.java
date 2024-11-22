@@ -154,9 +154,12 @@ public class LogbackLogManagerTest
     EventManager eventManager = mock(EventManager.class);
     LoggingOverridesStore store = mock(LoggingOverridesStore.class);
 
-    Continuation<LoggingOverridesData> data = new ContinuationArrayList<LoggingOverridesData>() {{
-      add(new LoggingOverridesData("logger-name", LoggerLevel.DEBUG.toString()));
-    }};
+    Continuation<LoggingOverridesData> data = new ContinuationArrayList<LoggingOverridesData>()
+    {
+      {
+        add(new LoggingOverridesData("logger-name", LoggerLevel.DEBUG.toString()));
+      }
+    };
     when(store.readRecords()).thenReturn(data);
 
     DatastoreLoggerOverrides overrides = new DatastoreLoggerOverrides(
@@ -190,15 +193,15 @@ public class LogbackLogManagerTest
     eventManager.post(changeEvent);
     LoggerContext context = LogbackLogManager.loggerContext();
 
-    await().atMost(10, SECONDS).untilAsserted(() ->
-        assertThat(context.getLogger(testName).getLevel(), is(Level.toLevel(testLevel))));
+    await().atMost(10, SECONDS)
+        .untilAsserted(() -> assertThat(context.getLogger(testName).getLevel(), is(Level.toLevel(testLevel))));
 
     LoggerOverridesEvent resetEvent = new LoggerOverridesEvent(testName, null, Action.RESET);
     resetEvent.setRemoteNodeId("nodeId");
     eventManager.post(resetEvent);
 
-    await().atMost(10, SECONDS).untilAsserted(() ->
-        assertThat(context.getLogger(testName).getLevel(), is(nullValue())));
+    await().atMost(10, SECONDS)
+        .untilAsserted(() -> assertThat(context.getLogger(testName).getLevel(), is(nullValue())));
   }
 
   @Test
@@ -214,16 +217,14 @@ public class LogbackLogManagerTest
     changeEvent.setRemoteNodeId("nodeId");
     eventManager.post(changeEvent);
 
-    await().atMost(10, SECONDS).untilAsserted(() ->
-        assertThat(context.getLogger("ROOT").getLevel(), is(Level.DEBUG)));
+    await().atMost(10, SECONDS).untilAsserted(() -> assertThat(context.getLogger("ROOT").getLevel(), is(Level.DEBUG)));
 
     // reset ROOT log level back to INFO
     LoggerOverridesEvent resetEvent = new LoggerOverridesEvent("ROOT", null, Action.RESET);
     resetEvent.setRemoteNodeId("nodeId");
     eventManager.post(resetEvent);
 
-    await().atMost(10, SECONDS).untilAsserted(() ->
-        assertThat(context.getLogger("ROOT").getLevel(), is(Level.INFO)));
+    await().atMost(10, SECONDS).untilAsserted(() -> assertThat(context.getLogger("ROOT").getLevel(), is(Level.INFO)));
   }
 
   @Test
@@ -243,20 +244,20 @@ public class LogbackLogManagerTest
     eventManager.post(changeEvent2);
 
     // check that loggers were set.
-    await().atMost(10, SECONDS).untilAsserted(() ->
-        assertThat(context.getLogger("org.bar").getLevel(), is(Level.TRACE)));
-    await().atMost(10, SECONDS).untilAsserted(() ->
-        assertThat(context.getLogger("org.foo").getLevel(), is(Level.DEBUG)));
+    await().atMost(10, SECONDS)
+        .untilAsserted(() -> assertThat(context.getLogger("org.bar").getLevel(), is(Level.TRACE)));
+    await().atMost(10, SECONDS)
+        .untilAsserted(() -> assertThat(context.getLogger("org.foo").getLevel(), is(Level.DEBUG)));
 
     // reset all loggers
     LoggerOverridesEvent resetEvent = new LoggerOverridesEvent(null, null, Action.RESET_ALL);
     resetEvent.setRemoteNodeId("nodeId");
     eventManager.post(resetEvent);
 
-    await().atMost(10, SECONDS).untilAsserted(() ->
-        assertThat(context.getLogger("org.bar").getLevel(), is(nullValue())));
-    await().atMost(10, SECONDS).untilAsserted(() ->
-        assertThat(context.getLogger("org.foo").getLevel(), is(nullValue())));
+    await().atMost(10, SECONDS)
+        .untilAsserted(() -> assertThat(context.getLogger("org.bar").getLevel(), is(nullValue())));
+    await().atMost(10, SECONDS)
+        .untilAsserted(() -> assertThat(context.getLogger("org.foo").getLevel(), is(nullValue())));
   }
 
   @Test

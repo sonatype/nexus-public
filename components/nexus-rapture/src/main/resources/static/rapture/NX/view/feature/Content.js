@@ -69,7 +69,14 @@ Ext.define('NX.view.feature.Content', {
     const isAdmin = user && user.administrator;
     const shouldHideForNonAdmin = isRiskOnDiskNoneAdminOverrideEnabled && !isAdmin;
 
-    if (isRiskOnDiskEnabled && isCurrentTitleInTitles && user && !shouldHideForNonAdmin) {
+    if (!user) {
+      document.cookie = 'MALWARE_BANNER=; expires=Thu, 26 Feb 1950 00:00:00 UTC; path=/';
+    }
+
+    const malwareBanner = document.cookie.match(/MALWARE_BANNER_STATUS=([^;]*)/);
+    const hideMalwareBanner = malwareBanner && malwareBanner[1] === 'close';
+
+    if (isRiskOnDiskEnabled && isCurrentTitleInTitles && user && !shouldHideForNonAdmin && !hideMalwareBanner) {
       maliciousRiskOnDisk.setHeight(285);
       maliciousRiskOnDisk.show();
       maliciousRiskOnDisk.rerender();

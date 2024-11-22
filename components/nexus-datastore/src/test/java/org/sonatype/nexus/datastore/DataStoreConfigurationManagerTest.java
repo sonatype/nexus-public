@@ -40,6 +40,7 @@ import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
 /**
  * {@link DataStoreConfigurationManager} tests.
  */
@@ -66,7 +67,9 @@ public class DataStoreConfigurationManagerTest
   }
 
   @Priority(1)
-  private static class NumberOneConfigSource implements DataStoreConfigurationSource {
+  private static class NumberOneConfigSource
+      implements DataStoreConfigurationSource
+  {
     @Override
     public String getName() {
       return "numberOne";
@@ -84,7 +87,9 @@ public class DataStoreConfigurationManagerTest
   }
 
   @Priority(2)
-  private static class NumberTwoConfigSource implements DataStoreConfigurationSource {
+  private static class NumberTwoConfigSource
+      implements DataStoreConfigurationSource
+  {
     @Override
     public String getName() {
       return "numberTwo";
@@ -102,7 +107,9 @@ public class DataStoreConfigurationManagerTest
   }
 
   @Priority(3)
-  private static class NumberThreeConfigSource implements DataStoreConfigurationSource {
+  private static class NumberThreeConfigSource
+      implements DataStoreConfigurationSource
+  {
     @Override
     public String getName() {
       return "numberThree";
@@ -124,14 +131,21 @@ public class DataStoreConfigurationManagerTest
     NumberOneConfigSource source1 = new NumberOneConfigSource();
     NumberTwoConfigSource source2 = new NumberTwoConfigSource();
     NumberThreeConfigSource source3 = new NumberThreeConfigSource();
-    //Intentionally load them out of order
+    // Intentionally load them out of order
     when(configurationSources.values()).thenReturn(ImmutableList.of(source1, source2, source3));
-    List<DataStoreConfiguration> configs = StreamSupport.stream(underTest.load().spliterator(), false).collect(toList());
+    List<DataStoreConfiguration> configs =
+        StreamSupport.stream(underTest.load().spliterator(), false).collect(toList());
 
     assertThat(configs, hasSize(7));
-    assertThat(configs.stream().filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberThree")).count(), is(equalTo(4L)));
-    assertThat(configs.stream().filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberTwo")).count(), is(equalTo(2L)));
-    assertThat(configs.stream().filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberOne")).count(), is(equalTo(1L)));
+    assertThat(configs.stream()
+        .filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberThree"))
+        .count(), is(equalTo(4L)));
+    assertThat(configs.stream()
+        .filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberTwo"))
+        .count(), is(equalTo(2L)));
+    assertThat(configs.stream()
+        .filter(dataStoreConfiguration -> dataStoreConfiguration.getSource().equals("numberOne"))
+        .count(), is(equalTo(1L)));
   }
 
   @Test

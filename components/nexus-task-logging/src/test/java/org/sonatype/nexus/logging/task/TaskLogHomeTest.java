@@ -51,7 +51,6 @@ public class TaskLogHomeTest
     assertFalse("temp file was not deleted", Files.exists(file));
   }
 
-
   /**
    * Tests that the task log appender is active after starting a task logger and using a temp appender to determine
    * the log path via {@link TaskLogHome#getTaskLogsHome()}
@@ -91,7 +90,8 @@ public class TaskLogHomeTest
   }
 
   private TaskLogInfo createTaskInfo(final String typeId) {
-    return new TaskLogInfo() {
+    return new TaskLogInfo()
+    {
       @Override
       public String getId() {
         return "id";

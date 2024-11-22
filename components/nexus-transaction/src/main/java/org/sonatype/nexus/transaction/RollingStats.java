@@ -78,7 +78,8 @@ class RollingStats
     if (tick < newTick) {
       synchronized (this) {
         if (tick < newTick) {
-          // move round circular window: any elements after the last tick, up to and including current tick, is now stale
+          // move round circular window: any elements after the last tick, up to and including current tick, is now
+          // stale
           rangeClosed(tick + 1, newTick).limit(buckets.length()).mapToInt(this::index).forEach(i -> buckets.set(i, 0));
           tick = newTick;
         }

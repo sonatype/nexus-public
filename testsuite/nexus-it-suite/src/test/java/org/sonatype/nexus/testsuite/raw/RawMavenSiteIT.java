@@ -39,6 +39,7 @@ public class RawMavenSiteIT
     extends RawITSupport
 {
   private static String INDEX_HTML = "index.html";
+
   private Repository repository;
 
   private RawClient client;
@@ -90,7 +91,7 @@ public class RawMavenSiteIT
 
     assertThat(getLastDownloadedTime(repository, INDEX_HTML), is(equalTo(null)));
 
-    //This forces a path through the IndexHtmlForwardHandler
+    // This forces a path through the IndexHtmlForwardHandler
     final HttpResponse index = client.get("");
 
     assertThat(status(index), is(HttpStatus.OK));
@@ -109,10 +110,10 @@ public class RawMavenSiteIT
     mavenDeployment.setProjectTemplateDir(resolveTestFile(project));
     mavenDeployment.setProjectDir(resolveBaseFile("target/raw-mvn-site/" + project).getAbsoluteFile());
     mavenDeployment.setProxyUrl(new URL(nexusUrl, "/repository/maven-public"));
-    mavenDeployment.setDeployUrl(siteUrl);  // dummy deployUrl since we only run the site
+    mavenDeployment.setDeployUrl(siteUrl); // dummy deployUrl since we only run the site
     mavenDeployment.setSiteUrl(siteUrl);
     mavenDeployment.init();
 
-    new MavenRunner().run(mavenDeployment,  "clean", "site:site", "site:deploy");
+    new MavenRunner().run(mavenDeployment, "clean", "site:site", "site:deploy");
   }
 }

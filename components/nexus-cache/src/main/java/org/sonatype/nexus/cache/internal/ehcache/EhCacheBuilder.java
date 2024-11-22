@@ -59,7 +59,7 @@ public class EhCacheBuilder<K, V>
 
     builder.withExpiry(mapToEhCacheExpiry(expiryFactory.create()));
 
-    Cache<K, V> cache = manager.createCache(name,  Eh107Configuration.fromEhcacheCacheConfiguration(builder));
+    Cache<K, V> cache = manager.createCache(name, Eh107Configuration.fromEhcacheCacheConfiguration(builder));
 
     manager.enableStatistics(name, statisticsEnabled);
     manager.enableManagement(name, managementEnabled);
@@ -99,7 +99,7 @@ public class EhCacheBuilder<K, V>
           return Duration.of(1, ChronoUnit.FOREVER);
         }
         ChronoUnit chronoUnit = null;
-        switch(duration.getTimeUnit()) {
+        switch (duration.getTimeUnit()) {
           case DAYS:
             chronoUnit = ChronoUnit.DAYS;
             break;

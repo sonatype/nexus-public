@@ -373,7 +373,7 @@ public class ClassDefScanner
      */
     private String stringLiteral(final AstNode node) {
       checkState(node instanceof StringLiteral, node, "Expected string literal only");
-      //noinspection ConstantConditions
+      // noinspection ConstantConditions
       StringLiteral string = (StringLiteral) node;
       return string.getValue();
     }
@@ -383,7 +383,7 @@ public class ClassDefScanner
      */
     private double numberLiteral(final AstNode node) {
       checkState(node instanceof NumberLiteral, node, "Expected number literal only");
-      //noinspection ConstantConditions
+      // noinspection ConstantConditions
       NumberLiteral number = (NumberLiteral) node;
       return number.getNumber();
     }
@@ -394,7 +394,7 @@ public class ClassDefScanner
     private List<String> arrayStringLiteral(final AstNode node) {
       checkState(node instanceof ArrayLiteral, node, "Expected array literal only");
       List<String> result = new ArrayList<>();
-      //noinspection ConstantConditions
+      // noinspection ConstantConditions
       ArrayLiteral array = (ArrayLiteral) node;
       for (AstNode element : array.getElements()) {
         result.add(stringLiteral(element));

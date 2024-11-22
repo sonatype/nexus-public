@@ -24,10 +24,7 @@ import org.sonatype.nexus.repository.content.store.FormatStoreModule;
  */
 @Named(ExampleFormat.NAME)
 public class ExampleStoreModule
-    extends FormatStoreModule<ExampleContentRepositoryDAO,
-                              ExampleComponentDAO,
-                              ExampleAssetDAO,
-                              ExampleAssetBlobDAO>
+    extends FormatStoreModule<ExampleContentRepositoryDAO, ExampleComponentDAO, ExampleAssetDAO, ExampleAssetBlobDAO>
 {
   // nothing to add...
 }

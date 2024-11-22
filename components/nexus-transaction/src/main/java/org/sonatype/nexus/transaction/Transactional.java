@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * @since 3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 public @interface Transactional
 {
   String DEFAULT_REASON = "transaction";

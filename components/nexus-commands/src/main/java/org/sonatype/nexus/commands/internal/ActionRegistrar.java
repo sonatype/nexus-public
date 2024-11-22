@@ -45,9 +45,10 @@ public class ActionRegistrar
   private final SessionFactory sessionFactory;
 
   @Inject
-  public ActionRegistrar(final BeanLocator beanLocator,
-                         @Nullable final SessionFactory sessionFactory,
-                         @Nullable final BundleContext bundleContext)
+  public ActionRegistrar(
+      final BeanLocator beanLocator,
+      @Nullable final SessionFactory sessionFactory,
+      @Nullable final BundleContext bundleContext)
   {
     this.beanLocator = checkNotNull(beanLocator);
     this.sessionFactory = sessionFactory; // might be null during tests

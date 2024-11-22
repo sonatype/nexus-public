@@ -177,7 +177,7 @@ public abstract class ProxyFacetSupport
   protected void configureCooperation(
       final Cooperation2Factory cooperationFactory,
       @Nullable @Named("local") Cooperation2Factory defaultCooperationFactory,
-      @Named("${nexus.proxy.clustered.cooperation.enabled:-true}") final boolean proxyClusteredCooperationEnabled,
+      @Named("${nexus.proxy.clustered.cooperation.enabled:-false}") final boolean proxyClusteredCooperationEnabled,
       @Named(DATASTORE_CLUSTERED_ENABLED_NAMED) final boolean clustered,
       @Named("${nexus.proxy.cooperation.enabled:-true}") final boolean cooperationEnabled,
       @Named("${nexus.proxy.cooperation.majorTimeout:-0s}") final Duration majorTimeout,

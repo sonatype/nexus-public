@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.tasklog;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -36,6 +35,7 @@ import static org.apache.commons.io.FileUtils.iterateFiles;
 
 /**
  * Cleanup the task log files based on how old in days they are
+ * 
  * @since 3.5
  */
 @Named
@@ -70,15 +70,14 @@ public class TaskLogCleanup
     AgeFileFilter ageFileFilter = new AgeFileFilter(thresholdDate);
     Iterator<File> filesToDelete = iterateFiles(logFilesHome, ageFileFilter, ageFileFilter);
     filesToDelete.forEachRemaining(f -> {
-          try {
-            forceDelete(f);
-            log.info("Removed task log file {}", f.toString());
-          }
-          catch (IOException e) { // NOSONAR
-            log.error("Unable to delete task file {}. Message was {}.", f.toString(), e.getMessage());
-          }
-        }
-    );
+      try {
+        forceDelete(f);
+        log.info("Removed task log file {}", f.toString());
+      }
+      catch (IOException e) { // NOSONAR
+        log.error("Unable to delete task file {}. Message was {}.", f.toString(), e.getMessage());
+      }
+    });
   }
 
   @VisibleForTesting

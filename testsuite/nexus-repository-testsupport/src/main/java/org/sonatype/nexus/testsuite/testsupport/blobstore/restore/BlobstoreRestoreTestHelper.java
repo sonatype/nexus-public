@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.blobstore.restore;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -38,6 +40,80 @@ public interface BlobstoreRestoreTestHelper
 
   String DRY_RUN = "dryRun";
 
+  String PLAN_RECONCILE_TYPE_ID = "blobstore.planReconciliation";
+
+  String EXECUTE_RECONCILE_TYPE_ID = "blobstore.executeReconciliationPlan";
+
+  /**
+   * Get the blob ids of the assets
+   */
+  List<BlobId> getAssetBlobId();
+
+  /**
+   * Deletes asset blob
+   *
+   * @param repository the name of the repository
+   * @param blobStore blobStore where blob is stored
+   * @param blobId blobId to delete
+   */
+  void deleteAssetBlob(Repository repository, BlobStore blobStore, BlobId blobId);
+
+  /**
+   * Verifies existence of asset blob
+   *
+   * @param repository the name of the blobstore
+   * @param blobStore blobStore where blob is stored
+   * @param blobId blobId to read
+   *
+   * @return {@code true} if the asset blob exists
+   */
+  boolean assetBlobExists(Repository repository, BlobStore blobStore, BlobId blobId);
+
+  /**
+   * Clean tables from previous data
+   */
+  void truncateTables();
+
+  /**
+   * Deletes the file with specified extension
+   *
+   * @param blobStorageName the name of the blobstore
+   * @param extension extension of the file to delete
+   */
+  void simulateFileLoss(String blobStorageName, String extension);
+
+  /**
+   * Asserts that the reconcile plan exists with specific type and action
+   *
+   * @param type the type of the plan
+   * @param action the action of the plan
+   */
+  boolean assertReconcilePlanExists(String type, String action);
+
+  /**
+   * Asserts that the reconcile plan exists with specific set of parameters
+   *
+   * @param type the type of the plan
+   * @param action the action of the plan
+   * @param blobIds list of blob ids to check
+   */
+  boolean assertReconcilePlanExists(String type, String action, List<BlobId> blobIds);
+
+  /**
+   * Asserts that the property files exist for the specified blobstore
+   *
+   * @param blobStorageName the name of the blobstore
+   */
+  boolean assertPropertyFilesExist(String blobStorageName);
+
+  /**
+   * Run the reconcile task with the specified wait for task timeout
+   *
+   * @param blobstoreName the name of the blobstore
+   * @param timeout the timeout to wait for the task to complete
+   */
+  void runReconcileTaskWithTimeout(final String blobstoreName, final long timeout);
+
   void simulateComponentAndAssetMetadataLoss();
 
   void simulateAssetMetadataLoss();
@@ -56,7 +132,7 @@ public interface BlobstoreRestoreTestHelper
   /**
    * Run the restore (reconcile) task with the default wait for task timeout and the specified dry run flag
    *
-   * @param blobstoreName the name of the blobstore
+   * @param blobStoreName the name of the blobstore
    * @param isDryRun when true set dryrun on the task which does not restore assets
    */
   default void runRestoreMetadataTask(final String blobStoreName, final boolean isDryRun) {
@@ -68,7 +144,7 @@ public interface BlobstoreRestoreTestHelper
    *
    * @param blobstoreName the name of the blobstore
    * @param timeout the timeout to wait for the task to complete
-   * @param isDryRun when true set dryrun on the task which does not restore assets
+   * @param dryRun when true set dryrun on the task which does not restore assets
    */
   void runRestoreMetadataTaskWithTimeout(final String blobstoreName, final long timeout, final boolean dryRun);
 
@@ -98,8 +174,8 @@ public interface BlobstoreRestoreTestHelper
       String... paths);
 
   /**
-   * Rewrites all the blob names either adding a leading slash, or removing a leading slash to simulate blobs
-   * which were written by the other database.
+   * Rewrites all the blob names either adding a leading slash, or removing a leading slash to simulate blobs which were
+   * written by the other database.
    */
   void rewriteBlobNames();
 
@@ -107,7 +183,6 @@ public interface BlobstoreRestoreTestHelper
    * Retrieve the map of path->blobId for all assets in the provided repository.
    *
    * @param pathFilter a predicate which returns true if the asset path should be included in the result.
-   *
    */
   Map<String, BlobId> getAssetToBlobIds(Repository repo, Predicate<String> pathFilter);
 

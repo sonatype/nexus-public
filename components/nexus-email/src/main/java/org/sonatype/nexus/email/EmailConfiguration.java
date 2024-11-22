@@ -22,7 +22,7 @@ import org.sonatype.nexus.crypto.secrets.Secret;
 public interface EmailConfiguration
 {
   boolean isEnabled();
-  
+
   void setEnabled(boolean enabled);
 
   String getHost();
@@ -30,7 +30,7 @@ public interface EmailConfiguration
   void setHost(String host);
 
   int getPort();
-  
+
   void setPort(int port);
 
   String getUsername();

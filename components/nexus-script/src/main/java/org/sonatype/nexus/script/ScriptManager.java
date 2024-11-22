@@ -21,7 +21,8 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
  *
  * @since 3.0
  */
-public interface ScriptManager extends Lifecycle
+public interface ScriptManager
+    extends Lifecycle
 {
   public static final String DEFAULT_TYPE = "groovy";
 

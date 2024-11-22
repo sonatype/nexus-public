@@ -98,8 +98,10 @@ final class DynamicFilterPipeline
   }
 
   @Override
-  public void dispatch(ServletRequest request, ServletResponse response, FilterChain proceedingFilterChain)
-      throws IOException, ServletException
+  public void dispatch(
+      ServletRequest request,
+      ServletResponse response,
+      FilterChain proceedingFilterChain) throws IOException, ServletException
   {
     new FilterChainInvocation(filterDefinitions(), servletPipeline, proceedingFilterChain).doFilter(
         withDispatcher(request, servletPipeline), response);
@@ -115,7 +117,8 @@ final class DynamicFilterPipeline
     }
   }
 
-  private static ServletRequest withDispatcher(ServletRequest servletRequest,
+  private static ServletRequest withDispatcher(
+      ServletRequest servletRequest,
       final DynamicServletPipeline servletPipeline)
   {
     if (!servletPipeline.hasServletsMapped()) {

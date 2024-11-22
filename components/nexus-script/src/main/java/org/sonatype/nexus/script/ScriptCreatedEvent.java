@@ -18,7 +18,7 @@ package org.sonatype.nexus.script;
  * @since 3.1
  */
 public class ScriptCreatedEvent
-  extends ScriptEvent
+    extends ScriptEvent
 {
   public ScriptCreatedEvent(final Script script) {
     super(script);

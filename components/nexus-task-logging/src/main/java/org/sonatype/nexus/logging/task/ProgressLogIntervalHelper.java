@@ -24,7 +24,7 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
  * Helper for logging progress messages, one per defined interval.
  */
 public class ProgressLogIntervalHelper
-  implements AutoCloseable
+    implements AutoCloseable
 {
   private final Stopwatch elapsed;
 

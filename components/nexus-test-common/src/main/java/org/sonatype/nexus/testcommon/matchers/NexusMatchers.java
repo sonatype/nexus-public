@@ -73,7 +73,8 @@ public class NexusMatchers
     List<E> actual = new ArrayList<>();
     Matcher<Iterable<? extends E>> iterableMatcher = contains(items);
 
-    return new TypeSafeDiagnosingMatcher<Stream<E>>(Stream.class) {
+    return new TypeSafeDiagnosingMatcher<Stream<E>>(Stream.class)
+    {
 
       @Override
       public void describeTo(final Description description) {
@@ -87,6 +88,7 @@ public class NexusMatchers
         }
 
         return iterableMatcher.matches(actual);
-      }};
+      }
+    };
   }
 }

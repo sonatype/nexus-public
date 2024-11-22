@@ -128,7 +128,8 @@ public class RawHostedIT
   @Test
   public void inlineContentDispositionSetsHeader() throws Exception {
     Configuration configuration = repos.createHosted(testName.getMethodName(), "raw-hosted", "ALLOW_ONCE", true);
-    configuration.attributes("raw").set(ContentDispositionHandler.CONTENT_DISPOSITION_CONFIG_KEY, ContentDisposition.INLINE.name());
+    configuration.attributes("raw")
+        .set(ContentDispositionHandler.CONTENT_DISPOSITION_CONFIG_KEY, ContentDisposition.INLINE.name());
 
     Repository repository = repos.createRepository(configuration);
 
@@ -146,7 +147,8 @@ public class RawHostedIT
   @Test
   public void attachmentContentDispositionSetsHeader() throws Exception {
     Configuration configuration = repos.createHosted(testName.getMethodName(), "raw-hosted", "ALLOW_ONCE", true);
-    configuration.attributes("raw").set(ContentDispositionHandler.CONTENT_DISPOSITION_CONFIG_KEY, ContentDisposition.ATTACHMENT.name());
+    configuration.attributes("raw")
+        .set(ContentDispositionHandler.CONTENT_DISPOSITION_CONFIG_KEY, ContentDisposition.ATTACHMENT.name());
 
     Repository repository = repos.createRepository(configuration);
 

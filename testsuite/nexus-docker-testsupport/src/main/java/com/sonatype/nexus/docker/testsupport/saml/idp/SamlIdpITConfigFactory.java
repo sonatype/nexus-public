@@ -18,7 +18,8 @@ import com.google.common.collect.ImmutableMap;
 
 public class SamlIdpITConfigFactory
 {
-  private SamlIdpITConfigFactory() { }
+  private SamlIdpITConfigFactory() {
+  }
 
   public static DockerContainerConfig createKeycloakConfig(
       final String image,

@@ -66,8 +66,8 @@ public class CertificateComponent
   /**
    * Retrieves certificate given a host/port.
    *
-   * @param host         to get certificate from
-   * @param port         the port
+   * @param host to get certificate from
+   * @param port the port
    * @param protocolHint the protocol hint
    * @return certificate
    */

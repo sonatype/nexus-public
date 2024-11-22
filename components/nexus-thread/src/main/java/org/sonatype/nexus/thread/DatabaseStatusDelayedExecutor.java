@@ -68,11 +68,11 @@ public class DatabaseStatusDelayedExecutor
   private ExecutorService executor;
 
   @Inject
-  public DatabaseStatusDelayedExecutor(final FreezeService freezeService,
-                                       @Named("${nexus.delayedExecutor.threadPoolSize:-1}")
-                                       final int delayedExecutorThreadPoolSize,
-                                       @Named("${nexus.delayedExecutor.sleepIntervalMs:-5000}") final int sleepInterval,
-                                       @Named("${nexus.delayedExecutor.maxRetries:-8640}") final int maxRetries)
+  public DatabaseStatusDelayedExecutor(
+      final FreezeService freezeService,
+      @Named("${nexus.delayedExecutor.threadPoolSize:-1}") final int delayedExecutorThreadPoolSize,
+      @Named("${nexus.delayedExecutor.sleepIntervalMs:-5000}") final int sleepInterval,
+      @Named("${nexus.delayedExecutor.maxRetries:-8640}") final int maxRetries)
   {
     this.freezeService = checkNotNull(freezeService);
     checkArgument(delayedExecutorThreadPoolSize > 0, delayedExecutorThreadPoolSize);
@@ -190,26 +190,28 @@ public class DatabaseStatusDelayedExecutor
 
   @Override
   @Guarded(by = STARTED)
-  public <T> List<Future<T>> invokeAll(final Collection<? extends Callable<T>> tasks,
-                                       final long timeout,
-                                       final TimeUnit unit)
-      throws InterruptedException
+  public <T> List<Future<T>> invokeAll(
+      final Collection<? extends Callable<T>> tasks,
+      final long timeout,
+      final TimeUnit unit) throws InterruptedException
   {
     return executor.invokeAll(wrapAll(tasks), timeout, unit);
   }
 
   @Override
   @Guarded(by = STARTED)
-  public <T> T invokeAny(final Collection<? extends Callable<T>> tasks)
-      throws InterruptedException, ExecutionException
+  public <T> T invokeAny(
+      final Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException
   {
     return executor.invokeAny(wrapAll(tasks));
   }
 
   @Override
   @Guarded(by = STARTED)
-  public <T> T invokeAny(final Collection<? extends Callable<T>> tasks, final long timeout, final TimeUnit unit)
-      throws InterruptedException, ExecutionException, TimeoutException
+  public <T> T invokeAny(
+      final Collection<? extends Callable<T>> tasks,
+      final long timeout,
+      final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException
   {
     return executor.invokeAny(wrapAll(tasks), timeout, unit);
   }

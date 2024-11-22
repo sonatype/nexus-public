@@ -59,7 +59,7 @@ public class IdpCommandLineITSupport
       connection.getInputStream();
       return true;
     }
-    catch (Exception ignore) { //NOSONAR
+    catch (Exception ignore) { // NOSONAR
       return false;
     }
     finally {

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.api;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -38,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MavenProxyApiRepository
     extends SimpleApiProxyRepository
 {
+  @Valid
   @NotNull
   protected final MavenAttributes maven;
 
@@ -54,7 +56,7 @@ public class MavenProxyApiRepository
       @JsonProperty("httpClient") final HttpClientAttributesWithPreemptiveAuth httpClient,
       @JsonProperty("routingRuleName") final String routingRuleName,
       @JsonProperty("maven") final MavenAttributes maven,
-      @JsonProperty("replication") @JsonInclude(value= Include.NON_EMPTY, content=Include.NON_NULL)
+      @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY, content = Include.NON_NULL)
       final ReplicationAttributes replication)
 
   {

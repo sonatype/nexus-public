@@ -26,7 +26,8 @@ Ext.define('NX.coreui.view.repository.recipe.CargoGroup', {
   alias: 'widget.nx-coreui-repository-cargo-group',
   requires: [
     'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.GroupFacet'
+    'NX.coreui.view.repository.facet.GroupFacet',
+    'NX.coreui.view.repository.facet.CargoRequireAuthenticationFacet'
   ],
 
   /**
@@ -36,6 +37,7 @@ Ext.define('NX.coreui.view.repository.recipe.CargoGroup', {
     var me = this;
 
     me.items = [
+      {xtype: 'nx-coreui-repository-cargo-require-authentication-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-group-facet', format: 'cargo'}
     ];

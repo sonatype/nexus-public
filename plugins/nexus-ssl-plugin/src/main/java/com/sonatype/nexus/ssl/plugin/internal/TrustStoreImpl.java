@@ -83,9 +83,10 @@ public class TrustStoreImpl
   private volatile SSLContext sslcontext;
 
   @Inject
-  public TrustStoreImpl(final EventManager eventManager,
-                        @Named("ssl") final KeyStoreManager keyStoreManager,
-                        final FreezeService freezeService) throws Exception
+  public TrustStoreImpl(
+      final EventManager eventManager,
+      @Named("ssl") final KeyStoreManager keyStoreManager,
+      final FreezeService freezeService) throws Exception
   {
     this.eventManager = checkNotNull(eventManager);
     this.keyStoreManager = checkNotNull(keyStoreManager);
@@ -95,8 +96,9 @@ public class TrustStoreImpl
   }
 
   @Override
-  public Certificate importTrustCertificate(final Certificate certificate, final String alias)
-      throws KeystoreException
+  public Certificate importTrustCertificate(
+      final Certificate certificate,
+      final String alias) throws KeystoreException
   {
     freezeService.checkWritable("Unable to import a certificate while database is frozen.");
 
@@ -114,8 +116,9 @@ public class TrustStoreImpl
   }
 
   @Override
-  public Certificate importTrustCertificate(final String certificateInPEM, final String alias)
-      throws KeystoreException, CertificateException
+  public Certificate importTrustCertificate(
+      final String certificateInPEM,
+      final String alias) throws KeystoreException, CertificateException
   {
     final Certificate certificate = decodePEMFormattedCertificate(certificateInPEM);
 
@@ -209,8 +212,8 @@ public class TrustStoreImpl
     return null;
   }
 
-  private static X509TrustManager getManagedTrustManager(final KeyStoreManager keyStoreManager)
-      throws KeystoreException
+  private static X509TrustManager getManagedTrustManager(
+      final KeyStoreManager keyStoreManager) throws KeystoreException
   {
     final TrustManager[] managedTrustManagers = keyStoreManager.getTrustManagers();
     if (managedTrustManagers != null) {
@@ -342,7 +345,9 @@ public class TrustStoreImpl
    * Wraps an {@link X509TrustManager} with one that falls back on the
    * managed trust manager when checking if a certificate is trusted.
    */
-  private class FallbackOnManagedX509TrustManager implements X509TrustManager {
+  private class FallbackOnManagedX509TrustManager
+      implements X509TrustManager
+  {
 
     private final X509TrustManager primary;
 
@@ -351,14 +356,12 @@ public class TrustStoreImpl
     }
 
     @Override
-    public void checkClientTrusted(final X509Certificate[] chain, final String authType)
-        throws CertificateException {
+    public void checkClientTrusted(final X509Certificate[] chain, final String authType) throws CertificateException {
       primary.checkClientTrusted(chain, authType);
     }
 
     @Override
-    public void checkServerTrusted(final X509Certificate[] chain, final String authType)
-        throws CertificateException {
+    public void checkServerTrusted(final X509Certificate[] chain, final String authType) throws CertificateException {
       try {
         primary.checkServerTrusted(chain, authType);
       }

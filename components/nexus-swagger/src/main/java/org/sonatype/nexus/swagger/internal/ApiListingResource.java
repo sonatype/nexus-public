@@ -48,11 +48,12 @@ public class ApiListingResource
   }
 
   @Override
-  protected Swagger process(final Application app,
-                            final ServletContext servletContext,
-                            final ServletConfig servletConfig,
-                            final HttpHeaders httpHeaders,
-                            final UriInfo uriInfo)
+  protected Swagger process(
+      final Application app,
+      final ServletContext servletContext,
+      final ServletConfig servletConfig,
+      final HttpHeaders httpHeaders,
+      final UriInfo uriInfo)
   {
     // update cached model to use base path calculated from incoming request
     return swaggerModel.getSwagger().basePath(uriInfo.getBaseUri().getPath());

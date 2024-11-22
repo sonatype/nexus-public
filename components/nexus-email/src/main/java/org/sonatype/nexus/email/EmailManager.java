@@ -40,8 +40,7 @@ public interface EmailManager
   /**
    * Send verification email to given address using the provided password.
    */
-  void sendVerification(EmailConfiguration configuration, String password, String address)
-      throws EmailException;
+  void sendVerification(EmailConfiguration configuration, String password, String address) throws EmailException;
 
   /**
    * Send verification email to given address using the existing password.
