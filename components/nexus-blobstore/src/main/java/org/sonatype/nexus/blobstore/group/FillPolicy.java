@@ -17,14 +17,14 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
 /**
  * Chooses a group member to store a new blob.
  *
  * @since 3.14
  */
-public interface FillPolicy {
+public interface FillPolicy
+{
 
   String getName();
 

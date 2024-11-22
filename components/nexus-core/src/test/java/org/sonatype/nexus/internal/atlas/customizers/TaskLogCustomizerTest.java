@@ -154,15 +154,18 @@ public class TaskLogCustomizerTest
         }
         ContentSourceSupport contentSourceSupport = (ContentSourceSupport) item;
         return contentSourceSupport.getPath().equals(path) &&
-               contentSourceSupport.getPriority().equals(priority) &&
-               contentSourceSupport.getType().equals(type);
+            contentSourceSupport.getPriority().equals(priority) &&
+            contentSourceSupport.getType().equals(type);
       }
 
       @Override
       public void describeTo(final Description description) {
-        description.appendText("ContentSource[").appendValue(path)
-            .appendText(", ").appendValue(priority)
-            .appendText(", ").appendValue(type)
+        description.appendText("ContentSource[")
+            .appendValue(path)
+            .appendText(", ")
+            .appendValue(priority)
+            .appendText(", ")
+            .appendValue(type)
             .appendText("]");
       }
     };

@@ -144,9 +144,7 @@ public class DefaultCapabilityRegistryTest
     when(factory.create()).thenAnswer(new Answer<Capability>()
     {
       @Override
-      public Capability answer(final InvocationOnMock invocation)
-          throws Throwable
-      {
+      public Capability answer(final InvocationOnMock invocation) throws Throwable {
         return mock(Capability.class);
       }
 
@@ -159,12 +157,10 @@ public class DefaultCapabilityRegistryTest
 
     final ActivationConditionHandlerFactory achf = mock(ActivationConditionHandlerFactory.class);
     when(achf.create(Mockito.<DefaultCapabilityReference>any())).thenReturn(
-        mock(ActivationConditionHandler.class)
-    );
+        mock(ActivationConditionHandler.class));
     final ValidityConditionHandlerFactory vchf = mock(ValidityConditionHandlerFactory.class);
     when(vchf.create(Mockito.<DefaultCapabilityReference>any())).thenReturn(
-        mock(ValidityConditionHandler.class)
-    );
+        mock(ValidityConditionHandler.class));
 
     when(capabilityStorage.add(Mockito.<CapabilityStorageItem>any())).thenAnswer(
         new Answer<CapabilityIdentity>()
@@ -173,8 +169,7 @@ public class DefaultCapabilityRegistryTest
           public CapabilityIdentity answer(final InvocationOnMock invocationOnMock) throws Throwable {
             return capabilityIdentity(String.valueOf(random.nextLong()));
           }
-        }
-    );
+        });
 
     when(capabilityStorage.newStorageItem(anyInt(), any(), anyBoolean(), any(), any()))
         .thenAnswer(i -> {
@@ -201,8 +196,7 @@ public class DefaultCapabilityRegistryTest
         achf,
         vchf,
         secretsService,
-        validatorProvider
-    );
+        validatorProvider);
 
     rec = ArgumentCaptor.forClass(CapabilityEvent.class);
   }
@@ -218,9 +212,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void create()
-      throws Exception
-  {
+  public void create() throws Exception {
     final CapabilityReference reference = underTest.add(CAPABILITY_TYPE, true, null, null);
     assertThat(reference, is(not(nullValue())));
 
@@ -235,9 +227,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void remove()
-      throws Exception
-  {
+  public void remove() throws Exception {
     final CapabilityReference reference = underTest.add(CAPABILITY_TYPE, true, null, null);
     final CapabilityReference reference1 = underTest.remove(reference.context().id());
 
@@ -256,9 +246,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void removeInexistent()
-      throws Exception
-  {
+  public void removeInexistent() throws Exception {
     underTest.add(CAPABILITY_TYPE, true, null, null);
 
     thrown.expect(CapabilityNotFoundException.class);
@@ -271,9 +259,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void get()
-      throws Exception
-  {
+  public void get() throws Exception {
     final CapabilityReference reference = underTest.add(CAPABILITY_TYPE, true, null, null);
     final CapabilityReference reference1 = underTest.get(reference.context().id());
 
@@ -286,9 +272,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void getInexistent()
-      throws Exception
-  {
+  public void getInexistent() throws Exception {
     underTest.add(CAPABILITY_TYPE, true, null, null);
     final CapabilityReference reference = underTest.get(capabilityIdentity("foo"));
 
@@ -301,9 +285,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void getAll()
-      throws Exception
-  {
+  public void getAll() throws Exception {
     underTest.add(CAPABILITY_TYPE, true, null, null);
     underTest.add(CAPABILITY_TYPE, true, null, null);
     final Collection<? extends CapabilityReference> references = underTest.getAll();
@@ -323,9 +305,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void load()
-      throws Exception
-  {
+  public void load() throws Exception {
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
@@ -357,9 +337,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void loadWhenVersionChanged()
-      throws Exception
-  {
+  public void loadWhenVersionChanged() throws Exception {
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
@@ -401,9 +379,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void loadWhenVersionChangedAndConversionFails()
-      throws Exception
-  {
+  public void loadWhenVersionChangedAndConversionFails() throws Exception {
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("p1", "v1");
     oldProps.put("p2", "v2");
@@ -438,9 +414,7 @@ public class DefaultCapabilityRegistryTest
    * @throws Exception unexpected
    */
   @Test
-  public void loadWhenTypeIsUnknown()
-      throws Exception
-  {
+  public void loadWhenTypeIsUnknown() throws Exception {
     final CapabilityStorageItem item = new CapabilityStorageItemData();
     item.setVersion(0);
     item.setType(CAPABILITY_TYPE.toString());
@@ -462,9 +436,7 @@ public class DefaultCapabilityRegistryTest
    * Verify that value is stored encrypted when corresponding field is marked with {@link Encrypted}.
    */
   @Test
-  public void createWithEncryptedProperty()
-      throws Exception
-  {
+  public void createWithEncryptedProperty() throws Exception {
     createCapabilityWithSecret("bar");
     ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
 
@@ -480,9 +452,7 @@ public class DefaultCapabilityRegistryTest
    * Verify that value is decrypted when corresponding field is marked with {@link Encrypted}.
    */
   @Test
-  public void loadWithEncryptedProperty()
-      throws Exception
-  {
+  public void loadWithEncryptedProperty() throws Exception {
     Map<String, String> properties = Maps.newHashMap();
     properties.put("foo", secretsService.encryptMaven("", "bar".toCharArray(), "").getId());
 
@@ -497,8 +467,7 @@ public class DefaultCapabilityRegistryTest
     when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
     when(descriptor.version()).thenReturn(0);
     when(descriptor.formFields()).thenReturn(Arrays.<FormField>asList(
-        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)
-    ));
+        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
 
     underTest.load();
 
@@ -506,8 +475,7 @@ public class DefaultCapabilityRegistryTest
 
     verify(eventManager, atLeastOnce()).post(ebRec.capture());
     assertThat(
-        ((CapabilityEvent) ebRec.getAllValues().get(0)).getReference().context().properties().get("foo"), is("bar")
-    );
+        ((CapabilityEvent) ebRec.getAllValues().get(0)).getReference().context().properties().get("foo"), is("bar"));
   }
 
   /**
@@ -535,9 +503,7 @@ public class DefaultCapabilityRegistryTest
    * On load, if properties are invalid, the entry is kept but marked as failed.
    */
   @Test
-  public void loadWhenPropertiesAreInvalid()
-      throws Exception
-  {
+  public void loadWhenPropertiesAreInvalid() throws Exception {
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("bad", "data");
     final CapabilityStorageItem item = new CapabilityStorageItemData();
@@ -545,7 +511,6 @@ public class DefaultCapabilityRegistryTest
     item.setType(CAPABILITY_TYPE.toString());
     item.setEnabled(true);
     item.setProperties(oldProps);
-
 
     CapabilityIdentity fooId = capabilityIdentity("foo");
     when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(fooId, item));
@@ -555,7 +520,8 @@ public class DefaultCapabilityRegistryTest
     when(descriptor.version()).thenReturn(0);
 
     doThrow(new ValidationException("Bad data!"))
-        .when(descriptor).validate(fooId, oldProps, ValidationMode.LOAD);
+        .when(descriptor)
+        .validate(fooId, oldProps, ValidationMode.LOAD);
 
     assertThat(underTest.getAll(), hasSize(0));
 
@@ -573,9 +539,7 @@ public class DefaultCapabilityRegistryTest
    * This is because the separate 'HasNoDuplicates' capability condition will track it.
    */
   @Test
-  public void loadWhenCapabilityIsNotUnique()
-      throws Exception
-  {
+  public void loadWhenCapabilityIsNotUnique() throws Exception {
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("duplicate", "data");
 
@@ -614,8 +578,7 @@ public class DefaultCapabilityRegistryTest
     CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
     when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
-        new PasswordFormField("password", "password", "Sensitive field", FormField.MANDATORY)
-    ));
+        new PasswordFormField("password", "password", "Sensitive field", FormField.MANDATORY)));
 
     final Map<String, String> oldProps = Maps.newHashMap();
     oldProps.put("p1", "v1");
@@ -661,15 +624,15 @@ public class DefaultCapabilityRegistryTest
     assertThat(foo, is("0"));
     verify(secretsService).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
 
-    //re encrypting the reference and force to re encrypt the secret
+    // re encrypting the reference and force to re encrypt the secret
     underTest.migrateSecrets(reference, (secret) -> true);
 
     verify(capabilityStorage).update(any(CapabilityIdentity.class), csiRec.capture());
-    CapabilityStorageItem updated = csiRec.getAllValues().get(csiRec.getAllValues().size() -1); // get the last value
+    CapabilityStorageItem updated = csiRec.getAllValues().get(csiRec.getAllValues().size() - 1); // get the last value
 
-    //verify we only modified secrets
+    // verify we only modified secrets
     assertThat(updated, is(notNullValue()));
-    assertThat(updated.getType() , is(initial.getType()));
+    assertThat(updated.getType(), is(initial.getType()));
     assertThat(updated.getNotes(), is(initial.getNotes()));
     assertThat(updated.isEnabled(), is(initial.isEnabled()));
 
@@ -677,17 +640,18 @@ public class DefaultCapabilityRegistryTest
     assertThat(foo, is("1")); // we re-encrypted the secret
     verify(secretsService, times(2)).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
 
-    //re encrypt again but this time force to not re encrypt anything
+    // re encrypt again but this time force to not re encrypt anything
     underTest.migrateSecrets(reference, (secret) -> false);
 
-    //we didn't update this time, since maps are equal
+    // we didn't update this time, since maps are equal
     verify(capabilityStorage).update(any(CapabilityIdentity.class), csiRec.capture());
-    CapabilityStorageItem nonUpdated = csiRec.getAllValues().get(csiRec.getAllValues().size() -1); // get the last value
+    CapabilityStorageItem nonUpdated = csiRec.getAllValues().get(csiRec.getAllValues().size() - 1); // get the last
+                                                                                                    // value
 
     assertThat(nonUpdated, is(notNullValue()));
 
     foo = updated.getProperties().get("foo");
-    assertThat(foo, is("1")); //  we did not re-encrypt the secret
+    assertThat(foo, is("1")); // we did not re-encrypt the secret
     verify(secretsService, times(2)).encryptMaven("capabilities", "my-secret".toCharArray(), "testuser");
   }
 
@@ -695,8 +659,7 @@ public class DefaultCapabilityRegistryTest
     final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
     when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
     when(descriptor.formFields()).thenReturn(Collections.singletonList(
-        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)
-    ));
+        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
 
     Map<String, String> properties = Maps.newHashMap();
     properties.put("foo", secretValue);

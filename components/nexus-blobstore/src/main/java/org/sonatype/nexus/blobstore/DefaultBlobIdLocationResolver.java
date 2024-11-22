@@ -60,7 +60,8 @@ public class DefaultBlobIdLocationResolver
 
   @Inject
   public DefaultBlobIdLocationResolver(
-      @Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean dateBasedLayoutEnabled) {
+      @Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean dateBasedLayoutEnabled)
+  {
     this.dateBasedLayoutEnabled = dateBasedLayoutEnabled;
     this.volumeChapterLocationStrategy = new VolumeChapterLocationStrategy();
     this.temporaryLocationStrategy = new TemporaryLocationStrategy();

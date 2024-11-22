@@ -83,7 +83,8 @@ public class BlobStoreReconciliationLoggerTest
 
     // mock logger used to actually log blob ids
     mockedStatic.when(() -> LoggerFactory.getLogger("blobstore-reconciliation-log")).thenReturn(logger);
-    mockedStatic.when(() -> LoggerFactory.getLogger(BlobStoreReconciliationLogger.class)).thenReturn(mock(Logger.class));
+    mockedStatic.when(() -> LoggerFactory.getLogger(BlobStoreReconciliationLogger.class))
+        .thenReturn(mock(Logger.class));
 
     underTest = new BlobStoreReconciliationLogger(applicationDirectories);
   }

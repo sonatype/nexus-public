@@ -54,11 +54,12 @@ public class CapabilityStorageImpl
   }
 
   @Override
-  public CapabilityStorageItem newStorageItem(final int version,
-                                              final String type,
-                                              final boolean enabled,
-                                              final String notes,
-                                              final Map<String, String> properties)
+  public CapabilityStorageItem newStorageItem(
+      final int version,
+      final String type,
+      final boolean enabled,
+      final String notes,
+      final Map<String, String> properties)
   {
     CapabilityStorageItem item = new CapabilityStorageItemData();
     item.setVersion(version);
@@ -86,14 +87,15 @@ public class CapabilityStorageImpl
   @Override
   public boolean update(final CapabilityIdentity id, final CapabilityStorageItem item) {
     postCommitEvent(() -> new CapabilityStorageItemUpdatedEventImpl((CapabilityStorageItemData) item));
-    ((HasEntityId)item).setId(entityId(id));
+    ((HasEntityId) item).setId(entityId(id));
     return dao().update((CapabilityStorageItemData) item);
   }
 
   @Transactional
   @Override
   public boolean remove(final CapabilityIdentity id) {
-    getAll().values().stream()
+    getAll().values()
+        .stream()
         .filter(capability -> id.equals(capabilityIdentity(capability)))
         .findFirst()
         .map(CapabilityStorageItemData.class::cast)
@@ -110,16 +112,18 @@ public class CapabilityStorageImpl
   @Transactional
   @Override
   public Map<CapabilityStorageItem, List<CapabilityIdentity>> browseCapabilityDuplicates() {
-    return getAll().entrySet().stream()
+    return getAll().entrySet()
+        .stream()
         .collect(Collectors.groupingBy(Entry::getValue))
-        .entrySet().stream()
+        .entrySet()
+        .stream()
         .filter(f -> f.getValue().size() > 1)
         .collect(Collectors.toMap(
             Entry::getKey,
-            entry -> entry.getValue().stream()
+            entry -> entry.getValue()
+                .stream()
                 .map(Entry::getKey)
-                .collect(Collectors.toList())
-        ));
+                .collect(Collectors.toList())));
   }
 
   @Override
@@ -130,7 +134,7 @@ public class CapabilityStorageImpl
   }
 
   public static CapabilityIdentity capabilityIdentity(final CapabilityStorageItem item) {
-    return new CapabilityIdentity(((HasEntityId)item).getId().getValue());
+    return new CapabilityIdentity(((HasEntityId) item).getId().getValue());
   }
 
   private static EntityId entityId(final CapabilityIdentity id) {

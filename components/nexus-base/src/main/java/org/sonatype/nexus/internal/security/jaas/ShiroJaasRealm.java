@@ -46,9 +46,10 @@ public class ShiroJaasRealm
   private final AppConfigurationEntry[] entries;
 
   @Inject
-  public ShiroJaasRealm(final BundleContext bundleContext,
-                        final SecurityHelper securityHelper,
-                        final SecuritySystem securitySystem)
+  public ShiroJaasRealm(
+      final BundleContext bundleContext,
+      final SecurityHelper securityHelper,
+      final SecuritySystem securitySystem)
   {
     Map<String, Object> options = new HashMap<>();
 
@@ -59,7 +60,7 @@ public class ShiroJaasRealm
     options.put(PROPERTY_MODULE, ShiroLoginModule.class.getName());
     options.put(PROPERTY_BUNDLE, Long.toString(bundleContext.getBundle().getBundleId()));
 
-    entries = new AppConfigurationEntry[] {
+    entries = new AppConfigurationEntry[]{
         new AppConfigurationEntry(ProxyLoginModule.class.getName(), SUFFICIENT, options)
     };
 

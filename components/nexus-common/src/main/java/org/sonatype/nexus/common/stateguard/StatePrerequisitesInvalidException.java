@@ -13,7 +13,7 @@
 package org.sonatype.nexus.common.stateguard;
 
 public class StatePrerequisitesInvalidException
-  extends RuntimeException
+    extends RuntimeException
 {
   public StatePrerequisitesInvalidException(final String message) {
     super(message);

@@ -13,9 +13,9 @@
 package org.sonatype.nexus.blobstore.api;
 
 public class BlobStoreStoppedEvent
-  extends BlobStoreEvent
+    extends BlobStoreEvent
 {
-  public BlobStoreStoppedEvent(BlobStore blobStore){
+  public BlobStoreStoppedEvent(BlobStore blobStore) {
     super(blobStore);
   }
 }

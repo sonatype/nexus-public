@@ -116,8 +116,10 @@ public class CleanupCapabilityDuplicatesServiceTest
     assertCapabilitiesCount(duplicates, 0);
   }
 
-  private void assertCapabilitiesCount(final Map<CapabilityStorageItem, List<CapabilityIdentity>> capabilities,
-                                       final int expectedCount) {
+  private void assertCapabilitiesCount(
+      final Map<CapabilityStorageItem, List<CapabilityIdentity>> capabilities,
+      final int expectedCount)
+  {
     AtomicInteger count = new AtomicInteger();
     capabilities.keySet().forEach(type -> {
       count.addAndGet(capabilities.get(type).size());
@@ -149,37 +151,58 @@ public class CleanupCapabilityDuplicatesServiceTest
 
     createTestCapabilities(5, "test-capability-1", emptyMap());
 
-    createTestCapabilities(5, "test-capability-2", new HashMap<String, String>() {{
-      put("repository", "maven-central");
-    }});
-    createTestCapabilities(1, "test-capability-2", new HashMap<String, String>() {{
-      put("repository", "maven-proxy");
-    }});
+    createTestCapabilities(5, "test-capability-2", new HashMap<String, String>()
+    {
+      {
+        put("repository", "maven-central");
+      }
+    });
+    createTestCapabilities(1, "test-capability-2", new HashMap<String, String>()
+    {
+      {
+        put("repository", "maven-proxy");
+      }
+    });
 
-    createTestCapabilities(5, "test-capability-3", new HashMap<String, String>() {{
-      put("repository", "nuget-proxy");
-    }});
-    createTestCapabilities(5, "test-capability-3", new HashMap<String, String>() {{
-      put("repository", "nuget-group");
-    }});
+    createTestCapabilities(5, "test-capability-3", new HashMap<String, String>()
+    {
+      {
+        put("repository", "nuget-proxy");
+      }
+    });
+    createTestCapabilities(5, "test-capability-3", new HashMap<String, String>()
+    {
+      {
+        put("repository", "nuget-group");
+      }
+    });
 
-    createTestCapabilities(2, "test-capability-4", new HashMap<String, String>() {{
-      put("repository", "nuget-group");
-      put("auth", "false");
-    }});
+    createTestCapabilities(2, "test-capability-4", new HashMap<String, String>()
+    {
+      {
+        put("repository", "nuget-group");
+        put("auth", "false");
+      }
+    });
   }
 
   private void prepareUniqueTestCapabilities() {
     createTestCapabilities(1, "test-capability-1", emptyMap());
-    createTestCapabilities(1, "test-capability-1", new HashMap<String, String>() {{
-      put("repository", "maven-central");
-    }});
+    createTestCapabilities(1, "test-capability-1", new HashMap<String, String>()
+    {
+      {
+        put("repository", "maven-central");
+      }
+    });
 
     createTestCapabilities(1, "test-capability-2", emptyMap());
-    createTestCapabilities(1, "test-capability-2", new HashMap<String, String>() {{
-      put("repository", "maven-central");
-      put("test", "test");
-    }});
+    createTestCapabilities(1, "test-capability-2", new HashMap<String, String>()
+    {
+      {
+        put("repository", "maven-central");
+        put("test", "test");
+      }
+    });
 
     createTestCapabilities(1, "test-capability-3", emptyMap());
   }

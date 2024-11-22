@@ -78,10 +78,11 @@ public class FileBlobStoreDescriptor
   private final FileBlobStorePathValidator pathValidator;
 
   @Inject
-  public FileBlobStoreDescriptor(final BlobStoreQuotaService quotaService,
-                                 final ApplicationDirectories applicationDirectories,
-                                 final BlobStoreUtil blobStoreUtil,
-                                 final FileBlobStorePathValidator pathValidator)
+  public FileBlobStoreDescriptor(
+      final BlobStoreQuotaService quotaService,
+      final ApplicationDirectories applicationDirectories,
+      final BlobStoreUtil blobStoreUtil,
+      final FileBlobStorePathValidator pathValidator)
   {
     super(quotaService);
     this.applicationDirectories = applicationDirectories;

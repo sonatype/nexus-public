@@ -25,7 +25,7 @@ public interface SoftDeletedBlobsStore
   /**
    * Create new record
    *
-   * @param blobId              string representation of {@link BlobId}
+   * @param blobId string representation of {@link BlobId}
    * @param sourceBlobStoreName the blobstore name this record is related to
    */
   void createRecord(BlobId blobId, String sourceBlobStoreName);
@@ -33,7 +33,7 @@ public interface SoftDeletedBlobsStore
   /**
    * Return all records stored in DB, the continuationToken to be used when amount more than single page (>1000 rows)
    *
-   * @param continuationToken   the record id used for pagination
+   * @param continuationToken the record id used for pagination
    * @param sourceBlobStoreName the blobstore name these records are related to
    * @return all records related to provided sourceBlobStoreName
    */
@@ -45,7 +45,7 @@ public interface SoftDeletedBlobsStore
    * Delete single record by provided 'blobId' related to specified blobstore name
    *
    * @param sourceBlobStoreName the blobstore name this record is related to
-   * @param blobId              {@link BlobId} of record that should be deleted
+   * @param blobId {@link BlobId} of record that should be deleted
    */
   void deleteRecord(String sourceBlobStoreName, BlobId blobId);
 

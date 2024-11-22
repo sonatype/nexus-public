@@ -21,5 +21,6 @@ public final class ReconcileTaskConstants
 
   public static final String EXECUTE_RECONCILE_PLAN_TYPE_ID = "blobstore.executeReconciliationPlan";
 
-  private ReconcileTaskConstants() { }
+  private ReconcileTaskConstants() {
+  }
 }

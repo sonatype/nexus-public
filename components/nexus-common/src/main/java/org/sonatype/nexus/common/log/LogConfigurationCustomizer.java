@@ -31,7 +31,7 @@ public interface LogConfigurationCustomizer
      *
      * If logger level is {@link LoggerLevel#DEFAULT} level will be calculated as effective level.
      *
-     * @param name  logger name
+     * @param name logger name
      * @param level logger level
      */
     void setLoggerLevel(String name, LoggerLevel level);

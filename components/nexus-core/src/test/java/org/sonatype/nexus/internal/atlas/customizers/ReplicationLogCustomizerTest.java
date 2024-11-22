@@ -75,7 +75,7 @@ public class ReplicationLogCustomizerTest
 
   @Test
   public void replicationLogInclusion() throws IOException {
-    //valid log files
+    // valid log files
     createLogFile("/log/replication/replication-repo0.log", TIME_2359);
     createLogFile("/log/replication/replication-repo1.log", TIME_2359);
 
@@ -83,7 +83,7 @@ public class ReplicationLogCustomizerTest
     underTest.customize(supportBundle);
 
     List<ContentSource> list = supportBundle.getSources();
-    assertThat(list.size(), equalTo(2)); //only two valid files
+    assertThat(list.size(), equalTo(2)); // only two valid files
 
     // includes valid files
     assertThat(list,
@@ -95,12 +95,11 @@ public class ReplicationLogCustomizerTest
             REPLICATIONLOG)));
   }
 
-
   @Test
   public void replicationLogExclusion() throws IOException {
-    //modified out of expected range
+    // modified out of expected range
     createLogFile("/log/replication/replication-repo2.log", TIME_2401);
-    //gzipped file in range (should not be grabbed , not valid file extension)
+    // gzipped file in range (should not be grabbed , not valid file extension)
     createLogFile("/log/replication/replication-repo-test-beta.gz", TIME_2359);
 
     // Add a sub-folder to implicitly assert that it will not be included in the zip
@@ -110,7 +109,7 @@ public class ReplicationLogCustomizerTest
     underTest.customize(supportBundle);
 
     List<ContentSource> list = supportBundle.getSources();
-    assertThat(list.size(), equalTo(0)); //should be empty , not valid files found
+    assertThat(list.size(), equalTo(0)); // should be empty , not valid files found
   }
 
   private void setupTestDirectories() throws IOException {
@@ -158,9 +157,12 @@ public class ReplicationLogCustomizerTest
 
       @Override
       public void describeTo(final Description description) {
-        description.appendText("ContentSource[").appendValue(path)
-            .appendText(", ").appendValue(priority)
-            .appendText(", ").appendValue(type)
+        description.appendText("ContentSource[")
+            .appendValue(path)
+            .appendText(", ")
+            .appendValue(priority)
+            .appendText(", ")
+            .appendValue(type)
             .appendText("]");
       }
     };

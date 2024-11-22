@@ -96,7 +96,7 @@ public class MockBlobStoreConfiguration
       attributes = Maps.newHashMap();
     }
 
-    Map<String,Object> map = attributes.get(key);
+    Map<String, Object> map = attributes.get(key);
     if (map == null) {
       map = Maps.newHashMap();
       attributes.put(key, map);
@@ -135,9 +135,11 @@ public class MockBlobStoreConfiguration
       catch (JsonProcessingException e) {
         throw new BlobStoreException("failed to marshal blob store configuration attributes to JSON", e, null);
       }
-      Map<String, Map<String,Object>> clonedAttributes;
+      Map<String, Map<String, Object>> clonedAttributes;
       try {
-        clonedAttributes = MAPPER.readValue(attribsJson, new TypeReference<Map<String,Map<String,Object>>>(){});
+        clonedAttributes = MAPPER.readValue(attribsJson, new TypeReference<Map<String, Map<String, Object>>>()
+        {
+        });
       }
       catch (IOException e) {
         throw new BlobStoreException("failed to parse blob store configuration attributes from JSON", e, null);

@@ -41,7 +41,7 @@ public class BlobRefTest
 
   private static final String[] STORES = {"store-@:@:@name", "@", ":", "abc/+xy&%$#", "store-:@:@:@name-for-testing"};
 
-  private static final OffsetDateTime DATE_CREATED = OffsetDateTime.of(2024, 1, 1, 10,  30, 45, 0, ZoneOffset.UTC);
+  private static final OffsetDateTime DATE_CREATED = OffsetDateTime.of(2024, 1, 1, 10, 30, 45, 0, ZoneOffset.UTC);
 
   private static final String DATE_BASED_REF = DATE_CREATED.format(DATE_TIME_FORMATTER);
 
@@ -77,7 +77,7 @@ public class BlobRefTest
 
   @Test
   public void testParseCanonicalWithFuzzyChars() {
-    for (String storeName: STORES) {
+    for (String storeName : STORES) {
       String blobRefString = String.format("%s@%s", storeName, BLOB_ID);
       BlobRef parsed = BlobRef.parse(blobRefString);
       assertParsed(parsed, storeName);
@@ -86,7 +86,7 @@ public class BlobRefTest
 
   @Test
   public void testParseLegacyOrientWithFuzzyChars() {
-    for (String storeName: STORES) {
+    for (String storeName : STORES) {
       String blobRefString = String.format("%s@%s:%s", storeName, NODE_ID, BLOB_ID);
       BlobRef parsed = BlobRef.parse(blobRefString);
       assertParsed(parsed, storeName);
@@ -95,7 +95,7 @@ public class BlobRefTest
 
   @Test
   public void testParseLegacySqlWithFuzzyChars() {
-    for (String storeName: STORES) {
+    for (String storeName : STORES) {
       String blobRefString = String.format("%s:%s@%s", storeName, BLOB_ID, NODE_ID);
       BlobRef parsed = BlobRef.parse(blobRefString);
       assertParsed(parsed, storeName);

@@ -90,10 +90,10 @@ public class DefaultCapabilityReferenceTest
 
     final Conditions conditions = new ConditionsImpl(
         new LogicalConditionsImpl(eventManager),
-        new CapabilityConditionsImpl(eventManager, mock(CapabilityDescriptorRegistry.class), mock(CapabilityRegistry.class)),
+        new CapabilityConditionsImpl(eventManager, mock(CapabilityDescriptorRegistry.class),
+            mock(CapabilityRegistry.class)),
         new NexusConditionsImpl(activeCondition),
-        mock(CryptoConditions.class)
-    );
+        mock(CryptoConditions.class));
 
     activeCondition.start();
 
@@ -107,30 +107,22 @@ public class DefaultCapabilityReferenceTest
         new Answer<ActivationConditionHandler>()
         {
           @Override
-          public ActivationConditionHandler answer(final InvocationOnMock invocation)
-              throws Throwable
-          {
+          public ActivationConditionHandler answer(final InvocationOnMock invocation) throws Throwable {
             return new ActivationConditionHandler(
-                eventManager, conditions, (DefaultCapabilityReference) invocation.getArguments()[0]
-            );
+                eventManager, conditions, (DefaultCapabilityReference) invocation.getArguments()[0]);
           }
-        }
-    );
+        });
 
     when(vchf.create(any(DefaultCapabilityReference.class))).thenAnswer(
         new Answer<ValidityConditionHandler>()
         {
           @Override
-          public ValidityConditionHandler answer(final InvocationOnMock invocation)
-              throws Throwable
-          {
+          public ValidityConditionHandler answer(final InvocationOnMock invocation) throws Throwable {
             return new ValidityConditionHandler(
                 eventManager, capabilityRegistry, conditions,
-                (DefaultCapabilityReference) invocation.getArguments()[0]
-            );
+                (DefaultCapabilityReference) invocation.getArguments()[0]);
           }
-        }
-    );
+        });
 
     underTest = new DefaultCapabilityReference(
         capabilityRegistry,
@@ -140,8 +132,7 @@ public class DefaultCapabilityReferenceTest
         capabilityIdentity("test"),
         capabilityType("TEST"),
         mock(CapabilityDescriptor.class),
-        capability
-    );
+        capability);
 
     underTest.create(Collections.<String, String>emptyMap(), Collections.emptyMap());
   }
@@ -330,8 +321,7 @@ public class DefaultCapabilityReferenceTest
         capabilityIdentity("test"),
         capabilityType("TEST"),
         mock(CapabilityDescriptor.class),
-        capability
-    );
+        capability);
     final HashMap<String, String> properties = new HashMap<String, String>();
     underTest.load(properties, properties);
 
@@ -353,7 +343,7 @@ public class DefaultCapabilityReferenceTest
   /**
    * Calling update does not forwards to capability if properties are same.
    */
-  @SuppressWarnings("java:S2699") //sonar wants an assertion, but we're asserting by throwing an exception
+  @SuppressWarnings("java:S2699") // sonar wants an assertion, but we're asserting by throwing an exception
   @Test
   public void updateIsNotForwardedToCapabilityIfSameProperties() throws Exception {
     final HashMap<String, String> properties = new HashMap<String, String>();

@@ -44,8 +44,9 @@ public class AuthTicketServiceImpl
   private final AuthTicketCache authTicketCache;
 
   @Inject
-  public AuthTicketServiceImpl(final AuthTicketGenerator authTicketGenerator,
-                               final AuthTicketCache authTicketCache)
+  public AuthTicketServiceImpl(
+      final AuthTicketGenerator authTicketGenerator,
+      final AuthTicketCache authTicketCache)
   {
     this.authTicketGenerator = checkNotNull(authTicketGenerator);
     this.authTicketCache = checkNotNull(authTicketCache);

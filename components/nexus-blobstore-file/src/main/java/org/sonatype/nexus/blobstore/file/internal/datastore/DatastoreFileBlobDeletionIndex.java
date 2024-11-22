@@ -88,7 +88,7 @@ public class DatastoreFileBlobDeletionIndex
 
   @Override
   public void stopIndex() throws IOException {
-    //  no special procedure is required
+    // no special procedure is required
   }
 
   @Override
@@ -105,18 +105,19 @@ public class DatastoreFileBlobDeletionIndex
     deletionContinuation = softDeletedBlobsStore.readRecords(token,
         Math.abs(deletedFileCacheLimit), blobStoreName);
 
-    if(!deletionContinuation.isEmpty()) {
+    if (!deletionContinuation.isEmpty()) {
       currentBatchIterator = this.deletionContinuation.stream()
           .map(value -> new BlobId(value.getBlobId(), value.getDatePathRef()))
           .iterator();
-    } else {
+    }
+    else {
       currentBatchIterator = null;
     }
   }
 
   @Override
   public final BlobId getNextAvailableRecord() {
-    if(Objects.isNull(currentBatchIterator) || !currentBatchIterator.hasNext() ) {
+    if (Objects.isNull(currentBatchIterator) || !currentBatchIterator.hasNext()) {
       populateInternalCache();
     }
 
@@ -176,8 +177,7 @@ public class DatastoreFileBlobDeletionIndex
     }
     catch (IOException e) {
       log.error(
-          "Unable to load deletions index file {}, run the compact blobstore task to rebuild", oldDeletionIndexFile, e
-      );
+          "Unable to load deletions index file {}, run the compact blobstore task to rebuild", oldDeletionIndexFile, e);
       oldDeletionIndex = null;
       metadata.setProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "true");
       metadata.store();
@@ -200,9 +200,10 @@ public class DatastoreFileBlobDeletionIndex
           if (!persistedRecords.contains(blobId)) {
             softDeletedBlobsStore.createRecord(blobId, blobStore.getBlobStoreConfiguration().getName());
             persistedRecords.add(blobId);
-          } else {
+          }
+          else {
             log.debug("Old deletion index contain duplicate entry with blobId - {} for blobstore - {}, " +
-                    "duplicate record will be skipped", blobId, blobStoreName);
+                "duplicate record will be skipped", blobId, blobStoreName);
           }
 
           oldDeletionIndex.remove();
@@ -232,4 +233,3 @@ public class DatastoreFileBlobDeletionIndex
     void run() throws Exception;
   }
 }
-

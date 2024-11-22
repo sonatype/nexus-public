@@ -41,4 +41,3 @@ public class HealthCheckMediator
     registry.unregister(entry.getKey().value());
   }
 }
-

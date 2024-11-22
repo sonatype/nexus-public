@@ -141,8 +141,7 @@ public class FileBlobStoreTest
 
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
-      BLOB_NAME_HEADER, "test/randomData.bin"
-  );
+      BLOB_NAME_HEADER, "test/randomData.bin");
 
   private FileBlobStore underTest;
 
@@ -184,7 +183,9 @@ public class FileBlobStoreTest
     underTest.setLiveBlobs(loadingCache);
 
     fullPath = underTest.getAbsoluteBlobDir()
-        .resolve(CONTENT_PREFIX).resolve("vol-03").resolve("chap-44");
+        .resolve(CONTENT_PREFIX)
+        .resolve("vol-03")
+        .resolve("chap-44");
     Files.createDirectories(fullPath);
 
     directFullPath = underTest.getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve("directpath");
@@ -341,7 +342,9 @@ public class FileBlobStoreTest
     underTest.doStart();
 
     Path tmpFilePath = underTest.getAbsoluteBlobDir()
-        .resolve(CONTENT_PREFIX).resolve(TMP).resolve("tmp$0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
+        .resolve(CONTENT_PREFIX)
+        .resolve(TMP)
+        .resolve("tmp$0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
 
     tmpFilePath.toFile().getParentFile().mkdirs();
     write(tmpFilePath, "@BlobStore.created-by=system".getBytes(UTF_8));
@@ -478,7 +481,8 @@ public class FileBlobStoreTest
   @Test
   public void toBlobNamePropertiesSuffix() {
     // /full/path/on/disk/to/content/directpath/some/direct/path/file.properties.properties
-    Path absolute = underTest.getContentDir().resolve(DIRECT_PATH_ROOT).resolve("some/direct/path/file.properties.properties");
+    Path absolute =
+        underTest.getContentDir().resolve(DIRECT_PATH_ROOT).resolve("some/direct/path/file.properties.properties");
     assertThat(underTest.toBlobName(absolute), is("some/direct/path/file.properties"));
   }
 

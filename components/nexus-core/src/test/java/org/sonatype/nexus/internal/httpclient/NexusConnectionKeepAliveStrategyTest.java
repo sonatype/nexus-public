@@ -48,8 +48,9 @@ public class NexusConnectionKeepAliveStrategyTest
   @Before
   public void prepare() {
     subject = new NexusConnectionKeepAliveStrategy(5000l);
-    Mockito.when(httpResponse.headerIterator(Mockito.anyString())).thenReturn(new BasicListHeaderIterator(
-        Collections.<Header>emptyList(), null));
+    Mockito.when(httpResponse.headerIterator(Mockito.anyString()))
+        .thenReturn(new BasicListHeaderIterator(
+            Collections.<Header>emptyList(), null));
   }
 
   @Test
@@ -99,8 +100,9 @@ public class NexusConnectionKeepAliveStrategyTest
     // server wins
     final List<Header> headers = new ArrayList<Header>(1);
     headers.add(new BasicHeader("Keep-Alive", "timeout=3"));
-    Mockito.when(httpResponse.headerIterator(Mockito.anyString())).thenReturn(new BasicListHeaderIterator(
-        headers, null));
+    Mockito.when(httpResponse.headerIterator(Mockito.anyString()))
+        .thenReturn(new BasicListHeaderIterator(
+            headers, null));
     final long keepAlive =
         subject.getKeepAliveDuration(httpResponse, httpContext);
     MatcherAssert.assertThat(keepAlive, Matchers.is(3000l));
@@ -112,8 +114,9 @@ public class NexusConnectionKeepAliveStrategyTest
     // server wins
     final List<Header> headers = new ArrayList<Header>(1);
     headers.add(new BasicHeader("Keep-Alive", "timeout=3, max=100"));
-    Mockito.when(httpResponse.headerIterator(Mockito.anyString())).thenReturn(new BasicListHeaderIterator(
-        headers, null));
+    Mockito.when(httpResponse.headerIterator(Mockito.anyString()))
+        .thenReturn(new BasicListHeaderIterator(
+            headers, null));
     final long keepAlive =
         subject.getKeepAliveDuration(httpResponse, httpContext);
     MatcherAssert.assertThat(keepAlive, Matchers.is(3000l));
@@ -125,8 +128,9 @@ public class NexusConnectionKeepAliveStrategyTest
     // nexus wins (is capped)
     final List<Header> headers = new ArrayList<Header>(1);
     headers.add(new BasicHeader("Keep-Alive", "timeout=8"));
-    Mockito.when(httpResponse.headerIterator(Mockito.anyString())).thenReturn(new BasicListHeaderIterator(
-        headers, null));
+    Mockito.when(httpResponse.headerIterator(Mockito.anyString()))
+        .thenReturn(new BasicListHeaderIterator(
+            headers, null));
     final long keepAlive =
         subject.getKeepAliveDuration(httpResponse, httpContext);
     MatcherAssert.assertThat(keepAlive, Matchers.is(5000l));

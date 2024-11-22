@@ -54,7 +54,8 @@ public class DefaultTaskNotificationMessageGenerator
   public String completed(final TaskInfo taskInfo) {
     URL template = DefaultTaskNotificationMessageGenerator.class.getResource("task-completed.vm");
     TemplateParameters params = new TemplateParameters();
-    String formattedDuration = DateTimeFormatter.ISO_LOCAL_TIME.format(LocalTime.MIDNIGHT.plus(taskInfo.getLastRunState().getRunDuration(), MILLIS));
+    String formattedDuration = DateTimeFormatter.ISO_LOCAL_TIME
+        .format(LocalTime.MIDNIGHT.plus(taskInfo.getLastRunState().getRunDuration(), MILLIS));
     params.set("formattedDuration", formattedDuration);
     params.set("taskInfo", taskInfo);
     return templateHelper.render(template, params);

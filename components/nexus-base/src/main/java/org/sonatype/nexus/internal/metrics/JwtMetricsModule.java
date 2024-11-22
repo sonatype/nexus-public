@@ -39,7 +39,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 @Named
 @FeatureFlag(name = JWT_ENABLED)
 public class JwtMetricsModule
-  extends MetricsModule
+    extends MetricsModule
 {
   private static final Logger log = LoggerFactory.getLogger(JwtMetricsModule.class);
 

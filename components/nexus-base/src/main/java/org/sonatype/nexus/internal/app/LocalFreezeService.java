@@ -81,10 +81,11 @@ public class LocalFreezeService
   private final EventManager eventManager;
 
   @Inject
-  public LocalFreezeService(final ApplicationDirectories directories,
-                            final ClientInfoProvider clientInfoProvider,
-                            final List<Freezable> freezables,
-                            final EventManager eventManager)
+  public LocalFreezeService(
+      final ApplicationDirectories directories,
+      final ClientInfoProvider clientInfoProvider,
+      final List<Freezable> freezables,
+      final EventManager eventManager)
   {
     this.markerFile = new File(directories.getWorkDirectory("db"), MARKER_FILE);
     this.clientInfoProvider = checkNotNull(clientInfoProvider);

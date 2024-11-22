@@ -76,10 +76,11 @@ public abstract class LogbackLoggerOverridesSupport
     parser.parse(logbackFile, new DefaultHandler()
     {
       @Override
-      public void startElement(final String uri,
-                               final String localName,
-                               final String qName,
-                               final Attributes attributes) throws SAXException
+      public void startElement(
+          final String uri,
+          final String localName,
+          final String qName,
+          final Attributes attributes) throws SAXException
       {
         // NOTE: ATM we are ignoring 'property' elements, this is needed for root, but is only needed
         // NOTE: to persist as a property for use in top-level logback.xml file

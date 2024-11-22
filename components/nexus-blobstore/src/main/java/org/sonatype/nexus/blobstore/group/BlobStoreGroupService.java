@@ -19,7 +19,8 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
  *
  * @since 3.15
  */
-public interface BlobStoreGroupService {
+public interface BlobStoreGroupService
+{
   /**
    * Are blob store groups enabled, i.e. can they be created and modified?
    */

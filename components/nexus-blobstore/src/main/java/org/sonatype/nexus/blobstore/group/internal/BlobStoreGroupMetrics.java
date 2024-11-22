@@ -77,7 +77,8 @@ public class BlobStoreGroupMetrics
 
   @Override
   public long getAvailableSpace() {
-    return availableSpaceByFileStore.values().stream()
+    return availableSpaceByFileStore.values()
+        .stream()
         .reduce(Math2::addClamped)
         .orElse(0L);
   }

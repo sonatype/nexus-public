@@ -72,8 +72,7 @@ public class FileBlobStoreConcurrencyIT
 {
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
-      BLOB_NAME_HEADER, "test/randomData.bin"
-  );
+      BLOB_NAME_HEADER, "test/randomData.bin");
 
   public static final int BLOB_MAX_SIZE_BYTES = 5_000_000;
 
@@ -162,54 +161,52 @@ public class FileBlobStoreConcurrencyIT
     });
 
     runner.addTask(numberOfReaders, () -> {
-          final BlobId blobId = blobIdsInTheStore.peek();
+      final BlobId blobId = blobIdsInTheStore.peek();
 
-          log("Attempting to read " + blobId);
+      log("Attempting to read " + blobId);
 
-          if (blobId == null) {
-            return;
-          }
+      if (blobId == null) {
+        return;
+      }
 
-          final Blob blob = underTest.get(blobId);
-          if (blob == null) {
-            log("Attempted to obtain blob, but it was deleted:" + blobId);
-            return;
-          }
+      final Blob blob = underTest.get(blobId);
+      if (blob == null) {
+        log("Attempted to obtain blob, but it was deleted:" + blobId);
+        return;
+      }
 
-          try (InputStream inputStream = blob.getInputStream()) {
-            readContentAndValidateMetrics(blobId, inputStream, blob.getMetrics());
-          }
-          catch (BlobStoreException e) {
-            checkState(deletedIds.contains(e.getBlobId()));
-            // This is normal operation if another thread deletes your blob after you obtain a Blob reference
-            log("Concurrent deletion suspected while calling blob.getInputStream().", e);
-          }
-        }
-    );
+      try (InputStream inputStream = blob.getInputStream()) {
+        readContentAndValidateMetrics(blobId, inputStream, blob.getMetrics());
+      }
+      catch (BlobStoreException e) {
+        checkState(deletedIds.contains(e.getBlobId()));
+        // This is normal operation if another thread deletes your blob after you obtain a Blob reference
+        log("Concurrent deletion suspected while calling blob.getInputStream().", e);
+      }
+    });
 
     runner.addTask(numberOfDeleters, () -> {
-          final BlobId blobId = blobIdsInTheStore.poll();
-          if (blobId == null) {
-            log("deleter: null blob id");
-            return;
-          }
-          log("Deleting {}", blobId);
+      final BlobId blobId = blobIdsInTheStore.poll();
+      if (blobId == null) {
+        log("deleter: null blob id");
+        return;
+      }
+      log("Deleting {}", blobId);
 
-          // There's a race condition here, we need to note that we're attempting to delete this before the deletion
-          // goes through, otherwise we may fail the check, above.
-          deletedIds.add(blobId);
-          underTest.delete(blobId, "Testing concurrency");
-        }
-    );
+      // There's a race condition here, we need to note that we're attempting to delete this before the deletion
+      // goes through, otherwise we may fail the check, above.
+      deletedIds.add(blobId);
+      underTest.delete(blobId, "Testing concurrency");
+    });
 
-    // Shufflers pull blob IDs off the front of the queue and stick them on the back, to make the blobID queue a bit less orderly
+    // Shufflers pull blob IDs off the front of the queue and stick them on the back, to make the blobID queue a bit
+    // less orderly
     runner.addTask(numberOfShufflers, () -> {
       final BlobId blobId = blobIdsInTheStore.poll();
       if (blobId != null) {
         blobIdsInTheStore.add(blobId);
       }
     });
-
 
     runner.addTask(numberOfCompactors, () -> underTest.compact(null));
 
@@ -224,10 +221,10 @@ public class FileBlobStoreConcurrencyIT
    *
    * @throws RuntimeException if there is any deviation
    */
-  private void readContentAndValidateMetrics(final BlobId blobId,
-                                             final InputStream inputStream,
-                                             final BlobMetrics metadataMetrics)
-      throws NoSuchAlgorithmException, IOException
+  private void readContentAndValidateMetrics(
+      final BlobId blobId,
+      final InputStream inputStream,
+      final BlobMetrics metadataMetrics) throws NoSuchAlgorithmException, IOException
   {
     final MetricsInputStream measured = new MetricsInputStream(inputStream);
     ByteStreams.copy(measured, nullOutputStream());
@@ -236,14 +233,16 @@ public class FileBlobStoreConcurrencyIT
     checkEqual("SHA1 hash", metadataMetrics.getSha1Hash(), measured.getMessageDigest(), blobId);
   }
 
-  private void checkEqual(final String propertyName, final Object expected, final Object measured,
-                          final BlobId blobId)
+  private void checkEqual(
+      final String propertyName,
+      final Object expected,
+      final Object measured,
+      final BlobId blobId)
   {
     if (!Objects.equal(measured, expected)) {
       throw new RuntimeException(
           "Blob " + blobId + "'s measured " + propertyName + " differed from its metadata. Expected " + expected +
-              " but was " + measured + "."
-      );
+              " but was " + measured + ".");
     }
   }
 }

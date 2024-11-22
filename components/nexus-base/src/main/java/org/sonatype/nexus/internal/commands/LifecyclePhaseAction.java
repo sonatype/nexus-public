@@ -30,7 +30,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.16
  */
 @Named
-@Command(name = "lifecyclePhase", scope = "nexus", description = "Move the Nexus application lifecycle to the given phase")
+@Command(name = "lifecyclePhase", scope = "nexus",
+    description = "Move the Nexus application lifecycle to the given phase")
 public class LifecyclePhaseAction
     implements Action
 {

@@ -83,7 +83,7 @@ public class NexusUberClassloader
   public Enumeration<URL> getResources(final String name) {
     List<URL> result = Lists.newArrayList();
     for (ClassSpace space : spaces) {
-      for (Enumeration<URL> resources = space.getResources(name); resources.hasMoreElements(); ) {
+      for (Enumeration<URL> resources = space.getResources(name); resources.hasMoreElements();) {
         result.add(resources.nextElement());
       }
     }

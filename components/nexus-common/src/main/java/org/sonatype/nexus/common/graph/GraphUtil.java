@@ -30,12 +30,12 @@ public class GraphUtil
    * Compute the depth that can be found from a node in a directed graph with no cycles by following all edges "down"
    * the graph until you hit a "leaf" node.
    *
-   * @param graph        a directed graph
-   * @param node         a root node to compute the depth for
+   * @param graph a directed graph
+   * @param node a root node to compute the depth for
    * @param initialDepth should be set to 0, recursive calls will use this track the current depth
-   * @param <T>          the type of node contained by the graph
+   * @param <T> the type of node contained by the graph
    * @return the depth reachable from the node (if the node has no child nodes the depth is 1, otherwise it's the
-   * longest path from the node to any child node following the edges of the graph)
+   *         longest path from the node to any child node following the edges of the graph)
    */
   public static <T> int depth(Graph<T> graph, T node, int initialDepth) {
     checkNotNull(graph);
@@ -44,7 +44,8 @@ public class GraphUtil
     checkState(!Graphs.hasCycle(graph), "unable to compute depth for a graph with cycles");
 
     int currentDepth = initialDepth + 1;
-    return graph.successors(node).stream()
+    return graph.successors(node)
+        .stream()
         .map(successor -> depth(graph, successor, currentDepth))
         .max(comparing(Integer::intValue))
         .orElse(currentDepth);

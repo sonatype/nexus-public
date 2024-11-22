@@ -47,7 +47,8 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for {@link SystemInformationGeneratorImpl}
  */
-public class SystemInformationGeneratorImplTest extends TestSupport
+public class SystemInformationGeneratorImplTest
+    extends TestSupport
 {
 
   public static final Map<String, Boolean> UNAVAILABLE = SystemInformationGeneratorImpl.getUNAVAILABLE();
@@ -97,7 +98,6 @@ public class SystemInformationGeneratorImplTest extends TestSupport
   @Test
   public void reportFileStoresHandlesIOExceptionGracefully() throws IOException {
     SystemInformationGeneratorImpl generator = mockSystemInformationGenerator();
-
 
     FileStore fs = Mockito.mock(FileStore.class);
     when(fs.toString()).thenReturn("description");
@@ -153,8 +153,7 @@ public class SystemInformationGeneratorImplTest extends TestSupport
         bundleService,
         nodeAccess,
         deploymentAccess,
-        systemInformationHelpers
-    );
+        systemInformationHelpers);
   }
 
   /**
@@ -195,8 +194,7 @@ public class SystemInformationGeneratorImplTest extends TestSupport
         bundleService,
         nodeAccess,
         deploymentAccess,
-        systemInformationHelpers
-    );
+        systemInformationHelpers);
 
     Map<String, Object> report = generator.report();
 
@@ -213,13 +211,13 @@ public class SystemInformationGeneratorImplTest extends TestSupport
     SystemInformationGeneratorImpl generator = new SystemInformationGeneratorImpl(
         applicationDirectories,
         applicationVersion,
-        Collections.singletonMap("INSTALL4J_ADD_VM_PARAMS", "test.variable=1 -Dnexus.password=nxrm -Dnexus.token=123456"),
+        Collections.singletonMap("INSTALL4J_ADD_VM_PARAMS",
+            "test.variable=1 -Dnexus.password=nxrm -Dnexus.token=123456"),
         bundleContext,
         bundleService,
         nodeAccess,
         deploymentAccess,
-        systemInformationHelpers
-    );
+        systemInformationHelpers);
 
     Map<String, Object> report = generator.report();
 

@@ -56,9 +56,11 @@ public abstract class BlobAttributesSupport<T extends Properties>
 
   protected final T propertiesFile;
 
-  protected BlobAttributesSupport(final T propertiesFile,
-                                  @Nullable final Map<String, String> headers,
-                                  @Nullable final BlobMetrics metrics) {
+  protected BlobAttributesSupport(
+      final T propertiesFile,
+      @Nullable final Map<String, String> headers,
+      @Nullable final BlobMetrics metrics)
+  {
     this.propertiesFile = checkNotNull(propertiesFile);
     this.headers = headers;
     this.metrics = metrics;

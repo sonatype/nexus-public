@@ -124,7 +124,8 @@ public class DatabaseCheckImpl
     }
 
     Flyway flyway = Flyway.configure()
-        .dataSource(dataSource).load();
+        .dataSource(dataSource)
+        .load();
 
     MigrationInfo current = flyway.info().current();
     if (current != null) {

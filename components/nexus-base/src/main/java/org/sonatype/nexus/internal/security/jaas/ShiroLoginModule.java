@@ -65,10 +65,11 @@ public class ShiroLoginModule
   private User user;
 
   @Override
-  public void initialize(final Subject jaasSubject,
-                         final CallbackHandler callbackHandler,
-                         final Map<String, ?> sharedState,
-                         final Map<String, ?> options)
+  public void initialize(
+      final Subject jaasSubject,
+      final CallbackHandler callbackHandler,
+      final Map<String, ?> sharedState,
+      final Map<String, ?> options)
   {
     this.jaasSubject = checkNotNull(jaasSubject);
     this.callbackHandler = checkNotNull(callbackHandler);
@@ -99,9 +100,7 @@ public class ShiroLoginModule
       shiroSubject.login(
           new UsernamePasswordToken(
               ((NameCallback) callbacks[0]).getName(),
-              ((PasswordCallback) callbacks[1]).getPassword()
-          )
-      );
+              ((PasswordCallback) callbacks[1]).getPassword()));
 
       if (!shiroSubject.hasRole(Roles.ANONYMOUS_ROLE_ID)) {
         user = securitySystem.getUser(shiroSubject.getPrincipal().toString());

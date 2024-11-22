@@ -29,8 +29,8 @@ import org.sonatype.nexus.transaction.Transactional;
 @Named
 @Singleton
 public class SecretsStoreImpl
-  extends ConfigStoreSupport<SecretsDAO>
-  implements SecretsStore
+    extends ConfigStoreSupport<SecretsDAO>
+    implements SecretsStore
 {
   @Inject
   public SecretsStoreImpl(final DataSessionSupplier sessionSupplier) {

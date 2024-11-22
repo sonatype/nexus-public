@@ -192,7 +192,7 @@ public class SecurityConfigurationImpl
     return Optional.of(name)
         .map(n -> privilegeDAO().deleteByName(n))
         .filter(Boolean.TRUE::equals)
-        .orElseThrow( () -> new NoSuchPrivilegeException(name));
+        .orElseThrow(() -> new NoSuchPrivilegeException(name));
   }
 
   // ROLES

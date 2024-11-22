@@ -37,25 +37,30 @@ public interface FeatureFlags
 
   /* Database externalization. Available values: true, false. Default value: true */
   String DATASTORE_ENABLED = "nexus.datastore.enabled";
+
   String DATASTORE_ENABLED_NAMED = "${nexus.datastore.enabled:-true}";
 
   /* Database externalization developers only. Available values: true, false. Default value: false */
   String DATASTORE_DEVELOPER = "nexus.datastore.developer";
+
   String DATASTORE_DEVELOPER_NAMED = "${nexus.datastore.developer:-false}";
 
   /* Distributed event service. Available values: true, false. Default value: false */
   String DATASTORE_CLUSTERED_ENABLED = "nexus.datastore.clustered.enabled";
+
   String DATASTORE_CLUSTERED_ENABLED_NAMED = "${nexus.datastore.clustered.enabled:-false}";
 
   /* Zero downtime upgrades while clustered. Available values: true, false. Default value: false */
   String CLUSTERED_ZERO_DOWNTIME_ENABLED = "nexus.zero.downtime.enabled";
+
   String CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED = "${nexus.zero.downtime.enabled:-false}";
+
   String CLUSTERED_ZERO_DOWNTIME_ENABLED_ENV = "NEXUS_ZERO_DOWNTIME_ENABLED";
 
   /* Feature flag to indicate if current db is postgresql */
   String DATASTORE_IS_POSTGRESQL = "datastore.isPostgresql";
 
-  //Enable elastic search
+  // Enable elastic search
   String ELASTIC_SEARCH_ENABLED = "nexus.elasticsearch.enabled";
 
   String ELASTIC_SEARCH_ENABLED_NAMED = "${nexus.elasticsearch.enabled:-false}";
@@ -69,9 +74,10 @@ public interface FeatureFlags
   /* HTTP Replication. Available values: true, false. Default value: true */
   String REPLICATION_HTTP_ENABLED = "nexus.replication.http.enabled";
 
-  /* flag for skipping blob store with soft-quota violation (for Round Robin group policy)
-  *  Available values: true, false. Default value: false
-  */
+  /*
+   * flag for skipping blob store with soft-quota violation (for Round Robin group policy)
+   * Available values: true, false. Default value: false
+   */
   String BLOBSTORE_SKIP_ON_SOFTQUOTA_VIOLATION = "nexus.blobstore.skipOnSoftQuotaViolation";
 
   /*  */
@@ -85,6 +91,7 @@ public interface FeatureFlags
    * - DATASTORE_DEVELOPER;
    */
   String DATASTORE_TABLE_SEARCH = "nexus.datastore.table.search.enabled";
+
   String DATASTORE_TABLE_SEARCH_NAMED = "${nexus.datastore.table.search.enabled:-false}";
 
   /**
@@ -166,6 +173,7 @@ public interface FeatureFlags
 
   /* When false skips the orient not supported error. Available values: true, false. Default value: true */
   String ORIENT_WARNING = "nexus.orient.warning";
+
   String ORIENT_WARNING_NAMED = "${nexus.orient.warning:-true}";
 
   /**
@@ -211,7 +219,7 @@ public interface FeatureFlags
   String RECONCILE_PLAN_ENABLED_NAMED = "${nexus.reconcile.plan.enabled:-false}";
 
   /* properties/env vars used by secrets service */
-  String SECRETS_FILE= "nexus.secrets.file";
+  String SECRETS_FILE = "nexus.secrets.file";
 
   String SECRETS_FILE_ENV = "NEXUS_SECRETS_KEY_FILE";
 

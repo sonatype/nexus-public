@@ -160,13 +160,15 @@ public class KeyAccessValidatorImpl
     Set<String> activeNodeIds = new HashSet<>();
     if (nodeAccess.isClustered()) {
       activeNodeIds = nodeHeartbeatManager
-          .getActiveNodeHeartbeatData().stream()
+          .getActiveNodeHeartbeatData()
+          .stream()
           .map(NodeHeartbeat::nodeInfo)
           .map(nodeInfo -> nodeInfo.get(NODE_ID))
           .filter(Objects::nonNull)
           .map(Object::toString)
           .collect(Collectors.toSet());
-    } else {
+    }
+    else {
       activeNodeIds.add(nodeAccess.getId());
     }
     return activeNodeIds;

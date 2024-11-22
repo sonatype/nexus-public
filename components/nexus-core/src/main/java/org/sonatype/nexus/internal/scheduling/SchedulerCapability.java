@@ -68,7 +68,6 @@ public class SchedulerCapability
   @Override
   protected String renderStatus() throws Exception {
     return render(SchedulerCapabilityDescriptor.TYPE_ID + "-status.vm", new TemplateParameters()
-            .set("detail", scheduler.renderDetailMessage())
-    );
+        .set("detail", scheduler.renderDetailMessage()));
   }
 }

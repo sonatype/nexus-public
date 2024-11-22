@@ -63,8 +63,10 @@ public class RoundRobinFillPolicy
 
   @Override
   @Nullable
-  public BlobStore chooseBlobStore(final BlobStoreGroup blobStoreGroup,
-                                   final Map<String, String> headers) {
+  public BlobStore chooseBlobStore(
+      final BlobStoreGroup blobStoreGroup,
+      final Map<String, String> headers)
+  {
     return nextMember(blobStoreGroup.getMembers());
   }
 
@@ -75,8 +77,7 @@ public class RoundRobinFillPolicy
    * @return the first writable {@link BlobStore} or null if none are writable
    */
   @Nullable
-  private BlobStore nextMember(final List<BlobStore> members)
-  {
+  private BlobStore nextMember(final List<BlobStore> members) {
     if (members.isEmpty()) {
       return null;
     }
@@ -105,7 +106,8 @@ public class RoundRobinFillPolicy
     BlobStoreQuotaResult result = quotaService.checkQuota(blobStore);
     if (result != null && result.isViolation()) {
       if (log.isTraceEnabled()) {
-        log.info("Skipping blobStore {} due to soft-quota violation: {}", result.getBlobStoreName(), result.getMessage());
+        log.info("Skipping blobStore {} due to soft-quota violation: {}", result.getBlobStoreName(),
+            result.getMessage());
       }
       else {
         log.info("Skipping blobStore {} due to soft-quota violation", result.getBlobStoreName());

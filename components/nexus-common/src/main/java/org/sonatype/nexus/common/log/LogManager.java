@@ -27,7 +27,7 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
  * Log manager.
  */
 public interface LogManager
-  extends Lifecycle
+    extends Lifecycle
 {
   String DEFAULT_LOGGER = "logfile";
 

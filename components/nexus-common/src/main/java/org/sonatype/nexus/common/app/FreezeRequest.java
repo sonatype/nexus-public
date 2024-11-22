@@ -41,11 +41,12 @@ public class FreezeRequest
   @Nullable
   private final String frozenByIp;
 
-  public FreezeRequest(@Nullable final String token,
-                       final String reason,
-                       final DateTime frozenAt,
-                       @Nullable final String frozenBy,
-                       @Nullable final String frozenByIp)
+  public FreezeRequest(
+      @Nullable final String token,
+      final String reason,
+      final DateTime frozenAt,
+      @Nullable final String frozenBy,
+      @Nullable final String frozenByIp)
   {
     this.token = token;
     this.reason = checkNotNull(reason);

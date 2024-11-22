@@ -64,13 +64,17 @@ public class ClientInfoProviderImpl
           .build();
     }
     catch (ProvisionException | OutOfScopeException e) {
-      /* This happens when called out of scope of http request.
-       * Create fake ClientInfo with the custom User Id and Remote address. */
-      return userId.get() != null && remoteIp.get() != null ? ClientInfo
-          .builder()
-          .userId(userId.get())
-          .remoteIP(remoteIp.get())
-          .build() : null;
+      /*
+       * This happens when called out of scope of http request.
+       * Create fake ClientInfo with the custom User Id and Remote address.
+       */
+      return userId.get() != null && remoteIp.get() != null
+          ? ClientInfo
+              .builder()
+              .userId(userId.get())
+              .remoteIP(remoteIp.get())
+              .build()
+          : null;
     }
   }
 

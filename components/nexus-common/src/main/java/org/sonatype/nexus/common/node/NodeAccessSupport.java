@@ -49,7 +49,7 @@ public abstract class NodeAccessSupport
         }
       }
     }
-    catch (Exception e) { //NOSONAR
+    catch (Exception e) { // NOSONAR
       log.debug("Failed retrieve hostname from external process", e);
     }
 
@@ -60,7 +60,7 @@ public abstract class NodeAccessSupport
     try {
       hostname = Optional.ofNullable(InetAddress.getLocalHost().getHostName());
     }
-    catch (Exception e) { //NOSONAR
+    catch (Exception e) { // NOSONAR
       log.debug("Failed to retrieve hostname from InetAddress", e);
     }
 

@@ -39,7 +39,8 @@ public class BlobStoreDescriptorProvider
   }
 
   public Map<String, BlobStoreDescriptor> get() {
-    return blobStoreDescriptors.entrySet().stream()
+    return blobStoreDescriptors.entrySet()
+        .stream()
         .filter(item -> databaseCheck.isAllowedByVersion(item.getValue().getClass()))
         .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
   }

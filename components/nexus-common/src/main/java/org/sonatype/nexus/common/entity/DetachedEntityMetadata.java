@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class DetachedEntityMetadata
-  implements EntityMetadata, Serializable
+    implements EntityMetadata, Serializable
 {
   private static final long serialVersionUID = 1L;
 

@@ -15,7 +15,6 @@ package org.sonatype.nexus.common.node;
 import java.io.Serializable;
 import java.util.Objects;
 
-
 /**
  * Node configuration
  *

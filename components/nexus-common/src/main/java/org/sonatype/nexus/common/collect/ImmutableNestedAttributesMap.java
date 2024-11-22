@@ -30,9 +30,10 @@ import static com.google.common.base.Preconditions.checkState;
 public class ImmutableNestedAttributesMap
     extends NestedAttributesMap
 {
-  public ImmutableNestedAttributesMap(@Nullable final NestedAttributesMap parent,
-                                      final String key,
-                                      final Map<String, Object> backing)
+  public ImmutableNestedAttributesMap(
+      @Nullable final NestedAttributesMap parent,
+      final String key,
+      final Map<String, Object> backing)
   {
     super(parent, key, Collections.unmodifiableMap(backing));
   }
@@ -52,7 +53,7 @@ public class ImmutableNestedAttributesMap
     else {
       checkState(child instanceof Map, "child '%s' not a Map", name);
     }
-    //noinspection unchecked,ConstantConditions
+    // noinspection unchecked,ConstantConditions
     return new ImmutableNestedAttributesMap(this, name, (Map<String, Object>) child);
   }
 }

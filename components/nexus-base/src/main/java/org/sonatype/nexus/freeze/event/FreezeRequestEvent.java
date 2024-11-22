@@ -13,7 +13,7 @@
 package org.sonatype.nexus.freeze.event;
 
 public class FreezeRequestEvent
-  extends FreezeEvent
+    extends FreezeEvent
 {
   final String reason;
 

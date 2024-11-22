@@ -37,5 +37,6 @@ public final class BlobAttributesConstants
 
   public static final String LAST_DOWNLOADED_ATTRIBUTE = "lastDownloaded";
 
-  private BlobAttributesConstants() {}
+  private BlobAttributesConstants() {
+  }
 }

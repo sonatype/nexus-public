@@ -64,8 +64,7 @@ public class DatastoreFileBlobStoreMetricsService
           metricsEntity.getBlobCount(),
           metricsEntity.getTotalSize(),
           availableSpace,
-          false
-      );
+          false);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);

@@ -25,7 +25,8 @@ import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
  *
  * @since 3.14
  */
-public class BlobStoreGroupConfigurationHelper {
+public class BlobStoreGroupConfigurationHelper
+{
 
   private BlobStoreGroupConfigurationHelper() {
     // Don't instantiate

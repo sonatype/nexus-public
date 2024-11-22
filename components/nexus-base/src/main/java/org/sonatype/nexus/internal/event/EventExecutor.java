@@ -90,11 +90,12 @@ class EventExecutor
   private volatile boolean asyncProcessing;
 
   @Inject
-  public EventExecutor(@Named("${nexus.event.affinityEnabled:-true}") final boolean affinityEnabled,
-                       @Named("${nexus.event.affinityCacheSize:-1000}") final int affinityCacheSize,
-                       @Named("${nexus.event.affinityTimeout:-1s}") final Time affinityTimeout,
-                       @Named("${nexus.event.singleCoordinator:-false}") final boolean singleCoordinator,
-                       @Named("${nexus.event.fairThreading:-false}") final boolean fairThreading)
+  public EventExecutor(
+      @Named("${nexus.event.affinityEnabled:-true}") final boolean affinityEnabled,
+      @Named("${nexus.event.affinityCacheSize:-1000}") final int affinityCacheSize,
+      @Named("${nexus.event.affinityTimeout:-1s}") final Time affinityTimeout,
+      @Named("${nexus.event.singleCoordinator:-false}") final boolean singleCoordinator,
+      @Named("${nexus.event.fairThreading:-false}") final boolean fairThreading)
   {
     this.affinityEnabled = affinityEnabled;
     this.affinityCacheSize = affinityCacheSize;
@@ -116,8 +117,7 @@ class EventExecutor
         TimeUnit.SECONDS,
         new SynchronousQueue<>(fairThreading), // rendezvous only, zero capacity
         new NexusThreadFactory("event", "event-manager"),
-        CALLER_RUNS_FAILSAFE
-    );
+        CALLER_RUNS_FAILSAFE);
 
     eventProcessor = NexusExecutorService.forCurrentSubject(threadPool);
 
@@ -133,8 +133,7 @@ class EventExecutor
             TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(), // allow queueing up of requests
             new NexusThreadFactory("affinity", "affinity-manager"),
-            CALLER_RUNS_FAILSAFE
-        );
+            CALLER_RUNS_FAILSAFE);
 
         affinityProcessor = NexusExecutorService.forCurrentSubject(affinityThread);
 
@@ -148,8 +147,7 @@ class EventExecutor
 
       affinityBarriers = CacheBuilder.newBuilder()
           .maximumSize(affinityCacheSize)
-          .build(CacheLoader.from(() ->
-              new AffinityBarrier(coordinator.get(), eventProcessor, affinityTimeout)));
+          .build(CacheLoader.from(() -> new AffinityBarrier(coordinator.get(), eventProcessor, affinityTimeout)));
     }
 
     asyncProcessing = true;

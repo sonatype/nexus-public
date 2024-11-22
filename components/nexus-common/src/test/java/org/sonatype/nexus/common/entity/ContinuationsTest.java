@@ -42,7 +42,7 @@ public class ContinuationsTest
     extends TestSupport
 {
   private static final String[] STRINGS =
-      new String[] {"one", "two", "three", "four", "five", "six", "seven", "eight"};
+      new String[]{"one", "two", "three", "four", "five", "six", "seven", "eight"};
 
   private BrowseMock browseMock = spy(new BrowseMock(STRINGS));
 
@@ -225,7 +225,8 @@ public class ContinuationsTest
     streamOf(browseMock::browse, -1);
   }
 
-  private static class BrowseMock {
+  private static class BrowseMock
+  {
     private final boolean isLastTokenNull;
 
     private final LinkedList<String> strings;
@@ -242,14 +243,14 @@ public class ContinuationsTest
     public Continuation<String> browse(final int limit, final String continuationToken) {
       Iterator<String> it = strings.iterator();
       if (continuationToken != null) {
-        while(it.hasNext()) {
+        while (it.hasNext()) {
           if (continuationToken.equals(it.next())) {
             break;
           }
         }
       }
       LinkedList<String> result = new LinkedList<>();
-      for (int i=0; i<limit; i++) {
+      for (int i = 0; i < limit; i++) {
         if (it.hasNext()) {
           result.add(it.next());
         }

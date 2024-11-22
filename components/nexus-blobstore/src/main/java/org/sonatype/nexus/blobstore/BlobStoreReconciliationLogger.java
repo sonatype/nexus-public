@@ -65,6 +65,7 @@ public class BlobStoreReconciliationLogger
 
   /**
    * Add new entry in rolling log later used in reconciliation task.
+   * 
    * @param reconciliationLogPath The path to the blob store's reconciliation log directory
    * @param blobId id of blob created
    */
@@ -85,8 +86,8 @@ public class BlobStoreReconciliationLogger
    * Stream blob ids of blobs created in a blob store since specified date (inclusive).
    *
    * @param reconciliationLogPath The path to the blob store's reconciliation log directory
-   * @param sinceDate             for which retrieve newly created blob ids
-   * @param dateBasedBlobIds      date-based blob ids
+   * @param sinceDate for which retrieve newly created blob ids
+   * @param dateBasedBlobIds date-based blob ids
    * @return stream of BlobId
    */
   public Stream<BlobId> getBlobsCreatedSince(

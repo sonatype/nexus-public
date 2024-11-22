@@ -45,8 +45,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @ManagedObject
 public class AnonymousManagerImpl
-  extends ComponentSupport
-  implements AnonymousManager, EventAware
+    extends ComponentSupport
+    implements AnonymousManager, EventAware
 {
   private final EventManager eventManager;
 
@@ -59,9 +59,10 @@ public class AnonymousManagerImpl
   private AnonymousConfiguration configuration;
 
   @Inject
-  public AnonymousManagerImpl(final EventManager eventManager,
-                              final AnonymousConfigurationStore store,
-                              @Named("initial") final Provider<AnonymousConfiguration> defaults)
+  public AnonymousManagerImpl(
+      final EventManager eventManager,
+      final AnonymousConfigurationStore store,
+      @Named("initial") final Provider<AnonymousConfiguration> defaults)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -128,7 +129,6 @@ public class AnonymousManagerImpl
     return getConfigurationInternal().copy();
   }
 
-
   @Override
   public AnonymousConfiguration newConfiguration() {
     return store.newConfiguration();
@@ -171,10 +171,10 @@ public class AnonymousManagerImpl
     // custom principals to aid with anonymous subject detection
     PrincipalCollection principals = new AnonymousPrincipalCollection(
         model.getUserId(),
-        model.getRealmName()
-    );
+        model.getRealmName());
 
-    // FIXME: buildSubject() calls deeply into various shiro dao/save bits which are probably overhead we don't need here at all
+    // FIXME: buildSubject() calls deeply into various shiro dao/save bits which are probably overhead we don't need
+    // here at all
 
     return new Subject.Builder()
         .principals(principals)
@@ -191,8 +191,9 @@ public class AnonymousManagerImpl
     handleReplication(event, e -> setConfiguration(e.getAnonymousConfiguration()));
   }
 
-  private void handleReplication(final AnonymousConfigurationEvent event,
-                                 final EventConsumer<AnonymousConfigurationEvent> consumer)
+  private void handleReplication(
+      final AnonymousConfigurationEvent event,
+      final EventConsumer<AnonymousConfigurationEvent> consumer)
   {
     if (!event.isLocal()) {
       try {

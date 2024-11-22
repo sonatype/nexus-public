@@ -36,11 +36,14 @@ public class FileDescriptorServiceImpl
 {
   static final long MINIMUM_FILE_DESCRIPTOR_COUNT = 65536;
 
-  static final String WARNING_HEADER = "WARNING: ****************************************************************************";
+  static final String WARNING_HEADER =
+      "WARNING: ****************************************************************************";
 
-  static final String WARNING_VIOLATION = "WARNING: The open file descriptor limit is {} which is below the minimum recommended value of {}.";
+  static final String WARNING_VIOLATION =
+      "WARNING: The open file descriptor limit is {} which is below the minimum recommended value of {}.";
 
-  static final String WARNING_URL = "WARNING: Please see: http://links.sonatype.com/products/nexus/system-reqs#filehandles";
+  static final String WARNING_URL =
+      "WARNING: Please see: http://links.sonatype.com/products/nexus/system-reqs#filehandles";
 
   static final long NOT_SUPPORTED = -1; // e.g. Windows does not have the concept of file descriptors
 
@@ -49,7 +52,8 @@ public class FileDescriptorServiceImpl
   @Inject
   public FileDescriptorServiceImpl(@Nullable final FileDescriptorProvider fileDescriptorProvider) {
     this.fileDescriptorCount = Optional.ofNullable(fileDescriptorProvider)
-        .orElse(new ProcessProbeFileDescriptorProvider()).getFileDescriptorCount();
+        .orElse(new ProcessProbeFileDescriptorProvider())
+        .getFileDescriptorCount();
   }
 
   @Override

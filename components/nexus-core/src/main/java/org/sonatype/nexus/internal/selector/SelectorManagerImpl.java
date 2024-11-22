@@ -115,11 +115,12 @@ public class SelectorManagerImpl
   private Cache<String, User> userCache;
 
   @Inject
-  public SelectorManagerImpl(final SelectorConfigurationStore store,
-                             final SecuritySystem securitySystem,
-                             final SelectorFactory selectorFactory,
-                             final CacheHelper cacheHelper,
-                             @Named("${nexus.shiro.cache.defaultTimeToLive:-2m}") final Time userCacheTimeout)
+  public SelectorManagerImpl(
+      final SelectorConfigurationStore store,
+      final SecuritySystem securitySystem,
+      final SelectorFactory selectorFactory,
+      final CacheHelper cacheHelper,
+      @Named("${nexus.shiro.cache.defaultTimeToLive:-2m}") final Time userCacheTimeout)
   {
     this.store = checkNotNull(store);
     this.securitySystem = checkNotNull(securitySystem);
@@ -214,8 +215,10 @@ public class SelectorManagerImpl
   @Guarded(by = STARTED)
   public void delete(final SelectorConfiguration configuration) {
     if (isInUse(configuration)) {
-      throw new IllegalStateException("Content selector " + configuration.getName() + " is in use and cannot be deleted");
-    } else {
+      throw new IllegalStateException(
+          "Content selector " + configuration.getName() + " is in use and cannot be deleted");
+    }
+    else {
       store.delete(configuration);
     }
   }
@@ -260,8 +263,9 @@ public class SelectorManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public boolean evaluate(final SelectorConfiguration selectorConfiguration, final VariableSource variableSource)
-      throws SelectorEvaluationException
+  public boolean evaluate(
+      final SelectorConfiguration selectorConfiguration,
+      final VariableSource variableSource) throws SelectorEvaluationException
   {
     try {
       return selectorCache.get(selectorConfiguration).evaluate(variableSource);
@@ -273,8 +277,9 @@ public class SelectorManagerImpl
   }
 
   @Override
-  public void toSql(final SelectorConfiguration selectorConfiguration, final SelectorSqlBuilder sqlBuilder)
-      throws SelectorEvaluationException
+  public void toSql(
+      final SelectorConfiguration selectorConfiguration,
+      final SelectorSqlBuilder sqlBuilder) throws SelectorEvaluationException
   {
     try {
       selectorCache.get(selectorConfiguration).toSql(sqlBuilder);
@@ -322,7 +327,8 @@ public class SelectorManagerImpl
       return Collections.emptyList();
     }
 
-    List<String> roleIds = currentUser.getRoles().stream()
+    List<String> roleIds = currentUser.getRoles()
+        .stream()
         .map(RoleIdentifier::getRoleId)
         .collect(toList());
 
@@ -331,7 +337,8 @@ public class SelectorManagerImpl
         .flatMap(Collection::stream)
         .collect(Collectors.toSet());
 
-    List<String> contentSelectorNames = authorizationManager.getPrivileges(privilegeIds).stream()
+    List<String> contentSelectorNames = authorizationManager.getPrivileges(privilegeIds)
+        .stream()
         .filter(repositoryFormatOrNameMatcher(repositoryNames, formats))
         .map(this::getContentSelector)
         .collect(toList());
@@ -363,7 +370,7 @@ public class SelectorManagerImpl
     Subject subject = securitySystem.getSubject();
     User currentUser = null;
 
-    if(subject.isAuthenticated() || AnonymousHelper.isAnonymous(subject)) {
+    if (subject.isAuthenticated() || AnonymousHelper.isAnonymous(subject)) {
       Cache<String, User> cache = getUserCache();
       String userKey = subject.getPrincipal().toString() + subject.getPrincipals().getRealmNames().toString();
       currentUser = cache.get(userKey);
@@ -384,9 +391,10 @@ public class SelectorManagerImpl
     return userCache;
   }
 
-  private boolean matchesFormatOrRepository(final Collection<String> repositoryNames,
-                                            final Collection<String> formats,
-                                            final Privilege privilege)
+  private boolean matchesFormatOrRepository(
+      final Collection<String> repositoryNames,
+      final Collection<String> formats,
+      final Privilege privilege)
   {
     String type = privilege.getType();
     String selector = privilege.getProperties().get(P_REPOSITORY);
@@ -418,7 +426,8 @@ public class SelectorManagerImpl
       cacheSnapshot = rolesCache;
       if (cacheSnapshot.isEmpty()) {
         // Remote roles can't contribute privileges, or have nested roles.
-        rolesCache = roleMap = securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream()
+        rolesCache = roleMap = securitySystem.listRoles(UserManager.DEFAULT_SOURCE)
+            .stream()
             .collect(Collectors.toMap(Role::getRoleId, Function.identity()));
       }
       else {
@@ -427,7 +436,8 @@ public class SelectorManagerImpl
 
       Set<String> results = new HashSet<>();
       roleIds.forEach(roleId -> traverseRoleTree(roleId, roleMap, results));
-      return results.stream().map(roleMap::get)
+      return results.stream()
+          .map(roleMap::get)
           .collect(Collectors.toList());
     }
     catch (NoSuchAuthorizationManagerException e) {
@@ -451,8 +461,9 @@ public class SelectorManagerImpl
     role.getRoles().forEach(childId -> traverseRoleTree(childId, roleMap, results));
   }
 
-  private Predicate<Privilege> repositoryFormatOrNameMatcher(final Collection<String> repositoryNames,
-                                                             final Collection<String> formats)
+  private Predicate<Privilege> repositoryFormatOrNameMatcher(
+      final Collection<String> repositoryNames,
+      final Collection<String> formats)
   {
     return (p) -> matchesFormatOrRepository(repositoryNames, formats, p);
   }
@@ -462,7 +473,8 @@ public class SelectorManagerImpl
   }
 
   private boolean isInUse(final SelectorConfiguration configuration) {
-    return securitySystem.listPrivileges().stream()
+    return securitySystem.listPrivileges()
+        .stream()
         .filter(privilege -> RepositoryContentSelectorPrivilegeDescriptor.TYPE.equals(privilege.getType()))
         .anyMatch(privilege -> privilege.getPrivilegeProperty(P_CONTENT_SELECTOR).equals(configuration.getName()));
   }

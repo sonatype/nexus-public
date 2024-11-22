@@ -120,8 +120,9 @@ public class FileBlobStorePathValidator
     return Paths.get(configuration.attributes(CONFIG_KEY).get(PATH_KEY, String.class));
   }
 
-  private boolean configsViolateUniquePathConstraint(final BlobStoreConfiguration config1,
-                                                     final BlobStoreConfiguration config2)
+  private boolean configsViolateUniquePathConstraint(
+      final BlobStoreConfiguration config1,
+      final BlobStoreConfiguration config2)
   {
     return pathsViolateUniqueConstraint(fromBlobStoreConfiguration(config1), fromBlobStoreConfiguration(config2));
   }

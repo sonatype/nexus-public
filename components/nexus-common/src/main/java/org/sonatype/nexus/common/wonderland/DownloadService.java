@@ -29,7 +29,8 @@ public interface DownloadService
   /**
    * @since 3.13
    */
-  class Download {
+  class Download
+  {
 
     private final long length;
 

@@ -24,6 +24,7 @@ public interface BlobStoreQuotaService
 {
   /**
    * If the config has a quota, ensure that the configuration has all the needed values
+   * 
    * @param config - the configuration to be validated
    * @since 3.15
    */

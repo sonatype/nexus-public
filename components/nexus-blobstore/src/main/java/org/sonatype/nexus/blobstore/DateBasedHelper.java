@@ -30,11 +30,10 @@ public class DateBasedHelper
    * Returns the date path prefix based on the given date range.
    *
    * @param fromDateTime the start date
-   * @param toDateTime   the end date
+   * @param toDateTime the end date
    * @return the date path prefix
    */
-  public static String getDatePathPrefix(final OffsetDateTime fromDateTime, final OffsetDateTime toDateTime)
-  {
+  public static String getDatePathPrefix(final OffsetDateTime fromDateTime, final OffsetDateTime toDateTime) {
     StringBuilder datePathPrefix = new StringBuilder();
     if (fromDateTime.getYear() == toDateTime.getYear()) {
       datePathPrefix.append("yyyy").append("/");
@@ -95,7 +94,8 @@ public class DateBasedHelper
   }
 
   private static boolean isApplicable(
-      final OffsetDateTime startTime, final OffsetDateTime endTime,
+      final OffsetDateTime startTime,
+      final OffsetDateTime endTime,
       final ChronoUnit granularity)
   {
 

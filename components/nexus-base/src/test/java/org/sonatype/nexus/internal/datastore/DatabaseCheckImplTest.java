@@ -74,7 +74,9 @@ public class DatabaseCheckImplTest
     assertFalse(underTest.isAllowedByVersion(withLatestFromAnnotation.getClass()));
   }
 
-  private static class DatabaseCheckImplForTest extends DatabaseCheckImpl {
+  private static class DatabaseCheckImplForTest
+      extends DatabaseCheckImpl
+  {
     public DatabaseCheckImplForTest(
         final DataStoreManager dataStoreManager)
     {
@@ -87,15 +89,23 @@ public class DatabaseCheckImplTest
     }
   }
 
-  private static class WithoutAnnotation {}
+  private static class WithoutAnnotation
+  {
+  }
 
   @AvailabilityVersion(from = "1.0")
-  private static class WithAnnotation {}
+  private static class WithAnnotation
+  {
+  }
 
   @AvailabilityVersion(from = "1.3")
-  private static class WithFromAnnotation {}
+  private static class WithFromAnnotation
+  {
+  }
 
   @AvailabilityVersion(from = "1.6")
-  private static class WithLatestFromAnnotation {}
+  private static class WithLatestFromAnnotation
+  {
+  }
 
 }

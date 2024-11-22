@@ -58,11 +58,11 @@ public class DatastoreFileBlobStoreIT
   public void setupPeriodicJobService() {
     // Setup synchronous running of the soft deleted blob index for the tests
     doAnswer(invocation -> {
-        invocation.getArgument(0, Runnable.class).run();
-        return null;
-      })
-      .when(periodicJobService)
-      .runOnce(any(Runnable.class), anyInt());
+      invocation.getArgument(0, Runnable.class).run();
+      return null;
+    })
+        .when(periodicJobService)
+        .runOnce(any(Runnable.class), anyInt());
   }
 
   @Override

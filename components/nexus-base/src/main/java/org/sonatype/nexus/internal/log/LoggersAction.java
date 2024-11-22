@@ -55,7 +55,10 @@ public class LoggersAction
       table.column("Name");
       table.column("Level").alignRight();
 
-      logManager.getLoggers().keySet().stream().sorted()
+      logManager.getLoggers()
+          .keySet()
+          .stream()
+          .sorted()
           .forEach(key -> table.addRow().addContent(key, logManager.getLoggers().get(key)));
 
       table.print(System.out);

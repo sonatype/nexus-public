@@ -78,8 +78,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   protected BlobStoreConfiguration blobStoreConfiguration;
 
   private static final Pattern UUID_PATTERN = Pattern.compile(
-          ".*vol-\\d{2}[/\\\\]chap-\\d{2}[/\\\\]\\b([0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b).(properties|bytes)$",
-          Pattern.CASE_INSENSITIVE);
+      ".*vol-\\d{2}[/\\\\]chap-\\d{2}[/\\\\]\\b([0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b).(properties|bytes)$",
+      Pattern.CASE_INSENSITIVE);
 
   /**
    * To match "content/2024/01/10/18/13/0c89ccf4-ec5b-44a8-83b2-d08df2599c6e.properties"
@@ -94,8 +94,9 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   private boolean dateBasedLayoutEnabled;
 
-  public BlobStoreSupport(final BlobIdLocationResolver blobIdLocationResolver,
-                          final DryRunPrefix dryRunPrefix)
+  public BlobStoreSupport(
+      final BlobIdLocationResolver blobIdLocationResolver,
+      final DryRunPrefix dryRunPrefix)
   {
     this.blobIdLocationResolver = checkNotNull(blobIdLocationResolver);
     this.dryRunPrefix = checkNotNull(dryRunPrefix);
@@ -108,7 +109,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   @Inject
   public void setDateBasedLayoutEnabled(
-      @Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean dateBasedLayoutEnabled) {
+      @Named(DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED) final boolean dateBasedLayoutEnabled)
+  {
     this.dateBasedLayoutEnabled = dateBasedLayoutEnabled;
   }
 
@@ -179,9 +181,11 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   @Override
   @Guarded(by = STARTED)
-  public boolean undelete(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId,
-                          final BlobAttributes attributes,
-                          final boolean isDryRun)
+  public boolean undelete(
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final BlobId blobId,
+      final BlobAttributes attributes,
+      final boolean isDryRun)
   {
     checkNotNull(attributes);
     String logPrefix = isDryRun ? dryRunPrefix.get() : "";
@@ -316,8 +320,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   private void updateTimer(final String name, final long value) {
     if (metricRegistry != null) {
-      Timer timer = timers.computeIfAbsent(name, key ->
-          metricRegistry.timer(getClass().getName().replaceAll("\\$.*", "") + '.' + name + ".timer"));
+      Timer timer = timers.computeIfAbsent(name,
+          key -> metricRegistry.timer(getClass().getName().replaceAll("\\$.*", "") + '.' + name + ".timer"));
       timer.update(value, TimeUnit.NANOSECONDS);
     }
   }

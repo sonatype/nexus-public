@@ -30,7 +30,12 @@ public class UpgradeCompletedEvent
     // deserialization
   }
 
-  public UpgradeCompletedEvent(@Nullable final String user, final String schemaVersion, final Collection<String> nodeIds, final String... migrations) {
+  public UpgradeCompletedEvent(
+      @Nullable final String user,
+      final String schemaVersion,
+      final Collection<String> nodeIds,
+      final String... migrations)
+  {
     super(user, schemaVersion, migrations);
     this.nodeIds = checkNotNull(nodeIds);
   }

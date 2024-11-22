@@ -32,7 +32,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
-
 /**
  * REST API to reset the stored Node ID. This is intended for use when cloning a system.
  *
@@ -76,7 +75,8 @@ public class NodeIdApiResource
     nodeIdStore.clear();
   }
 
-  public static class NodeInformation {
+  public static class NodeInformation
+  {
     public final String nodeId;
 
     public NodeInformation(final String nodeId) {

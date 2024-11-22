@@ -94,8 +94,11 @@ public class BlobStoreResource
   @GET
   public List<GenericBlobStoreApiResponse> listBlobStores() {
     Map<String, BlobStore> blobstoresByName = blobStoreManager.getByName();
-    return store.list().stream().map(
-            configuration -> new GenericBlobStoreApiResponse(configuration, blobstoresByName.get(configuration.getName())))
+    return store.list()
+        .stream()
+        .map(
+            configuration -> new GenericBlobStoreApiResponse(configuration,
+                blobstoresByName.get(configuration.getName())))
         .collect(toList());
   }
 

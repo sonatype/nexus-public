@@ -35,7 +35,7 @@ public class GraphUtilTest
 
   @Test(expected = IllegalStateException.class)
   public void depthRequiresNoLoops() {
-    MutableGraph<String> directedGraphWithLoops  = GraphBuilder.directed().build();
+    MutableGraph<String> directedGraphWithLoops = GraphBuilder.directed().build();
     directedGraphWithLoops.addNode(ROOT_NODE);
     directedGraphWithLoops.putEdge(ROOT_NODE, TEST_NODE);
     directedGraphWithLoops.putEdge(TEST_NODE, ROOT_NODE);

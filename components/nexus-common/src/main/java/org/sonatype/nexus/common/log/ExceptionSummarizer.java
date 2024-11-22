@@ -56,8 +56,9 @@ public class ExceptionSummarizer
   /**
    * Summarizes exceptions using the matcher to detect repeats; summaries are written to the logger.
    */
-  public static ExceptionSummarizer summarize(final BiPredicate<Exception, Exception> matcher,
-                                              final BiConsumer<String, Exception> logger)
+  public static ExceptionSummarizer summarize(
+      final BiPredicate<Exception, Exception> matcher,
+      final BiConsumer<String, Exception> logger)
   {
     return new ExceptionSummarizer(matcher, logger);
   }
@@ -91,8 +92,9 @@ public class ExceptionSummarizer
   }
 
   @VisibleForTesting
-  ExceptionSummarizer(final BiPredicate<Exception, Exception> matcher,
-                      final BiConsumer<String, Exception> logger)
+  ExceptionSummarizer(
+      final BiPredicate<Exception, Exception> matcher,
+      final BiConsumer<String, Exception> logger)
   {
     this.matcher = checkNotNull(matcher);
     this.logger = checkNotNull(logger);

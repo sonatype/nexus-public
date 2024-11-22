@@ -52,10 +52,10 @@ public interface SecretsDAO
   /**
    * Updates a record by its identifier with a new keyId and secret.
    *
-   * @param id        the identifier of the secret
+   * @param id the identifier of the secret
    * @param oldSecret the current encrypted secret to update, used to ensure the expected secret is being updated
-   * @param keyId     the identifier for the key (not the key itself) which was used to encrypt the secret
-   * @param secret    the previously encrypted secret to store
+   * @param keyId the identifier for the key (not the key itself) which was used to encrypt the secret
+   * @param secret the previously encrypted secret to store
    * @return the id for the updated record
    */
   int update(
