@@ -17,13 +17,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+import org.sonatype.nexus.logging.internal.LogbackContextProvider;
+
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
-import org.slf4j.impl.StaticLoggerBinder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -79,7 +80,7 @@ public class SeparateTaskLogTaskLogger
   }
 
   private String getTaskLogIdentifier() {
-    LoggerContext loggerContext = (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
+    LoggerContext loggerContext = LogbackContextProvider.get();
     Appender<ILoggingEvent> appender = loggerContext.getLogger(ROOT_LOGGER_NAME).getAppender("tasklogfile");
     if (appender instanceof RollingFileAppender) {
       File file = new File(((RollingFileAppender<ILoggingEvent>) appender).getFile());

@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -64,9 +65,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.LoggerFactory;
-import org.slf4j.impl.StaticLoggerBinder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
@@ -207,7 +205,7 @@ public class LogbackLogManager
   }
 
   @VisibleForTesting
-  void logFileNotFound(String fileName) {
+  void logFileNotFound(final String fileName) {
     log.info("Unable to find log file: {}", fileName);
   }
 
@@ -544,13 +542,7 @@ public class LogbackLogManager
    */
   @VisibleForTesting
   static LoggerContext loggerContext() {
-    ILoggerFactory factory = LoggerFactory.getILoggerFactory();
-    if (factory instanceof LoggerContext) {
-      return (LoggerContext) factory;
-    }
-    // Pax-Logging registers a custom implementation of ILoggerFactory which hides logback; as a workaround
-    // we set org.ops4j.pax.logging.StaticLogbackContext=true in system.properties and access it statically
-    return (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
+    return LogbackContextProvider.get();
   }
 
   /**
@@ -558,7 +550,9 @@ public class LogbackLogManager
    */
   private static Collection<Appender<ILoggingEvent>> appenders() {
     List<Appender<ILoggingEvent>> result = new ArrayList<>();
-    for (ch.qos.logback.classic.Logger log : loggerContext().getLoggerList()) {
+    LoggerContext context = loggerContext();
+
+    for (ch.qos.logback.classic.Logger log : context.getLoggerList()) {
       Iterator<Appender<ILoggingEvent>> iter = log.iteratorForAppenders();
       while (iter.hasNext()) {
         result.add(iter.next());
@@ -596,7 +590,8 @@ public class LogbackLogManager
     }
   }
 
-  public final boolean isValidLogFile(java.nio.file.Path path) {
+  @Override
+  public final boolean isValidLogFile(final java.nio.file.Path path) {
     boolean isValid = path.getFileName().toString().toLowerCase().endsWith(".log");
     if (log.isDebugEnabled() && !isValid) {
       log.debug("File {} skipped as not valid log file", path.getFileName().toString());
@@ -604,6 +599,7 @@ public class LogbackLogManager
     return isValid;
   }
 
+  @Override
   public Map<String, LoggerLevel> getEffectiveLoggersUpdatedByFetchedOverrides() {
     Map<String, LoggerLevel> loggersOverrides = overrides.syncWithDBAndGet();
     Map<String, LoggerLevel> loggers = getLoggers();
