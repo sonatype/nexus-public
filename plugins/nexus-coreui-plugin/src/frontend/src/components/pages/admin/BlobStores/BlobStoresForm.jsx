@@ -76,7 +76,8 @@ export default function BlobStoresForm({itemId, onDone}) {
     repositoryUsage,
     type,
     types,
-    bucketRegionMismatch
+    bucketRegionMismatch,
+    bucketEncryptionMismatch
   } = current.context;
   const hasSoftQuota = path(['softQuota', 'enabled'], data);
   const cannotDelete = blobStoreUsage > 0 || repositoryUsage > 0;
@@ -110,7 +111,13 @@ export default function BlobStoresForm({itemId, onDone}) {
   const spaceUsedQuotaName = quotaTypes?.find((it) => it.id === SPACE_USED_QUOTA_ID).name;
 
   function getErrorTitleMessage() {
-    return bucketRegionMismatch ? UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchTitle : undefined;
+    if (bucketRegionMismatch) {
+      return UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchTitle
+    }
+    if (bucketEncryptionMismatch) {
+      return UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketEncryptionMismatchTitle
+    }
+    return undefined;
   }
 
   return <Page className="nxrm-blob-stores">

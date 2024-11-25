@@ -176,7 +176,10 @@ export default {
       ERROR: {
         bucketRegionMismatchException: 'GoogleCloudBucketRegionMismatchException',
         bucketRegionMismatchMessage: 'Region and bucket location do not match.',
-        bucketRegionMismatchTitle: 'Selected region does not match the bucket\'s location.'
+        bucketRegionMismatchTitle: 'Selected region does not match the bucket\'s location.',
+        bucketEncryptionMismatchException: 'GoogleCloudEncryptionKeyMismatchException',
+        bucketEncryptionMismatchMessage: 'Bucket and Encryption do not match.',
+        bucketEncryptionMismatchTitle: 'Selected encryption does not match the bucket\'s encryption.'
       }
     }
   },
