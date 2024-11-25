@@ -392,11 +392,16 @@ public class DatastoreBlobstoreRestoreTestHelper
       connection.setAutoCommit(false);
 
       try (
-          PreparedStatement ps1 = connection.prepareStatement("TRUNCATE TABLE reconcile_plan CASCADE;");
-          PreparedStatement ps2 = connection.prepareStatement("TRUNCATE TABLE reconcile_plan_details CASCADE;");
-          PreparedStatement ps3 = connection.prepareStatement("TRUNCATE TABLE raw_asset CASCADE;");
-          PreparedStatement ps4 = connection.prepareStatement("TRUNCATE TABLE raw_asset_blob CASCADE;");
-          PreparedStatement ps5 = connection.prepareStatement("TRUNCATE TABLE raw_component CASCADE;")) {
+          PreparedStatement ps1 = connection.prepareStatement(
+              "DELETE FROM reconcile_plan_details WHERE id IN (SELECT rpd.id FROM reconcile_plan_details rpd);");
+          PreparedStatement ps2 = connection
+              .prepareStatement("DELETE FROM reconcile_plan WHERE id IN (SELECT rp.id FROM reconcile_plan rp);");
+          PreparedStatement ps3 = connection
+              .prepareStatement("DELETE FROM raw_asset WHERE asset_id IN (SELECT ra.asset_id FROM raw_asset ra);");
+          PreparedStatement ps4 = connection.prepareStatement(
+              "DELETE FROM raw_asset_blob WHERE asset_blob_id IN (SELECT rab.asset_blob_id FROM raw_asset_blob rab);");
+          PreparedStatement ps5 = connection.prepareStatement(
+              "DELETE FROM raw_component WHERE component_id IN (SELECT rc.component_id FROM raw_component rc);")) {
         ps1.executeUpdate();
         ps2.executeUpdate();
         ps3.executeUpdate();
