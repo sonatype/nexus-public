@@ -178,11 +178,7 @@ public class AssetBlobDAOTest
 
       dao.createAssetBlob(assetBlob1);
       dao.createAssetBlob(assetBlob2);
-
-      // blobs created in desired time range
-      Continuation<AssetBlob> assetBlobs = dao.browseAssetBlobsWithinDuration(2, now, now.minusDays(11), null);
-      assertThat(assetBlobs, contains(sameBlob(assetBlob1),sameBlob(assetBlob2)));
-
+      assertThat(dao.countAssetBlobsWithinDuration(now, now.minusDays(11)), is(2));
       // blobs are not in range
       assertThat(dao.browseAssetBlobsWithinDuration(2, now.plusDays(20), now.plusDays(11), null), hasSize(0));
     }
@@ -334,7 +330,7 @@ public class AssetBlobDAOTest
 
   private void prepareLegacyFormatAssetBlobs(final int assetsCount, final int legacyAssetsCount) throws SQLException {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
-         Connection connection = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+        Connection connection = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
       for (int i = 0; i < assetsCount; i++) {
         dao.createAssetBlob(randomAssetBlob());
@@ -346,7 +342,8 @@ public class AssetBlobDAOTest
         BlobRef blobRef = assetBlob.blobRef();
         String id = ((AssetBlobData) assetBlob).assetBlobId.toString();
         String legacyBlobRef = String.format("%s:%s@%s", blobRef.getStore(), blobRef.getBlob(), NODE_ID);
-        String sql = String.format("UPDATE test_asset_blob SET blob_ref='%s' WHERE asset_blob_id=%s", legacyBlobRef, id);
+        String sql =
+            String.format("UPDATE test_asset_blob SET blob_ref='%s' WHERE asset_blob_id=%s", legacyBlobRef, id);
 
         try {
           connection.prepareStatement(sql).executeUpdate();

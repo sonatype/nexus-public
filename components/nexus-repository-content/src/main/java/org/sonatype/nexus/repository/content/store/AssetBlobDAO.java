@@ -24,6 +24,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetReconcileData;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -72,11 +73,13 @@ public interface AssetBlobDAO
    * @return collection of asset blobs and the next continuation token
    * @see Continuation#nextContinuationToken()
    */
-  Continuation<AssetBlob> browseAssetBlobsWithinDuration(
+  Continuation<AssetReconcileData> browseAssetBlobsWithinDuration(
       @Param("limit") int limit,
       @Param("start") OffsetDateTime start,
       @Param("end") OffsetDateTime end,
       @Param("continuationToken") @Nullable String continuationToken);
+
+  int countAssetBlobsWithinDuration(@Param("start") OffsetDateTime start, @Param("end") OffsetDateTime end);
 
   /**
    * Creates the given asset blob in the content data store.

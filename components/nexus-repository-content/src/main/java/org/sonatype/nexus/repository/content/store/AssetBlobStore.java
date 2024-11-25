@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetReconcileData;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -80,7 +81,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   }
 
   /**
-   * Browse asset blobs in the content data store in a paged fashion.
+   * Browse asset blobs in the content data store in a paged fashion by provided date range.
    *
    * @param limit maximum number of asset blobs to return
    * @param continuationToken optional token to continue from a previous request
@@ -89,13 +90,21 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<AssetBlob> browseAssetBlobsWithinDuration(
+  public Continuation<AssetReconcileData> browseAssetBlobsWithinDuration(
       final int limit,
       OffsetDateTime start,
       OffsetDateTime end,
       @Nullable final String continuationToken)
   {
     return dao().browseAssetBlobsWithinDuration(limit, start, end, continuationToken);
+  }
+
+  /**
+   * Return count of asset blobs matched with provided date range
+   */
+  @Transactional
+  public int countAssetBlobsWithinDuration(OffsetDateTime start, OffsetDateTime end) {
+    return dao().countAssetBlobsWithinDuration(start, end);
   }
 
   /**
