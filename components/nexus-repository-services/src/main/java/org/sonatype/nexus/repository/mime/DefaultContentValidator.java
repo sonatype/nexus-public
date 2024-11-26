@@ -76,7 +76,7 @@ public class DefaultContentValidator
       contentDetectedMimeTypes.addAll(mimeSupport.detectMimeTypes(is, contentName));
     }
     adjustIfHtml(contentDetectedMimeTypes);
-    log.debug("Mime support detects {} as {}", contentName, contentDetectedMimeTypes);
+    log.info("Mime support detects {} as {}", contentName, contentDetectedMimeTypes);
 
     if (strictContentTypeValidation && isUnknown(contentDetectedMimeTypes)) {
       throw new InvalidContentException("Content type could not be determined: " + contentName);
@@ -90,12 +90,16 @@ public class DefaultContentValidator
               mimeRulesSource != null ? mimeRulesSource : MimeRulesSource.NOOP)
       );
       adjustIfHtml(nameAssumedMimeTypes);
-      log.debug("Mime support assumes {} as {}", contentName, nameAssumedMimeTypes);
+      log.info("Mime support assumes {} as {} {}", contentName, nameAssumedMimeTypes);
 
       if (!isUnknown(nameAssumedMimeTypes)) {
         Set<String> intersection = Sets.intersection(contentDetectedMimeTypes, nameAssumedMimeTypes);
         log.debug("content/name types intersection {}", intersection);
-        if (strictContentTypeValidation && intersection.isEmpty()) {
+        if ( strictContentTypeValidation && intersection.isEmpty()
+              && !("[application/x-apple-diskimage]".equals(nameAssumedMimeTypes.toString())
+                 && ( "[application/x-bzip]".equals(contentDetectedMimeTypes.toString())
+                     || "[application/zlib]".equals(contentDetectedMimeTypes.toString())) )
+                        ) {
           throw new InvalidContentException(
               String.format("Detected content type %s, but expected %s: %s",
                   contentDetectedMimeTypes, nameAssumedMimeTypes, contentName)
