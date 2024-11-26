@@ -136,15 +136,16 @@ public abstract class QuartzSchedulerSPI
 
   private boolean active;
 
-  @SuppressWarnings("squid:S00107") //suppress constructor parameter count
+  @SuppressWarnings("squid:S00107") // suppress constructor parameter count
   @Inject
-  public QuartzSchedulerSPI(final EventManager eventManager,
-                            final NodeAccess nodeAccess,
-                            final Provider<JobStore> jobStoreProvider,
-                            final Provider<Scheduler> schedulerProvider,
-                            final LastShutdownTimeService lastShutdownTimeService,
-                            final DatabaseStatusDelayedExecutor delayedExecutor,
-                            @Named("${nexus.quartz.recoverInterruptedJobs:-true}") final boolean recoverInterruptedJobs)
+  public QuartzSchedulerSPI(
+      final EventManager eventManager,
+      final NodeAccess nodeAccess,
+      final Provider<JobStore> jobStoreProvider,
+      final Provider<Scheduler> schedulerProvider,
+      final LastShutdownTimeService lastShutdownTimeService,
+      final DatabaseStatusDelayedExecutor delayedExecutor,
+      @Named("${nexus.quartz.recoverInterruptedJobs:-true}") final boolean recoverInterruptedJobs)
   {
     this.eventManager = checkNotNull(eventManager);
     this.nodeAccess = checkNotNull(nodeAccess);
@@ -166,8 +167,13 @@ public abstract class QuartzSchedulerSPI
   }
 
   @VisibleForTesting
-  Scheduler getScheduler() {
+  public Scheduler getScheduler() {
     return scheduler;
+  }
+
+  @VisibleForTesting
+  public void setScheduler(final Scheduler scheduler) {
+    this.scheduler = scheduler;
   }
 
   //
@@ -241,7 +247,7 @@ public abstract class QuartzSchedulerSPI
   }
 
   @VisibleForTesting
-  void recoverJob(final Trigger trigger, final JobDetail jobDetail) {
+  public void recoverJob(final Trigger trigger, final JobDetail jobDetail) {
     if (shouldRecoverJob(trigger, jobDetail)) {
       try {
         Trigger newTrigger = newTrigger()
@@ -270,10 +276,13 @@ public abstract class QuartzSchedulerSPI
    *
    * @param nexusLastRunTime - approximate time at which the last instance of nexus was shutdown
    */
-  protected void updateLastRunStateInfo(final JobDetail jobDetail, final Optional<Date> nexusLastRunTime)
-      throws SchedulerException
+  @VisibleForTesting
+  public void updateLastRunStateInfo(
+      final JobDetail jobDetail,
+      final Optional<Date> nexusLastRunTime) throws SchedulerException
   {
-    Optional<Date> latestFireWrapper = scheduler.getTriggersOfJob(jobDetail.getKey()).stream()
+    Optional<Date> latestFireWrapper = scheduler.getTriggersOfJob(jobDetail.getKey())
+        .stream()
         .filter(Objects::nonNull)
         .map(Trigger::getPreviousFireTime)
         .filter(Objects::nonNull)
@@ -352,9 +361,10 @@ public abstract class QuartzSchedulerSPI
   /**
    * Schedules a manually executable trigger for a job missing a trigger and adds marker for health check reporting
    */
-  private Trigger scheduleJobWithManualTrigger(final JobKey jobKey,
-                                               final JobDetail jobDetail,
-                                               final TriggerKey triggerKey) throws SchedulerException
+  private Trigger scheduleJobWithManualTrigger(
+      final JobKey jobKey,
+      final JobDetail jobDetail,
+      final TriggerKey triggerKey) throws SchedulerException
   {
     log.error("Missing trigger for key: {}", jobKey);
     Trigger trigger = triggerConverter.convert(new Manual())
@@ -384,8 +394,7 @@ public abstract class QuartzSchedulerSPI
     QuartzTaskState taskState = new QuartzTaskState(
         taskConfiguration,
         schedule,
-        trigger.getFireTimeAfter(now)
-    );
+        trigger.getFireTimeAfter(now));
 
     QuartzTaskFuture future = null;
     if (scheduler.getTriggerState(trigger.getKey()) == TriggerState.BLOCKED) {
@@ -396,8 +405,7 @@ public abstract class QuartzSchedulerSPI
           taskConfiguration.getTaskLogName(),
           trigger.getStartTime(), // TODO verify this
           schedule,
-          null
-      );
+          null);
     }
     else if (schedule instanceof Now) {
       future = new QuartzTaskFuture(
@@ -406,16 +414,14 @@ public abstract class QuartzSchedulerSPI
           taskConfiguration.getTaskLogName(),
           now,
           schedule,
-          null
-      );
+          null);
     }
 
     QuartzTaskJobListener listener = new QuartzTaskJobListener(
         listenerName(jobDetail.getKey()),
         eventManager,
         this,
-        new QuartzTaskInfo(eventManager, this, jobDetail.getKey(), taskState, future)
-    );
+        new QuartzTaskInfo(eventManager, this, jobDetail.getKey(), taskState, future));
 
     scheduler.getListenerManager().addJobListener(listener, keyEquals(jobDetail.getKey()));
 
@@ -458,10 +464,8 @@ public abstract class QuartzSchedulerSPI
           new QuartzTaskState(
               taskInfo.getConfiguration().apply(configurationOf(jobDetail)),
               taskInfo.getSchedule(),
-              taskInfo.getCurrentState().getNextRun()
-          ),
-          taskInfo.getTaskFuture()
-      );
+              taskInfo.getCurrentState().getNextRun()),
+          taskInfo.getTaskFuture());
     }
   }
 
@@ -473,10 +477,8 @@ public abstract class QuartzSchedulerSPI
           new QuartzTaskState(
               taskInfo.getConfiguration(),
               triggerConverter.convert(trigger),
-              trigger.getFireTimeAfter(new Date())
-          ),
-          taskInfo.getTaskFuture()
-      );
+              trigger.getFireTimeAfter(new Date())),
+          taskInfo.getTaskFuture());
     }
   }
 
@@ -568,7 +570,8 @@ public abstract class QuartzSchedulerSPI
   public List<TaskInfo> listsTasks() {
     try {
       // returns all tasks which are NOT removed or done
-      return allTasks().values().stream()
+      return allTasks().values()
+          .stream()
           .filter((task) -> !task.isRemovedOrDone())
           .collect(Collectors.toList());
     }
@@ -600,8 +603,9 @@ public abstract class QuartzSchedulerSPI
 
   @Override
   @Guarded(by = STARTED)
-  public TaskInfo scheduleTask(final TaskConfiguration config,
-                               final Schedule schedule)
+  public TaskInfo scheduleTask(
+      final TaskConfiguration config,
+      final Schedule schedule)
   {
     checkState(!EventHelper.isReplicating(), "Replication in progress");
 
@@ -639,8 +643,7 @@ public abstract class QuartzSchedulerSPI
         config.getId(),
         config.getTaskLogName(),
         jobKey.getName(),
-        schedule
-    );
+        schedule);
 
     // register job specific listener with initial state
     QuartzTaskJobListener listener = attachJobListener(jobDetail, trigger);
@@ -670,8 +673,7 @@ public abstract class QuartzSchedulerSPI
         old.getJobKey().getName(),
         old.getConfiguration().getTaskLogName(),
         old.getSchedule(),
-        schedule
-    );
+        schedule);
 
     JobDetail jobDetail = buildJob(config, old.getJobKey());
     Trigger trigger = buildTrigger(schedule, jobDetail);
@@ -686,15 +688,13 @@ public abstract class QuartzSchedulerSPI
       verifyCron(jobData);
     }
 
-      // update TaskInfo, but only if it's WAITING, as running one will pick up the change by job listener when done
+    // update TaskInfo, but only if it's WAITING, as running one will pick up the change by job listener when done
     old.setNexusTaskStateIfWaiting(
         new QuartzTaskState(
             config,
             schedule,
-            trigger.getFireTimeAfter(new Date())
-        ),
-        future
-    );
+            trigger.getFireTimeAfter(new Date())),
+        future);
 
     if (!config.isEnabled()) {
       scheduler.pauseJob(old.getJobKey());
@@ -822,7 +822,8 @@ public abstract class QuartzSchedulerSPI
   @VisibleForTesting
   protected QuartzTaskInfo findTaskById(final String id) throws SchedulerException {
     try (TcclBlock tccl = TcclBlock.begin(this)) {
-      return allTasks().values().stream()
+      return allTasks().values()
+          .stream()
           .filter((task) -> task.getId().equals(id))
           .findFirst()
           .orElse(null);
@@ -849,11 +850,11 @@ public abstract class QuartzSchedulerSPI
    * Used by {@link QuartzTaskInfo#runNow()}.
    */
   @Guarded(by = STARTED)
-  public void runNow(final String triggerSource,
-                     final JobKey jobKey,
-                     final QuartzTaskInfo taskInfo,
-                     final QuartzTaskState taskState)
-      throws TaskRemovedException, SchedulerException
+  public void runNow(
+      final String triggerSource,
+      final JobKey jobKey,
+      final QuartzTaskInfo taskInfo,
+      final QuartzTaskState taskState) throws TaskRemovedException, SchedulerException
   {
     checkState(active, "Cannot run tasks while scheduler is paused");
 
@@ -870,9 +871,7 @@ public abstract class QuartzSchedulerSPI
               config.getTaskLogName(),
               new Date(),
               scheduleFactory().now(),
-              triggerSource
-          )
-      );
+              triggerSource));
     }
 
     try (TcclBlock tccl = TcclBlock.begin(this)) {
@@ -943,7 +942,8 @@ public abstract class QuartzSchedulerSPI
     TaskInfo taskInfo = getTaskByTypeId(typeId, config);
     if (taskInfo == null) {
       return false;
-    } else {
+    }
+    else {
       return taskInfo.getCurrentState().getState().isWaiting() || taskInfo.getCurrentState().getState().isRunning();
     }
   }
@@ -972,13 +972,13 @@ public abstract class QuartzSchedulerSPI
   private Predicate<TaskInfo> matchConfig(final Map<String, String> config) {
     return t -> {
       TaskConfiguration tc = t.getConfiguration();
-      return config.entrySet().stream()
+      return config.entrySet()
+          .stream()
           .filter(e -> e.getKey() != null)
           .filter(e -> e.getValue() != null)
           .allMatch(e -> e.getValue().equals(tc.getString(e.getKey())));
     };
   }
-
 
   /**
    * See {@link QuartzTaskInfo#runNow(String)}
