@@ -16,18 +16,18 @@ import java.io.File;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Handler;
-
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.bootstrap.internal.LogbackContextProvider;
 import org.sonatype.nexus.bootstrap.internal.ShutdownHelper;
 import org.sonatype.nexus.bootstrap.internal.TemporaryDirectory;
 import org.sonatype.nexus.bootstrap.jetty.JettyServer;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.impl.StaticLoggerBinder;
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
 
 /**
@@ -185,7 +185,7 @@ public class Launcher
    */
   private void configureInitialLoggingOverrides(final Map<String, String> props) {
     LoggerContext loggerContext = loggerContext();
-    if (props != null && loggerContext != null) {
+    if (props != null) {
       props.entrySet()
           .stream()
           .map(Property::new)
@@ -201,7 +201,11 @@ public class Launcher
     loggerContext.getLogger(logger).setLevel(Level.valueOf(level));
   }
 
-  private static LoggerContext loggerContext() {
-    return LogbackContextProvider.get();
+  private LoggerContext loggerContext() {
+    ILoggerFactory factory = LoggerFactory.getILoggerFactory();
+    if (factory instanceof LoggerContext) {
+      return (LoggerContext) factory;
+    }
+    return (LoggerContext) StaticLoggerBinder.getSingleton().getLoggerFactory();
   }
 }
