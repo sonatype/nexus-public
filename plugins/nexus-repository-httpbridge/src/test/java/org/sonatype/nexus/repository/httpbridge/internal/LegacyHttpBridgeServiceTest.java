@@ -65,6 +65,7 @@ public class LegacyHttpBridgeServiceTest
     when(locator.locate(any())).thenReturn(null);
 
     underTest = new LegacyHttpBridgeService(locator, legacyUrlEnabledHelper);
+    underTest.doStart();
 
     when(capabilityEvent.getReference()).thenReturn(capabilityReference);
     when(capabilityReference.context()).thenReturn(capabilityContext);
@@ -82,6 +83,7 @@ public class LegacyHttpBridgeServiceTest
     when(legacyUrlEnabledHelper.isEnabled()).thenReturn(false);
 
     underTest = new LegacyHttpBridgeService(locator, legacyUrlEnabledHelper);
+    underTest.doStart();
 
     verify(locator, never()).add(any());
   }
