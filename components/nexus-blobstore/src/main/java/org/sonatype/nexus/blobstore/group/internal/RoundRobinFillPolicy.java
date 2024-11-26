@@ -47,7 +47,8 @@ public class RoundRobinFillPolicy
 
   protected static final String NAME = "Round Robin";
 
-  private AtomicInteger sequence = new AtomicInteger();
+  @VisibleForTesting
+  AtomicInteger sequence = new AtomicInteger();
 
   @Inject
   private BlobStoreQuotaService quotaService;

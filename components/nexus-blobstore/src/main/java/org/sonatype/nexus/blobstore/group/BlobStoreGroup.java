@@ -112,7 +112,8 @@ public class BlobStoreGroup
 
   private Supplier<List<BlobStore>> members;
 
-  private FillPolicy fillPolicy;
+  @VisibleForTesting
+  FillPolicy fillPolicy;
 
   private BlobStoreConfiguration blobStoreConfiguration;
 
