@@ -582,7 +582,6 @@
         <version>3.76.0-SNAPSHOT</version>
         <type>zip</type>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
 

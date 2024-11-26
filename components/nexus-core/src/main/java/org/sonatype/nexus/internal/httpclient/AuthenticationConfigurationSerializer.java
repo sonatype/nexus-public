@@ -16,6 +16,7 @@ import java.io.IOException;
 
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
+import org.sonatype.nexus.httpclient.config.GoogleAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 
@@ -66,6 +67,9 @@ public class AuthenticationConfigurationSerializer
     else if (value instanceof BearerTokenAuthenticationConfiguration) {
       jgen.writeStringField(typeSer.getPropertyName(), BearerTokenAuthenticationConfiguration.TYPE);
     }
+    else if (value instanceof GoogleAuthenticationConfiguration) {
+      jgen.writeStringField(typeSer.getPropertyName(), GoogleAuthenticationConfiguration.TYPE);
+    }
     else {
       // be foolproof, if new type added but this class is not updated
       throw new JsonGenerationException("Unsupported type:" + value.getClass().getName(), jgen);
@@ -96,6 +100,10 @@ public class AuthenticationConfigurationSerializer
     else if (value instanceof BearerTokenAuthenticationConfiguration) {
       BearerTokenAuthenticationConfiguration btac = (BearerTokenAuthenticationConfiguration) value;
       jgen.writeStringField(BearerTokenAuthenticationConfiguration.TYPE, btac.getBearerToken());
+    }
+    else if (value instanceof GoogleAuthenticationConfiguration) {
+      GoogleAuthenticationConfiguration gac = (GoogleAuthenticationConfiguration)value;
+      // nothing to write really.
     }
     else {
       // be foolproof, if new type added but this class is not updated

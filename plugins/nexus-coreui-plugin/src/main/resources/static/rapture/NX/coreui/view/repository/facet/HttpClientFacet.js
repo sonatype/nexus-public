@@ -167,7 +167,8 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
   getAuthTypeStore: function() {
     return [
       ['username', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_Username')],
-      ['ntlm', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_NTLM')]
+      ['ntlm', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_NTLM')],
+      ['google', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_Google')]
     ];
   }
 

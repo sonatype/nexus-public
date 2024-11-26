@@ -16,6 +16,7 @@ import java.io.IOException;
 
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
+import org.sonatype.nexus.httpclient.config.GoogleAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 
@@ -79,6 +80,10 @@ public class AuthenticationConfigurationDeserializer
     else if (BearerTokenAuthenticationConfiguration.class.equals(type)) {
       BearerTokenAuthenticationConfiguration btac = (BearerTokenAuthenticationConfiguration) configuration;
       btac.setBearerToken(btac.getBearerToken());
+    }
+    else if (GoogleAuthenticationConfiguration.class.equals(type)) {
+      GoogleAuthenticationConfiguration gac = (GoogleAuthenticationConfiguration)configuration;
+      // nothing to set really.
     }
     return configuration;
   }
