@@ -214,13 +214,9 @@ public interface FeatureFlags
 
   String CONAN_V2_ENABLED_NAMED = "${nexus.conan.v2.enabled:-false}";
 
-  String RESTORE_METADATA_ENABLED = "nexus.restore.metadata.enabled";
-
-  String RESTORE_METADATA_ENABLED_NAMED = "${nexus.restore.metadata.enabled:-false}";
-
   String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
 
-  String RECONCILE_PLAN_ENABLED_NAMED = "${nexus.reconcile.plan.enabled:-true}";
+  String RECONCILE_PLAN_ENABLED_NAMED = "${nexus.reconcile.plan.enabled:-false}";
 
   /* properties/env vars used by secrets service */
   String SECRETS_FILE = "nexus.secrets.file";
