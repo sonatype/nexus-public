@@ -147,8 +147,7 @@ export default {
           + 'lower-case characters, numbers, periods, dashes, and underscores. Spaces are not permitted).'
       },
       REGION: {
-        label: 'Region',
-        sublabel: 'Region must correspond to bucket\'s location.'
+        label: 'Region'
       },
       PREFIX: {
         label: 'Prefix',

@@ -32,8 +32,7 @@ export default {
     const validationErrors = {
       bucketConfiguration: {
         bucket: {
-          name: ValidationUtils.validateNotBlank(data.bucketConfiguration?.bucket?.name),
-          region: ValidationUtils.validateNotBlank(data.bucketConfiguration?.bucket?.region)
+          name: ValidationUtils.validateNotBlank(data.bucketConfiguration?.bucket?.name)
         }
       }
     };
