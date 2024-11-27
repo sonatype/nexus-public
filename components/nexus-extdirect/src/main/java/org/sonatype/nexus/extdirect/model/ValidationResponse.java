@@ -42,7 +42,7 @@ public class ValidationResponse
 
   public ValidationResponse(final ConstraintViolationException cause) {
     super(false, new ArrayList<>());
-    //noinspection ThrowableResultOfMethodCallIgnored
+    // noinspection ThrowableResultOfMethodCallIgnored
     checkNotNull(cause);
     Set<ConstraintViolation<?>> violations = cause.getConstraintViolations();
     if (violations != null && !violations.isEmpty()) {
@@ -79,4 +79,7 @@ public class ValidationResponse
     }
   }
 
+  public List<String> getMessages() {
+    return messages;
+  }
 }
