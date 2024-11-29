@@ -227,6 +227,8 @@ public interface FeatureFlags
 
   String DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED = "${nexus.blobstore.datebased.layout.enabled:-false}";
 
+  String RECONCILE_CLEANUP_DAYS_AGO = "${nexus.reconcile.cleanup.daysAgo:-7}";
+
   String SECRETS_API_ENABLED = "nexus.secrets.api.enabled";
 
   /* Feature flag to enable/disable s3 logging */
