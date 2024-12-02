@@ -10,31 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.text
+package org.sonatype.nexus.common.thread;
 
-import org.sonatype.goodies.testsupport.TestSupport
+import java.security.SecureClassLoader;
 
-import org.junit.Test
+import org.sonatype.goodies.testsupport.TestSupport;
+
+import org.junit.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
- * Tests for {@link Plural}
+ * Tests for {@link TcclBlock}.
  */
-class PluralTest
-  extends TestSupport
+public class TcclBlockTest
+    extends TestSupport
 {
   @Test
-  void 'simple plural'() {
-    assert Plural.of(-1, 'dog') == '-1 dogs'
-    assert Plural.of(0, 'dog') == '0 dogs'
-    assert Plural.of(1, 'dog') == '1 dog'
-    assert Plural.of(2, 'dog') == '2 dogs'
-  }
+  public void testBeginAndRestoreClassLoader() {
+    Thread thread = Thread.currentThread();
+    ClassLoader original = thread.getContextClassLoader();
+    ClassLoader classLoader = new SecureClassLoader(getClass().getClassLoader())
+    {
+    };
 
-  @Test
-  void 'complex plural'() {
-    assert Plural.of(-1, 'candy', 'candies') == '-1 candies'
-    assert Plural.of(0, 'candy', 'candies') == '0 candies'
-    assert Plural.of(1, 'candy', 'candies') == '1 candy'
-    assert Plural.of(2, 'candy', 'candies') == '2 candies'
+    try (TcclBlock tccl = TcclBlock.begin(classLoader)) {
+      assertThat(thread.getContextClassLoader(), is(classLoader));
+    }
+    assertThat(thread.getContextClassLoader(), is(original));
   }
 }

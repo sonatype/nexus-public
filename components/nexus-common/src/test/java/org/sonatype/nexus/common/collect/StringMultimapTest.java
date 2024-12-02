@@ -10,41 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.collect
+package org.sonatype.nexus.common.collect;
 
-import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.goodies.testsupport.TestSupport;
 
-import org.junit.Before
-import org.junit.Test
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Tests for {@link StringMultimap}.
  */
-class StringMultimapTest
-  extends TestSupport
+public class StringMultimapTest
+    extends TestSupport
 {
-  private StringMultimap underTest
+  private StringMultimap underTest;
 
   @Before
-  void setUp() {
-    underTest = new StringMultimap()
+  public void setUp() {
+    underTest = new StringMultimap();
   }
 
   @Test
-  void 'size validation'() {
-    log underTest
-    assert underTest.size() == 0
+  public void testSizeValidation() {
+    assertThat(underTest.size(), is(0));
 
-    underTest.set('foo', 'bar')
-    log underTest
-    assert underTest.size() == 1
+    underTest.set("foo", "bar");
+    assertThat(underTest.size(), is(1));
 
-    underTest.set('foo', 'baz')
-    log underTest
-    assert underTest.size() == 1
+    underTest.set("foo", "baz");
+    assertThat(underTest.size(), is(1));
 
-    underTest.set('ick', 'poo')
-    log underTest
-    assert underTest.size() == 2
+    underTest.set("ick", "poo");
+    assertThat(underTest.size(), is(2));
   }
 }

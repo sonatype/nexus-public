@@ -10,33 +10,34 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.thread
+package org.sonatype.nexus.common.text;
 
-import java.security.SecureClassLoader
+import org.sonatype.goodies.testsupport.TestSupport;
 
-import org.sonatype.goodies.testsupport.TestSupport
+import org.junit.Test;
 
-import org.junit.Test
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
- * Tests for {@link TcclBlock}.
+ * Tests for {@link Plural}
  */
-class TcclBlockTest
+public class PluralTest
     extends TestSupport
 {
   @Test
-  void 'begin and restore class-loader'() {
-    Thread thread = Thread.currentThread()
-    ClassLoader original = thread.contextClassLoader
-    ClassLoader classLoader = new SecureClassLoader(getClass().classLoader) {}
+  public void testSimplePlural() {
+    assertThat(Plural.of(-1, "dog"), is("-1 dogs"));
+    assertThat(Plural.of(0, "dog"), is("0 dogs"));
+    assertThat(Plural.of(1, "dog"), is("1 dog"));
+    assertThat(Plural.of(2, "dog"), is("2 dogs"));
+  }
 
-    def tccl = TcclBlock.begin(classLoader)
-    try {
-      assert thread.contextClassLoader.is(classLoader)
-    }
-    finally {
-      tccl.close()
-    }
-    assert thread.contextClassLoader.is(original)
+  @Test
+  public void testComplexPlural() {
+    assertThat(Plural.of(-1, "candy", "candies"), is("-1 candies"));
+    assertThat(Plural.of(0, "candy", "candies"), is("0 candies"));
+    assertThat(Plural.of(1, "candy", "candies"), is("1 candy"));
+    assertThat(Plural.of(2, "candy", "candies"), is("2 candies"));
   }
 }
