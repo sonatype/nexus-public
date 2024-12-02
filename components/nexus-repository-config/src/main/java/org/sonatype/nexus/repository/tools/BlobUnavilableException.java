@@ -10,18 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.tools
+package org.sonatype.nexus.repository.tools;
 
-/** 
- * Possible error states that can be detected by {@link DeadBlobFinder}.
+/**
+ * Thrown when Blob InputStream reports no available bytes.
+ * 
  * @since 3.3
  */
-enum ResultState {
-  ASSET_DELETED, // DB record was deleted during inspection
-  DELETED, // DB record references blobRef which has since been deleted
-  MISSING_BLOB_REF, // DB record has no blobRef
-  SHA1_DISAGREEMENT, // DB record and blob have different SHA1
-  UNAVAILABLE_BLOB, // blob has an inputstream that reports 0 when calling isAvailable()
-  UNKNOWN,
-  UNREADABLE_BLOB, // Unable to read blob from disk
+public class BlobUnavilableException
+    extends Exception
+{
+  public BlobUnavilableException() {
+    super("Blob InputStream reports unavailable");
+  }
 }

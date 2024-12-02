@@ -10,34 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config
-
-import org.sonatype.nexus.repository.manager.RepositoryManager
-
-import spock.lang.Specification
+package org.sonatype.nexus.repository.tools;
 
 /**
- * Tests validity of Repository names validated by {@link UniqueRepositoryNameValidator}
- * @since 3.0
+ * Exception thrown when Asset record metadata has a different SHA1 than the blob suggests.
+ * 
+ * @since 3.3
  */
-class UniqueRepositoryNameValidatorTest
-    extends Specification
+public class MismatchedSHA1Exception
+    extends Exception
 {
-  RepositoryManager repositoryManager = Mock()
-
-  UniqueRepositoryNameValidator validator = new UniqueRepositoryNameValidator(repositoryManager)
-
-  def "Name is valid when the RepositoryManager says it does not exist"(String name, boolean exists) {
-    when:
-      def valid = validator.isValid(name, null)
-
-    then:
-      1 * repositoryManager.exists(name) >> exists
-      valid == !exists
-
-    where:
-      name  | exists
-      'foo' | true
-      'foo' | false
+  public MismatchedSHA1Exception() {
+    super("SHA1 values disagree between the DB and the BlobStore");
   }
 }
