@@ -14,9 +14,9 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -43,7 +43,6 @@ public interface AssetBlobDAO
    * @param limit maximum number of asset blobs to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of asset blobs and the next continuation token
-   *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<AssetBlob> browseUnusedAssetBlobs(
@@ -135,7 +134,7 @@ public interface AssetBlobDAO
 
   /**
    * Sets the content type on the asset
-   * 
+   *
    * @param blobRef
    * @param contentType
    */
@@ -208,4 +207,6 @@ public interface AssetBlobDAO
    * @return the path
    */
   String getPathByBlobRef(@Param("blobRef") BlobRef blobRef);
+
+  List<AssetReconcileData> browseAssetBlobsByBlobRefs(@Param("blobRefs") List<BlobRef> blobRefs);
 }

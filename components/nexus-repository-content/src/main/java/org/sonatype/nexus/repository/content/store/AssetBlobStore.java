@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -273,5 +274,10 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Transactional
   public String getPathByBlobRef(final BlobRef blobRef) {
     return dao().getPathByBlobRef(blobRef);
+  }
+
+  @Transactional
+  public List<AssetReconcileData> browseAssetBlobsByBlobRefs(final List<BlobRef> blobRefs) {
+    return dao().browseAssetBlobsByBlobRefs(blobRefs);
   }
 }
