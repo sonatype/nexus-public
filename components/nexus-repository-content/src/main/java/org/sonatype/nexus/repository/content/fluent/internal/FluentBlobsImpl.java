@@ -32,6 +32,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
+import org.sonatype.nexus.common.hash.MultiHashingInputStreamFactory;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.repository.view.Content;
@@ -84,19 +85,22 @@ public class FluentBlobsImpl
   }
 
   @Override
-  public TempBlob ingest(final InputStream in,
-                         @Nullable final String contentType,
-                         final Iterable<HashAlgorithm> hashing) {
+  public TempBlob ingest(
+      final InputStream in,
+      @Nullable final String contentType,
+      final Iterable<HashAlgorithm> hashing)
+  {
     return ingest(in, contentType, ImmutableMap.of(), hashing);
   }
 
   @Override
-  public TempBlob ingest(final InputStream in,
-                         @Nullable final String contentType,
-                         final Map<String, String> headers,
-                         final Iterable<HashAlgorithm> hashing)
+  public TempBlob ingest(
+      final InputStream in,
+      @Nullable final String contentType,
+      final Map<String, String> headers,
+      final Iterable<HashAlgorithm> hashing)
   {
-    MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in);
+    MultiHashingInputStream hashingStream = MultiHashingInputStreamFactory.input(hashing, in);
     Blob blob = blobStore.get().create(hashingStream, tempHeaders(headers, contentType));
 
     return new TempBlob(blob, hashingStream.hashes(), true, blobStore.get());
@@ -180,10 +184,8 @@ public class FluentBlobsImpl
     }
   }
 
-
   @Override
-  public TempBlob ingest(final Blob srcBlob, final BlobStore srcStore, final Map<HashAlgorithm, HashCode> hashes)
-  {
+  public TempBlob ingest(final Blob srcBlob, final BlobStore srcStore, final Map<HashAlgorithm, HashCode> hashes) {
     BlobStore destination = blobStore.get();
 
     String contentType = srcBlob.getHeaders().get(CONTENT_TYPE_HEADER);
@@ -205,6 +207,7 @@ public class FluentBlobsImpl
    * We often use Content-Type and MIME type interchangeably throughout NXRM.
    * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
    * This method transforms the content type into the mime type that we expect
+   * 
    * @param contentType
    * @return just the mime type, which is what we mean when we say content type
    */
@@ -216,7 +219,8 @@ public class FluentBlobsImpl
     int semicolonIndex = contentType.indexOf(';');
     if (semicolonIndex == -1) {
       return contentType;
-    } else {
+    }
+    else {
       return contentType.substring(0, semicolonIndex);
     }
   }

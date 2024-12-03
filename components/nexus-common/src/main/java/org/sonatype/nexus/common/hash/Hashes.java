@@ -60,7 +60,7 @@ public final class Hashes
     checkNotNull(algorithms);
     checkNotNull(inputStream);
 
-    try (MultiHashingInputStream hashingStream = new MultiHashingInputStream(algorithms, inputStream)) {
+    try (MultiHashingInputStream hashingStream = MultiHashingInputStreamFactory.input(algorithms, inputStream)) {
       ByteStreams.copy(hashingStream, ByteStreams.nullOutputStream());
       return hashingStream.hashes();
     }
