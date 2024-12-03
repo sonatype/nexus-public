@@ -10,30 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.authz
+package org.sonatype.nexus.security.realm;
 
-import org.sonatype.goodies.testsupport.TestSupport
+import java.util.List;
 
-import org.apache.shiro.authz.permission.WildcardPermission
-import org.junit.Test
-
-/**
- * Permission trials.
- */
-class PermissionTrial
-    extends TestSupport
+public class TestRealmConfiguration
+    implements RealmConfiguration
 {
-  @Test
-  void 'test implied wildcard'() {
-    def perm = new WildcardPermission('nexus:something:special:read')
-    def granted = new WildcardPermission('nexus:*')
-    assert granted.implies(perm)
+  private List<String> realmNames;
+
+  @Override
+  public List<String> getRealmNames() {
+    return realmNames;
   }
 
-  @Test
-  void 'test implied wildcard without *'() {
-    def perm = new WildcardPermission('nexus:something:special:read')
-    def granted = new WildcardPermission('nexus')
-    assert granted.implies(perm)
+  @Override
+  public void setRealmNames(final List<String> realmNames) {
+    this.realmNames = realmNames;
+  }
+
+  @Override
+  public RealmConfiguration copy() {
+    return this;
   }
 }
