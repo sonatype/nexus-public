@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.List;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -58,8 +57,7 @@ public class UploadDefinitionResource
   private final UploadConfiguration uploadConfiguration;
 
   @Inject
-  public UploadDefinitionResource(final UploadManager uploadManager, final UploadConfiguration uploadConfiguration)
-  {
+  public UploadDefinitionResource(final UploadManager uploadManager, final UploadConfiguration uploadConfiguration) {
     this.uploadManager = checkNotNull(uploadManager);
     this.uploadConfiguration = checkNotNull(uploadConfiguration);
   }
@@ -79,8 +77,7 @@ public class UploadDefinitionResource
 
   @Path("{format}/upload-specs")
   @GET
-  public UploadDefinitionXO get(@PathParam("format") final String format)
-  {
+  public UploadDefinitionXO get(@PathParam("format") final String format) {
     log.debug("Get upload definition for format '{}'.", format);
 
     if (!uploadConfiguration.isEnabled()) {

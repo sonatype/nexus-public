@@ -32,6 +32,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
+import static org.mockito.Mockito.when;
+
 @RunWith(JUnitParamsRunner.class)
 public class AssetXOTest
     extends TestSupport
@@ -50,8 +52,9 @@ public class AssetXOTest
   public void testFrom(String repositoryName, String path, String expectedUrl) throws Exception {
     Repository repository = createRepository(new HostedType(), repositoryName);
     AssetSearchResult assetSearchResult = Mockito.mock(AssetSearchResult.class);
-    Mockito.when(assetSearchResult.getPath()).thenReturn(path);
-    Mockito.when(assetSearchResult.getId()).thenReturn("resource-id");
+    when(assetSearchResult.getPath()).thenReturn(path);
+    when(assetSearchResult.getId()).thenReturn("resource-id");
+    when(assetSearchResult.getFormat()).thenReturn("test-format");
     AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
     Assert.assertTrue(assetXO.getDownloadUrl().contains(expectedUrl));
   }
@@ -60,8 +63,9 @@ public class AssetXOTest
     Repository repository = new RepositoryImpl(
         Mockito.mock(EventManager.class),
         type,
-        new Format("test-format") { }
-    );
+        new Format("test-format")
+        {
+        });
     repository.init(config(repositoryName));
     return repository;
   }

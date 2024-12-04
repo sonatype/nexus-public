@@ -10,49 +10,53 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.api
+package org.sonatype.nexus.repository.rest.api;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter
-import com.fasterxml.jackson.annotation.JsonPropertyOrder
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * @since 3.8
  */
-@JsonPropertyOrder(["id", "repository", "format", "group", "name", "version", "assets"])
-interface ComponentXO
+@JsonPropertyOrder({"id", "repository", "format", "group", "name", "version", "assets"})
+public interface ComponentXO
 {
-  String getId()
+  String getId();
 
-  void setId(String id)
+  void setId(String id);
 
-  String getGroup()
+  String getGroup();
 
-  void setGroup(String group)
+  void setGroup(String group);
 
-  String getName()
+  String getName();
 
-  void setName(String name)
+  void setName(String name);
 
-  String getVersion()
+  String getVersion();
 
-  void setVersion(String version)
+  void setVersion(String version);
 
-  String getRepository()
+  String getRepository();
 
-  void setRepository(String repository)
+  void setRepository(String repository);
 
-  String getFormat()
+  String getFormat();
 
-  void setFormat(String format)
+  void setFormat(String format);
 
-  List<AssetXO> getAssets()
+  List<AssetXO> getAssets();
 
-  void setAssets(List<AssetXO> assets)
+  void setAssets(List<AssetXO> assets);
 
   /**
    * Attributes to add the JSON payload
+   *
    * @return
    */
   @JsonAnyGetter
-  Map<String, Object> getExtraJsonAttributes()
+  Map<String, Object> getExtraJsonAttributes();
 }
