@@ -40,9 +40,10 @@ public class AssetBlobStore<T extends AssetBlobDAO>
     extends ContentStoreSupport<T>
 {
   @Inject
-  public AssetBlobStore(final DataSessionSupplier sessionSupplier,
-                        @Assisted final String contentStoreName,
-                        @Assisted final Class<T> daoClass)
+  public AssetBlobStore(
+      final DataSessionSupplier sessionSupplier,
+      @Assisted final String contentStoreName,
+      @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
   }
@@ -57,8 +58,11 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<AssetBlob> browseUnusedAssetBlobs(final int limit,
-      final int blobCreatedDelayMinute, @Nullable final String continuationToken) {
+  public Continuation<AssetBlob> browseUnusedAssetBlobs(
+      final int limit,
+      final int blobCreatedDelayMinute,
+      @Nullable final String continuationToken)
+  {
     return dao().browseUnusedAssetBlobs(limit, blobCreatedDelayMinute, continuationToken);
   }
 
@@ -94,7 +98,6 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   {
     return dao().browseAssetBlobsWithinDuration(limit, start, end, continuationToken);
   }
-
 
   /**
    * Return count of asset blobs matched with provided date range
@@ -200,7 +203,10 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @return collection of asset blobs and the next continuation token
    */
   @Transactional
-  public Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(final int limit, @Nullable final String continuationToken) {
+  public Continuation<AssetBlob> browseAssetsWithLegacyBlobRef(
+      final int limit,
+      @Nullable final String continuationToken)
+  {
     return dao().browseAssetsWithLegacyBlobRef(limit, continuationToken);
   }
 

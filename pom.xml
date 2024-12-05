@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.buildsupport</groupId>
     <artifactId>public-parent</artifactId>
-    <version>48</version>
+    <version>51</version>
     <relativePath/>
   </parent>
 
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.75.0-06</nexus.version>
+    <nexus.version>3.75.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <karaf.version>4.3.9</karaf.version>
@@ -79,7 +79,7 @@
     <it.test.log.level>INFO</it.test.log.level>
 
     <!--
-    Default compile support for Java8+
+    Default compile support for Java17+
     -->
     <maven.compiler.release>17</maven.compiler.release>
     <maven.compiler.source>17</maven.compiler.source>
@@ -113,6 +113,16 @@
       org.sonatype.goodies.testsupport.group.Unstable,
       org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
     </it.excludedGroups>
+
+    <test.argLine>
+      --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+      --add-opens=java.base/java.net=ALL-UNNAMED
+      --add-opens=java.base/java.util=ALL-UNNAMED
+      --add-exports=java.base/sun.security.x509=ALL-UNNAMED
+      --add-exports=java.base/sun.security.rsa=ALL-UNNAMED
+      --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED
+    </test.argLine>
+
     <clm.skip>false</clm.skip>
 
     <!-- fabric8 container naming pattern: {imageName}-{buildTimestamp}-{index} -->
@@ -623,6 +633,14 @@
           </configuration>
         </plugin>
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <configuration>
+            <allowIncompleteProjects>true</allowIncompleteProjects>
+          </configuration>
+        </plugin>
+
         <!--
         Additional configuration for release; enable additional profiles.
         -->
@@ -676,7 +694,7 @@
         <plugin>
           <groupId>org.eclipse.sisu</groupId>
           <artifactId>sisu-maven-plugin</artifactId>
-          <version>0.3.4</version>
+          <version>0.9.0.M3</version>
           <executions>
             <execution>
               <goals>
@@ -932,94 +950,206 @@
           </executions>
         </plugin>
 
-        <!--
-        Use headers.sh script.
-        -->
         <plugin>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
           <configuration>
-            <excludes combine.children="append">
-              <exclude>**/sonatype-config/**</exclude>
+            <encoding>UTF-8</encoding>
+            <strictCheck>true</strictCheck>
+            <useDefaultExcludes>true</useDefaultExcludes>
+            <licenseSets>
+              <!-- License Set for Public Codebase -->
+              <!-- This set applies the standard Sonatype header (header.txt) for the OSS code. -->
+              <licenseSet>
+                <header>header.txt</header>
+                <excludes>
+                  <exclude>**/sonatype-config/**</exclude>
+                  <!--
+                  Exclude zion configuration.
+                  -->
+                  <exclude>.zion/**</exclude>
+                  <exclude>variables.properties</exclude>
+                  <!--
+                  Exclude top-level helper scripts.
+                  -->
+                  <exclude>*.sh</exclude>
+                  <exclude>*.cmd</exclude>
+                  <!--
+                  Exclude markdown documentation files
+                  -->
+                  <exclude>**/*.md</exclude>
+                  <!--
+                  Exclude maven-wrapper configuration.
+                  -->
+                  <exclude>.mvn/**</exclude>
+                  <!--
+                  Exclude optional private bits.
+                  -->
+                  <exclude>private/**</exclude>
+                  <!--
+                  Exclude assembly overlay files
+                  -->
+                  <exclude>**/src/main/resources/overlay/**</exclude>
+                  <!--
+                  Exclude (most) test resource files, many of these need specific content w/o headers.
+                  -->
+                  <exclude>**/src/test/resources/**</exclude>
+                  <exclude>**/src/test/filtered-resources/**</exclude>
+                  <exclude>**/src/test/it-resources/**</exclude>
+                  <!--
+                  Exclude XML stylesheet template so header doesn't alter expected output
+                  -->
+                  <exclude>**/nexus/internal/atlas/customizers/jetty-stylesheet.xml</exclude>
+                  <exclude>**/nexus/internal/atlas/customizers/hazelcast-stylesheet.xml</exclude>
+                  <!--
+                  Exclude rapture configuration, generated and thirdparty resources.
+                  -->
+                  <exclude>**/src/main/baseapp/**</exclude>
+                  <exclude>**/src/main/resources/static/rapture/baseapp-*.js</exclude>
+                  <exclude>**/src/main/resources/static/rapture/resources/baseapp-*.css</exclude>
+                  <exclude>**/src/main/resources-filtered/static/rapture/resources/baseapp-*.css</exclude>
+                  <exclude>**/src/main/resources/static/rapture/Ext/ux/**</exclude>
+                  <exclude>**/src/main/resources/static/rapture/Ext/patch/**</exclude>
+                  <!--
+                  Exclude npm dependencies
+                  -->
+                  <exclude>**/node_modules/**</exclude>
+                  <!--
+                  Exclude files generated by javascript builds
+                  -->
+                  <exclude>**/nexus-ui-plugin/dist/**</exclude>
+                  <!--
+                  Excludes for specific classes which have compatible, yet different licences.
+                  -->
+                  <exclude>**/nexus-extdirect/**/com/softwarementors/**</exclude>
+                  <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
+                  <exclude>**/org/sonatype/nexus/repository/apt/internal/org/apache/commons/compress/archivers/ar/ArArchiveInputStream.java</exclude>
 
-              <!--
-              Exclude zion configuration.
-              -->
-              <exclude>.zion/**</exclude>
-              <exclude>variables.properties</exclude>
+                  <!--
+                  JS files will include the extjs specific header, see header-extjs profile below
+                  -->
+                  <exclude>**/*.js</exclude>
+                  <exclude>**/dependency-reduced-pom.xml</exclude>
+                </excludes>
+              </licenseSet>
 
-              <!--
-              Exclude top-level helper scripts.
-              -->
-              <exclude>*.sh</exclude>
-              <exclude>*.cmd</exclude>
+              <!-- License Set for ExtJS JavaScript Files -->
+              <!-- This set applies the ExtJS-specific license header (header-extjs.txt) to JavaScript files. -->
+              <licenseSet>
+                <header>header-extjs.txt</header>
+                <includes>
+                  <include>**/*.js</include>
+                </includes>
+                <excludes>
+                  <exclude>private/**</exclude>
+                  <!--
+                  Exclude assembly overlay files
+                  -->
+                  <exclude>assemblies/**/src/main/resources/overlay/**</exclude>
+                  <!--
+                  Exclude (most) test resource files, many of these need specific content w/o headers.
+                  -->
+                  <exclude>**/src/test/resources/**</exclude>
+                  <exclude>**/src/test/filtered-resources/**</exclude>
+                  <exclude>**/src/test/it-resources/**</exclude>
+                  <!--
+                  Exclude rapture configuration, generated and thirdparty resources.
+                  -->
+                  <exclude>**/src/main/baseapp/**</exclude>
+                  <exclude>**/src/main/resources/static/rapture/baseapp-*.js</exclude>
+                  <exclude>**/src/main/resources/static/rapture/resources/baseapp-*.css</exclude>
+                  <exclude>**/src/main/resources-filtered/static/rapture/resources/baseapp-*.css</exclude>
+                  <exclude>**/src/main/resources/static/rapture/Ext/ux/**</exclude>
+                  <exclude>**/src/main/resources/static/rapture/Ext/patch/**</exclude>
+                  <!--
+                  Exclude npm dependencies
+                  -->
+                  <exclude>**/node_modules/**</exclude>
+                  <!--
+                  Exclude files generated by javascript builds
+                  -->
+                  <exclude>**/nexus-ui-plugin/dist/**</exclude>
+                  <exclude>**/dependency-reduced-pom.xml</exclude>
+                </excludes>
+              </licenseSet>
 
-              <!--
-              Exclude markdown documentation files
-              -->
-              <exclude>**/*.md</exclude>
-
-              <!--
-              Exclude maven-wrapper configuration.
-              -->
-              <exclude>.mvn/**</exclude>
-
-              <!--
-              Exclude optional private bits.
-              -->
-              <exclude>private/**</exclude>
-
-              <!--
-              Exclude assembly overlay files
-              -->
-              <exclude>assemblies/**/src/main/resources/overlay/**</exclude>
-
-              <!--
-              Exclude (most) test resource files, many of these need specific content w/o headers.
-              -->
-              <exclude>**/src/test/resources/**</exclude>
-              <exclude>**/src/test/filtered-resources/**</exclude>
-              <exclude>**/src/test/it-resources/**</exclude>
-
-              <!--
-              Exclude XML stylesheet template so header doesn't alter expected output
-              -->
-              <exclude>**/nexus-core/**/jetty-stylesheet.xml</exclude>
-              <exclude>**/nexus-core/**/hazelcast-stylesheet.xml</exclude>
-
-              <!--
-              Exclude rapture configuration, generated and thirdparty resources.
-              -->
-              <exclude>**/nexus-rapture/src/main/baseapp/**</exclude>
-              <exclude>**/nexus-rapture/src/main/resources/static/rapture/baseapp-*.js</exclude>
-              <exclude>**/nexus-rapture/src/main/resources/static/rapture/resources/baseapp-*.css</exclude>
-              <exclude>**/nexus-rapture/src/main/resources-filtered/static/rapture/resources/baseapp-*.css</exclude>
-              <exclude>**/nexus-rapture/src/main/resources/static/rapture/Ext/ux/**</exclude>
-              <exclude>**/nexus-rapture/src/main/resources/static/rapture/Ext/patch/**</exclude>
-
-              <!--
-              Exclude npm dependencies
-              -->
-              <exclude>**/node_modules/**</exclude>
-
-              <!--
-              Exclude files generated by javascript builds
-              -->
-              <exclude>**/nexus-ui-plugin/dist/**</exclude>
-
-              <!--
-              Excludes for specific classes which have compatible, yet different licences.
-              -->
-              <exclude>**/nexus-extdirect/**/com/softwarementors/**</exclude>
-              <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
-              <exclude>**/nexus-repository-apt/**/org/sonatype/nexus/repository/apt/internal/org/apache/commons/compress/archivers/ar/ArArchiveInputStream.java</exclude>
-
-              <!--
-              JS files will include the extjs specific header, see header-extjs profile below
-              -->
-              <exclude>**/*.js</exclude>
-              <exclude>**/dependency-reduced-pom.xml</exclude>
-            </excludes>
+              <!-- License Set for Private (Pro) Codebase -->
+              <!-- This set applies the private-specific license header (private/header.txt) to files part of the pro codebase. -->
+              <licenseSet>
+                <header>private/header.txt</header>
+                <includes>
+                  <include>private/**/*.java</include>
+                  <include>private/**/*.xml</include>
+                  <include>private/**/*.js</include>
+                  <include>private/**/*.groovy</include>
+                </includes>
+                <excludes>
+                  <exclude>.zion/**</exclude>
+                  <exclude>variables.properties</exclude>
+                  <!--
+                  Exclude markdown documentation files
+                  -->
+                  <exclude>**/*.md</exclude>
+                  <!--
+                  Exclude assembly overlay files
+                  -->
+                  <exclude>assemblies/**/src/main/resources/overlay/**</exclude>
+                  <!--
+                  Exclude (most) test resource files, many of these need specific content w/o headers.
+                  -->
+                  <exclude>**/src/test/resources/**</exclude>
+                  <exclude>**/src/test/filtered-resources/**</exclude>
+                  <exclude>**/src/test/it-resources/**</exclude>
+                  <!--
+                  Exclude npm dependencies
+                  -->
+                  <exclude>**/node_modules/**</exclude>
+                  <!--
+                  Exclude third-party resources.
+                  -->
+                  <exclude>**/nexus-clm-plugin/src/main/resources/artifact-details-template/jquery*</exclude>
+                  <exclude>**/nexus-proximanova-plugin/src/main/resources/static/rapture/resources/fonts/**</exclude>
+                  <!--
+                  Exclude OSS codebase overlays.
+                  -->
+                  <exclude>**/nexus-public-sources/src/main/resources/overlay/**</exclude>
+                  <!--
+                  Exclude licenses and related templates
+                  -->
+                  <exclude>**/nexus-licenses/src/main/licenses/**</exclude>
+                  <!--
+                  Exclude functional-testsuite overlay resources
+                  -->
+                  <exclude>**/functional-testsuite/src/test/ft-resources/testsuite-lib/siesta/**</exclude>
+                  <!--
+                  Exclude testsuite data resources
+                  -->
+                  <exclude>**/nexus-testsuite-data/src/main/resources/**</exclude>
+                  <!--
+                  Exclude stress testsuite scripts
+                  -->
+                  <exclude>**/nexus-stress-testsuite/scripts/**</exclude>
+                  <!--
+                  Exclude installer resources
+                  -->
+                  <exclude>**/nexus-installer/src/main/installer/**</exclude>
+                  <exclude>**/nexus-installer/*.sh</exclude>
+                  <!--
+                  Exclude selenide forked classes
+                  -->
+                  <exclude>**/selenide-functional-tests/src/test/java/com/sonatype/nexus/com/codeborne/selenide/**</exclude>
+                  <!--
+                  Excludes for specific classes which have compatible, yet different licenses.
+                  -->
+                  <exclude>**/nexus-ldap-plugin/**/org/sonatype/nexus/ldap/internal/connector/dao/LdapEncoder.java</exclude>
+                  <exclude>**/dependency-reduced-pom.xml</exclude>
+                  <!--
+                  Exclude files generated by swagger codegen
+                  -->
+                  <exclude>**/io/swagger/client/**</exclude>
+                </excludes>
+              </licenseSet>
+            </licenseSets>
           </configuration>
         </plugin>
 
@@ -1062,6 +1192,68 @@
                 <file>${session.executionRootDirectory}/sonatype-config/sonatype-eclipse.xml</file>
               </eclipse>
             </java>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-plugin-plugin</artifactId>
+          <!-- Overridden due to parent pom defining a version which does not support java 17 -->
+          <version>3.15.0</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <useSystemClassLoader>false</useSystemClassLoader>
+            <forkCount>1</forkCount>
+            <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+            <reuseForks>true</reuseForks>
+            <argLine>
+              ${test.argLine}
+              ${surefire.maxHeap}
+              -XX:MaxDirectMemorySize=2G
+              -XX:+HeapDumpOnOutOfMemoryError
+              -XX:HeapDumpPath=${project.build.directory}/surefire-reports
+            </argLine>
+            <excludes>
+              <exclude>**/Abstract*</exclude>
+              <exclude>**/*$*</exclude>
+              <exclude>**/*Tests</exclude>
+            </excludes>
+            <groups>${it.includedGroups}</groups>
+            <excludedGroups>${it.excludedGroups}</excludedGroups>
+          </configuration>
+        </plugin>
+
+        <!--
+        Basic integration-test environment configuration.
+        -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <configuration>
+            <trimStackTrace>false</trimStackTrace>
+            <forkCount>1</forkCount>
+            <reuseForks>false</reuseForks>
+            <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+            <argLine>
+              ${test.argLine}
+              -Xmx400M
+              -XX:MaxDirectMemorySize=2G
+              -XX:+HeapDumpOnOutOfMemoryError
+              -XX:HeapDumpPath=${project.build.directory}/failsafe-reports
+            </argLine>
+            <excludes>
+              <exclude>**/Abstract*</exclude>
+              <exclude>**/*$*</exclude>
+            </excludes>
+            <includes>
+              <include>${it.includes}</include>
+            </includes>
+            <groups>${it.includedGroups}</groups>
+            <excludedGroups>${it.excludedGroups}</excludedGroups>
           </configuration>
         </plugin>
       </plugins>
