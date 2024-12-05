@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.75.1-SNAPSHOT</version>
+    <version>3.75.1-01</version>
   </parent>
 
   <artifactId>nexus-base-feature</artifactId>
