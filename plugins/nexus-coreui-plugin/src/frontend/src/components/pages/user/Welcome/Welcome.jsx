@@ -76,7 +76,7 @@ export default function Welcome() {
   const onLoad = () => {
     if (ref.current?.contentWindow) {
       setIframeHeight(
-          ref.current.contentWindow.document.body.scrollHeight + iframePadding
+          ref.current.contentWindow.document.body.scrollHeight + iframePadding * 4
       )
     }
   };
