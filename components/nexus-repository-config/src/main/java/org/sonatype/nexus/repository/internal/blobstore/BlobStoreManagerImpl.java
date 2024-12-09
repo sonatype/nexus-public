@@ -119,19 +119,20 @@ public class BlobStoreManagerImpl
   private final SecretsService secretService;
 
   @Inject
-  public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
-                              final BlobStoreConfigurationStore store,
-                              final Map<String, BlobStoreDescriptor> blobStoreDescriptors,
-                              final Map<String, Provider<BlobStore>> blobStorePrototypes,
-                              final FreezeService freezeService,
-                              final Provider<RepositoryManager> repositoryManagerProvider,
-                              final NodeAccess nodeAccess,
-                              @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
-                              final DefaultBlobStoreProvider defaultBlobstoreProvider,
-                              final BlobStoreTaskService blobStoreTaskService,
-                              final Provider<BlobStoreOverride> blobStoreOverrideProvider,
-                              final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager,
-                              final SecretsService secretService)
+  public BlobStoreManagerImpl(
+      final EventManager eventManager, // NOSONAR
+      final BlobStoreConfigurationStore store,
+      final Map<String, BlobStoreDescriptor> blobStoreDescriptors,
+      final Map<String, Provider<BlobStore>> blobStorePrototypes,
+      final FreezeService freezeService,
+      final Provider<RepositoryManager> repositoryManagerProvider,
+      final NodeAccess nodeAccess,
+      @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
+      final DefaultBlobStoreProvider defaultBlobstoreProvider,
+      final BlobStoreTaskService blobStoreTaskService,
+      final Provider<BlobStoreOverride> blobStoreOverrideProvider,
+      final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager,
+      final SecretsService secretService)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -181,7 +182,7 @@ public class BlobStoreManagerImpl
         log.error("Unable to restore BlobStore {}", configuration.getName(), e);
       }
       finally {
-        if(blobStore != null) {
+        if (blobStore != null) {
           track(configuration.getName(), blobStore);
         }
       }
@@ -238,7 +239,7 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public BlobStore create(final BlobStoreConfiguration configuration) throws Exception {
     checkNotNull(configuration);
-    log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(), configuration.getAttributes());
+    log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(), configuration);
     validateConfiguration(configuration, true);
     List<Secret> encryptedAttributes = encryptSensitiveAttributes(newConfiguration(), configuration);
     try {
@@ -324,7 +325,7 @@ public class BlobStoreManagerImpl
     checkNotNull(blobStore);
     blobStore.validateCanCreateAndUpdate();
     log.debug("Updating BlobStore: {} with attributes: {}", configuration.getName(),
-        configuration.getAttributes());
+        configuration);
 
     return blobStore;
   }
@@ -526,8 +527,9 @@ public class BlobStoreManagerImpl
     handleReplication(event, e -> update(e.getConfiguration()));
   }
 
-  private void handleReplication(final BlobStoreConfigurationEvent event,
-                                 final EventConsumer<BlobStoreConfigurationEvent> consumer)
+  private void handleReplication(
+      final BlobStoreConfigurationEvent event,
+      final EventConsumer<BlobStoreConfigurationEvent> consumer)
   {
     if (!event.isLocal()) {
       try {
@@ -612,7 +614,8 @@ public class BlobStoreManagerImpl
       log.debug("Removed blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName());
     }
     catch (BlobStoreException e) {
-      log.warn("Failed to remove blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName(), e);
+      log.warn("Failed to remove blobId {} from blob store '{}'", blobId,
+          srcBlobStore.getBlobStoreConfiguration().getName(), e);
     }
     return newBlob;
   }
@@ -623,10 +626,11 @@ public class BlobStoreManagerImpl
    * the blob in its new member blob store so it can be assumed that it will no longer change in the source and can be
    * safely deleted.
    */
-  private void ensureDeletedStateTransferred(final BlobId blobId,
-                                             final BlobStore srcBlobStore,
-                                             final BlobStore destBlobStore,
-                                             final boolean isSrcDeleted)
+  private void ensureDeletedStateTransferred(
+      final BlobId blobId,
+      final BlobStore srcBlobStore,
+      final BlobStore destBlobStore,
+      final boolean isSrcDeleted)
   {
     BlobAttributes currentSrcAttributes = srcBlobStore.getBlobAttributes(blobId);
     if (currentSrcAttributes != null && currentSrcAttributes.isDeleted() != isSrcDeleted) {
@@ -641,8 +645,8 @@ public class BlobStoreManagerImpl
       return Optional.of(blobId)
           .map(r -> blobStore.get(r, true))
           .map(Blob::getInputStream)
-          .orElseThrow(() ->
-              new IllegalStateException(format("Unable to get input stream from source %S with blobId: %s",
+          .orElseThrow(
+              () -> new IllegalStateException(format("Unable to get input stream from source %S with blobId: %s",
                   blobStore.getBlobStoreConfiguration().getName(),
                   blobId)));
     }
@@ -687,7 +691,8 @@ public class BlobStoreManagerImpl
     NestedAttributesMap newBlobStoreTypeData = newblobStoreConfiguration.attributes(typeKey.toLowerCase());
     NestedAttributesMap oldBlobStoreTypeData = oldBlobStoreConfiguration.attributes(typeKey.toLowerCase());
     List<String> sensitiveAttributes = blobStoreDescriptors.get(typeKey).getSensitiveConfigurationFields();
-    log.debug("Removing sensitive attributes from old store configuration. Blob store name: '{}'", oldBlobStoreConfiguration.getName());
+    log.debug("Removing sensitive attributes from old store configuration. Blob store name: '{}'",
+        oldBlobStoreConfiguration.getName());
     for (String sensitiveAttrKey : sensitiveAttributes) {
       if (oldBlobStoreTypeData.get(sensitiveAttrKey) != null &&
           !Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))) {
