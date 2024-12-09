@@ -35,8 +35,6 @@ public class OssNexusEdition
 
   @Override
   protected boolean doesApply(final Properties properties, final Path workDirPath) {
-    //If this method is executed there is no need to validate anything, the other
-    //nexus edition classes (Pro and Starter) already did all the checks needed.
     return true;
   }
 

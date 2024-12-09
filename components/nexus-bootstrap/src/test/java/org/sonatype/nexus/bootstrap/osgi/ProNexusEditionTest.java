@@ -54,19 +54,11 @@ public class ProNexusEditionTest
 
   private Boolean proMarkerExists;
 
-  private Boolean hasLoadAsStarter;
-
-  private Boolean loadAsStarter;
-
-  private Boolean proStarterMarkerExists;
-
   private Boolean nullFileLic;
 
   private Boolean nullPrefLic;
 
   private Boolean is_oss;
-
-  private Boolean is_starter;
 
   public ProNexusEditionTest(
       final Boolean hasLoadAsOss,
@@ -74,84 +66,51 @@ public class ProNexusEditionTest
       final Boolean proMarkerExists,
       final Boolean nullFileLic,
       final Boolean nullPrefLic,
-      final Boolean hasLoadAsStarter,
-      final Boolean loadAsStarter,
-      final Boolean proStarterMarkerExists,
-      final Boolean is_oss,
-      final Boolean is_starter)
+      final Boolean is_oss)
   {
     this.hasLoadAsOss = hasLoadAsOss;
     this.loadAsOss = loadAsOss;
     this.proMarkerExists = proMarkerExists;
     this.nullFileLic = nullFileLic;
     this.nullPrefLic = nullPrefLic;
-    this.hasLoadAsStarter = hasLoadAsStarter;
-    this.loadAsStarter = loadAsStarter;
-    this.proStarterMarkerExists = proStarterMarkerExists;
     this.is_oss = is_oss;
-    this.is_starter = is_starter;
   }
 
   @Parameters(name = "{index}: hasLoadAsOss: {0}, loadAsOss: {1}, proMarker: {2}, "
       +
-      "nullFileLic: {3}, nullPrefLic: {4}, hasLoadAsStarter: {5}, loadAsStarter: {6}, starterMarker: {7}, is_oss: {8}, is_starter: {9}")
+      "nullFileLic: {3}, nullPrefLic: {4}, is_oss: {5}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{
         // if nexus.loadAsOSS has a value and it's true then is_oss == true
-        {true, true, false, true, true, false, false, false, true, false},
-        {true, true, true, true, true, false, false, false, true, false},
-        {true, true, false, true, true, false, false, false, true, false},
-        {true, true, true, true, true, false, false, false, true, false},
-        {true, true, false, false, true, false, false, false, true, false},
-        {true, true, true, false, true, false, false, false, true, false},
-        {true, true, false, false, true, false, false, false, true, false},
-        {true, true, true, false, true, false, false, false, true, false},
-        {true, true, false, true, false, false, false, false, true, false},
-        {true, true, true, true, false, false, false, false, true, false},
-        {true, true, false, true, false, false, false, false, true, false},
-        {true, true, true, true, false, false, false, false, true, false},
-        {true, true, false, false, false, false, false, false, true, false},
-        {true, true, true, false, false, false, false, false, true, false},
-        {true, true, false, false, false, false, false, false, true, false},
-        {true, true, true, false, false, false, false, false, true, false},
+        {true, true, true, true, true, true},
+        {true, true, true, true, false, true},
+        {true, true, true, false, true, true},
+        {true, true, false, true, true, true},
+        {true, true, false, false, true, true},
+        {true, true, true, false, false, true},
+        {true, true, false, true, false, true},
+        {true, true, false, false, false, true},
         // if nexus.loadAsOSS has a value and it's false then is_oss == false
-        {true, false, true, true, true, false, false, false, false, false},
-        {true, false, false, true, true, false, false, false, false, false},
-        {true, false, true, true, true, false, false, false, false, false},
-        {true, false, false, true, true, false, false, false, false, false},
-        {true, false, true, false, true, false, false, false, false, false},
-        {true, false, false, false, true, false, false, false, false, false},
-        {true, false, true, false, true, false, false, false, false, false},
-        {true, false, false, false, true, false, false, false, false, false},
-        {true, false, true, true, false, false, false, false, false, false},
-        {true, false, false, true, false, false, false, false, false, false},
-        {true, false, true, true, false, false, false, false, false, false},
-        {true, false, false, true, false, false, false, false, false, false},
-        {true, false, true, false, false, false, false, false, false, false},
-        {true, false, false, false, false, false, false, false, false, false},
-        {true, false, true, false, false, false, false, false, false, false},
-        {true, false, false, false, false, false, false, false, false, false},
+        {true, false, true, true, true, false},
+        {true, false, false, true, true, false},
+        {true, false, true, false, true, false},
+        {true, false, true, true, false, false},
+        {true, false, false, false, true, false},
+        {true, false, false, true, false, false},
+        {true, false, true, false, false, false},
+        {true, false, false, false, false, false},
         // if nexus.loadAsOss doesn't have a value
-        {false, false, false, true, true, false, false, false, true, false},
+        {false, false, false, true, true, true},
         // proMarker is present then is_oss = false
-        {false, false, true, true, true, false, false, false, false, false},
-        {false, false, true, true, true, false, false, false, false, false},
-        {false, false, true, false, true, false, false, false, false, false},
-        {false, false, true, false, true, false, false, false, false, false},
-        {false, false, true, true, false, false, false, false, false, false},
-        {false, false, true, true, false, false, false, false, false, false},
-        {false, false, true, false, false, false, false, false, false, false},
-        {false, false, true, false, false, false, false, false, false, false},
+        {false, false, true, true, true, false},
+        {false, false, true, false, true, false},
+        {false, false, true, true, false, false},
+        {false, false, true, false, false, false},
         // if clustered then is_oss = false
-        {false, false, false, false, true, false, false, false, false, false},
-        {false, false, false, true, false, false, false, false, false, false},
-        {false, false, false, false, false, false, false, false, false, false},
-        // if nexus.licenseFile is not null then is_oss = false
-        {false, false, false, false, true, false, false, false, false, false},
-        {false, false, false, false, false, false, false, false, false, false},
-        // if there is a license stored in javaprefs then is_oss = false
-        {false, false, false, true, false, false, false, false, false, false},
-        });
+        {false, false, false, false, true, false},
+        {false, false, false, true, false, false},
+        {false, false, false, false, false, false},
+    });
   }
 
   @Test

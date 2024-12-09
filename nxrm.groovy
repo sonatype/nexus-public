@@ -880,7 +880,6 @@ def deploy() {
   extract("./assemblies/nexus-base-template/target/", "nexus-base-template-*.zip")
   extract("./private/assemblies/distributions/nexus-oss/target/", "nexus-*-bundle.zip")
   extract("./private/assemblies/distributions/nexus-pro/target/", "nexus-professional-*-bundle.zip")
-  extract("./private/assemblies/distributions/nexus-pro-starter/target/", "nexus-pro-starter-*-bundle.zip")
 
   // Tell Karaf to load bundles from local .m2 folder
   def files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/org.ops4j.pax.url.mvn.cfg")
@@ -1104,14 +1103,11 @@ def runNxrm() {
     case "pro":
       run("nexus-professional-")
       break
-    case "pro-starter":
-      run("nexus-pro-starter-")
-      break
     case "base":
       run("nexus-base-template-")
       break
     default:
-      error("Usage: ./nxrm.groovy -r { base | oss | pro | pro-starter } [nexus-options]")
+      error("Usage: ./nxrm.groovy -r { base | oss | pro } [nexus-options]")
   }
 }
 
