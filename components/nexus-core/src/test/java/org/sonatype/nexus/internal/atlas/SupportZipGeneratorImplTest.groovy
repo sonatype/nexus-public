@@ -32,6 +32,7 @@ import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SYSINFO
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.ARCHIVEDLOG
 
 /**
  * Unit tests for {@link SupportZipGeneratorImpl}
@@ -46,8 +47,10 @@ class SupportZipGeneratorImplTest
   def mockJmxCustomizer = Mock(SupportBundleCustomizer)
   def mockSysInfoCustomizer = Mock(SupportBundleCustomizer)
   def mockDbInfoCustomizer = Mock(SupportBundleCustomizer)
+  def mockArchivedLogCustomizer = Mock(SupportBundleCustomizer)
   def throwExceptionCustomizer = Mock(SupportBundleCustomizer)
   def throwExceptionInMiddleCustomizer = Mock(SupportBundleCustomizer)
+  def archivedLogContentSource = new TestGeneratedContentSourceSupport(ARCHIVEDLOG, 'log/archived-logs/archive-log.log', OPTIONAL)
   def logContentSource = new TestGeneratedContentSourceSupport(LOG, 'log/nexus.log', OPTIONAL)
   def taskLogContentSource = new TestGeneratedContentSourceSupport(TASKLOG, 'log/tasks/task.log', OPTIONAL)
   def auditLogContentSource = new TestGeneratedContentSourceSupport(AUDITLOG, 'log/audit.log', OPTIONAL)
@@ -74,6 +77,7 @@ class SupportZipGeneratorImplTest
     mockJmxCustomizer.customize(_) >> { SupportBundle bundle -> bundle << jmxContentSource }
     mockSysInfoCustomizer.customize(_) >> { SupportBundle bundle -> bundle << sysInfoContentSource }
     mockDbInfoCustomizer.customize(_) >> { SupportBundle bundle -> bundle << dbInfoContentSource }
+    mockArchivedLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << archivedLogContentSource }
     throwExceptionCustomizer.customize(_) >> { SupportBundle bundle -> bundle << throwExceptionSource }
     throwExceptionInMiddleCustomizer.customize(_) >> { SupportBundle bundle ->
       bundle.add(logContentSource)
@@ -111,9 +115,10 @@ class SupportZipGeneratorImplTest
       logContentSource.contentSize = 2000
       taskLogContentSource.contentSize = 1000
       jmxContentSource.contentSize = 1000
+      archivedLogContentSource.contentSize = 10000
       def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockArchivedLogCustomizer, mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
           ByteSize.bytes(1000), ByteSize.bytes(0))
 
     when:
@@ -128,6 +133,7 @@ class SupportZipGeneratorImplTest
       entries.find { it.name == 'prefix/log/nexus.log' && it.size < 2000 } != null
       entries.find { it.name == 'prefix/log/tasks/task.log' && it.size == 1000 } != null
       entries.find { it.name == 'prefix/info/jmx.json' && it.size == 1000 } != null
+      entries.find { it.name == 'prefix/log/archived-logs/archive-log.log'} == null //not included in the support zip if exceeds the limit
       entries.find { it.name == 'prefix/truncated' } != null
   }
 
@@ -136,9 +142,10 @@ class SupportZipGeneratorImplTest
       logContentSource.contentSize = 1000
       taskLogContentSource.contentSize = 1000
       jmxContentSource.contentSize = 1000
+      archivedLogContentSource.contentSize = 1000
       def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitZipSize: true)
       def out = new ByteArrayOutputStream()
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockArchivedLogCustomizer, mockLogCustomizer, mockTaskLogCustomizer, mockJmxCustomizer],
           ByteSize.bytes(0), ByteSize.bytes(2500))
 
     when:
@@ -158,7 +165,7 @@ class SupportZipGeneratorImplTest
       def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
       jmxContentSource.contentSize = 1000
-      def generator = new SupportZipGeneratorImpl(downloadService, [mockJmxCustomizer, mockDbInfoCustomizer, throwExceptionCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockArchivedLogCustomizer, mockJmxCustomizer, mockDbInfoCustomizer, throwExceptionCustomizer],
           ByteSize.bytes(1000000),
           ByteSize.bytes(1000000))
     when:
@@ -176,7 +183,7 @@ class SupportZipGeneratorImplTest
     given:
       def req = new SupportZipGeneratorRequest(log: true, taskLog: true, jmx: true, limitFileSizes: true)
       def out = new ByteArrayOutputStream()
-      def generator = new SupportZipGeneratorImpl(downloadService, [throwExceptionInMiddleCustomizer],
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockArchivedLogCustomizer, throwExceptionInMiddleCustomizer],
           ByteSize.bytes(1000000),
           ByteSize.bytes(1000000))
     when:

@@ -77,6 +77,8 @@ public class SupportZipGeneratorImpl
    */
   private final ByteSize maxZipFileSize;
 
+  private static int archivedLogSize;
+
   @Inject
   SupportZipGeneratorImpl(
       final DownloadService downloadService,
@@ -88,10 +90,10 @@ public class SupportZipGeneratorImpl
     this.downloadService = checkNotNull(downloadService);
 
     this.maxFileSize = maxFileSize;
-    log.info( "Maximum included file size: {}", maxFileSize);
+    log.info("Maximum included file size: {}", maxFileSize);
 
     this.maxZipFileSize = maxZipFileSize;
-    log.info( "Maximum ZIP file size: {}", maxZipFileSize);
+    log.info("Maximum ZIP file size: {}", maxZipFileSize);
   }
 
   @Override
@@ -102,15 +104,16 @@ public class SupportZipGeneratorImpl
   @Override
   public Result generate(final SupportZipGeneratorRequest request, final String prefix) {
     checkNotNull(request);
+    setArchivedLogSize(request);
 
-    log.info( "Generating support ZIP: {}", request);
+    log.info("Generating support ZIP: {}", request);
 
     String uniquePrefix = downloadService.uniqueName(prefix);
 
     try {
       // Write zip to temporary file first;
       Path file = Files.createTempFile(uniquePrefix, "zip");
-      log.debug( "Writing ZIP file: {}", file);
+      log.debug("Writing ZIP file: {}", file);
 
       boolean truncated;
       try (OutputStream output = Files.newOutputStream(file, StandardOpenOption.WRITE)) {
@@ -121,11 +124,11 @@ public class SupportZipGeneratorImpl
       // move the file into place;
       String targetFileName = uniquePrefix + ".zip";
       String path = downloadService.move(file.toFile(), targetFileName);
-      log.info( "Created support ZIP file: {}", path);
+      log.info("Created support ZIP file: {}", path);
 
       return new Result(truncated, targetFileName, path, length);
     }
-    catch(IOException e) {
+    catch (IOException e) {
       log.error("Support zip generation failed", e);
       return null;
     }
@@ -142,7 +145,7 @@ public class SupportZipGeneratorImpl
     try {
       // customize the bundle
       bundleCustomizers.forEach(customizer -> {
-        log.debug( "Customizing bundle with: {}", customizer);
+        log.debug("Customizing bundle with: {}", customizer);
         customizer.customize(bundle);
       });
       checkState(!bundle.getSources().isEmpty(), "At least one bundle source must be configured");
@@ -154,13 +157,13 @@ public class SupportZipGeneratorImpl
       // prepare bundle sources
       List<ContentSource> preparedSources = sources.stream()
           .map(source -> {
-            log.debug( "Preparing bundle source: {}", source);
+            log.debug("Preparing bundle source: {}", source);
             try {
               source.prepare();
               return source;
             }
             catch (Exception e) {
-              log.error( "Failed to prepare source {}", source.getClass(), e);
+              log.error("Failed to prepare source {}", source.getClass(), e);
               return null;
             }
           })
@@ -171,19 +174,19 @@ public class SupportZipGeneratorImpl
           .createZip();
     }
     catch (Exception e) {
-      log.error( "Failed to create support ZIP", e);
+      log.error("Failed to create support ZIP", e);
       return false;
     }
     finally {
       if (sources != null) {
         // cleanup bundle sources
         sources.forEach(source -> {
-          log.debug( "Cleaning bundle source: {}", source);
+          log.debug("Cleaning bundle source: {}", source);
           try {
             source.cleanup();
           }
           catch (Exception e) {
-            log.warn( "Bundle source cleanup failed", e);
+            log.warn("Bundle source cleanup failed", e);
           }
         });
       }
@@ -197,7 +200,7 @@ public class SupportZipGeneratorImpl
     Set<Type> types = new HashSet<>();
     if (request.isSystemInformation()) {
       types.add(SYSINFO);
-      types.add(DBINFO); //including this in sys information unless we decide to make it it's own front end toggle
+      types.add(DBINFO); // including this in sys information unless we decide to make it it's own front end toggle
     }
     if (request.isThreadDump()) {
       types.add(THREAD);
@@ -226,18 +229,24 @@ public class SupportZipGeneratorImpl
     if (request.isReplication()) {
       types.add(REPLICATIONLOG);
     }
+    // included by default, if not selected it will default to 0 days of archived logs which means it includes nothing
+    types.add(ARCHIVEDLOG);
     return types;
   }
 
   /**
    * Filter only included content sources.
    */
-  private List<ContentSource> filterSources(final SupportZipGeneratorRequest request, final SupportBundle supportBundle) {
+  private List<ContentSource> filterSources(
+      final SupportZipGeneratorRequest request,
+      final SupportBundle supportBundle)
+  {
     Set<Type> include = includedTypes(request);
 
-    return supportBundle.getSources().stream()
+    return supportBundle.getSources()
+        .stream()
         .filter(source -> include.contains(source.getType()))
-        .peek(source -> log.debug( "Including content source: {}", source))
+        .peek(source -> log.debug("Including content source: {}", source))
         .collect(Collectors.toList());
   }
 
@@ -245,7 +254,17 @@ public class SupportZipGeneratorImpl
     return (int) (100 - ((compressed / uncompressed) * 100));
   }
 
-  private class ZipCreator {
+  // helper to get archived log request size
+  public void setArchivedLogSize(SupportZipGeneratorRequest request) {
+    archivedLogSize = request.getArchivedLog();
+  }
+
+  public static int getArchivedLogSize() {
+    return archivedLogSize;
+  }
+
+  private class ZipCreator
+  {
     private final OutputStream outputStream;
 
     private final List<ContentSource> sources;
@@ -274,6 +293,7 @@ public class SupportZipGeneratorImpl
 
     /**
      * Creates the zip file.
+     * 
      * @return true if the zipfile was truncated
      */
     boolean createZip() {
@@ -307,12 +327,22 @@ public class SupportZipGeneratorImpl
         // add content entries, sorted so highest priority are processed first
         sources.sort(Comparator.naturalOrder());
         sources.forEach(source -> {
-          log.debug( "Adding content entry: {} {} bytes", source, source.getSize());
+          // skipping over archived files that cause the zip to be too large or are past the file size limit
+          // TODO: figure out how to handle .gz file truncation gracefully
+          if (source.getType() == ARCHIVEDLOG
+              && (limitFileSizes && source.getSize() > maxContentSize || limitZipSize && source.getSize() +
+                  stream.getCount() > maxZipSize)) {
+            log.warn("Skipping {} due to size limit", source.getPath());
+            return;
+          }
+
+          log.debug("Adding content entry: {} {} bytes", source, source.getSize());
           ZipEntry entry = addEntry(zip, source.getPath());
 
           try (InputStream input = source.getContent()) {
             // determine if the current file is a log file
-            boolean isLogFile = source.getType() == LOG || source.getType() == TASKLOG || source.getType() == AUDITLOG;
+            boolean isLogFile = source.getType() == LOG || source.getType() == TASKLOG || source.getType() == AUDITLOG
+                || source.getType() == ARCHIVEDLOG;
             // only apply truncation logic to log files
             byte[] buff = new byte[chunkSize];
             int len;
@@ -334,7 +364,8 @@ public class SupportZipGeneratorImpl
               zip.flush();
             }
           }
-          catch (Exception e) { //NOSONAR - catching all exceptions so that a bad file of any sort won't cause us to stop
+          catch (Exception e) { // NOSONAR - catching all exceptions so that a bad file of any sort won't cause us to
+            // stop
             log.warn("Unable to include {} in bundle, moving onto next file.", source.getPath(), e);
           }
 
@@ -410,14 +441,14 @@ public class SupportZipGeneratorImpl
         List<String> path = Arrays.asList(it.getPath().split("/"));
         if (path.size() > 1) {
           // eg. "foo/bar/baz" -> [ "foo", "foo/bar" ]
-          for (int i=1; i<path.size(); i++) {
+          for (int i = 1; i < path.size(); i++) {
             dirs.add(path.subList(0, i).stream().collect(Collectors.joining("/")));
           }
         }
       });
 
       dirs.forEach(it -> {
-        log.debug( "Adding directory entry: {}", it);
+        log.debug("Adding directory entry: {}", it);
         ZipEntry entry = addEntry(zip, it + "/");
         // must end with "/"
         closeEntry(zip, entry);
