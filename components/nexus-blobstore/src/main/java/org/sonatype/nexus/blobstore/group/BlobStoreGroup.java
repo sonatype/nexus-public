@@ -478,6 +478,7 @@ public class BlobStoreGroup
   public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
       final String prefix,
       final OffsetDateTime fromDateTime,
+      final OffsetDateTime toDateTime,
       @Nullable final String continuationToken,
       final int pageSize)
   {

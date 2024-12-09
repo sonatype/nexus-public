@@ -55,7 +55,7 @@
                     JOIN ${format}_asset A ON AB.asset_blob_id = A.asset_blob_id
                     JOIN ${format}_content_repository CR ON CR.repository_id = A.repository_id
                     JOIN repository R ON R.id = cr.config_repository_id
-    WHERE AB.added_to_repository BETWEEN #{end} AND #{start}
+    WHERE AB.added_to_repository BETWEEN #{start} AND #{end}
     <if test="continuationToken != null">
       AND AB.asset_blob_id > #{continuationToken}
     </if>
@@ -64,7 +64,7 @@
 
   <select id="countAssetBlobsWithinDuration" resultType="int">
     SELECT count(1) FROM ${format}_asset_blob
-    WHERE added_to_repository BETWEEN #{end} AND #{start}
+    WHERE added_to_repository BETWEEN #{start} AND #{end}
   </select>
 
   <select id="browseUnusedAssetBlobs" resultType="AssetBlobData">

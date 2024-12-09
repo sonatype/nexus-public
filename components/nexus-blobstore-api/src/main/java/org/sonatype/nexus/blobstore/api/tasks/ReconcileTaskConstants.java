@@ -21,6 +21,8 @@ public final class ReconcileTaskConstants
 
   public static final String EXECUTE_RECONCILE_PLAN_TYPE_ID = "blobstore.executeReconciliationPlan";
 
+  public static final String UNABLE_TO_RUN_TASK_LOG_ERROR = "Unable to run task {}";
+
   private ReconcileTaskConstants() {
   }
 }

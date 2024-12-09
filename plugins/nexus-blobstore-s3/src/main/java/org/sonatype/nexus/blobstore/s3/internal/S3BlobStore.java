@@ -797,6 +797,7 @@ public class S3BlobStore
   public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
       final String prefix,
       final OffsetDateTime fromDateTime,
+      final OffsetDateTime toDateTime,
       @Nullable final String continuationToken,
       final int pageSize)
   {
@@ -811,7 +812,8 @@ public class S3BlobStore
         .stream()
         .filter(o -> o.getKey().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX) || o.getKey().endsWith(BLOB_FILE_CONTENT_SUFFIX))
         .filter(this::isNotTempBlob)
-        .filter(s3Obj -> s3Obj.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(fromDateTime))
+        .filter(s3Obj -> s3Obj.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isAfter(fromDateTime) &&
+            s3Obj.getLastModified().toInstant().atOffset(ZoneOffset.UTC).isBefore(toDateTime))
         .map(S3AttributesLocation::new)
         .map(this::getBlobIdFromAttributeFilePath)
         .filter(Objects::nonNull)

@@ -1139,7 +1139,7 @@ public class FileBlobStore
       Map<String, OffsetDateTime> dateBasedBlobIds = dateBasedWalkFile.getBlobIdToDateRef();
 
       LocalDateTime sinceDate = now().minusSeconds(duration.getSeconds());
-      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate, dateBasedBlobIds);
+      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate, now(), dateBasedBlobIds);
     }
   }
 
@@ -1147,6 +1147,7 @@ public class FileBlobStore
   public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
       String prefix,
       OffsetDateTime fromDateTime,
+      OffsetDateTime toDateTime,
       @Nullable final String continuationToken,
       final int pageSize)
   {
@@ -1155,7 +1156,7 @@ public class FileBlobStore
         dateBasedWalkFile.getBlobIdToDateRef(contentDir.resolve(prefix).toString());
     List<BlobId> blobIds =
         reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, fromDateTime.toLocalDateTime(),
-            dateBasedBlobIds).collect(Collectors.toList());
+            toDateTime.toLocalDateTime(), dateBasedBlobIds).collect(Collectors.toList());
     return new PaginatedResult<>(blobIds, null);
   }
 

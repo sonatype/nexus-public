@@ -178,7 +178,7 @@ public class AssetBlobDAOTest
 
       dao.createAssetBlob(assetBlob1);
       dao.createAssetBlob(assetBlob2);
-      assertThat(dao.countAssetBlobsWithinDuration(now, now.minusDays(11)), is(2));
+      assertThat(dao.countAssetBlobsWithinDuration(now.minusDays(11), now), is(2));
       // blobs are not in range
       assertThat(dao.browseAssetBlobsWithinDuration(2, now.plusDays(20), now.plusDays(11), null), hasSize(0));
     }

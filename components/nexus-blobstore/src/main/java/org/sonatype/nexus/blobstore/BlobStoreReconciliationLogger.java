@@ -83,19 +83,22 @@ public class BlobStoreReconciliationLogger
   }
 
   /**
-   * Stream blob ids of blobs created in a blob store since specified date (inclusive).
+   * Stream blob ids of blobs created in a blob store within date range (inclusive).
    *
    * @param reconciliationLogPath The path to the blob store's reconciliation log directory
-   * @param sinceDate for which retrieve newly created blob ids
+   * @param fromDate The date from which range starts
+   * @param toDate The date from which range ends
    * @param dateBasedBlobIds date-based blob ids
+   *
    * @return stream of BlobId
    */
   public Stream<BlobId> getBlobsCreatedSince(
       final Path reconciliationLogPath,
-      final LocalDateTime sinceDate,
+      final LocalDateTime fromDate,
+      final LocalDateTime toDate,
       final Map<String, OffsetDateTime> dateBasedBlobIds)
   {
-    return getLogFilesToProcess(reconciliationLogPath, sinceDate)
+    return getLogFilesToProcess(reconciliationLogPath, fromDate, toDate)
         .flatMap(this::readLines)
         .map(line -> {
           String[] split = line.split(",");
@@ -131,12 +134,16 @@ public class BlobStoreReconciliationLogger
     }
   }
 
-  private Stream<File> getLogFilesToProcess(final Path reconciliationLogPath, final LocalDateTime sinceDate) {
+  private Stream<File> getLogFilesToProcess(
+      final Path reconciliationLogPath,
+      final LocalDateTime fromDate,
+      final LocalDateTime toDate)
+  {
     File reconciliationLogDirectory = applicationDirectories.getWorkDirectory(reconciliationLogPath.toString());
     File[] logs = reconciliationLogDirectory.listFiles();
     if (Objects.nonNull(logs)) {
       return Stream.of(logs)
-          .filter(isFileNameOlderOrSameAs(sinceDate))
+          .filter(isFileNameInDateRange(fromDate, toDate))
           .peek(file -> LOGGER.info("Processing file '{}'", file.getName()));
     }
     else {
@@ -145,11 +152,11 @@ public class BlobStoreReconciliationLogger
     }
   }
 
-  private Predicate<File> isFileNameOlderOrSameAs(final LocalDateTime sinceDate) {
+  private Predicate<File> isFileNameInDateRange(final LocalDateTime fromDate, final LocalDateTime toDate) {
     return file -> {
       try {
         LocalDate logFileDate = LocalDate.parse(file.getName());
-        return !sinceDate.toLocalDate().isAfter(logFileDate);
+        return !fromDate.toLocalDate().isAfter(logFileDate) && !toDate.toLocalDate().isBefore(logFileDate);
       }
       catch (DateTimeParseException e) {
         return false;

@@ -55,13 +55,12 @@ public class DateBasedHelper
     return toDateTime.format(dateTimeFormatter);
   }
 
-  public static List<String> generatePrefixes(final OffsetDateTime now, final Duration duration) {
-    OffsetDateTime utcDateTime = now.withOffsetSameInstant(ZoneOffset.UTC); // Convert to UTC
-
+  public static List<String> generatePrefixes(final OffsetDateTime from, final OffsetDateTime to) {
     List<String> prefixes = new ArrayList<>();
-    OffsetDateTime startTime = utcDateTime.minus(duration).truncatedTo(ChronoUnit.MINUTES);
-    OffsetDateTime endTime = utcDateTime.truncatedTo(ChronoUnit.MINUTES);
+    OffsetDateTime startTime = from.truncatedTo(ChronoUnit.MINUTES).withOffsetSameInstant(ZoneOffset.UTC);
+    OffsetDateTime endTime = to.truncatedTo(ChronoUnit.MINUTES).withOffsetSameInstant(ZoneOffset.UTC);
 
+    Duration duration = Duration.between(startTime, endTime);
     if (duration.toDays() > 0) {
       while (isApplicable(startTime, endTime, ChronoUnit.DAYS)) {
         prefixes.add(startTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))); // Only days
