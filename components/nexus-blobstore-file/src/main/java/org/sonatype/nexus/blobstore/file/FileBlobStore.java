@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -79,6 +80,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
@@ -564,10 +566,21 @@ public class FileBlobStore
         return false;
       }
 
+      DateTime deletedDateTime = new DateTime();
       blobAttributes.setDeleted(true);
       blobAttributes.setDeletedReason(reason);
-      blobAttributes.setDeletedDateTime(new DateTime());
+      blobAttributes.setDeletedDateTime(deletedDateTime);
       blobAttributes.store();
+
+      // Save properties file under the new location
+      BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());
+      Path path = attributePath(propRef);
+      FileBlobAttributes newBlobAttributes = new FileBlobAttributes(
+          path, blobAttributes.getHeaders(), blobAttributes.getMetrics());
+      newBlobAttributes.setDeleted(true);
+      newBlobAttributes.setDeletedReason(reason);
+      newBlobAttributes.setDeletedDateTime(deletedDateTime);
+      newBlobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs
       blobDeletionIndex.createRecord(blobId);
