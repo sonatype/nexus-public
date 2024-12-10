@@ -22,7 +22,8 @@ import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
 
-public class RawHostedRecipeTest extends RawRecipeTestSupport
+public class RawHostedRecipeTest
+    extends RawRecipeTestSupport
 {
   @Mock
   private Repository rawHostedRepository;
@@ -32,8 +33,7 @@ public class RawHostedRecipeTest extends RawRecipeTestSupport
   @Before
   public void setup() {
     underTest = new RawHostedRecipe(new HostedType(), new RawFormat());
-    mockFacets(underTest);
-    mockHandlers(underTest);
+    mockDependencies(underTest);
   }
 
   @Test

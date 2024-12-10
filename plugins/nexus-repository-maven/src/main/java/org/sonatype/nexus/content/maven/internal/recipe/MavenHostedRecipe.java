@@ -19,21 +19,15 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
-import org.sonatype.nexus.content.maven.internal.index.MavenContentProxyIndexFacet;
+import org.sonatype.nexus.content.maven.internal.index.MavenContentHostedIndexFacet;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
-import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
-import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.maven.internal.matcher.MavenNx2MetaFilesMatcher;
-import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe;
-import org.sonatype.nexus.repository.proxy.ProxyHandler;
-import org.sonatype.nexus.repository.purge.PurgeUnusedFacet;
-import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.repository.maven.internal.recipes.Maven2HostedRecipe;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet;
-import org.sonatype.nexus.repository.view.Route.Builder;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
@@ -41,65 +35,44 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 
 /**
- * @since 3.26
+ * @since 3.25
  */
 @AvailabilityVersion(from = "1.0")
-@Named(Maven2ProxyRecipe.NAME)
+@Named(Maven2HostedRecipe.NAME)
 @Singleton
-public class MavenProxyRecipe
+public class MavenHostedRecipe
     extends MavenRecipeSupport
-    implements Maven2ProxyRecipe
+    implements Maven2HostedRecipe
 {
-  private final Provider<HttpClientFacet> httpClientFacet;
+  private final Provider<MavenContentHostedIndexFacet> mavenIndexFacet;
 
-  private final Provider<NegativeCacheFacet> negativeCacheFacet;
-
-  private final Provider<MavenProxyFacet> proxyFacet;
-
-  private final Provider<PurgeUnusedFacet> purgeUnusedFacet;
-
-  private final NegativeCacheHandler negativeCacheHandler;
-
-  private final ProxyHandler proxyHandler;
-
-  private final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet;
+  private final Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet;
 
   @Inject
-  public MavenProxyRecipe(
-      @Named(ProxyType.NAME) final Type type,
+  public MavenHostedRecipe(
+      @Named(HostedType.NAME) final Type type,
       @Named(Maven2Format.NAME) final Format format,
-      final Provider<HttpClientFacet> httpClientFacet,
-      final Provider<NegativeCacheFacet> negativeCacheFacet,
-      final Provider<MavenProxyFacet> proxyFacet,
-      final Provider<PurgeUnusedFacet> purgeUnusedFacet,
-      final NegativeCacheHandler negativeCacheHandler,
-      final ProxyHandler proxyHandler,
-      final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet)
+      final Provider<MavenContentHostedIndexFacet> mavenIndexFacet,
+      final Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet)
   {
     super(type, format);
-    this.httpClientFacet = checkNotNull(httpClientFacet);
-    this.negativeCacheFacet = checkNotNull(negativeCacheFacet);
-    this.proxyFacet = checkNotNull(proxyFacet);
-    this.purgeUnusedFacet = checkNotNull(purgeUnusedFacet);
-    this.negativeCacheHandler = checkNotNull(negativeCacheHandler);
-    this.proxyHandler = checkNotNull(proxyHandler);
-    this.mavenProxyIndexFacet = checkNotNull(mavenProxyIndexFacet);
+    this.mavenIndexFacet = checkNotNull(mavenIndexFacet);
+    this.mavenPurgeSnapshotsFacet = checkNotNull(mavenPurgeSnapshotsFacet);
   }
 
   @Override
   public void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(securityFacet.get());
     repository.attach(configure(viewFacet.get()));
-    repository.attach(httpClientFacet.get());
-    repository.attach(negativeCacheFacet.get());
-    repository.attach(proxyFacet.get());
+    repository.attach(mavenMetadataRebuildFacet.get());
     repository.attach(mavenContentFacet.get());
-    repository.attach(purgeUnusedFacet.get());
     repository.attach(searchFacet.get());
     repository.attach(browseFacet.get());
-    repository.attach(mavenProxyIndexFacet.get());
+    repository.attach(mavenArchetypeCatalogFacet.get());
+    repository.attach(mavenIndexFacet.get());
     repository.attach(mavenMaintenanceFacet.get());
     repository.attach(removeSnapshotsFacet.get());
+    repository.attach(mavenPurgeSnapshotsFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {
@@ -107,42 +80,36 @@ public class MavenProxyRecipe
 
     addBrowseUnsupportedRoute(builder);
 
-    // Note: partialFetchHandler() NOT added for Maven metadata;
+    // Note: partialFetchHandler NOT added for Maven metadata
     builder.route(newMetadataRouteBuilder()
-        .handler(negativeCacheHandler)
         .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(lastDownloadedHandler)
-        .handler(proxyHandler)
+        .handler(mavenMetadataRebuildHandler)
+        .handler(mavenContentHandler)
         .create());
 
     builder.route(newIndexRouteBuilder()
-        .handler(negativeCacheHandler)
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(lastDownloadedHandler)
-        .handler(proxyHandler)
+        .handler(mavenContentHandler)
         .create());
 
     builder.route(newArchetypeCatalogRouteBuilder()
-        .handler(negativeCacheHandler)
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(lastDownloadedHandler)
-        .handler(proxyHandler)
-        .create());
-
-    builder.route(newNx2MetaFilesRouteBuilder()
-        .handler(notFound())
+        .handler(archetypeCatalogHandler)
+        .handler(mavenContentHandler)
         .create());
 
     builder.route(newMavenPathRouteBuilder()
-        .handler(negativeCacheHandler)
         .handler(partialFetchHandler)
         .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(lastDownloadedHandler)
-        .handler(proxyHandler)
+        .handler(mavenContentHandler)
         .create());
 
     builder.defaultHandlers(notFound());
@@ -150,9 +117,5 @@ public class MavenProxyRecipe
     facet.configure(builder.create());
 
     return facet;
-  }
-
-  private Builder newNx2MetaFilesRouteBuilder() {
-    return new Builder().matcher(new MavenNx2MetaFilesMatcher(mavenPathParser));
   }
 }

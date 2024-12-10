@@ -33,7 +33,8 @@ import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
 
-public class RawProxyRecipeTest extends RawRecipeTestSupport
+public class RawProxyRecipeTest
+    extends RawRecipeTestSupport
 {
   @Mock
   private Repository rawProxyRepository;
@@ -66,12 +67,10 @@ public class RawProxyRecipeTest extends RawRecipeTestSupport
 
   private final Provider<NegativeCacheFacet> negativeCacheFacetProvider = () -> negativeCacheFacet;
 
-
   @Mock
   private RawProxyFacet proxyFacet;
 
   private final Provider<RawProxyFacet> rawProxyFacetProvider = () -> proxyFacet;
-
 
   @Mock
   private PurgeUnusedFacet purgeUnusedFacet;
@@ -82,19 +81,10 @@ public class RawProxyRecipeTest extends RawRecipeTestSupport
 
   @Before
   public void setup() {
-    underTest = new RawProxyRecipe(new ProxyType(), new RawFormat());
-    mockFacets(underTest);
-    mockHandlers(underTest);
-    underTest.setNegativeCacheHandler(negativeCacheHandler);
-    underTest.setPartialFetchHandler(partialFetchHandler);
-    underTest.setProxyHandler(proxyHandler);
-    underTest.setConditionalRequestHandler(conditionalRequestHandler);
-    underTest.setHandlerContributor(handlerContributor);
-    underTest.setRoutingRuleHandler(routingRuleHandler);
-    underTest.setHttpClientFacet(httpClientFacetProvider);
-    underTest.setNegativeCacheFacet(negativeCacheFacetProvider);
-    underTest.setProxyFacet(rawProxyFacetProvider);
-    underTest.setPurgeUnusedFacet(purgeUnusedFacetProvider);
+    underTest =
+        new RawProxyRecipe(new ProxyType(), new RawFormat(), httpClientFacetProvider, negativeCacheFacetProvider,
+            rawProxyFacetProvider, purgeUnusedFacetProvider, negativeCacheHandler, proxyHandler, routingRuleHandler);
+    mockDependencies(underTest);
   }
 
   @Test
@@ -112,4 +102,3 @@ public class RawProxyRecipeTest extends RawRecipeTestSupport
     verify(rawProxyRepository).attach(purgeUnusedFacet);
   }
 }
-
