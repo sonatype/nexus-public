@@ -90,6 +90,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
       authenticationConfiguration.set("password", authentication.getPassword());
       authenticationConfiguration.set("ntlmHost", authentication.getNtlmHost());
       authenticationConfiguration.set("ntlmDomain", authentication.getNtlmDomain());
+      authenticationConfiguration.set("bearerToken", authentication.getBearerToken());
     }
   }
 

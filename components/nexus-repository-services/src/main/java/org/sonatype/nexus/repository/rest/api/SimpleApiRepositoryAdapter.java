@@ -100,8 +100,7 @@ public class SimpleApiRepositoryAdapter
             online,
             getHostedStorageAttributes(repository),
             getCleanupPolicyAttributes(repository),
-            getComponentAttributes(repository)
-        );
+            getComponentAttributes(repository));
       case ProxyType.NAME:
         return new SimpleApiProxyRepository(name, format, url, online,
             getStorageAttributes(repository),
@@ -118,7 +117,7 @@ public class SimpleApiRepositoryAdapter
 
   protected ComponentAttributes getComponentAttributes(final Repository repository) {
     return new ComponentAttributes(
-        repository.getConfiguration().attributes(COMPONENT).get(PROPRIETARY_COMPONENTS, Boolean.class,false));
+        repository.getConfiguration().attributes(COMPONENT).get(PROPRIETARY_COMPONENTS, Boolean.class, false));
   }
 
   protected String getRoutingRuleName(final Repository repository) {
@@ -154,7 +153,9 @@ public class SimpleApiRepositoryAdapter
 
   protected GroupDeployAttributes getGroupAttributes(final Repository repository) {
     NestedAttributesMap groupAttributes = repository.getConfiguration().attributes("group");
-    Collection<String> memberNames = groupAttributes.get("memberNames", new TypeToken<Collection<String>>() { });
+    Collection<String> memberNames = groupAttributes.get("memberNames", new TypeToken<Collection<String>>()
+    {
+    });
     String groupWriteMember = groupAttributes.get(GROUP_WRITE_MEMBER, String.class);
     return new GroupDeployAttributes(memberNames, groupWriteMember);
   }
@@ -207,7 +208,8 @@ public class SimpleApiRepositoryAdapter
       String ntlmHost = authenticationMap.get("ntlmHost", String.class);
       String ntlmDomain = authenticationMap.get("ntlmDomain", String.class);
 
-      authentication = new HttpClientConnectionAuthenticationAttributes(type, username, null, ntlmHost, ntlmDomain);
+      authentication =
+          new HttpClientConnectionAuthenticationAttributes(type, username, null, ntlmHost, ntlmDomain, null);
     }
 
     HttpClientConnectionAttributes connection = null;
@@ -221,7 +223,8 @@ public class SimpleApiRepositoryAdapter
       Boolean useTrustStore = connectionMap.get("useTrustStore", Boolean.class, Boolean.FALSE);
 
       connection =
-          new HttpClientConnectionAttributes(retries, userAgentSuffix, timeout, enableCircularRedirects, enableCookies, useTrustStore);
+          new HttpClientConnectionAttributes(retries, userAgentSuffix, timeout, enableCircularRedirects, enableCookies,
+              useTrustStore);
     }
 
     return new HttpClientAttributes(blocked, autoBlock, connection, authentication);
