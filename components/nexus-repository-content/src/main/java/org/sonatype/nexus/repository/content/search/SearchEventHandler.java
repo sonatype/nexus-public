@@ -31,6 +31,8 @@ import javax.inject.Named;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
@@ -45,8 +47,6 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadManager.UIUploadEvent;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
-import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.codahale.metrics.annotation.Gauge;
@@ -95,7 +95,8 @@ public abstract class SearchEventHandler
 
   enum RequestType
   {
-    INDEX, PURGE
+    INDEX,
+    PURGE
   }
 
   private final RepositoryManager repositoryManager;
@@ -190,9 +191,9 @@ public abstract class SearchEventHandler
   /**
    * Request update search indexes based on component id
    *
-   * @param format      The repository format
+   * @param format The repository format
    * @param componentId The component id
-   * @param repository  The repository
+   * @param repository The repository
    */
   public void requestIndex(final String format, final int componentId, final Repository repository) {
     if (processEvents && componentId > 0) {
@@ -204,9 +205,9 @@ public abstract class SearchEventHandler
   /**
    * Request purge search indexes based on component id
    *
-   * @param format      The repository format
+   * @param format The repository format
    * @param componentId The component id
-   * @param repository  The repository
+   * @param repository The repository
    */
   public void requestPurge(final String format, final int componentId, final Repository repository) {
     if (processEvents && componentId > 0) {
@@ -264,11 +265,9 @@ public abstract class SearchEventHandler
    */
   @VisibleForTesting
   static void indexUIUpload(final Repository repository, final List<String> assetPaths) {
-    repository.optionalFacet(SearchFacet.class).ifPresent(searchFacet ->
-        repository.optionalFacet(ContentFacet.class).ifPresent(contentFacet ->
-            processUIUpload(assetPaths, contentFacet, searchFacet)
-        )
-    );
+    repository.optionalFacet(SearchFacet.class)
+        .ifPresent(searchFacet -> repository.optionalFacet(ContentFacet.class)
+            .ifPresent(contentFacet -> processUIUpload(assetPaths, contentFacet, searchFacet)));
   }
 
   private static void processUIUpload(
@@ -288,7 +287,9 @@ public abstract class SearchEventHandler
   }
 
   private static Optional<EntityId> getComponentEntityId(final String assetPath, final ContentFacet contentFacet) {
-    return contentFacet.assets().path(assetPath).find()
+    return contentFacet.assets()
+        .path(assetPath)
+        .find()
         .map(InternalIds::internalComponentId)
         .filter(OptionalInt::isPresent)
         .map(OptionalInt::getAsInt)
@@ -410,17 +411,19 @@ public abstract class SearchEventHandler
     }
 
     // deliver index/purge requests to the relevant repositories
-    requestsByRepository.asMap().forEach(
-        (repoTag, componentIds) -> ofNullable(repositoryManager.get(repositoryName(repoTag))).ifPresent(
-            repository -> repository.optionalFacet(SearchFacet.class).ifPresent(
-                searchFacet -> {
-                  if (repoTag.startsWith(INDEX.name())) {
-                    searchFacet.index(componentIds);
-                  }
-                  else {
-                    searchFacet.purge(componentIds);
-                  }
-                })));
+    requestsByRepository.asMap()
+        .forEach(
+            (repoTag, componentIds) -> ofNullable(repositoryManager.get(repositoryName(repoTag))).ifPresent(
+                repository -> repository.optionalFacet(SearchFacet.class)
+                    .ifPresent(
+                        searchFacet -> {
+                          if (repoTag.startsWith(INDEX.name())) {
+                            searchFacet.index(componentIds);
+                          }
+                          else {
+                            searchFacet.purge(componentIds);
+                          }
+                        })));
   }
 
   @VisibleForTesting
@@ -436,7 +439,8 @@ public abstract class SearchEventHandler
   }
 
   /**
-   * Extracts the external component id from the request key; this should only be done in the context of a repository/format.
+   * Extracts the external component id from the request key; this should only be done in the context of a
+   * repository/format.
    */
   private static EntityId componentId(final String requestKey) {
     return toExternalId(parseInt(requestKey.substring(requestKey.indexOf(':') + 1)));

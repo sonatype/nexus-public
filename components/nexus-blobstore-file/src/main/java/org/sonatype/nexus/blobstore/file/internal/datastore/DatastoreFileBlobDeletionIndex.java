@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,8 +33,8 @@ import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData;
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.property.PropertiesFile;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
 
 import com.squareup.tape.QueueFile;
 
@@ -140,7 +141,6 @@ public class DatastoreFileBlobDeletionIndex
   }
 
   private void scheduleMigrateIndex(final PropertiesFile metadata) {
-    invoke(periodicJobService::startUsing);
     periodicJobService.runOnce(() -> {
       try {
         migrateDeletionIndexFromFiles(metadata);
@@ -148,7 +148,6 @@ public class DatastoreFileBlobDeletionIndex
       catch (IOException e) {
         log.error("Failed to migrate soft deleted blobs to the database", e);
       }
-      invoke(periodicJobService::stopUsing);
     }, (int) migrationDelay.getSeconds());
   }
 
@@ -216,20 +215,5 @@ public class DatastoreFileBlobDeletionIndex
     if (oldDeletionIndexFile.exists() && !oldDeletionIndexFile.delete()) {
       log.error("Unable to delete 'deletion index' file, path = {}", oldDeletionIndexFile.getAbsolutePath());
     }
-  }
-
-  private void invoke(final ThrowingRunnable callable) {
-    try {
-      callable.run();
-    }
-    catch (Exception e) {
-      log.debug("Failed to start or stop using the PeriodicJobService", e);
-    }
-  }
-
-  @FunctionalInterface
-  private static interface ThrowingRunnable
-  {
-    void run() throws Exception;
   }
 }

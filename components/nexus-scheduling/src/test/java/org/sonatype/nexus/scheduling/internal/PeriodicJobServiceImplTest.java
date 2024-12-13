@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 
 import org.awaitility.Awaitility;
 import org.junit.Before;
@@ -40,7 +40,8 @@ public class PeriodicJobServiceImplTest
 
   private boolean isRunning() {
     try {
-      service.schedule(() -> {} , 60).cancel();
+      service.schedule(() -> {
+      }, 60).cancel();
       return true;
     }
     catch (IllegalStateException | NullPointerException e) {
@@ -48,9 +49,10 @@ public class PeriodicJobServiceImplTest
     }
   }
 
-  @SuppressWarnings("java:S2699") // sonar doesn't detect awaitility assertions https://jira.sonarsource.com/browse/SONARJAVA-3334
+  @SuppressWarnings("java:S2699") // sonar doesn't detect awaitility assertions
+                                  // https://jira.sonarsource.com/browse/SONARJAVA-3334
   @Test
-  public void numberIncrementingTask() throws Exception {
+  public void numberIncrementingTask() {
     service.startUsing();
 
     final AtomicInteger counter = new AtomicInteger();
@@ -65,7 +67,7 @@ public class PeriodicJobServiceImplTest
   }
 
   @Test
-  public void testConditionalLifecycle() throws Exception {
+  public void testConditionalLifecycle() {
     assertThat(isRunning(), is(false));
     service.startUsing();
     assertThat(isRunning(), is(true));
@@ -78,7 +80,7 @@ public class PeriodicJobServiceImplTest
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testStopUsing_InvalidPrecondition() throws Exception {
+  public void testStopUsing_InvalidPrecondition() {
     service.stopUsing();
   }
 }

@@ -22,7 +22,7 @@ import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.metrics.DatastoreBlobStoreMetricsServiceSupport;
 import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -51,7 +51,6 @@ public class DatastoreS3BlobStoreMetricsService
         metricsEntity.getBlobCount(),
         metricsEntity.getTotalSize(),
         AVAILABLE_SPACE_BY_FILE_STORE,
-        true
-    );
+        true);
   }
 }

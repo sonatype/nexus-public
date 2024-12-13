@@ -35,6 +35,8 @@ import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeEventHandler;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeEventHandlerSupport;
@@ -46,8 +48,6 @@ import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
-import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -320,12 +320,13 @@ public class BrowseEventHandler
       requestsByRepository.asMap().forEach((repository, assetIds) -> {
         try {
           cooperation.on(() -> {
-            repository.optionalFacet(BrowseFacet.class).ifPresent(browseFacet -> browseFacet.addPathsToAssets(assetIds));
+            repository.optionalFacet(BrowseFacet.class)
+                .ifPresent(browseFacet -> browseFacet.addPathsToAssets(assetIds));
             return null;
           })
-          // We always need to process our assets regardless of what the remote node did
-          .checkFunction(Optional::empty)
-          .cooperate(repository.getName());
+              // We always need to process our assets regardless of what the remote node did
+              .checkFunction(Optional::empty)
+              .cooperate(repository.getName());
         }
         catch (IOException e) {
           logWarning("An error occurred while processing browse nodes for {}", repository, e);
@@ -346,15 +347,16 @@ public class BrowseEventHandler
       Iterator<Repository> itr = repositoriesToTrim.iterator();
       while (itr.hasNext()) {
         Repository nextRepository = itr.next();
-        itr.remove(); //do the removal first so other threads can add the same repository to the set to trim
+        itr.remove(); // do the removal first so other threads can add the same repository to the set to trim
         try {
           cooperation.on(() -> {
-              nextRepository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
-              return null;
-            })
-            // In order to guarantee the repository is trimmed we return an empty result if another thread initially won
-            .checkFunction(Optional::empty)
-            .cooperate(nextRepository.getName());
+            nextRepository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
+            return null;
+          })
+              // In order to guarantee the repository is trimmed we return an empty result if another thread initially
+              // won
+              .checkFunction(Optional::empty)
+              .cooperate(nextRepository.getName());
         }
         catch (IOException e) {
           logWarning("An error occurred while trying to trim {}", nextRepository, e);

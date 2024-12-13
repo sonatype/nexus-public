@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -45,19 +45,29 @@ public class PeriodicJobServiceImpl
   private int activeClients;
 
   @Override
-  public synchronized void startUsing() throws Exception {
+  public synchronized void startUsing() {
     if (activeClients == 0) {
-      start();
+      try {
+        start();
+      }
+      catch (Exception e) {
+        throw new PeriodicJobStartException(e);
+      }
     }
     activeClients++;
   }
 
   @Override
-  public synchronized void stopUsing() throws Exception {
+  public synchronized void stopUsing() {
     checkState(activeClients > 0, "Not started");
     activeClients--;
     if (activeClients == 0) {
-      stop();
+      try {
+        stop();
+      }
+      catch (Exception e) {
+        throw new PeriodicJobShutdownException(e);
+      }
     }
   }
 
@@ -75,8 +85,18 @@ public class PeriodicJobServiceImpl
     executor = null;
   }
 
+  @Override
   public void runOnce(final Runnable runnable, final int delaySeconds) {
-    executor.schedule(runnable, delaySeconds, TimeUnit.SECONDS);
+    startUsing();
+    executor.schedule(() -> {
+      try {
+        runnable.run();
+        return null;
+      }
+      finally {
+        stopUsing();
+      }
+    }, delaySeconds, TimeUnit.SECONDS);
   }
 
   @Override
@@ -113,5 +133,21 @@ public class PeriodicJobServiceImpl
         log.error("Periodic job threw exception", e);
       }
     };
+  }
+
+  public static class PeriodicJobShutdownException
+      extends RuntimeException
+  {
+    private PeriodicJobShutdownException(final Exception e) {
+      super(e);
+    }
+  }
+
+  public static class PeriodicJobStartException
+      extends RuntimeException
+  {
+    private PeriodicJobStartException(final Exception e) {
+      super(e);
+    }
   }
 }

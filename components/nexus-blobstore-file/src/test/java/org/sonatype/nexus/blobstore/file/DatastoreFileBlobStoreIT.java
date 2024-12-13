@@ -19,9 +19,9 @@ import org.sonatype.nexus.blobstore.file.internal.datastore.DatastoreFileBlobDel
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
 import org.sonatype.nexus.blobstore.file.store.internal.SoftDeletedBlobsDAO;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.transaction.TransactionModule;
 

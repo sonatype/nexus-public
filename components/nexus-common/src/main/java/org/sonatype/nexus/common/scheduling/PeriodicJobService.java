@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.scheduling;
+package org.sonatype.nexus.common.scheduling;
 
 import java.time.Duration;
 
@@ -27,7 +27,7 @@ public interface PeriodicJobService
    *
    * @since 3.1
    */
-  void startUsing() throws Exception;
+  void startUsing();
 
   /**
    * Signals the caller no longer needs the service. The service is stopped if this invocation balances out all previous
@@ -35,7 +35,7 @@ public interface PeriodicJobService
    *
    * @since 3.1
    */
-  void stopUsing() throws Exception;
+  void stopUsing();
 
   /**
    * Runs the provided task a single time after the specified number of seconds.

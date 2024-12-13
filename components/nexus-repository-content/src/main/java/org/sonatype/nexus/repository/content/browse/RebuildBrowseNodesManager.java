@@ -21,6 +21,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
@@ -54,13 +55,19 @@ public class RebuildBrowseNodesManager
 
   private final RepositoryManager repositoryManager;
 
+  private final PeriodicJobService periodicJobService;
+
   private boolean rebuildOnStart = false;
 
   @Inject
-  public RebuildBrowseNodesManager(final TaskScheduler taskScheduler, final RepositoryManager repositoryManager)
+  public RebuildBrowseNodesManager(
+      final TaskScheduler taskScheduler,
+      final RepositoryManager repositoryManager,
+      final PeriodicJobService periodicJobService)
   {
     this.taskScheduler = checkNotNull(taskScheduler);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.periodicJobService = checkNotNull(periodicJobService);
   }
 
   public void setRebuildOnSart(final boolean rebuildOnStart) {
@@ -73,6 +80,10 @@ public class RebuildBrowseNodesManager
       return;
     }
 
+    periodicJobService.runOnce(this::maybeRebuild, 0);
+  }
+
+  private void maybeRebuild() {
     Stopwatch sw = Stopwatch.createStarted();
     try {
       String repositoryNames = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
