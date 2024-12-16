@@ -47,10 +47,10 @@ public abstract class BlobstoreRestoreTestHelperSupport
   public void runReconcileTaskWithTimeout(final String blobstoreName, final long timeout) {
     TaskConfiguration planingConfig = taskScheduler.createTaskConfigurationInstance(PLAN_RECONCILE_TYPE_ID);
     planingConfig.setString(BLOB_STORE_NAME_FIELD_ID, blobstoreName);
-    TaskInfo plabningTaskInfo = taskScheduler.submit(planingConfig);
+    TaskInfo planingTaskInfo = taskScheduler.submit(planingConfig);
     await().atMost(timeout, SECONDS)
-        .until(() -> plabningTaskInfo.getLastRunState() != null
-            && plabningTaskInfo.getLastRunState().getEndState().equals(OK));
+        .until(() -> planingTaskInfo.getLastRunState() != null
+            && planingTaskInfo.getLastRunState().getEndState().equals(OK));
 
     TaskConfiguration executeConfig = taskScheduler.createTaskConfigurationInstance(EXECUTE_RECONCILE_TYPE_ID);
     executeConfig.setString(BLOB_STORE_NAME_FIELD_ID, blobstoreName);
