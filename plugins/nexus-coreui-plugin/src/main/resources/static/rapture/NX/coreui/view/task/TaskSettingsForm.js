@@ -149,6 +149,12 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
           ['once', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_OnceItem')]]);
       }
 
+      if (taskTypeModel.get('id') === 'blobstore.planReconciliation') {
+        scheduleFieldSet.setHidden(true);
+      } else {
+        scheduleFieldSet.setHidden(false);
+      }
+
       Ext.each(formFields, function(field) {
         var properties = model.get('properties');
         if (properties && !properties.hasOwnProperty(field.id)) {
