@@ -65,7 +65,7 @@
     </Set>
     <Call name="addCustomizer">
       <Arg>
-        <New class="org.sonatype.nexus.bootstrap.jetty.DockerSubdomainRequestCustomizer">
+        <New class="org.sonatype.nexus.bootstrap.jetty.NexusRequestCustomizer">
           <Arg>
             <Property name="nexus-context-path"/>
           </Arg>
