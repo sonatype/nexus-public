@@ -10,25 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.upgrade;
+package org.sonatype.nexus.upgrade.datastore.internal.steps;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.sql.Connection;
+import java.util.Optional;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import com.google.inject.BindingAnnotation;
+import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-/**
- * Marks a class or a method as available from a specified database schema version onwards
- * 
- */
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@BindingAnnotation
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface AvailabilityVersion
+@Named
+@Singleton
+public class ConanV2UpgradeStep_2_8
+    implements DatabaseMigrationStep
 {
-  String from();
+  @Override
+  public Optional<String> version() {
+    return Optional.of("2.8");
+  }
+
+  @Override
+  public void migrate(final Connection connection) throws Exception {
+    // No-op, this makes conan V2 proxy/group repositories available
+  }
 }

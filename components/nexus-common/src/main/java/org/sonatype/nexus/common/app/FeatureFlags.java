@@ -210,10 +210,6 @@ public interface FeatureFlags
   String MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED_NAMED =
       "${nexus.malware.risk.on.disk.nonadmin.override.enabled:-false}";
 
-  String CONAN_V2_ENABLED = "nexus.conan.v2.enabled";
-
-  String CONAN_V2_ENABLED_NAMED = "${nexus.conan.v2.enabled:-false}";
-
   String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
 
   String RECONCILE_PLAN_ENABLED_NAMED = "${nexus.reconcile.plan.enabled:-false}";

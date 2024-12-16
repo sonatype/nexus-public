@@ -12,23 +12,30 @@
  */
 package org.sonatype.nexus.common.upgrade;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import com.google.inject.BindingAnnotation;
+import org.sonatype.nexus.common.db.DatabaseCheck;
+import org.sonatype.nexus.common.guice.AbstractInterceptorModule;
+
+import com.google.inject.matcher.Matchers;
 
 /**
- * Marks a class or a method as available from a specified database schema version onwards
- * 
+ * Guice module for configuring upgrade-related interceptors.
+ *
+ * This module binds an interceptor to methods annotated with {@link AvailabilityVersion}.
+ * The interceptor is an instance of {@link AvailabilityVersionCheckerInterceptor} which is provided
+ * with a {@link DatabaseCheck} instance.
+ *
  */
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@BindingAnnotation
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface AvailabilityVersion
+@Named
+@Singleton
+public class UpgradeModule
+    extends AbstractInterceptorModule
 {
-  String from();
+  @Override
+  protected void configure() {
+    bindInterceptor(Matchers.any(), Matchers.annotatedWith(AvailabilityVersion.class),
+        new AvailabilityVersionCheckerInterceptor(getProvider(DatabaseCheck.class)));
+  }
 }
