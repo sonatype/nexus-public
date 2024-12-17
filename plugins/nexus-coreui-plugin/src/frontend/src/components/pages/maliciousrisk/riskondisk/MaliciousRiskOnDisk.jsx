@@ -30,14 +30,30 @@ import UIStrings from "../../../../constants/UIStrings";
 import "./MaliciousRiskOnDisk.scss";
 import FeatureFlags from '../../../../constants/FeatureFlags';
 
-const {MALWARE_RISK_ON_DISK_ENABLED, MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED} = FeatureFlags;
+const {
+  CLM,
+  MALWARE_RISK_ENABLED,
+  MALWARE_RISK_ON_DISK_ENABLED,
+  MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED
+} = FeatureFlags;
 
 const {
   TITLE_PLURAL,
   TITLE_SINGULAR,
   DESCRIPTION,
   CONTACT_SONATYPE,
+  VIEW_MALWARE_RISK,
 } = UIStrings.MALICIOUS_RISK.RISK_ON_DISK;
+
+function MalwareButton({isProEdition, isMalwareRiskEnabled, isIqServerEnabled}) {
+  if (isProEdition && isMalwareRiskEnabled && isIqServerEnabled) {
+    return <a className="nx-btn nx-btn--error" href="#browse/malwarerisk">{VIEW_MALWARE_RISK}</a>;
+  } else if (isProEdition) {
+    return <a className="nx-btn nx-btn--error" href={CONTACT_SONATYPE.URL.PRO} target="_blank">{CONTACT_SONATYPE.TEXT}</a>;
+  } else {
+    return <a className="nx-btn nx-btn--error" href={CONTACT_SONATYPE.URL.OSS} target="_blank">{CONTACT_SONATYPE.TEXT}</a>;
+  }
+}
 
 function MaliciousRiskOnDiskContent({user, props}) {
   const [state, send] = useMachine(MaliciousRiskOnDiskMachine, {devtools: true});
@@ -47,9 +63,12 @@ function MaliciousRiskOnDiskContent({user, props}) {
 
   const isAdmin = user?.administrator;
   const isProEdition = ExtJS.isProEdition();
+  const isIqServerEnabled = ExtJS.state().getValue(CLM)?.enabled;
+  const isMalwareRiskEnabled = ExtJS.state().getValue(MALWARE_RISK_ENABLED);
+  const isMalwareRemediationPage = window.location.hash.includes('#browse/malwarerisk');
 
   const riskOnDiskCount = maliciousRiskOnDisk?.totalCount ?? 0;
-  const showWarningAlert = riskOnDiskCount > 0 && !closeMalwareBanner;
+  const showWarningAlert = riskOnDiskCount > 0 && !closeMalwareBanner && !isMalwareRemediationPage;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -69,25 +88,18 @@ function MaliciousRiskOnDiskContent({user, props}) {
     send({type: 'DISMISS'});
   }
 
-  function getFirewallContactSonatype() {
-    return isProEdition ? CONTACT_SONATYPE.URL.PRO : CONTACT_SONATYPE.URL.OSS;
-  }
-
   return (
       <NxLoadWrapper loading={isLoading} error={loadError} retryHandler={retry}>
         {showWarningAlert && <div className="risk-on-disk-container">
           <NxErrorAlert className="risk-on-disk-alert" onClose={dismiss}>
             <div className="risk-on-disk-content">
-              <div className="risk-on-disk-alert-title">
+              <div className="malware-components-count">
                 <NxFontAwesomeIcon icon={faExclamationTriangle}/>
                 <NxH2>{riskOnDiskCount.toLocaleString()}</NxH2>
                 <NxH3>{riskOnDiskCount > 1 ? TITLE_PLURAL : TITLE_SINGULAR}</NxH3>
               </div>
               <NxGrid.Column className='risk-on-disk-alert-description'>
                 <NxGrid.ColumnSection>
-                  <NxGrid.Header>
-                    <NxH3 className='risk-on-disk-alert-description-title'>{DESCRIPTION.TITLE}</NxH3>
-                  </NxGrid.Header>
                   <p>{DESCRIPTION.CONTENT}</p>
                 </NxGrid.ColumnSection>
                 {!isAdmin &&
@@ -97,15 +109,17 @@ function MaliciousRiskOnDiskContent({user, props}) {
                 }
               </NxGrid.Column>
             </div>
-            <NxButtonBar>
-              {isAdmin &&
-                  <a className="nx-btn nx-btn--error"
-                     href={getFirewallContactSonatype()}
-                     target="_blank">
-                    {CONTACT_SONATYPE.TEXT}
-                  </a>}
-            </NxButtonBar>
+            {isAdmin && <NxButtonBar>
+              <MalwareButton isProEdition={isProEdition}
+                             isMalwareRiskEnabled={isMalwareRiskEnabled}
+                             isIqServerEnabled={isIqServerEnabled}/>
+            </NxButtonBar>}
           </NxErrorAlert>
+        </div>}
+        {isMalwareRemediationPage && <div className={`malware-components-count ${riskOnDiskCount === 0 ? 'zero' : ''}`}>
+            {riskOnDiskCount > 0 && <NxFontAwesomeIcon icon={faExclamationTriangle}/>}
+            <NxH2>{riskOnDiskCount.toLocaleString()}</NxH2>
+            <NxH3>{riskOnDiskCount > 1 ? TITLE_PLURAL : TITLE_SINGULAR}</NxH3>
         </div>}
       </NxLoadWrapper>
   );
