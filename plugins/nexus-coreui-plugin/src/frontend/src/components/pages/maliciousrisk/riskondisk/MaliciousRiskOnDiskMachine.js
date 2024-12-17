@@ -88,7 +88,8 @@ export default createMachine({
     setCookie: () => document.cookie = 'MALWARE_BANNER=close; path=/'
   },
   guards: {
-    shouldOpenAndLoad: () => document.cookie.match(/MALWARE_BANNER=([^;]*)/)?.[1] !== 'close'
+    shouldOpenAndLoad: () => document.cookie.match(/MALWARE_BANNER=([^;]*)/)?.[1] !== 'close' ||
+        window.location.hash.includes('#browse/malwarerisk')
   },
   services: {
     fetchData: () => Axios.get(MALICIOUS_RISK_ON_DISK)
