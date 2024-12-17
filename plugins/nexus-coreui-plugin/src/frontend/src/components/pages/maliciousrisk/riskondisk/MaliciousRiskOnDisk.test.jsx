@@ -27,7 +27,6 @@ import MaliciousRiskStrings from "../../../../constants/pages/maliciousrisk/Mali
 
 const {MALICIOUS_RISK_ON_DISK} = APIConstants.REST.PUBLIC;
 const {
-  CLM,
   MALWARE_RISK_ENABLED,
   MALWARE_RISK_ON_DISK_ENABLED
 } = FeatureFlags;
@@ -54,8 +53,7 @@ const selectors = {
   getHeading: (t) => screen.getByRole('heading', {name: t}),
   queryButton: (t) => screen.queryByRole('button', {name: t}),
   queryLink: (t) => screen.queryByRole('link', {name: t}),
-  queryAlert: () => screen.queryByRole('alert'),
-  queryText: (t) => screen.queryByText(t),
+  queryAlert: () => screen.queryByRole('alert')
 };
 
 describe('MaliciousRiskOnDisk', () => {
@@ -63,113 +61,121 @@ describe('MaliciousRiskOnDisk', () => {
     when(ExtJS.state().getValue)
         .calledWith(MALWARE_RISK_ON_DISK_ENABLED)
         .mockReturnValue(true);
+    when(ExtJS.state().getValue)
+        .calledWith(MALWARE_RISK_ENABLED)
+        .mockReturnValue(true);
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockResolvedValue({
       data: maliciousRiskOnDiskResponse
     });
   })
 
-  async function renderView(isAdmin, isProEdition) {
+  async function renderView(isAdmin, isProEdition, page) {
+    window.location.hash = `#browse/${page}`;
     ExtJS.isProEdition.mockReturnValue(isProEdition);
     ExtJS.useUser.mockReturnValue({'administrator': isAdmin});
+    const rerender = jest.fn();
 
-    render(<MaliciousRiskOnDisk />);
+    render(<MaliciousRiskOnDisk rerender={rerender}/>);
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
   }
 
-  it('does not render if user is not logged', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('does not render if user is not logged', async (page) => {
     ExtJS.useUser.mockReturnValue(null);
     await act(async () => {
-      render(<MaliciousRiskOnDisk />);
+      render(<MaliciousRiskOnDisk/>);
     });
 
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
-  it('does not render if feature flag is false', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('does not render if feature flag is false', async (page) => {
     when(ExtJS.state().getValue)
         .calledWith(MALWARE_RISK_ON_DISK_ENABLED)
         .mockReturnValue(false);
     await act(async () => {
-      render(<MaliciousRiskOnDisk />);
+      render(<MaliciousRiskOnDisk/>);
     });
 
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
-  it('does not render if malicious count is 0', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('does not render if malicious count is 0', async (page) => {
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockResolvedValue({
       data: maliciousRiskOnDiskResponseWithCount0
     });
     await act(async () => {
-      render(<MaliciousRiskOnDisk />);
+      render(<MaliciousRiskOnDisk/>);
     });
 
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
-  it('renders error message if data fetch fails', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('renders error message if data fetch fails', async (page) => {
     when(axios.get).calledWith(MALICIOUS_RISK_ON_DISK).mockRejectedValue(new Error('Failed to fetch data'));
-    await renderView(true, true);
+    await renderView(true, true, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
     expect(selectors.queryAlert()).toHaveTextContent('Failed to fetch data');
   });
 
-  it('renders correctly when admin user and pro edition', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('renders correctly when admin user and pro edition', async (page) => {
     const isAdmin = true;
     const isProEdition = true;
+    const showContactSonatypeBtn = isAdmin;
 
-    await renderView(isAdmin, isProEdition);
-
-    expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender('1,234,567', isAdmin, isProEdition);
-  });
-
-  it('renders correctly when admin user and pro edition with IQ and FF enabled', async () => {
-    when(ExtJS.state().getValue).calledWith(CLM).mockReturnValue({enabled: true});
-    when(ExtJS.state().getValue).calledWith(MALWARE_RISK_ENABLED).mockReturnValue(true);
-    const isAdmin = true;
-    const isProEdition = true;
-    const isIqServerEnabled = true;
-    const isMalwareRiskEnabled = true;
-
-    await renderView(isAdmin, isProEdition);
+    await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender('1,234,567', isAdmin, isProEdition, isIqServerEnabled, isMalwareRiskEnabled);
+    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
+        showContactSonatypeBtn, isProEdition);
   });
 
-  it('renders correctly when admin user and oss edition', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('renders correctly when admin user and oss edition', async (page) => {
     const isAdmin = true;
     const isProEdition = false;
+    const showContactSonatypeBtn = isAdmin;
 
-    await renderView(isAdmin, isProEdition);
+    await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender('1,234,567', isAdmin, isProEdition);
+    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
+        showContactSonatypeBtn, isProEdition);
   });
 
-  it('renders correctly when non-admin user and pro edition', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('renders correctly when non-admin user and pro edition', async (page) => {
     const isAdmin = false;
     const isProEdition = true;
+    const showContactSonatypeBtn = isAdmin;
 
-    await renderView(isAdmin, isProEdition);
+    await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender('1,234,567', isAdmin, isProEdition);
+    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
+        showContactSonatypeBtn, isProEdition);
   });
 
-  it('renders correctly when non-admin user and oss edition', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('renders correctly when non-admin user and oss edition', async (page) => {
     const isAdmin = false;
     const isProEdition = false;
+    const showContactSonatypeBtn = isAdmin;
 
-    await renderView(isAdmin, isProEdition);
+    await renderView(isAdmin, isProEdition, page);
 
     expect(selectors.queryAlert()).toBeInTheDocument();
-    await expectAlertToRender('1,234,567', isAdmin, isProEdition);
+    await expectAlertToRender(page, '1,234,567', RISK_ON_DISK.TITLE_PLURAL, RISK_ON_DISK.DESCRIPTION.CONTENT,
+        showContactSonatypeBtn, isProEdition);
   });
 
-  it('renders a close button and set the cookie when button clicked', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('renders a close button and set the cookie when button clicked', async (page) => {
     const isAdmin = true;
     const isProEdition = true;
 
@@ -180,7 +186,7 @@ describe('MaliciousRiskOnDisk', () => {
       configurable: true,
     });
 
-    await renderView(isAdmin, isProEdition);
+    await renderView(isAdmin, isProEdition, page);
 
     const closeButton = selectors.queryButton('Close');
     expect(closeButton).toBeInTheDocument();
@@ -189,7 +195,8 @@ describe('MaliciousRiskOnDisk', () => {
     expect(setCookie).toHaveBeenCalledWith('MALWARE_BANNER=close; path=/');
   });
 
-  it('does not render the banner if cookie "MALWARE_BANNER" is close', async () => {
+  it.each(['maliciousRisk', 'welcome', 'browse', 'search'])
+  ('does not render the banner if cookie "MALWARE_BANNER" is close', async (page) => {
     const getCookie = jest.fn(() => 'MALWARE_BANNER=close');
     Object.defineProperty(document, 'cookie', {
       get: getCookie,
@@ -198,35 +205,33 @@ describe('MaliciousRiskOnDisk', () => {
     });
 
     await act(async () => {
-      render(<MaliciousRiskOnDisk />);
+      render(<MaliciousRiskOnDisk/>);
     });
     expect(getCookie).toHaveBeenCalled();
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
-  async function expectAlertToRender(count, isAdmin, isProEdition, isIqServerEnabled = null, isMalwareRiskEnabled = null) {
+  async function expectAlertToRender(page, count, title, description, showContactSonatypeBtn, isProEdition) {
     expect(selectors.getHeading(count)).toBeInTheDocument();
-    expect(selectors.getHeading(RISK_ON_DISK.TITLE_PLURAL)).toBeInTheDocument();
-    expect(selectors.queryAlert()).toHaveTextContent(RISK_ON_DISK.DESCRIPTION.CONTENT);
+    expect(selectors.getHeading(title)).toBeInTheDocument();
+    expect(selectors.queryAlert()).toHaveTextContent(description);
 
-    if (isAdmin) {
-      if (isProEdition && isIqServerEnabled && isMalwareRiskEnabled) {
-        expect(selectors.queryLink('View Malware Risk')).toBeInTheDocument();
-        expect(selectors.queryLink('View Malware Risk')).toHaveAttribute('href', '#browse/malwarerisk');
-      } else if (isProEdition) {
-        expect(selectors.queryLink('Contact Sonatype to Resolve')).toBeInTheDocument();
+    if (showContactSonatypeBtn) {
+      expect(selectors.queryLink('Contact Sonatype to Resolve')).toBeInTheDocument();
+
+      if (isProEdition) {
         expect(selectors.queryLink('Contact Sonatype to Resolve'))
             .toHaveAttribute('href',
                 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more');
-      } else {
-        expect(selectors.queryLink('Contact Sonatype to Resolve')).toBeInTheDocument();
+      }
+      else {
         expect(selectors.queryLink('Contact Sonatype to Resolve'))
             .toHaveAttribute('href',
                 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/oss-admin-learn-more');
       }
-    } else {
-      expect(selectors.queryLink('Contact Sonatype to Resolve')).not.toBeInTheDocument();
-      expect(selectors.queryText('Contact your instance administrator to resolve.')).toBeInTheDocument();
+    }
+    else {
+      expect(selectors.queryButton('Contact Sonatype')).not.toBeInTheDocument();
     }
   }
 });

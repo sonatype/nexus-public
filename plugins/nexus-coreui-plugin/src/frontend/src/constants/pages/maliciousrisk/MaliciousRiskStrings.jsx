@@ -16,12 +16,11 @@ import React from "react";
 export default {
   MALICIOUS_RISK: {
     MENU: {
-      text: 'Malware Risk',
+      text: 'OSS Malware Risk',
       textComplement: '<span class="nxrm-new-tag">NEW</span>',
       description: 'Visualize risk in your repositories'
     },
-    TITLE: 'Malware Risk',
-    DESCRIPTION: 'Open source malware is cached in the proxy repositories on your Nexus Repository.',
+    TITLE: 'Open Source Malware Risk',
     COMPONENTS_IN_HIGH_RISK_ECOSYSTEMS: {
       TEXT: 'Open Source Malware in High Risk Ecosystems',
       REPOSITORIES_PROTECTED: '0 repositories protected',
@@ -71,7 +70,7 @@ export default {
       TITLE_SINGULAR: 'Malware Component Found',
       DESCRIPTION: {
         TITLE: <><strong>Open source malware is cached in the proxy repositories of this instance of Nexus Repository Manager</strong></>,
-        CONTENT: 'Open source malware is cached in the proxy repositories on your Nexus Repository, review the components flagged by Sonatype as containing malware and remove them.',
+        CONTENT: 'Malware contains harmful malicious components and poses significant risk to your software supply chain and OSS ecosystem. This includes ransomware, data exfiltration, credential harvesters, file system corruption, etc. Immediate action is required to remove this malware from your repository.',
         ADDITIONAL_NON_ADMIN_CONTENT: <><strong>Contact your instance administrator to resolve.</strong></>
       },
       CONTACT_SONATYPE: {
@@ -81,39 +80,13 @@ export default {
           PRO: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more'
         }
       },
-      VIEW_MALWARE_RISK: 'View Malware Risk'
+      VIEW_OSS_MALWARE_RISK: 'View OSS Malware Risk'
     },
     LOAD_ERROR: 'An error occurred while fetching the malicious risk data',
     HDS_CONNECTION_WARNING: <>
       OSS Malware Risk data relies on backend services that are currently unreachable. To view malware risk, <NxTextLink
         href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/repository-health-check-overview"
         external>ensure the required URLs are accessible</NxTextLink>
-    </>,
-    MALWARE_REMEDIATION: {
-      DESCRIPTION: 'Sonatype has identified malware components in your repository. Use the CSV below to identify which components are malicious and remediate.',
-      REMEDIATION_STEPS: {
-        TITLE: 'Steps to Remediate',
-        FIRST: 'Download the CSV file using the link below to review the components flagged by Sonatype as containing malware.',
-        SECOND: <>Search your proxy repository to remove the components. <NxTextLink
-          href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/guide-to-removing-malware" external>
-          Guide to removing malware</NxTextLink></>,
-        THIRD: <>Learn how to protect your repository to keep developers from downloading Malware again. <NxTextLink
-          href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/malware-risk" external>
-          How to protect your repository from malware</NxTextLink></>
-      },
-      DOWNLOAD_CSV: 'Download CSV'
-    },
-    OPEN_SOURCE_MALWARE: {
-      TITLE: 'What is Open Source Malware?',
-      INFO: <>
-        <p>Open Source Malware in proxy repositories poses a critical risk to the integrity of the software supply chain,
-        introducing malware such as credential harvesting, data exfiltration, backdoor, file system corruption leads to
-        compromised applications, data breaches, and regulatory non-compliance.</p>
-        <p>Remediation requires immediate removal of infected components, identifying impacted dependencies, and
-        Developers must be informed of the threat and prevented from accessing to compromised artifacts.</p>
-        <NxTextLink href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/vulnerabilities-and-malware" external>
-        Differentiating Software Vulnerabilities and Malware</NxTextLink>
-      </>,
-    }
+    </>
   }
 }

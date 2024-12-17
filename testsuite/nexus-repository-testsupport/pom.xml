@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>3.76.1-01</version>
+    <version>3.77.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-testsupport</artifactId>
@@ -218,28 +218,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-eclipse-compiler</artifactId>
-            <version>3.7.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-eclipse-batch</artifactId>
-            <version>3.0.8-01</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <compilerId>groovy-eclipse-compiler</compilerId>
-          <release>8</release>
-          <source>8</source>
-          <target>8</target>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>

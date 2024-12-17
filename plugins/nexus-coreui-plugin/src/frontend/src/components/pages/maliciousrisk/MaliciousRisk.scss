@@ -98,39 +98,3 @@
     margin-bottom: 0;
   }
 }
-
-.nxrm-malware-remediation {
-  .nx-tile-content {
-    display: flex;
-  }
-
-  .nxrm-remediation-content {
-    width: 475px;
-    flex-shrink: 0;
-    padding-right: var(--nx-spacing-4x);
-    margin-right: var(--nx-spacing-6x);
-  }
-
-  .nxrm-remediation-description {
-    margin-top: var(--nx-spacing-6x);
-  }
-
-  .nxrm-remediation-steps {
-    ol {
-      margin-top: 0;
-      padding-left: var(--nx-spacing-4x);
-    }
-
-    .nx-btn--tertiary {
-      margin: var(--nx-spacing-2x) 0;
-    }
-
-    h3, ol > li {
-      margin-bottom: var(--nx-spacing-2x);
-    }
-  }
-
-  .nx-alert--info {
-    margin-top: 0;
-  }
-}

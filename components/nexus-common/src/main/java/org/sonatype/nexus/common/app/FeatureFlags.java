@@ -199,7 +199,7 @@ public interface FeatureFlags
 
   String MALWARE_RISK_ENABLED = "nexus.malware.risk.enabled";
 
-  String MALWARE_RISK_ENABLED_NAMED = "${nexus.malware.risk.enabled:-true}";
+  String MALWARE_RISK_ENABLED_NAMED = "${nexus.malware.risk.enabled:-false}";
 
   String MALWARE_RISK_ON_DISK_ENABLED = "nexus.malware.risk.on.disk.enabled";
 
@@ -209,9 +209,6 @@ public interface FeatureFlags
 
   String MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED_NAMED =
       "${nexus.malware.risk.on.disk.nonadmin.override.enabled:-false}";
-
-  String MALWARE_REMEDIATOR_TASK_CHECK_REPOSITORY_IN_KNOWN_REGISTRIES_NAMED =
-      "${nexus.malware.remediator.task.check.repository.in.known.registries:-true}";
 
   String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
 

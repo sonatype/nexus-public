@@ -108,7 +108,8 @@ public class NexusLifecycleManagerTest
         servicesPhase,
         repositoriesPhase,
         capabilitiesPhase,
-        tasksPhase);
+        tasksPhase
+    );
 
     assertThat("One or more phases is not mocked", phases.size(), is(Phase.values().length));
 
@@ -126,7 +127,7 @@ public class NexusLifecycleManagerTest
       return entry;
     }).collect(toList());
 
-    when(locator.<Named, Lifecycle>locate(Key.get(Lifecycle.class, Named.class))).thenReturn((Iterable) entries);
+    when(locator.<Named, Lifecycle> locate(Key.get(Lifecycle.class, Named.class))).thenReturn(entries);
 
     underTest = new NexusLifecycleManager(locator, systemBundle);
   }
@@ -145,7 +146,8 @@ public class NexusLifecycleManagerTest
         repositoriesPhase,
         capabilitiesPhase,
         tasksPhase,
-        systemBundle);
+        systemBundle
+    );
   }
 
   @Test
@@ -252,8 +254,7 @@ public class NexusLifecycleManagerTest
 
     Lifecycle badPhase = randomPhases.stream()
         .filter(phase -> !(phase.equals(offPhase) || phase.equals(tasksPhase)))
-        .findFirst()
-        .get();
+        .findFirst().get();
 
     doThrow(new Exception("testing")).when(badPhase).start();
 
