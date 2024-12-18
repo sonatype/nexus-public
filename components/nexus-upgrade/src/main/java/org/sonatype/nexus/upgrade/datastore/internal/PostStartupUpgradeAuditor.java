@@ -21,7 +21,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.upgrade.events.UpgradeEventSupport;
 
@@ -41,20 +40,13 @@ public class PostStartupUpgradeAuditor
 
   private final EventManager eventManager;
 
-  private final PeriodicJobService periodicJobService;
-
   @Inject
-  public PostStartupUpgradeAuditor(final EventManager eventManager, final PeriodicJobService periodicJobService) {
+  public PostStartupUpgradeAuditor(final EventManager eventManager) {
     this.eventManager = checkNotNull(eventManager);
-    this.periodicJobService = checkNotNull(periodicJobService);
   }
 
   @Override
   protected void doStart() {
-    periodicJobService.runOnce(this::broadcast, 1);
-  }
-
-  private void broadcast() {
     events.forEach(eventManager::post);
     events.clear();
   }
