@@ -140,7 +140,8 @@ public class RepositoryUiService
   }
 
   public List<ReferenceXO> readRecipes() {
-    return recipes.entrySet().stream()
+    return recipes.entrySet()
+        .stream()
         .filter(entry -> entry.getValue().isFeatureEnabled())
         .map(RepositoryUiService::toReference)
         .collect(Collectors.toList());
@@ -165,7 +166,8 @@ public class RepositoryUiService
         .map(Repository::getFormat)
         .map(Format::getValue)
         .distinct()
-        .map(RepositoryUiService::toBrowseableFormat).collect(Collectors.toList());
+        .map(RepositoryUiService::toBrowseableFormat)
+        .collect(Collectors.toList());
   }
 
   private static BrowseableFormatXO toBrowseableFormat(final String format) {
@@ -186,10 +188,17 @@ public class RepositoryUiService
     List<RepositoryReferenceXO> references = StreamSupport.stream(filter(parameters).spliterator(), false)
         .map(repository -> new RepositoryReferenceXO(repository.getRepositoryName(), repository.getRepositoryName(),
             getType(repository), getFormat(repository), getVersionPolicy(repository),
-            getUrl(repository.getRepositoryName()), buildStatus(repository)))
+            getUrl(repository.getRepositoryName()), getBlobStoreName(repository), buildStatus(repository)))
         .collect(Collectors.toList());
     references = filterForAutocomplete(parameters, references);
     return references;
+  }
+
+  private String getBlobStoreName(final Configuration repository) {
+    return repository.getAttributes()
+        .get("storage")
+        .get("blobStoreName")
+        .toString();
   }
 
   private static String getVersionPolicy(final Configuration configuration) {
@@ -207,7 +216,8 @@ public class RepositoryUiService
       final List<RepositoryReferenceXO> references)
   {
     if (StringUtils.isNotBlank(parameters.getQuery())) {
-      return references.stream().filter(repo -> repo.getName().startsWith(parameters.getQuery()))
+      return references.stream()
+          .filter(repo -> repo.getName().startsWith(parameters.getQuery()))
           .collect(Collectors.toList());
     }
     return references;
@@ -219,7 +229,7 @@ public class RepositoryUiService
   public List<RepositoryReferenceXO> readReferencesAddingEntryForAll(final @Nullable StoreLoadParameters parameters) {
     List<RepositoryReferenceXO> references = readReferences(parameters);
     RepositoryReferenceXO all = new RepositoryReferenceXO(RepositorySelector.all().toSelector(), "(All Repositories)",
-        null, null, null, null, null, 1);
+        null, null, null, null, null, null, 1);
     references.add(all);
     return references;
   }
@@ -234,7 +244,7 @@ public class RepositoryUiService
     List<RepositoryReferenceXO> references = readReferencesAddingEntryForAll(parameters);
     formats.stream().forEach(format -> {
       references.add(new RepositoryReferenceXO(RepositorySelector.allOfFormat(format.getValue()).toSelector(),
-          "(All " + format.getValue() + " Repositories)", null, null, null, null, null));
+          "(All " + format.getValue() + " Repositories)", null, null, null, null, null, null));
     });
     return references;
   }
@@ -480,15 +490,13 @@ public class RepositoryUiService
       }
       String versionPolicies = parameters.getFilter("versionPolicies");
 
-      configurations = filterIn(configurations, versionPolicies, configuration ->
-          Optional.of(configuration)
-              .map(Configuration::getAttributes)
-              .map(attr -> attr.get("maven"))
-              .map(Map.class::cast)
-              .map(maven -> maven.get("versionPolicy"))
-              .map(String.class::cast)
-              .orElse(null)
-      );
+      configurations = filterIn(configurations, versionPolicies, configuration -> Optional.of(configuration)
+          .map(Configuration::getAttributes)
+          .map(attr -> attr.get("maven"))
+          .map(Map.class::cast)
+          .map(maven -> maven.get("versionPolicy"))
+          .map(String.class::cast)
+          .orElse(null));
     }
 
     configurations = repositoryPermissionChecker
@@ -516,7 +524,8 @@ public class RepositoryUiService
     if (facets == null) {
       return Collections.emptyList();
     }
-    return Arrays.asList(facets.split(",")).stream()
+    return Arrays.asList(facets.split(","))
+        .stream()
         .filter(StringUtils::isNotBlank)
         .map(typeLookup::type)
         .map(clazz -> (Class<Facet>) clazz)
@@ -555,9 +564,9 @@ public class RepositoryUiService
    * of only excludes will include all other items. Used to parse the filters build by
    * {@link org.sonatype.nexus.formfields.RepositoryCombobox#getStoreFilters()}
    *
-   * @param iterable              The iterable to filter
-   * @param filter                A comma separated list of values which either match the selected field or, if
-   *                              prepended with '!', do not match the field
+   * @param iterable The iterable to filter
+   * @param filter A comma separated list of values which either match the selected field or, if
+   *          prepended with '!', do not match the field
    * @param filteredFieldSelector A selector for the field to match against the supplied filter list
    * @return The filtered iterable
    */
@@ -567,7 +576,8 @@ public class RepositoryUiService
       final Function<U, String> filteredFieldSelector)
   {
     if (filter == null) {
-      return iterable instanceof List ? (List<U>) iterable
+      return iterable instanceof List
+          ? (List<U>) iterable
           : StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
     }
 

@@ -28,6 +28,8 @@ public class RepositoryReferenceXO
 
   private String url;
 
+  private String blobStoreName;
+
   private RepositoryStatusXO status;
 
   /**
@@ -43,10 +45,11 @@ public class RepositoryReferenceXO
       final String format,
       final String versionPolicy,
       final String url,
+      final String blobStoreName,
       final RepositoryStatusXO status,
       final int sortOrder)
   {
-    this(id, name, type, format, versionPolicy, url, status);
+    this(id, name, type, format, versionPolicy, url, blobStoreName, status);
     this.sortOrder = sortOrder;
   }
 
@@ -57,7 +60,9 @@ public class RepositoryReferenceXO
       final String format,
       final String versionPolicy,
       final String url,
-      final RepositoryStatusXO status) {
+      final String blobStoreName,
+      final RepositoryStatusXO status)
+  {
     setId(id);
     setName(name);
     this.type = type;
@@ -65,6 +70,7 @@ public class RepositoryReferenceXO
     this.versionPolicy = versionPolicy;
     this.url = url;
     this.status = status;
+    this.blobStoreName = blobStoreName;
   }
 
   public String getType() {
@@ -83,6 +89,10 @@ public class RepositoryReferenceXO
     return url;
   }
 
+  public String getBlobStoreName() {
+    return blobStoreName;
+  }
+
   public RepositoryStatusXO getStatus() {
     return status;
   }
@@ -94,6 +104,7 @@ public class RepositoryReferenceXO
   @Override
   public String toString() {
     return "RepositoryReferenceXO [id=" + getId() + ", name=" + getName() + ", type=" + type + ", format=" + format +
-        ", versionPolicy=" + versionPolicy + ", url=" + url + ", status=" + status + ", sortOrder=" + sortOrder + "]";
+        ", versionPolicy=" + versionPolicy + ", url=" + url + ", blobStoreName=" + blobStoreName + ", status=" + status
+        + ", sortOrder=" + sortOrder + "]";
   }
 }

@@ -28,6 +28,8 @@ public class ItemselectFormField
 {
   public static final String TYPE = "itemselect";
 
+  private static final String ATTRIBUTE_LISTENERS = "listeners";
+
   private String storeApi;
 
   private final Map<String, String> storeFilters = new HashMap<>();
@@ -36,32 +38,36 @@ public class ItemselectFormField
 
   private String nameMapping;
 
-  public ItemselectFormField(final String id,
-                             final String label,
-                             final String helpText,
-                             final boolean required,
-                             final String initialValue)
+  public ItemselectFormField(
+      final String id,
+      final String label,
+      final String helpText,
+      final boolean required,
+      final String initialValue)
   {
     super(id, label, helpText, required, null, initialValue);
   }
 
-  public ItemselectFormField(final String id,
-                             final String label,
-                             final String helpText,
-                             final boolean required)
+  public ItemselectFormField(
+      final String id,
+      final String label,
+      final String helpText,
+      final boolean required)
   {
     this(id, label, helpText, required, null);
   }
 
-  public ItemselectFormField(final String id,
-                             final String label,
-                             final String helpText)
+  public ItemselectFormField(
+      final String id,
+      final String label,
+      final String helpText)
   {
     this(id, label, helpText, OPTIONAL);
   }
 
-  public ItemselectFormField(final String id,
-                             final String label)
+  public ItemselectFormField(
+      final String id,
+      final String label)
   {
     this(id, label, null);
   }
@@ -161,6 +167,26 @@ public class ItemselectFormField
 
   public ItemselectFormField withValueAsString(final boolean valueAsString) {
     getAttributes().put("valueAsString", valueAsString);
+    return this;
+  }
+
+  /**
+   * Configure a listener that will be bound to an event during component initialization.
+   * The listener function must be declared in NX.coreui.view.formfield.SettingsFieldSet
+   * 
+   * @param eventName Any event name from Ext.ux.form.ItemSelector
+   * @param listenerName Name of the property that contains the handler method. Must be defined in
+   *          NX.coreui.view.formfield.SettingsFieldSet
+   * @return This instance
+   */
+  public ItemselectFormField withListener(final String eventName, final String listenerName) {
+    Map<String, String> declaredListeners = getAttributes().containsKey(ATTRIBUTE_LISTENERS)
+        ? (Map<String, String>) getAttributes().get(ATTRIBUTE_LISTENERS)
+        : new HashMap<>();
+
+    declaredListeners.put(eventName, listenerName);
+    getAttributes().put(ATTRIBUTE_LISTENERS, declaredListeners);
+
     return this;
   }
 }

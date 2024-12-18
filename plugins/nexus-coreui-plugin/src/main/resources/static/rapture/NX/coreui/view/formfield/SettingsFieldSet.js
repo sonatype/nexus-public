@@ -116,6 +116,7 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
             config.delimiter = me.delimiter;
           }
           item = Ext.apply(factory.create(formField, me.disableSort), config);
+          me.configureListeners(formField, item);
           me.add(item);
         }
       });
@@ -221,6 +222,62 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
 
     if (remainingMessages.length > 0) {
       NX.Messages.warning(remainingMessages.join('\n'));
+    }
+  },
+  /**
+   * Associates field listeners with their corresponding handlers defined in attributes.listeners configuration.
+   * @param formField Field configuration.
+   * @param item Instance of the field.
+   */
+  configureListeners: function(formField, item) {
+    const me = this;
+
+    if(formField.attributes["listeners"]) {
+      const listeners = formField.attributes["listeners"];
+
+      Ext.Array.each(Object.keys(listeners),function (key) {
+        const listener = me[listeners[key]];
+
+        if(listener) {
+          item.on(key, me[listeners[key]]);
+        }
+      })
+    }
+  },
+  /**
+   * Filters the repositoryName field to display only repositories associated with the blob store selected in the blobStoreName field.
+   * @param selector Instance of the blobStoreName ItemSelector
+   * @param newValue The blob stores selected.
+   */
+  filterRepositoryBySelectedBlobstore: function(selector, newValue) {
+    const allBlobStoresEntry = '(All Blob Stores)';
+    const repositoryNameItems = selector.up('nx-coreui-formfield-settingsfieldset').query("nx-itemselector[name=property_repositoryName]")
+    const selectedBlobStores = newValue.split(',')
+    const filter = function (record) {
+      return Ext.Array.contains(selectedBlobStores, allBlobStoresEntry)
+          || Ext.Array.contains(selectedBlobStores, record.get('blobStoreName'));
+    };
+
+    if(repositoryNameItems) {
+      Ext.Array.each(repositoryNameItems, function(repositoryNameItem) {
+        const filterField = repositoryNameItem.fromField.down('textfield');
+        var store = repositoryNameItem.store;
+        const newSelectedRepositories = repositoryNameItem.value && repositoryNameItem.value.length > 0
+            ? Ext.Array.filter(repositoryNameItem.getRecordsForValue(repositoryNameItem.value), filter)
+            : [];
+
+        if(store.remoteFilter) {
+          store = Ext.create('Ext.data.ChainedStore', { source: store });
+          repositoryNameItem.store = store;
+        }
+
+        filterField.setValue('');
+        store.clearFilter();
+        store.filterBy(filter);
+
+        repositoryNameItem.populateFromStore(store);
+        repositoryNameItem.setValue(Ext.Array.map(newSelectedRepositories, function(record) { return record.get("name"); }));
+      })
     }
   }
 
