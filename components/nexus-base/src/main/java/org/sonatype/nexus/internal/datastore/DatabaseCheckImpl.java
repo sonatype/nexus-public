@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.datastore;
 
 import java.sql.Connection;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -30,6 +31,9 @@ import org.sonatype.nexus.common.upgrade.events.UpgradeEventSupport;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.eventbus.Subscribe;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationInfo;
@@ -47,6 +51,8 @@ public class DatabaseCheckImpl
     extends StateGuardLifecycleSupport
     implements DatabaseCheck, EventAware
 {
+  private final LoadingCache<String, Boolean> cache = CacheBuilder.newBuilder().build(new AllowedCacheLoader());
+
   private final DataStoreManager dataStoreManager;
 
   private DataSource dataSource;
@@ -103,21 +109,23 @@ public class DatabaseCheckImpl
     if (schemaVersion.isPresent()) {
       currentSchemaVersion = schemaVersion.get();
     }
+    cache.invalidateAll();
   }
 
-  private boolean isAllowed(final String requiredVersion) {
-    if (currentSchemaVersion == null) {
-      currentSchemaVersion = getMigrationVersion(dataSource);
-      if (currentSchemaVersion == null) {
-        return true;
-      }
+  private boolean isAllowed(final String version) {
+    try {
+      return cache.get(version);
     }
-
-    return currentSchemaVersion.isAtLeast(requiredVersion);
+    catch (ExecutionException e) {
+      if (e.getCause() instanceof RuntimeException cause) {
+        throw cause;
+      }
+      throw new RuntimeException(e); // NOSONAR
+    }
   }
 
   @VisibleForTesting
-  MigrationVersion getMigrationVersion(final DataSource dataSource) {
+  MigrationVersion getMigrationVersion() {
     if (dataSource == null) {
       log.warn("datasource has not been initialised");
       return null;
@@ -134,5 +142,20 @@ public class DatabaseCheckImpl
 
     log.error("Could not determine database schema version");
     return null;
+  }
+
+  private class AllowedCacheLoader
+      extends CacheLoader<String, Boolean>
+  {
+    @Override
+    public Boolean load(final String requiredVersion) throws Exception {
+      if (currentSchemaVersion == null) {
+        currentSchemaVersion = getMigrationVersion();
+        if (currentSchemaVersion == null) {
+          return true;
+        }
+      }
+      return currentSchemaVersion.isAtLeast(requiredVersion);
+    }
   }
 }

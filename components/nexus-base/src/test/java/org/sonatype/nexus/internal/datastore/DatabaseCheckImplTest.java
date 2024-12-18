@@ -14,8 +14,6 @@ package org.sonatype.nexus.internal.datastore;
 
 import java.util.Optional;
 
-import javax.sql.DataSource;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.datastore.api.DataStore;
@@ -84,7 +82,7 @@ public class DatabaseCheckImplTest
     }
 
     @Override
-    MigrationVersion getMigrationVersion(final DataSource dataSource) {
+    MigrationVersion getMigrationVersion() {
       return MigrationVersion.fromVersion("1.4");
     }
   }

@@ -12,11 +12,8 @@
  */
 package org.sonatype.nexus.coreui.internal.blobstore;
 
-import java.util.Collections;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
-import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
 
 import org.junit.Test;
 import org.mockito.Mock;
@@ -58,27 +55,6 @@ public class S3FailoverStateContributorTest
     underTest = new S3FailoverStateContributor(databaseCheck, true);
     assertThat(underTest.getState(), hasEntry("S3FailoverEnabled", true));
     verify(databaseCheck).isAtLeast("2.6");
-    verifyNoMoreInteractions(databaseCheck);
-  }
-
-  @Test
-  public void failoverAvailableZduAfterUpgrade() {
-    when(databaseCheck.isAtLeast("2.6")).thenReturn(false);
-    underTest = new S3FailoverStateContributor(databaseCheck, true);
-    assertThat(underTest.getState(), hasEntry("S3FailoverEnabled", false));
-    verify(databaseCheck).isAtLeast("2.6");
-
-    // upgrade previous to minimum version
-    UpgradeCompletedEvent event = new UpgradeCompletedEvent("user", "2.5", Collections.EMPTY_LIST);
-    underTest.on(event);
-
-    assertThat(underTest.getState(), hasEntry("S3FailoverEnabled", false));
-
-    // upgrade to minimum version
-    event = new UpgradeCompletedEvent("user", "2.6", Collections.EMPTY_LIST);
-    underTest.on(event);
-
-    assertThat(underTest.getState(), hasEntry("S3FailoverEnabled", true));
     verifyNoMoreInteractions(databaseCheck);
   }
 }
