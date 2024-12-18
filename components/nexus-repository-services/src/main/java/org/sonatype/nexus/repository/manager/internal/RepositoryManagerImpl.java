@@ -435,9 +435,6 @@ public class RepositoryManagerImpl
     Repository repository = repository(repositoryName);
 
     final Configuration oldConfiguration = repository.getConfiguration().copy();
-
-    repository.stopSafe();
-
     try {
       if (!EventHelper.isReplicating()) {
         httpAuthenticationPasswordEncoder.encodeHttpAuthPassword(oldConfiguration.getAttributes(),
@@ -457,6 +454,7 @@ public class RepositoryManagerImpl
       throw e;
     }
 
+    repository.stopSafe();
     repository.update(configuration);
     repository.start();
 
