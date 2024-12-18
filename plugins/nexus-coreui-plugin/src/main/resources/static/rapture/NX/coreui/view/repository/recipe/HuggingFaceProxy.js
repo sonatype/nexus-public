@@ -51,5 +51,14 @@ Ext.define('NX.coreui.view.repository.recipe.HuggingFaceProxy', {
     Ext.ComponentQuery.query('checkbox[name=attributes.httpclient.autoBlock]')[0].setValue(false);
 
     me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_ProxyFacet_Huggingface_Remote_HelpText'));
+  },
+
+  listeners: {
+    afterRender: function() {
+      if (this.getRecord() === undefined) {
+        const httpClientFacet = this.down('nx-coreui-repository-httpclient-facet-with-bearer-token');
+        httpClientFacet.down('numberfield[name=attributes.httpclient.connection.timeout]').setValue(120);
+      }
+    }
   }
 });
