@@ -143,7 +143,7 @@ public class AssetDAOTestSupport
       assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 4 : null);
       assertEntityVersion(component2.componentId, componentDAO, entityVersionEnabled ? 3 : null);
 
-      //browse all assets
+      // browse all assets
       assertThat(browseAssets(dao, repositoryId, null, 10, null), contains(
           allOf(samePath(asset1), sameKind(asset1), sameAttributes(asset1)),
           allOf(samePath(asset2), sameKind(asset2), sameAttributes(asset2)),
@@ -151,7 +151,7 @@ public class AssetDAOTestSupport
           allOf(samePath(asset4), sameKind(asset4), sameAttributes(asset4)),
           allOf(samePath(asset5), sameKind(asset5), sameAttributes(asset5))));
 
-      //browse by kind
+      // browse by kind
       assertThat(browseAssets(dao, repositoryId, aKind, 10, null), contains(
           allOf(samePath(asset3), sameKind(asset3), sameAttributes(asset3))));
 
@@ -289,7 +289,8 @@ public class AssetDAOTestSupport
       assertThat(tempResult, sameAttributes(asset2));
       assertThat(tempResult.created(), is(oldCreated));
       assertThat(tempResult.lastUpdated(), is(oldLastUpdated)); // won't have changed as attributes haven't changed
-      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 9 : null); //version shouldn't change
+      assertEntityVersion(component1.componentId, componentDAO, entityVersionEnabled ? 9 : null); // version shouldn't
+                                                                                                  // change
 
       session.getTransaction().commit();
     }
@@ -564,7 +565,6 @@ public class AssetDAOTestSupport
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 5 : null);
 
-
       session.getTransaction().commit();
 
       assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, 60, null),
@@ -593,11 +593,10 @@ public class AssetDAOTestSupport
           .collect(summingInt(r -> countComponents(componentDAO, r))), is(10));
 
       // now gather them back by browsing
-      generatedRepositories().forEach(r ->
-          browseComponents(componentDAO, r.repositoryId, null, 10, null).stream()
-              .map(ComponentData.class::cast)
-              .map(assetDao::browseComponentAssets)
-              .forEach(browsedAssets::addAll));
+      generatedRepositories().forEach(r -> browseComponents(componentDAO, r.repositoryId, null, 10, null).stream()
+          .map(ComponentData.class::cast)
+          .map(assetDao::browseComponentAssets)
+          .forEach(browsedAssets::addAll));
     }
 
     // we should have the same assets, but maybe in a different order
@@ -613,7 +612,9 @@ public class AssetDAOTestSupport
     ComponentData component = (ComponentData) generatedComponents().get(0);
     component.componentId = null;
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      assertTrue(session.access(TestAssetDAO.class).browseComponentAssets(component).stream()
+      assertTrue(session.access(TestAssetDAO.class)
+          .browseComponentAssets(component)
+          .stream()
           .map(Asset::component)
           .map(Optional::get)
           .allMatch(sameCoordinates(component)::matches));
@@ -894,7 +895,7 @@ public class AssetDAOTestSupport
       dao.createAsset(asset3, false);
       dao.createAsset(asset4, false);
 
-      //browse all assets
+      // browse all assets
       assertThat(
           dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), null,
               null, null, emptyMap(), 10),
@@ -943,7 +944,7 @@ public class AssetDAOTestSupport
       dao.lastDownloaded(asset1.assetId, dateTime);
 
       Optional<OffsetDateTime> actual = dao.readAsset(asset1.assetId).get().lastDownloaded();
-      assertThat(actual.map(t-> t.truncatedTo(ChronoUnit.SECONDS)).orElse(null),
+      assertThat(actual.map(t -> t.truncatedTo(ChronoUnit.SECONDS)).orElse(null),
           is(dateTime.truncatedTo(ChronoUnit.SECONDS)));
 
       assertEntityVersion(componentData.componentId, session.access(TestComponentDAO.class),
@@ -1206,7 +1207,7 @@ public class AssetDAOTestSupport
 
       assertThat(countAssets(dao, repositoryId), is(5));
       assertThat(dao.readPathsFromRepository(repositoryId,
-              asList(asset1.path(), asset2.path(), asset3.path(), asset4.path(), asset5.path())).size(),
+          asList(asset1.path(), asset2.path(), asset3.path(), asset4.path(), asset5.path())).size(),
           is(5));
 
       assertEntityVersion(component1.componentId, session.access(TestComponentDAO.class),
@@ -1235,7 +1236,7 @@ public class AssetDAOTestSupport
       assertEntityVersion(component2.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 5 : null);
 
-      //assets don't exist - should still be the same
+      // assets don't exist - should still be the same
       dao.deleteAssetsByPaths(repositoryId, asList(asset1.path(), asset2.path()), entityVersionEnabled);
       assertEntityVersion(component1.componentId, session.access(TestComponentDAO.class),
           entityVersionEnabled ? 6 : null);
@@ -1271,14 +1272,14 @@ public class AssetDAOTestSupport
       session.getTransaction().commit();
 
       // existing asset + blob + component
-      assertThat(assetDao.assetRecordsExist(assetBlob.blobRef()), is(true));
+      assertThat(assetDao.assetRecordsExist(assetBlob.blobRef(), null, null), is(true));
 
       // random blob is not exists
       BlobRef blobRef = new BlobRef("default", UUID.randomUUID().toString());
-      assertThat(assetDao.assetRecordsExist(blobRef), is(false));
+      assertThat(assetDao.assetRecordsExist(blobRef, null, null), is(false));
 
       // record still exists without a component
-      assertThat(assetDao.assetRecordsExist(assetBlobWithoutComponent.blobRef()), is(true));
+      assertThat(assetDao.assetRecordsExist(assetBlobWithoutComponent.blobRef(), null, null), is(true));
     }
   }
 
@@ -1291,7 +1292,8 @@ public class AssetDAOTestSupport
   }
 
   protected void createComponents(
-      final ComponentDAO componentDAO, final boolean entityVersionEnabled,
+      final ComponentDAO componentDAO,
+      final boolean entityVersionEnabled,
       ComponentData... components)
   {
     stream(components).forEach(component -> componentDAO.createComponent(component, entityVersionEnabled));
@@ -1328,7 +1330,8 @@ public class AssetDAOTestSupport
   }
 
   private void assertEntityVersion(
-      final int componentId, final ComponentDAO componentDAO,
+      final int componentId,
+      final ComponentDAO componentDAO,
       final Integer expectedEntityVersion)
   {
     Optional<Component> component = componentDAO.readComponent(componentId);

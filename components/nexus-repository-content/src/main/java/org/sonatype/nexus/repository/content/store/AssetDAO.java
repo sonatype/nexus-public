@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -39,7 +38,7 @@ import org.apache.ibatis.annotations.Param;
  *
  * @since 3.20
  */
-@Expects({ ContentRepositoryDAO.class, ComponentDAO.class, AssetBlobDAO.class })
+@Expects({ContentRepositoryDAO.class, ComponentDAO.class, AssetBlobDAO.class})
 @SchemaTemplate("format")
 public interface AssetDAO
     extends ContentDataAccess
@@ -55,10 +54,11 @@ public interface AssetDAO
    * @param filterParams parameter map for the optional filter
    * @return count of assets in the repository
    */
-  int countAssets(@Param("repositoryId") int repositoryId,
-                  @Nullable @Param("kind") String kind,
-                  @Nullable @Param("filter") String filter,
-                  @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+  int countAssets(
+      @Param("repositoryId") int repositoryId,
+      @Nullable @Param("kind") String kind,
+      @Nullable @Param("filter") String filter,
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
    * Browse all assets in the given repository in a paged fashion.
@@ -70,23 +70,23 @@ public interface AssetDAO
    * @param filter optional filter to apply
    * @param filterParams parameter map for the optional filter
    * @return collection of assets and the next continuation token
-   *
    * @see Continuation#nextContinuationToken()
    */
-  Continuation<Asset> browseAssets(@Param("repositoryId") int repositoryId,
-                                   @Param("limit") int limit,
-                                   @Nullable @Param("continuationToken") String continuationToken,
-                                   @Nullable @Param("kind") String kind,
-                                   @Nullable @Param("filter") String filter,
-                                   @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+  Continuation<Asset> browseAssets(
+      @Param("repositoryId") int repositoryId,
+      @Param("limit") int limit,
+      @Nullable @Param("continuationToken") String continuationToken,
+      @Nullable @Param("kind") String kind,
+      @Nullable @Param("filter") String filter,
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
-   * Browse all assets with corresponding components and blobs in the given repository in a paged fashion.
-   * The returned assets will be sorted by asset id in ascending order. Blob and the Component are eagerly populated.
+   * Browse all assets with corresponding components and blobs in the given repository in a paged fashion. The returned
+   * assets will be sorted by asset id in ascending order. Blob and the Component are eagerly populated.
    *
-   * @param repositoryId      the repository to browse
+   * @param repositoryId the repository to browse
    * @param continuationToken optional token to continue from a previous request
-   * @param limit             maximum number of assets to return
+   * @param limit maximum number of assets to return
    * @return collection of assets and the next continuation token
    * @see Continuation#nextContinuationToken()
    */
@@ -96,8 +96,8 @@ public interface AssetDAO
       @Param("limit") int limit);
 
   /**
-   * Browse all assets in the given repositories in a paged fashion. The returned assets will be sorted
-   * by asset id in ascending order.
+   * Browse all assets in the given repositories in a paged fashion. The returned assets will be sorted by asset id in
+   * ascending order.
    *
    * @param repositoryIds the ids of the repositories to browse
    * @param continuationToken optional token to continue from a previous request
@@ -106,7 +106,6 @@ public interface AssetDAO
    * @param filterParams parameter map for the optional filter
    * @param limit maximum number of assets to return
    * @return collection of assets from the specified repositories and the next continuation token
-   *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<Asset> browseAssetsInRepositories(
@@ -164,7 +163,7 @@ public interface AssetDAO
   /**
    * Creates the given asset in the content data store and retrieves the generated assetId.
    *
-   * @param asset                        the asset to create
+   * @param asset the asset to create
    * @param updateComponentEntityVersion whether to update the component's entity version
    */
   int createAsset(
@@ -192,11 +191,13 @@ public interface AssetDAO
    * Retrieves a collection of assets located specific paths in the given repository.
    *
    * @param repositoryId the repository containing the assets
-   * @param paths        a list of asset paths
+   * @param paths a list of asset paths
    * @return collection of assets if found
    * @since 3.30
    */
-  Collection<Asset> readPathsFromRepository(@Param("repositoryId") int repositoryId, @Param("paths") List<String> paths);
+  Collection<Asset> readPathsFromRepository(
+      @Param("repositoryId") int repositoryId,
+      @Param("paths") List<String> paths);
 
   /**
    * Find an asset based on the blob ref of the associated blob.
@@ -210,24 +211,24 @@ public interface AssetDAO
   /**
    * Find assets by their component ids.
    *
-   *<p>
+   * <p>
    * Important: Aimed to be used ONLY on HA mode, do not use this method in non-HA methods or classes.
-   *</p>
+   * </p>
    *
-   * @param componentIds      a set of component ids.
-   * @param assetFilter       optional filter to apply.
+   * @param componentIds a set of component ids.
+   * @param assetFilter optional filter to apply.
    * @param assetFilterParams parameter map for the optional filter.
    * @return collection of {@link AssetInfo}
    */
-  Collection<AssetInfo> findByComponentIds(@Param("componentIds") Set<Integer> componentIds,
-                                           @Param("assetFilter") final String assetFilter,
-                                           @Param("assetFilterParams") final Map<String, String> assetFilterParams);
+  Collection<AssetInfo> findByComponentIds(
+      @Param("componentIds") Set<Integer> componentIds,
+      @Param("assetFilter") final String assetFilter,
+      @Param("assetFilterParams") final Map<String, String> assetFilterParams);
 
   /**
    * Updates the kind of the given asset in the content data store.
    *
    * @param asset the asset to update
-   *
    * @param updateComponentEntityVersion whether to update the component entity version
    * @since 3.25
    */
@@ -294,22 +295,21 @@ public interface AssetDAO
    * @param daysAgo the number of days ago to check
    * @param limit when positive limits the number of assets selected per-call
    * @return selected asset ids
-   *
    * @since 3.26
    */
-  int[] selectNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
-                                    @Param("daysAgo") int daysAgo,
-                                    @Param("limit") int limit);
+  int[] selectNotRecentlyDownloaded(
+      @Param("repositoryId") int repositoryId,
+      @Param("daysAgo") int daysAgo,
+      @Param("limit") int limit);
 
   /**
    * Purges the selected assets.
-   *
+   * <p>
    * This version of the method is for databases that support primitive arrays.
    *
    * @param assetIds the assets to purge
    * @param updateComponentEntityVersion whether to update the component entity version
    * @return the number of purged assets
-   *
    * @since 3.26
    */
   int purgeSelectedAssets(
@@ -318,19 +318,18 @@ public interface AssetDAO
 
   /**
    * Purges the selected assets.
-   *
+   * <p>
    * This version of the method is for databases that don't yet support primitive arrays.
    *
    * @param assetIds the assets to purge
    * @return the number of purged assets
-   *
    * @since 3.26
    */
   int purgeSelectedAssets(@Param("assetIds") Integer[] assetIds);
 
   /**
    * Generally it is recommended that this method not be called and let stores manage this value automatically.
-   *
+   * <p>
    * Sets the created time of the asset associated with the ID to the specified time.
    *
    * @since 3.29
@@ -339,7 +338,7 @@ public interface AssetDAO
 
   /**
    * Generally it is recommended that this method not be called and let stores manage this value automatically.
-   *
+   * <p>
    * Sets the last download time of the asset associated with the ID to the specified time.
    *
    * @since 3.29
@@ -348,7 +347,7 @@ public interface AssetDAO
 
   /**
    * Generally it is recommended that this method not be called and let stores manage this value automatically.
-   *
+   * <p>
    * Sets the last updated time of the asset associated with the ID to the specified time.
    *
    * @since 3.29
@@ -381,7 +380,12 @@ public interface AssetDAO
    * Checks for existence of asset in all three: <format>_asset, <format>_asset_blob, <format>_component tables
    *
    * @param blobRef the blob reference
+   * @param path
+   * @param repository
    * @return {@code true} if asset exists in all three: <format>_asset, <format>_asset_blob, <format>_component tables
    */
-  boolean assetRecordsExist(@Param("blobRef") BlobRef blobRef);
+  boolean assetRecordsExist(
+      @Param("blobRef") BlobRef blobRef,
+      final @Param("path") String path,
+      final @Param("repository") String repository);
 }

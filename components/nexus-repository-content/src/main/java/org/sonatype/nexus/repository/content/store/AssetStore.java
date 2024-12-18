@@ -88,10 +88,11 @@ public class AssetStore<T extends AssetDAO>
    * @return count of assets in the repository
    */
   @Transactional
-  public int countAssets(final int repositoryId,
-                         @Nullable final String kind,
-                         @Nullable final String filter,
-                         @Nullable final Map<String, Object> filterParams)
+  public int countAssets(
+      final int repositoryId,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
   {
     return dao().countAssets(repositoryId, kind, filter, filterParams);
   }
@@ -110,12 +111,13 @@ public class AssetStore<T extends AssetDAO>
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<Asset> browseAssets(final int repositoryId,
-                                          @Nullable final String continuationToken,
-                                          @Nullable final String kind,
-                                          @Nullable final String filter,
-                                          @Nullable final Map<String, Object> filterParams,
-                                          final int limit)
+  public Continuation<Asset> browseAssets(
+      final int repositoryId,
+      @Nullable final String continuationToken,
+      @Nullable final String kind,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams,
+      final int limit)
   {
     return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
@@ -124,9 +126,9 @@ public class AssetStore<T extends AssetDAO>
    * Browse all assets with corresponding components and blobs in the given repository in a paged fashion.
    * The returned assets will be sorted by asset id in ascending order.
    *
-   * @param repositoryId      the repository to browse
+   * @param repositoryId the repository to browse
    * @param continuationToken optional token to continue from a previous request
-   * @param limit             maximum number of assets to return
+   * @param limit maximum number of assets to return
    * @return collection of assets and the next continuation token
    * @see Continuation#nextContinuationToken()
    */
@@ -143,12 +145,12 @@ public class AssetStore<T extends AssetDAO>
    * Browse all assets in the given repositories in a paged fashion. The returned assets will be sorted
    * by asset id in ascending order.
    *
-   * @param repositoryIds     the repositories to browse
+   * @param repositoryIds the repositories to browse
    * @param continuationToken optional token to continue from a previous request
    * @param kind optional kind of assets to return
    * @param filter optional filter to apply
    * @param filterParams parameter map for the optional filter
-   * @param limit             maximum number of assets to return
+   * @param limit maximum number of assets to return
    * @return collection of assets and the next continuation token
    * @see Continuation#nextContinuationToken()
    *
@@ -178,15 +180,16 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Find updated assets. The paging works differently because results are sorted by addedToRepository instead of id. Page
+   * Find updated assets. The paging works differently because results are sorted by addedToRepository instead of id.
+   * Page
    * through results by passing the addedToRepository value from the last record in the Collection.
    *
    * @param repositoryId the repository to browse
    * @param addedToRepository addedToRepository of asset content from the last record of the previous call.
-   * @param regexList  list of wildcard expressions to match on path.
-   *                             Supported special characters are * and ?
+   * @param regexList list of wildcard expressions to match on path.
+   *          Supported special characters are * and ?
    * @param batchSize how many assets to fetch in each call. May return more assets than this if there are
-   *                  multiple assets with the same addedToRepository value as the last record.
+   *          multiple assets with the same addedToRepository value as the last record.
    * @return batch of updated assets
    */
   @Transactional
@@ -198,7 +201,8 @@ public class AssetStore<T extends AssetDAO>
       @Nullable Map<String, Object> filterParams,
       final int batchSize)
   {
-    // We consider dates the same if they are at the same millisecond. Normalization of the date plus using a >= query has
+    // We consider dates the same if they are at the same millisecond. Normalization of the date plus using a >= query
+    // has
     // the effect of doing a > query as if the data in the database was truncated to the millisecond.
     OffsetDateTime addedToRepositoryNormalized = null;
     if (addedToRepository != null) {
@@ -232,7 +236,9 @@ public class AssetStore<T extends AssetDAO>
         }
 
         assets.addAll(
-            matchAddedToRepository.stream().filter(asset -> !knownPaths.contains(asset.path())).collect(Collectors.toList()));
+            matchAddedToRepository.stream()
+                .filter(asset -> !knownPaths.contains(asset.path()))
+                .collect(Collectors.toList()));
       }
       else {
         // It's not safe to leave the extra record in. There may be more assets with same addedToRepository value as it.
@@ -244,8 +250,12 @@ public class AssetStore<T extends AssetDAO>
   }
 
   private boolean hasMoreResultsWithSameBlobCreated(final List<AssetInfo> assets) {
-    OffsetDateTime lastAddedToRepository = assets.get(assets.size() - 1).addedToRepository().truncatedTo(ChronoUnit.MILLIS);;
-    OffsetDateTime secondToLastAddedToRepository = assets.get(assets.size() - 2).addedToRepository().truncatedTo(ChronoUnit.MILLIS);;
+    OffsetDateTime lastAddedToRepository =
+        assets.get(assets.size() - 1).addedToRepository().truncatedTo(ChronoUnit.MILLIS);
+    ;
+    OffsetDateTime secondToLastAddedToRepository =
+        assets.get(assets.size() - 2).addedToRepository().truncatedTo(ChronoUnit.MILLIS);
+    ;
     return lastAddedToRepository.equals(secondToLastAddedToRepository);
   }
 
@@ -301,14 +311,16 @@ public class AssetStore<T extends AssetDAO>
    * Retrieves an assets associated with the given component ids.
    *
    * @param componentIds a set of component ids to search
-   * @param assetFilter       optional filter to apply.
+   * @param assetFilter optional filter to apply.
    * @param assetFilterParams parameter map for the optional filter.
    * @return collection of {@link AssetInfo}
    */
   @Transactional
-  public Collection<AssetInfo> findByComponentIds(final Set<Integer> componentIds,
-                                                  final String assetFilter,
-                                                  final Map<String, String> assetFilterParams) {
+  public Collection<AssetInfo> findByComponentIds(
+      final Set<Integer> componentIds,
+      final String assetFilter,
+      final Map<String, String> assetFilterParams)
+  {
     if (CollectionUtils.isEmpty(componentIds)) {
       return Collections.emptyList();
     }
@@ -336,14 +348,16 @@ public class AssetStore<T extends AssetDAO>
    * @param asset the asset to update
    */
   @Transactional
-  public void updateAssetAttributes(final Asset asset,
-                                    final AttributeChangeSet changeSet)
+  public void updateAssetAttributes(
+      final Asset asset,
+      final AttributeChangeSet changeSet)
   {
     // reload latest attributes, apply change, then update database if necessary
     dao().readAssetAttributes(asset).ifPresent(attributes -> {
       ((AssetData) asset).setAttributes(attributes);
 
-      boolean changesApplied = changeSet.getChanges().stream()
+      boolean changesApplied = changeSet.getChanges()
+          .stream()
           .map(change -> applyAttributeChange(attributes, change))
           .reduce((a, b) -> a || b)
           .orElse(false);
@@ -537,8 +551,8 @@ public class AssetStore<T extends AssetDAO>
    * @return {@code true} if asset exists in all three: <format>_asset, <format>_asset_blob, <format>_component tables
    */
   @Transactional
-  public Boolean assetRecordsExist(final BlobRef blobRef) {
-    return dao().assetRecordsExist(blobRef);
+  public Boolean assetRecordsExist(final BlobRef blobRef, final String path, final String repository) {
+    return dao().assetRecordsExist(blobRef, path, repository);
   }
 
   private int purgeAssets(final int[] assetIds) {

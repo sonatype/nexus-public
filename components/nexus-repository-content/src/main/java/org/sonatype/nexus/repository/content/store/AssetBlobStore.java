@@ -280,4 +280,22 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   public List<AssetReconcileData> browseAssetBlobsByBlobRefs(final List<BlobRef> blobRefs) {
     return dao().browseAssetBlobsByBlobRefs(blobRefs);
   }
+
+  /**
+   * Retrieves an asset blob from the content data store based on provided data.
+   * By blobRef or (path and repository) if new version was uploaded
+   *
+   * @param blobRef the blob reference
+   * @param path the blob path
+   * @param repository the blob repository
+   * @return asset blob if it was found
+   */
+  @Transactional
+  public Optional<AssetBlob> readAssetBlobByPathAndRepository(
+      final BlobRef blobRef,
+      final String path,
+      final String repository)
+  {
+    return dao().readAssetBlobByPathAndRepository(blobRef, path, repository);
+  }
 }

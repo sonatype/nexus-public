@@ -209,4 +209,17 @@ public interface AssetBlobDAO
   String getPathByBlobRef(@Param("blobRef") BlobRef blobRef);
 
   List<AssetReconcileData> browseAssetBlobsByBlobRefs(@Param("blobRefs") List<BlobRef> blobRefs);
+
+  /**
+   * Retrieves an asset blob from the content data store based blobRef or path with repository.
+   *
+   * @param blobRef the blob reference
+   * @param path the blob path
+   * @param blobRef the blob repository
+   * @return asset blob if it was found
+   */
+  Optional<AssetBlob> readAssetBlobByPathAndRepository(
+      final @Param("blobRef") BlobRef blobRef,
+      final @Param("path") String path,
+      final @Param("repository") String repository);
 }
