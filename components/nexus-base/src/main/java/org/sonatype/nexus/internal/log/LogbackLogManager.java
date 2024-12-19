@@ -252,6 +252,13 @@ public class LogbackLogManager
   }
 
   @Override
+  @Nullable
+  @Guarded(by = STARTED)
+  public InputStream getLogFileStream(final String fileName) throws IOException {
+    return getLogFileStream(fileName, 0, Long.MAX_VALUE);
+  }
+
+  @Override
   @Guarded(by = STARTED)
   public Map<String, LoggerLevel> getLoggers() {
     Map<String, LoggerLevel> loggers = new HashMap<>();

@@ -70,6 +70,15 @@ public interface LogManager
   InputStream getLogFileStream(String fileName, long fromByte, long bytesCount) throws IOException;
 
   /**
+   * Provides access to named log-file streams.
+   *
+   * @param fileName name of log file to fetch
+   * @return Stream to log file or {@code null} if non-existent.
+   */
+  @Nullable
+  InputStream getLogFileStream(String fileName) throws IOException;
+
+  /**
    * Return mapping of existing loggers which have explicit levels configured (never null).
    *
    * @since 2.7
