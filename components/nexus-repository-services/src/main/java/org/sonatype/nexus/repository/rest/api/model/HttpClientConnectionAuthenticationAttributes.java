@@ -35,11 +35,24 @@ public class HttpClientConnectionAuthenticationAttributes
   @ApiModelProperty(access = "writeOnly")
   protected final String password;
 
+  @ApiModelProperty(access = "writeOnly")
+  protected final String bearerToken;
+
   @ApiModelProperty
   protected final String ntlmHost;
 
   @ApiModelProperty
   protected final String ntlmDomain;
+
+  public HttpClientConnectionAuthenticationAttributes(
+          @JsonProperty("type") final String type,
+          @JsonProperty("username") final String username,
+          @JsonProperty(value = "password", access = Access.WRITE_ONLY) final String password,
+          @JsonProperty("ntlmHost") final String ntlmHost,
+          @JsonProperty("ntlmDomain") final String ntlmDomain)
+  {
+    this(type, username, password, ntlmHost, ntlmDomain, null);
+  }
 
   @JsonCreator
   public HttpClientConnectionAuthenticationAttributes(
@@ -47,13 +60,15 @@ public class HttpClientConnectionAuthenticationAttributes
       @JsonProperty("username") final String username,
       @JsonProperty(value = "password", access = Access.WRITE_ONLY) final String password,
       @JsonProperty("ntlmHost") final String ntlmHost,
-      @JsonProperty("ntlmDomain") final String ntlmDomain)
+      @JsonProperty("ntlmDomain") final String ntlmDomain,
+      @JsonProperty(value = "bearerToken", access = Access.WRITE_ONLY) final String bearerToken)
   {
     this.type = type;
     this.username = username;
     this.password = password;
     this.ntlmHost = ntlmHost;
     this.ntlmDomain = ntlmDomain;
+    this.bearerToken = bearerToken;
   }
 
   public String getType() {
@@ -74,5 +89,9 @@ public class HttpClientConnectionAuthenticationAttributes
 
   public String getNtlmDomain() {
     return ntlmDomain;
+  }
+
+  public String getBearerToken() {
+    return bearerToken;
   }
 }
