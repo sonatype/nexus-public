@@ -206,8 +206,9 @@ public class SimpleApiRepositoryAdapter
       String username = authenticationMap.get("username", String.class);
       String ntlmHost = authenticationMap.get("ntlmHost", String.class);
       String ntlmDomain = authenticationMap.get("ntlmDomain", String.class);
+      String bearerToken = authenticationMap.get("bearerToken", String.class);
 
-      authentication = new HttpClientConnectionAuthenticationAttributes(type, username, null, ntlmHost, ntlmDomain);
+      authentication = new HttpClientConnectionAuthenticationAttributes(type, username, null, ntlmHost, ntlmDomain, bearerToken);
     }
 
     HttpClientConnectionAttributes connection = null;
