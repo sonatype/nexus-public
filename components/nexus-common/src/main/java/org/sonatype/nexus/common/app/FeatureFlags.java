@@ -210,6 +210,9 @@ public interface FeatureFlags
   String MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED_NAMED =
       "${nexus.malware.risk.on.disk.nonadmin.override.enabled:-false}";
 
+  String MALWARE_REMEDIATOR_TASK_CHECK_REPOSITORY_IN_KNOWN_REGISTRIES_NAMED =
+      "${nexus.malware.remediator.task.check.repository.in.known.registries:-false}";
+
   String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
 
   String RECONCILE_PLAN_ENABLED_NAMED = "${nexus.reconcile.plan.enabled:-false}";
