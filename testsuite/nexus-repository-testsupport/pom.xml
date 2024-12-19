@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>3.76.0-02</version>
+    <version>3.76.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-testsupport</artifactId>
