@@ -1347,8 +1347,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Task_Script_Creation_Disabled: '<i>Admin - Execute script</i> task creation is disabled. ' +
         '<a href="https://links.sonatype.com/products/nxrm3/disabled-groovy-scripting">More information</a>',
 
-    Task_TaskScope_Label: 'Task scope:',
-    Task_TaskScope_HelpText: 'Limit the impact of this task to blobs modified within a specific time period.',
+    Task_TaskScope_Label: 'Timespan:',
+    Task_TaskScope_HelpText: 'Limit this task to files added to the repository during a specific timespan.',
     Task_TaskScope_StartEndDates_Item: 'Start/End Dates',
     Task_TaskScope_StartEndDates_FieldLabel: 'Only blobs created within start/end date',
     Task_TaskScope_StartEndDates_FieldHelpText: 'Attempt to reconcile blobs uploaded within the start end end date specified below (e.g., 09/23/2024).',
@@ -1356,7 +1356,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Task_TaskScopeDates_EndDate_FieldLabel: 'End date',
     Task_TaskScope_Duration_Item: 'Duration',
     Task_TaskScope_Duration_FieldLabel: 'Task scope duration',
-    Task_TaskScope_Duration_FieldHelpText: 'Reconcile blobs created within the specific date range below.',
+    Task_TaskScope_Duration_FieldHelpText: 'Limit the reconcile scope to files added or deleted in the timespan starting from when the task runs.',
     Task_TaskScope_Duration_SinceDays_FieldLabel: 'Days',
     Task_TaskScope_Duration_SinceHours_FieldLabel: 'Hours',
     Task_TaskScope_Duration_SinceMinutes_FieldLabel: 'Minutes',
