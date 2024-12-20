@@ -444,6 +444,8 @@ public class RepositoryManagerImpl
       // ensure configuration sanity
       repository.validate(configuration);
 
+      repository.stopSafe();
+
       if (!EventHelper.isReplicating()) {
         store.update(configuration);
         httpAuthenticationPasswordEncoder.removeSecret(oldConfiguration.getAttributes(), configuration.getAttributes());
@@ -454,7 +456,6 @@ public class RepositoryManagerImpl
       throw e;
     }
 
-    repository.stopSafe();
     repository.update(configuration);
     repository.start();
 
