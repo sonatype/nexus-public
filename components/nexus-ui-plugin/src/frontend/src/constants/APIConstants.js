@@ -310,6 +310,9 @@ export default {
       get MALICIOUS_RISK_ON_DISK() {
         return `${this.BASE_URL}malicious-risk/risk-on-disk`;
       },
+      get MALWARE_COMPONENTS_CSV() {
+        return `${this.BASE_URL}malicious-risk/malware-components-csv`;
+      },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',
     SYSTEM_INFORMATION_HA: 'service/rest/beta/system/information',
