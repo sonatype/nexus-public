@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -79,6 +80,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
@@ -564,10 +566,21 @@ public class FileBlobStore
         return false;
       }
 
+      BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());
+      Path path = attributePath(propRef);
+
+      DateTime deletedDateTime = new DateTime();
       blobAttributes.setDeleted(true);
       blobAttributes.setDeletedReason(reason);
-      blobAttributes.setDeletedDateTime(new DateTime());
+      blobAttributes.setDeletedDateTime(deletedDateTime);
+      blobAttributes.setSoftDeletedLocation(getLocationPrefix(propRef));
       blobAttributes.store();
+
+      // Save properties file under the new location
+      FileBlobAttributes newBlobAttributes = new FileBlobAttributes(path);
+      newBlobAttributes.updateFrom(blobAttributes);
+      newBlobAttributes.setOriginalLocation(getLocationPrefix(blobId));
+      newBlobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs
       blobDeletionIndex.createRecord(blobId);
@@ -600,7 +613,13 @@ public class FileBlobStore
 
       if (blobDeleted && contentSize != null) {
         metricsService.recordDeletion(contentSize);
+        fileOperations.deleteEmptyDirectory(blobPath.getParent());
       }
+      Optional.ofNullable(getFileBlobAttributes(blobId)).ifPresent(attr -> {
+        Optional<String> softDeletedLocation = attr.getSoftDeletedLocation();
+        // Remove copied soft-deleted attributes
+        softDeletedLocation.ifPresent(location -> deleteCopiedAttributes(blobId, location));
+      });
 
       return blobDeleted;
     }
@@ -1276,5 +1295,10 @@ public class FileBlobStore
   @VisibleForTesting
   public void flushMetrics() throws IOException {
     metricsService.flush();
+  }
+
+  @Override
+  protected void deleteCopiedAttributes(final BlobId blobId, final String softDeletedLocation) {
+    fileOperations.deleteQuietly(attributePath(createBlobIdForTimePath(blobId, softDeletedLocation)));
   }
 }

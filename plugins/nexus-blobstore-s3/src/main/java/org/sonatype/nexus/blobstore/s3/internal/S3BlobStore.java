@@ -21,12 +21,14 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -62,8 +64,8 @@ import com.amazonaws.SdkBaseException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.iterable.S3Objects;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.GetObjectMetadataRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -513,7 +515,8 @@ public class S3BlobStore
     try (final Timer.Context expireContext = expireTimer.time()) {
       log.debug("Soft deleting blob {}", blobId);
 
-      S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
+      String attributePath = attributePath(blobId);
+      S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath);
 
       boolean loaded = blobAttributes.load();
       if (!loaded) {
@@ -527,16 +530,27 @@ public class S3BlobStore
         return false;
       }
 
+      BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());
+      String softDeletedLocation = attributePath(propRef);
+
+      DateTime deletedDateTime = new DateTime();
       blobAttributes.setDeleted(true);
       blobAttributes.setDeletedReason(reason);
-      blobAttributes.setDeletedDateTime(new DateTime());
+      blobAttributes.setDeletedDateTime(deletedDateTime);
+      blobAttributes.setSoftDeletedLocation(getLocationPrefix(propRef));
       blobAttributes.store();
+
+      // Save properties file under the new location
+      S3BlobAttributes newBlobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), softDeletedLocation);
+      newBlobAttributes.updateFrom(blobAttributes);
+      newBlobAttributes.setOriginalLocation(getLocationPrefix(blobId));
+      newBlobAttributes.store();
 
       // soft delete is implemented using an S3 lifecycle that sets expiration on objects with DELETED_TAG
       // tag the bytes
       s3.setObjectTagging(tagAsDeleted(contentPath(blobId)));
       // tag the attributes
-      s3.setObjectTagging(tagAsDeleted(attributePath(blobId)));
+      s3.setObjectTagging(tagAsDeleted(attributePath));
       blob.markStale();
 
       Long contentSize = getContentSizeForDeletion(blobAttributes);
@@ -596,6 +610,10 @@ public class S3BlobStore
       boolean blobDeleted = batchDelete(blobPath, attributePath);
 
       if (blobDeleted && contentSize != null) {
+        Optional<String> softDeletedLocation = blobAttributes.getSoftDeletedLocation();
+        // Remove copied soft-deleted attributes
+        softDeletedLocation.ifPresent(location -> deleteCopiedAttributes(blobId, location));
+
         metricsService.recordDeletion(contentSize);
       }
 
@@ -919,6 +937,11 @@ public class S3BlobStore
     s3.setObjectTagging(untagAsDeleted(contentPath(blobId)));
     s3.setObjectTagging(untagAsDeleted(attributePath(blobId)));
     metricsService.recordAddition(attributes.getMetrics().getContentSize());
+  }
+
+  @Override
+  protected void deleteCopiedAttributes(final BlobId blobId, final String softDeletedLocation) {
+    deleteQuietly(attributePath(createBlobIdForTimePath(blobId, softDeletedLocation)));
   }
 
   @Override

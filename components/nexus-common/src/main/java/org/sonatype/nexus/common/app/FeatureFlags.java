@@ -228,7 +228,7 @@ public interface FeatureFlags
 
   String RECONCILE_CLEANUP_DAYS_AGO = "${nexus.reconcile.cleanup.daysAgo:-7}";
 
-  String RECONCILE_EXECUTE_CREATED_HOURS_AGO = "${nexus.reconcile.execute.plans.created.hoursAgo:-2}";
+  String RECONCILE_EXECUTE_CREATED_HOURS_AGO = "${nexus.reconcile.execute.plans.created:-2h}";
 
   String SECRETS_API_ENABLED = "nexus.secrets.api.enabled";
 

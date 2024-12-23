@@ -39,6 +39,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.stateguard.Transitions;
+import org.sonatype.nexus.common.text.Strings2;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -47,6 +48,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_FORMATTER;
 import static org.sonatype.nexus.blobstore.api.BlobRef.DATE_TIME_PATH_FORMATTER;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATE_BASED_BLOBSTORE_LAYOUT_ENABLED_NAMED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
@@ -193,22 +195,35 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
         .map(BlobAttributes::getProperties)
         .map(p -> p.getProperty(HEADER_PREFIX + BLOB_NAME_HEADER));
     if (!blobName.isPresent()) {
-      log.error("Property not present: {}, for blob id: {}, at path: {}", HEADER_PREFIX + BLOB_NAME_HEADER,
-          blobId, attributePathString(blobId)); // NOSONAR
+      log.error("Property not present: {}, for blob id: {}, at path: {}", HEADER_PREFIX + BLOB_NAME_HEADER, blobId,
+          attributePathString(blobId)); // NOSONAR
       return false;
     }
+    Optional<String> originalLocation = attributes.getOriginalLocation();
+    if (originalLocation.isPresent()) {
+      log.debug("Undelete invoked with copied attributes. Retrying with original location: {}",
+          originalLocation.get());
+      return undelete(inUseChecker, createBlobIdForTimePath(blobId, originalLocation.get()), null, isDryRun);
+    }
+
     if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName.get())) {
       String deletedReason = attributes.getDeletedReason();
       if (!isDryRun) {
-        attributes.setDeleted(false);
-        attributes.setDeletedReason(null);
         try {
+          Optional<String> softDeletedLocation = attributes.getSoftDeletedLocation();
+          // Remove deletion flag and persist
+          attributes.setDeleted(false);
+          attributes.setDeletedReason(null);
+          attributes.setSoftDeletedLocation(null);
           doUndelete(blobId, attributes);
           attributes.store();
+
+          // Remove copied soft-deleted attributes
+          softDeletedLocation.ifPresent(location -> deleteCopiedAttributes(blobId, location));
         }
         catch (IOException e) {
-          log.error("Error while un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}",
-              blobId, deletedReason, blobStoreConfiguration.getName(), blobName.get(), e);
+          log.error("Error while un-deleting blob id: {}, deleted reason: {}, blob store: {}, blob name: {}", blobId,
+              deletedReason, blobStoreConfiguration.getName(), blobName, e);
         }
       }
       log.warn(
@@ -221,9 +236,18 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   protected abstract String attributePathString(BlobId blobId);
 
+  /**
+   * Invoked during an undelete activity before the properties file is stored. This allows implementations to add
+   * necessary book keeping.
+   */
   protected void doUndelete(final BlobId blobId, final BlobAttributes attributes) {
     // no-op
   }
+
+  /**
+   * Deletes the underlying attributes file, this should only be used to remove duplicate attributes
+   */
+  protected abstract void deleteCopiedAttributes(BlobId blobId, String softDeletedLocation);
 
   @Override
   @Guarded(by = STARTED)
@@ -344,5 +368,33 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     if (isStarted()) {
       doStop();
     }
+  }
+
+  /**
+   * @return if the blobId uses a date, returns formatted via dateTime,
+   *         or an empty string if the blobId does not reference a date
+   */
+  protected static String getLocationPrefix(final BlobId blobId) {
+    return Optional.ofNullable(blobId.getBlobCreatedRef())
+        .map(time -> time.format(DATE_TIME_FORMATTER))
+        .orElse("");
+  }
+
+  /**
+   * For a blob, create a BlobId which represents the location of an attributes file relocated to a different timestamp.
+   * An empty location string will result in a BlobId without a timestamp (i.e. old style layout)
+   *
+   * @param blobId used to provided the unique part of the blob's identifier
+   * @param locationTimestamp a DATE_TIME_FORMATTER string for the soft-deleted location
+   * @return an optional containing the BobId if getSoftDeletedLocation provides a value
+   */
+  protected BlobId createBlobIdForTimePath(final BlobId blobId, final String locationTimestamp) {
+    if (Strings2.isBlank(locationTimestamp)) {
+      return new BlobId(blobId.asUniqueString());
+    }
+
+    LocalDateTime localDateTime = LocalDateTime.parse(locationTimestamp, DATE_TIME_FORMATTER);
+    OffsetDateTime softDeletedDateTime = localDateTime.atOffset(ZoneOffset.UTC);
+    return new BlobId(blobId.asUniqueString(), softDeletedDateTime);
   }
 }

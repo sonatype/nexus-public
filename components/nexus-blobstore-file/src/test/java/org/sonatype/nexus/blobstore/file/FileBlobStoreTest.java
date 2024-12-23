@@ -391,6 +391,7 @@ public class FileBlobStoreTest
     verify(attributes).getProperties();
     verify(attributes).isDeleted();
     verify(attributes).getDeletedReason();
+    verify(attributes).getOriginalLocation();
     verifyNoMoreInteractions(attributes);
   }
 
@@ -435,7 +436,7 @@ public class FileBlobStoreTest
     when(nodeAccess.isOldestNode()).thenReturn(true);
     underTest.doStart();
 
-    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"), 
+    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"),
         deletedBlobStoreProperties);
 
     setRebuildMetadataToTrue();

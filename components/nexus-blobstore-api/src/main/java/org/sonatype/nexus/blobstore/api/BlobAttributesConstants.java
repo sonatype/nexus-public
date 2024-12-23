@@ -37,6 +37,10 @@ public final class BlobAttributesConstants
 
   public static final String LAST_DOWNLOADED_ATTRIBUTE = "lastDownloaded";
 
+  public static final String ORIGINAL_LOCATION_ATTRIBUTE = "originalLocation";
+
+  public static final String SOFT_DELETED_LOCATION_ATTRIBUTE = "softDeletedLocation";
+
   private BlobAttributesConstants() {
   }
 }
