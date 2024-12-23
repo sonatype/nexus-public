@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.coreui;
 
+import java.util.Date;
+import java.util.List;
 import javax.inject.Provider;
 import javax.validation.Validator;
 
@@ -23,6 +25,8 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.schedule.Manual;
+import org.sonatype.nexus.scheduling.schedule.Schedule;
+import org.sonatype.nexus.scheduling.schedule.Weekly;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
@@ -32,6 +36,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +50,7 @@ public class TaskComponentTest
   public ExpectedException thrown = ExpectedException.none();
 
   private TaskComponent component;
+
   private TaskScheduler scheduler;
 
   @Mock
@@ -152,5 +158,35 @@ public class TaskComponentTest
     thrown.expectMessage("This task is not allowed to be created");
 
     component.create(taskXO);
+  }
+
+  @Test
+  public void testAppendPlanReconciliationText() {
+    TaskConfiguration taskConfiguration = mock(TaskConfiguration.class);
+    when(taskConfiguration.isVisible()).thenReturn(true);
+    when(taskConfiguration.getTypeId()).thenReturn(TaskComponent.PLAN_RECONCILIATION_TASK_ID);
+
+    TaskInfo taskInfo = mock(TaskInfo.class);
+    CurrentState localState = mock(CurrentState.class);
+    Schedule schedule = mock(Weekly.class);
+    when(localState.getState()).thenReturn(TaskState.WAITING);
+    when(taskInfo.getId()).thenReturn("taskId");
+    when(taskInfo.getTypeId()).thenReturn(TaskComponent.PLAN_RECONCILIATION_TASK_ID);
+    when(taskInfo.getCurrentState()).thenReturn(localState);
+    when(taskInfo.getConfiguration()).thenReturn(taskConfiguration);
+    when(taskInfo.getSchedule()).thenReturn(schedule);
+    when(scheduler.listsTasks()).thenReturn(List.of(taskInfo));
+
+    ExternalTaskState extState = mock(ExternalTaskState.class);
+    when(scheduler.toExternalTaskState(taskInfo)).thenReturn(extState);
+    when(extState.getState()).thenReturn(TaskState.WAITING);
+    when(extState.getLastEndState()).thenReturn(TaskState.OK);
+    when(extState.getLastRunStarted()).thenReturn(new Date());
+    when(extState.getLastRunDuration()).thenReturn(100L);
+
+    List<TaskXO> tasks = component.read();
+    assertEquals(1, tasks.size());
+    assertEquals(TaskComponent.PLAN_RECONCILIATION_TASK_ID, tasks.get(0).getTypeId());
+    assertEquals("Ok [0s]" + TaskComponent.PLAN_RECONCILIATION_TASK_OK_TEXT, tasks.get(0).getLastRunResult());
   }
 }
