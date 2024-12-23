@@ -199,7 +199,7 @@ public interface FeatureFlags
 
   String MALWARE_RISK_ENABLED = "nexus.malware.risk.enabled";
 
-  String MALWARE_RISK_ENABLED_NAMED = "${nexus.malware.risk.enabled:-false}";
+  String MALWARE_RISK_ENABLED_NAMED = "${nexus.malware.risk.enabled:-true}";
 
   String MALWARE_RISK_ON_DISK_ENABLED = "nexus.malware.risk.on.disk.enabled";
 
