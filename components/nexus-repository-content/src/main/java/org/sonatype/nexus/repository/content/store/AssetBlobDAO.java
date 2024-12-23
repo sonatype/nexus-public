@@ -190,7 +190,7 @@ public interface AssetBlobDAO
    *
    * @return asset blobs count
    */
-  int countNotMigratedAssetBlobs();
+  boolean existsNotMigratedAssetBlobs();
 
   /**
    * Get repository name by blob reference.

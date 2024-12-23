@@ -175,9 +175,11 @@
     WHERE asset_blob_id = #{assetBlobData.assetBlobId}
   </update>
 
-  <select id="countNotMigratedAssetBlobs" resultType="int">
-    SELECT COUNT(*) FROM ${format}_asset_blob
-    WHERE blob_ref LIKE '%:%' AND blob_ref NOT LIKE '%@%@%'
+  <select id="existsNotMigratedAssetBlobs" resultType="boolean">
+    SELECT EXISTS (
+      SELECT 1 FROM ${format}_asset_blob
+      WHERE blob_ref LIKE '%:%'
+    )
   </select>
 
   <select id="getRepositoryName" resultType="String">

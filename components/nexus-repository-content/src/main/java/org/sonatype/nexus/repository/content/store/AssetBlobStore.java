@@ -251,7 +251,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    */
   @Transactional
   public boolean notMigratedAssetBlobRefsExists() {
-    return dao().countNotMigratedAssetBlobs() > 0;
+    return dao().existsNotMigratedAssetBlobs();
   }
 
   /**
