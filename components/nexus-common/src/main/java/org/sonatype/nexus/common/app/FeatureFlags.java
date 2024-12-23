@@ -211,7 +211,7 @@ public interface FeatureFlags
       "${nexus.malware.risk.on.disk.nonadmin.override.enabled:-false}";
 
   String MALWARE_REMEDIATOR_TASK_CHECK_REPOSITORY_IN_KNOWN_REGISTRIES_NAMED =
-      "${nexus.malware.remediator.task.check.repository.in.known.registries:-false}";
+      "${nexus.malware.remediator.task.check.repository.in.known.registries:-true}";
 
   String RECONCILE_PLAN_ENABLED = "nexus.reconcile.plan.enabled";
 
