@@ -81,6 +81,7 @@ public class BlobStoreXO
 
   /**
    * the name of the group to which this blob store belongs, or null if not in a group
+   * 
    * @since 3.15
    */
   private String groupName;
@@ -105,7 +106,7 @@ public class BlobStoreXO
     return groupName;
   }
 
-  public boolean getIsQuotaEnabled() {
+  public boolean isQuotaEnabled() {
     return isQuotaEnabled;
   }
 

@@ -239,7 +239,7 @@ public class RepositoryUiServiceTest
       assertThat(reference.getUrl(),
           is(String.format("%s/repository/%s/", BaseUrlHolder.get(), repoConfiguration.getRepositoryName())));
       assertThat(reference.getStatus().getRepositoryName(), is(repoConfiguration.getRepositoryName()));
-      assertThat(reference.getStatus().getOnline(), is(repoConfiguration.isOnline()));
+      assertThat(reference.getStatus().isOnline(), is(repoConfiguration.isOnline()));
     }
   }
 

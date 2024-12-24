@@ -167,4 +167,14 @@ public class MockBlobStoreConfiguration
     setName(name);
     return this;
   }
+
+  public MockBlobStoreConfiguration withType(final String type) {
+    setType(type);
+    return this;
+  }
+
+  public MockBlobStoreConfiguration withAttributes(final Map<String, Map<String, Object>> attributes) {
+    setAttributes(attributes);
+    return this;
+  }
 }
