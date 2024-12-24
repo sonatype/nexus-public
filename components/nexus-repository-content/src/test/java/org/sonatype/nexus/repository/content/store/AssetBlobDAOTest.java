@@ -36,6 +36,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -201,16 +202,16 @@ public class AssetBlobDAOTest
   }
 
   @Test
-  public void testExistsLegacyAssetBlobs() throws Exception {
+  public void testCountLegacyAssetBlobs() throws Exception {
     final int TOTAL_ASSETS = 20;
     final int LEGACY_ASSETS = 15;
     prepareLegacyFormatAssetBlobs(TOTAL_ASSETS, LEGACY_ASSETS);
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
-      boolean legacyExists = dao.existsNotMigratedAssetBlobs();
+      int legacyCount = dao.countNotMigratedAssetBlobs();
 
-      assertThat(legacyExists, is(true));
+      assertThat(legacyCount, is(equalTo(LEGACY_ASSETS)));
     }
   }
 
