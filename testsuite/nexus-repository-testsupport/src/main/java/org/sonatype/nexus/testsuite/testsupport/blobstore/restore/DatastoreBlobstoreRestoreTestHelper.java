@@ -330,7 +330,7 @@ public class DatastoreBlobstoreRestoreTestHelper
   public void simulateFileLoss(String blobStorageName, String extension) {
     try {
       BlobStore blobstore = blobstoreManager.get(blobStorageName);
-      String absoluteBlobDir = String.valueOf(((FileBlobStore) blobstore).getAbsoluteBlobDir());
+      String absoluteBlobDir = ((FileBlobStore) blobstore).getAbsoluteBlobDir().toString();
       List<BlobId> blobIds = getAssetBlobId();
       blobIds.forEach(blobId -> {
         String filePath = getFileAbsolutePathForBlobIdRef(blobId, extension, absoluteBlobDir);
