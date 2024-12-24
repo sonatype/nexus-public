@@ -50,6 +50,7 @@ Ext.define('NX.ext.form.field.ItemSelector', {
   invalidCls: 'nx-invalid',
 
   maskOnDisable: false,
+  selectionPlaceholder: null,
 
   /**
    * Override super *private* impl so we can control the button configuration.
@@ -203,11 +204,25 @@ Ext.define('NX.ext.form.field.ItemSelector', {
   },
 
   getValue: function() {
+    const me = this,
+        valueField = me.valueField,
+        parentValue = this.callParent();
+    var result = parentValue;
+
+    if(Array.isArray(parentValue)) {
+      result = Ext.Array.filter(parentValue, function(item) {
+        if (me.selectionPlaceholder) {
+          return me.selectionPlaceholder[valueField] !== item;
+        }
+        return true
+      });
+    }
+
     if (this.valueAsString) {
-      return this.callParent().toString();
+      return result.toString();
     }
     else {
-      return this.callParent();
+      return result;
     }
   },
 
@@ -275,5 +290,18 @@ Ext.define('NX.ext.form.field.ItemSelector', {
     Ext.each(this.query('boundlist'), function(list) {
       list.mask();
     });
+  },
+  getSelections: function(list) {
+    const me = this,
+        valueField = me.valueField,
+        selected = this.callParent(arguments);
+
+    if(list === me.toField.boundList && me.selectionPlaceholder) {
+      return Ext.Array.filter(selected, function (item) {
+        return item.data[valueField] !== me.selectionPlaceholder[valueField];
+      });
+    } else {
+      return selected;
+    }
   }
 });

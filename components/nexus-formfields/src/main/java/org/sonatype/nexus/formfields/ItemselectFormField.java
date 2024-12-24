@@ -189,4 +189,9 @@ public class ItemselectFormField
 
     return this;
   }
+
+  public ItemselectFormField withSelectionPlaceholderText(final String value) {
+    getAttributes().put("selectionPlaceholderText", value);
+    return this;
+  }
 }

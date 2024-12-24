@@ -186,6 +186,7 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
 
       form.setValues(data);
     }
+    me.fireEvent("propertiesimported", me, properties);
   },
 
   /**
@@ -250,11 +251,10 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
    * @param newValue The blob stores selected.
    */
   filterRepositoryBySelectedBlobstore: function(selector, newValue) {
-    const allBlobStoresEntry = '(All Blob Stores)';
     const repositoryNameItems = selector.up('nx-coreui-formfield-settingsfieldset').query("nx-itemselector[name=property_repositoryName]")
-    const selectedBlobStores = newValue.split(',')
+    const selectedBlobStores = Ext.Array.filter(newValue.split(','), function(value) { return value !== "" });
     const filter = function (record) {
-      return Ext.Array.contains(selectedBlobStores, allBlobStoresEntry)
+      return selectedBlobStores.length === 0
           || Ext.Array.contains(selectedBlobStores, record.get('blobStoreName'));
     };
 

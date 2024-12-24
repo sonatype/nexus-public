@@ -39,6 +39,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldItemselectFactory', {
    * Create control.
    */
   create: function (formField, disableSort) {
+    const me = this;
     var filters,
         attributes = formField['attributes'] || {},
         idMapping = formField['idMapping'] || 'id',
@@ -81,6 +82,24 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldItemselectFactory', {
     }
     if (attributes['valueAsString']) {
       itemConfig.valueAsString = attributes['valueAsString'];
+    }
+    if (attributes['selectionPlaceholderText']) {
+      const placeholder = {};
+
+      placeholder[idMapping] = attributes['selectionPlaceholderText'];
+      placeholder[nameMapping] = attributes['selectionPlaceholderText'];
+      itemConfig.selectionPlaceholder = placeholder;
+      itemConfig.listeners = {
+        afterrender: function (itemSelector) {
+          const settings = itemSelector.up('nx-coreui-formfield-settingsfieldset');
+
+          itemSelector.on('change', me.selectionPlaceholderUpdater);
+          if(settings) {
+            settings.on('propertiesimported', function() { me.selectionPlaceholderUpdater(itemSelector) });
+          }
+          me.selectionPlaceholderUpdater(itemSelector);
+        }
+      };
     }
 
     if (formField['storeApi']) {
@@ -125,6 +144,30 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldItemselectFactory', {
     }
 
     return Ext.create('NX.ext.form.field.ItemSelector', itemConfig);
+  },
+
+  selectionPlaceholderUpdater: function (itemSelector) {
+    const placeholderRecord = itemSelector.selectionPlaceholder;
+
+    if(placeholderRecord) {
+      const toField = itemSelector.toField, store = toField.getStore(), valueField = itemSelector.valueField;
+      const selectedValues = Ext.Array.filter(itemSelector.getValue().split(','), function(selection) {
+        return selection !== "" && selection !== placeholderRecord[valueField];
+      });
+      if (selectedValues.length === 0) {
+        if (!store.findRecord(valueField, placeholderRecord[valueField])) {
+          store.add(placeholderRecord);
+          toField.setStore(store);
+        }
+      }
+      else {
+        const placeholder = store.findRecord(valueField, placeholderRecord[valueField]);
+        if (placeholder) {
+          store.remove(placeholder);
+          toField.setStore(store);
+        }
+      }
+    }
   }
 
 });
