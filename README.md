@@ -75,4 +75,4 @@ Looking to contribute to our code but need some help? There's a few ways to get 
 
 * Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
 * Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
-* Connect with [@sonatypeDev](https://twitter.com/sonatypeDev) on Twitter
+* Connect with [@sonatypeDev](https://x.com/sonatypeDev) on X (formerly Twitter)
