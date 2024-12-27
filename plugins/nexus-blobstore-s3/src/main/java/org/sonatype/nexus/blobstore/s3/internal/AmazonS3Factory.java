@@ -79,11 +79,13 @@ public class AmazonS3Factory
   private final SecretsFactory secretsFactory;
 
   @Inject
-  public AmazonS3Factory(@Named("${nexus.s3.connection.pool:--1}") final int connectionPoolSize,
-                         @Nullable @Named("${nexus.s3.connection.ttl:-null}") final Time connectionTtl,
-                         @Named("${nexus.s3.cloudwatchmetrics.enabled:-false}") final boolean cloudWatchMetricsEnabled,
-                         @Named("${nexus.s3.cloudwatchmetrics.namespace:-nexus-blobstore-s3}") final String cloudWatchMetricsNamespace,
-                         final SecretsFactory secretsFactory) {
+  public AmazonS3Factory(
+      @Named("${nexus.s3.connection.pool:--1}") final int connectionPoolSize,
+      @Nullable @Named("${nexus.s3.connection.ttl:-null}") final Time connectionTtl,
+      @Named("${nexus.s3.cloudwatchmetrics.enabled:-false}") final boolean cloudWatchMetricsEnabled,
+      @Named("${nexus.s3.cloudwatchmetrics.namespace:-nexus-blobstore-s3}") final String cloudWatchMetricsNamespace,
+      final SecretsFactory secretsFactory)
+  {
     this.defaultConnectionPoolSize = connectionPoolSize;
     this.cloudWatchMetricsEnabled = cloudWatchMetricsEnabled;
     this.cloudWatchMetricsNamespace = cloudWatchMetricsNamespace;
@@ -108,9 +110,9 @@ public class AmazonS3Factory
 
     AWSCredentialsProvider credentialsProvider = null;
     if (!isNullOrEmpty(accessKeyId) && !isNullOrEmpty(secretAccessKey)) {
-      String sessionToken = s3Configuration.get(SESSION_TOKEN_KEY, String.class);
+      String decryptedSessionToken = getSessionToken(s3Configuration);
       String decryptedAccessKey = new String(secretsFactory.from(secretAccessKey).decrypt());
-      AWSCredentials credentials = buildCredentials(accessKeyId, decryptedAccessKey, sessionToken);
+      AWSCredentials credentials = buildCredentials(accessKeyId, decryptedAccessKey, decryptedSessionToken);
 
       String assumeRole = s3Configuration.get(ASSUME_ROLE_KEY, String.class);
       credentialsProvider = buildCredentialsProvider(credentials, region, assumeRole);
@@ -121,7 +123,8 @@ public class AmazonS3Factory
     String endpoint = s3Configuration.get(ENDPOINT_KEY, String.class);
     if (!isNullOrEmpty(endpoint)) {
       builder = builder.withEndpointConfiguration(new AmazonS3ClientBuilder.EndpointConfiguration(endpoint, region));
-    } else if (!isNullOrEmptyOrDefault(region)) {
+    }
+    else if (!isNullOrEmptyOrDefault(region)) {
       builder = builder.withRegion(region);
     }
 
@@ -145,7 +148,7 @@ public class AmazonS3Factory
 
     if (cloudWatchMetricsEnabled) {
       if (credentialsProvider != null) {
-          AwsSdkMetrics.setCredentialProvider(credentialsProvider);
+        AwsSdkMetrics.setCredentialProvider(credentialsProvider);
       }
       AwsSdkMetrics.setMetricNameSpace(cloudWatchMetricsNamespace);
       if (!isNullOrEmptyOrDefault(region)) {
@@ -158,9 +161,11 @@ public class AmazonS3Factory
     return builder.build();
   }
 
-  private AWSCredentials buildCredentials(final String accessKeyId,
-                                          final String secretAccessKey,
-                                          final String sessionToken) {
+  private AWSCredentials buildCredentials(
+      final String accessKeyId,
+      final String secretAccessKey,
+      final String sessionToken)
+  {
     if (isNullOrEmpty(sessionToken)) {
       return new BasicAWSCredentials(accessKeyId, secretAccessKey);
     }
@@ -169,7 +174,11 @@ public class AmazonS3Factory
     }
   }
 
-  private AWSCredentialsProvider buildCredentialsProvider(final AWSCredentials credentials, final String region, final String assumeRole) {
+  private AWSCredentialsProvider buildCredentialsProvider(
+      final AWSCredentials credentials,
+      final String region,
+      final String assumeRole)
+  {
     AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credentials);
     if (isNullOrEmpty(assumeRole)) {
       return credentialsProvider;
@@ -185,7 +194,8 @@ public class AmazonS3Factory
       }
       AWSSecurityTokenService securityTokenService = AWSSecurityTokenServiceClientBuilder.standard()
           .withRegion(stsRegion)
-          .withCredentials(credentialsProvider).build();
+          .withCredentials(credentialsProvider)
+          .build();
 
       return new STSAssumeRoleSessionCredentialsProvider.Builder(assumeRole, "nexus-s3-session")
           .withStsClient(securityTokenService)
@@ -202,6 +212,13 @@ public class AmazonS3Factory
       log.warn("Default AWS region not configured, using {}", region, e);
       return region;
     }
+  }
+
+  private String getSessionToken(final NestedAttributesMap s3Configuration) {
+    if (s3Configuration.contains(SESSION_TOKEN_KEY)) {
+      return new String(secretsFactory.from(s3Configuration.get(SESSION_TOKEN_KEY, String.class)).decrypt());
+    }
+    return null;
   }
 
   private boolean isNullOrEmptyOrDefault(final String value) {

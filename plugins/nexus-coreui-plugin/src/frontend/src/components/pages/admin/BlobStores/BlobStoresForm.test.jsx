@@ -204,7 +204,7 @@ describe('BlobStoresForm', function() {
           accessKeyId: () => getByLabelText('Access Key ID'),
           secretAccessKey: () => getByLabelText('Secret Access Key'),
           assumeRole: () => getByLabelText('Assume Role ARN (Optional)'),
-          sessionToken: () => getByLabelText('Session Token ARN (Optional)'),
+          sessionToken: () => getByLabelText('Session Token (Optional)'),
           encryptionType: () => getByLabelText('Encryption Type'),
           kmsKeyId: () => getByLabelText('KMS Key ID (Optional)'),
           endpointURL: () => getByLabelText('Endpoint URL'),

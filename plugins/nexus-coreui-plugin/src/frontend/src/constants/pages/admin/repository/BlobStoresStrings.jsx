@@ -206,7 +206,7 @@ export default {
     S3BlobStore_Authentication_AccessKeyId: 'Access Key ID',
     S3BlobStore_Authentication_SecretAccessKey: 'Secret Access Key',
     S3BlobStore_Authentication_AssumeRoleArn: 'Assume Role ARN (Optional)',
-    S3BlobStore_Authentication_SessionToken: 'Session Token ARN (Optional)',
+    S3BlobStore_Authentication_SessionToken: 'Session Token (Optional)',
     S3BlobStore_EncryptionSettings_Title: 'Encryption (Optional)',
     S3BlobStore_EncryptionSettings_Type_FieldLabel: 'Encryption Type',
     S3BlobStore_EncryptionSettings_Type_HelpText: 'The type of encryption for objects in the S3 Blob Store',
