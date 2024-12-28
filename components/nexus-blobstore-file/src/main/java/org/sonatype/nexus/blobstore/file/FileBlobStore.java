@@ -30,6 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -1174,8 +1175,10 @@ public class FileBlobStore
     Map<String, OffsetDateTime> dateBasedBlobIds =
         dateBasedWalkFile.getBlobIdToDateRef(contentDir.resolve(prefix).toString());
     List<BlobId> blobIds =
-        reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, fromDateTime.toLocalDateTime(),
-            toDateTime.toLocalDateTime(), dateBasedBlobIds).collect(Collectors.toList());
+        reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir,
+            fromDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime(),
+            toDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime(),
+            dateBasedBlobIds).collect(Collectors.toList());
     return new PaginatedResult<>(blobIds, null);
   }
 

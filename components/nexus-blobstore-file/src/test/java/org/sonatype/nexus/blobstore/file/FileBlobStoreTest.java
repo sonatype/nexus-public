@@ -17,6 +17,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -66,6 +72,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -552,5 +559,19 @@ public class FileBlobStoreTest
     assertThat(metrics.getContentSize(), is(size));
     assertThat(metrics.getSha1Hash(), is(sha1));
     assertThat(metrics.getCreationTime(), is(creationTime));
+  }
+
+  @Test
+  public void testGetBlobIdUpdatedSinceStream() {
+    OffsetDateTime fromDateTime = LocalDate.now().atTime(LocalTime.MIN).atOffset(ZoneOffset.UTC);
+    OffsetDateTime toDateTime = LocalDate.now().atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC);
+
+    ZoneId systemZone = ZoneId.systemDefault();
+    LocalDateTime fromSystemTime = fromDateTime.atZoneSameInstant(systemZone).toLocalDateTime();
+    LocalDateTime toSystemTime = toDateTime.atZoneSameInstant(systemZone).toLocalDateTime();
+
+    underTest.getBlobIdUpdatedSinceStream("test", fromDateTime, toDateTime, null, 10);
+    verify(reconciliationLogger, times(1)).getBlobsCreatedSince(any(),
+        eq(fromSystemTime), eq(toSystemTime), anyMap());
   }
 }
