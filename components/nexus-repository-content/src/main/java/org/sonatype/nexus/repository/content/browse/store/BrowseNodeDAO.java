@@ -42,9 +42,9 @@ public interface BrowseNodeDAO
    * Retrieves the browse nodes directly under the given hierarchical display path.
    *
    * @param repositoryId the repository containing the browse nodes
-   * @param displayPath  the hierarchical path leading up to the browse nodes
-   * @param limit        when positive limits the number of browse nodes returned
-   * @param filter       optional filter to apply
+   * @param displayPath the hierarchical path leading up to the browse nodes
+   * @param limit when positive limits the number of browse nodes returned
+   * @param filter optional filter to apply
    * @param filterParams parameter map for the optional filter
    * @return browse nodes found directly under the display path
    */
@@ -84,7 +84,7 @@ public interface BrowseNodeDAO
    * Deletes all browse nodes in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the browse nodes
-   * @param limit        when positive limits the number of browse nodes deleted per-call
+   * @param limit when positive limits the number of browse nodes deleted per-call
    * @return {@code true} if any browse nodes were deleted
    */
   boolean deleteBrowseNodes(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
@@ -93,7 +93,7 @@ public interface BrowseNodeDAO
    * Deletes a browse node by its asset internal id and path.
    *
    * @param internalAssetId the asset internal id
-   * @param path            the path
+   * @param path the path
    * @return the parent node id of the deleted node
    */
   Long deleteByAssetIdAndPath(@Param("internalAssetId") Integer internalAssetId, @Param("path") String path);
@@ -117,8 +117,20 @@ public interface BrowseNodeDAO
    * Retrieves the browse node by its request path.
    *
    * @param repositoryId the repository containing the browse nodes
-   * @param requestPath  the request path
+   * @param requestPath the request path
    * @return the browse node if found
    */
   List<BrowseNode> getByRequestPath(@Param("repositoryId") int repositoryId, @Param("requestPath") String requestPath);
+
+  /**
+   * Retrieves a list of child browse nodes for the given parent node id
+   *
+   * @param parentNodeId the parent node id
+   * @param limit when positive limits the number of browse nodes returned
+   * @return the browse node or {@code null} if not found
+   */
+  List<BrowseNode> getChildByParentNodeId(
+      @Param("parentNodeId") Long parentNodeId,
+      @Param("limit") int limit,
+      @Param("offset") int offset);
 }

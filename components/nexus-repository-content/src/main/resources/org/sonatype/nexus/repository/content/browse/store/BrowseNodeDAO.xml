@@ -203,4 +203,9 @@
         C.repository_id = #{repositoryId} AND C.request_path = #{requestPath};
   </select>
 
+  <select id="getChildByParentNodeId" resultMap="browseNodeResult">
+    SELECT * FROM ${format}_browse_node WHERE
+        parent_id = #{parentNodeId}
+    <if test="limit gt 0"> LIMIT #{limit} OFFSET #{offset}</if>;
+    </select>
 </mapper>
