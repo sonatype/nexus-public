@@ -91,6 +91,7 @@ Ext.define('NX.coreui.view.task.TaskScopeDuration', {
   getSinceValueFor: function (fieldName) {
     const field = this.down('numberfield[name="' + fieldName + '"]');
     if (field) {
+      field.resetOriginalValue();
       return String(field.value);
     }
     return null;
