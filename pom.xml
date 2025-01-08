@@ -599,30 +599,6 @@
   <build>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <dependencies>
-            <dependency>
-              <groupId>org.codehaus.groovy</groupId>
-              <artifactId>groovy-eclipse-compiler</artifactId>
-              <version>3.7.0</version>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <!--
-              While these properties are the "default" compiler plugin ones,
-              we have them here explicitly for easier readability, as some
-              modules will override these properties to retain Java6 compatibility.
-            -->
-            <source>${maven.compiler.source}</source>
-            <target>${maven.compiler.target}</target>
-            <!--
-            Configure support for Groovy compilation.
-            -->
-            <compilerId>groovy-eclipse-compiler</compilerId>
-          </configuration>
-        </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -1549,26 +1525,6 @@
           <name>public</name>
         </property>
       </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <dependencies>
-              <!--
-                To support building nexus-public, we have to select the last version of groovy-eclipse-batch available
-                in Maven Central. This comes with a downside, as this compiler won't support the use of the parallel
-                build options in maven (e.g. `-T 1C`).
-               -->
-              <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy-eclipse-batch</artifactId>
-                <version>3.0.8-01</version>
-              </dependency>
-            </dependencies>
-          </plugin>
-        </plugins>
-      </build>
     </profile>
 
     <!--
