@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.67.0-03</version>
+    <version>3.76.0-03</version>
   </parent>
 
   <artifactId>nexus-base-overlay</artifactId>
