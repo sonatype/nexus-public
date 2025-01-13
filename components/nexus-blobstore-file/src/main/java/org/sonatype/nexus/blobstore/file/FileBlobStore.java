@@ -567,21 +567,23 @@ public class FileBlobStore
         return false;
       }
 
-      BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());
-      Path path = attributePath(propRef);
+      if (isDateBasedLayoutEnabled()) {
+        BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());
+        Path path = attributePath(propRef);
+        DateTime deletedDateTime = new DateTime();
+        blobAttributes.setDeletedDateTime(deletedDateTime);
+        blobAttributes.setSoftDeletedLocation(getLocationPrefix(propRef));
 
-      DateTime deletedDateTime = new DateTime();
+        // Save properties file under the new location
+        FileBlobAttributes newBlobAttributes = getFileBlobAttributes(path);
+        newBlobAttributes.updateFrom(blobAttributes);
+        newBlobAttributes.setOriginalLocation(getLocationPrefix(blobId));
+        newBlobAttributes.store();
+      }
+
       blobAttributes.setDeleted(true);
       blobAttributes.setDeletedReason(reason);
-      blobAttributes.setDeletedDateTime(deletedDateTime);
-      blobAttributes.setSoftDeletedLocation(getLocationPrefix(propRef));
       blobAttributes.store();
-
-      // Save properties file under the new location
-      FileBlobAttributes newBlobAttributes = new FileBlobAttributes(path);
-      newBlobAttributes.updateFrom(blobAttributes);
-      newBlobAttributes.setOriginalLocation(getLocationPrefix(blobId));
-      newBlobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs
       blobDeletionIndex.createRecord(blobId);
@@ -1259,8 +1261,14 @@ public class FileBlobStore
   }
 
   @Nullable
-  private FileBlobAttributes getFileBlobAttributes(final BlobId blobId) {
+  @VisibleForTesting
+  FileBlobAttributes getFileBlobAttributes(final BlobId blobId) {
     return (FileBlobAttributes) getBlobAttributes(blobId);
+  }
+
+  @VisibleForTesting
+  FileBlobAttributes getFileBlobAttributes(final Path path) {
+    return new FileBlobAttributes(path);
   }
 
   /**

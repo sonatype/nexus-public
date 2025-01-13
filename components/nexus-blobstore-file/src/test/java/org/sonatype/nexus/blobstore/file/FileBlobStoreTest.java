@@ -70,19 +70,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.blobstore.BlobStoreSupport.CONTENT_PREFIX;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
@@ -136,6 +130,9 @@ public class FileBlobStoreTest
 
   @Mock
   private FileBlobAttributes attributes;
+
+  @Mock
+  FileBlobAttributes newBlobAttributes;
 
   @Mock
   NodeAccess nodeAccess;
@@ -574,4 +571,101 @@ public class FileBlobStoreTest
     verify(reconciliationLogger, times(1)).getBlobsCreatedSince(any(),
         eq(fromSystemTime), eq(toSystemTime), anyMap());
   }
+
+  @Test
+  public void testDoDeleteWithDateBasedLayoutEnabled() throws Exception {
+
+    TestFileBlobStore underTest = createFixture();
+
+    BlobId blobId = new BlobId("test-blob-id");
+    Path path = underTest.attributePath(new BlobId(blobId.asUniqueString(), UTC.now()));
+    when(underTest.isDateBasedLayoutEnabled()).thenReturn(true);
+    when(attributes.isDeleted()).thenReturn(false);
+    when(underTest.getFileBlobAttributes(blobId)).thenReturn(attributes);
+    when(underTest.getFileBlobAttributes(path)).thenReturn(newBlobAttributes);
+
+    boolean result = underTest.doDelete(blobId, "test-reason");
+
+    assertTrue(result);
+    assertAttributes(blobId);
+
+    verify(attributes).setDeletedDateTime(any());
+    verify(attributes).setSoftDeletedLocation(anyString());
+    verify(newBlobAttributes).updateFrom(attributes);
+    verify(newBlobAttributes).setOriginalLocation(anyString());
+    verify(newBlobAttributes).store();
+  }
+
+  @Test
+  public void testDoDeleteWithDateBasedLayoutDisabled() throws Exception {
+
+    TestFileBlobStore underTest = createFixture();
+
+    BlobId blobId = new BlobId("test-blob-id");
+    when(underTest.isDateBasedLayoutEnabled()).thenReturn(false);
+    when(attributes.isDeleted()).thenReturn(false);
+    when(underTest.getFileBlobAttributes(blobId)).thenReturn(attributes);
+
+    boolean result = underTest.doDelete(blobId, "test-reason");
+
+    assertTrue(result);
+    assertAttributes(blobId);
+    verify(attributes, never()).setDeletedDateTime(any());
+    verifyNoInteractions(newBlobAttributes);
+  }
+
+  private TestFileBlobStore createFixture() {
+    BlobStoreConfiguration configuration = new MockBlobStoreConfiguration();
+
+    Map<String, Map<String, Object>> attributes1 = new HashMap<>();
+    Map<String, Object> fileMap = new HashMap<>();
+    fileMap.put("path", temporaryFolder.getRoot().toPath());
+    attributes1.put("file", fileMap);
+
+    configuration.setAttributes(attributes1);
+
+    TestFileBlobStore underTest = spy(new TestFileBlobStore(
+        util.createTempDir().toPath(), blobIdLocationResolver, fileOperations, metrics, configuration, appDirs,
+        nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex));
+
+    underTest.init(configuration);
+    underTest.setLiveBlobs(loadingCache);
+    return underTest;
+  }
+
+  private void assertAttributes(final BlobId blobId) throws Exception {
+    verify(attributes).setDeleted(true);
+    verify(attributes).setDeletedReason("test-reason");
+    verify(attributes).store();
+    verify(fileBlobDeletionIndex).createRecord(blobId);
+  }
+
+  // test class to provide isDateBasedLayoutEnabled() method
+  private class TestFileBlobStore
+      extends FileBlobStore
+  {
+    public TestFileBlobStore(
+        Path root,
+        BlobIdLocationResolver blobIdLocationResolver,
+        FileOperations fileOperations,
+        DatastoreFileBlobStoreMetricsService metrics,
+        BlobStoreConfiguration configuration,
+        ApplicationDirectories appDirs,
+        NodeAccess nodeAccess,
+        DryRunPrefix dryRunPrefix,
+        BlobStoreReconciliationLogger reconciliationLogger,
+        long blobStoreQuota,
+        BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
+        FileBlobDeletionIndex fileBlobDeletionIndex)
+    {
+      super(root, blobIdLocationResolver, fileOperations, metrics, configuration, appDirs, nodeAccess, dryRunPrefix,
+          reconciliationLogger, blobStoreQuota, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
+    }
+
+    @Override
+    public boolean isDateBasedLayoutEnabled() {
+      return false;
+    }
+  }
+
 }
