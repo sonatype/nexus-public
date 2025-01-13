@@ -20,6 +20,7 @@ import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -35,18 +36,28 @@ public class S3BlobAttributes
     super(new S3PropertiesFile(s3, bucket, key), null, null);
   }
 
-  public S3BlobAttributes(final AmazonS3 s3, final String bucket, final String key, final Map<String, String> headers,
-                          final BlobMetrics metrics) {
+  public S3BlobAttributes(
+      final AmazonS3 s3,
+      final String bucket,
+      final String key,
+      final Map<String, String> headers,
+      final BlobMetrics metrics)
+  {
     super(new S3PropertiesFile(s3, bucket, key), checkNotNull(headers), checkNotNull(metrics));
   }
 
   public boolean load() throws IOException {
-    if (!propertiesFile.exists()) {
+    try {
+      propertiesFile.load();
+      readFrom(propertiesFile);
+      return true;
+    }
+    catch (AmazonS3Exception e) {
+      if (e.getStatusCode() != 404) {
+        throw e;
+      }
       return false;
     }
-    propertiesFile.load();
-    readFrom(propertiesFile);
-    return true;
   }
 
   @Override
@@ -56,7 +67,7 @@ public class S3BlobAttributes
   }
 
   @Override
-  public void writeProperties(){
+  public void writeProperties() {
     writeTo(propertiesFile);
   }
 }

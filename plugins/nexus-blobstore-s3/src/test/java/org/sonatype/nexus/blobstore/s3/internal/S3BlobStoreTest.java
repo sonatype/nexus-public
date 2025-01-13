@@ -24,21 +24,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import com.amazonaws.SdkClientException;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.model.DeleteObjectsRequest;
-import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.services.s3.model.SetObjectTaggingRequest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mock;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
@@ -52,21 +37,51 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.internal.datastore.DatastoreS3BlobStoreMetricsService;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 
+import com.amazonaws.SdkClientException;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsResult;
+import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.SetObjectTaggingRequest;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
 import org.mockito.MockedStatic;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.endsWith;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_ATTRIBUTES_SUFFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_FILE_CONTENT_SUFFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
@@ -236,7 +251,6 @@ public class S3BlobStoreTest
 
     doNothing().when(bucketManager).prepareStorageLocation(cfg);
     when(s3.doesObjectExist("mybucket", "prefix/metadata.properties")).thenReturn(false);
-    when(s3.doesObjectExist("mybucket", "prefix/" + propertiesLocation(blobId))).thenReturn(true);
     when(s3.getObject("mybucket", "prefix/" + propertiesLocation(blobId))).thenReturn(attributesS3Object);
     when(s3.getObject("mybucket", "prefix/" + bytesLocation(blobId))).thenReturn(contentS3Object);
 
@@ -251,7 +265,6 @@ public class S3BlobStoreTest
 
     verify(bucketManager).prepareStorageLocation(cfg);
     verify(s3).doesObjectExist("mybucket", "prefix/metadata.properties");
-    verify(s3).doesObjectExist("mybucket", "prefix/" + propertiesLocation(blobId));
     verify(s3).getObject("mybucket", "prefix/" + propertiesLocation(blobId));
     verify(s3).getObject("mybucket", "prefix/" + bytesLocation(blobId));
   }
@@ -284,6 +297,7 @@ public class S3BlobStoreTest
   public void testSoftDeleteReturnsFalseWhenBlobDoesNotExist() throws Exception {
     blobStore.init(config);
     blobStore.doStart();
+    mockPropertiesException();
     boolean deleted = blobStore.delete(new BlobId("soft-delete-fail"), "test");
     assertThat(deleted, is(false));
     verify(s3, never()).setObjectTagging(any());
@@ -431,6 +445,7 @@ public class S3BlobStoreTest
     blobStore.init(config);
     blobStore.doStart();
 
+    mockPropertiesException();
     BlobId blobId = blobStore.create(new ByteArrayInputStream("hello world".getBytes()), Map.of("BlobStore.direct-path",
         "true", "BlobStore.blob-name", "foo/bar/myblob", "BlobStore.created-by", "test")).getId();
 
@@ -611,6 +626,8 @@ public class S3BlobStoreTest
 
     boolean deleted = blobStore.deleteIfTemp(blob.getId());
     assertThat(deleted, is(true));
+
+    mockPropertiesException();
     Blob retrievedBlob = blobStore.get(blob.getId());
     assertThat(retrievedBlob, is(nullValue()));
     verify(s3).deleteObjects(any(DeleteObjectsRequest.class));
@@ -654,5 +671,11 @@ public class S3BlobStoreTest
     S3ObjectInputStream inputStream = new S3ObjectInputStream(new ByteArrayInputStream(content.getBytes()), null);
     when(s3Object.getObjectContent()).thenReturn(inputStream);
     return s3Object;
+  }
+
+  private void mockPropertiesException() {
+    AmazonS3Exception exception = new AmazonS3Exception("Missing");
+    exception.setStatusCode(404);
+    when(s3.getObject(anyString(), endsWith(".properties"))).thenThrow(exception);
   }
 }
