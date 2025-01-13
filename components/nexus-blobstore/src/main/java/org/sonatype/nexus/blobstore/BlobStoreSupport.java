@@ -203,7 +203,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     if (originalLocation.isPresent()) {
       log.debug("Undelete invoked with copied attributes. Retrying with original location: {}",
           originalLocation.get());
-      return undelete(inUseChecker, createBlobIdForTimePath(blobId, originalLocation.get()), null, isDryRun);
+      BlobId originalBlobId = createBlobIdForTimePath(blobId, originalLocation.get());
+      return undelete(inUseChecker, originalBlobId, getBlobAttributes(originalBlobId), isDryRun);
     }
 
     if (attributes.isDeleted() && inUseChecker != null && inUseChecker.test(this, blobId, blobName.get())) {
