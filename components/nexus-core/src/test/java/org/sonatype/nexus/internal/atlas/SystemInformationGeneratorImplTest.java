@@ -13,7 +13,10 @@
 package org.sonatype.nexus.internal.atlas;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -25,6 +28,7 @@ import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.karaf.bundle.core.BundleService;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import java.io.IOException;
@@ -51,7 +55,10 @@ public class SystemInformationGeneratorImplTest
     extends TestSupport
 {
 
-  public static final Map<String, Boolean> UNAVAILABLE = SystemInformationGeneratorImpl.getUNAVAILABLE();
+  public static final Map<String, Object> UNAVAILABLE = SystemInformationGeneratorImpl.UNAVAILABLE;
+
+  @Rule
+  public TemporaryFolder tempFolder = new TemporaryFolder();
 
   @Mock
   private ApplicationDirectories applicationDirectories;
@@ -73,6 +80,20 @@ public class SystemInformationGeneratorImplTest
 
   @Mock
   private Map<String, SystemInformationHelper> systemInformationHelpers;
+
+  @Before
+  public void setup() throws IOException {
+    when(applicationVersion.getVersion()).thenReturn("3.77.0-SNAPSHOT");
+    when(applicationVersion.getBuildRevision()).thenReturn("123456");
+    when(applicationVersion.getBuildTimestamp()).thenReturn("2021-01-01T00:00:00Z");
+    when(applicationVersion.getEdition()).thenReturn("oss");
+    when(nodeAccess.getId()).thenReturn("ABCDE");
+    when(deploymentAccess.getId()).thenReturn("ABCDE");
+    when(applicationDirectories.getInstallDirectory()).thenReturn(tempFolder.newFile());
+    when(applicationDirectories.getWorkDirectory()).thenReturn(tempFolder.newFile());
+    when(applicationDirectories.getTemporaryDirectory()).thenReturn(tempFolder.newFile());
+    when(bundleContext.getBundles()).thenReturn(new Bundle[0]);
+  }
 
   /**
    * reportFileStores runs successfully using FileSystem.default
@@ -105,7 +126,7 @@ public class SystemInformationGeneratorImplTest
     when(fs.name()).thenReturn("brokenfsname");
     when(fs.getTotalSpace()).thenThrow(new IOException("testing"));
 
-    Map<String, Boolean> fsReport = (Map<String, Boolean>) generator.reportFileStore(fs);
+    Map<String, Object> fsReport = generator.reportFileStore(fs);
 
     Assert.assertEquals(UNAVAILABLE, fsReport);
   }
@@ -139,7 +160,7 @@ public class SystemInformationGeneratorImplTest
     when(intf.getDisplayName()).thenReturn("brokenintf");
     when(intf.supportsMulticast()).thenThrow(new SocketException("testing"));
 
-    Map<String, Boolean> report = (Map<String, Boolean>) generator.reportNetworkInterface(intf);
+    Map<String, Object> report = generator.reportNetworkInterface(intf);
 
     Assert.assertEquals(UNAVAILABLE, report);
   }
