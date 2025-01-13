@@ -75,15 +75,20 @@
   </select>
 
   <select id="getByDisplayPath" resultMap="browseNodeResult">
+    <bind name="isConanFormat" value="'${format}' == 'conan'"/>
     SELECT B.*,
-        CASE WHEN C.last_updated IS NULL THEN A.last_updated ELSE C.last_updated END AS last_updated,
+      <if test="isConanFormat">
+        COALESCE(C.last_updated, A.last_updated) AS last_updated,
+      </if>
         NOT EXISTS (<include refid="hasChild"/>) as leaf FROM
         <foreach collection="displayPath" index="i">
         ${format}_browse_node B${i},
         </foreach>
         ${format}_browse_node B
-    LEFT JOIN ${format}_component C ON B.component_id = C.component_id
-    LEFT JOIN ${format}_asset A ON B.asset_id = A.asset_id
+    <if test="isConanFormat">
+      LEFT JOIN ${format}_component C ON B.component_id = C.component_id
+      LEFT JOIN ${format}_asset A ON B.asset_id = A.asset_id
+    </if>
     WHERE 0 = <foreach collection="displayPath" index="i" item="name">
               B${i}.parent_id AND B${i}.repository_id = #{repositoryId} AND B${i}.display_name = #{name} AND B${i}.node_id =
               </foreach>
