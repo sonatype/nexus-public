@@ -10,32 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw
+package org.sonatype.nexus.repository.httpbridge.internal.describe;
 
-import spock.lang.Specification
-import spock.lang.Unroll
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
- * {@link RawCoordinatesHelper} tests.
+ * Tests for {@link DescribeType}.
  */
-class RawCoordinatesHelperTest
-    extends Specification
+public class DescribeTypeTest
 {
-  @Unroll
-  def 'group of #path is #expectedGroup'() {
-    when: 'we get the group of a path'
-      def group = RawCoordinatesHelper.getGroup(path)
 
-    then: 'the group is as expected'
-      group == expectedGroup
+  @Test
+  public void parseHtml() {
+    assertEquals(DescribeType.HTML, DescribeType.parse("html"));
+  }
 
-    where:
-      path                           || expectedGroup
-      '/foo/bar'                     || '/foo'
-      'foo/bar'                      || '/foo'
-      'foobar.txt'                   || '/'
-      '/foobar.txt'                  || '/'
-      '/some/long/involved/path.txt' || '/some/long/involved'
-      'some/long/involved/path.txt'  || '/some/long/involved'
+  @Test
+  public void parseJson() {
+    assertEquals(DescribeType.JSON, DescribeType.parse("json"));
+  }
+
+  @Test
+  public void parseBlankAsHtml() {
+    assertEquals(DescribeType.HTML, DescribeType.parse(""));
+  }
+
+  @Test
+  public void parseTrueAsHtml() {
+    assertEquals(DescribeType.HTML, DescribeType.parse("true"));
   }
 }
