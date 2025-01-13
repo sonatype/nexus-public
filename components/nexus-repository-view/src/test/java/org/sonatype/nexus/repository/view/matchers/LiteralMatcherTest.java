@@ -10,35 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view.matchers.logic
+package org.sonatype.nexus.repository.view.matchers;
 
-import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.view.Context
-import org.sonatype.nexus.repository.view.Request
-import org.sonatype.nexus.repository.view.matchers.LiteralMatcher
+import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Request;
 
-import org.junit.Test
+import org.junit.Test;
 
-import static org.mockito.Mockito.mock
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 /**
- * Tests for {@link NotMatcher}.
+ * Tests for {@link LiteralMatcher}.
  */
-class NotMatcherTest
-  extends TestSupport
+public class LiteralMatcherTest
+    extends TestSupport
 {
   private Context context(String path) {
-    return new Context(mock(Repository.class), new Request.Builder().action('GET').path(path).build())
+    return new Context(mock(Repository.class), new Request.Builder().action("GET").path(path).build());
   }
 
   @Test
-  void 'NOT 2 matchers'() {
-    def underTest = new NotMatcher(
-        new LiteralMatcher('foo')
-    )
-
-    assert !underTest.matches(context('foo'))
-    assert underTest.matches(context('bar'))
+  public void basic() {
+    LiteralMatcher underTest = new LiteralMatcher("foo");
+    assertTrue(underTest.matches(context("foo")));
+    assertFalse(underTest.matches(context("bar")));
   }
 }
