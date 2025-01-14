@@ -860,7 +860,6 @@ def runDeploy() {
 
 def deploy() {
   extract("./assemblies/nexus-base-template/target/", "nexus-base-template-*.zip")
-  extract("./private/assemblies/distributions/nexus-oss/target/", "nexus-*-bundle.zip")
   extract("./private/assemblies/distributions/nexus-pro/target/", "nexus-professional-*-bundle.zip")
 
   // Tell Karaf to load bundles from local .m2 folder
@@ -1079,9 +1078,6 @@ def runNxrm() {
   }
 
   switch (assembly) {
-    case "oss":
-      run("nexus-")
-      break
     case "pro":
       run("nexus-professional-")
       break
@@ -1089,7 +1085,7 @@ def runNxrm() {
       run("nexus-base-template-")
       break
     default:
-      error("Usage: ./nxrm.groovy -r { base | oss | pro } [nexus-options]")
+      error("Usage: ./nxrm.groovy -r { base | pro } [nexus-options]")
   }
 }
 

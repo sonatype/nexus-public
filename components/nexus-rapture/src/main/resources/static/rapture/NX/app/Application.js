@@ -132,7 +132,8 @@ Ext.define('NX.app.Application', {
     'Permissions',
     'AnalyticsOptOut',
     'UpgradeAlert',
-    'UpgradeModal'
+    'UpgradeModal',
+    'CEBanners'
   ],
 
   /**

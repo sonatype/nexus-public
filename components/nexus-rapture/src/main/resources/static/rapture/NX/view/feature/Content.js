@@ -77,7 +77,6 @@ Ext.define('NX.view.feature.Content', {
     const hideMalwareBanner = malwareBanner && malwareBanner[1] === 'close';
 
     if (isRiskOnDiskEnabled && isCurrentTitleInTitles && user && !shouldHideForNonAdmin && !hideMalwareBanner) {
-      maliciousRiskOnDisk.setHeight(225);
       maliciousRiskOnDisk.show();
       maliciousRiskOnDisk.rerender();
     }

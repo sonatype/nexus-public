@@ -19,8 +19,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import com.google.common.collect.ImmutableMap;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Named
 @Singleton
@@ -28,15 +30,25 @@ public class WelcomeStateContributor
     extends ComponentSupport
     implements StateContributor
 {
-  private final Map<String, Object> state;
+  public static final String NODE_ID = "nexus.node.id";
+
+  private final NodeAccess nodeAccess;
+
+  private final Boolean featureFlag;
 
   @Inject
-  public WelcomeStateContributor(@Named("${nexus.react.welcome:-true}") final Boolean featureFlag) {
-    state = ImmutableMap.of("nexus.react.welcome", featureFlag);
+  public WelcomeStateContributor(
+      @Named("${nexus.react.welcome:-true}") final Boolean featureFlag,
+      final NodeAccess nodeAccess)
+  {
+    this.nodeAccess = checkNotNull(nodeAccess);
+    this.featureFlag = featureFlag;
   }
 
   @Override
   public Map<String, Object> getState() {
-    return state;
+    return ImmutableMap.of(
+        "nexus.react.welcome", featureFlag,
+        NODE_ID, nodeAccess.getId());
   }
 }

@@ -30,13 +30,6 @@ export default function configurePlugins() {
       }
     })
   };
-
-  if (window.location.search.startsWith('?debug')) {
-    console.log('initialize xstate inspector');
-    inspect({
-      iframe: false
-    });
-  }
 }
 
 /**
@@ -128,7 +121,7 @@ function registerFeature(feature) {
       }
 
       if (isVisible && visibility.editions) {
-        isVisible = visibility.editions.every((edition) =>  NX.State.getEdition() === edition);
+        isVisible = visibility.editions.some((edition) =>  NX.State.getEdition() === edition);
         console.debug("editionCheck="+isVisible, visibility.editions);
       }
 

@@ -338,13 +338,13 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-oss-edition</artifactId>
+        <artifactId>nexus-open-core-edition</artifactId>
         <version>3.77.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
-        <artifactId>nexus-oss-edition</artifactId>
+        <artifactId>nexus-open-core-edition</artifactId>
         <version>3.77.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>

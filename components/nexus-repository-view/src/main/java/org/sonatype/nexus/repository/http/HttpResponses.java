@@ -143,8 +143,10 @@ public class HttpResponses
    * @param realmName realm name used in the authentication challenge header
    * @return a 401 authentication challenge response
    */
-  public static Response unauthorized(final String message, final String authenticationScheme,
-                                      final String realmName)
+  public static Response unauthorized(
+      final String message,
+      final String authenticationScheme,
+      final String realmName)
   {
     checkNotNull(message);
     checkNotNull(authenticationScheme);
@@ -191,6 +193,18 @@ public class HttpResponses
         .build();
   }
 
+  // Conflict: 409
+
+  public static Response conflict(@Nullable final String message) {
+    return new Response.Builder()
+        .status(Status.failure(CONFLICT, message))
+        .build();
+  }
+
+  public static Response conflict() {
+    return conflict(null);
+  }
+
   public static Response serviceUnavailable(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(SERVICE_UNAVAILABLE, message))
@@ -213,8 +227,8 @@ public class HttpResponses
 
   public static Response gatewayTimeout(@Nullable final String message) {
     return new Response.Builder()
-            .status(Status.failure(GATEWAY_TIMEOUT, message))
-            .build();
+        .status(Status.failure(GATEWAY_TIMEOUT, message))
+        .build();
   }
 
   public static Response notImplemented(@Nullable final String message) {

@@ -63,7 +63,10 @@ public class RepositoryAssetWebhook
 
   private enum EventAction
   {
-    CREATED, UPDATED, DELETED, PURGED
+    CREATED,
+    UPDATED,
+    DELETED,
+    PURGED
   }
 
   @Subscribe

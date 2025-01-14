@@ -137,8 +137,6 @@ public interface FeatureFlags
 
   String FIREWALL_QUARANTINE_FIX_ENABLED_NAMED = "${nexus.firewall.quarantineFix.enabled:-false}";
 
-  String CIRCUIT_BREAKER_ENABLED = "nexus.circuitb.enabled";
-
   String REACT_PRIVILEGES = "nexus.react.privileges";
 
   String REACT_PRIVILEGES_NAMED = "${nexus.react.privileges:-true}";
@@ -237,7 +235,4 @@ public interface FeatureFlags
   String S3_LOGGING_ENABLED = "nexus.s3.logging.enabled";
 
   String S3_LOGGING_ENABLED_ENV = "S3_LOGGING_ENABLED";
-
-  /* OSS registration */
-  String OSS_REGISTRATION_ENABLED_NAMED = "${nexus.license.community:-false}";
 }

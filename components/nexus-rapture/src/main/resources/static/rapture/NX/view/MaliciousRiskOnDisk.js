@@ -39,12 +39,24 @@ Ext.define('NX.view.MaliciousRiskOnDisk', {
               me.show();
             }
           },
+          toggle: me.toggle.bind(me),
         }
       }
     ];
 
     me.show();
     me.callParent();
+  },
+
+  toggle: function(height) {
+    const me = this;
+    const container = me.down('nx-secondary-container');
+
+    if (container) {
+      me.setHeight(height);
+      container.setHeight(height);
+      container.updateLayout();
+    }
   },
 
   rerender: function() {

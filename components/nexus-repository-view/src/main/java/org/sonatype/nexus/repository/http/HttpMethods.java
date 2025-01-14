@@ -40,7 +40,7 @@ public class HttpMethods
   public static final String TRACE = "TRACE";
 
   public static final String CONNECT = "CONNECT";
-  
+
   // http://ietf.org/rfc/rfc2518
 
   public static final String PROPFIND = "PROPFIND";
@@ -96,4 +96,8 @@ public class HttpMethods
   // https://datatracker.ietf.org/drafts/draft-reschke-webdav-search/
 
   public static final String SEARCH = "SEARCH";
+
+  public static boolean isUpload(final String action) {
+    return action.equals(HttpMethods.POST) || action.equals(HttpMethods.PUT);
+  }
 }

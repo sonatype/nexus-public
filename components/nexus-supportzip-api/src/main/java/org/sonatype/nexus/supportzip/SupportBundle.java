@@ -37,7 +37,18 @@ public class SupportBundle
      */
     enum Type
     {
-      SYSINFO, DBINFO, THREAD, METRICS, CONFIG, SECURITY, LOG, TASKLOG, AUDITLOG, JMX, REPLICATIONLOG, ARCHIVEDLOG
+      SYSINFO,
+      DBINFO,
+      THREAD,
+      METRICS,
+      CONFIG,
+      SECURITY,
+      LOG,
+      TASKLOG,
+      AUDITLOG,
+      JMX,
+      REPLICATIONLOG,
+      ARCHIVEDLOG
     }
 
     /**
@@ -56,7 +67,11 @@ public class SupportBundle
      */
     enum Priority
     {
-      OPTIONAL(999), LOW(100), DEFAULT(50), HIGH(10), REQUIRED(0);
+      OPTIONAL(999),
+      LOW(100),
+      DEFAULT(50),
+      HIGH(10),
+      REQUIRED(0);
 
       final int order;
 

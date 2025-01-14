@@ -91,7 +91,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-oss-edition</artifactId>
+      <artifactId>nexus-open-core-edition</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>

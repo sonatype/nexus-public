@@ -235,9 +235,6 @@ export default {
       get SAML() {
         return `${this.BASE_URL}saml`;
       },
-      get USAGE_METRICS() {
-        return `${this.BASE_URL}usage-metrics`;
-      },
       get PRIVILEGES_TYPES() {
         return `${this.BASE_URL}privileges/types`;
       }

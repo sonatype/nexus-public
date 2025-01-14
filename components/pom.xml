@@ -58,7 +58,7 @@
     <module>nexus-guice-servlet</module>
     <module>nexus-main</module>
     <module>nexus-mime</module>
-    <module>nexus-oss-edition</module>
+    <module>nexus-open-core-edition</module>
     <module>nexus-pax-exam</module>
     <module>nexus-pax-logging</module>
     <module>nexus-plugin-api</module>
