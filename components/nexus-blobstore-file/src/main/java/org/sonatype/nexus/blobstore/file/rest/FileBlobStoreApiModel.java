@@ -16,6 +16,7 @@ import javax.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.rest.BlobStoreApiModel;
 
 import io.swagger.annotations.ApiModelProperty;
@@ -23,9 +24,7 @@ import io.swagger.annotations.ApiModelProperty;
 public class FileBlobStoreApiModel
     extends BlobStoreApiModel
 {
-  @ApiModelProperty("The path to the blobstore contents. This can be an absolute path to anywhere on the system Nexus Repository Manager "
-      +
-      "has access to or it can be a path relative to the sonatype-work directory.")
+  @ApiModelProperty(FileBlobStoreDescriptor.PATH_HELP_TEXT)
   @NotEmpty(message = "Path is required")
   private String path;
 
