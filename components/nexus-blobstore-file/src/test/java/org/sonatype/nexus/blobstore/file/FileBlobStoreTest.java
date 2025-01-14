@@ -40,6 +40,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.file.FileBlobStore.FileBlob;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.file.internal.datastore.metrics.DatastoreFileBlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
@@ -58,7 +59,6 @@ import com.squareup.tape.QueueFile;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -82,7 +82,6 @@ import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PAT
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
-import static org.sonatype.nexus.blobstore.file.FileBlobStore.TMP;
 
 /**
  * Tests {@link FileBlobStore}.
@@ -340,24 +339,53 @@ public class FileBlobStoreTest
     assertThat(subdir2.toFile().exists(), is(false));
   }
 
-  @Ignore("NEXUS-40608")
   @Test
-  public void testDeleteBlobTempFiles() throws Exception {
+  public void testDoDeleteHard() throws Exception {
     underTest.doStart();
 
-    Path tmpFilePath = underTest.getAbsoluteBlobDir()
+    BlobId blobId = new BlobId("0515c8b9-0de0-49d4-bcf0-7738c40c9c5e");
+    Path bytesPath = underTest.getAbsoluteBlobDir()
         .resolve(CONTENT_PREFIX)
-        .resolve(TMP)
-        .resolve("tmp$0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
+        .resolve("vol-03")
+        .resolve("chap-44")
+        .resolve("0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.bytes");
+    bytesPath.toFile().getParentFile().mkdirs();
+    Path written = write(bytesPath, "hello".getBytes(StandardCharsets.UTF_8));
+    assertThat(written.toFile().exists(), is(true));
+    // oddly FileOperations is a mock here; we need to provide a real delete for this test
+    doAnswer(invocationOnMock -> {
+      Files.delete(bytesPath);
+      return true;
+    }).when(fileOperations).delete(bytesPath);
 
-    tmpFilePath.toFile().getParentFile().mkdirs();
-    write(tmpFilePath, "@BlobStore.created-by=system".getBytes(UTF_8));
+    Path propertiesPath = underTest.getAbsoluteBlobDir()
+        .resolve(CONTENT_PREFIX)
+        .resolve("vol-03")
+        .resolve("chap-44")
+        .resolve("0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
 
-    assertThat(tmpFilePath.toFile().exists(), is(true));
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sha1", "a5aa215f17898e21986cb19d4b72f6bebf86c4bd");
+    properties.put("BlobStore.blob-name", "/content/foo/tree.txt");
+    properties.put("BlobStore.created-by", "admin");
+    properties.put("size", "5");
+    properties.put("creationTime", "1736870404222");
+    properties.put("Bucket.repo-name", "raw");
+    BlobMetrics blobMetrics =
+        new BlobMetrics(new DateTime(1736870404222L), "a5aa215f17898e21986cb19d4b72f6bebf86c4bd", 5);
+    FileBlobAttributes attributes = new FileBlobAttributes(propertiesPath, properties, blobMetrics);
+    attributes.store();
 
-    underTest.doDeleteTempFiles(0);
+    // oddly FileOperations is a mock here; we need to provide a real delete for this test
+    doAnswer(invocationOnMock -> {
+      Files.delete(propertiesPath);
+      return true;
+    }).when(fileOperations).delete(propertiesPath);
 
-    assertThat(tmpFilePath.toFile().exists(), is(false));
+    assertThat(propertiesPath.toFile().exists(), is(true));
+    boolean deleted = underTest.doDeleteHard(blobId);
+    assertThat(deleted, is(true));
+    assertThat(propertiesPath.toFile().exists(), is(false));
   }
 
   @Test

@@ -606,8 +606,20 @@ public class FileBlobStore
     try {
       log.debug("Hard deleting blob {}", blobId);
 
+      // look for a softDeletedLocation from is blob's attributes, and if present, delete it first
+      FileBlobAttributes attributes = getFileBlobAttributes(blobId);
+      Optional.ofNullable(attributes).ifPresent(attr -> {
+        Optional<String> softDeletedLocation = attr.getSoftDeletedLocation();
+        // Remove copied soft-deleted attributes
+        softDeletedLocation.ifPresent(location -> deleteCopiedAttributes(blobId, location));
+      });
+
       Path attributePath = attributePath(blobId);
-      Long contentSize = getContentSizeForDeletion(blobId);
+      Long contentSize = null;
+      // attributes may still be null here if the file was removed from the filesystem out of band, e.g data loss
+      if (attributes != null && attributes.getMetrics() != null) {
+        contentSize = attributes.getMetrics().getContentSize();
+      }
 
       Path blobPath = contentPath(blobId);
 
@@ -618,11 +630,6 @@ public class FileBlobStore
         metricsService.recordDeletion(contentSize);
         fileOperations.deleteEmptyDirectory(blobPath.getParent());
       }
-      Optional.ofNullable(getFileBlobAttributes(blobId)).ifPresent(attr -> {
-        Optional<String> softDeletedLocation = attr.getSoftDeletedLocation();
-        // Remove copied soft-deleted attributes
-        softDeletedLocation.ifPresent(location -> deleteCopiedAttributes(blobId, location));
-      });
 
       return blobDeleted;
     }
@@ -1310,6 +1317,7 @@ public class FileBlobStore
 
   @Override
   protected void deleteCopiedAttributes(final BlobId blobId, final String softDeletedLocation) {
+    log.trace("deleteCopiedAttributes for blobId: {}, softDeletedLocation: {}", blobId, softDeletedLocation);
     fileOperations.deleteQuietly(attributePath(createBlobIdForTimePath(blobId, softDeletedLocation)));
   }
 }
