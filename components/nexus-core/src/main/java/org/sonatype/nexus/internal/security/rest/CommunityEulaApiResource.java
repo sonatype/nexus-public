@@ -56,6 +56,7 @@ public class CommunityEulaApiResource
     else {
       eulaStatus.setAccepted(false);
     }
+    eulaStatus.setDisclaimer(EulaStatus.EXPECTED_DISCLAIMER);
     return eulaStatus;
   }
 
@@ -65,10 +66,15 @@ public class CommunityEulaApiResource
   @RequiresPermissions("nexus:*")
   @Consumes(MediaType.APPLICATION_JSON)
   public void setEulaAcceptedCE(EulaStatus eulaStatus) {
-    NexusKeyValue kv = new NexusKeyValue();
-    kv.setKey(EULA_KEY);
-    kv.setType(ValueType.OBJECT);
-    kv.setValue(Map.of("accepted", eulaStatus.isAccepted()));
-    globalKeyValueStore.setKey(kv);
+    if (eulaStatus.hasExpectedDisclaimer()) {
+      NexusKeyValue kv = new NexusKeyValue();
+      kv.setKey(EULA_KEY);
+      kv.setType(ValueType.OBJECT);
+      kv.setValue(Map.of("accepted", eulaStatus.isAccepted()));
+      globalKeyValueStore.setKey(kv);
+    }
+    else {
+      throw new IllegalArgumentException("Invalid EULA disclaimer");
+    }
   }
 }

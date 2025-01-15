@@ -60,6 +60,7 @@ public class CommunityEulaApiResourceTest
   public void testSetEulaAccepted() {
     EulaStatus eulaStatus = new EulaStatus();
     eulaStatus.setAccepted(true);
+    eulaStatus.setDisclaimer(EulaStatus.EXPECTED_DISCLAIMER);
     underTest.setEulaAcceptedCE(eulaStatus);
     verify(mockGlobalKeyValueStore, times(1)).setKey(any(NexusKeyValue.class));
   }

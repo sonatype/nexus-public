@@ -31,17 +31,20 @@ public interface CommunityEulaApiResourceDoc
   @ApiOperation(value = "Get the current Community Eula status.")
   @ApiResponses(value = {
       @ApiResponse(code = 200, message = "Successful response", examples = @Example(value = {
-          @ExampleProperty(mediaType = MediaType.APPLICATION_JSON, value = "{\"accepted\": false}")
+          @ExampleProperty(mediaType = MediaType.APPLICATION_JSON,
+              value = "{\"disclaimer\": \"Use of Sonatype Nexus Repository - Community Edition is governed by the End User License Agreement at https://links.sonatype.com/products/nxrm/ce-eula. By returning the value from ‘accepted:false’ to ‘accepted:true’, you acknowledge that you have read and agree to the End User License Agreement at https://links.sonatype.com/products/nxrm/ce-eula.\", \"accepted\": false}")
       }))
   })
   EulaStatus getCommunityEulaStatus();
 
   @ApiOperation("Set the Community Eula status.")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "EULA status set successfully")
+      @ApiResponse(code = 204, message = "EULA status set successfully"),
+      @ApiResponse(code = 500, message = "Incorrect EULA disclaimer")
   })
   void setEulaAcceptedCE(
       @ApiParam(examples = @Example(value = {
-          @ExampleProperty(mediaType = MediaType.APPLICATION_JSON, value = "{\"accepted\": true}")
+          @ExampleProperty(mediaType = MediaType.APPLICATION_JSON,
+              value = "{\"disclaimer\": \"Use of Sonatype Nexus Repository - Community Edition is governed by the End User License Agreement at https://links.sonatype.com/products/nxrm/ce-eula. By returning the value from ‘accepted:false’ to ‘accepted:true’, you acknowledge that you have read and agree to the End User License Agreement at https://links.sonatype.com/products/nxrm/ce-eula.\", \"accepted\": true}")
       })) EulaStatus eulaStatus);
 }
