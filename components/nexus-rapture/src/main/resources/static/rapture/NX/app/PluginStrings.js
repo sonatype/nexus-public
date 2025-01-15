@@ -126,7 +126,7 @@ Ext.define('NX.app.PluginStrings', {
 
     // About modal
     AboutWindow_Title: 'About Sonatype Nexus Repository',
-    AboutWindow_About_Title: 'Copyright',
+    AboutWindow_About_Title: 'Legal Terms and Copyright',
     AboutWindow_License_Tab: 'License',
 
     // Authentication modal

@@ -268,10 +268,9 @@ public class RaptureWebResourceBundle
 
       @Override
       protected byte[] generate() throws IOException {
-        String edition = "OSS".equals(applicationVersion.getEdition()) ? "oss" : "pro";
 
         return render("COPYRIGHT.vm", new TemplateParameters()
-            .set("edition", edition));
+            .set("edition", applicationVersion.getEdition()));
       }
     };
   }

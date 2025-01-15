@@ -33,34 +33,35 @@
     body {
       font-family: arial, tahoma, verdana, helvetica, sans-serif;
       font-size: 14px;
+      p {
+        padding: 8px 0;
+      }
     }
   </style>
 </head>
 <body>
+#if($edition == "COMMUNITY")
+  <p>
+    All use of and access to Sonatype Nexus Repository Community Edition is governed by these 
+    <a href="http://links.sonatype.com/products/nxrm/tos/ce" target="_blank" rel="noopener">terms and conditions</a>.
+  </p>
+#elseif($edition == "OC")
+  <p>
+    Sonatype Nexus Repository Core: The core functionality of Nexus Repository is offered to the Community under the terms of the 
+    <a href="http://links.sonatype.com/products/nxrm/tos/oc" target="_blank" rel="noopener">Eclipse Public License</a>.
+  </p>
+  <p>
+    Sonatype Nexus Repository Core is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon between Sonatype, Inc. and Sencha Inc. Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a closed source work.
+  </p>
+#else
+  <p>
+    All use of and access to Sonatype Nexus Repository Pro is governed by these 
+    <a href="http://links.sonatype.com/products/nxrm/tos/pro" target="_blank" rel="noopener">terms and conditions</a>.
+  </p>
+#end
 <p>
   Copyright &copy; 2008-present Sonatype, Inc.
 </p>
 
-<p>
-  All rights reserved. Includes the third-party code listed at
-  <a href="http://links.sonatype.com/products/nexus/$edition/attributions" target="_blank" rel="noopener">http://links.sonatype.com/products/nexus/$edition/attributions</a>
-</p>
-
-<p>
-  Sonatype and Sonatype Nexus are trademarks of Sonatype, Inc.
-  <br/>
-  Apache Maven is a trademark of the Apache Foundation.
-  <br/>
-  M2Eclipse is a trademark of the Eclipse Foundation.
-  <br/>
-  All other trademarks are the property of their respective owners.
-</p>
-
-<p>
-  The HealthCheck plugin needs to access Sonatype Data Services to be fully functional.
-  <br/>
-  Access to and use of the Sonatype Data Services is subject to Sonatype's separate
-  <a href="http://links.sonatype.com/products/clm/tos" target="_blank" rel="noopener">terms of service</a> for the data services.
-</p>
 </body>
 </html>
