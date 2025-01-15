@@ -137,12 +137,12 @@ export default function CEHardLimitAlerts() {
           </>
         }
         {throttlingStatus === 'BELOW_LIMITS_IN_GRACE' && !dismissedBanners.includes('below_limits_in_grace') && <>
-            <NxInfoAlert className="ce-alert-under-limit-in-grace-period" onClose={() => dismiss('below_limits_in_grace')}>
+            <NxWarningAlert className="ce-alert-under-limit-in-grace-period" onClose={() => dismiss('below_limits_in_grace')}>
               <div>
                 {HEADER.GRACE_PERIOD.UNDER_WARNING(gracePeriodEndDate)}{' '}
                 <UnderLimitsInGracePeriodLinks />
               </div>
-            </NxInfoAlert>
+            </NxWarningAlert>
           </>
         }
         {throttlingStatus === 'OVER_LIMITS_GRACE_PERIOD_ENDED' && <>

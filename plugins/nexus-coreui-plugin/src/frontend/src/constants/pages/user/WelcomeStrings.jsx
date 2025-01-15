@@ -79,7 +79,7 @@ export default {
         },
         OVER_LIMITS: {
           STATUS_INDICATOR: 'Usage over limits',
-          WARNING: (endDate) => <>As of {endDate}, new components cannot be added while usage exceeds limits.</>,
+          WARNING: (endDate) => <>Usage limits came into effect on {endDate}. As usage levels are currently higher than the Nexus Repository Community Edition maximum, new components can no longer be added to this instance.</>,
           TITLE: 'Usage Limits In Effect'
         },
         APPROACHING_LIMITS: {
@@ -97,7 +97,7 @@ export default {
         },
         GRACE_PERIOD: {
           OVER_WARNING: (endDate) => <>Starting {endDate}, new components cannot be added.</>,
-          UNDER_WARNING: (endDate) => <> Starting {endDate} when you exceed usage limits, you will not be able to add new components.</>,
+          UNDER_WARNING: (endDate) => <>Usage limits take effect on {endDate}. When the usage exceeds the Nexus Repository Community Edition maximum, new components can no longer be added to this instance.</>,
           TITLE: (endDate) => <>Usage Limits Will Be Enforced Starting {endDate}</>
         }
       },

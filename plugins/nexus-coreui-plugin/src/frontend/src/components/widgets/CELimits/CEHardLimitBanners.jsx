@@ -18,7 +18,8 @@ import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {
   NxTextLink,
   NxErrorAlert,
-  NxWarningAlert
+  NxWarningAlert,
+  NxH3
 } from '@sonatype/react-shared-components';
 import './CEHardLimitsBanners.scss';
 import CEHardLimitBannersMachine from './CEHardLimitBannersMachine';
@@ -124,6 +125,7 @@ export default function CEHardLimitBanners({onClose}) {
         }
         {throttlingStatus === 'OVER_LIMITS_GRACE_PERIOD_ENDED' &&
           <NxErrorAlert className="ce-banner-over-limit-grace-period-ended">
+            <NxH3 className="banner-header">{HEADER.OVER_LIMITS.TITLE}</NxH3>
             <p>{BANNERS.OVER_LIMIT_END_GRACE} <ContactLinks /></p>
           </NxErrorAlert>
         }

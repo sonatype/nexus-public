@@ -100,7 +100,7 @@ describe('CEHardLimitAlerts', () => {
     const getPurchaseNowButton = screen.getByRole('link', {name: 'Purchase Now'});
     const getRestoreUsageButton = screen.getByRole('link', {name: 'How to Restore Usage'});
 
-    expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage Limits In EffectAs of October 15, 2024, new components cannot be added while usage exceeds limits. Purchase a license to remove limits, or if you have already purchased a license upload it here.How to Restore UsagePurchase Now');
+    expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage Limits In EffectUsage limits came into effect on October 15, 2024. As usage levels are currently higher than the Nexus Repository Community Edition maximum, new components can no longer be added to this instance. Purchase a license to remove limits, or if you have already purchased a license upload it here.How to Restore UsagePurchase Now');
     expect(getPurchaseNowButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/pricing?nodeId=node-example-id&componentCountLimit=100000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=200000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&utm_medium=product&utm_source=nexus_repo_community&utm_campaign=repo_community_usage&malwareCount=3');
     expect(getRestoreUsageButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/how-to-restore-usage?utm_medium=product&utm_source=nexus_repo_community&utm_campaign=repo_community_usage');
   });
@@ -115,7 +115,7 @@ describe('CEHardLimitAlerts', () => {
   it('should render the under limits banner inside grace period', async () => {
     const {container} = await renderView('2024-12-15T00:00:00.000', 'Under limits');
 
-    expect(container.querySelector('.nx-alert')).toHaveTextContent('Starting December 15, 2024 when you exceed usage limits, you will not be able to add new components. Purchase a license to remove limits, or if you have already purchased a license upload it here.');
+    expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage limits take effect on December 15, 2024. When the usage exceeds the Nexus Repository Community Edition maximum, new components can no longer be added to this instance. Purchase a license to remove limits, or if you have already purchased a license upload it here.');
     expect(screen.getByRole('button', {name: 'Close'})).toBeInTheDocument();
   });
 

@@ -17,4 +17,40 @@
     max-width: 100%;
     border-radius: 0;
   }
+
+  .banner-header {
+    color: var(--nx-swatch-white);
+    margin-bottom: var(--nx-spacing-2x);
+  }
+
+  .ce-banner-over-limit-in-grace-period,
+  .ce-banner-over-limit-grace-period-ended,
+  .ce-banner-over-limit-non-admin {
+    color: var(--nx-swatch-white);
+    background-color: var(--nx-swatch-red-40);
+
+    .nx-icon {
+      color: var(--nx-swatch-white);
+    }
+
+    a {
+      color: var(--nx-swatch-white);
+      font-weight: bold;
+    }
+  }
+
+  .ce-banner-under-limit-grace-period-ended,
+  .ce-banner-nearing-limit-non-admin,
+  .ce-banner-near-limit-never-in-grace-period {
+    background-color: var(--nx-swatch-yellow-50);
+
+    .nx-icon {
+      color: var(--nx-swatch-black);
+    }
+
+    a {
+      color: var(--nx-swatch-black);
+      font-weight: bold;
+    }
+  }
  }
