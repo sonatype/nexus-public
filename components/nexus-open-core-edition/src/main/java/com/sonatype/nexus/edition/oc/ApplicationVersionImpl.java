@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.app.ApplicationVersionSupport;
  *
  * @since 3.0
  */
-@Named("OC")
+@Named("CORE")
 @Singleton
 public class ApplicationVersionImpl
     extends ApplicationVersionSupport
@@ -31,7 +31,7 @@ public class ApplicationVersionImpl
 
   @Override
   public String getEdition() {
-    return "OC";
+    return "CORE";
   }
 
 }

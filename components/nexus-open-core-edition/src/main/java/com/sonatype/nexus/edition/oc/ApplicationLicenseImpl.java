@@ -26,7 +26,7 @@ import org.sonatype.nexus.common.app.ApplicationLicense;
  *
  * @since 3.0
  */
-@Named("OC")
+@Named("CORE")
 @Singleton
 public class ApplicationLicenseImpl
     implements ApplicationLicense

@@ -45,7 +45,7 @@
     All use of and access to Sonatype Nexus Repository Community Edition is governed by these 
     <a href="http://links.sonatype.com/products/nxrm/tos/ce" target="_blank" rel="noopener">terms and conditions</a>.
   </p>
-#elseif($edition == "OC")
+#elseif($edition == "CORE")
   <p>
     Sonatype Nexus Repository Core: The core functionality of Nexus Repository is offered to the Community under the terms of the 
     <a href="http://links.sonatype.com/products/nxrm/tos/oc" target="_blank" rel="noopener">Eclipse Public License</a>.
@@ -55,7 +55,7 @@
   </p>
 #else
   <p>
-    All use of and access to Sonatype Nexus Repository Pro is governed by these 
+    All use of and access to Sonatype Nexus Repository Professional is governed by these
     <a href="http://links.sonatype.com/products/nxrm/tos/pro" target="_blank" rel="noopener">terms and conditions</a>.
   </p>
 #end

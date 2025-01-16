@@ -20,6 +20,8 @@
  * - Takari (optional but recommended. Much quicker builds.) - see http://takari.io/book/30-team-maven.html#takari-smart-builder
  *      To enable: Add 'takari=true' to .nxrm/nxrmrc.groovy
  */
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 @Grab(group = 'com.aestasit.infrastructure.sshoogr', module = 'sshoogr', version = '0.9.26')
 @Grab(group = 'com.caseyscarborough.colorizer', module = 'groovy-colorizer', version = '1.0.0')
 @Grab(group = 'jline', module = 'jline', version = '2.14.2')
@@ -34,6 +36,8 @@ import java.nio.file.Paths
 import java.time.ZonedDateTime
 
 import com.caseyscarborough.colorizer.Colorizer
+import com.google.common.base.Stopwatch
+import groovy.xml.XmlNodePrinter
 import org.ajoberstar.grgit.*
 import org.ajoberstar.grgit.operation.*
 import org.ajoberstar.grgit.service.*
@@ -42,17 +46,9 @@ import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.rauschig.jarchivelib.ArchiveFormat
 import org.rauschig.jarchivelib.ArchiverFactory
-import com.google.common.base.Stopwatch
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import groovy.xml.XmlNodePrinter
 
-import static com.aestasit.infrastructure.ssh.DefaultSsh.*
 import static java.time.ZoneId.systemDefault
 import static java.time.format.DateTimeFormatter.ofPattern
-import java.util.zip.*
-
 
 ant = new AntBuilder()
 ant.project.buildListeners[0].messageOutputLevel = 0
@@ -1081,11 +1077,11 @@ def runNxrm() {
     case "pro":
       run("nexus-professional-")
       break
-    case "base":
+    case "core":
       run("nexus-base-template-")
       break
     default:
-      error("Usage: ./nxrm.groovy -r { base | pro } [nexus-options]")
+      error("Usage: ./nxrm.groovy -r { core | pro } [nexus-options]")
   }
 }
 
