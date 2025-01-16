@@ -17,6 +17,7 @@ import java.util.Optional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
@@ -43,6 +44,7 @@ public class CommunityEulaApiResource
   @RequiresPermissions("nexus:*")
   @RequiresAuthentication
   @GET
+  @Produces(MediaType.APPLICATION_JSON)
   public EulaStatus getCommunityEulaStatus() {
     Optional<NexusKeyValue> eulaStatusOptional = globalKeyValueStore.getKey(EULA_KEY);
     EulaStatus eulaStatus = new EulaStatus();
