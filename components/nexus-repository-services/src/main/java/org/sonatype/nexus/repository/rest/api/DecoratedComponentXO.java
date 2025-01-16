@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public abstract class DecoratedComponentXO
     implements ComponentXO, DecoratedObject<ComponentXO>
 {
-  private String id;
+  protected String id;
 
   protected final ComponentXO componentXO;
 
