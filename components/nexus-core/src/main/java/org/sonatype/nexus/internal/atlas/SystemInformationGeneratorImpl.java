@@ -33,7 +33,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.karaf.bundle.core.BundleInfo;
 import org.apache.karaf.bundle.core.BundleService;
 import org.eclipse.sisu.Parameters;
@@ -47,8 +46,6 @@ import org.sonatype.nexus.common.atlas.SystemInformationGenerator;
 import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.text.Strings2;
-
-import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.text.Strings2.MASK;
@@ -80,13 +77,13 @@ public class SystemInformationGeneratorImpl
 
   private final Map<String, SystemInformationHelper> systemInformationHelpers;
 
-  static final Map<String, Object> UNAVAILABLE = ImmutableMap.of("unavailable", true);
+  static final Map<String, Object> UNAVAILABLE = Map.of("unavailable", true);
 
   private static final List<String> SENSITIVE_FIELD_NAMES =
-      ImmutableList.of("password", "secret", "token", "sign", "auth", "cred", "key", "pass");
+      List.of("password", "secret", "token", "sign", "auth", "cred", "key", "pass");
 
   private static final List<String> SENSITIVE_CREDENTIALS_KEYS =
-      ImmutableList.of("sun.java.command", "INSTALL4J_ADD_VM_PARAMS");
+      List.of("sun.java.command", "INSTALL4J_ADD_VM_PARAMS");
 
   @Inject
   public SystemInformationGeneratorImpl(
@@ -113,42 +110,43 @@ public class SystemInformationGeneratorImpl
   public Map<String, Object> report() {
     log.info("Generating system information report");
 
-    Map<String, Object> sections = ImmutableMap.<String, Object>builder()
-        .put("system-time", reportTime())
-        .put("system-properties", reportObfuscatedProperties(System.getProperties()))
-        .put("system-environment", reportObfuscatedProperties(System.getenv()))
-        .put("system-runtime", reportRuntime())
-        .put("system-network", reportNetwork())
-        .put("system-filestores", reportFileStores())
-        .put("nexus-status", reportNexusStatus())
-        .put("nexus-node", reportNexusNode())
-        .put("nexus-properties", reportObfuscatedProperties(parameters))
-        .put("nexus-configuration", reportNexusConfiguration())
-        .put("nexus-bundles", reportNexusBundles())
-        .putAll(systemInformationHelpers.entrySet()
-            .stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getValue())))
-        .build();
+    Map<String, Object> sections = new HashMap<>();
+    sections.put("system-time", reportTime());
+    sections.put("system-properties", reportObfuscatedProperties(System.getProperties()));
+    sections.put("system-environment", reportObfuscatedProperties(System.getenv()));
+    sections.put("system-runtime", reportRuntime());
+    sections.put("system-network", reportNetwork());
+    sections.put("system-filestores", reportFileStores());
+    sections.put("nexus-status", reportNexusStatus());
+    sections.put("nexus-node", reportNexusNode());
+    sections.put("nexus-properties", reportObfuscatedProperties(parameters));
+    sections.put("nexus-configuration", reportNexusConfiguration());
+    sections.put("nexus-bundles", reportNexusBundles());
+
+    // Merge additional system information helpers
+    sections.putAll(systemInformationHelpers);
 
     return sections;
   }
 
   private Map<String, Object> reportTime() {
     Date now = new Date();
-    return ImmutableMap.of(
-        "timezone", TimeZone.getDefault().getID(),
-        "current", now.getTime(),
-        "iso8601", Iso8601Date.format(now));
+    Map<String, Object> data = new HashMap<>();
+    data.put("timezone", TimeZone.getDefault().getID());
+    data.put("current", now.getTime());
+    data.put("iso8601", Iso8601Date.format(now));
+    return data;
   }
 
   private Map<String, Object> reportRuntime() {
     Runtime runtime = Runtime.getRuntime();
-    return ImmutableMap.of(
-        "availableProcessors", runtime.availableProcessors(),
-        "freeMemory", runtime.freeMemory(),
-        "totalMemory", runtime.totalMemory(),
-        "maxMemory", runtime.maxMemory(),
-        "threads", Thread.activeCount());
+    Map<String, Object> data = new HashMap<>();
+    data.put("availableProcessors", runtime.availableProcessors());
+    data.put("freeMemory", runtime.freeMemory());
+    data.put("totalMemory", runtime.totalMemory());
+    data.put("maxMemory", runtime.maxMemory());
+    data.put("threads", Thread.activeCount());
+    return data;
   }
 
   private Map<String, Object> reportFileStores() {
@@ -161,7 +159,7 @@ public class SystemInformationGeneratorImpl
       }
       fileStores.put(key, reportFileStore(store));
     }
-    return ImmutableMap.copyOf(fileStores);
+    return fileStores;
   }
 
   private Map<String, Object> reportNetwork() {
@@ -177,24 +175,27 @@ public class SystemInformationGeneratorImpl
   }
 
   private Map<String, Object> reportNexusStatus() {
-    return ImmutableMap.of(
-        "version", applicationVersion.getVersion(),
-        "edition", applicationVersion.getEdition(),
-        "buildRevision", applicationVersion.getBuildRevision(),
-        "buildTimestamp", applicationVersion.getBuildTimestamp());
+    Map<String, Object> data = new HashMap<>();
+    data.put("version", applicationVersion.getVersion());
+    data.put("edition", applicationVersion.getEdition());
+    data.put("buildRevision", applicationVersion.getBuildRevision());
+    data.put("buildTimestamp", applicationVersion.getBuildTimestamp());
+    return data;
   }
 
   private Map<String, Object> reportNexusNode() {
-    return ImmutableMap.of(
-        "node-id", nodeAccess.getId(),
-        "deployment-id", deploymentAccess.getId());
+    Map<String, Object> data = new HashMap<>();
+    data.put("node-id", nodeAccess.getId());
+    data.put("deployment-id", deploymentAccess.getId());
+    return data;
   }
 
   private Map<String, Object> reportNexusConfiguration() {
-    return ImmutableMap.of(
-        "installDirectory", fileref(applicationDirectories.getInstallDirectory()),
-        "workingDirectory", fileref(applicationDirectories.getWorkDirectory()),
-        "temporaryDirectory", fileref(applicationDirectories.getTemporaryDirectory()));
+    Map<String, Object> data = new HashMap<>();
+    data.put("installDirectory", fileref(applicationDirectories.getInstallDirectory()));
+    data.put("workingDirectory", fileref(applicationDirectories.getWorkDirectory()));
+    data.put("temporaryDirectory", fileref(applicationDirectories.getTemporaryDirectory()));
+    return data;
   }
 
   private Map<String, Object> reportNexusBundles() {
@@ -205,15 +206,16 @@ public class SystemInformationGeneratorImpl
               BundleInfo info = bundleService.getInfo(bundle);
               // name is not set for groovy bundles
               String name = info.getName() == null ? "" : info.getName();
-              return ImmutableMap.of(
-                  "bundleId", info.getBundleId(),
-                  "name", name,
-                  "symbolicName", info.getSymbolicName(),
-                  "location", info.getUpdateLocation(),
-                  "version", info.getVersion(),
-                  "state", info.getState().name(),
-                  "startLevel", info.getStartLevel(),
-                  "fragment", info.isFragment());
+              Map<String, Object> bundleData = new HashMap<>();
+              bundleData.put("bundleId", info.getBundleId());
+              bundleData.put("name", name);
+              bundleData.put("symbolicName", info.getSymbolicName());
+              bundleData.put("location", info.getUpdateLocation());
+              bundleData.put("version", info.getVersion());
+              bundleData.put("state", info.getState().name());
+              bundleData.put("startLevel", info.getStartLevel());
+              bundleData.put("fragment", info.isFragment());
+              return bundleData;
             }));
   }
 
@@ -229,13 +231,14 @@ public class SystemInformationGeneratorImpl
 
   Map<String, Object> reportFileStore(FileStore store) {
     try {
-      return ImmutableMap.of(
-          "description", store.toString(),
-          "type", store.type(),
-          "totalSpace", store.getTotalSpace(),
-          "usableSpace", store.getUsableSpace(),
-          "unallocatedSpace", store.getUnallocatedSpace(),
-          "readOnly", store.isReadOnly());
+      Map<String, Object> data = new HashMap<>();
+      data.put("description", store.toString());
+      data.put("type", store.type());
+      data.put("totalSpace", store.getTotalSpace());
+      data.put("usableSpace", store.getUsableSpace());
+      data.put("unallocatedSpace", store.getUnallocatedSpace());
+      data.put("readOnly", store.isReadOnly());
+      return data;
     }
     catch (IOException e) {
       log.error("Could not add report to support zip for file store {}", store.name(), e);
@@ -245,18 +248,19 @@ public class SystemInformationGeneratorImpl
 
   Map<String, Object> reportNetworkInterface(NetworkInterface intf) {
     try {
-      return ImmutableMap.of(
-          "displayName", intf.getDisplayName(),
-          "up", intf.isUp(),
-          "virtual", intf.isVirtual(),
-          "multicast", intf.supportsMulticast(),
-          "loopback", intf.isLoopback(),
-          "ptp", intf.isPointToPoint(),
-          "mtu", intf.getMTU(),
-          "addresses", Collections.list(intf.getInetAddresses())
-              .stream()
-              .map(Object::toString)
-              .collect(Collectors.joining(",")));
+      Map<String, Object> data = new HashMap<>();
+      data.put("displayName", intf.getDisplayName());
+      data.put("up", intf.isUp());
+      data.put("virtual", intf.isVirtual());
+      data.put("multicast", intf.supportsMulticast());
+      data.put("loopback", intf.isLoopback());
+      data.put("ptp", intf.isPointToPoint());
+      data.put("mtu", intf.getMTU());
+      data.put("addresses", Collections.list(intf.getInetAddresses())
+          .stream()
+          .map(Object::toString)
+          .collect(Collectors.joining(",")));
+      return data;
     }
     catch (SocketException e) {
       log.error("Could not add report to support zip for network interface {}", intf.getDisplayName(), e);
@@ -275,6 +279,7 @@ public class SystemInformationGeneratorImpl
   private Map<String, String> reportObfuscatedProperties(Map<String, String> properties) {
     return properties.entrySet()
         .stream()
+        .filter(entry -> entry.getKey() != null && entry.getValue() != null)
         .collect(Collectors.toMap(
             Map.Entry::getKey,
             entry -> {
