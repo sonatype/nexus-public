@@ -28,7 +28,7 @@ import {helperFunctions} from './UsageHelper';
 
 const {
   useGracePeriodEndDate,
-  useViewPricingUrl,
+  useViewPurchaseALicenseUrl,
   useThrottlingStatus,
   useDaysUntilGracePeriodEnds
 } = helperFunctions;
@@ -55,7 +55,6 @@ export default function CEHardLimitBanners({onClose}) {
   const isCommunityEdition = ExtJS.state().getEdition() === 'COMMUNITY';
 
   const gracePeriodEndDate = useGracePeriodEndDate();
-  const viewPricingUrl = useViewPricingUrl();
   const throttlingStatus = useThrottlingStatus();
   const daysUntilGracePeriodEnds = useDaysUntilGracePeriodEnds();
 
@@ -84,7 +83,7 @@ export default function CEHardLimitBanners({onClose}) {
     return <>
       <NxTextLink className="review-usage-link" onClick={scrollToUsageCenter}>
         Review your usage
-      </NxTextLink> or <NxTextLink className="usage-view-pricing-link" href={viewPricingUrl} target="_blank">
+      </NxTextLink> or <NxTextLink className="usage-view-pricing-link" href={useViewPurchaseALicenseUrl()} target="_blank">
         purchase a license to remove limits.
       </NxTextLink>
     </>

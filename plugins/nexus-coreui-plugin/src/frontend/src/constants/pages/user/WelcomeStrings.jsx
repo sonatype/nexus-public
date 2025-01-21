@@ -10,7 +10,6 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { NxTextLink } from '@sonatype/react-shared-components';
 import React from 'react';
 
 export default {
@@ -73,7 +72,7 @@ export default {
       },
       HEADER: {
         BUTTONS: {
-          GET_STARTED: 'Get Started',
+          LEARN_MORE: 'Learn More',
           RESTORE_USAGE: 'How to Restore Usage',
           PURCHASE_NOW: 'Purchase Now'
         },

@@ -81,34 +81,34 @@ describe('CEHardLimitAlerts', () => {
   it('should render the correct links', () => {
     renderView('', '75% usage');
 
-    const getStartedButton = screen.getByRole('link', {name: 'Get Started'});
+    const learnMoreButton = screen.getByRole('link', {name: 'Learn More'});
     const uploadLicense = screen.getByRole('link', {name: 'upload it here'});
 
-    expect(getStartedButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/pricing?nodeId=node-example-id&componentCountLimit=100000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=200000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&utm_medium=product&utm_source=nexus_repo_community&utm_campaign=repo_community_usage&malwareCount=3');
+    expect(learnMoreButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/ce/learn-more?nodeId=node-example-id&componentCountLimit=100000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=200000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&malwareCount=3');
     expect(uploadLicense).toHaveAttribute('href', '#admin/system/licensing');
   });
 
   it('should render the nearing limits banner', async () => {
     const {container} = await renderView('', '75% usage');
 
-    expect(container.querySelector('.nx-alert')).toHaveTextContent('Instance Trending Toward Usage LimitsOnce limits are reached, new components cannot be added. Purchase a license to remove limits, or if you have already purchased a license upload it here.Get Started');
+    expect(container.querySelector('.nx-alert')).toHaveTextContent('Instance Trending Toward Usage LimitsOnce limits are reached, new components cannot be added. Purchase a license to remove limits, or if you have already purchased a license upload it here.Learn More');
     expect(screen.getByRole('button', {name: 'Close'})).toBeInTheDocument();
   });
 
   it('should render the over limits banner outside of grace period', async () => {
     const {container} = await renderView('2024-10-15T00:00:00.000', 'Over limits');
     const getPurchaseNowButton = screen.getByRole('link', {name: 'Purchase Now'});
-    const getRestoreUsageButton = screen.getByRole('link', {name: 'How to Restore Usage'});
+    const getLearnMoreLimitsEnforcedButton = screen.getByRole('link', {name: 'Learn More'});
 
-    expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage Limits In EffectUsage limits came into effect on October 15, 2024. As usage levels are currently higher than the Nexus Repository Community Edition maximum, new components can no longer be added to this instance. Purchase a license to remove limits, or if you have already purchased a license upload it here.How to Restore UsagePurchase Now');
-    expect(getPurchaseNowButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/pricing?nodeId=node-example-id&componentCountLimit=100000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=200000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&utm_medium=product&utm_source=nexus_repo_community&utm_campaign=repo_community_usage&malwareCount=3');
-    expect(getRestoreUsageButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/how-to-restore-usage?utm_medium=product&utm_source=nexus_repo_community&utm_campaign=repo_community_usage');
+    expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage Limits In EffectUsage limits came into effect on October 15, 2024. As usage levels are currently higher than the Nexus Repository Community Edition maximum, new components can no longer be added to this instance. Purchase a license to remove limits, or if you have already purchased a license upload it here.Learn MorePurchase Now');
+    expect(getPurchaseNowButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/ce/purchase-license?nodeId=node-example-id&componentCountLimit=100000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=200000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&malwareCount=3');
+    expect(getLearnMoreLimitsEnforcedButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/ce/learn-more-limits-enforced?nodeId=node-example-id&componentCountLimit=100000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=200000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&malwareCount=3');
   });
 
   it('should render the over limits banner inside grace period', async () => {
     const {container} = await renderView('2024-12-15T00:00:00.000', 'Over limits');
 
-    expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage Limits Will Be Enforced Starting December 15, 2024Starting December 15, 2024, new components cannot be added. Purchase a license to remove limits, or if you have already purchased a license upload it here.Get Started');
+    expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage Limits Will Be Enforced Starting December 15, 2024Starting December 15, 2024, new components cannot be added. Purchase a license to remove limits, or if you have already purchased a license upload it here.Learn More');
     expect(screen.getByRole('button', {name: 'Close'})).toBeInTheDocument();
   });
 
@@ -122,7 +122,7 @@ describe('CEHardLimitAlerts', () => {
   it('should render the near limits banner outside grace period', async () => {
     const {container} = await renderView('2024-10-15T00:00:00.000', '75% usage');
 
-    expect(container.querySelector('.nx-alert')).toHaveTextContent('Instance Trending Toward Usage LimitsIf you exceed usage limits, you will not be able to add new components. Purchase a license to remove limits, or if you have already purchased a license upload it here.Get Started');
+    expect(container.querySelector('.nx-alert')).toHaveTextContent('Instance Trending Toward Usage LimitsIf you exceed usage limits, you will not be able to add new components. Purchase a license to remove limits, or if you have already purchased a license upload it here.Learn More');
     expect(screen.getByRole('button', {name: 'Close'})).toBeInTheDocument();
   });
 });

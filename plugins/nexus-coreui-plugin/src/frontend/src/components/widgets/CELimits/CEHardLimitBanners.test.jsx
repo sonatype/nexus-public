@@ -85,7 +85,7 @@ describe('CEHardLimitBanners', () => {
 
     const viewPricingLink = screen.getByRole('link', {name: 'purchase a license to remove limits.'});
 
-    expect(viewPricingLink).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/pricing?nodeId=node-example-id&componentCountLimit=100000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=200000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&utm_medium=product&utm_source=nexus_repo_community&utm_campaign=repo_community_usage&malwareCount=3');
+    expect(viewPricingLink).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/ce/purchase-license?nodeId=node-example-id&componentCountLimit=100000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=200000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&malwareCount=3');
   });
 
   it('should render the nearing limits banner', async () => {

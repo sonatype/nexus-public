@@ -29,34 +29,36 @@ function getMetricData(usage, metricName) {
   return { metricValue, thresholdValue, highestRecordedCount, aggregates };
 }
 
-function useViewPricingUrl() {
+function addProductParams() {
   const nodeId = ExtJS.state().getValue('nexus.node.id');
   const usage = ExtJS.state().getValue('contentUsageEvaluationResult', []);
   const { metricValue: peakRequestsMetricValue, thresholdValue: peakRequestsThresholdValue, highestRecordedCount: highestRecordedCountPeakRequests } = getMetricData(usage, "peak_requests_per_day");
   const { metricValue: componentTotalMetricValue, thresholdValue: componentTotalThresholdValue, highestRecordedCount: highestRecordedCountComponentTotal } = getMetricData(usage, "component_total_count");
   const malwareCount = ExtJS.state().getValue('nexus.malware.count')?.totalCount || 0;
-  const user = ExtJS.useUser();
-  const isAnonymous = !user?.administrator && !user?.authenticated;
 
-  const params = isAnonymous ? {
-    utm_medium: 'product',
-    utm_source: 'nexus_repo_community',
-    utm_campaign: 'repo_community_usage'
-  } : 
-  {
-    nodeId: nodeId,
-    componentCountLimit: componentTotalThresholdValue,
-    componentCountMax: highestRecordedCountComponentTotal,
-    componentCount: componentTotalMetricValue,
-    requestsPer24HoursLimit: peakRequestsThresholdValue,
-    requestsPer24HoursMax: highestRecordedCountPeakRequests,
-    requestsPer24HoursCount: peakRequestsMetricValue,
-    utm_medium: 'product',
-    utm_source: 'nexus_repo_community',
-    utm_campaign: 'repo_community_usage',
-    malwareCount: malwareCount
-  };
-  return `http://links.sonatype.com/products/nxrm3/pricing?${new URLSearchParams(params).toString()}`;
+  const params =
+      {
+        nodeId: nodeId,
+        componentCountLimit: componentTotalThresholdValue,
+        componentCountMax: highestRecordedCountComponentTotal,
+        componentCount: componentTotalMetricValue,
+        requestsPer24HoursLimit: peakRequestsThresholdValue,
+        requestsPer24HoursMax: highestRecordedCountPeakRequests,
+        requestsPer24HoursCount: peakRequestsMetricValue,
+        malwareCount: malwareCount
+      };
+  return new URLSearchParams(params).toString();
+}
+
+function useViewPurchaseALicenseUrl() {
+  return `http://links.sonatype.com/products/nxrm3/ce/purchase-license?${addProductParams()}`;
+}
+
+function useViewLearnMoreUrl() {
+  if (useThrottlingStatus() === 'OVER_LIMITS_GRACE_PERIOD_ENDED') {
+    return `http://links.sonatype.com/products/nxrm3/ce/learn-more-limits-enforced?${addProductParams()}`;
+  }
+  return `http://links.sonatype.com/products/nxrm3/ce/learn-more?${addProductParams()}`;
 }
 
 function useGracePeriodEndsDate() {
@@ -110,7 +112,8 @@ function useThrottlingStatus() {
 }
 
 export const helperFunctions = {
-  useViewPricingUrl,
+  useViewLearnMoreUrl,
+  useViewPurchaseALicenseUrl,
   useGracePeriodEndDate,
   useThrottlingStatus,
   useGracePeriodEndsDate,
