@@ -161,6 +161,10 @@ Ext.define('NX.controller.State', {
         me.fireEvent('userAuthenticated', key, value);
       }
 
+      if (Ext.typeOf(value) !== 'object' && value !== model.get('value')) {
+        model.set('value', value);
+      }
+
       if (!Ext.Object.equals(value, model.get('value'))) {
         model.set('value', value);
       }

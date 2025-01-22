@@ -92,16 +92,21 @@ export default {
     MALWARE_REMEDIATION: {
       DESCRIPTION: 'Sonatype has identified malware components in your repository. Use the CSV below to identify which components are malicious and remediate.',
       REMEDIATION_STEPS: {
-        TITLE: 'Steps to Remediate',
-        FIRST: 'Download the CSV file using the link below to review the components flagged by Sonatype as containing malware.',
-        SECOND: <>Search your proxy repository to remove the components. <NxTextLink
-          href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/guide-to-removing-malware" external>
+        TITLE: 'Steps to Identify and Address Malware',
+        FIRST: <>Create and run Automatic Malware Management tasks on your proxy repositories. <NxTextLink
+          href="https://links.sonatype.com/products/nxrm3/docs/scheduled-task" className="scheduled-task-link" external>
+          Learn about maintenance tasks</NxTextLink></>,
+        SECOND: 'Download the CSV file using the link below to review the components flagged by Sonatype as containing malware.',
+        THIRD: <>Search your proxy repository to remove the components. <NxTextLink
+          href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/guide-to-removing-malware"
+          className="guide-to-removing-malware-link" external>
           Guide to removing malware</NxTextLink></>,
-        THIRD: <>Learn how to protect your repository to keep developers from downloading Malware again. <NxTextLink
-          href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/malware-risk" external>
+        FOURTH: <>Learn how to protect your repository to keep developers from downloading Malware again. <NxTextLink
+          href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/malware-risk" className="malware-risk-link" external>
           How to protect your repository from malware</NxTextLink></>
       },
-      DOWNLOAD_CSV: 'Download CSV'
+      DOWNLOAD_CSV: 'Download CSV',
+      CURRENT_TASKS_CONFIGURED: (count) => <>Current tasks configured: <strong>{count}</strong></>,
     },
     OPEN_SOURCE_MALWARE: {
       TITLE: 'What is Open Source Malware?',
@@ -111,9 +116,15 @@ export default {
         compromised applications, data breaches, and regulatory non-compliance.</p>
         <p>Remediation requires immediate removal of infected components, identifying impacted dependencies, and
         Developers must be informed of the threat and prevented from accessing to compromised artifacts.</p>
-        <NxTextLink href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/vulnerabilities-and-malware" external>
+        <NxTextLink href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/vulnerabilities-and-malware"
+                    className="vulnerabilities-and-malware-link" external>
         Differentiating Software Vulnerabilities and Malware</NxTextLink>
       </>,
-    }
+    },
+    POWERED_BY: {
+      TEXT: 'Powered by',
+      IMAGE: './static/rapture/resources/images/sonatype-firewall-logo-nav.svg'
+    },
+    MALWARE_MANAGEMENT_TASKS_COUNT: "malwareManagementTasksCount",
   }
 }

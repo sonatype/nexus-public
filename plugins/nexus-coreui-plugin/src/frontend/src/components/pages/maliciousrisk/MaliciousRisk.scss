@@ -133,4 +133,18 @@
   .nx-alert--info {
     margin-top: 0;
   }
+
+  .nxrm-status-indicator-section {
+    margin: var(--nx-spacing-2x) 0;
+
+    span {
+      margin-left: 0;
+    }
+  }
+}
+
+.nxrm-repo-firewall-logo-section span{
+  display: block;
+  font-size: var(--nx-font-size-xs);
+  margin-bottom: var(--nx-spacing-2x);
 }
