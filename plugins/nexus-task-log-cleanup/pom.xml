@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.77.0-SNAPSHOT</version>
+    <version>3.77.0-05</version>
   </parent>
 
   <artifactId>nexus-task-log-cleanup</artifactId>
