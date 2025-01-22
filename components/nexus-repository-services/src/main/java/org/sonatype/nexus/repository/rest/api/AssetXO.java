@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,6 +26,7 @@ import org.sonatype.nexus.repository.search.AssetSearchResult;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -248,7 +250,8 @@ public class AssetXO
         .build();
   }
 
-  private static Map<String, Object> getExpandedAttributes(
+  @VisibleForTesting
+  static Map<String, Object> getExpandedAttributes(
       Map<String, Object> attributes,
       String format,
       @Nullable Map<String, AssetXODescriptor> assetDescriptors)
@@ -258,10 +261,14 @@ public class AssetXO
         .map(AssetXODescriptor::listExposedAttributeKeys)
         .orElse(Set.of());
 
-    Map<String, Object> exposedAttributes = attributes.entrySet()
-        .stream()
-        .filter(entry -> exposedAttributeKeys.contains(entry.getKey()))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    Map<String, Object> formatAttributes = (Map<String, Object>) attributes.get(format);
+    Map<String, Object> exposedAttributes = new HashMap<>();
+    if (formatAttributes != null) {
+      exposedAttributes.putAll(formatAttributes.entrySet()
+          .stream()
+          .filter(e -> exposedAttributeKeys.contains(e.getKey()))
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+    }
 
     return Map.of(format, exposedAttributes);
   }

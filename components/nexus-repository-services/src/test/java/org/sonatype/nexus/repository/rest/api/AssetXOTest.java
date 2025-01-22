@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.event.EventManager;
@@ -32,6 +36,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 @RunWith(JUnitParamsRunner.class)
@@ -59,6 +65,63 @@ public class AssetXOTest
     Assert.assertTrue(assetXO.getDownloadUrl().contains(expectedUrl));
   }
 
+  @Test
+  public void testGetExpandedAttributes_withExposedKeys() {
+    Map<String, Object> attributes = new HashMap<>();
+    Map<String, Object> formatAttributes = new HashMap<>();
+    formatAttributes.put("key1", "value1");
+    formatAttributes.put("key2", "value2");
+    attributes.put("test-format", formatAttributes);
+
+    Map<String, AssetXODescriptor> assetDescriptors = new HashMap<>();
+    AssetXODescriptor descriptor = new TestAssetXODescriptor(Set.of("key1"));
+    assetDescriptors.put("test-format", descriptor);
+
+    Map<String, Object> result = AssetXO.getExpandedAttributes(attributes, "test-format", assetDescriptors);
+
+    assertEquals(1, result.size());
+    assertTrue(result.containsKey("test-format"));
+    Map<String, Object> resultFormatAttributes = (Map<String, Object>) result.get("test-format");
+    assertEquals(1, resultFormatAttributes.size());
+    assertEquals("value1", resultFormatAttributes.get("key1"));
+  }
+
+  @Test
+  public void testGetExpandedAttributes_withoutExposedKeys() {
+    Map<String, Object> attributes = new HashMap<>();
+    Map<String, Object> formatAttributes = new HashMap<>();
+    formatAttributes.put("key1", "value1");
+    formatAttributes.put("key2", "value2");
+    attributes.put("test-format", formatAttributes);
+
+    Map<String, AssetXODescriptor> assetDescriptors = new HashMap<>();
+    AssetXODescriptor descriptor = new TestAssetXODescriptor(Set.of());
+    assetDescriptors.put("test-format", descriptor);
+
+    Map<String, Object> result = AssetXO.getExpandedAttributes(attributes, "test-format", assetDescriptors);
+
+    assertEquals(1, result.size());
+    assertTrue(result.containsKey("test-format"));
+    Map<String, Object> resultFormatAttributes = (Map<String, Object>) result.get("test-format");
+    assertTrue(resultFormatAttributes.isEmpty());
+  }
+
+  @Test
+  public void testGetExpandedAttributes_withNullDescriptors() {
+    Map<String, Object> attributes = new HashMap<>();
+    Map<String, Object> formatAttributes = new HashMap<>();
+    formatAttributes.put("key1", "value1");
+    formatAttributes.put("key2", "value2");
+    attributes.put("test-format", formatAttributes);
+
+    Map<String, Object> result = AssetXO.getExpandedAttributes(attributes, "test-format", null);
+
+    assertEquals(1, result.size());
+    assertTrue(result.containsKey("test-format"));
+    Map<String, Object> resultFormatAttributes = (Map<String, Object>) result.get("test-format");
+    assertTrue(resultFormatAttributes.isEmpty());
+  }
+
   private static Repository createRepository(final Type type, String repositoryName) throws Exception {
     Repository repository = new RepositoryImpl(
         Mockito.mock(EventManager.class),
@@ -75,5 +138,20 @@ public class AssetXOTest
     configuration.setOnline(true);
     configuration.setRepositoryName(repositoryName);
     return configuration;
+  }
+
+  static class TestAssetXODescriptor
+      implements AssetXODescriptor
+  {
+    private Set<String> exposedAttributeKeys;
+
+    public TestAssetXODescriptor(Set<String> exposedAttributeKeys) {
+      this.exposedAttributeKeys = exposedAttributeKeys;
+    }
+
+    @Override
+    public Set<String> listExposedAttributeKeys() {
+      return exposedAttributeKeys;
+    }
   }
 }
