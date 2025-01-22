@@ -69,7 +69,11 @@ public class MultiHashingInputStream
 
     int numRead = in.read(bytes, off, len);
     if (numRead != -1) {
-      submitHashing(hasher -> hasher.putBytes(bytes, off, numRead));
+      // Create a copy of the read bytes in case the provided buffer is externally modified
+      byte[] copy = new byte[numRead];
+      System.arraycopy(bytes, off, copy, 0, numRead);
+
+      submitHashing(hasher -> hasher.putBytes(copy, 0, numRead));
       count += numRead;
     }
     return numRead;
