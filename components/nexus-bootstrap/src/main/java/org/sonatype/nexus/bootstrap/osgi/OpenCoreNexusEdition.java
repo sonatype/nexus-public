@@ -42,7 +42,7 @@ public class OpenCoreNexusEdition
 
   @Override
   protected void doApply(final Properties properties, final Path workDirPath) {
-    log.info("Loading OSS Edition");
+    log.info("Loading Sonatype Nexus Repository Core");
     properties.put(NEXUS_EDITION, NexusEditionType.OC.editionString);
     String updatedNexusFeaturesProps = properties.getProperty(NEXUS_FEATURES)
         .replace(NexusEditionFeature.PRO_FEATURE.featureString, getEditionFeature().featureString);

@@ -99,7 +99,7 @@ public abstract class NexusEdition
         return workDirPath.resolve(EDITION_PRO_PATH).toFile();
       }
       default: {
-        throw new IllegalStateException("Marker for OSS edition not supported!");
+        throw new IllegalStateException("Marker for Core edition not supported!");
       }
     }
   }
