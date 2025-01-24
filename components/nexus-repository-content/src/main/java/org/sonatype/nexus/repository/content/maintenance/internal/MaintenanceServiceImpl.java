@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.maintenance.internal;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import javax.inject.Inject;
@@ -27,8 +29,10 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
@@ -37,6 +41,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.authz.AuthorizationException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -160,6 +165,28 @@ public class MaintenanceServiceImpl
     return repositoryPermissionChecker.userCanDeleteInRepository(repository);
   }
 
+  @Override
+  public Set<String> deleteAssets(final Repository repository, final List<Integer> assetIds) {
+    checkNotNull(repository);
+    checkNotNull(assetIds);
+    if (assetIds.isEmpty()) {
+      return Set.of();
+    }
+
+    AssetStore<?> assetStore = contentFacetSupport(repository).stores().assetStore;
+    Set<String> deletedAssets = new HashSet<>();
+    String repositoryName = repository.getName();
+    for (Integer assetId : assetIds) {
+      assetStore.readAsset(assetId).ifPresent(asset -> {
+        Set<String> currentDeletedAssets = deleteAsset(repository, asset);
+        log.trace("Current deleted assets {} from {} repository", currentDeletedAssets, repositoryName);
+        deletedAssets.addAll(currentDeletedAssets);
+      });
+    }
+    log.debug("Total deleted assets {} from {} repository", deletedAssets, repositoryName);
+    return deletedAssets;
+  }
+
   private boolean canDeleteAssetInRepository(
       final String repositoryName,
       final String format,
@@ -184,12 +211,22 @@ public class MaintenanceServiceImpl
     if (isPostgresql()) {
       Integer internalAssetId = InternalIds.internalAssetId(asset);
 
-      repository.optionalFacet(BrowseFacet.class).ifPresent(facet ->
-          facet.deleteByAssetIdAndPath(internalAssetId, asset.path()));
+      repository.optionalFacet(BrowseFacet.class)
+          .ifPresent(facet -> facet.deleteByAssetIdAndPath(internalAssetId, asset.path()));
     }
   }
 
   private boolean isPostgresql() {
     return this.databaseCheck.isPostgresql();
+  }
+
+  @VisibleForTesting
+  protected ContentFacetSupport contentFacetSupport(final Repository repository) {
+    try {
+      return (ContentFacetSupport) repository.facet(ContentFacet.class);
+    }
+    catch (Exception e) {
+      throw new MissingFacetException(repository, ContentFacetSupport.class);
+    }
   }
 }
