@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.assertj.db.type.AssertDbConnectionFactory;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -257,7 +258,9 @@ public class KeyValueDAOTest
   }
 
   private Table table() {
-    return new Table(sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).get().getDataSource(), "test_key_value");
+    return AssertDbConnectionFactory
+            .of(sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).get().getDataSource()).create()
+            .table("test_key_value").build();
   }
 
   private void withDAO(final Consumer<KeyValueDAO> consumer) {
