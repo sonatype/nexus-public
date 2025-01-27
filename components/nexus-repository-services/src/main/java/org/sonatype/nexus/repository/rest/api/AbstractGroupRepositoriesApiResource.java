@@ -35,12 +35,10 @@ import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiGroupRepository;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
-import org.sonatype.nexus.validation.Validate;
 
 import com.google.common.collect.Sets;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
@@ -69,8 +67,7 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
   }
 
   @POST
-  @RequiresAuthentication
-  @Validate
+  @Override
   public Response createRepository(final T request) {
     validateRequest(request);
     return super.createRepository(request);
@@ -78,8 +75,7 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
 
   @PUT
   @Path("/{repositoryName}")
-  @RequiresAuthentication
-  @Validate
+  @Override
   public Response updateRepository(
       final T request,
       @PathParam("repositoryName") final String repositoryName)
@@ -122,44 +118,38 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
       if (!"PRO".equals(applicationVersion.getEdition())) {
         violations.add(constraintViolationFactory.createViolation(
             WRITABLE_MEMBER,
-            GroupHandler.INSUFFICIENT_LICENSE
-        ));
+            GroupHandler.INSUFFICIENT_LICENSE));
       }
       else if (writableMemberRepository == null) {
         violations.add(constraintViolationFactory.createViolation(
             WRITABLE_MEMBER,
-            "Writable member repository does not exist"
-        ));
+            "Writable member repository does not exist"));
       }
       else if (!writableMemberRepository.getType().getValue().equals(HostedType.NAME)) {
         violations.add(constraintViolationFactory.createViolation(
             WRITABLE_MEMBER,
-            "Writable member must be a hosted repository"
-        ));
+            "Writable member must be a hosted repository"));
       }
       else if (!writableMemberRepository.getFormat().getValue().equals(request.getFormat())) {
         violations.add(constraintViolationFactory.createViolation(
             WRITABLE_MEMBER,
-            "Writable member repository format does not match group repository format: " + writableMember
-        ));
+            "Writable member repository format does not match group repository format: " + writableMember));
       }
       else if (!request.getGroup().getMemberNames().contains(writableMember)) {
         violations.add(constraintViolationFactory.createViolation(
             WRITABLE_MEMBER,
-            "Writable member must be a member of the group"
-        ));
+            "Writable member must be a member of the group"));
       }
     }
   }
 
   @GET
   @Path("/{repositoryName}")
-  @RequiresAuthentication
-  @Validate
   @ApiOperation(value = "Get repository", response = SimpleApiGroupRepository.class)
   @Override
-  public AbstractApiRepository getRepository(@ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
-                                             @PathParam("repositoryName") final String repositoryName)
+  public AbstractApiRepository getRepository(
+      @ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+      @PathParam("repositoryName") final String repositoryName)
   {
     return super.getRepository(formatAndType, repositoryName);
   }

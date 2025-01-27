@@ -25,14 +25,12 @@ import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.FormatAndType;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
-import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
@@ -58,8 +56,6 @@ public abstract class AptProxyRepositoriesApiResource
       @ApiResponse(code = 405, message = DISABLED_IN_HIGH_AVAILABILITY)
   })
   @POST
-  @RequiresAuthentication
-  @Validate
   @Override
   public Response createRepository(final AptProxyRepositoryApiRequest request) {
     return super.createRepository(request);
@@ -75,8 +71,6 @@ public abstract class AptProxyRepositoriesApiResource
   })
   @PUT
   @Path("/{repositoryName}")
-  @RequiresAuthentication
-  @Validate
   @Override
   public Response updateRepository(
       final AptProxyRepositoryApiRequest request,
@@ -87,12 +81,12 @@ public abstract class AptProxyRepositoriesApiResource
 
   @GET
   @Path("/{repositoryName}")
-  @RequiresAuthentication
-  @Validate
   @ApiOperation(value = "Get repository", response = AptProxyApiRepository.class)
   @Override
-  public AbstractApiRepository getRepository(@ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
-                                             @PathParam("repositoryName") final String repositoryName) {
+  public AbstractApiRepository getRepository(
+      @ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+      @PathParam("repositoryName") final String repositoryName)
+  {
     return super.getRepository(formatAndType, repositoryName);
   }
 
