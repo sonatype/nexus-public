@@ -102,6 +102,13 @@
         <if test="filter != null"> AND (${filter})</if>;
   </select>
 
+  <select id="countComponentsWithAssetsBlobs" resultType="int">
+    SELECT COUNT(DISTINCT component_id) FROM ${format}_asset
+    WHERE asset_blob_id IS NOT NULL AND repository_id = #{repositoryId}
+    <if test="kind != null"> AND kind = #{kind}</if>
+    <if test="filter != null"> AND (${filter})</if>;
+  </select>
+
   <select id="countUnnormalized" resultType="int">
     SELECT COUNT(component_id) FROM ${format}_component WHERE normalized_version IS NULL;
   </select>
