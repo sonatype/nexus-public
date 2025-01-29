@@ -115,30 +115,4 @@
     </dependency>
   </dependencies>
 
-  <build>
-  <plugins>
-  <plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-compiler-plugin</artifactId>
-    <dependencies>
-      <dependency>
-        <groupId>org.codehaus.groovy</groupId>
-        <artifactId>groovy-eclipse-compiler</artifactId>
-        <version>3.7.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.codehaus.groovy</groupId>
-        <artifactId>groovy-eclipse-batch</artifactId>
-        <version>3.0.8-01</version>
-      </dependency>
-    </dependencies>
-    <configuration>
-      <compilerId>groovy-eclipse-compiler</compilerId>
-      <release>8</release>
-      <source>8</source>
-      <target>8</target>
-    </configuration>
-  </plugin>
-  </plugins>
-  </build>
 </project>
