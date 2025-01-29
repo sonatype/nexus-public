@@ -230,14 +230,13 @@
           <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-eclipse-batch</artifactId>
-            <version>3.0.8-01</version>
+            <version>3.0.13-02</version>
           </dependency>
         </dependencies>
         <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
           <compilerId>groovy-eclipse-compiler</compilerId>
-          <release>8</release>
-          <source>8</source>
-          <target>8</target>
         </configuration>
       </plugin>
       <plugin>

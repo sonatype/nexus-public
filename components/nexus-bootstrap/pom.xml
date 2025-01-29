@@ -80,7 +80,7 @@
     <dependency>
       <groupId>org.osgi</groupId>
       <artifactId>org.osgi.annotation.versioning</artifactId>
-      <optional>true</optional>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
