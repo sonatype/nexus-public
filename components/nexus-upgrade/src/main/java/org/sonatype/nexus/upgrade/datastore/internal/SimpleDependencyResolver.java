@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * 3. RepeatableSteps based on their depends on ordering
  */
 class SimpleDependencyResolver
-    extends ComponentSupport
+  extends ComponentSupport
 {
   private final Collection<DatabaseMigrationStep> steps;
 
@@ -54,55 +54,53 @@ class SimpleDependencyResolver
     Map<Class<? extends DatabaseMigrationStep>, NexusJavaMigration> orderedMap = new LinkedHashMap<>();
 
     // Add versioned steps, the dependencies are managed by Flyway
-    steps.stream()
-        .filter(step -> step.version().isPresent())
-        .forEach(step -> orderedMap.put(step.getClass(), new NexusJavaMigration(step)));
+   steps.stream()
+       .filter(step -> step.version().isPresent())
+       .forEach(step -> orderedMap.put(step.getClass(), new NexusJavaMigration(step)));
 
-    // Add steps without dependencies, we don't specify a 'round' for these
-    steps.stream()
-        .filter(step -> !step.version().isPresent())
-        .filter(step -> dependencies(step).isEmpty())
-        .forEach(step -> orderedMap.put(step.getClass(), new NexusJavaMigration(step)));
+   // Add steps without dependencies, we don't specify a 'round' for these
+   steps.stream()
+       .filter(step -> !step.version().isPresent())
+       .filter(step -> dependencies(step).isEmpty())
+       .forEach(step -> orderedMap.put(step.getClass(), new NexusJavaMigration(step)));
 
-    // Create a map containing Step -> Dependencies
-    Map<DatabaseMigrationStep, List<Class<? extends RepeatableDatabaseMigrationStep>>> stepToDependency = steps.stream()
-        .filter(step -> !orderedMap.containsKey(step.getClass()))
-        .collect(Collectors.toMap(Function.identity(), SimpleDependencyResolver::dependencies));
+   // Create a map containing Step -> Dependencies
+   Map<DatabaseMigrationStep, List<Class<RepeatableDatabaseMigrationStep>>> stepToDependency = steps.stream()
+       .filter(step -> !orderedMap.containsKey(step.getClass()))
+       .collect(Collectors.toMap(Function.identity(), SimpleDependencyResolver::dependencies));
 
-    // We process the rest in 'rounds' as Flyway uses the description to order versionless migrations.
-    // Steps within a round cannot depend on each other.
-    int round = 1;
-    boolean found;
-    do {
-      found = false;
+   // We process the rest in 'rounds' as Flyway uses the description to order versionless migrations.
+   // Steps within a round cannot depend on each other.
+   int round = 1;
+   boolean found;
+   do {
+     found = false;
 
-      Iterator<Entry<DatabaseMigrationStep, List<Class<? extends RepeatableDatabaseMigrationStep>>>> iter =
-          stepToDependency
-              .entrySet()
-              .iterator();
+     Iterator<Entry<DatabaseMigrationStep, List<Class<RepeatableDatabaseMigrationStep>>>> iter = stepToDependency
+         .entrySet()
+         .iterator();
 
-      Map<Class<? extends DatabaseMigrationStep>, NexusJavaMigration> roundMap = new HashMap<>();
+     Map<Class<? extends DatabaseMigrationStep>, NexusJavaMigration> roundMap = new HashMap<>();
 
-      while (iter.hasNext()) {
-        Entry<DatabaseMigrationStep, List<Class<? extends RepeatableDatabaseMigrationStep>>> entry = iter.next();
+     while (iter.hasNext()) {
+       Entry<DatabaseMigrationStep, List<Class<RepeatableDatabaseMigrationStep>>> entry = iter.next();
 
-        if (orderedMap.keySet().containsAll(entry.getValue())) {
-          // If all dependencies are met, add the step to the orderedMap and remove from future evaluations
-          found = true;
-          iter.remove();
-          roundMap.put(entry.getKey().getClass(), new NexusJavaMigration(entry.getKey(), round));
-        }
-      }
-      // Finally add the steps to a round
-      orderedMap.putAll(roundMap);
-      round++;
-    }
-    while (found);
+       if (orderedMap.keySet().containsAll(entry.getValue())) {
+         // If all dependencies are met, add the step to the orderedMap and remove from future evaluations
+         found = true;
+         iter.remove();
+         roundMap.put(entry.getKey().getClass(), new NexusJavaMigration(entry.getKey(), round));
+       }
+     }
+     // Finally add the steps to a round
+     orderedMap.putAll(roundMap);
+     round++;
+   } while (found);
 
-    if (!stepToDependency.isEmpty()) {
-      log.error("Unable to compute dependencies for: {}", stepToDependency.keySet());
-      throw new IllegalStateException("Unable to compute dependencies between upgrades");
-    }
+   if (!stepToDependency.isEmpty()) {
+     log.error("Unable to compute dependencies for: {}", stepToDependency.keySet());
+     throw new IllegalStateException("Unable to compute dependencies between upgrades");
+   }
 
     return orderedMap.values();
   }
@@ -110,9 +108,10 @@ class SimpleDependencyResolver
   /*
    * Retrieve the classes specified via @DependsOn annotations
    */
-  private static List<Class<? extends RepeatableDatabaseMigrationStep>> dependencies(final DatabaseMigrationStep step) {
+  private static List<Class<RepeatableDatabaseMigrationStep>> dependencies(final DatabaseMigrationStep step) {
     return Stream.of(step.getClass().getAnnotationsByType(DependsOn.class))
         .map(DependsOn::value)
+        .map(RepeatableDatabaseMigrationStep.class.getClass()::cast)
         .collect(Collectors.toList());
   }
 
