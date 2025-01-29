@@ -146,6 +146,11 @@
     </profile>
     <profile>
       <id>sonatype</id>
+      <activation>
+        <property>
+          <name>!public</name>
+        </property>
+      </activation>
       <modules>
         <!-- these modules still rely on the groovy-eclipse-compiler not present in maven central -->
         <module>nexus-repository-testsupport</module>
