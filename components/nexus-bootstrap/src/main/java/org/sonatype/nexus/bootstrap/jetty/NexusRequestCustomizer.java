@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.bootstrap.jetty;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -87,7 +88,7 @@ public class NexusRequestCustomizer
     if (isJettyPort(connector)) {
       String repositoryName = DockerSubdomainRepositoryMapping.get(request.getHeader("Host"));
       if (repositoryName != null) {
-        String dockerLocation = uri.getScheme() != null ? uri.toString() : request.getScheme() + ":" + uri;
+        String dockerLocation = extractDockerLocation(request);
         log.debug("For {} dockerLocation {}", repositoryName, dockerLocation);
 
         request.setAttribute("dockerLocation", dockerLocation);
@@ -95,6 +96,26 @@ public class NexusRequestCustomizer
         setNewRequestURI(request, uri, path, newPath);
       }
     }
+  }
+
+  private static String extractDockerLocation(final Request request) {
+    HttpURI uri = request.getHttpURI();
+
+    // Prefer proxy forwarded headers, fall back to what we know about the request
+    String scheme = Optional.ofNullable(request.getHeader("X-Forwarded-Proto"))
+        .orElseGet(uri::getScheme);
+    String host = Optional.ofNullable(request.getHeader("X-Forwarded-Host"))
+        .orElseGet(uri::getHost);
+    int port = Optional.ofNullable(request.getHeader("X-Forwarded-Port"))
+        .map(Integer::valueOf)
+        .orElseGet(uri::getPort);
+
+    if (port < 1 || port == 80 && "http".equals(scheme) || port == 443 && "https".equals(scheme)) {
+      // Omit canonical ports or missing port
+      return scheme + "://" + host + uri.getPath();
+    }
+
+    return scheme + "://" + host + ":" + port + uri.getPath();
   }
 
   private boolean isJettyPort(final Connector connector) {
