@@ -51,7 +51,9 @@ public class NexusBundlePlan
     super(locator);
 
     // lookup these core elements once rather than on each call to compose
-    nexusProperties = getFirstValue(locator.locate(ParameterKeys.PROPERTIES));
+    Iterable<? extends BeanEntry<?, Map>> entries = locator.locate(ParameterKeys.PROPERTIES);
+    BeanEntry<?, Map> next = entries.iterator().next();
+    nexusProperties = next.getValue();
     servletContextModule = new ServletContextModule(getFirstValue(locator.locate(Key.get(ServletContext.class))));
     interceptorModules = new EntryListAdapter<>(locator.locate(Key.get(AbstractInterceptorModule.class)));
     converterModules = new EntryListAdapter<>(locator.locate(Key.get(TypeConverterSupport.class)));

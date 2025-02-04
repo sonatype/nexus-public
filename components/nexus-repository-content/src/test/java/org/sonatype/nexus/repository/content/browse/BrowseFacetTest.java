@@ -15,10 +15,12 @@ package org.sonatype.nexus.repository.content.browse;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeData;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeManager;
 import org.sonatype.nexus.repository.ossindex.PackageUrlService;
@@ -29,6 +31,7 @@ import org.mockito.Mock;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,10 +55,11 @@ public class BrowseFacetTest
         Collections.emptyMap(),
         Collections.emptyMap(),
         packageUrlService,
-        1000
-    );
+        1000);
 
-    when(repository.getFormat()).thenReturn(new Format("raw") { });
+    when(repository.getFormat()).thenReturn(new Format("raw")
+    {
+    });
     when(repository.getName()).thenReturn("My-Raw-Repository");
 
     underTest.attach(repository);
@@ -114,5 +118,38 @@ public class BrowseFacetTest
 
     verify(browseNodeManager).deleteByAssetIdAndPath(internalAssetId, path);
     verify(browseNodeManager, never()).delete(parentNodeId);
+  }
+
+  @Test
+  public void testDeleteByAssetIdAndParentWithChildIsNotDeleted() {
+    Integer internalAssetId = 1;
+    String path = "test/path";
+    Long parentNodeId = 2L;
+
+    BrowseNodeData childNode = new BrowseNodeData();
+    childNode.setAssetCount(0L);
+    childNode.setNodeId(100L);
+
+    when(browseNodeManager.deleteByAssetIdAndPath(internalAssetId, path)).thenReturn(parentNodeId);
+    when(browseNodeManager.getNodeParents(parentNodeId)).thenReturn(generateParentNodes());
+
+    when(browseNodeManager.hasAnyAssetOrComponentChildren(3L)).thenReturn(true);
+
+    underTest.deleteByAssetIdAndPath(internalAssetId, path);
+
+    verify(browseNodeManager, times(1)).deleteByAssetIdAndPath(internalAssetId, path);
+    verify(browseNodeManager, times(1)).delete(parentNodeId);
+  }
+
+  private List<BrowseNode> generateParentNodes() {
+    BrowseNodeData parentNodeTwo = new BrowseNodeData();
+    parentNodeTwo.setAssetCount(0L);
+    parentNodeTwo.setNodeId(2L);
+
+    BrowseNodeData parentNode = new BrowseNodeData();
+    parentNode.setAssetCount(0L);
+    parentNode.setNodeId(3L);
+
+    return List.of(parentNodeTwo, parentNode);
   }
 }

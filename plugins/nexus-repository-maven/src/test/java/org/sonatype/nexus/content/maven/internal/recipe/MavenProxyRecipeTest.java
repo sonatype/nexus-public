@@ -68,19 +68,13 @@ public class MavenProxyRecipeTest
   private final Provider<MavenContentProxyIndexFacet> mavenContentProxyIndexFacetProvider =
       () -> mavenContentProxyIndexFacet;
 
-  @Mock
-  private MavenMaintenanceFacet mavenMaintenanceFacet;
-
-  private final Provider<MavenMaintenanceFacet> mavenMaintenanceFacetProvider = () -> mavenMaintenanceFacet;
-
   private MavenProxyRecipe underTest;
 
   @Before
   public void setup() {
-    underTest =
-        new MavenProxyRecipe(new ProxyType(), new Maven2Format(), httpClientFacetProvider, negativeCacheFacetProvider,
-            mavenProxyFacetProvider, purgeUnusedFacetProvider, negativeCacheHandler, proxyHandler,
-            mavenContentProxyIndexFacetProvider, mavenMaintenanceFacetProvider);
+    underTest = new MavenProxyRecipe(new ProxyType(), new Maven2Format(), httpClientFacetProvider,
+        negativeCacheFacetProvider, mavenProxyFacetProvider, purgeUnusedFacetProvider, negativeCacheHandler,
+        proxyHandler, mavenContentProxyIndexFacetProvider);
     mockHandlers(underTest);
     mockFacets(underTest);
   }

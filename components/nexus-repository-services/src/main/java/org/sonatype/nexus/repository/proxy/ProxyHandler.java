@@ -17,9 +17,11 @@ import java.io.UncheckedIOException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.CooperationException;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.view.Context;
@@ -29,8 +31,11 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
 
+import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_REMOTE_FETCH_SKIP_MARKER;
+import static org.sonatype.nexus.repository.proxy.ThrottlerInterceptor.PAYMENT_REQUIRED_MESSAGE;
 
 /**
  * A format-neutral proxy handler which delegates to an instance of {@link ProxyFacet} for content.
@@ -41,6 +46,9 @@ public class ProxyHandler
     extends ComponentSupport
     implements Handler
 {
+  @Inject
+  private NodeAccess nodeAccess;
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception { // NOSONAR
@@ -53,6 +61,10 @@ public class ProxyHandler
       Payload payload = proxyFacet(context).get(context);
       if (payload != null) {
         return buildPayloadResponse(context, payload);
+      }
+      if (context.getAttributes() != null && context.getAttributes().contains(PROXY_REMOTE_FETCH_SKIP_MARKER) &&
+          context.getAttributes().get(PROXY_REMOTE_FETCH_SKIP_MARKER).equals(TRUE)) {
+        return buildPaymentRequiredResponse(context);
       }
       return buildNotFoundResponse(context);
     }
@@ -88,9 +100,18 @@ public class ProxyHandler
   protected Response buildPayloadResponse(final Context context, final Payload payload) {
     return HttpResponses.ok(payload);
   }
-  
+
   protected Response buildNotFoundResponse(final Context context) {
     return HttpResponses.notFound();
+  }
+
+  protected Response buildPaymentRequiredResponse(Context context) {
+    if (context.getRepository().getFormat().getValue().equals("nuget")) {
+      return HttpResponses.conflict(PAYMENT_REQUIRED_MESSAGE.concat(nodeAccess.getId()));
+    }
+    else {
+      return HttpResponses.forbidden(PAYMENT_REQUIRED_MESSAGE.concat(nodeAccess.getId()));
+    }
   }
 
   protected Response buildHttpErrorResponce(final BypassHttpErrorException proxyErrorsException) {

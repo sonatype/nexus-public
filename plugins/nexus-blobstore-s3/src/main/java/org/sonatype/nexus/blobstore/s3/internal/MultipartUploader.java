@@ -32,11 +32,12 @@ import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
+import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Uploads a file, using multipart upload if the file is larger or equal to the chunk size.  A normal putObject request
+ * Uploads a file, using multipart upload if the file is larger or equal to the chunk size. A normal putObject request
  * is used instead if only a single chunk would be sent.
  *
  * @since 3.12
@@ -65,25 +66,30 @@ public class MultipartUploader
         uploadMultiPart(s3, bucket, key, chunkOne, contents);
       }
     }
-    catch(IOException | SdkClientException e) { // NOSONAR
+    catch (IOException | SdkClientException e) { // NOSONAR
       throw new BlobStoreException("Error uploading blob", e, null);
     }
   }
 
-  private void uploadSinglePart(final AmazonS3 s3, final String bucket, final String key, final InputStream contents)
-      throws IOException {
+  private void uploadSinglePart(
+      final AmazonS3 s3,
+      final String bucket,
+      final String key,
+      final InputStream contents) throws IOException
+  {
     log.debug("Starting upload to key {} in bucket {} of {} bytes", key, bucket, contents.available());
     ObjectMetadata metadata = new ObjectMetadata();
     metadata.setContentLength(contents.available());
     s3.putObject(bucket, key, contents, metadata);
   }
 
-  private void uploadMultiPart(final AmazonS3 s3,
-                               final String bucket,
-                               final String key,
-                               final InputStream firstChunk,
-                               final InputStream restOfContents)
-      throws IOException {
+  private void uploadMultiPart(
+      final AmazonS3 s3,
+      final String bucket,
+      final String key,
+      final InputStream firstChunk,
+      final InputStream restOfContents) throws IOException
+  {
     checkState(firstChunk.available() > 0);
     String uploadId = null;
     try {
@@ -93,7 +99,7 @@ public class MultipartUploader
       log.debug("Starting multipart upload {} to key {} in bucket {}", uploadId, key, bucket);
 
       List<UploadPartResult> results = new ArrayList<>();
-      for (int partNumber = 1; ; partNumber++) {
+      for (int partNumber = 1;; partNumber++) {
         InputStream chunk = partNumber == 1 ? firstChunk : readChunk(restOfContents);
         if (chunk.available() == 0) {
           break;
@@ -124,7 +130,7 @@ public class MultipartUploader
         try {
           s3.abortMultipartUpload(new AbortMultipartUploadRequest(bucket, key, uploadId));
         }
-        catch(Exception e) {
+        catch (Exception e) {
           log.error("Error aborting S3 multipart upload to bucket {} with key {}", bucket, key,
               log.isDebugEnabled() ? e : null);
         }
@@ -132,7 +138,8 @@ public class MultipartUploader
     }
   }
 
-  private InputStream readChunk(final InputStream input) throws IOException {
+  @VisibleForTesting
+  InputStream readChunk(final InputStream input) throws IOException {
     byte[] buffer = new byte[chunkSize];
     int offset = 0;
     int remain = chunkSize;

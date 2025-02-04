@@ -21,8 +21,9 @@ import org.sonatype.nexus.common.property.ImplicitSourcePropertiesFile;
  * Support class which allows properties of CloudBlobs to specify metadata which should be used to indicate whether that
  * properties file is for a TempBlob
  *
- * @param <T> The metadata type for that cloud blob store e.g. <code>com.amazonaws.services.s3.model.ObjectMetadata</code>
- *            for AWS S3 BlobStore implementation.
+ * @param <T> The metadata type for that cloud blob store e.g.
+ *          <code>com.amazonaws.services.s3.model.ObjectMetadata</code>
+ *          for AWS S3 BlobStore implementation.
  * @see CloudBlobStoreSupport
  * @since 3.37
  */

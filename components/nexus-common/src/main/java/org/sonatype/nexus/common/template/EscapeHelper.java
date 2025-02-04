@@ -94,6 +94,7 @@ public class EscapeHelper
 
   /**
    * Strip java el start token from a string
+   * 
    * @since 3.14
    */
   public String stripJavaEl(final String value) {

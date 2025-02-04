@@ -14,7 +14,15 @@ import React, { useState, useEffect } from 'react';
 import {useActor} from '@xstate/react';
 import { FormUtils } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../../constants/UIStrings';
-import { NxFieldset, NxFileUpload, NxFormGroup, NxRadio, NxTextInput, NxCheckbox } from '@sonatype/react-shared-components';
+import {
+  NxFieldset,
+  NxFileUpload,
+  NxFormGroup,
+  NxRadio,
+  NxTextInput,
+  NxCheckbox,
+  NxP
+} from '@sonatype/react-shared-components';
 
 const GOOGLE = UIStrings.BLOB_STORES.GOOGLE;
 
@@ -58,6 +66,11 @@ export default function GoogleBlobStoreSettings({ service }) {
 
   return (
       <div className="nxrm-google-blobstore">
+        <NxFormGroup {...GOOGLE.REGION}>
+          <NxP className="nx-sub-label" aria-label={GOOGLE.REGION.label}>
+            The region is automatically set based on where Nexus Repository is running in GCP. Ensure the bucket is in the same region.
+          </NxP>
+        </NxFormGroup>
         <NxFormGroup {...GOOGLE.PROJECT_ID}>
           <NxTextInput
               {...FormUtils.fieldProps(bucketField('projectId'), current)}
@@ -73,11 +86,6 @@ export default function GoogleBlobStoreSettings({ service }) {
           <NxTextInput
               {...FormUtils.fieldProps(bucketField('prefix'), current)}
                  onChange={FormUtils.handleUpdate(bucketField('prefix'), send)}/>
-        </NxFormGroup>
-        <NxFormGroup {...GOOGLE.REGION} isRequired>
-          <NxTextInput
-              {...FormUtils.fieldProps(bucketField('region'), current)}
-          onChange={FormUtils.handleUpdate(bucketField('region'), send)}/>
         </NxFormGroup>
         <NxFieldset label={GOOGLE.AUTHENTICATION.LABEL}>
           <NxRadio

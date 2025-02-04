@@ -114,8 +114,8 @@ public final class SafeXml
     return factory;
   }
 
-  public static void configureValidator(Validator validator)
-      throws SAXNotRecognizedException, SAXNotSupportedException
+  public static void configureValidator(
+      Validator validator) throws SAXNotRecognizedException, SAXNotSupportedException
   {
     validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
     validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");

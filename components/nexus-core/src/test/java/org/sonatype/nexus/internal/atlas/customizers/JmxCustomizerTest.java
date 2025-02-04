@@ -73,9 +73,9 @@ public class JmxCustomizerTest
     when(tabularData.get(newArrayList("key1", "key1a").toArray())).thenReturn(compositeData);
     Object result = underTest.render(tabularData);
     assertThat(result, instanceOf(List.class));
-    assertThat((List<?>)result, hasSize(1));
+    assertThat((List<?>) result, hasSize(1));
     assertThat(((List<?>) result).get(0), instanceOf(Map.class));
-    assertThat((Map<?,?>)((List<?>) result).get(0), hasEntry("key", "value"));
+    assertThat((Map<?, ?>) ((List<?>) result).get(0), hasEntry("key", "value"));
   }
 
   @Test
@@ -86,7 +86,7 @@ public class JmxCustomizerTest
     when(compositeData.get("key")).thenReturn("value");
     Object result = underTest.render(compositeData);
     assertThat(result, instanceOf(Map.class));
-    assertThat((Map<?,?>) result, hasEntry("key", "value"));
+    assertThat((Map<?, ?>) result, hasEntry("key", "value"));
   }
 
   @Test
@@ -157,7 +157,8 @@ public class JmxCustomizerTest
     assertThat(result, nullValue());
   }
 
-  private enum TestEnum {
+  private enum TestEnum
+  {
     VALUE
   }
 }

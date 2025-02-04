@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ACCESS_KEY_ID_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
 
 /**
  * {@link AmazonS3Factory} tests.
@@ -114,18 +115,25 @@ public class AmazonS3FactoryTest
   }
 
   @Test
-  public void itShouldDecryptTheSecretAccessKey() {
-    Secret secretMock = mock(Secret.class);
-    when(secretsFactory.from("_1")).thenReturn(secretMock);
-    when(secretMock.decrypt()).thenReturn("secretAccessKey".toCharArray());
-    config.getAttributes().get("s3").put(SECRET_ACCESS_KEY_KEY, "_1");
-    config.getAttributes().get("s3").put("region", "us-west-2");
+  public void itShouldDecryptTheSecretAccessKeyAndSessionToken() {
+    Secret accessKeyMock = mock(Secret.class);
+    Secret sessionTokenMock = mock(Secret.class);
+    when(secretsFactory.from("_1")).thenReturn(accessKeyMock);
+    when(secretsFactory.from("_2")).thenReturn(sessionTokenMock);
+    when(accessKeyMock.decrypt()).thenReturn("secretAccessKey".toCharArray());
+    when(sessionTokenMock.decrypt()).thenReturn("sessionToken".toCharArray());
+
     config.getAttributes().get("s3").put(ACCESS_KEY_ID_KEY, "accessKeyId");
+    config.getAttributes().get("s3").put(SECRET_ACCESS_KEY_KEY, "_1");
+    config.getAttributes().get("s3").put(SESSION_TOKEN_KEY, "_2");
+    config.getAttributes().get("s3").put("region", "us-west-2");
 
     amazonS3Factory.create(config);
 
     verify(secretsFactory).from("_1");
-    verify(secretMock).decrypt();
+    verify(secretsFactory).from("_2");
+    verify(accessKeyMock).decrypt();
+    verify(sessionTokenMock).decrypt();
   }
 
   private String getSignerOverride(AmazonS3 s3) throws Exception {

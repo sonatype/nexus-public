@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.76.0-SNAPSHOT</version>
+    <version>3.77.0-08</version>
   </parent>
 
   <artifactId>nexus-bootstrap</artifactId>
@@ -75,6 +75,12 @@
       <groupId>org.osgi</groupId>
       <artifactId>osgi.core</artifactId>
       <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.annotation.versioning</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -141,6 +147,13 @@
       <artifactId>system-rules</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>pl.pragmatists</groupId>
+      <artifactId>JUnitParams</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>

@@ -51,7 +51,6 @@ public class ApiKeyUpgrade_1_31Test
 
   private ApiKeyUpgrade_1_31 underTest = new ApiKeyUpgrade_1_31();
 
-
   @Test
   public void testUpgrade() throws Exception {
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
@@ -80,7 +79,8 @@ public class ApiKeyUpgrade_1_31Test
 
   @Test
   public void testUpgrade_notRequired() throws Exception {
-    sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(() -> new IllegalStateException())
+    sessionRule.getDataStore(DEFAULT_DATASTORE_NAME)
+        .orElseThrow(() -> new IllegalStateException())
         .register(ApiKeyDAO.class);
 
     try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {

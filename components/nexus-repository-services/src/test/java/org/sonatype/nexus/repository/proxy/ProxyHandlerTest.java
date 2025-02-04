@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.io.CooperationException;
+import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpStatus;
@@ -32,12 +35,15 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static java.lang.Boolean.TRUE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_REMOTE_FETCH_SKIP_MARKER;
 
 public class ProxyHandlerTest
     extends TestSupport
@@ -63,6 +69,13 @@ public class ProxyHandlerTest
   @Mock
   private Request request;
 
+  @Mock
+  private NodeAccess nodeAccess;
+
+  @Mock
+  private Format format;
+
+  @InjectMocks
   private final ProxyHandler underTest = new ProxyHandler();
 
   @Before
@@ -72,6 +85,9 @@ public class ProxyHandlerTest
     when(repository.facet(ProxyFacet.class)).thenReturn(proxyFacet);
     when(httpResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.toString()).thenReturn("status line");
+    when(nodeAccess.getId()).thenReturn("123-456-789");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("npm");
   }
 
   @Test
@@ -91,6 +107,15 @@ public class ProxyHandlerTest
   public void testPayloaAbsentReturns404Response() throws Exception {
     when(request.getAction()).thenReturn(HttpMethods.GET);
     assertStatusCode(underTest.handle(context), HttpStatus.NOT_FOUND);
+  }
+
+  @Test
+  public void testPayloaAbsentSkipMarkerTrueReturns402Response() throws Exception {
+    AttributesMap attributes = new AttributesMap();
+    attributes.set(PROXY_REMOTE_FETCH_SKIP_MARKER, TRUE);
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    when(context.getAttributes()).thenReturn(attributes);
+    assertStatusCode(underTest.handle(context), HttpStatus.FORBIDDEN);
   }
 
   @Test

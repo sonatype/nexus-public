@@ -34,6 +34,7 @@ public class WriteToFirstMemberFillPolicy
 {
 
   public static final String TYPE = "writeToFirst";
+
   private static final String NAME = "Write to First";
 
   @Override
@@ -45,7 +46,8 @@ public class WriteToFirstMemberFillPolicy
   @Nullable
   public BlobStore chooseBlobStore(final BlobStoreGroup blobStoreGroup, final Map<String, String> headers) {
     return blobStoreGroup
-        .getMembers().stream()
+        .getMembers()
+        .stream()
         .filter(BlobStore::isWritable)
         .filter(BlobStore::isStorageAvailable)
         .findFirst()

@@ -103,17 +103,15 @@ public class NexusContextListener
   private static final List<String> SUPPORTED_EDITIONS = Collections.unmodifiableList(Arrays.asList(
       "oss",
       "pro",
-      "pro-starter"
-  ));
+      "community"));
 
   private static final String EDITIONS_PATTERN = String.format(
       "(?<edition>(%s)(,(%s))*)",
       String.join("|", SUPPORTED_EDITIONS),
-      String.join("|", SUPPORTED_EDITIONS)
-  );
+      String.join("|", SUPPORTED_EDITIONS));
 
   private static final Pattern INSTALL_MODE_FEATURE_FLAG_PATTERN = compile(
-      "(?:" + EDITIONS_PATTERN +":)?featureFlag:(?<enabled>enabledByDefault:)?(?<flag>.+)");
+      "(?:" + EDITIONS_PATTERN + ":)?featureFlag:(?<enabled>enabledByDefault:)?(?<flag>.+)");
 
   private static final String EDITION = "edition";
 

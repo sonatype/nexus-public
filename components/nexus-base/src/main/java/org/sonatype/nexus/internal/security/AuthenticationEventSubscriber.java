@@ -66,9 +66,10 @@ public class AuthenticationEventSubscriber
           .path(clientInfo.getPath());
     }
 
-    eventManager.get().post(new NexusAuthenticationEvent(
-        builder.build(),
-        event.isSuccessful(),
-        event.getAuthenticationFailureReasons()));
+    eventManager.get()
+        .post(new NexusAuthenticationEvent(
+            builder.build(),
+            event.isSuccessful(),
+            event.getAuthenticationFailureReasons()));
   }
 }

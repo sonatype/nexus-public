@@ -14,10 +14,9 @@ package org.sonatype.nexus.freeze.event;
 
 public abstract class FreezeEvent
 {
-  public enum FreezeEventTypes {
-    FREEZE("Freeze"),
-    RELEASE("Release"),
-    FORCE_RELEASE("Force Release");
+  public enum FreezeEventTypes
+  {
+    FREEZE("Freeze"), RELEASE("Release"), FORCE_RELEASE("Force Release");
 
     private final String type;
 

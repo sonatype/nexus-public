@@ -32,8 +32,7 @@ public interface NexusKeyValueDAO
    * @return {@link Optional<NexusKeyValue>}
    */
   Optional<NexusKeyValue> get(
-      @Param("key") final String key
-  );
+      @Param("key") final String key);
 
   /**
    * sets a key_value record

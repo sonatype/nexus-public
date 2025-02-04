@@ -39,7 +39,10 @@ public class PerformanceLoggingInputStream
 
   }
 
-  private PerformanceLoggingInputStream(final CountingInputStream countingInputStream, final PerformanceLogger performanceLogger) {
+  private PerformanceLoggingInputStream(
+      final CountingInputStream countingInputStream,
+      final PerformanceLogger performanceLogger)
+  {
     super(countingInputStream);
     this.countingInputStream = checkNotNull(countingInputStream);
     this.performanceLogger = checkNotNull(performanceLogger);

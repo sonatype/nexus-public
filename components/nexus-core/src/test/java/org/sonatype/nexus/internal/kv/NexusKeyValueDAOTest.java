@@ -51,8 +51,7 @@ public class NexusKeyValueDAOTest
     kv.setType(ValueType.CHARACTER);
     kv.setValue("test-value");
 
-    assertKeyValueOperations(() -> kv, (existing) ->
-        assertThat(existing.getAsString(), is("test-value")));
+    assertKeyValueOperations(() -> kv, (existing) -> assertThat(existing.getAsString(), is("test-value")));
   }
 
   @Test
@@ -62,9 +61,7 @@ public class NexusKeyValueDAOTest
     kv.setType(ValueType.NUMBER);
     kv.setValue(10);
 
-    assertKeyValueOperations(() -> kv, (existing) ->
-        assertThat(existing.getAsInt(), is(10))
-    );
+    assertKeyValueOperations(() -> kv, (existing) -> assertThat(existing.getAsInt(), is(10)));
   }
 
   @Test
@@ -74,9 +71,7 @@ public class NexusKeyValueDAOTest
     kv.setType(ValueType.BOOLEAN);
     kv.setValue(false);
 
-    assertKeyValueOperations(() -> kv, (existing) ->
-        assertThat(existing.getAsBoolean(), is(false))
-    );
+    assertKeyValueOperations(() -> kv, (existing) -> assertThat(existing.getAsBoolean(), is(false)));
   }
 
   @Test
@@ -106,26 +101,29 @@ public class NexusKeyValueDAOTest
 
     assertKeyValueOperations(() -> kv, (existing) -> {
       ObjectMapper mapper = new ObjectMapper();
-      List<TestObject> objectList = existing.getAsObjectList(mapper , TestObject.class);
+      List<TestObject> objectList = existing.getAsObjectList(mapper, TestObject.class);
       assertThat(objectList, hasSize(2));
       assertThat(objectList.get(0), equalTo(object1));
       assertThat(objectList.get(1), equalTo(object2));
     });
   }
 
-  private void assertKeyValueOperations(final Supplier<NexusKeyValue> kvSupplier, final Consumer<NexusKeyValue> assertionConsumer) {
+  private void assertKeyValueOperations(
+      final Supplier<NexusKeyValue> kvSupplier,
+      final Consumer<NexusKeyValue> assertionConsumer)
+  {
     NexusKeyValue initial = kvSupplier.get();
     write((dao) -> dao.set(initial));
 
     Optional<NexusKeyValue> existing = read((dao) -> dao.get(initial.key()));
 
-    //verify kv can be read correctly
+    // verify kv can be read correctly
     assertTrue(existing.isPresent());
     assertKeyValue(initial, existing.get());
-    //pass to consumer with specific kv assertions
+    // pass to consumer with specific kv assertions
     assertionConsumer.accept(existing.get());
 
-    //verify kv can be deleted correctly
+    // verify kv can be deleted correctly
     boolean deleted = read((dao) -> dao.remove(initial.key()));
     assertTrue(deleted);
   }
@@ -167,7 +165,7 @@ public class NexusKeyValueDAOTest
       this.exclusive = exclusive;
     }
 
-    public TestObject(){
+    public TestObject() {
 
     }
 

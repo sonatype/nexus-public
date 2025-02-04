@@ -49,7 +49,7 @@ public class MultiHashingOutputStream
   public void write(final int b) throws IOException {
     out.write(b);
     for (Hasher hasher : hashers.values()) {
-      hasher.putByte((byte)b);
+      hasher.putByte((byte) b);
     }
   }
 

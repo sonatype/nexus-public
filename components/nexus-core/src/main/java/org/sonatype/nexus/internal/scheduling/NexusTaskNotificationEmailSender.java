@@ -50,8 +50,10 @@ public class NexusTaskNotificationEmailSender
   private final Map<String, TaskNotificationMessageGenerator> taskNotificationMessageGenerators;
 
   @Inject
-  public NexusTaskNotificationEmailSender(final Provider<EmailManager> emailManager,
-                                          final Map<String, TaskNotificationMessageGenerator> taskNotificationMessageGenerators) {
+  public NexusTaskNotificationEmailSender(
+      final Provider<EmailManager> emailManager,
+      final Map<String, TaskNotificationMessageGenerator> taskNotificationMessageGenerators)
+  {
     this.emailManager = checkNotNull(emailManager);
     this.taskNotificationMessageGenerators = checkNotNull(taskNotificationMessageGenerators);
   }

@@ -47,9 +47,9 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    * Retrieves the browse nodes directly under the given hierarchical display path.
    *
    * @param repositoryId the repository containing the browse nodes
-   * @param displayPath  the hierarchical path leading up to the browse nodes
-   * @param limit        when positive limits the number of browse nodes returned
-   * @param filter       optional filter to apply to the browse nodes
+   * @param displayPath the hierarchical path leading up to the browse nodes
+   * @param limit when positive limits the number of browse nodes returned
+   * @param filter optional filter to apply to the browse nodes
    * @param filterParams parameter map for the optional filter
    * @return browse nodes found directly under the display path
    */
@@ -130,7 +130,7 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    * Deletes a browse node based on its internal asset Id and node path.
    *
    * @param internalAssetId the internal Id of the asset
-   * @param path            the path of the node
+   * @param path the path of the node
    * @return the parent node id of the deleted node
    */
   @Transactional
@@ -163,7 +163,7 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
    * Retrieves a browse node by its request path.
    *
    * @param repositoryId the repository containing the browse node
-   * @param requestPath  the request path of the node
+   * @param requestPath the request path of the node
    * @return the browse node or {@code null} if not found
    */
   @Transactional
@@ -172,5 +172,17 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
         .stream()
         .findFirst()
         .orElse(null);
+  }
+
+  /**
+   * Retrieves a list of child nodes for the given parent node.
+   *
+   * @param parentNodeId the internal Id of parent node
+   * @param limit when positive limits the number of browse nodes returned
+   * @return list of child nodes
+   */
+  @Transactional
+  public List<BrowseNode> getChildByParentNodeId(final Long parentNodeId, final int limit, final int offset) {
+    return dao().getChildByParentNodeId(parentNodeId, limit, offset);
   }
 }

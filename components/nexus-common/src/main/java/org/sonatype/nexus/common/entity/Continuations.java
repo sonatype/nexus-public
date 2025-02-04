@@ -114,7 +114,8 @@ public class Continuations
   {
     checkArgument(browseFunction != null, FUNCTION_NON_NULL);
     checkArgument(limit >= 0, LIMIT_NON_NEGATIVE);
-    return new Iterator<T>() {
+    return new Iterator<T>()
+    {
       private Continuation<T> continuation = browseFunction.apply(limit, startToken);
 
       private Iterator<T> iterator = continuation.iterator();

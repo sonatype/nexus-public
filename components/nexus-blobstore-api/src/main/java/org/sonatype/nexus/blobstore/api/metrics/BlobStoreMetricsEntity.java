@@ -17,17 +17,17 @@ package org.sonatype.nexus.blobstore.api.metrics;
  */
 public class BlobStoreMetricsEntity
 {
-  //for mybatis
+  // for mybatis
   private String id;
 
   /*
-  * Name of the blobstore these metrics belong to.
-  */
+   * Name of the blobstore these metrics belong to.
+   */
   private String blobStoreName;
 
   /*
-  * Total size (in bytes) this blobstore uses.
-  */
+   * Total size (in bytes) this blobstore uses.
+   */
   private long totalSize = 0L;
 
   /*

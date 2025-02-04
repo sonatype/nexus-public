@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
-import static org.sonatype.nexus.security.BreadActions.READ;
+import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Native script to work with content selectors from within ES queries.
@@ -61,11 +61,12 @@ public class ContentAuthPluginScript
 
   private final boolean contentAuthSleep;
 
-  public ContentAuthPluginScript(final Subject subject,
-                                 final ContentPermissionChecker contentPermissionChecker,
-                                 final VariableResolverAdapterManager variableResolverAdapterManager,
-                                 final RepositoryManager repositoryManager,
-                                 final boolean contentAuthSleep)
+  public ContentAuthPluginScript(
+      final Subject subject,
+      final ContentPermissionChecker contentPermissionChecker,
+      final VariableResolverAdapterManager variableResolverAdapterManager,
+      final RepositoryManager repositoryManager,
+      final boolean contentAuthSleep)
   {
     this.subject = checkNotNull(subject);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
@@ -92,7 +93,7 @@ public class ContentAuthPluginScript
         Set<String> repoNames = new HashSet<>();
         repoNames.add(repositoryName);
         repoNames.addAll(repositoryManager.findContainingGroups(repositoryName));
-        return contentPermissionChecker.isPermitted(repoNames, format, READ, variableSource);
+        return contentPermissionChecker.isPermitted(repoNames, format, BROWSE, variableSource);
       }
       return false;
     }

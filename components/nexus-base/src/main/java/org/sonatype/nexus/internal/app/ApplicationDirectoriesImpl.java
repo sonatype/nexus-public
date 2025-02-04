@@ -34,8 +34,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 @Singleton
 public class ApplicationDirectoriesImpl
-  extends ComponentSupport
-  implements ApplicationDirectories
+    extends ComponentSupport
+    implements ApplicationDirectories
 {
   private final File installDir;
 
@@ -46,8 +46,9 @@ public class ApplicationDirectoriesImpl
   private final File tempDir;
 
   @Inject
-  public ApplicationDirectoriesImpl(@Named("${karaf.base}") final File installDir,
-                                    @Named("${karaf.data}") final File workDir)
+  public ApplicationDirectoriesImpl(
+      @Named("${karaf.base}") final File installDir,
+      @Named("${karaf.data}") final File workDir)
   {
     this.installDir = resolve(installDir, false);
     log.debug("Install dir: {}", this.installDir);

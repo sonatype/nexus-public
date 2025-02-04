@@ -54,7 +54,7 @@ public class BlobStoreQuotaServiceImpl
   @Override
   public void validateSoftQuotaConfig(final BlobStoreConfiguration config) {
     getQuotaType(config).ifPresent(type -> {
-      if(!quotas.containsKey(type)) {
+      if (!quotas.containsKey(type)) {
         throw new ValidationErrorsException("To enable Soft Quota, you must select a Type of Quota");
       }
     });

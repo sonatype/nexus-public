@@ -98,31 +98,32 @@ public abstract class BlobStoreMetricsPropertiesReaderSupport<B extends BlobStor
 
   protected abstract Stream<T> backingFiles() throws BlobStoreMetricsNotAvailableException;
 
-  protected BlobStoreMetrics getCombinedMetrics(final Stream<T> blobStoreMetricsFiles) throws BlobStoreMetricsNotAvailableException {
+  protected BlobStoreMetrics getCombinedMetrics(
+      final Stream<T> blobStoreMetricsFiles) throws BlobStoreMetricsNotAvailableException
+  {
     AccumulatingBlobStoreMetrics blobStoreMetrics = getAccumulatingBlobStoreMetrics();
     blobStoreMetricsFiles.forEach(metricsFile -> {
       iterate(1, i -> i + 1)
           .limit(MAXIMUM_TRIES)
           .forEach(currentTry -> {
-              try {
-                metricsFile.load();
+            try {
+              metricsFile.load();
+            }
+            catch (IOException e) {
+              log.debug("Unable to load properties file {}. Try number {} of {}.", metricsFile, currentTry,
+                  MAXIMUM_TRIES, e);
+              if (currentTry >= MAXIMUM_TRIES) {
+                throw new RuntimeException("Failed to load blob store metrics from " + metricsFile, e);
               }
-              catch (IOException e) {
-                log.debug("Unable to load properties file {}. Try number {} of {}.", metricsFile, currentTry,
-                    MAXIMUM_TRIES, e);
-                if (currentTry >= MAXIMUM_TRIES) {
-                  throw new RuntimeException("Failed to load blob store metrics from " + metricsFile, e);
-                }
-                try {
-                  MILLISECONDS.sleep(METRICS_LOADING_DELAY_MILLIS);
-                }
-                catch (InterruptedException e1) {
-                  log.warn("Interrupted", e1);
-                  Thread.currentThread().interrupt();
-                }
+              try {
+                MILLISECONDS.sleep(METRICS_LOADING_DELAY_MILLIS);
+              }
+              catch (InterruptedException e1) {
+                log.warn("Interrupted", e1);
+                Thread.currentThread().interrupt();
               }
             }
-          );
+          });
 
       blobStoreMetrics.addBlobCount(parseLong(metricsFile.getProperty(BLOB_COUNT_PROP_NAME, "0")));
       blobStoreMetrics.addTotalSize(parseLong(metricsFile.getProperty(TOTAL_SIZE_PROP_NAME, "0")));

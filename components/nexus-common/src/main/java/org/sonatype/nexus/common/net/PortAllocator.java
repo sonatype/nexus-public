@@ -37,6 +37,7 @@ public class PortAllocator
   private static final int MIN_PORT = 10000;
 
   private static final int MAX_PORT = 30000;
+
   // see https://chromium.googlesource.com/chromium/src.git/+/refs/heads/master/net/base/port_util.cc
   private static final int UNSAFE_PORT = 10080;
 

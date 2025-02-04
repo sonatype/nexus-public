@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class BlobId
-  implements Serializable, Comparable<BlobId>
+    implements Serializable, Comparable<BlobId>
 {
   private final String id;
 

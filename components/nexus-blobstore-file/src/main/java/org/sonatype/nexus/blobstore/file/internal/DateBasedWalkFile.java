@@ -51,7 +51,8 @@ public class DateBasedWalkFile
 
   // to match date, for example "2024/01/01/13/10"
   private static final String DATE_BASED_MATCHER =
-      "(\\d{4}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2})";
+      "(\\d{4}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR + "\\d{2}" + FILE_SEPARATOR
+          + "\\d{2})";
 
   private static final Pattern DATE_BASED_PATTERN = Pattern.compile(
       ".*" + CONTENT_PREFIX + FILE_SEPARATOR + DATE_BASED_MATCHER + FILE_SEPARATOR + ".*$", Pattern.CASE_INSENSITIVE);
@@ -109,8 +110,9 @@ public class DateBasedWalkFile
     }
   }
 
-  private Map<String, OffsetDateTime> getAllFiles(final String startDir, final OffsetDateTime fromDateTime)
-      throws IOException
+  private Map<String, OffsetDateTime> getAllFiles(
+      final String startDir,
+      final OffsetDateTime fromDateTime) throws IOException
   {
     Map<String, OffsetDateTime> blobIds = new HashMap<>();
     Path startPath = Paths.get(startDir);

@@ -41,7 +41,8 @@ Ext.define('NX.onboarding.view.OnboardingCompleteScreen', {
       buttons: ['->', {
         text: NX.I18n.render(me, 'Finish_Button'),
         action: 'finish',
-        ui: 'nx-primary'
+        ui: 'nx-primary',
+        cls: 'onboarding-finish-button'
       }]
     });
 

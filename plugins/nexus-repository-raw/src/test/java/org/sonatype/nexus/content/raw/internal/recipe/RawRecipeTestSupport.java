@@ -34,7 +34,8 @@ import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 
 import org.mockito.Mock;
 
-public abstract class RawRecipeTestSupport extends TestSupport
+public abstract class RawRecipeTestSupport
+    extends TestSupport
 {
   @Mock
   private ExceptionHandler exceptionHandler;
@@ -99,26 +100,10 @@ public abstract class RawRecipeTestSupport extends TestSupport
 
   private final Provider<BrowseFacet> browseFacetProvider = () -> browseFacet;
 
-  protected <T extends RawRecipeSupport> void mockHandlers(T underTest) {
-    underTest.setExceptionHandler(exceptionHandler);
-    underTest.setTimingHandler(timingHandler);
-    underTest.setIndexHtmlForwardHandler(indexHtmlForwardHandler);
-    underTest.setSecurityHandler(securityHandler);
-    underTest.setPartialFetchHandler(partialFetchHandler);
-    underTest.setContentHandler(contentHandler);
-    underTest.setConditionalRequestHandler(conditionalRequestHandler);
-    underTest.setContentHeadersHandler(contentHeadersHandler);
-    underTest.setLastDownloadedHandler(lastDownloadedHandler);
-    underTest.setHandlerContributor(handlerContributor);
-    underTest.setContentDispositionHandler(contentDispositionHandler);
-  }
-
-  protected <T extends RawRecipeSupport> void mockFacets(T underTest) {
-    underTest.setSecurityFacet(securityFacetProvider);
-    underTest.setViewFacet(viewFacetProvider);
-    underTest.setContentFacet(contentFacetProvider);
-    underTest.setMaintenanceFacet(maintenanceFacetProvider);
-    underTest.setSearchFacet(searchFacetProvider);
-    underTest.setBrowseFacet(browseFacetProvider);
+  protected <T extends RawRecipeSupport> void mockDependencies(final T underTest) {
+    underTest.setDependencies(securityFacetProvider, viewFacetProvider, contentFacetProvider, maintenanceFacetProvider,
+        searchFacetProvider, browseFacetProvider, exceptionHandler, timingHandler, indexHtmlForwardHandler,
+        securityHandler, partialFetchHandler, contentHandler, conditionalRequestHandler, contentHeadersHandler,
+        lastDownloadedHandler, handlerContributor, contentDispositionHandler);
   }
 }

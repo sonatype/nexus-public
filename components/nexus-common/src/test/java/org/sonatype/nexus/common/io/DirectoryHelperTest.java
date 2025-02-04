@@ -97,7 +97,7 @@ public class DirectoryHelperTest
     final File mkdirA = DirectoryHelper.mkdir(root, "mkdir-parent-a"); // new
     assertThat(mkdirA, isDirectory());
 
-    File file = DirectoryHelper.mkdir(new File(root, "dir2"), "dir21"); //existing
+    File file = DirectoryHelper.mkdir(new File(root, "dir2"), "dir21"); // existing
     assertThat(file, isDirectory());
   }
 
@@ -319,28 +319,28 @@ public class DirectoryHelperTest
   public void testDeleteIfEmptyRecursively() throws Exception {
     File dir = temporaryFolder.newFolder("basedir");
 
-    //now lets start adding some directories
-    //first off a simple empty directory
+    // now lets start adding some directories
+    // first off a simple empty directory
     File subdir = new File(dir, "sub");
     Files.createDirectory(subdir.toPath());
 
-    //now some nested empty directories
+    // now some nested empty directories
     subdir = new File(dir, "subnested");
     Files.createDirectory(subdir.toPath());
-    for (int i = 0 ; i < 10 ; i++) {
+    for (int i = 0; i < 10; i++) {
       subdir = new File(subdir, "subnested" + i);
       Files.createDirectory(subdir.toPath());
     }
 
-    //now a directory with a file in it
+    // now a directory with a file in it
     subdir = new File(dir, "subwithcontent");
     Files.createDirectory(subdir.toPath());
     new File(subdir, "afile.txt").createNewFile();
 
-    //now a nested directory with a file in it
+    // now a nested directory with a file in it
     subdir = new File(dir, "subnestedwithcontent");
     Files.createDirectory(subdir.toPath());
-    for (int i = 0 ; i < 10 ; i++) {
+    for (int i = 0; i < 10; i++) {
       subdir = new File(subdir, "subnestedwithcontent" + i);
       Path newdir = Files.createDirectory(subdir.toPath());
       if (i == 9) {
@@ -368,17 +368,17 @@ public class DirectoryHelperTest
   public void testDeleteIfEmptyRecursively_skipNewerDirs() throws Exception {
     File dir = temporaryFolder.newFolder("basedir");
 
-    //This directory will be the one that is slightly older than the timestamp so _should_ get deleted
+    // This directory will be the one that is slightly older than the timestamp so _should_ get deleted
     File subdir = new File(dir, "sub");
     Files.createDirectory(subdir.toPath());
 
-    //put some sleeps around the timestamp, to guaranty state, and that the timestamp wont errantly associate with the
-    //test created directories
+    // put some sleeps around the timestamp, to guaranty state, and that the timestamp wont errantly associate with the
+    // test created directories
     Thread.sleep(1000);
     Date okTimestamp = new Date();
     Thread.sleep(1000);
 
-    //This directory should come after the timestamp, so should not get deleted
+    // This directory should come after the timestamp, so should not get deleted
     subdir = new File(dir, "sub2");
     Files.createDirectory(subdir.toPath());
 

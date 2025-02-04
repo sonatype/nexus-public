@@ -43,7 +43,7 @@ Ext.define('NX.s3blobstore.app.PluginStrings', {
     S3Blobstore_Authentication_AccessKeyId: 'Access Key ID',
     S3Blobstore_Authentication_SecretAccessKey: 'Secret Access Key',
     S3Blobstore_Authentication_AssumeRoleArn: 'Assume Role ARN (Optional)',
-    S3Blobstore_Authentication_SessionToken: 'Session Token ARN (Optional)',
+    S3Blobstore_Authentication_SessionToken: 'Session Token (Optional)',
     S3Blobstore_EncryptionSettings_Title: 'Encryption',
     S3Blobstore_EncryptionSettings_Type_FieldLabel: 'Encryption Type',
     S3Blobstore_EncryptionSettings_Type_HelpText: 'The type of encryption for objects in the S3 Blob Store',

@@ -14,10 +14,13 @@ package org.sonatype.nexus.bootstrap.osgi;
 
 public enum NexusEditionType
 {
-  OSS("nexus-oss-edition"),
-  PRO("nexus-pro-edition");
+  OC("nexus-open-core-edition"),
+  PRO("nexus-pro-edition"),
+  COMMUNITY("nexus-community-edition");
 
   public final String editionString;
 
-  NexusEditionType(String editionString) { this.editionString = editionString; }
+  NexusEditionType(String editionString) {
+    this.editionString = editionString;
+  }
 }

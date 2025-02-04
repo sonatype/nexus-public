@@ -15,6 +15,7 @@ package org.sonatype.nexus.capability;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 
 /**
@@ -48,6 +49,11 @@ public class CapabilityReferenceFilterBuilder
 
     public String getTypeId() {
       return typeId;
+    }
+
+    @VisibleForTesting
+    CapabilityIdentity getIgnoreCapabilityId() {
+      return ignoreCapabilityId;
     }
 
     public Boolean isEnabled() {

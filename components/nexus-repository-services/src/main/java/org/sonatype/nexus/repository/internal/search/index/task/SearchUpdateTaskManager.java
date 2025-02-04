@@ -15,11 +15,13 @@ package org.sonatype.nexus.repository.internal.search.index.task;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -27,6 +29,7 @@ import org.sonatype.nexus.repository.search.index.SearchUpdateService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTaskDescriptor.REPOSITORY_NAMES_FIELD_ID;
@@ -51,16 +54,20 @@ public class SearchUpdateTaskManager
 
   private final SearchUpdateService searchUpdateService;
 
+  private PeriodicJobService periodicJobService;
+
   @Inject
   public SearchUpdateTaskManager(
       final TaskScheduler taskScheduler,
       final RepositoryManager repositoryManager,
       final SearchUpdateService searchUpdateService,
+      final PeriodicJobService periodicJobService,
       @Named("${nexus.search.updateIndexesOnStartup.enabled:-true}") final boolean enabled)
   {
     this.taskScheduler = requireNonNull(taskScheduler);
     this.repositoryManager = requireNonNull(repositoryManager);
     this.searchUpdateService = requireNonNull(searchUpdateService);
+    this.periodicJobService = checkNotNull(periodicJobService);
     this.enabled = enabled;
   }
 
@@ -69,6 +76,10 @@ public class SearchUpdateTaskManager
     if (!enabled) {
       return;
     }
+    periodicJobService.runOnce(this::maybeScheduleReIndex, 0);
+  }
+
+  private void maybeScheduleReIndex() {
     try {
       List<String> reindexList = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
           .filter(searchUpdateService::needsReindex)

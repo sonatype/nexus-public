@@ -162,7 +162,8 @@ public class LastShutdownTimeServiceImplTest
 
     lastShutdownTimeService = new LastShutdownTimeServiceImpl(logManager, true);
 
-    Optional<Date> result = lastShutdownTimeService.findShutdownTimeInLog(realReader, START_MARKER, pattern, 1000, GROUP_NAME, dateFormat);
+    Optional<Date> result =
+        lastShutdownTimeService.findShutdownTimeInLog(realReader, START_MARKER, pattern, 1000, GROUP_NAME, dateFormat);
 
     assertThat(result.isPresent(), equalTo(false));
   }

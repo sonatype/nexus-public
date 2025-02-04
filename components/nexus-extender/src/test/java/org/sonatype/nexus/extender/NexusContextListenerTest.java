@@ -47,8 +47,7 @@ public class NexusContextListenerTest
       final String flag,
       final Boolean flagValue,
       final String edition,
-      final boolean isFeatureFlagEnabled
-  )
+      final boolean isFeatureFlagEnabled)
   {
     this.installMode = installMode;
     this.flag = flag;
@@ -64,17 +63,17 @@ public class NexusContextListenerTest
   @Parameters(name = "{index}: installMode: {0}, flag: {1}, flagValue: {2}, edition: {3}, isFeatureFlagEnabled: {4}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{
-        {"oss,pro,pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO-STARTER", true},
-        {"oss,pro,pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "OSS", true},
-        {"oss,pro,pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO", true},
-        {"oss,pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO", false},
-        {"oss,pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "OSS", true},
-        {"pro,pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "OSS", false},
-        {"pro,pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO", true},
-        {"pro,pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO-STARTER", true},
-        {"pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "OSS", false},
-        {"pro-starter:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO-STARTER", true},
-        {"featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO-STARTER", true},
+        {"oss,pro,community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "COMMUNITY", true},
+        {"oss,pro,community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "OSS", true},
+        {"oss,pro,community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO", true},
+        {"oss,community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO", false},
+        {"oss,community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "OSS", true},
+        {"pro,community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "OSS", false},
+        {"pro,community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "PRO", true},
+        {"pro,community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "COMMUNITY", true},
+        {"community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "OSS", false},
+        {"community:featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "COMMUNITY", true},
+        {"featureFlag:enabledByDefault:foo.enabled", "foo.enabled", true, "COMMUNITY", true},
 
         {"oss:featureFlag:foo.enabled", "foo.enabled", true, "OSS", true},
         {"oss:featureFlag:foo.enabled", "foo.enabled", true, "PRO", false},

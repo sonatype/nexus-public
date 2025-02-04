@@ -27,7 +27,7 @@ import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.metrics.DatastoreBlobStoreMetricsServiceSupport;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -64,8 +64,7 @@ public class DatastoreFileBlobStoreMetricsService
           metricsEntity.getBlobCount(),
           metricsEntity.getTotalSize(),
           availableSpace,
-          false
-      );
+          false);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);

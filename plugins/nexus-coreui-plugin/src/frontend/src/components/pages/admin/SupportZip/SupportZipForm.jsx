@@ -10,12 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, { FormEvent } from 'react';
 import UIStrings from '../../../../constants/UIStrings';
-import {NxButton, NxCheckbox, NxFieldset, NxFontAwesomeIcon, NxModal} from '@sonatype/react-shared-components';
+import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {NxButton, NxCheckbox, NxFieldset, NxFontAwesomeIcon, NxModal, useToggle, NxFormSelect, nxFormSelectStateHelpers, NxFormGroup} from '@sonatype/react-shared-components';
 import {faFileArchive} from '@fortawesome/free-solid-svg-icons';
 
 export default function SupportZipForm({params, setParams, submit, clustered, hazips, cancel}) {
+
   return <>
     <NxModal.Content>
       <div className="nx-form">
@@ -95,6 +97,14 @@ export default function SupportZipForm({params, setParams, submit, clustered, ha
           >
             {UIStrings.SUPPORT_ZIP.JMX_LABEL}
           </NxCheckbox>
+          <NxFormGroup label={UIStrings.SUPPORT_ZIP.ARCHIVED_LOGS_LABEL}>
+                <NxFormSelect id='archivedLog' onChange={ (value) => setParams('archivedLog', value)}>
+                  <option value="0">None</option>
+                  <option value="1">1 Day</option>
+                  <option value="2">2 Days</option>
+                  <option value="3">3 Days</option>
+                </NxFormSelect>
+          </NxFormGroup>
         </NxFieldset>
         <NxFieldset label={UIStrings.SUPPORT_ZIP.OPTIONS}>
           <NxCheckbox

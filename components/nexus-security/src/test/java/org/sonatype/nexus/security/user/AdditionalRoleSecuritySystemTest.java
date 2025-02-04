@@ -28,6 +28,11 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+
 public class AdditionalRoleSecuritySystemTest
     extends AbstractSecurityTest
 {
@@ -68,34 +73,28 @@ public class AdditionalRoleSecuritySystemTest
 
     // A,B,C,1
     Set<String> roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("RoleA"));
-    Assert.assertTrue(roleIds.contains("RoleB"));
-    Assert.assertTrue(roleIds.contains("RoleC"));
-    Assert.assertTrue("roles: " + toRoleIdSet(user.getRoles()), roleIds.contains("Role1"));
-
-    Assert.assertEquals("roles: " + toRoleIdSet(user.getRoles()), 4, user.getRoles().size());
+    assertThat(roleIds, hasItems("RoleA", "RoleB", "RoleC", "Role1"));
+    assertThat(roleIds, hasSize(4));
 
     user = userMap.get("dknudsen");
     Assert.assertNotNull(user);
-    Assert.assertEquals(1, user.getRoles().size());
+    assertThat(user.getRoles(), hasSize(1));
 
     // Role2
     roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("Role2"));
+    assertThat(roleIds, hasItems("Role2"));
 
     user = userMap.get("cdugas");
     Assert.assertNotNull(user);
-    Assert.assertEquals(3, user.getRoles().size());
+    assertThat(user.getRoles(), hasSize(3));
 
     // A,B,1
     roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("RoleA"));
-    Assert.assertTrue(roleIds.contains("RoleB"));
-    Assert.assertTrue(roleIds.contains("Role1"));
+    assertThat(roleIds, hasItems("RoleA", "RoleB", "Role1"));
 
     user = userMap.get("pperalez");
     Assert.assertNotNull(user);
-    Assert.assertEquals(0, user.getRoles().size());
+    assertThat(user.getRoles(), empty());
   }
 
   @Ignore("TESTING, issue here with more usermanager bound than test requires")
@@ -114,30 +113,25 @@ public class AdditionalRoleSecuritySystemTest
 
     // A,B,C,1
     Set<String> roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("RoleA"));
-    Assert.assertTrue(roleIds.contains("RoleB"));
-    Assert.assertTrue(roleIds.contains("RoleC"));
-    Assert.assertTrue(roleIds.contains("Role1"));
+    assertThat(roleIds, hasItems("RoleA", "RoleB", "RoleC", "Role1"));
 
     criteria.setUserId("dknudsen");
     user = searchForSingleUser(criteria, "dknudsen", null);
     Assert.assertNotNull(user);
-    Assert.assertEquals(1, user.getRoles().size());
+    assertThat(user.getRoles(), hasSize(1));
 
     // Role2
     roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("Role2"));
+    assertThat(roleIds, hasItems("Role2"));
 
     criteria.setUserId("cdugas");
     user = searchForSingleUser(criteria, "cdugas", null);
     Assert.assertNotNull(user);
-    Assert.assertEquals(3, user.getRoles().size());
+    assertThat(user.getRoles(), hasSize(3));
 
     // A,B,1
     roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("RoleA"));
-    Assert.assertTrue(roleIds.contains("RoleB"));
-    Assert.assertTrue(roleIds.contains("Role1"));
+    assertThat(roleIds, hasItems("RoleA", "RoleB", "Role1"));
   }
 
   @Test
@@ -151,34 +145,29 @@ public class AdditionalRoleSecuritySystemTest
     criteria.setUserId("jcoder");
     user = searchForSingleUser(criteria, "jcoder", "MockUserManagerA");
     Assert.assertNotNull(user);
-    Assert.assertEquals(4, user.getRoles().size());
 
     // A,B,C,1
     Set<String> roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("RoleA"));
-    Assert.assertTrue(roleIds.contains("RoleB"));
-    Assert.assertTrue(roleIds.contains("RoleC"));
-    Assert.assertTrue(roleIds.contains("Role1"));
+    assertThat(roleIds, hasItems("RoleA", "RoleB", "RoleC", "Role1"));
+    assertThat(user.getRoles(), hasSize(4));
 
     criteria.setUserId("dknudsen");
     user = searchForSingleUser(criteria, "dknudsen", "MockUserManagerA");
     Assert.assertNotNull(user);
-    Assert.assertEquals(1, user.getRoles().size());
+    assertThat(user.getRoles(), hasSize(1));
 
     // Role2
     roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("Role2"));
+    assertThat(roleIds, hasItems("Role2"));
 
     criteria.setUserId("cdugas");
     user = searchForSingleUser(criteria, "cdugas", "MockUserManagerA");
     Assert.assertNotNull(user);
-    Assert.assertEquals(3, user.getRoles().size());
+    assertThat(user.getRoles(), hasSize(3));
 
     // A,B,1
     roleIds = toRoleIdSet(user.getRoles());
-    Assert.assertTrue(roleIds.contains("RoleA"));
-    Assert.assertTrue(roleIds.contains("RoleB"));
-    Assert.assertTrue(roleIds.contains("Role1"));
+    assertThat(roleIds, hasItems("RoleA", "RoleB", "Role1"));
   }
 
   @Ignore("TESTING, issue here with more usermanager bound than test requires")
@@ -196,10 +185,14 @@ public class AdditionalRoleSecuritySystemTest
     // Assert.assertTrue( "User not found in: " + userMap, userMap.containsKey( "other-user" ) );
     // other user is only defined in the mapping, simulates a user that was deleted
 
-    Assert.assertEquals(4, result.size());
+    assertThat(result, hasSize(4));
   }
 
-  private User searchForSingleUser(UserSearchCriteria criteria, String userId, String source) throws Exception {
+  private User searchForSingleUser(
+      final UserSearchCriteria criteria,
+      final String userId,
+      final String source) throws Exception
+  {
     criteria.setSource(source);
     Set<User> users = securitySystem.searchUsers(criteria);
 
@@ -214,7 +207,7 @@ public class AdditionalRoleSecuritySystemTest
     return userMap.get(userId);
   }
 
-  private Map<String, User> toUserMap(Set<User> users) {
+  private Map<String, User> toUserMap(final Set<User> users) {
     HashMap<String, User> map = new HashMap<String, User>();
     for (User plexusUser : users) {
       map.put(plexusUser.getUserId(), plexusUser);
@@ -222,7 +215,7 @@ public class AdditionalRoleSecuritySystemTest
     return map;
   }
 
-  private Set<String> toRoleIdSet(Set<RoleIdentifier> roles) {
+  private Set<String> toRoleIdSet(final Set<RoleIdentifier> roles) {
     Set<String> roleIds = new HashSet<String>();
     for (RoleIdentifier role : roles) {
       roleIds.add(role.getRoleId());

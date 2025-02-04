@@ -49,14 +49,6 @@ public class OnboardingCapability
             conditions().capabilities().passivateCapabilityDuringUpdate());
   }
 
-  public boolean isProStarterInfoPageCompleted() {
-    return getConfig().isProStarterInfoPageCompleted();
-  }
-
-  public void setProStarterInfoPageCompleted(final boolean proStarterInfoPageCompleted) {
-    getConfig().setProStarterInfoPageCompleted(proStarterInfoPageCompleted);
-  }
-
   public boolean isRegistrationStarted() {
     return getConfig().isRegistrationStarted();
   }
@@ -71,14 +63,5 @@ public class OnboardingCapability
 
   public void setRegistrationCompleted(final boolean registrationCompleted) {
     getConfig().setRegistrationCompleted(registrationCompleted);
-  }
-
-  public void setProperties(
-      final boolean proStarterInfoPageCompleted, final boolean registrationStarted, final boolean registrationCompleted)
-  {
-    getConfig()
-        .setProStarterInfoPageCompleted(proStarterInfoPageCompleted)
-        .setRegistrationStarted(registrationStarted)
-        .setRegistrationCompleted(registrationCompleted);
   }
 }

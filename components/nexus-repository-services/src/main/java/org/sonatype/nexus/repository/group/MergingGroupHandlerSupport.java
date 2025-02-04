@@ -24,9 +24,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nonnull;
 
-import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.repository.Repository;
@@ -44,6 +44,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.net.HttpHeaders;
+import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -90,8 +91,9 @@ public abstract class MergingGroupHandlerSupport
   }
 
   @Override
-  protected Response doGet(@Nonnull final Context context, @Nonnull final DispatchedRepositories dispatched)
-      throws Exception
+  protected Response doGet(
+      @Nonnull final Context context,
+      @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
     GroupFacet groupFacet = context.getRepository().facet(GroupFacet.class);
 
@@ -103,7 +105,8 @@ public abstract class MergingGroupHandlerSupport
     Map<Repository, Response> successfulResponses;
     try {
       Map<Repository, Response> responses = getAll(context, groupFacet.members(), dispatched);
-      successfulResponses = responses.entrySet().stream()
+      successfulResponses = responses.entrySet()
+          .stream()
           .filter(entry -> entry.getValue().getStatus().getCode() == HttpStatus.OK)
           .filter(entry -> entry.getValue().getPayload() != null)
           // LinkedHashMap so that we maintain the order of the member responses.
@@ -142,8 +145,8 @@ public abstract class MergingGroupHandlerSupport
     }
 
     return cooperation.on(() -> merge(context, successfulResponses, optEtag))
-      .checkFunction(() -> Optional.of(getCached(context)))
-      .cooperate(context.getRepository().getName(), cooperationKey(context));
+        .checkFunction(() -> Optional.of(getCached(context)))
+        .cooperate(context.getRepository().getName(), cooperationKey(context));
   }
 
   /**
@@ -188,7 +191,7 @@ public abstract class MergingGroupHandlerSupport
 
     successfulResponses.stream()
         .map(Response::getPayload)
-        .map(MergingGroupHandlerSupport::etag)
+        .map(this::etag)
         .peek(optEtag -> valid.compareAndSet(true, optEtag.isPresent()))
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -204,26 +207,58 @@ public abstract class MergingGroupHandlerSupport
   /*
    * Return an Optional of the Payload's etag
    */
-  private static Optional<String> etag(final Payload payload) {
+  private Optional<String> etag(final Payload payload) {
     if (!(payload instanceof Content)) {
+      log.debug("Found payload instead of content. No etag available");
       return Optional.empty();
     }
-    AttributesMap attributes = ((Content) payload).getAttributes();
 
-    CacheInfo cacheInfo = attributes.get(CacheInfo.class);
-    if (cacheInfo != null && cacheInfo.getCacheToken() != null) {
-      if (cacheInfo.getCacheToken() != null) {
-        return Optional.of(cacheInfo.getCacheToken());
-      }
-      else {
-        return Optional.of(ISODateTimeFormat.dateTime().print(cacheInfo.getLastVerified()));
-      }
-    }
-    String etag = attributes.get(Content.CONTENT_ETAG, String.class);
-    if (etag != null) {
-      return Optional.of(etag);
-    }
-    return Optional.empty();
+    Content content = ((Content) payload);
+
+    return getCacheToken(content)
+        .or(() -> getLastVerified(content))
+        .or(() -> getEtag(content))
+        .or(() -> getLastModified(content));
+  }
+
+  /*
+   * Get a proxy's remote last modified
+   */
+  private Optional<String> getLastVerified(final Content content) {
+    log.trace("getLastVerified {}", content);
+    return Optional.of(content.getAttributes())
+        .map(attributes -> attributes.get(CacheInfo.class))
+        .map(CacheInfo::getLastVerified)
+        .map(ISODateTimeFormat.dateTime()::print);
+  }
+
+  /*
+   * Get a proxy's remote etag
+   */
+  private Optional<String> getCacheToken(final Content content) {
+    log.trace("getCacheToken {}", content);
+    return Optional.of(content.getAttributes())
+        .map(attributes -> attributes.get(CacheInfo.class))
+        .map(CacheInfo::getCacheToken);
+  }
+
+  /*
+   * Get etag for local Nexus content
+   */
+  private Optional<String> getEtag(final Content content) {
+    log.trace("getEtag {}", content);
+    return Optional.of(content.getAttributes())
+        .map(attributes -> attributes.get(Content.CONTENT_ETAG, String.class));
+  }
+
+  /*
+   * Get etag for local Nexus content
+   */
+  private Optional<String> getLastModified(final Content content) {
+    log.trace("getLastModified {}", content);
+    return Optional.of(content.getAttributes())
+        .map(attributes -> attributes.get(Content.CONTENT_LAST_MODIFIED, DateTime.class))
+        .map(ISODateTimeFormat.dateTime()::print);
   }
 
   /*
@@ -231,9 +266,10 @@ public abstract class MergingGroupHandlerSupport
    */
   private Predicate<Content> unchanged(final Optional<String> etag) {
     if (!etag.isPresent()) {
+      log.trace("Unchanged missing etag");
       return __ -> false;
     }
-    return content -> Optional.ofNullable(content.getAttributes().get(Content.CONTENT_ETAG))
+    return content -> getEtag(content)
         .map(etag.get()::equals)
         .orElse(false);
   }
@@ -246,7 +282,7 @@ public abstract class MergingGroupHandlerSupport
    *
    */
   protected static Predicate<String> skipUntil(final Predicate<String> matcher) {
-    final boolean[] done = new boolean[] {false};
+    final boolean[] done = new boolean[]{false};
     return line -> {
       if (done[0]) {
         return true;
@@ -265,6 +301,8 @@ public abstract class MergingGroupHandlerSupport
   }
 
   protected static <T> BinaryOperator<T> throwingMerger() {
-    return (u,v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); };
+    return (u, v) -> {
+      throw new IllegalStateException(String.format("Duplicate key %s", u));
+    };
   }
 }

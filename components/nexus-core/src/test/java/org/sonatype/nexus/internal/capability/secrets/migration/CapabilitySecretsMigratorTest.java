@@ -85,7 +85,7 @@ public class CapabilitySecretsMigratorTest
     cancelableHelperMock.when(CancelableHelper::checkCancellation)
         .thenAnswer(i -> {
           canceledStateCheckCount++;
-          //force failure after we checked targetCheck times
+          // force failure after we checked targetCheck times
           if (canceledStateCheckCount > targetCheck) {
             throw new TaskInterruptedException("expected", true);
           }

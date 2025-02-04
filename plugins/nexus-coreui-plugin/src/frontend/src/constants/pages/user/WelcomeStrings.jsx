@@ -57,25 +57,50 @@ export default {
       SECOND_STEP_TEXT: 'A modal with the repository\'s direct URL will appear; copy this URL to use as needed. The modal also contains a link to our help documentation to get more information on how to connect to your repository.'
     },
     USAGE: {
+      BANNERS: {
+        NEAR_LIMITS: 'This instance of Nexus Repository Community Edition is trending toward its usage limit. Once limits are reached, new components cannot be added.',
+        OVER_LIMIT_IN_GRACE: (daysLeft, endDate) => <><strong>{daysLeft} Days Remaining</strong><br/>This instance of Nexus Repository Community Edition has exceeded its usage limit. Limits will be enforced starting {endDate}, when new components can no longer be added.</>,
+        OVER_LIMIT_END_GRACE: 'This instance of Nexus Repository Community Edition has exceeded its usage limit. New components can no longer be added.',
+        BELOW_LIMIT_END_GRACE: 'If this instance of Nexus Repository Community Edition exceeds usage limits, you will not be able to add new components.',
+        THROTTLING_NON_ADMIN: <>This instance of Nexus Repository Community Edition has exceeded its usage limit. New components can no longer be added. Talk to your repository administrator.</>,
+        NEARING_NON_ADMIN: <>This instance of Nexus Repository Community Edition is trending toward its usage limit.  Once limits are reached, new components cannot be added. Talk to your repository administrator.</>
+      },
       MENU: {
-        TEXT: 'Usage'
+        TITLE: 'Usage Center',
+        SUB_TITLE: 'Usage Metrics Overview',
+        SUB_TEXT: 'Monitor this instance\'s usage to ensure your deployment is appropriate for your needs.'
       },
-      TOTAL_COMPONENTS: {
-        TITLE: 'Total components'
+      HEADER: {
+        BUTTONS: {
+          LEARN_MORE: 'Learn More',
+          RESTORE_USAGE: 'How to Restore Usage',
+          PURCHASE_NOW: 'Purchase Now'
+        },
+        OVER_LIMITS: {
+          STATUS_INDICATOR: 'Usage over limits',
+          WARNING: (endDate) => <>Usage limits came into effect on {endDate}. As usage levels are currently higher than the Nexus Repository Community Edition maximum, new components can no longer be added to this instance.</>,
+          TITLE: 'Usage Limits In Effect'
+        },
+        APPROACHING_LIMITS: {
+          STATUS_INDICATOR: 'Usage nearing limits',
+          WARNING: 'Once limits are reached, new components cannot be added.',
+          TITLE: 'Instance Trending Toward Usage Limits'
+        },
+        UNDER_LIMITS: {
+          STATUS_INDICATOR: 'Usage below limits',
+          TITLE: 'Instance Trending Toward Usage Limits',
+          WARNING: 'If you exceed usage limits, you will not be able to add new components.'
+        },
+        PRO_POSTGRES: {
+          TEXT: 'Monitor this instance\'s usage to optimize your deployments.'
+        },
+        GRACE_PERIOD: {
+          OVER_WARNING: (endDate) => <>Starting {endDate}, new components cannot be added.</>,
+          UNDER_WARNING: (endDate) => <>Usage limits take effect on {endDate}. When the usage exceeds the Nexus Repository Community Edition maximum, new components can no longer be added to this instance.</>,
+          TITLE: (endDate) => <>Usage Limits Will Be Enforced Starting {endDate}</>
+        }
       },
-      UNIQUE_LOGINS: {
-        TITLE: 'Unique logins',
-        SUB_TITLE: 'Past 30 days'
-      },
-      PEAK_REQUESTS_PER_MINUTE: {
-        TITLE: 'Peak requests per minute',
-        SUB_TITLE: 'Past 24 hours'
-      },
-      PEAK_REQUESTS_PER_DAY: {
-        TITLE: 'Peak requests per day',
-        SUB_TITLE: 'Past 30 days'
-      },
-      CIRCUIT_B: {
+      CARDS: {
         TOTAL_COMPONENTS: {
           TITLE: 'Total Components',
           SUB_TITLE: 'Current',
@@ -83,15 +108,8 @@ export default {
           METRIC_NAME: 'component_total_count',
           METRIC_NAME_PRO_POSTGRESQL: 'component_total_count',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
-          TOOLTIP: (edition) => {
-            if (edition === 'Starter_Edition') {
-              return NX.I18n.get('Total_Components_Tooltip');
-            } else if (edition === 'PRO') {
-              return 'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.'
-            } else {
-              return 'Sonatype Nexus Repository OSS performs best when your total component counts remain under {} components across all repositories in your instance.'
-            }
-          }
+          TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your total component counts remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.',
+          TOOLTIP_CE: 'Community Edition tracks the total components stored in this instance. If usage exceeds the 100,000 component limit, the date will be displayed, and write restrictions will apply until usage is reduced.'
         },
         UNIQUE_LOGINS: {
           TITLE: 'Unique Logins',
@@ -100,7 +118,7 @@ export default {
           METRIC_NAME: 'successful_last_24h',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
           TOOLTIP: 'Measures unique users who login over a period of time.',
-          TOOLTIP_STARTER: 'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.'
+          TOOLTIP_CE: 'Unique successful logins to this Sonatype Nexus Repository instance in the last 30 days.'
         },
         REQUESTS_PER_MINUTE: {
           TITLE: 'Requests Per Minute',
@@ -123,41 +141,27 @@ export default {
           METRIC_NAME: 'peak_requests_per_day',
           METRIC_NAME_PRO_POSTGRESQL: 'peak_requests_per_day_30d',
           AGGREGATE_PERIOD_30_D: 'peak_recorded_count_30d',
-          TOOLTIP: (edition) => {
-            if (edition === 'Starter_Edition') {
-              return NX.I18n.get('Requests_Per_Day_Tooltip')
-            } else if (edition === 'PRO') {
-              return 'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.'
-            } else {
-              return `Sonatype Nexus Repository OSS performs best when requests per day remain under {} requests per day to all repository endpoints across all repositories in your instance.`
-            }
-          }
+          TOOLTIP_PRO: 'Sonatype Nexus Repository Pro using an embedded database performs best when your requests per day remain under the threshold. If you are exceeding the threshold, we strongly recommend migrating to a PostgreSQL database.',
+          TOOLTIP_CE: 'Community Edition tracks the total daily requests to this instance. If usage exceeds the 200,000 request limit, the date will be displayed, and write restrictions will apply until usage is reduced.'
         },
-        CARD_SHARED_LABELS: {
+        CARD_PRO_LABELS: {
           THRESHOLD: 'Threshold',
           THRESHOLD_NAME: 'thresholdName',
           THRESHOLD_VALUE: 'thresholdValue',
+        },
+        CARD_CE_LABELS: {
+          USAGE_LIMIT: 'Usage Limit',
+        },
+        CARD_SHARED_LABELS: {
           PERIOD: 'period',
           VALUE: 'value',
+          LAST_EXCEEDED_DATE_LABEL: 'Last time over the usage limit'
         },
         PERCENTAGE: 0.75,
         SOFT_THRESHOLD: 'SOFT_THRESHOLD',
-        STARTER_THRESHOLD: 'STARTER_THRESHOLD',
+        HARD_THRESHOLD: 'HARD_THRESHOLD',
         PRO: 'PRO',
-        OSS: 'OSS',
-        STARTER: 'Starter_Edition',
-      },
-      CARD_LINK_OSS: {
-        TEXT: 'Understand your usage',
-        URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-free'
-      },
-      CARD_LINK_PRO: {
-        TEXT: 'Understand your usage',
-        URL: 'https://links.sonatype.com/products/nxrm3/docs/optimize-performance-pro'
-      },
-      CARD_LINK_STARTER: {
-        TEXT: 'Understand your usage',
-        URL: 'https://links.sonatype.com/products/nxrm3/docs/review-usage'
+        COMMUNITY: 'COMMUNITY'
       },
       ALERTS: {
         EXCEEDING_THRESHOLDS: {

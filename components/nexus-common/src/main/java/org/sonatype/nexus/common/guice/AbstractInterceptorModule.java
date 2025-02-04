@@ -41,9 +41,10 @@ public abstract class AbstractInterceptorModule
   private boolean bound;
 
   @Override
-  protected void bindInterceptor(final Matcher<? super Class<?>> classMatcher,
-                                 final Matcher<? super Method> methodMatcher,
-                                 final MethodInterceptor... interceptors)
+  protected void bindInterceptor(
+      final Matcher<? super Class<?>> classMatcher,
+      final Matcher<? super Method> methodMatcher,
+      final MethodInterceptor... interceptors)
   {
     if (!bound) {
       // Explicitly bind module instance under a specific sub-type (not Module as Guice forbids that)

@@ -18,13 +18,13 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -31,7 +31,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Singleton
 @Path(RESOURCE_URI)
 public class FileBlobStoreApiResourceV1
-  extends FileBlobStoreResource
+    extends FileBlobStoreResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
 

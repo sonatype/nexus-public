@@ -27,7 +27,9 @@ public class SimpleMethodInvocation
     implements MethodInvocation
 {
   private final Object instance;
+
   private final Method method;
+
   private final Object[] args;
 
   public SimpleMethodInvocation(final Object instance, final Method method, final Object[] args) {

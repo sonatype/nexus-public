@@ -12,14 +12,6 @@
  */
 package org.sonatype.nexus.rapture.internal.state;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.sonatype.nexus.common.app.ApplicationLicense;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -27,13 +19,25 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import static org.junit.Assert.assertEquals;
+import org.sonatype.nexus.common.app.ApplicationLicense;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class LicenseStateContributorTest {
-
+public class LicenseStateContributorTest
+{
   private static final List<String> LICENSE_ATTRIBUTES = Arrays.asList("feature1", "feature2");
 
   @Mock
@@ -56,13 +60,13 @@ public class LicenseStateContributorTest {
     when(applicationLicense.getAttributes()).thenReturn(attributes);
 
     Map<String, Object> state = licenseStateContributor.getState();
-    LicenseXO licenseXO = (LicenseXO) state.get("license");
+    LicenseXO licenseXO = (LicenseXO) Objects.requireNonNull(state).get("license");
 
-    assertEquals(true, licenseXO.isRequired());
-    assertEquals(true, licenseXO.isInstalled());
-    assertEquals(true, licenseXO.isValid());
-    assertEquals(-1, licenseXO.getDaysToExpiry());
-    assertEquals(LICENSE_ATTRIBUTES, licenseXO.getFeatures());
+    assertThat(licenseXO.isRequired(), is(true));
+    assertThat(licenseXO.isInstalled(), is(true));
+    assertThat(licenseXO.isValid(), is(true));
+    assertThat(licenseXO.getDaysToExpiry(), is(-1));
+    assertThat(licenseXO.getFeatures(), contains(LICENSE_ATTRIBUTES.toArray()));
   }
 
   @Test
@@ -72,13 +76,13 @@ public class LicenseStateContributorTest {
     when(applicationLicense.getAttributes()).thenReturn(attributes);
 
     Map<String, Object> state = licenseStateContributor.getState();
-    LicenseXO licenseXO = (LicenseXO) state.get("license");
+    LicenseXO licenseXO = (LicenseXO) Objects.requireNonNull(state).get("license");
 
-    assertEquals(true, licenseXO.isRequired());
-    assertEquals(true, licenseXO.isInstalled());
-    assertEquals(true, licenseXO.isValid());
-    assertEquals(1, licenseXO.getDaysToExpiry());
-    assertEquals(LICENSE_ATTRIBUTES, licenseXO.getFeatures());
+    assertThat(licenseXO.isRequired(), is(true));
+    assertThat(licenseXO.isInstalled(), is(true));
+    assertThat(licenseXO.isValid(), is(true));
+    assertThat(licenseXO.getDaysToExpiry(), is(1));
+    assertThat(licenseXO.getFeatures(), contains(LICENSE_ATTRIBUTES.toArray()));
   }
 
   @Test
@@ -88,13 +92,13 @@ public class LicenseStateContributorTest {
     when(applicationLicense.getAttributes()).thenReturn(attributes);
 
     Map<String, Object> state = licenseStateContributor.getState();
-    LicenseXO licenseXO = (LicenseXO) state.get("license");
+    LicenseXO licenseXO = (LicenseXO) Objects.requireNonNull(state).get("license");
 
-    assertEquals(true, licenseXO.isRequired());
-    assertEquals(true, licenseXO.isInstalled());
-    assertEquals(true, licenseXO.isValid());
-    assertEquals(0, licenseXO.getDaysToExpiry());
-    assertEquals(LICENSE_ATTRIBUTES, licenseXO.getFeatures());
+    assertThat(licenseXO.isRequired(), is(true));
+    assertThat(licenseXO.isInstalled(), is(true));
+    assertThat(licenseXO.isValid(), is(true));
+    assertThat(licenseXO.getDaysToExpiry(), is(0));
+    assertThat(licenseXO.getFeatures(), contains(LICENSE_ATTRIBUTES.toArray()));
   }
 
   @Test
@@ -103,13 +107,23 @@ public class LicenseStateContributorTest {
     when(applicationLicense.getAttributes()).thenReturn(attributes);
 
     Map<String, Object> state = licenseStateContributor.getState();
-    LicenseXO licenseXO = (LicenseXO) state.get("license");
+    LicenseXO licenseXO = (LicenseXO) Objects.requireNonNull(state).get("license");
 
-    assertEquals(true, licenseXO.isRequired());
-    assertEquals(true, licenseXO.isInstalled());
-    assertEquals(true, licenseXO.isValid());
-    assertEquals(0, licenseXO.getDaysToExpiry());
-    assertEquals(LICENSE_ATTRIBUTES, licenseXO.getFeatures());
+    assertThat(licenseXO.isRequired(), is(true));
+    assertThat(licenseXO.isInstalled(), is(true));
+    assertThat(licenseXO.isValid(), is(true));
+    assertThat(licenseXO.getDaysToExpiry(), is(0));
+    assertThat(licenseXO.getFeatures(), contains(LICENSE_ATTRIBUTES.toArray()));
+  }
+
+  @Test
+  public void testGetState_withoutLicenseAttributes() {
+    when(applicationLicense.getAttributes()).thenReturn(null);
+
+    Map<String, Object> state = licenseStateContributor.getState();
+    LicenseXO licenseXO = (LicenseXO) Objects.requireNonNull(state).get("license");
+
+    assertThat(licenseXO.getFeatures().size(), is(0));
   }
 
   private Map<String, Object> mockLicenseAttributes(Date expirationDate) {

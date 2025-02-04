@@ -19,7 +19,7 @@ package org.sonatype.nexus.blobstore.api;
  * @since 3.15
  */
 public class BlobStoreUpdatedEvent
-  extends BlobStoreEvent
+    extends BlobStoreEvent
 {
   public BlobStoreUpdatedEvent(final BlobStore blobStore) {
     super(blobStore);

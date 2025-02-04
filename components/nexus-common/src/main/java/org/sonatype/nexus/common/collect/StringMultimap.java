@@ -32,9 +32,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class StringMultimap
-  implements Iterable<Entry<String,String>>
+    implements Iterable<Entry<String, String>>
 {
-  private final ListMultimap<String,String> backing;
+  private final ListMultimap<String, String> backing;
 
   public StringMultimap(final ListMultimap<String, String> entries) {
     this.backing = checkNotNull(entries);
@@ -124,7 +124,7 @@ public class StringMultimap
     return backing.isEmpty();
   }
 
-  public Collection<Entry<String,String>> entries() {
+  public Collection<Entry<String, String>> entries() {
     return backing.entries();
   }
 

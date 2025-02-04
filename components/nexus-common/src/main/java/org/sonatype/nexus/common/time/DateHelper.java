@@ -15,8 +15,11 @@ package org.sonatype.nexus.common.time;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -76,7 +79,11 @@ public class DateHelper
    */
   @Nullable
   public static Date toDate(@Nullable final Long timestamp) {
-    if (timestamp == null || timestamp == 0) {
+    if (timestamp == null || timestamp <= 0) {
+      return null;
+    }
+    Instant instant = Instant.ofEpochMilli(timestamp);
+    if (instant.equals(Instant.EPOCH)) {
       return null;
     }
     return new Date(timestamp);
@@ -198,5 +205,16 @@ public class DateHelper
       return 0;
     }
     return (int) ((date2.getTime() - date1.getTime()) / DateUtils.MILLIS_PER_DAY);
+  }
+
+  /**
+   * Formats an Instant to a String in ISO-8601 format.
+   */
+  public static String isoFormatter(Instant instant) {
+    if (instant == null) {
+      return null;
+    }
+    LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+    return localDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
   }
 }

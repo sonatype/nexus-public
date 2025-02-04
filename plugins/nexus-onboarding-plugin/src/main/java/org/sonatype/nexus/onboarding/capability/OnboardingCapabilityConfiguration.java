@@ -49,15 +49,6 @@ public class OnboardingCapabilityConfiguration
     this.registrationCompleted = parseBoolean(properties.get(REGISTRATION_COMPLETED), DEFAULT_REGISTRATION_COMPLETED);
   }
 
-  public boolean isProStarterInfoPageCompleted() {
-    return proStarterInfoPageCompleted;
-  }
-
-  public OnboardingCapabilityConfiguration setProStarterInfoPageCompleted(final boolean proStarterInfoPageCompleted) {
-    this.proStarterInfoPageCompleted = proStarterInfoPageCompleted;
-    return this;
-  }
-
   public boolean isRegistrationStarted() {
     return registrationStarted;
   }

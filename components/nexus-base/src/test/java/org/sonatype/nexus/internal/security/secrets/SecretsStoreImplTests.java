@@ -83,11 +83,16 @@ public class SecretsStoreImplTests
     final int id = underTest.create(LDAP, MY_KEY, MY_SECRET, "jsmith");
 
     assertThat(table()).row()
-        .value("id").isEqualTo(id)
-        .value("purpose").isEqualTo(LDAP)
-        .value("key_id").isEqualTo(MY_KEY)
-        .value("secret").isEqualTo(MY_SECRET)
-        .value("user_id").isEqualTo("jsmith");
+        .value("id")
+        .isEqualTo(id)
+        .value("purpose")
+        .isEqualTo(LDAP)
+        .value("key_id")
+        .isEqualTo(MY_KEY)
+        .value("secret")
+        .isEqualTo(MY_SECRET)
+        .value("user_id")
+        .isEqualTo("jsmith");
   }
 
   @Test
@@ -118,11 +123,16 @@ public class SecretsStoreImplTests
     assertTrue(underTest.update(id, MY_SECRET, MY_KEY2, MY_SECRET2));
 
     assertThat(table()).row()
-        .value("id").isEqualTo(id)
-        .value("purpose").isEqualTo(LDAP)
-        .value("key_id").isEqualTo(MY_KEY2)
-        .value("secret").isEqualTo(MY_SECRET2)
-        .value("user_id").isNull();
+        .value("id")
+        .isEqualTo(id)
+        .value("purpose")
+        .isEqualTo(LDAP)
+        .value("key_id")
+        .isEqualTo(MY_KEY2)
+        .value("secret")
+        .isEqualTo(MY_SECRET2)
+        .value("user_id")
+        .isNull();
   }
 
   @Test
@@ -131,11 +141,16 @@ public class SecretsStoreImplTests
     assertFalse(underTest.update(id, MY_SECRET2, MY_KEY2, MY_SECRET2));
 
     assertThat(table()).row()
-        .value("id").isEqualTo(id)
-        .value("purpose").isEqualTo(LDAP)
-        .value("key_id").isEqualTo(MY_KEY)
-        .value("secret").isEqualTo(MY_SECRET)
-        .value("user_id").isNull();
+        .value("id")
+        .isEqualTo(id)
+        .value("purpose")
+        .isEqualTo(LDAP)
+        .value("key_id")
+        .isEqualTo(MY_KEY)
+        .value("secret")
+        .isEqualTo(MY_SECRET)
+        .value("user_id")
+        .isNull();
   }
 
   @Test

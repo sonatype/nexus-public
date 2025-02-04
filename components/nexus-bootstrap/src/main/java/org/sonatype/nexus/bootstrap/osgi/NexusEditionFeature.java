@@ -14,10 +14,13 @@ package org.sonatype.nexus.bootstrap.osgi;
 
 public enum NexusEditionFeature
 {
-  OSS_FEATURE("nexus-oss-feature"),
-  PRO_FEATURE("nexus-pro-feature");
+  OC_FEATURE("nexus-open-core-feature"),
+  PRO_FEATURE("nexus-pro-feature"),
+  COMMUNITY_FEATURE("nexus-community-feature");
 
   public final String featureString;
 
-  NexusEditionFeature(String featureString) { this.featureString = featureString; }
+  NexusEditionFeature(String featureString) {
+    this.featureString = featureString;
+  }
 }

@@ -27,13 +27,13 @@ import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
 import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -187,7 +187,7 @@ public class QueuingUpgradeTaskSchedulerTest
     // replicating events from other nodes should not trigger
     verifyNoInteractions(taskScheduler);
 
-    underTest.on(new UpgradeFailedEvent("jsmith", "123", "Failed",  "Migration_1.0"));
+    underTest.on(new UpgradeFailedEvent("jsmith", "123", "Failed", "Migration_1.0"));
 
     // non-replicated events should trigger
     verify(taskScheduler).submit(any());

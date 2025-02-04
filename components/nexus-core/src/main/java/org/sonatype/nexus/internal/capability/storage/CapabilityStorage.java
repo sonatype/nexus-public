@@ -59,11 +59,12 @@ public interface CapabilityStorage
   /**
    * @since 3.20
    */
-  CapabilityStorageItem newStorageItem(final int version,
-                                       final String type,
-                                       final boolean enabled,
-                                       final String notes,
-                                       final Map<String, String> properties);
+  CapabilityStorageItem newStorageItem(
+      final int version,
+      final String type,
+      final boolean enabled,
+      final String notes,
+      final Map<String, String> properties);
 
   /**
    * Find capability duplicates.

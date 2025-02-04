@@ -14,9 +14,9 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -24,6 +24,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetReconcileData;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -42,7 +43,6 @@ public interface AssetBlobDAO
    * @param limit maximum number of asset blobs to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of asset blobs and the next continuation token
-   *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<AssetBlob> browseUnusedAssetBlobs(
@@ -72,11 +72,13 @@ public interface AssetBlobDAO
    * @return collection of asset blobs and the next continuation token
    * @see Continuation#nextContinuationToken()
    */
-  Continuation<AssetBlob> browseAssetBlobsWithinDuration(
+  Continuation<AssetReconcileData> browseAssetBlobsWithinDuration(
       @Param("limit") int limit,
       @Param("start") OffsetDateTime start,
       @Param("end") OffsetDateTime end,
       @Param("continuationToken") @Nullable String continuationToken);
+
+  int countAssetBlobsWithinDuration(@Param("start") OffsetDateTime start, @Param("end") OffsetDateTime end);
 
   /**
    * Creates the given asset blob in the content data store.
@@ -132,7 +134,7 @@ public interface AssetBlobDAO
 
   /**
    * Sets the content type on the asset
-   * 
+   *
    * @param blobRef
    * @param contentType
    */
@@ -205,4 +207,19 @@ public interface AssetBlobDAO
    * @return the path
    */
   String getPathByBlobRef(@Param("blobRef") BlobRef blobRef);
+
+  List<AssetReconcileData> browseAssetBlobsByBlobRefs(@Param("blobRefs") List<BlobRef> blobRefs);
+
+  /**
+   * Retrieves an asset blob from the content data store based blobRef or path with repository.
+   *
+   * @param blobRef the blob reference
+   * @param path the blob path
+   * @param blobRef the blob repository
+   * @return asset blob if it was found
+   */
+  Optional<AssetBlob> readAssetBlobByPathAndRepository(
+      final @Param("blobRef") BlobRef blobRef,
+      final @Param("path") String path,
+      final @Param("repository") String repository);
 }

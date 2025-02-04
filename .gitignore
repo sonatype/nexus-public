@@ -19,17 +19,9 @@ target/
 .clover
 build.log
 atlassian-ide-plugin.xml
-components/nexus-core/groovy-classes/
-components/nexus-ui-plugin/dist/
 dependency-reduced-pom.xml
-node_modules/
 out
 
 # Zion
 .zion/
 variables.properties
-
-# Yarn cache
-.yarn/cache/
-.yarn/install-state.gz
-

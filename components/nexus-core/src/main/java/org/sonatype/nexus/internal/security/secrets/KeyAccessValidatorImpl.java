@@ -29,6 +29,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.time.Clock;
 import org.sonatype.nexus.crypto.secrets.KeyAccessValidator;
@@ -40,7 +41,6 @@ import org.sonatype.nexus.kv.NexusKeyValue;
 import org.sonatype.nexus.kv.ValueType;
 import org.sonatype.nexus.node.datastore.NodeHeartbeat;
 import org.sonatype.nexus.node.datastore.NodeHeartbeatManager;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -160,13 +160,15 @@ public class KeyAccessValidatorImpl
     Set<String> activeNodeIds = new HashSet<>();
     if (nodeAccess.isClustered()) {
       activeNodeIds = nodeHeartbeatManager
-          .getActiveNodeHeartbeatData().stream()
+          .getActiveNodeHeartbeatData()
+          .stream()
           .map(NodeHeartbeat::nodeInfo)
           .map(nodeInfo -> nodeInfo.get(NODE_ID))
           .filter(Objects::nonNull)
           .map(Object::toString)
           .collect(Collectors.toSet());
-    } else {
+    }
+    else {
       activeNodeIds.add(nodeAccess.getId());
     }
     return activeNodeIds;

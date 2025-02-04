@@ -43,7 +43,7 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.0
  */
 public class AttributesMap
-  implements Iterable<Entry<String,Object>>
+    implements Iterable<Entry<String, Object>>
 {
   private static final Logger log = LoggerFactory.getLogger(AttributesMap.class);
 
@@ -90,7 +90,7 @@ public class AttributesMap
 
         // special handling for booleans from string
         if (Boolean.class.equals(type.getRawType()) && value instanceof String) {
-          T result = (T) Boolean.valueOf((String)value);
+          T result = (T) Boolean.valueOf((String) value);
           Throwable stackThrow = null;
           if (log.isDebugEnabled()) {
             stackThrow = new Throwable("Unexpected Attribute Coercion. Stack trace output to locate area of concern:");
@@ -340,7 +340,7 @@ public class AttributesMap
   /**
    * Return all attribute entries.
    */
-  public Set<Entry<String,Object>> entries() {
+  public Set<Entry<String, Object>> entries() {
     return backing.entrySet();
   }
 

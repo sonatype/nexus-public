@@ -57,6 +57,7 @@ import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUC
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
 
 /**
  * A {@link BlobStoreDescriptor} for {@link S3BlobStore}.
@@ -90,9 +91,11 @@ public class S3BlobStoreDescriptor
   private final BlobStoreManager blobStoreManager;
 
   @Inject
-  public S3BlobStoreDescriptor(final BlobStoreQuotaService quotaService,
-                               final BlobStoreManager blobStoreManager,
-                               final Provider<CapabilityRegistry> capabilityRegistryProvider) {
+  public S3BlobStoreDescriptor(
+      final BlobStoreQuotaService quotaService,
+      final BlobStoreManager blobStoreManager,
+      final Provider<CapabilityRegistry> capabilityRegistryProvider)
+  {
     super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.capabilityRegistryProvider = checkNotNull(capabilityRegistryProvider);
@@ -110,7 +113,7 @@ public class S3BlobStoreDescriptor
 
   @Override
   public List<FormField> getFormFields() {
-      return Collections.emptyList();
+    return Collections.emptyList();
   }
 
   @Override
@@ -139,7 +142,7 @@ public class S3BlobStoreDescriptor
 
   @Override
   public List<String> getSensitiveConfigurationFields() {
-    return Collections.singletonList(SECRET_ACCESS_KEY_KEY);
+    return List.of(SECRET_ACCESS_KEY_KEY, SESSION_TOKEN_KEY);
   }
 
   private Map<String, List<SelectOption>> initializeSelectOptions() {
@@ -159,16 +162,17 @@ public class S3BlobStoreDescriptor
   }
 
   protected boolean isCustomS3RegionCapabilityEnabled() {
-    return !capabilityRegistryProvider.get().get(
-        CapabilityReferenceFilterBuilder.capabilities()
-            .withType(CapabilityType.capabilityType(CustomS3RegionCapabilityDescriptor.TYPE_ID))
-            .enabled())
-            .isEmpty();
+    return !capabilityRegistryProvider.get()
+        .get(
+            CapabilityReferenceFilterBuilder.capabilities()
+                .withType(CapabilityType.capabilityType(CustomS3RegionCapabilityDescriptor.TYPE_ID))
+                .enabled())
+        .isEmpty();
   }
 
   private List<SelectOption> getCustomS3RegionOptions() {
-    return capabilityRegistryProvider.get().get(capabilityReference ->
-        capabilityReference.capability() instanceof CustomS3RegionCapability)
+    return capabilityRegistryProvider.get()
+        .get(capabilityReference -> capabilityReference.capability() instanceof CustomS3RegionCapability)
         .stream()
         .map(capabilityReference -> capabilityReference.capabilityAs(CustomS3RegionCapability.class))
         .findFirst()
@@ -179,25 +183,30 @@ public class S3BlobStoreDescriptor
 
   private List<SelectOption> getSignerTypes() {
     return new Builder<SelectOption>().add(new SelectOption(AmazonS3Factory.DEFAULT, DEFAULT_LABEL))
-        .add(new SelectOption(S3_SIGNER, S3_SIGNER)).add(new SelectOption(S3_V4_SIGNER, S3_V4_SIGNER)).build();
+        .add(new SelectOption(S3_SIGNER, S3_SIGNER))
+        .add(new SelectOption(S3_V4_SIGNER, S3_V4_SIGNER))
+        .build();
   }
 
   private List<SelectOption> getEncryptionTypes() {
     return new Builder<SelectOption>().add(new SelectOption(NoEncrypter.ID, NoEncrypter.NAME))
         .add(new SelectOption(S3ManagedEncrypter.ID, S3ManagedEncrypter.NAME))
-        .add(new SelectOption(KMSEncrypter.ID, KMSEncrypter.NAME)).build();
+        .add(new SelectOption(KMSEncrypter.ID, KMSEncrypter.NAME))
+        .build();
   }
 
   private String trimAndCollapseSlashes(final String prefix) {
     return Optional.ofNullable(prefix)
-          .filter(StringUtils::isNotBlank)
-          .map(s -> StringUtils.strip(s, "/ "))
-          .map(s -> s.replaceAll("/+", "/"))
-          .orElse(prefix);
+        .filter(StringUtils::isNotBlank)
+        .map(s -> StringUtils.strip(s, "/ "))
+        .map(s -> s.replaceAll("/+", "/"))
+        .orElse(prefix);
   }
 
-  private void validateOverlappingBucketWithConfiguration(final BlobStoreConfiguration newConfig, // NOSONAR
-                                                          final BlobStoreConfiguration existingConfig) {
+  private void validateOverlappingBucketWithConfiguration(
+      final BlobStoreConfiguration newConfig, // NOSONAR
+      final BlobStoreConfiguration existingConfig)
+  {
     String newName = newConfig.getName();
     String newBucket = newConfig.attributes(CONFIG_KEY).get(BUCKET_KEY, String.class, "");
     String newPrefix = newConfig.attributes(CONFIG_KEY).get(BUCKET_PREFIX_KEY, String.class, "");
@@ -226,8 +235,7 @@ public class S3BlobStoreDescriptor
   private boolean prefixesOverlap(final String prefix1, final String prefix2) {
     String prefix1WithDelimiters = ("/" + prefix1 + "/").replaceAll("//", "/");
     String prefix2WithDelimiters = ("/" + prefix2 + "/").replaceAll("//", "/");
-    return
-        prefix1WithDelimiters.startsWith(prefix2WithDelimiters) ||
+    return prefix1WithDelimiters.startsWith(prefix2WithDelimiters) ||
         prefix2WithDelimiters.startsWith(prefix1WithDelimiters);
   }
 }

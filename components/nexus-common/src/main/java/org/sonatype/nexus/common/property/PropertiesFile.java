@@ -39,7 +39,7 @@ public class PropertiesFile
   private static final Logger log = LoggerFactory.getLogger(PropertiesFile.class);
 
   private static final DateTimeFormatter FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss,SSSZ");
-  
+
   private final File file;
 
   public PropertiesFile(final File file) {
@@ -60,6 +60,7 @@ public class PropertiesFile
   /**
    * Store the file with specific comments. If none are provided a timestamp will be added. This is done using
    * the same pattern used in log files to ease reconciliation of timing across the system.
+   * 
    * @since 3.7
    */
   public void store(final String comments) throws IOException {

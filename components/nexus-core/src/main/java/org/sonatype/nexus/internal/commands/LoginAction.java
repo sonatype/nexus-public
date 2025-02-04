@@ -36,10 +36,10 @@ public class LoginAction
 {
   private final SecurityHelper securityHelper;
 
-  @Option(name = "-u", aliases = { "--username" }, description = "Username to login with", required = true)
+  @Option(name = "-u", aliases = {"--username"}, description = "Username to login with", required = true)
   String username;
 
-  @Option(name = "-p", aliases = { "--password" }, description = "Password to login with", required = true)
+  @Option(name = "-p", aliases = {"--password"}, description = "Password to login with", required = true)
   String password;
 
   @Inject
@@ -53,4 +53,3 @@ public class LoginAction
     return null;
   }
 }
-

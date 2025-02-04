@@ -35,7 +35,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
 /**
- * A {@link BlobStoreMetricsPropertiesReaderSupport} implementation that retains blobstore metrics in memory, periodically
+ * A {@link BlobStoreMetricsPropertiesReaderSupport} implementation that retains blobstore metrics in memory,
+ * periodically
  * writing them out to a file.
  *
  * @since 3.0
@@ -76,7 +77,7 @@ public class FileBlobStoreMetricsPropertiesReader
       return Stream.empty();
     }
     try (DirectoryStream<Path> files =
-         Files.newDirectoryStream(storageDirectory, path -> path.toString().endsWith(METRICS_FILENAME))) {
+        Files.newDirectoryStream(storageDirectory, path -> path.toString().endsWith(METRICS_FILENAME))) {
       return StreamSupport.stream(files.spliterator(), false)
           .map(Path::toFile)
           .map(PropertiesFile::new)

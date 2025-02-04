@@ -102,7 +102,7 @@ public class CoordinateContentSelectorHealthCheckTest
   @Test
   public void longSelectorNamesAreTruncated() {
     List<SelectorConfiguration> selectorConfigurationList = new ArrayList<>();
-    for (int idx = 0; idx<160; idx++) {
+    for (int idx = 0; idx < 160; idx++) {
       selectorConfigurationList.add(coordinates3);
       selectorConfigurationList.add(coordinates1);
       selectorConfigurationList.add(coordinates2);

@@ -70,7 +70,7 @@ public class RawProxyFacet
    */
   private String assetPath(final Context context) {
     final TokenMatcher.State tokenMatcherState = context.getAttributes().require(TokenMatcher.State.class);
-    return tokenMatcherState.getTokens().get(RawProxyRecipe.PATH_NAME);
+    return tokenMatcherState.getTokens().get(RawRecipeSupport.PATH_NAME);
   }
 
   private String removeSlashPrefix(final String url) {

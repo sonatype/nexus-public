@@ -303,11 +303,12 @@ public interface BlobStore
 
   /**
    * Get a {@link Stream} of {@link BlobId} for blobs contained in this blob store that have been updated within the
-   * provided from date and under the specified path prefix.
+   * provided date range and under the specified path prefix.
    */
   PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
       String prefix,
       OffsetDateTime fromDateTime,
+      OffsetDateTime toDateTime,
       @Nullable String continuationToken,
       int pageSize);
 

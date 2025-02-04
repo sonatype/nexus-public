@@ -330,7 +330,7 @@ public class DatastoreBlobstoreRestoreTestHelper
   public void simulateFileLoss(String blobStorageName, String extension) {
     try {
       BlobStore blobstore = blobstoreManager.get(blobStorageName);
-      String absoluteBlobDir = String.valueOf(((FileBlobStore) blobstore).getAbsoluteBlobDir());
+      String absoluteBlobDir = ((FileBlobStore) blobstore).getAbsoluteBlobDir().toString();
       List<BlobId> blobIds = getAssetBlobId();
       blobIds.forEach(blobId -> {
         String filePath = getFileAbsolutePathForBlobIdRef(blobId, extension, absoluteBlobDir);
@@ -387,31 +387,45 @@ public class DatastoreBlobstoreRestoreTestHelper
   }
 
   @Override
-  public void truncateTables() {
-    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME)) {
+  public void truncateTables(final String format) {
+    try (Connection connection = sessionSupplier.openConnection(DEFAULT_DATASTORE_NAME);
+        PreparedStatement deletePlanDetails = connection.prepareStatement(
+            "DELETE FROM reconcile_plan_details WHERE id IN (SELECT rpd.id FROM reconcile_plan_details rpd)");
+        PreparedStatement deletePlans = connection.prepareStatement(
+            "DELETE FROM reconcile_plan WHERE id IN (SELECT rp.id FROM reconcile_plan rp)");
+        PreparedStatement deleteFormatAssets = connection.prepareStatement(deleteFormatAssetsSQL(format));
+        PreparedStatement deleteFormatAssetBlobs = connection.prepareStatement(deleteFormatAssetBlobsSQL(format));
+        PreparedStatement deleteFormatComponents = connection.prepareStatement(deleteFormatComponentsSQL(format))) {
+
       connection.setAutoCommit(false);
 
-      try (
-          PreparedStatement ps1 = connection.prepareStatement("TRUNCATE TABLE reconcile_plan CASCADE;");
-          PreparedStatement ps2 = connection.prepareStatement("TRUNCATE TABLE reconcile_plan_details CASCADE;");
-          PreparedStatement ps3 = connection.prepareStatement("TRUNCATE TABLE raw_asset CASCADE;");
-          PreparedStatement ps4 = connection.prepareStatement("TRUNCATE TABLE raw_asset_blob CASCADE;");
-          PreparedStatement ps5 = connection.prepareStatement("TRUNCATE TABLE raw_component CASCADE;")) {
-        ps1.executeUpdate();
-        ps2.executeUpdate();
-        ps3.executeUpdate();
-        ps4.executeUpdate();
-        ps5.executeUpdate();
+      deletePlanDetails.executeUpdate();
+      deletePlans.executeUpdate();
+      deleteFormatAssets.executeUpdate();
+      deleteFormatAssetBlobs.executeUpdate();
+      deleteFormatComponents.executeUpdate();
 
-        connection.commit();
-      }
-      catch (SQLException e) {
-        throw new RuntimeException(e);
-      }
+      connection.commit();
     }
     catch (SQLException e) {
       throw new RuntimeException("Error managing the connection: " + e.getMessage(), e);
     }
+  }
+
+  private String deleteFormatComponentsSQL(final String format) {
+    return String.format("DELETE FROM %s_component WHERE component_id IN (SELECT rc.component_id FROM %s_component rc)",
+        format, format);
+  }
+
+  private String deleteFormatAssetsSQL(final String format) {
+    return String.format("DELETE FROM %s_asset WHERE asset_id IN (SELECT ra.asset_id FROM %s_asset ra)",
+        format, format);
+  }
+
+  private String deleteFormatAssetBlobsSQL(final String format) {
+    return String.format(
+        "DELETE FROM %s_asset_blob WHERE asset_blob_id IN (SELECT rab.asset_blob_id FROM %s_asset_blob rab)",
+        format, format);
   }
 
   private boolean isFileExist(String filePath) {

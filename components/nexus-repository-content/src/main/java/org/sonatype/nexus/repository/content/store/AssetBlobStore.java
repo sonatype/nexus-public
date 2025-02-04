@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AssetReconcileData;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -80,7 +82,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   }
 
   /**
-   * Browse asset blobs in the content data store in a paged fashion.
+   * Browse asset blobs in the content data store in a paged fashion by provided date range.
    *
    * @param limit maximum number of asset blobs to return
    * @param continuationToken optional token to continue from a previous request
@@ -89,13 +91,21 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Continuation<AssetBlob> browseAssetBlobsWithinDuration(
+  public Continuation<AssetReconcileData> browseAssetBlobsWithinDuration(
       final int limit,
       OffsetDateTime start,
       OffsetDateTime end,
       @Nullable final String continuationToken)
   {
     return dao().browseAssetBlobsWithinDuration(limit, start, end, continuationToken);
+  }
+
+  /**
+   * Return count of asset blobs matched with provided date range
+   */
+  @Transactional
+  public int countAssetBlobsWithinDuration(OffsetDateTime start, OffsetDateTime end) {
+    return dao().countAssetBlobsWithinDuration(start, end);
   }
 
   /**
@@ -264,5 +274,28 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Transactional
   public String getPathByBlobRef(final BlobRef blobRef) {
     return dao().getPathByBlobRef(blobRef);
+  }
+
+  @Transactional
+  public List<AssetReconcileData> browseAssetBlobsByBlobRefs(final List<BlobRef> blobRefs) {
+    return dao().browseAssetBlobsByBlobRefs(blobRefs);
+  }
+
+  /**
+   * Retrieves an asset blob from the content data store based on provided data.
+   * By blobRef or (path and repository) if new version was uploaded
+   *
+   * @param blobRef the blob reference
+   * @param path the blob path
+   * @param repository the blob repository
+   * @return asset blob if it was found
+   */
+  @Transactional
+  public Optional<AssetBlob> readAssetBlobByPathAndRepository(
+      final BlobRef blobRef,
+      final String path,
+      final String repository)
+  {
+    return dao().readAssetBlobByPathAndRepository(blobRef, path, repository);
   }
 }

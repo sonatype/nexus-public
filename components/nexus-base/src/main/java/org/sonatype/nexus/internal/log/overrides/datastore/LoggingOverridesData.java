@@ -28,7 +28,8 @@ public class LoggingOverridesData
 
   private String level;
 
-  public LoggingOverridesData() {}
+  public LoggingOverridesData() {
+  }
 
   public LoggingOverridesData(final String name, final String level) {
     this.name = checkNotNull(name);

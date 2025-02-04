@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.config.memory;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.sonatype.nexus.security.config.CRole;
@@ -136,6 +137,41 @@ public class MemoryCRole
   @Override
   public void setVersion(final int version) {
     this.version = version;
+  }
+
+  public MemoryCRole withDescription(final String description) {
+    this.description = description;
+    return this;
+  }
+
+  public MemoryCRole withId(final String id) {
+    this.id = id;
+    return this;
+  }
+
+  public MemoryCRole withName(final String name) {
+    this.name = name;
+    return this;
+  }
+
+  public MemoryCRole withPrivileges(final String... privileges) {
+    this.privileges = new HashSet<>(Set.of(privileges));
+    return this;
+  }
+
+  public MemoryCRole withReadOnly(final boolean readOnly) {
+    this.readOnly = readOnly;
+    return this;
+  }
+
+  public MemoryCRole withRoles(final String... roles) {
+    this.roles = Set.of(roles);
+    return this;
+  }
+
+  public MemoryCRole withVersion(final int version) {
+    this.version = version;
+    return this;
   }
 
   @Override

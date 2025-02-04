@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ComponentSet;
@@ -78,7 +79,8 @@ public class FluentComponentsImpl
 
   @Override
   public FluentComponent with(final Component component) {
-    return component instanceof FluentComponent ? (FluentComponent) component
+    return component instanceof FluentComponent
+        ? (FluentComponent) component
         : new FluentComponentImpl(facet, component);
   }
 
@@ -110,6 +112,9 @@ public class FluentComponentsImpl
       @Nullable final String filter,
       @Nullable final Map<String, Object> filterParams)
   {
+    if (isNugetV2Proxy()) {
+      return componentStore.countComponentsWithAssetsBlobs(facet.contentRepositoryId(), kind, filter, filterParams);
+    }
     return componentStore.countComponents(facet.contentRepositoryId(), kind, filter, filterParams);
   }
 
@@ -200,12 +205,18 @@ public class FluentComponentsImpl
   }
 
   @Override
-  public Continuation<FluentComponent> selectComponents(final SqlGenerator<? extends SqlQueryParameters> generator, final SqlQueryParameters params) {
+  public Continuation<FluentComponent> selectComponents(
+      final SqlGenerator<? extends SqlQueryParameters> generator,
+      final SqlQueryParameters params)
+  {
     return new FluentContinuation<>(componentStore.selectComponents(generator, params), this::with);
   }
 
   @Override
-  public Continuation<FluentComponent> selectComponentsWithAssets(final SqlGenerator<? extends SqlQueryParameters> generator, final SqlQueryParameters params) {
+  public Continuation<FluentComponent> selectComponentsWithAssets(
+      final SqlGenerator<? extends SqlQueryParameters> generator,
+      final SqlQueryParameters params)
+  {
     return new FluentContinuation<>(componentStore.selectComponentsWithAssets(generator, params), this::with);
   }
 
@@ -245,12 +256,35 @@ public class FluentComponentsImpl
       return true;
     }
     else if (facet.repository().getType() instanceof GroupType) {
-      return facet.repository().facet(GroupFacet.class).allMembers().stream()
+      return facet.repository()
+          .facet(GroupFacet.class)
+          .allMembers()
+          .stream()
           .map(InternalIds::contentRepositoryId)
           .filter(Optional::isPresent)
           .map(Optional::get)
           .anyMatch(id -> id == expectedContentRepositoryId);
     }
     return false;
+  }
+
+  private boolean isNugetV2Proxy() {
+    if (!facet.repository().getFormat().getValue().equals("nuget") ||
+        !facet.repository().getType().getValue().equals("proxy")) {
+      return false;
+    }
+
+    Configuration conf = facet.repository().getConfiguration();
+    if (conf == null || conf.getAttributes() == null) {
+      return false;
+    }
+
+    Map<String, Object> nugetProxy = (Map<String, Object>) conf.getAttributes().get("nugetProxy");
+    if (nugetProxy == null) {
+      return false;
+    }
+
+    String nugetVersion = (String) nugetProxy.get("nugetVersion");
+    return "V2".equals(nugetVersion);
   }
 }

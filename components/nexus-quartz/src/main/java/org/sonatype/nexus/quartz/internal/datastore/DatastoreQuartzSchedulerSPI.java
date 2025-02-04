@@ -17,7 +17,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -109,15 +108,15 @@ public class DatastoreQuartzSchedulerSPI
   @Override
   public boolean cancel(final String id, final boolean mayInterruptIfRunning) {
     boolean locallyCancelled = super.cancel(id, mayInterruptIfRunning);
-     if (locallyCancelled) {
-       return true;
-     }
+    if (locallyCancelled) {
+      return true;
+    }
 
-     if (!EventHelper.isReplicating()) {
-       eventManager.post(new CancelJobEvent(id, mayInterruptIfRunning));
-     }
+    if (!EventHelper.isReplicating()) {
+      eventManager.post(new CancelJobEvent(id, mayInterruptIfRunning));
+    }
 
-     return false;
+    return false;
   }
 
   private Optional<QuartzTaskJobListener> attachJobListener(final JobKey jobKey) {
@@ -276,7 +275,7 @@ public class DatastoreQuartzSchedulerSPI
           log.debug("Missing job for {}", event.getJobKey());
           return;
         }
-        synchronized(mutex) {
+        synchronized (mutex) {
           handler.accept(jobDetail);
         }
       }
@@ -347,7 +346,7 @@ public class DatastoreQuartzSchedulerSPI
           return;
         }
 
-        synchronized(mutex) {
+        synchronized (mutex) {
           handler.accept(trigger);
         }
       }
@@ -359,7 +358,8 @@ public class DatastoreQuartzSchedulerSPI
   }
 
   @FunctionalInterface
-  private interface Consumer<E> {
+  private interface Consumer<E>
+  {
     void accept(E entity) throws SchedulerException;
   }
 }

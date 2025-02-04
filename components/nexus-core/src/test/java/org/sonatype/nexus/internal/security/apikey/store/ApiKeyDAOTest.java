@@ -352,7 +352,8 @@ public class ApiKeyDAOTest
   }
 
   private Optional<ApiKeyInternal> findApiKey(final String domain, final String primaryPrincipal) {
-    return apiKeyDAO.findApiKeys(domain, primaryPrincipal).stream()
+    return apiKeyDAO.findApiKeys(domain, primaryPrincipal)
+        .stream()
         .findFirst();
   }
 

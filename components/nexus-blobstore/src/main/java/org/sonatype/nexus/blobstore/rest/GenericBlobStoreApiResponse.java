@@ -39,8 +39,7 @@ public class GenericBlobStoreApiResponse
   private long availableSpaceInBytes;
 
   @SuppressWarnings("unused") // Required for ITs
-  public GenericBlobStoreApiResponse()
-  {
+  public GenericBlobStoreApiResponse() {
     super();
   }
 

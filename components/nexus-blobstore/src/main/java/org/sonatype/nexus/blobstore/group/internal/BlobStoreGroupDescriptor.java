@@ -91,11 +91,12 @@ public class BlobStoreGroupDescriptor
   private final Map<String, FillPolicy> fillPolicies;
 
   @Inject
-  public BlobStoreGroupDescriptor(final BlobStoreManager blobStoreManager,
-                                  final BlobStoreUtil blobStoreUtil,
-                                  final Provider<BlobStoreGroupService> blobStoreGroupService,
-                                  final BlobStoreQuotaService quotaService,
-                                  final Map<String, FillPolicy> fillPolicies)
+  public BlobStoreGroupDescriptor(
+      final BlobStoreManager blobStoreManager,
+      final BlobStoreUtil blobStoreUtil,
+      final Provider<BlobStoreGroupService> blobStoreGroupService,
+      final BlobStoreQuotaService quotaService,
+      final Map<String, FillPolicy> fillPolicies)
   {
     super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
@@ -106,8 +107,7 @@ public class BlobStoreGroupDescriptor
         MEMBERS_KEY,
         messages.membersLabel(),
         null,
-        MANDATORY
-    );
+        MANDATORY);
     this.members.setStoreApi("coreui_Blobstore.readGroupable");
     this.members.setIdMapping("name");
     this.members.setButtons("up", "add", "remove", "down");
@@ -117,11 +117,12 @@ public class BlobStoreGroupDescriptor
         BlobStoreGroup.FILL_POLICY_KEY,
         messages.fillPolicyLabel(),
         null,
-        FormField.MANDATORY
-    ).withStoreApi("coreui_Blobstore.fillPolicies");
-    this.fillPolicy.getAttributes().put("options", fillPolicies.entrySet().stream().collect(
-        toMap(Map.Entry::getKey, e -> e.getValue().getName())
-    ));
+        FormField.MANDATORY).withStoreApi("coreui_Blobstore.fillPolicies");
+    this.fillPolicy.getAttributes()
+        .put("options", fillPolicies.entrySet()
+            .stream()
+            .collect(
+                toMap(Map.Entry::getKey, e -> e.getValue().getName())));
   }
 
   @Override
@@ -162,8 +163,7 @@ public class BlobStoreGroupDescriptor
     }
     if (!fillPolicies.containsKey(fillPolicy)) {
       throw new ValidationErrorsException("Blob store group requires a valid fill policy name, options include [{}]",
-          String.join(", ", fillPolicies.keySet())
-      );
+          String.join(", ", fillPolicies.keySet()));
     }
 
     List<String> memberNames = config.attributes(CONFIG_KEY).get(MEMBERS_KEY, List.class);
@@ -198,10 +198,10 @@ public class BlobStoreGroupDescriptor
                 memberConfig.getType()));
       }
 
-
-      if(blobStoreManager.hasConflictingTasks(memberName)){
+      if (blobStoreManager.hasConflictingTasks(memberName)) {
         throw new ValidationErrorsException(
-            format("Blob Store '%s' has conflicting tasks running and is not eligible to be a group member", memberName));
+            format("Blob Store '%s' has conflicting tasks running and is not eligible to be a group member",
+                memberName));
       }
 
       // target member may not be a member of a different group
@@ -232,7 +232,7 @@ public class BlobStoreGroupDescriptor
             if (existingMember.isWritable() || !existingMember.isEmpty()) {
               throw new ValidationErrorsException(
                   format("Blob Store '%s' cannot be removed from Blob Store Group '%s', " +
-                          "use 'Admin - Remove a member from a blob store group' task instead",
+                      "use 'Admin - Remove a member from a blob store group' task instead",
                       existingMemberName, name));
             }
           }

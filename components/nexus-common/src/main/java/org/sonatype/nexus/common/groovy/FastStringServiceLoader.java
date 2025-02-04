@@ -35,7 +35,7 @@ public class FastStringServiceLoader
 {
   @Override
   protected void doStart() throws Exception {
-    //HACK: workaround to 'Unable to load FastStringService' groovy issue
+    // HACK: workaround to 'Unable to load FastStringService' groovy issue
     try (TcclBlock ignored = TcclBlock.begin(FastStringService.class)) {
       FastStringUtils.toCharArray("ab");
     }

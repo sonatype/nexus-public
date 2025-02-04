@@ -65,7 +65,8 @@ public class ObjectInputStreamWithClassLoaderTest
     try (ObjectInputStreamWithClassLoader underTest = new ObjectInputStreamWithClassLoader(
         serialize(OBJECT_TO_SERIALIZE), classLoader)) {
       underTest.resolveClass(classDescription);
-    } catch (Exception e){
+    }
+    catch (Exception e) {
       // no-op
     }
     assertThat(classLoader.isLoaded(name), is(true));
@@ -98,7 +99,8 @@ public class ObjectInputStreamWithClassLoaderTest
     try (ObjectInputStreamWithClassLoader underTest = new ObjectInputStreamWithClassLoader(
         serialize(OBJECT_TO_SERIALIZE), loadingFunction)) {
       underTest.resolveClass(classDescription);
-    } catch (Exception e){
+    }
+    catch (Exception e) {
       // no-op
     }
     verify(loadingFunction).loadClass(name);
@@ -126,7 +128,8 @@ public class ObjectInputStreamWithClassLoaderTest
 
   @SuppressWarnings("serial")
   private static class TestFixture
-      implements Serializable {
+      implements Serializable
+  {
     String contents;
 
     public TestFixture(final String contents) {
@@ -134,7 +137,9 @@ public class ObjectInputStreamWithClassLoaderTest
     }
   }
 
-  private static class TestClassLoader extends ClassLoader {
+  private static class TestClassLoader
+      extends ClassLoader
+  {
 
     private final Map<String, Class<?>> classes = new HashMap<>();
 

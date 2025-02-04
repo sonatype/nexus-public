@@ -34,7 +34,7 @@ import MaliciousComponents from "./MaliciousComponents";
 import MaliciousHighRiskEcosystems from "./MaliciousHighRiskEcosystems";
 import MaliciousEvents from "./MaliciousEvents";
 import {faExclamationTriangle} from "@fortawesome/free-solid-svg-icons";
-import MaliciousRiskOnDisk from "./riskondisk/MaliciousRiskOnDisk";
+import MaliciousRiskOnDisk from "../../widgets/riskondisk/MaliciousRiskOnDisk";
 import "./MaliciousRisk.scss";
 
 const {

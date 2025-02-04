@@ -26,8 +26,8 @@ import com.google.common.annotations.VisibleForTesting;
  * @since 3.0
  */
 public abstract class ApplicationVersionSupport
-  extends ComponentSupport
-  implements ApplicationVersion
+    extends ComponentSupport
+    implements ApplicationVersion
 {
   public static final String UNKNOWN = "UNKNOWN";
 

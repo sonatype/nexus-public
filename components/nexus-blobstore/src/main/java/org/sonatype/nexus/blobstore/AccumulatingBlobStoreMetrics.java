@@ -35,10 +35,11 @@ public class AccumulatingBlobStoreMetrics
 
   private final boolean unlimited;
 
-  public AccumulatingBlobStoreMetrics(final long blobCount,
-                                      final long totalSize,
-                                      final Map<String, Long> availableSpaceByFileStore,
-                                      final boolean unlimited)
+  public AccumulatingBlobStoreMetrics(
+      final long blobCount,
+      final long totalSize,
+      final Map<String, Long> availableSpaceByFileStore,
+      final boolean unlimited)
   {
     this.blobCount = blobCount;
     this.totalSize = totalSize;
@@ -66,7 +67,8 @@ public class AccumulatingBlobStoreMetrics
 
   @Override
   public long getAvailableSpace() {
-    return availableSpaceByFileStore.values().stream()
+    return availableSpaceByFileStore.values()
+        .stream()
         .reduce(Math2::addClamped)
         .orElse(0L);
   }

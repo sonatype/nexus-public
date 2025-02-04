@@ -64,11 +64,13 @@ import Upload from './components/pages/browse/Upload/Upload';
 import Nodes from "./components/pages/admin/Nodes/NodeList";
 import Browse from './components/pages/browse/Browse/Browse';
 import UpgradeAlert from './components/UpgradeAlert/UpgradeAlert';
-import UsageMetricsAlert from './components/pages/user/Welcome/UsageMetricsAlert';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
-import MaliciousRisk from "./components/pages/maliciousrisk/MaliciousRisk";
-import MaliciousRiskOnDisk from "./components/pages/maliciousrisk/riskondisk/MaliciousRiskOnDisk";
+import CEHardLimitBanners from './components/widgets/CELimits/CEHardLimitBanners';
+import MaliciousRiskOnDisk from "./components/widgets/riskondisk/MaliciousRiskOnDisk";
 import FeatureFlags from './constants/FeatureFlags';
+import MalwareRemediation from './components/pages/maliciousrisk/MalwareRemediation';
+import CommunityEulaOnboarding from './components/pages/onboarding/CommunityEulaOnboarding';
+import CommunityDiscoverOnboarding from './components/pages/onboarding/CommunityDiscoverOnboarding';
 
 const {MALWARE_RISK_ENABLED} = FeatureFlags;
 
@@ -76,9 +78,11 @@ window.ReactComponents = {
   ...window.ReactComponents,
   AnalyzeApplication,
   UpgradeAlert,
-  UsageMetricsAlert,
   UpgradeModal,
-  MaliciousRiskOnDisk
+  MaliciousRiskOnDisk,
+  CEHardLimitBanners,
+  CommunityEulaOnboarding,
+  CommunityDiscoverOnboarding
 };
 
 window.BlobStoreTypes = {
@@ -553,7 +557,7 @@ window.plugins.push({
           defaultValue: false
         }],
         permissions: ['nexus:*'],
-        editions: ['PRO']
+        editions: ['PRO', 'COMMUNITY']
       }
     },
     {
@@ -608,20 +612,21 @@ window.plugins.push({
     },
     {
       mode: 'browse',
-      path: '/MaliciousRisk',
+      path: '/MalwareRisk',
       ...UIStrings.MALICIOUS_RISK.MENU,
-      view: MaliciousRisk,
+      view: MalwareRemediation,
       iconCls: 'x-fa fa-exclamation-triangle malicious-risk-icon',
       weight: 101,
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        requiresUser: true,
+        permissions: [Permissions.ADMIN],
         statesEnabled: [
           {
             key: MALWARE_RISK_ENABLED,
             defaultValue: false
           }
         ],
+        editions: ['PRO']
       }
     }
   ]

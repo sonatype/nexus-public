@@ -80,7 +80,6 @@ class AffinityBarrier
     });
   }
 
-
   /**
    * Executes the asynchronous event delivery, registering a new party to track when it's done.
    */
@@ -117,17 +116,17 @@ class AffinityBarrier
         // careful about is accidentally bumping things too much that we end up skipping a cycle, so we use
         // a temporary party to stop that from happening
 
-        if (cycle == getPhase()) {         // is it still our turn?
-          register();                      // temporary party to stop phaser running ahead
+        if (cycle == getPhase()) { // is it still our turn?
+          register(); // temporary party to stop phaser running ahead
           int overdueParties = 0;
-          while (cycle == getPhase()) {    // is it still our turn? (cf. double-checked lock)
+          while (cycle == getPhase()) { // is it still our turn? (cf. double-checked lock)
             overdueParties++;
-            arrive();                      // try to bump overdue deliveries one-by-one
+            arrive(); // try to bump overdue deliveries one-by-one
           }
           if (overdueParties > 0) {
             log.debug("Bumping affinity barrier: {} parties overdue", overdueParties);
           }
-          arriveAndDeregister();           // finally remove our temporary party
+          arriveAndDeregister(); // finally remove our temporary party
         }
       }
       catch (IllegalStateException | InterruptedException e) { // NOSONAR: no need to log full stack

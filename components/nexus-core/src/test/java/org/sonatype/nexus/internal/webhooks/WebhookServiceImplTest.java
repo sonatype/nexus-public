@@ -73,14 +73,16 @@ public class WebhookServiceImplTest
 
   private WebhookServiceImpl underTest;
 
-  private static class TestFormat extends Format
+  private static class TestFormat
+      extends Format
   {
     public TestFormat() {
       super("format");
     }
   }
 
-  private static class TestType extends Type
+  private static class TestType
+      extends Type
   {
     public TestType() {
       super("value");
@@ -118,7 +120,8 @@ public class WebhookServiceImplTest
     RepositoryWebhookPayload.RepositoryPayload repository = new RepositoryWebhookPayload.RepositoryPayload("name",
         new TestType(), new TestFormat());
 
-    RepositoryWebhookPayload payload = new RepositoryWebhookPayload(CREATED, repository, "nodeId", timestamp, "initiator");
+    RepositoryWebhookPayload payload =
+        new RepositoryWebhookPayload(CREATED, repository, "nodeId", timestamp, "initiator");
 
     WebhookRequest request = new WebhookRequest();
     request.setUrl(new URI("uri"));

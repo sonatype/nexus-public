@@ -153,6 +153,7 @@ describe('SupportZip', () => {
       expect(Axios.post).toHaveBeenCalledWith(
         APIConstants.REST.INTERNAL.SUPPORT_ZIP + nodeMock.nodeId,
         {
+          archivedLog: 0,
           auditLog: true,
           configuration: true,
           hostname: 'MacBook-Pro.local',
@@ -192,6 +193,7 @@ describe('SupportZip', () => {
       expect(Axios.post).toHaveBeenCalledWith(
         APIConstants.REST.INTERNAL.SUPPORT_ZIP + nodeMock.nodeId,
         {
+          archivedLog: 0,
           auditLog: true,
           configuration: true,
           hostname: 'MacBook-Pro.local',

@@ -36,12 +36,12 @@ Ext.define('NX.onboarding.app.PluginStrings', {
 
   bundles: {
     'NX.onboarding.view.OnboardingStartScreen': {
-      Title: 'Setup',
-      Description: '<p>This wizard will help you complete required setup tasks.</p>',
+      Title: 'Welcome to Sonatype Nexus Repository Manager',
+      Description: '<p>This wizard will guide you through setup tasks to get started.</p>',
     },
     'NX.onboarding.view.OnboardingCompleteScreen': {
-      Title: 'Complete',
-      Description: '<p>The setup tasks have been completed, enjoy using Nexus Repository Manager!</p>',
+      Title: 'Setup Complete',
+      Description: '<p>Your instance is now ready to use. Explore Sonatype Nexus Repository to unlock its full potential.</p>',
       Finish_Button: 'Finish'
     },
     'NX.onboarding.view.ChangeAdminPasswordScreen': {
@@ -67,6 +67,13 @@ Ext.define('NX.onboarding.app.PluginStrings', {
           'identifying or proprietary information (e.g. the names of hosts, servers, repositories, or users).</p>',
       Enable_Label: 'Yes, I agree to share anonymous data.',
       Disable_Label: 'No, not interested.'
+    },
+    'NX.onboarding.view.CommunityDiscoverScreen': {
+      Title: 'Discover Community Edition'
+    },
+    'NX.onboarding.view.CommunityEulaScreen': {
+      Title: 'Agree End User License Agreement',
+      Agree_Button: 'Agree'
     }
   }
 }, function(obj) {

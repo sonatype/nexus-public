@@ -29,7 +29,8 @@ public abstract class BlobStoreApiModel
   @ApiModelProperty("Settings to control the soft quota")
   private BlobStoreApiSoftQuota softQuota;
 
-  public BlobStoreApiModel() {}
+  public BlobStoreApiModel() {
+  }
 
   public BlobStoreApiModel(BlobStoreConfiguration configuration) {
     softQuota = createSoftQuota(configuration);

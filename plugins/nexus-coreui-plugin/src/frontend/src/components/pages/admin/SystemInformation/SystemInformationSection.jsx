@@ -20,6 +20,10 @@ import {Information, Section} from '@sonatype/nexus-ui-plugin';
  * @param information - a key value map of information to display
  */
 export default function SystemInformationSection({sectionName, information}) {
+  if (information === undefined || information === null) {
+    return <></>;
+  }
+
   return <Section>
     <h2>{sectionName}</h2>
     <Information information={information}/>

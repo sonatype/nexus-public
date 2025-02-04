@@ -47,12 +47,27 @@ public interface ComponentDAO
    * Count all components in the given repository.
    *
    * @param repositoryId the repository to count
-   * @param kind         optional kind of components to count
-   * @param filter       optional filter to apply
+   * @param kind optional kind of components to count
+   * @param filter optional filter to apply
    * @param filterParams parameter map for the optional filter
    * @return count of components in the repository
    */
   int countComponents(
+      @Param("repositoryId") int repositoryId,
+      @Nullable @Param("kind") String kind,
+      @Nullable @Param("filter") String filter,
+      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+
+  /**
+   * Count all Nuget components with an associated blob_id in the given repository.
+   *
+   * @param repositoryId the repository to count
+   * @param kind optional kind of components to count
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
+   * @return count of components in the repository
+   */
+  int countComponentsWithAssetsBlobs(
       @Param("repositoryId") int repositoryId,
       @Nullable @Param("kind") String kind,
       @Nullable @Param("filter") String filter,
@@ -68,12 +83,12 @@ public interface ComponentDAO
   /**
    * Browse all components in the given repository in a paged fashion.
    *
-   * @param repositoryId      the repository to browse
-   * @param limit             maximum number of components to return
+   * @param repositoryId the repository to browse
+   * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
-   * @param kind              optional kind of components to return
-   * @param filter            optional filter to apply
-   * @param filterParams      parameter map for the optional filter
+   * @param kind optional kind of components to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return collection of components and the next continuation token
    * @see Continuation#nextContinuationToken()
    */
@@ -108,8 +123,8 @@ public interface ComponentDAO
   /**
    * Browse all components in the given repository ids in a paged fashion.
    *
-   * @param repositoryIds     the ids repositories to browse
-   * @param limit             maximum number of components to return
+   * @param repositoryIds the ids repositories to browse
+   * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of components and the next continuation token
    * @see Continuation#nextContinuationToken()
@@ -122,10 +137,10 @@ public interface ComponentDAO
   /**
    * Browse all components in the given repository, namespace and name, in a paged fashion.
    *
-   * @param repositoryId      the repository to browse
-   * @param namespace         the component namespace to browse
-   * @param name              the component name to browse
-   * @param limit             maximum number of components to return
+   * @param repositoryId the repository to browse
+   * @param namespace the component namespace to browse
+   * @param name the component name to browse
+   * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of components and the next continuation token
    * @see Continuation#nextContinuationToken()
@@ -140,21 +155,23 @@ public interface ComponentDAO
   /**
    * Select components using the provided query generator and parameters.
    *
-   * @param generator  generator for the select
-   * @param params     parameters for the select
-  */
+   * @param generator generator for the select
+   * @param params parameters for the select
+   */
   @ResultMap("ComponentDataMap")
   @ResultType(ComponentData.class)
   @SelectProvider(type = SqlAdapter.class, method = "select")
-  Continuation<Component> selectComponents(final SqlGenerator<? extends SqlQueryParameters> generator,
-                                           @Param("params") final SqlQueryParameters params);
-
+  Continuation<Component> selectComponents(
+      final SqlGenerator<? extends SqlQueryParameters> generator,
+      @Param("params") final SqlQueryParameters params);
 
   @ResultMap("ComponentAssetsDataMap")
   @ResultType(ComponentData.class)
   @SelectProvider(type = SqlAdapter.class, method = "select")
-  Continuation<Component> selectComponentsWithAssets(final SqlGenerator<? extends SqlQueryParameters> generator,
-                                                     @Param("params") final SqlQueryParameters params);
+  Continuation<Component> selectComponentsWithAssets(
+      final SqlGenerator<? extends SqlQueryParameters> generator,
+      @Param("params") final SqlQueryParameters params);
+
   /**
    * Browse all component namespaces in the given repository.
    * <P/>
@@ -169,7 +186,7 @@ public interface ComponentDAO
    * Browse the names of all components under a namespace in the given repository.
    *
    * @param repositoryId the repository to browse
-   * @param namespace    the namespace to browse (empty string to browse components that don't have a namespace)
+   * @param namespace the namespace to browse (empty string to browse components that don't have a namespace)
    * @return collection of component names
    */
   Collection<String> browseNames(
@@ -179,8 +196,8 @@ public interface ComponentDAO
   /**
    * Browse all component sets (distinct namespace+name) in the given repository.
    *
-   * @param repositoryId      the repository to browse
-   * @param limit             maximum number of components to return
+   * @param repositoryId the repository to browse
+   * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of componentSets and the next continuation token
    * @see Continuation#nextContinuationToken()
@@ -196,8 +213,8 @@ public interface ComponentDAO
    * The result will include the empty string if there are any components that don't have a version.
    *
    * @param repositoryId the repository to browse
-   * @param namespace    the namespace of the component
-   * @param name         the name of the component
+   * @param namespace the namespace of the component
+   * @param name the name of the component
    * @return collection of component versions
    */
   Collection<String> browseVersions(
@@ -208,7 +225,7 @@ public interface ComponentDAO
   /**
    * Creates the given component in the content data store.
    *
-   * @param component            the component to create
+   * @param component the component to create
    * @param entityVersionEnabled whether to version this component
    */
   void createComponent(
@@ -227,9 +244,9 @@ public interface ComponentDAO
    * Retrieves a component located at the given coordinate in the content data store.
    *
    * @param repositoryId the repository containing the component
-   * @param namespace    the namespace of the component
-   * @param name         the name of the component
-   * @param version      the version of the component
+   * @param namespace the namespace of the component
+   * @param name the name of the component
+   * @param version the version of the component
    * @return component if it was found
    */
   Optional<Component> readCoordinate(
@@ -241,7 +258,7 @@ public interface ComponentDAO
   /**
    * Updates the kind of the given component in the content data store.
    *
-   * @param component            the component to update
+   * @param component the component to update
    * @param entityVersionEnabled whether to version this component
    * @since 3.25
    */
@@ -252,7 +269,7 @@ public interface ComponentDAO
   /**
    * Updates the normalized_version of the given component in the content data store.
    *
-   * @param component            the component to update
+   * @param component the component to update
    * @param entityVersionEnabled whether to version this component
    * @since 3.61
    */
@@ -271,7 +288,7 @@ public interface ComponentDAO
   /**
    * Updates the attributes of the given component in the content data store.
    *
-   * @param component            the component to update
+   * @param component the component to update
    * @param entityVersionEnabled whether to version this component
    */
   void updateComponentAttributes(
@@ -290,7 +307,7 @@ public interface ComponentDAO
    * Deletes all components in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the components
-   * @param limit        when positive limits the number of components deleted per-call
+   * @param limit when positive limits the number of components deleted per-call
    * @return {@code true} if any components were deleted
    */
   int deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
@@ -299,8 +316,8 @@ public interface ComponentDAO
    * Selects components in the given repository whose assets were last downloaded more than given number of days ago.
    *
    * @param repositoryId the repository to check
-   * @param daysAgo      the number of days ago to check
-   * @param limit        when positive limits the number of components selected per-call
+   * @param daysAgo the number of days ago to check
+   * @param limit when positive limits the number of components selected per-call
    * @return selected component ids
    * @since 3.26
    */

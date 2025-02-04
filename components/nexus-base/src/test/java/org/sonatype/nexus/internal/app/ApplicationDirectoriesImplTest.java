@@ -30,7 +30,7 @@ import static org.hamcrest.Matchers.notNullValue;
  * Tests for {@link ApplicationDirectoriesImpl}
  */
 public class ApplicationDirectoriesImplTest
-  extends TestSupport
+    extends TestSupport
 {
   private File installDir;
 
