@@ -147,8 +147,7 @@ export default {
           + 'lower-case characters, numbers, periods, dashes, and underscores. Spaces are not permitted).'
       },
       REGION: {
-        label: 'Region',
-        sublabel: 'Region must correspond to bucket\'s location.'
+        label: 'Region'
       },
       PREFIX: {
         label: 'Prefix',
@@ -176,7 +175,10 @@ export default {
       ERROR: {
         bucketRegionMismatchException: 'GoogleCloudBucketRegionMismatchException',
         bucketRegionMismatchMessage: 'Region and bucket location do not match.',
-        bucketRegionMismatchTitle: 'Selected region does not match the bucket\'s location.'
+        bucketRegionMismatchTitle: 'Selected region does not match the bucket\'s location.',
+        bucketEncryptionMismatchException: 'GoogleCloudEncryptionKeyMismatchException',
+        bucketEncryptionMismatchMessage: 'Bucket and Encryption do not match.',
+        bucketEncryptionMismatchTitle: 'Selected encryption does not match the bucket\'s encryption.'
       }
     }
   },
@@ -204,7 +206,7 @@ export default {
     S3BlobStore_Authentication_AccessKeyId: 'Access Key ID',
     S3BlobStore_Authentication_SecretAccessKey: 'Secret Access Key',
     S3BlobStore_Authentication_AssumeRoleArn: 'Assume Role ARN (Optional)',
-    S3BlobStore_Authentication_SessionToken: 'Session Token ARN (Optional)',
+    S3BlobStore_Authentication_SessionToken: 'Session Token (Optional)',
     S3BlobStore_EncryptionSettings_Title: 'Encryption (Optional)',
     S3BlobStore_EncryptionSettings_Type_FieldLabel: 'Encryption Type',
     S3BlobStore_EncryptionSettings_Type_HelpText: 'The type of encryption for objects in the S3 Blob Store',

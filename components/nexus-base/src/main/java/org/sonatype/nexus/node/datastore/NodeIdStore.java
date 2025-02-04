@@ -24,7 +24,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 public interface NodeIdStore
 {
   /**
-   * Remove the currently persisted node id, this will not change the  {@link NodeAccess}.
+   * Remove the currently persisted node id, this will not change the {@link NodeAccess}.
    */
   void clear();
 
@@ -44,6 +44,7 @@ public interface NodeIdStore
 
   /**
    * Set the current node id, this will not update the {@link NodeAccess}
+   * 
    * @param nodeId
    */
   void set(final String nodeId);

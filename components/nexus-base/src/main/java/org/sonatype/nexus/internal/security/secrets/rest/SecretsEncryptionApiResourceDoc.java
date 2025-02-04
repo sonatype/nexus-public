@@ -28,8 +28,7 @@ public interface SecretsEncryptionApiResourceDoc
 {
   @ApiOperation(
       value = "Re-encrypt secrets using the specified key",
-      notes = "Ensure all nodes have access to the key, and they use the same key"
-  )
+      notes = "Ensure all nodes have access to the key, and they use the same key")
   @ApiResponses(value = {
       @ApiResponse(code = 202, message = "Re-encrypt task successfully submitted"),
       @ApiResponse(code = 400, message = "Invalid request. See the response for more information. " +

@@ -88,8 +88,9 @@ public class EventManagerImplTest
     executor.start(); // enable multi-threaded mode
 
     // non-replicating case
-    FakeAlmightySubject.forUserId("testUser").execute(
-        () -> underTest.post("a string"));
+    FakeAlmightySubject.forUserId("testUser")
+        .execute(
+            () -> underTest.post("a string"));
 
     await().atMost(5, TimeUnit.SECONDS).until(underTest::isCalmPeriod);
 
@@ -98,9 +99,10 @@ public class EventManagerImplTest
     assertThat(handler.replicatingCount.get(), is(0));
 
     // replicating case
-    FakeAlmightySubject.forUserId("testUser").execute(
-        () -> EventHelper.asReplicating(
-            () -> underTest.post("a string")));
+    FakeAlmightySubject.forUserId("testUser")
+        .execute(
+            () -> EventHelper.asReplicating(
+                () -> underTest.post("a string")));
 
     await().atMost(5, TimeUnit.SECONDS).until(underTest::isCalmPeriod);
 

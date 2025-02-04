@@ -42,9 +42,10 @@ public class ScalableBloomFilter<T>
 
   private final double falsePositiveProbability;
 
-  public ScalableBloomFilter(final Funnel<? super T> funnel,
-                             final int filterCapacity,
-                             final double falsePositiveProbability)
+  public ScalableBloomFilter(
+      final Funnel<? super T> funnel,
+      final int filterCapacity,
+      final double falsePositiveProbability)
   {
     checkArgument(filterCapacity > 0, "filter capacity must be greater than 0");
     checkArgument(falsePositiveProbability > 0, "fpp must be greater than 0");
@@ -95,8 +96,9 @@ public class ScalableBloomFilter<T>
       }
     }
 
-    double andProbability = filters.stream().mapToDouble(BloomFilter::expectedFpp)
-        .reduce((a , b) -> a * b)
+    double andProbability = filters.stream()
+        .mapToDouble(BloomFilter::expectedFpp)
+        .reduce((a, b) -> a * b)
         .getAsDouble();
 
     // These events are not mutually exclusive so the formula for calculating the probability is

@@ -14,8 +14,6 @@ package org.sonatype.nexus.internal.datastore;
 
 import java.util.Optional;
 
-import javax.sql.DataSource;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.datastore.api.DataStore;
@@ -74,7 +72,9 @@ public class DatabaseCheckImplTest
     assertFalse(underTest.isAllowedByVersion(withLatestFromAnnotation.getClass()));
   }
 
-  private static class DatabaseCheckImplForTest extends DatabaseCheckImpl {
+  private static class DatabaseCheckImplForTest
+      extends DatabaseCheckImpl
+  {
     public DatabaseCheckImplForTest(
         final DataStoreManager dataStoreManager)
     {
@@ -82,20 +82,28 @@ public class DatabaseCheckImplTest
     }
 
     @Override
-    MigrationVersion getMigrationVersion(final DataSource dataSource) {
+    MigrationVersion getMigrationVersion() {
       return MigrationVersion.fromVersion("1.4");
     }
   }
 
-  private static class WithoutAnnotation {}
+  private static class WithoutAnnotation
+  {
+  }
 
   @AvailabilityVersion(from = "1.0")
-  private static class WithAnnotation {}
+  private static class WithAnnotation
+  {
+  }
 
   @AvailabilityVersion(from = "1.3")
-  private static class WithFromAnnotation {}
+  private static class WithFromAnnotation
+  {
+  }
 
   @AvailabilityVersion(from = "1.6")
-  private static class WithLatestFromAnnotation {}
+  private static class WithLatestFromAnnotation
+  {
+  }
 
 }

@@ -62,7 +62,8 @@ public class SecurityUserExport
   @Override
   public void export(final File file) throws IOException {
     log.debug("Export CUser and CUserRoleMapping data to {}", file);
-    Map<String, CUser> userIdToCUser = configuration.getUsers().stream()
+    Map<String, CUser> userIdToCUser = configuration.getUsers()
+        .stream()
         .collect(Collectors.toMap(CUser::getId, identity()));
     List<CUserRoleMapping> userRoleMappings = configuration.getUserRoleMappings();
     List<SecurityUserData> securityUsers = new ArrayList<>(userIdToCUser.size());
@@ -116,7 +117,8 @@ public class SecurityUserExport
 
     @JsonIgnore
     public Set<String> getRoles() {
-      return userRoleMappings.stream().filter(role -> DEFAULT_SOURCE.equals(role.getSource()))
+      return userRoleMappings.stream()
+          .filter(role -> DEFAULT_SOURCE.equals(role.getSource()))
           .findFirst()
           .map(CUserRoleMapping::getRoles)
           .orElse(Collections.emptySet());

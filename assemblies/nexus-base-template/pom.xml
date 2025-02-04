@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.76.0-SNAPSHOT</version>
+    <version>3.77.0-08</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -119,7 +119,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-oss-edition</artifactId>
+      <artifactId>nexus-open-core-edition</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
@@ -188,7 +188,7 @@
               <!-- disable include of target/classes, we use overlay instead -->
               <includeBuildOutputDirectory>false</includeBuildOutputDirectory>
               <!-- override expected osgi.ee to match compilation target -->
-              <javase>1.8</javase>
+              <javase>${maven.compiler.release}</javase>
               <!-- install startup jars 'by-reference' which avoids copying -->
               <useReferenceUrls>true</useReferenceUrls>
               <startupFeatures>
@@ -221,7 +221,7 @@
                 <!-- <feature>ssh</feature> -->
                 <feature>nexus-datastore-mybatis</feature>
                 <feature>nexus-core-feature</feature>
-                <feature>nexus-oss-edition</feature>
+                <feature>nexus-open-core-edition</feature>
               </installedFeatures>
             </configuration>
           </execution>

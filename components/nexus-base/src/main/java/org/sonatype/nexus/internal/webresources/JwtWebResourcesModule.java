@@ -28,14 +28,15 @@ import org.eclipse.sisu.inject.Sources;
 import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 
 /**
- * Web resources module using {@link JwtSecurityFilter}. Both servlet and filter-chain are installed with the lowest priority.
+ * Web resources module using {@link JwtSecurityFilter}. Both servlet and filter-chain are installed with the lowest
+ * priority.
  *
  * @since 3.38
  */
 @Named
 @FeatureFlag(name = JWT_ENABLED)
 public class JwtWebResourcesModule
-  extends WebResourcesModule
+    extends WebResourcesModule
 {
   @Override
   protected void configure() {

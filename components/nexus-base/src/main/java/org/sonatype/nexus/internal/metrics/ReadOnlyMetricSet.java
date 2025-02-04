@@ -34,9 +34,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.6
  */
 public class ReadOnlyMetricSet
-  implements MetricSet
+    implements MetricSet
 {
-  private final Map<String,Metric> metrics;
+  private final Map<String, Metric> metrics;
 
   public ReadOnlyMetricSet(final Provider<FreezeService> freezeServiceProvider) {
     checkNotNull(freezeServiceProvider);
@@ -47,7 +47,7 @@ public class ReadOnlyMetricSet
   }
 
   @Override
-  public Map<String,Metric> getMetrics() {
+  public Map<String, Metric> getMetrics() {
     return metrics;
   }
 
@@ -66,12 +66,13 @@ public class ReadOnlyMetricSet
   private Metric freezeTime(final Provider<FreezeService> freezeServiceProvider) {
     return (Gauge<Long>) () -> Optional.ofNullable(freezeServiceProvider.get())
         .map(freezeService -> {
-            Long val = freezeService.currentFreezeRequests().stream()
-                .map(FreezeRequest::frozenAt)
-                .min(DateTime::compareTo)
-                .map(DateTime::getMillis)
-                .orElse(0L);
-            return val;
+          Long val = freezeService.currentFreezeRequests()
+              .stream()
+              .map(FreezeRequest::frozenAt)
+              .min(DateTime::compareTo)
+              .map(DateTime::getMillis)
+              .orElse(0L);
+          return val;
         })
         .orElse(0L);
   }

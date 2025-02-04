@@ -112,7 +112,8 @@ public class BlobStoreGroup
 
   private Supplier<List<BlobStore>> members;
 
-  private FillPolicy fillPolicy;
+  @VisibleForTesting
+  FillPolicy fillPolicy;
 
   private BlobStoreConfiguration blobStoreConfiguration;
 
@@ -209,11 +210,10 @@ public class BlobStoreGroup
 
   @Override
   public void createBlobAttributes(final BlobId blobId, Map<String, String> headers, final BlobMetrics metrics) {
-    BlobStore result = fillPolicy.chooseBlobStore(this, headers);
-    if (result == null) {
-      throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create properties", null);
-    }
-    result.createBlobAttributes(blobId, headers, metrics);
+    locate(blobId)
+        .orElseThrow(() -> new BlobStoreException(
+            "Unable to find a member Blob Store of '" + this + "' for create properties", null))
+        .createBlobAttributes(blobId, headers, metrics);
   }
 
   @Override
@@ -477,6 +477,7 @@ public class BlobStoreGroup
   public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
       final String prefix,
       final OffsetDateTime fromDateTime,
+      final OffsetDateTime toDateTime,
       @Nullable final String continuationToken,
       final int pageSize)
   {

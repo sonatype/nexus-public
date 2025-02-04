@@ -60,8 +60,9 @@ public class GroovyScriptEngineFactory
   private GroovyScriptEngine engine;
 
   @Inject
-  public GroovyScriptEngineFactory(@Named("nexus-uber") final ClassLoader classLoader,
-                                   final ApplicationDirectories applicationDirectories)
+  public GroovyScriptEngineFactory(
+      @Named("nexus-uber") final ClassLoader classLoader,
+      final ApplicationDirectories applicationDirectories)
   {
     this.classLoader = checkNotNull(classLoader);
     this.applicationDirectories = checkNotNull(applicationDirectories);
@@ -113,8 +114,8 @@ public class GroovyScriptEngineFactory
   static String getContext(final Binding binding) {
     Optional<String> taskContext = getVariable(binding, "task", ScriptTask.class)
         .map(ts -> format("Task '%s'", ts.getName()));
-    Optional<String> scriptContext = getVariable(binding,"scriptName", String.class)
-        .map(name -> format("Script '%s'" , name));
+    Optional<String> scriptContext = getVariable(binding, "scriptName", String.class)
+        .map(name -> format("Script '%s'", name));
     return Stream.of(taskContext, scriptContext)
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -125,7 +126,7 @@ public class GroovyScriptEngineFactory
   private static <T> Optional<T> getVariable(final Binding binding, final String name, final Class<T> type) {
     if (binding.hasVariable(name)) {
       Object instance = binding.getVariable(name);
-      if(type.isInstance(instance)) {
+      if (type.isInstance(instance)) {
         return (Optional<T>) Optional.of(instance);
       }
     }

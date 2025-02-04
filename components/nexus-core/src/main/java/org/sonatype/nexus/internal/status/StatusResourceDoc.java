@@ -61,7 +61,8 @@ public interface StatusResourceDoc
   @GET
   @ApiOperation("Health check endpoint that returns the results of the system status checks")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "The system status check results", response = Result.class, responseContainer = "Map")
+      @ApiResponse(code = 200, message = "The system status check results", response = Result.class,
+          responseContainer = "Map")
   })
   SortedMap<String, Result> getSystemStatusChecks();
 

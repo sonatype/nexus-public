@@ -235,9 +235,6 @@ export default {
       get SAML() {
         return `${this.BASE_URL}saml`;
       },
-      get USAGE_METRICS() {
-        return `${this.BASE_URL}usage-metrics`;
-      },
       get PRIVILEGES_TYPES() {
         return `${this.BASE_URL}privileges/types`;
       }
@@ -309,6 +306,9 @@ export default {
       },
       get MALICIOUS_RISK_ON_DISK() {
         return `${this.BASE_URL}malicious-risk/risk-on-disk`;
+      },
+      get MALWARE_COMPONENTS_CSV() {
+        return `${this.BASE_URL}malicious-risk/malware-components-csv`;
       },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',

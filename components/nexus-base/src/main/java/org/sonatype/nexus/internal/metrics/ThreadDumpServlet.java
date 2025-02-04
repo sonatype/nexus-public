@@ -26,11 +26,12 @@ import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
  * @since 3.0
  */
 public class ThreadDumpServlet
-  extends com.codahale.metrics.servlets.ThreadDumpServlet
+    extends com.codahale.metrics.servlets.ThreadDumpServlet
 {
   @Override
-  protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-      throws ServletException, IOException
+  protected void doGet(
+      final HttpServletRequest req,
+      final HttpServletResponse resp) throws ServletException, IOException
   {
     boolean download = Boolean.parseBoolean(req.getParameter("download"));
     if (download) {

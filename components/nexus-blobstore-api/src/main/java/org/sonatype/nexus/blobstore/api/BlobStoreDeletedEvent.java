@@ -19,7 +19,7 @@ package org.sonatype.nexus.blobstore.api;
  * @since 3.1
  */
 public class BlobStoreDeletedEvent
-  extends BlobStoreEvent
+    extends BlobStoreEvent
 {
   public BlobStoreDeletedEvent(final BlobStore blobStore) {
     super(blobStore);

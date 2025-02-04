@@ -18,4 +18,3 @@ public interface BlobStoreTaskService
 
   int countTasksInUseForBlobStore(final String blobStoreName);
 }
-

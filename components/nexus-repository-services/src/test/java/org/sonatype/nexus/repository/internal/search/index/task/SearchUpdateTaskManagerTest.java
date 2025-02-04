@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.internal.search.index.task;
 import java.util.Collections;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.index.SearchUpdateService;
@@ -29,6 +30,8 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -53,6 +56,9 @@ public class SearchUpdateTaskManagerTest
   private Repository repository3;
 
   @Mock
+  private PeriodicJobService periodicJobService;
+
+  @Mock
   private SearchUpdateService searchUpdateService;
 
   private final TaskConfiguration taskConfiguration = new TaskConfiguration();
@@ -66,7 +72,13 @@ public class SearchUpdateTaskManagerTest
     when(repository3.getName()).thenReturn("repository3");
     when(taskScheduler.createTaskConfigurationInstance(any())).thenReturn(taskConfiguration);
 
-    underTest = new SearchUpdateTaskManager(taskScheduler, repositoryManager, searchUpdateService, true);
+    doAnswer(i -> {
+      ((Runnable) i.getArgument(0)).run();
+      return null;
+    }).when(periodicJobService).runOnce(any(), anyInt());
+
+    underTest =
+        new SearchUpdateTaskManager(taskScheduler, repositoryManager, searchUpdateService, periodicJobService, true);
   }
 
   @Test
@@ -83,7 +95,8 @@ public class SearchUpdateTaskManagerTest
 
   @Test
   public void skipProcessingWhenNotEnabled() {
-    underTest = new SearchUpdateTaskManager(taskScheduler, repositoryManager, searchUpdateService, false);
+    underTest =
+        new SearchUpdateTaskManager(taskScheduler, repositoryManager, searchUpdateService, periodicJobService, false);
 
     underTest.doStart();
 
@@ -93,7 +106,7 @@ public class SearchUpdateTaskManagerTest
 
   @Test
   public void onStartup_noRepositories() {
-    when(repositoryManager.browse()).thenReturn(Collections.EMPTY_LIST);
+    when(repositoryManager.browse()).thenReturn(Collections.emptyList());
     underTest.doStart();
     verifyNoMoreInteractions(taskScheduler);
   }

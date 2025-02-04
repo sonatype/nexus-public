@@ -45,10 +45,11 @@ public class StateGuard
 
   private String current;
 
-  StateGuard(final Logger log,
-             final ReadWriteLock readWriteLock,
-             final String initial,
-             @Nullable final String failure)
+  StateGuard(
+      final Logger log,
+      final ReadWriteLock readWriteLock,
+      final String initial,
+      @Nullable final String failure)
   {
     this.log = checkNotNull(log);
     this.readWriteLock = checkNotNull(readWriteLock);
@@ -73,7 +74,7 @@ public class StateGuard
    * Get write lock from State Guard.
    */
   public Lock getWriteLock() {
-    return  readWriteLock.writeLock();
+    return readWriteLock.writeLock();
   }
 
   /**
@@ -133,7 +134,12 @@ public class StateGuard
   /**
    * Create a transition to given state with custom exception-handling behaviour.
    */
-  public Transition transition(final String to, final boolean silent, final Class<? extends Exception>[] ignore, boolean requiresWriteLock) {
+  public Transition transition(
+      final String to,
+      final boolean silent,
+      final Class<? extends Exception>[] ignore,
+      boolean requiresWriteLock)
+  {
     return new TransitionImpl(to, silent, ignore, requiresWriteLock);
   }
 
@@ -152,7 +158,7 @@ public class StateGuard
    * Transition from current state to target state and execute an action.
    */
   private class TransitionImpl
-    implements Transition
+      implements Transition
   {
     private final String to;
 
@@ -165,7 +171,12 @@ public class StateGuard
     @Nullable
     private String[] allowed;
 
-    private TransitionImpl(final String to, final boolean silent, final Class<? extends Exception>[] ignore, final boolean requiresWriteLock)    {
+    private TransitionImpl(
+        final String to,
+        final boolean silent,
+        final Class<? extends Exception>[] ignore,
+        final boolean requiresWriteLock)
+    {
       this.to = checkNotNull(to);
       this.silent = silent;
       this.ignore = checkNotNull(ignore);
@@ -193,7 +204,7 @@ public class StateGuard
     public <V> V run(final Action<V> action) throws Exception {
       Lock lock = null;
       if (requiresWriteLock) {
-       lock = Locks.write(readWriteLock);
+        lock = Locks.write(readWriteLock);
       }
       try {
         if (allowed != null) {
@@ -259,7 +270,7 @@ public class StateGuard
    * Execute an action or callable if current state is allowed.
    */
   private class GuardImpl
-    implements Guard
+      implements Guard
   {
     private final String[] allowed;
 
@@ -338,8 +349,7 @@ public class StateGuard
           logger != null ? logger : defaultLogger,
           lock != null ? lock : new ReentrantReadWriteLock(),
           initial,
-          failure
-      );
+          failure);
     }
   }
 }

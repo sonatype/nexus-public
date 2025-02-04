@@ -79,8 +79,7 @@ public class MetadataDatabase
     };
   }
 
-  private Properties getDbInfo(final DataStore<?> dataStore)
-  {
+  private Properties getDbInfo(final DataStore<?> dataStore) {
     Properties dsProperties = new Properties();
     try (Connection connection = dataStore.getDataSource().getConnection()) {
       dsProperties.setProperty("DatabaseProductName", connection.getMetaData().getDatabaseProductName());

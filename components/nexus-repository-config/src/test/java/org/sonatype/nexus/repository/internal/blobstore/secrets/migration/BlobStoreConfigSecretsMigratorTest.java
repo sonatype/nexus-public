@@ -37,7 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.internal.blobstore.secrets.migration.BlobStoreConfigSecretsMigrator.S3_TYPE;
-import static org.sonatype.nexus.repository.internal.blobstore.secrets.migration.BlobStoreConfigSecretsMigrator.SECRET_ACCESS_KEY_KEY;
+import static org.sonatype.nexus.repository.internal.blobstore.secrets.migration.BlobStoreConfigSecretsMigrator.secretKeys;
 
 public class BlobStoreConfigSecretsMigratorTest
     extends TestSupport
@@ -69,7 +69,7 @@ public class BlobStoreConfigSecretsMigratorTest
 
     verify(blobStoreManager).browse();
     verify(blobStoreManager, times(4)).update(any(BlobStoreConfiguration.class));
-    verify(secretsService, times(4)).from(anyString());
+    verify(secretsService, times(8)).from(anyString());
   }
 
   @Test
@@ -97,7 +97,8 @@ public class BlobStoreConfigSecretsMigratorTest
         when(blobStoreConfiguration.getType()).thenReturn(S3_TYPE);
         Map<String, Map<String, Object>> attributes = new HashMap<>();
         Map<String, Object> config = new HashMap<>();
-        config.put(SECRET_ACCESS_KEY_KEY, "legacy-secret-" + i);
+        config.put(secretKeys.get(0), "legacy-secret-" + i);
+        config.put(secretKeys.get(1), "legacy-token" + i);
         attributes.put(S3_TYPE, config);
 
         when(blobStoreConfiguration.getAttributes()).thenReturn(attributes);

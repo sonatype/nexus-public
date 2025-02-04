@@ -24,14 +24,12 @@ import org.sonatype.nexus.repository.maven.api.MavenHostedApiRepository;
 import org.sonatype.nexus.repository.rest.api.AbstractHostedRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.FormatAndType;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
-import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
@@ -55,8 +53,6 @@ public abstract class MavenHostedRepositoriesApiResource
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
   })
   @POST
-  @RequiresAuthentication
-  @Validate
   @Override
   public Response createRepository(final MavenHostedRepositoryApiRequest request) {
     return super.createRepository(request);
@@ -71,8 +67,6 @@ public abstract class MavenHostedRepositoriesApiResource
   })
   @PUT
   @Path("/{repositoryName}")
-  @RequiresAuthentication
-  @Validate
   @Override
   public Response updateRepository(
       final MavenHostedRepositoryApiRequest request,
@@ -83,12 +77,12 @@ public abstract class MavenHostedRepositoriesApiResource
 
   @GET
   @Path("/{repositoryName}")
-  @RequiresAuthentication
-  @Validate
   @Override
   @ApiOperation(value = "Get repository", response = MavenHostedApiRepository.class)
-  public AbstractApiRepository getRepository(@ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
-                                             @PathParam("repositoryName") final String repositoryName) {
+  public AbstractApiRepository getRepository(
+      @ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+      @PathParam("repositoryName") final String repositoryName)
+  {
     return super.getRepository(formatAndType, repositoryName);
   }
 }

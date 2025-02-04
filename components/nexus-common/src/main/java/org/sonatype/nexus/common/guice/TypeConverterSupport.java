@@ -50,7 +50,7 @@ public abstract class TypeConverterSupport<T>
       return doConvert(value, toType);
     }
     catch (Exception e) {
-      throw new ProvisionException(String.format("Unable to convert value: %s due to: %s", value, e)); //NON-NLS
+      throw new ProvisionException(String.format("Unable to convert value: %s due to: %s", value, e)); // NON-NLS
     }
   }
 

@@ -29,12 +29,12 @@ public class DecoratorUtils
    * something specific to class A. getDecoratedEntity(c, A.class) would look for and return the A object.
    *
    * @param decoratedObject The decorated object to inspect. This is normally an instance of {@link DecoratedObject}
-   *                        which provides the {@link DecoratedObject#getWrappedObject()} method.
+   *          which provides the {@link DecoratedObject#getWrappedObject()} method.
    *
-   *                        Note that it is not strongly typed to allow for easier calling since normally the type of
-   *                        the object you have is an interface. For example DecoratorUtilsTest#DecoratorTest does not
-   *                        implement DecoratedObject, rather the abstract class DecoratorUtilsTest#DecoratedTest does)
-   * @param clazz           The class type to search for
+   *          Note that it is not strongly typed to allow for easier calling since normally the type of
+   *          the object you have is an interface. For example DecoratorUtilsTest#DecoratorTest does not
+   *          implement DecoratedObject, rather the abstract class DecoratorUtilsTest#DecoratedTest does)
+   * @param clazz The class type to search for
    * @return The instance if found, otherwise null
    */
   @Nullable

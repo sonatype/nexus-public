@@ -26,7 +26,7 @@ public interface FileBlobDeletionIndex
   /**
    * Initialisation of deletion index that should be done in the scope of {@link FileBlobStore} startup
    *
-   * @param metadata  blobstore-related properties
+   * @param metadata blobstore-related properties
    * @param blobStore the {@link FileBlobStore} instance that this deletion index is related to
    */
   void initIndex(PropertiesFile metadata, FileBlobStore blobStore) throws IOException;

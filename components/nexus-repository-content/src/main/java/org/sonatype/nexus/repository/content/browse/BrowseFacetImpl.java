@@ -181,6 +181,13 @@ public class BrowseFacetImpl
         }
 
         BrowseNodeData nodeToDelete = (BrowseNodeData) parentNode;
+
+        // If the node has no assets, check if it has children with assets or components
+        boolean hasChildren = browseNodeManager.hasAnyAssetOrComponentChildren(nodeToDelete.getNodeId());
+        if (hasChildren) {
+          break;
+        }
+
         log.debug("Deleting node with id = {} and path = '{}'", nodeToDelete.getNodeId(), nodeToDelete.getPath());
         deleteByNodeId(nodeToDelete.getNodeId());
       }
@@ -189,8 +196,8 @@ public class BrowseFacetImpl
 
   @Override
   public void deleteByNodeId(final Long nodeId) {
-      log.debug("Deleting browse node for repository = {} and node id = {}", getRepository().getName(), nodeId);
-      browseNodeManager.delete(nodeId);
+    log.debug("Deleting browse node for repository = {} and node id = {}", getRepository().getName(), nodeId);
+    browseNodeManager.delete(nodeId);
   }
 
   @Override
@@ -224,8 +231,11 @@ public class BrowseFacetImpl
           progressLogger.info("Processed {} / {} {} assets in {} ms",
               processed, total, repositoryName, elapsed);
           if (progressUpdater != null) {
-            long percentageComplete = BigDecimal.valueOf(processed).divide(BigDecimal.valueOf(total),
-                2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).longValue();
+            long percentageComplete = BigDecimal.valueOf(processed)
+                .divide(BigDecimal.valueOf(total),
+                    2, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .longValue();
             progressUpdater.accept(
                 String.format("%d%% Complete", percentageComplete));
           }
@@ -244,7 +254,7 @@ public class BrowseFacetImpl
   }
 
   /**
-   * Create browse nodes for an asset and it's component.  Using a cache of component ids to limit component
+   * Create browse nodes for an asset and it's component. Using a cache of component ids to limit component
    * nodes being recreated
    */
   private void createBrowseNodes(final FluentAsset asset, final Map<Integer, Integer> componentsProcessed) {

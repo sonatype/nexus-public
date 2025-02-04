@@ -39,9 +39,10 @@ public class HttpClientConnectionAuthenticationAttributesWithPreemptive
       @JsonProperty("username") final String username,
       @JsonProperty(value = "password", access = Access.WRITE_ONLY) final String password,
       @JsonProperty("ntlmHost") final String ntlmHost,
-      @JsonProperty("ntlmDomain") final String ntlmDomain)
+      @JsonProperty("ntlmDomain") final String ntlmDomain,
+      @JsonProperty("bearerToken") final String bearerToken)
   {
-    super(type, username, password, ntlmHost, ntlmDomain);
+    super(type, username, password, ntlmHost, ntlmDomain, bearerToken);
     this.preemptive = preemptive;
   }
 
@@ -49,7 +50,8 @@ public class HttpClientConnectionAuthenticationAttributesWithPreemptive
       final HttpClientConnectionAuthenticationAttributes auth,
       final Boolean preemptive)
   {
-    super(auth.getType(), auth.getUsername(), auth.getPassword(), auth.getNtlmHost(), auth.getNtlmDomain());
+    super(auth.getType(), auth.getUsername(), auth.getPassword(), auth.getNtlmHost(), auth.getNtlmDomain(),
+        auth.getBearerToken());
     this.preemptive = preemptive;
   }
 

@@ -40,10 +40,7 @@ public class ThrowServlet
 
   private enum Type
   {
-    RUNTIME,
-    ERROR,
-    IO,
-    SERVLET;
+    RUNTIME, ERROR, IO, SERVLET;
 
     static Type parse(final String value) {
       if (value == null) {
@@ -54,8 +51,9 @@ public class ThrowServlet
   }
 
   @Override
-  protected void service(final HttpServletRequest request, final HttpServletResponse response)
-      throws ServletException, IOException
+  protected void service(
+      final HttpServletRequest request,
+      final HttpServletResponse response) throws ServletException, IOException
   {
     Type type = Type.parse(request.getParameter("type"));
     String message = request.getParameter("message");

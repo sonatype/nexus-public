@@ -60,7 +60,8 @@ public class FileDescriptorServiceImplTest
 
   @Test
   public void doNotLogOnGoodFileDescriptors() {
-    FileDescriptorServiceImpl fileDescriptorService = new TestFileDescriptorService(fileDescriptorProvider.with(MINIMUM_FILE_DESCRIPTOR_COUNT));
+    FileDescriptorServiceImpl fileDescriptorService =
+        new TestFileDescriptorService(fileDescriptorProvider.with(MINIMUM_FILE_DESCRIPTOR_COUNT));
     fileDescriptorService.doStart();
     fileDescriptorService.isFileDescriptorLimitOk();
     verify(mockLogger, never()).warn(eq(WARNING_HEADER));

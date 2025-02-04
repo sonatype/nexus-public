@@ -95,6 +95,10 @@ public class TaskComponent
 
   private static final String TASK_RESULT_INTERRUPTED = "Interrupted";
 
+  public static final String PLAN_RECONCILIATION_TASK_ID = "blobstore.planReconciliation";
+
+  public static final String PLAN_RECONCILIATION_TASK_OK_TEXT = " - Plan(s) is ready to run";
+
   private final TaskScheduler taskScheduler;
 
   private final Provider<Validator> validatorProvider;
@@ -126,8 +130,11 @@ public class TaskComponent
   @ExceptionMetered
   @RequiresPermissions("nexus:tasks:read")
   public List<TaskXO> read() {
-    return taskScheduler.listsTasks().stream().filter(taskInfo -> taskInfo.getConfiguration().isVisible())
-        .map(this::asTaskXO).collect(toList());
+    return taskScheduler.listsTasks()
+        .stream()
+        .filter(taskInfo -> taskInfo.getConfiguration().isVisible())
+        .map(this::asTaskXO)
+        .collect(toList());
   }
 
   /**
@@ -263,7 +270,7 @@ public class TaskComponent
     result.setStatusDescription(statusDescription);
     result.setSchedule(getSchedule(taskInfo.getSchedule()));
     result.setLastRun(lastRun);
-    result.setLastRunResult(getLastRunResult(endTaskState, runDuration));
+    result.setLastRunResult(getLastRunResult(taskInfo, endTaskState, runDuration));
     result.setNextRun(externalTaskState.getNextFireTime());
     result.setRunnable(taskState.isWaiting());
     result.setStoppable(taskState.isRunning());
@@ -285,14 +292,19 @@ public class TaskComponent
       result.setStartDate(((Weekly) schedule).getStartAt());
       // expects integers with 1=SUN, 2=MON, etc...
       result.setRecurringDays(
-          ((Weekly) schedule).getDaysToRun().stream().map(dayToRun -> dayToRun.ordinal() + 1).collect(toList())
+          ((Weekly) schedule).getDaysToRun()
+              .stream()
+              .map(dayToRun -> dayToRun.ordinal() + 1)
+              .collect(toList())
               .toArray(new Integer[]{}));
     }
     else if (schedule instanceof Monthly) {
       result.setStartDate(((Monthly) schedule).getStartAt());
       // expects ints, with 999 being the lastDayOfMonth
-      result.setRecurringDays(((Monthly) schedule).getDaysToRun().stream()
-          .map(dayToRun -> dayToRun.isLastDayOfMonth() ? 999 : dayToRun.getDay()).collect(toList())
+      result.setRecurringDays(((Monthly) schedule).getDaysToRun()
+          .stream()
+          .map(dayToRun -> dayToRun.isLastDayOfMonth() ? 999 : dayToRun.getDay())
+          .collect(toList())
           .toArray(new Integer[]{}));
     }
     else if (schedule instanceof Cron) {
@@ -334,14 +346,20 @@ public class TaskComponent
           return taskScheduler.getScheduleFactory().daily(date.getTime());
 
         case "weekly":
-          return taskScheduler.getScheduleFactory().weekly(date.getTime(), Arrays.stream(taskXO.getRecurringDays())
-              .map(recurringDay -> Weekday.values()[shiftWeekDay(recurringDay - 1, startDateClient, startDateServer)])
-              .collect(Collectors.toSet()));
+          return taskScheduler.getScheduleFactory()
+              .weekly(date.getTime(), Arrays.stream(taskXO.getRecurringDays())
+                  .map(recurringDay -> Weekday.values()[shiftWeekDay(recurringDay - 1, startDateClient,
+                      startDateServer)])
+                  .collect(Collectors.toSet()));
 
         case "monthly":
-          return taskScheduler.getScheduleFactory().monthly(date.getTime(), Arrays.stream(taskXO.getRecurringDays())
-              .map(recurringDay -> recurringDay == 999 ? CalendarDay.lastDay() : CalendarDay.day(
-                  shiftMonthDay(recurringDay, startDateClient, startDateServer))).collect(Collectors.toSet()));
+          return taskScheduler.getScheduleFactory()
+              .monthly(date.getTime(), Arrays.stream(taskXO.getRecurringDays())
+                  .map(recurringDay -> recurringDay == 999
+                      ? CalendarDay.lastDay()
+                      : CalendarDay.day(
+                          shiftMonthDay(recurringDay, startDateClient, startDateServer)))
+                  .collect(Collectors.toSet()));
       }
     }
     return taskScheduler.getScheduleFactory().manual();
@@ -409,12 +427,12 @@ public class TaskComponent
       return "advanced";
     }
     else {
-      // FIXME: Is this valid?  There should be no other Schedule types other than handled above
+      // FIXME: Is this valid? There should be no other Schedule types other than handled above
       return schedule.getClass().getName();
     }
   }
 
-  private static String getLastRunResult(final TaskState endState, final Long runDuration) {
+  private static String getLastRunResult(final TaskInfo taskInfo, final TaskState endState, final Long runDuration) {
     StringBuilder lastRunResult = new StringBuilder();
 
     if (endState != null) {
@@ -450,8 +468,16 @@ public class TaskComponent
         }
         lastRunResult.append(seconds).append("s]");
       }
+
+      appendPlanReconciliationText(lastRunResult, endState, taskInfo);
     }
     return lastRunResult.toString();
+  }
+
+  private static void appendPlanReconciliationText(StringBuilder lastRunResult, TaskState endState, TaskInfo taskInfo) {
+    if (OK.equals(endState) && taskInfo.getTypeId().equals(PLAN_RECONCILIATION_TASK_ID)) {
+      lastRunResult.append(PLAN_RECONCILIATION_TASK_OK_TEXT);
+    }
   }
 
   private static TaskTypeXO asTaskTypeXO(final TaskDescriptor taskDescriptor) {

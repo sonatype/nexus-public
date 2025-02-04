@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -92,8 +91,7 @@ public class RealmManagerImpl
       @Named("initial") final Provider<RealmConfiguration> defaults,
       final RealmSecurityManager realmSecurityManager,
       final Map<String, Realm> availableRealms,
-      @Named("${nexus.security.enableAuthorizationRealmManagement:-false}")
-      final boolean enableAuthorizationRealmManagement)
+      @Named("${nexus.security.enableAuthorizationRealmManagement:-false}") final boolean enableAuthorizationRealmManagement)
   {
     this.beanLocator = checkNotNull(beanLocator);
     this.eventManager = checkNotNull(eventManager);
@@ -371,7 +369,8 @@ public class RealmManagerImpl
    */
   private void clearAuthcRealmCacheForUserId(final String userId) {
     // NOTE: we don't need to iterate all the Sec Managers, they use the same Realms, so one is fine.
-    Optional.of(realmSecurityManager)
+    Optional
+        .of(realmSecurityManager)
         .map(RealmSecurityManager::getRealms)
         .orElse(emptyList())
         .stream()
@@ -426,9 +425,9 @@ public class RealmManagerImpl
 
   @Override
   public List<SecurityRealm> getAvailableRealms(final boolean includeHidden) {
-    return StreamSupport.stream(beanLocator.locate(Key.get(Realm.class, Named.class)).spliterator(), false)
+    return StreamSupport
+        .stream(beanLocator.locate(Key.get(Realm.class, Named.class)).spliterator(), false)
         .filter(entry -> {
-          log.info(entry.toString());
           if (includeHidden || enableAuthorizationRealmManagement) {
             return true;
           }
@@ -436,7 +435,8 @@ public class RealmManagerImpl
           return !AuthorizingRealmImpl.NAME.equals(((Named) entry.getKey()).value());
         })
         .map(entry -> new SecurityRealm(((Named) entry.getKey()).value(), entry.getDescription()))
-        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName())).collect(toList());
+        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+        .collect(toList());
   }
 
   @Override

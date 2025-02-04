@@ -36,8 +36,9 @@ public class ProNexusEdition
 
   @Override
   protected boolean doesApply(final Properties properties, final Path workDirPath) {
-    return !properties.getProperty(NEXUS_FEATURES, "").contains(NexusEditionFeature.OSS_FEATURE.featureString) &&
-        !shouldSwitchToOss(workDirPath);
+    return properties.getProperty(NEXUS_FEATURES, "").contains(NexusEditionFeature.PRO_FEATURE.featureString) &&
+        !shouldSwitchToFree(workDirPath) &&
+        !isNexusLoadAs(NEXUS_LOAD_AS_CE_PROP_NAME);
   }
 
   @Override
@@ -47,7 +48,7 @@ public class ProNexusEdition
   }
 
   @Override
-  protected boolean shouldSwitchToOss(final Path workDirPath) {
+  protected boolean shouldSwitchToFree(final Path workDirPath) {
     File proEditionMarker = getEditionMarker(workDirPath, NexusEditionType.PRO);
     boolean switchToOss;
     if (hasNexusLoadAs(NEXUS_LOAD_AS_OSS_PROP_NAME)) {

@@ -30,10 +30,14 @@ public interface NodeAccess
   /**
    * Returns the local-node identifier.
    * <p/>
-   * ID is based on certificate fingerprint digest encoded with "-" every 8 characters for better human readability while
+   * ID is based on certificate fingerprint digest encoded with "-" every 8 characters for better human readability
+   * while
    * remaining terse:
    * <p/>
-   * <pre>05F4743F-A7565846-43FDF9D0-577BE4FB-079289C6</pre>
+   * 
+   * <pre>
+   * 05F4743F-A7565846-43FDF9D0-577BE4FB-079289C6
+   * </pre>
    */
   String getId();
 

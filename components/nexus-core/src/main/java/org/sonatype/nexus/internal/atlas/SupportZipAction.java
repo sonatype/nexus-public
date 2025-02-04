@@ -69,6 +69,9 @@ public class SupportZipAction
   @Option(name = "-Lz", aliases = "--limit-zip", description = "Limit size of ZIP")
   private boolean includeLimitZipSize = false;
 
+  @Option(name = "-al", aliases = "--archivedlog", description = "Include 0, 1, 2, 3 days of archived logs")
+  private int includeArchivedLogs = 0; // defaults to 0
+
   @Inject
   public SupportZipAction(final SupportZipGenerator supportZipGenerator) {
     this.supportZipGenerator = checkNotNull(supportZipGenerator);
@@ -87,6 +90,7 @@ public class SupportZipAction
     request.setAuditLog(includeAuditLog);
     request.setLimitFileSizes(includeLimitFileSizes);
     request.setLimitZipSize(includeLimitZipSize);
+    request.setArchivedLog(includeArchivedLogs);
 
     System.out.println("Generating support ZIP...");
 

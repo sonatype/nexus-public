@@ -36,9 +36,8 @@ public class S3BlobStoreApiBucketSecurity
   @ApiModelProperty("An IAM role to assume in order to access the S3 bucket")
   private final String role;
 
-  @ApiModelProperty(
-      "An AWS STS session token associated with temporary security credentials which grant access to the S3 bucket")
-  private final String sessionToken;
+  @ApiModelProperty("An AWS STS session token associated with temporary security credentials which grant access to the S3 bucket")
+  private String sessionToken;
 
   @JsonCreator
   public S3BlobStoreApiBucketSecurity(
@@ -71,5 +70,9 @@ public class S3BlobStoreApiBucketSecurity
 
   public void setSecretAccessKey(final String secretAccessKey) {
     this.secretAccessKey = secretAccessKey;
+  }
+
+  public void setSessionToken(final String sessionToken) {
+    this.sessionToken = sessionToken;
   }
 }

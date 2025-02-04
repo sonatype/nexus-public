@@ -21,7 +21,7 @@ import org.junit.Test;
  * Tests for various {@link NumberSequence} implementations.
  */
 public class NumberSequenceTest
-  extends TestSupport
+    extends TestSupport
 {
   @Test
   public void testConstantSequence() {

@@ -26,7 +26,8 @@ import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
 
-public class RawGroupRecipeTest extends RawRecipeTestSupport
+public class RawGroupRecipeTest
+    extends RawRecipeTestSupport
 {
   @Mock
   private Repository rawGroupRepository;
@@ -43,11 +44,8 @@ public class RawGroupRecipeTest extends RawRecipeTestSupport
 
   @Before
   public void setup() {
-    underTest = new RawGroupRecipe(new GroupType(), new RawFormat());
-    mockFacets(underTest);
-    mockHandlers(underTest);
-    underTest.setGroupHandler(groupHandler);
-    underTest.setGroupFacet(groupFacetProvider);
+    underTest = new RawGroupRecipe(new GroupType(), new RawFormat(), groupFacetProvider, groupHandler);
+    mockDependencies(underTest);
   }
 
   @Test

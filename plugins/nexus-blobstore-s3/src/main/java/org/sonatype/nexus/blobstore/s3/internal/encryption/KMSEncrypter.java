@@ -20,6 +20,7 @@ import com.amazonaws.services.s3.model.AbstractPutObjectRequest;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.SSEAwsKeyManagementParams;
+import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.empty;
@@ -38,9 +39,16 @@ public class KMSEncrypter
 
   public static final String NAME = "KMS Managed Encryption";
 
+  @VisibleForTesting
+  SSEAwsKeyManagementParams getKmsParameters() {
+    return kmsParameters;
+  }
+
   private final SSEAwsKeyManagementParams kmsParameters;
 
-  public KMSEncrypter() { this(empty()); }
+  public KMSEncrypter() {
+    this(empty());
+  }
 
   public KMSEncrypter(final Optional<String> kmsId) {
     this.kmsParameters = checkNotNull(kmsId)

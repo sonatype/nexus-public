@@ -116,22 +116,24 @@ public class ElasticSearchIndexServiceImpl
    * @param indexSettingsContributors the index settings contributors
    * @param eventManager the event manager
    * @param bulkCapacity how many bulk requests to batch before they're automatically flushed (default: 1000)
-   * @param concurrentRequests how many bulk requests to execute concurrently (default: 1; 0 means execute synchronously)
+   * @param concurrentRequests how many bulk requests to execute concurrently (default: 1; 0 means execute
+   *          synchronously)
    * @param flushInterval how long to wait in milliseconds between flushing bulk requests (default: 0, instantaneous)
    * @param calmTimeout timeout in ms to wait for a calm period
    * @param batchingThreads This is the number of threads 'n' batching up index updates into 'n' BulkProcessors.
-   *                        That is, the number of independent batches to accumulate index updates in.
+   *          That is, the number of independent batches to accumulate index updates in.
    */
   @Inject
-  public ElasticSearchIndexServiceImpl(final Provider<Client> client, // NOSONAR
-                                       final IndexNamingPolicy indexNamingPolicy,
-                                       final List<IndexSettingsContributor> indexSettingsContributors,
-                                       final EventManager eventManager,
-                                       @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
-                                       @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
-                                       @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval,
-                                       @Named("${nexus.elasticsearch.calmTimeout:-3000}") final int calmTimeout,
-                                       @Named("${nexus.elasticsearch.batching.threads.count:-1}") final int batchingThreads)
+  public ElasticSearchIndexServiceImpl(
+      final Provider<Client> client, // NOSONAR
+      final IndexNamingPolicy indexNamingPolicy,
+      final List<IndexSettingsContributor> indexSettingsContributors,
+      final EventManager eventManager,
+      @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
+      @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
+      @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval,
+      @Named("${nexus.elasticsearch.calmTimeout:-3000}") final int calmTimeout,
+      @Named("${nexus.elasticsearch.batching.threads.count:-1}") final int batchingThreads)
   {
     checkState(batchingThreads > 0,
         "'nexus.elasticsearch.batching.threads.count' must be positive.");
@@ -146,10 +148,16 @@ public class ElasticSearchIndexServiceImpl
     createBulkProcessorsAndExecutors(bulkCapacity, concurrentRequests, flushInterval, batchingThreads);
   }
 
-  private void createBulkProcessorsAndExecutors(final int bulkCapacity,
-                                                final int concurrentRequests,
-                                                final int flushInterval,
-                                                final int batchingThreads)
+  @VisibleForTesting
+  void setBulkProcessorToExecutors(final Map<Integer, Entry<BulkProcessor, ExecutorService>> bulkProcessorToExecutors) {
+    this.bulkProcessorToExecutors = bulkProcessorToExecutors;
+  }
+
+  private void createBulkProcessorsAndExecutors(
+      final int bulkCapacity,
+      final int concurrentRequests,
+      final int flushInterval,
+      final int batchingThreads)
   {
     Map<Integer, Entry<BulkProcessor, ExecutorService>> bulkProcessorAndThreadPools = new HashMap<>();
     for (int count = 0; count < batchingThreads; ++count) {
@@ -287,26 +295,32 @@ public class ElasticSearchIndexServiceImpl
     }
     updateCount.getAndIncrement();
     log.debug("Adding to index document {} from {}: {}", identifier, repository, json);
-    client.get().prepareIndex(indexName, TYPE, identifier).setSource(json).execute(
-        new ActionListener<IndexResponse>() {
-          @Override
-          public void onResponse(final IndexResponse indexResponse) {
-            log.debug("successfully added {} {} to index {}: {}", TYPE, identifier, indexName, indexResponse);
-          }
-          @Override
-          public void onFailure(final Throwable e) {
-            log.error(
-              "failed to add {} {} to index {}; this is a sign that the Elasticsearch index thread pool is overloaded",
-              TYPE, identifier, indexName, e);
-          }
-        });
+    client.get()
+        .prepareIndex(indexName, TYPE, identifier)
+        .setSource(json)
+        .execute(
+            new ActionListener<IndexResponse>()
+            {
+              @Override
+              public void onResponse(final IndexResponse indexResponse) {
+                log.debug("successfully added {} {} to index {}: {}", TYPE, identifier, indexName, indexResponse);
+              }
+
+              @Override
+              public void onFailure(final Throwable e) {
+                log.error(
+                    "failed to add {} {} to index {}; this is a sign that the Elasticsearch index thread pool is overloaded",
+                    TYPE, identifier, indexName, e);
+              }
+            });
   }
 
   @Override
-  public <T> List<Future<Void>> bulkPut(final Repository repository,
-                                        final Iterable<T> components,
-                                        final Function<T, String> identifierProducer,
-                                        final Function<T, String> jsonDocumentProducer)
+  public <T> List<Future<Void>> bulkPut(
+      final Repository repository,
+      final Iterable<T> components,
+      final Function<T, String> identifierProducer,
+      final Function<T, String> jsonDocumentProducer)
   {
     checkNotNull(repository);
     checkNotNull(components);
@@ -387,7 +401,8 @@ public class ElasticSearchIndexServiceImpl
         }
       });
       return JsonUtils.from(root);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       logger.debug("Error during filter Conan Asset Attributes for json {}", json);
       return json;
     }
@@ -396,7 +411,8 @@ public class ElasticSearchIndexServiceImpl
   private IndexRequest createIndexRequest(final String indexName, final String identifier, final String json) {
     return client.get()
         .prepareIndex(indexName, TYPE, identifier)
-        .setSource(json).request();
+        .setSource(json)
+        .request();
   }
 
   @Override
@@ -408,16 +424,18 @@ public class ElasticSearchIndexServiceImpl
       return;
     }
     log.debug("Removing from index document {} from {}", identifier, repository);
-    client.get().prepareDelete(indexName, TYPE, identifier).execute(new ActionListener<DeleteResponse>() {
+    client.get().prepareDelete(indexName, TYPE, identifier).execute(new ActionListener<DeleteResponse>()
+    {
       @Override
       public void onResponse(final DeleteResponse deleteResponse) {
         log.debug("successfully removed {} {} from index {}: {}", TYPE, identifier, indexName, deleteResponse);
       }
+
       @Override
       public void onFailure(final Throwable e) {
         log.error(
-          "failed to remove {} {} from index {}; this is a sign that the Elasticsearch index thread pool is overloaded",
-          TYPE, identifier, indexName, e);
+            "failed to remove {} {} from index {}; this is a sign that the Elasticsearch index thread pool is overloaded",
+            TYPE, identifier, indexName, e);
       }
     });
   }
@@ -438,7 +456,7 @@ public class ElasticSearchIndexServiceImpl
       identifiers.forEach(id -> {
         log.debug("Bulk removing from index document {} from {}", id, repository);
         final DeleteRequest deleteRequest = client.get().prepareDelete(indexName, TYPE, id).request();
-        executorService.submit(new BulkProcessorUpdater<>(bulkProcessor, deleteRequest));  //NOSONAR
+        executorService.submit(new BulkProcessorUpdater<>(bulkProcessor, deleteRequest)); // NOSONAR
       });
     }
     else {
@@ -459,13 +477,13 @@ public class ElasticSearchIndexServiceImpl
         toDelete.getHits().forEach(hit -> {
           log.debug("Bulk removing from index document {} from {}", hit.getId(), hit.index());
           final DeleteRequest request = client.get().prepareDelete(hit.index(), TYPE, hit.getId()).request();
-          executorService.submit(new BulkProcessorUpdater<>(bulkProcessor, request)); //NOSONAR
+          executorService.submit(new BulkProcessorUpdater<>(bulkProcessor, request)); // NOSONAR
         });
       });
     }
 
     if (!periodicFlush) {
-      executorService.submit(new BulkProcessorFlusher(bulkProcessor)); //NOSONAR
+      executorService.submit(new BulkProcessorFlusher(bulkProcessor)); // NOSONAR
     }
   }
 
@@ -559,8 +577,7 @@ public class ElasticSearchIndexServiceImpl
   }
 
   private boolean allIndicesReady() {
-    Map<String, ClusterIndexHealth>
-        indexHealth =
+    Map<String, ClusterIndexHealth> indexHealth =
         client.get().admin().cluster().health(new ClusterHealthRequest()).actionGet().getIndices();
     for (ClusterIndexHealth health : indexHealth.values()) {
       if (health.getStatus() != GREEN) {
@@ -572,9 +589,7 @@ public class ElasticSearchIndexServiceImpl
     return true;
   }
 
-  private void waitFor(final Callable<Boolean> function)
-      throws InterruptedException
-  {
+  private void waitFor(final Callable<Boolean> function) throws InterruptedException {
     Thread.yield();
     long end = System.currentTimeMillis() + calmTimeout;
     do {
@@ -586,7 +601,7 @@ public class ElasticSearchIndexServiceImpl
       catch (final InterruptedException e) {
         throw e; // cancelled
       }
-      catch (final Exception e) { //NOSONAR
+      catch (final Exception e) { // NOSONAR
         log.debug("Exception thrown whilst waiting", e);
       }
       Thread.sleep(100);

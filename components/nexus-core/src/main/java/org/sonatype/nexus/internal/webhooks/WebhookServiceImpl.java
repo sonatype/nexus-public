@@ -138,8 +138,9 @@ public class WebhookServiceImpl
   /**
    * Generate HMAC signature (HEX encoded) of given body using secret as key.
    */
-  private static String sign(final String body, final String secret)
-      throws NoSuchAlgorithmException, InvalidKeyException
+  private static String sign(
+      final String body,
+      final String secret) throws NoSuchAlgorithmException, InvalidKeyException
   {
     SecretKeySpec key = new SecretKeySpec(secret.getBytes(), HMAC_SHA1);
     Mac mac = Mac.getInstance(HMAC_SHA1);
@@ -198,7 +199,7 @@ public class WebhookServiceImpl
 
     log.debug("Sending POST request: {}", httpPost);
     try (CloseableHttpClient httpClient = httpClientProvider.get();
-         CloseableHttpResponse putResponse = httpClient.execute(httpPost)) {
+        CloseableHttpResponse putResponse = httpClient.execute(httpPost)) {
 
       StatusLine status = putResponse.getStatusLine();
       log.debug("Response status: {}", status);

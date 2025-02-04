@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 
 public class NexusEditionFactory
@@ -25,14 +26,22 @@ public class NexusEditionFactory
   }
 
   private static final List<NexusEdition> editions =
-      ImmutableList.of(new ProNexusEdition(), new OssNexusEdition());
+      ImmutableList.of(new ProNexusEdition(), new CommunityNexusEdition());
 
   public static void selectActiveEdition(final Properties properties, final Path workDirPath) {
-    NexusEdition nexusEdition =
-        editions.stream().filter(edition -> edition.applies(properties, workDirPath)).findFirst().orElse(null);
-    if (nexusEdition == null) {
-      nexusEdition = new OssNexusEdition();
-    }
+    NexusEdition nexusEdition = findActiveEdition(editions, properties, workDirPath);
     nexusEdition.apply(properties, workDirPath);
+  }
+
+  @VisibleForTesting
+  static NexusEdition findActiveEdition(
+      final List<NexusEdition> editions,
+      final Properties properties,
+      final Path workDirPath)
+  {
+    return editions.stream()
+        .filter(edition -> edition.applies(properties, workDirPath))
+        .findFirst()
+        .orElse(new OpenCoreNexusEdition());
   }
 }

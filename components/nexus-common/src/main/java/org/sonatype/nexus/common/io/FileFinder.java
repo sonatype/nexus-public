@@ -28,7 +28,12 @@ import org.slf4j.LoggerFactory;
 public class FileFinder
 {
   private static final Logger log = LoggerFactory.getLogger(FileFinder.class);
-  public static Optional<Path> findLatestTimestampedFile(Path directoryPath, String prefix, String suffix) throws IOException {
+
+  public static Optional<Path> findLatestTimestampedFile(
+      Path directoryPath,
+      String prefix,
+      String suffix) throws IOException
+  {
     try (Stream<Path> stream = Files.list(directoryPath)) {
       Predicate<Path> nameCheck = path -> matchesPattern(path, prefix, suffix);
       Comparator<Path> timestampComparator = Comparator.comparingLong(path -> getFileTimestamp(path, prefix, suffix));

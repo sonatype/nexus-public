@@ -219,10 +219,14 @@ public class ApiKeyStoreV2ImplTest
     underTest.persistApiKey(NUGET, PRINCIPALS, KEY, null);
 
     assertThat(table()).hasNumberOfRows(1)
-        .column("domain").hasValues(NUGET)
-        .column("username").hasValues(BOB)
-        .column("access_key").hasValues(accessKey(KEY))
-        .column("secret").hasValues("0");
+        .column("domain")
+        .hasValues(NUGET)
+        .column("username")
+        .hasValues(BOB)
+        .column("access_key")
+        .hasValues(accessKey(KEY))
+        .column("secret")
+        .hasValues("0");
 
     verify(secretsService).encrypt(NUGET, secret(KEY), BOB);
   }
@@ -236,10 +240,14 @@ public class ApiKeyStoreV2ImplTest
     underTest.persistApiKey(NUGET, PRINCIPALS, KEY2, null);
 
     assertThat(table()).hasNumberOfRows(1)
-        .column("domain").hasValues(NUGET)
-        .column("username").hasValues(BOB)
-        .column("access_key").hasValues(accessKey(KEY2))
-        .column("secret").hasValues("1");
+        .column("domain")
+        .hasValues(NUGET)
+        .column("username")
+        .hasValues(BOB)
+        .column("access_key")
+        .hasValues(accessKey(KEY2))
+        .column("secret")
+        .hasValues("1");
   }
 
   @Test
@@ -268,10 +276,14 @@ public class ApiKeyStoreV2ImplTest
     verifyNoInteractions(secretsService);
 
     assertThat(table()).hasNumberOfRows(1)
-        .column("domain").hasValues(NUGET)
-        .column("username").hasValues(BOB)
-        .column("access_key").hasValues(accessKey(KEY))
-        .column("secret").hasValues("0");
+        .column("domain")
+        .hasValues(NUGET)
+        .column("username")
+        .hasValues(BOB)
+        .column("access_key")
+        .hasValues(accessKey(KEY))
+        .column("secret")
+        .hasValues("0");
   }
 
   @Test

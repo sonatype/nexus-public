@@ -30,7 +30,7 @@ public class ZipSupport
   public static void zipFiles(Path path, List<String> filesToZip, String zipFileName) throws IOException {
     byte[] buffer = new byte[1024];
     try (FileOutputStream fos = new FileOutputStream(zipFileName);
-         ZipOutputStream zos = new ZipOutputStream(fos)) {
+        ZipOutputStream zos = new ZipOutputStream(fos)) {
       for (String fileName : filesToZip) {
         File file = path.resolve(fileName).toFile();
         if (!file.exists()) {

@@ -47,7 +47,8 @@ public class SupportBundle
       TASKLOG,
       AUDITLOG,
       JMX,
-      REPLICATIONLOG
+      REPLICATIONLOG,
+      ARCHIVEDLOG
     }
 
     /**

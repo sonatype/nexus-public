@@ -37,7 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.security.BreadActions.READ;
+import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Tests for {@link ContentAuthPluginScript}.
@@ -80,7 +80,8 @@ public class ContentAuthPluginScriptTest
     when(variableResolverAdapter.fromSourceLookup(eq(sourceLookup), anyMap())).thenReturn(variableSource);
     when(repositoryManager.findContainingGroups(any())).thenReturn(Collections.emptyList());
     underTest = new ContentAuthPluginScript(subject, contentPermissionChecker,
-        variableResolverAdapterManager, repositoryManager, true) {
+        variableResolverAdapterManager, repositoryManager, true)
+    {
       @Override
       protected SourceLookup getSourceLookup() {
         return sourceLookup;
@@ -95,9 +96,11 @@ public class ContentAuthPluginScriptTest
         .put("repository_name", REPOSITORY_NAME)
         .put("assets", Collections.singletonList(Collections.singletonMap("name", PATH)))
         .build());
-    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, READ, variableSource)).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource))
+        .thenReturn(true);
     assertThat(underTest.run(), is(true));
-    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, READ, variableSource);
+    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE,
+        variableSource);
   }
 
   @Test
@@ -107,9 +110,11 @@ public class ContentAuthPluginScriptTest
         .put("repository_name", REPOSITORY_NAME)
         .put("assets", Collections.singletonList(Collections.singletonMap("name", PATH)))
         .build());
-    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, READ, variableSource)).thenReturn(false);
+    when(contentPermissionChecker.isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE, variableSource))
+        .thenReturn(false);
     assertThat(underTest.run(), is(false));
-    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, READ, variableSource);
+    verify(contentPermissionChecker, times(1)).isPermitted(Collections.singleton(REPOSITORY_NAME), FORMAT, BROWSE,
+        variableSource);
   }
 
   @Test

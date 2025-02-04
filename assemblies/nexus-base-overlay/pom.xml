@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.76.0-SNAPSHOT</version>
+    <version>3.77.0-08</version>
   </parent>
 
   <artifactId>nexus-base-overlay</artifactId>
@@ -91,7 +91,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-oss-edition</artifactId>
+      <artifactId>nexus-open-core-edition</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>

@@ -45,7 +45,8 @@ public class CoordinateContentSelectorHealthCheck
 
   private static final String HEALTHY_MESSAGE = "No content selectors using coordinates found.";
 
-  private static final String UNHEALTHY_MESSAGE = "Found %d content %s with coordinates, these will be deprecated soon: %s";
+  private static final String UNHEALTHY_MESSAGE =
+      "Found %d content %s with coordinates, these will be deprecated soon: %s";
 
   private final SelectorManager selectorManager;
 
@@ -56,13 +57,15 @@ public class CoordinateContentSelectorHealthCheck
 
   @Override
   protected Result check() {
-    List<SelectorConfiguration> coordinateSelectors = selectorManager.browse().stream()
+    List<SelectorConfiguration> coordinateSelectors = selectorManager.browse()
+        .stream()
         .filter(SelectorConfiguration::hasCoordinates)
         .collect(toList());
 
     if (coordinateSelectors.isEmpty()) {
       return Result.healthy(HEALTHY_MESSAGE);
-    } else {
+    }
+    else {
       String coordinateSelectorNames = coordinateSelectors.stream()
           .map(SelectorConfiguration::getName)
           .sorted()

@@ -25,6 +25,8 @@ Ext.define('NX.onboarding.controller.Onboarding', {
     'NX.Messages',
     'NX.I18n',
     'NX.onboarding.step.OnboardingStartStep',
+    'NX.onboarding.step.CommunityDiscoverStep',
+    'NX.onboarding.step.CommunityEulaStep',
     'NX.onboarding.step.ChangeAdminPasswordStep',
     'NX.onboarding.step.ConfigureAnonymousAccessStep',
     'NX.onboarding.step.OnboardingCompleteStep',
@@ -36,7 +38,9 @@ Ext.define('NX.onboarding.controller.Onboarding', {
     'ChangeAdminPasswordScreen',
     'ConfigureAnonymousAccessScreen',
     'OnboardingCompleteScreen',
-    'OnboardingModal'
+    'OnboardingModal',
+    'CommunityEulaScreen',
+    'CommunityDiscoverScreen'
   ],
   stores: [
     'Onboarding'

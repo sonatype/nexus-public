@@ -48,8 +48,8 @@ public class H2TaskSupportTest
   @Test
   public void testExportDatabase_HappyPath() throws Exception {
     try (ResultSet resultSet = mock(ResultSet.class);
-         PreparedStatement statement = mock(PreparedStatement.class);
-         Connection connection = mock(Connection.class)) {
+        PreparedStatement statement = mock(PreparedStatement.class);
+        Connection connection = mock(Connection.class)) {
       when(connection.prepareStatement(any())).thenReturn(statement);
       when(statement.getResultSet()).thenReturn(resultSet);
 
@@ -67,7 +67,7 @@ public class H2TaskSupportTest
   public void testProcessResults_HappyPath() throws Exception {
     // Mock the FileWriter construction to avoid unplanned I/O.
     try (ResultSet resultSet = mock(ResultSet.class);
-         MockedConstruction<FileWriter> mockFileWriter = mockConstruction(FileWriter.class)) {
+        MockedConstruction<FileWriter> mockFileWriter = mockConstruction(FileWriter.class)) {
       H2TaskSupport taskSupport = spy(new H2TaskSupport());
       doReturn(-2L).when(taskSupport).writeLines(eq(resultSet), isNull(), anyInt(), anyInt(), any());
 
@@ -82,7 +82,7 @@ public class H2TaskSupportTest
   public void testWriteLines_HappyPath() throws Exception {
     Consumer<String> testProgress = spy(TestProgress.class);
     try (ResultSet resultSet = mock(ResultSet.class);
-          BufferedWriter buffer = mock(BufferedWriter.class)) {
+        BufferedWriter buffer = mock(BufferedWriter.class)) {
 
       // Just process one line
       when(resultSet.next()).thenReturn(true, false);
@@ -118,7 +118,7 @@ public class H2TaskSupportTest
   @Test
   public void testRollback_HappyPath() throws Exception {
     try (Connection connection = mock(Connection.class);
-         PreparedStatement statement = mock(PreparedStatement.class)) {
+        PreparedStatement statement = mock(PreparedStatement.class)) {
       when(connection.prepareStatement(any())).thenReturn(statement);
 
       H2TaskSupport taskSupport = spy(new H2TaskSupport());
@@ -155,10 +155,13 @@ public class H2TaskSupportTest
       verify(connection, times(1)).setAutoCommit(true);
 
       taskSupport.resetAutoCommit(connection, false);
-      verify(connection, times(1)).setAutoCommit(false);    }
+      verify(connection, times(1)).setAutoCommit(false);
+    }
   }
 
-  private static class TestProgress implements Consumer<String> {
+  private static class TestProgress
+      implements Consumer<String>
+  {
     @Override
     public void accept(final String s) {
       // Ignore

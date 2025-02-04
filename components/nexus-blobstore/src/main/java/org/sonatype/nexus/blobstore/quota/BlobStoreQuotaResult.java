@@ -27,9 +27,10 @@ public class BlobStoreQuotaResult
 
   private final String blobStoreName;
 
-  public BlobStoreQuotaResult(final boolean isViolation,
-                              final String blobStoreName,
-                              final String humanReadableMessage)
+  public BlobStoreQuotaResult(
+      final boolean isViolation,
+      final String blobStoreName,
+      final String humanReadableMessage)
   {
     this.isViolation = isViolation;
     this.blobStoreName = checkNotNull(blobStoreName);

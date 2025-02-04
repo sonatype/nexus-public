@@ -20,7 +20,7 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Retention(RUNTIME)
-@Target({PACKAGE, TYPE })
+@Target({PACKAGE, TYPE})
 public @interface FeatureFlagGroup
 {
   FeatureFlag[] value();

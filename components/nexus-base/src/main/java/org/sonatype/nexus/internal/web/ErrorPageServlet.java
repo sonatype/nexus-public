@@ -94,8 +94,7 @@ public class ErrorPageServlet
   private final URL template;
 
   @Inject
-  public ErrorPageServlet(final TemplateHelper templateHelper, final XFrameOptions xFrameOptions)
-  {
+  public ErrorPageServlet(final TemplateHelper templateHelper, final XFrameOptions xFrameOptions) {
     this.templateHelper = checkNotNull(templateHelper);
     this.xFrameOptions = checkNotNull(xFrameOptions);
     template = getClass().getResource(TEMPLATE_RESOURCE);
@@ -104,8 +103,9 @@ public class ErrorPageServlet
 
   @SuppressWarnings("unused")
   @Override
-  protected void service(final HttpServletRequest request, final HttpServletResponse response)
-      throws ServletException, IOException
+  protected void service(
+      final HttpServletRequest request,
+      final HttpServletResponse response) throws ServletException, IOException
   {
     ServletHelper.addNoCacheResponseHeaders(response);
 

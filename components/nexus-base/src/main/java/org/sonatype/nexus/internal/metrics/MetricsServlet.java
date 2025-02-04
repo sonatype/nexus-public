@@ -40,7 +40,7 @@ import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
  */
 @Singleton
 public class MetricsServlet
-  extends com.codahale.metrics.servlets.MetricsServlet
+    extends com.codahale.metrics.servlets.MetricsServlet
 {
   @Inject
   public MetricsServlet(final MetricRegistry registry) {
@@ -59,8 +59,9 @@ public class MetricsServlet
   }
 
   @Override
-  protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-      throws ServletException, IOException
+  protected void doGet(
+      final HttpServletRequest req,
+      final HttpServletResponse resp) throws ServletException, IOException
   {
     boolean download = Boolean.parseBoolean(req.getParameter("download"));
     if (download) {

@@ -34,8 +34,8 @@ public interface CUserRoleMappingDAO
   void create(CUserRoleMappingData mapping);
 
   Optional<CUserRoleMappingData> read(
-      @Param("userId") String userId,   // usual case-sensitive userId, non-null when doing usual search
-      @Param("userLo") String userLo,   // lowercase userId, non-null when doing case-insensitive search
+      @Param("userId") String userId, // usual case-sensitive userId, non-null when doing usual search
+      @Param("userLo") String userLo, // lowercase userId, non-null when doing case-insensitive search
       @Param("source") String source);
 
   default Optional<CUserRoleMappingData> read(String userId, String source) {
@@ -45,8 +45,8 @@ public interface CUserRoleMappingDAO
   boolean update(CUserRoleMappingData mapping);
 
   boolean delete(
-      @Param("userId") String userId,   // usual case-sensitive userId, non-null when doing usual search
-      @Param("userLo") String userLo,   // lowercase userId, non-null when doing case-insensitive search
+      @Param("userId") String userId, // usual case-sensitive userId, non-null when doing usual search
+      @Param("userLo") String userLo, // lowercase userId, non-null when doing case-insensitive search
       @Param("source") String source);
 
   default boolean delete(String userId, String source) {

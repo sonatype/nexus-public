@@ -77,7 +77,7 @@ public class FileRawObjectAccess
 
   @Override
   public void putRawObject(final Path path, final InputStream input) {
-    try(InputStream in = input) {
+    try (InputStream in = input) {
       File rawObjectFile = storageDir.resolve(path).toFile();
       FileUtils.copyToFile(in, rawObjectFile);
     }
@@ -92,10 +92,12 @@ public class FileRawObjectAccess
       File[] files = dir.listFiles(fileFilter);
       if (files != null) {
         return stream(files).sorted();
-      } else {
+      }
+      else {
         throw new IOException("Unexpected exception reading directory " + dir);
       }
-    } else {
+    }
+    else {
       log.debug("Path {} is not a directory", dirPath);
       return Stream.empty();
     }
@@ -131,7 +133,8 @@ public class FileRawObjectAccess
 
         deleteEmptyParentDirectories(rawObjectDir);
       }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }

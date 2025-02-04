@@ -16,9 +16,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
-import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.SECRETS_FILE;
 
 /**
- * Default implementation for  {@link EncryptionKeySource} This implementation uses a JSON file to read the secret keys
+ * Default implementation for {@link EncryptionKeySource} This implementation uses a JSON file to read the secret keys
  * expected to be used in nexus
  */
 @Named
@@ -109,7 +109,8 @@ public class EncryptionKeySourceImpl
     catch (IOException e) {
       throw new UncheckedIOException(
           String.format("Unable to read secret encryption keys from '%s'. Cause: %s", secretsFilePath,
-              e.getMessage()), e);
+              e.getMessage()),
+          e);
     }
   }
 

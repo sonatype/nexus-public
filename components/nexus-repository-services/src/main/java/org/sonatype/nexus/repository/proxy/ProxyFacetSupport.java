@@ -86,7 +86,7 @@ public abstract class ProxyFacetSupport
 
   public static final String BYPASS_HTTP_ERRORS_HEADER_VALUE = "true";
 
-  private static final String PROXY_REMOTE_FETCH_SKIP_MARKER =
+  public static final String PROXY_REMOTE_FETCH_SKIP_MARKER =
       "proxy.remote-fetch.skip";
 
   @VisibleForTesting
@@ -168,9 +168,9 @@ public abstract class ProxyFacetSupport
    * Configures content {@link Cooperation} for this proxy; a timeout of 0 means wait indefinitely.
    *
    * @param cooperationEnabled should threads attempt to cooperate when downloading resources
-   * @param majorTimeout       when waiting for the main I/O request
-   * @param minorTimeout       when waiting for any I/O dependencies
-   * @param threadsPerKey      limits the threads waiting under each key
+   * @param majorTimeout when waiting for the main I/O request
+   * @param minorTimeout when waiting for any I/O dependencies
+   * @param threadsPerKey limits the threads waiting under each key
    * @since 3.4
    */
   @Inject
@@ -210,6 +210,14 @@ public abstract class ProxyFacetSupport
         .threadsPerKey(threadsPerKey);
   }
 
+  @Inject
+  @Nullable
+  private ThrottlerInterceptor throttlerInterceptor;
+
+  @Inject
+  @Nullable
+  private GracePeriodInterceptor gracePeriodInterceptor;
+
   @VisibleForTesting
   void buildCooperation() {
     buildCooperation(getRepository());
@@ -239,8 +247,7 @@ public abstract class ProxyFacetSupport
 
     cacheControllerHolder = new CacheControllerHolder(
         new CacheController((int) config.getContentMaxAge().getSeconds(), null),
-        new CacheController((int) config.getMetadataMaxAge().getSeconds(), null)
-    );
+        new CacheController((int) config.getMetadataMaxAge().getSeconds(), null));
 
     // normalize URL path to contain trailing slash
     config.remoteUrl = normalizeURLPath(config.remoteUrl);
@@ -303,6 +310,20 @@ public abstract class ProxyFacetSupport
     }
     boolean remoteFetchSkipMarker = isRemoteFetchSkipMarkerEnabled(context);
     if (remoteFetchSkipMarker) {
+      return content;
+    }
+    if (gracePeriodInterceptor != null &&
+        gracePeriodInterceptor.isInGracePeriod() &&
+        throttlerInterceptor != null &&
+        throttlerInterceptor.shouldBlock()) {
+      getEventManager().post(new ProxyThrottledRequestEvent(false));
+    }
+    if (gracePeriodInterceptor != null &&
+        !gracePeriodInterceptor.isInGracePeriod() &&
+        throttlerInterceptor != null &&
+        throttlerInterceptor.shouldBlock()) {
+      context.getAttributes().set(PROXY_REMOTE_FETCH_SKIP_MARKER, TRUE);
+      getEventManager().post(new ProxyThrottledRequestEvent(true));
       return content;
     }
     return get(context, content);
@@ -568,7 +589,7 @@ public abstract class ProxyFacetSupport
     return null;
   }
 
-  protected String encodeUrl(final String url) throws UnsupportedEncodingException { //NOSONAR
+  protected String encodeUrl(final String url) throws UnsupportedEncodingException { // NOSONAR
     // some formats can use special characters in url
     // override this method if necessary
     return url;
@@ -608,8 +629,10 @@ public abstract class ProxyFacetSupport
   /**
    * Execute http client request.
    */
-  protected HttpResponse execute(final Context context, final HttpClient client, final HttpRequestBase request)
-      throws IOException
+  protected HttpResponse execute(
+      final Context context,
+      final HttpClient client,
+      final HttpRequestBase request) throws IOException
   {
     return client.execute(request);
   }
@@ -642,8 +665,10 @@ public abstract class ProxyFacetSupport
   /**
    * Refresh the asset's cache status because the upstream server has indicated that the content has not changed.
    */
-  protected abstract void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo)
-      throws IOException;
+  protected abstract void indicateVerified(
+      final Context context,
+      final Content content,
+      final CacheInfo cacheInfo) throws IOException;
 
   /**
    * Provide the URL of the content relative to the repository root.

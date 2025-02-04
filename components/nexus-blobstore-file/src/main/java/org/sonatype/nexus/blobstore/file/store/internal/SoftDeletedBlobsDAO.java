@@ -32,8 +32,8 @@ public interface SoftDeletedBlobsDAO
    * Create new record
    *
    * @param sourceBlobStoreName the blobstore name this record is related to
-   * @param blobId              string representation of {@link BlobId}
-   * @param datePathRef         the {@link OffsetDateTime} of the blob creation
+   * @param blobId string representation of {@link BlobId}
+   * @param datePathRef the {@link OffsetDateTime} of the blob creation
    */
   void createRecord(
       @Param("sourceBlobStoreName") String sourceBlobStoreName,
@@ -43,7 +43,7 @@ public interface SoftDeletedBlobsDAO
   /**
    * Return all records stored in DB, the continuationToken to be used when amount more than single page (>1000 rows)
    *
-   * @param continuationToken   the record id used for pagination
+   * @param continuationToken the record id used for pagination
    * @param sourceBlobStoreName the blobstore name these records are related to
    * @return all records related to provided sourceBlobStoreName
    */
@@ -56,7 +56,7 @@ public interface SoftDeletedBlobsDAO
    * Delete single record by provided 'blobId' related to specified blobstore name
    *
    * @param sourceBlobStoreName the blobstore name this record is related to
-   * @param blobId              {@link BlobId} of record that should be deleted
+   * @param blobId {@link BlobId} of record that should be deleted
    */
   void deleteRecord(
       @Param("sourceBlobStoreName") String sourceBlobStoreName,
@@ -66,7 +66,7 @@ public interface SoftDeletedBlobsDAO
    * Delete all records related to provided blobstore name
    *
    * @param sourceBlobStoreName the blobstore name these records are related to
-   * @param limit               maximum amount of rows to be deleted
+   * @param limit maximum amount of rows to be deleted
    * @return numbers of deleted rows
    */
   int deleteAllRecords(

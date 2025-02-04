@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.config.memory;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.sonatype.nexus.security.config.CUserRoleMapping;
@@ -101,6 +102,21 @@ public class MemoryCUserRoleMapping
   @Override
   public void setVersion(final String version) {
     this.version = version;
+  }
+
+  public MemoryCUserRoleMapping withRoles(final String... roles) {
+    setRoles(new HashSet<>(Set.of(roles)));
+    return this;
+  }
+
+  public MemoryCUserRoleMapping withSource(final String source) {
+    this.source = source;
+    return this;
+  }
+
+  public MemoryCUserRoleMapping withUserId(final String userId) {
+    this.userId = userId;
+    return this;
   }
 
   @Override

@@ -19,5 +19,6 @@ package org.sonatype.nexus.repository.apt.internal.hosted;
  */
 public enum AssetAction
 {
-  ADDED, REMOVED
+  ADDED,
+  REMOVED
 }

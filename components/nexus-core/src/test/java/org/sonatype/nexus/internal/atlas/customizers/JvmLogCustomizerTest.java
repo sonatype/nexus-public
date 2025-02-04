@@ -52,7 +52,6 @@ public class JvmLogCustomizerTest
 
   private JvmLogCustomizer underTest;
 
-
   @Before
   public void setup() throws IOException {
     when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory.getRoot());
@@ -64,7 +63,7 @@ public class JvmLogCustomizerTest
   public void customizeJvmLog() throws Exception {
     File file = createLogFile();
     when(mockLogManager.getLogFile(anyString())).thenReturn(file);
-    try(FileWriter writer = new FileWriter(file)) {
+    try (FileWriter writer = new FileWriter(file)) {
       writer.write("-Dnexus.password=nxrm -Dnexus.token=123");
     }
     SupportBundle supportBundle = new SupportBundle();
@@ -76,11 +75,10 @@ public class JvmLogCustomizerTest
     ContentSource contentSource = list.get(0);
     contentSource.prepare();
 
-    try(BufferedReader reader = new BufferedReader(new InputStreamReader(contentSource.getContent()))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(contentSource.getContent()))) {
       assertThat(reader.readLine(), equalTo("-Dnexus.password=**** -Dnexus.token=****"));
     }
   }
-
 
   private File createLogFile() throws IOException {
     File file = new File(temporaryWorkDirectory.getRoot(), "/log/jvm.log");

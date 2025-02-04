@@ -35,9 +35,11 @@ public class XFrameOptions
 
   private static final String HEALTHCHECK_PATH = "/static/healthcheck-tos.html";
 
-  private static final String OSS_LICENSE_PATH = "/OSS-LICENSE.html";
+  private static final String OC_LICENSE_PATH = "/OC-LICENSE.html";
 
   private static final String PRO_LICENSE_PATH = "/PRO-LICENSE.html";
+
+  private static final String CE_LICENSE_PATH = "/CE-LICENSE.html";
 
   private static final String SWAGGER_UI = "/swagger-ui/";
 
@@ -55,8 +57,9 @@ public class XFrameOptions
     frameablePaths = new HashSet<>();
     frameablePaths.add(COPYRIGHT_PATH);
     frameablePaths.add(HEALTHCHECK_PATH);
-    frameablePaths.add(OSS_LICENSE_PATH);
+    frameablePaths.add(OC_LICENSE_PATH);
     frameablePaths.add(PRO_LICENSE_PATH);
+    frameablePaths.add(CE_LICENSE_PATH);
     frameablePaths.add(SWAGGER_UI);
   }
 

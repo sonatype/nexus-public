@@ -56,8 +56,12 @@ public class AuthenticationEventSubscriberTest
   @Test
   public void testOn_successWithClientInfo() {
     ClientInfo clientInfo =
-        ClientInfo.builder().path("/path/to/artifact").remoteIP("remote ip").userAgent("user agent string")
-            .userId("user id").build();
+        ClientInfo.builder()
+            .path("/path/to/artifact")
+            .remoteIP("remote ip")
+            .userAgent("user agent string")
+            .userId("user id")
+            .build();
     when(clientInfoProvider.getCurrentThreadClientInfo()).thenReturn(clientInfo);
     AuthenticationEvent authenticationEvent = new AuthenticationEvent("user id", true);
 

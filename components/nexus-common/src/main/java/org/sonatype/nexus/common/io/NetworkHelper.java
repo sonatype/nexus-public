@@ -29,7 +29,8 @@ public final class NetworkHelper
   /**
    * Workaround ambiguous InetAddress.getLocalHost() on Linux-based systems.
    *
-   * @see <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4665037">http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4665037</a>
+   * @see <a href=
+   *      "http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4665037">http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4665037</a>
    */
   public static String findLocalHostAddress() throws Exception {
     // first look for a local address which isn't the loopback interface or P2P/VPN

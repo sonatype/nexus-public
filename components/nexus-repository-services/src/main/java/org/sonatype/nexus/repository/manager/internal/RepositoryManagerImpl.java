@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -88,8 +87,7 @@ import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 @ManagedObject(
     domain = "org.sonatype.nexus.repository.manager",
     typeClass = RepositoryManager.class,
-    description = "Repository manager"
-)
+    description = "Repository manager")
 public class RepositoryManagerImpl
     extends StateGuardLifecycleSupport
     implements RepositoryManager, EventAware
@@ -127,19 +125,20 @@ public class RepositoryManagerImpl
   private final HttpAuthenticationPasswordEncoder httpAuthenticationPasswordEncoder;
 
   @Inject
-  public RepositoryManagerImpl(final EventManager eventManager,
-                               final ConfigurationStore store,
-                               final RepositoryFactory factory,
-                               final Provider<ConfigurationFacet> configFacet,
-                               final Map<String, Recipe> recipes,
-                               final RepositoryAdminSecurityContributor securityContributor,
-                               final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
-                               final FreezeService freezeService,
-                               @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
-                               final BlobStoreManager blobStoreManager,
-                               final GroupMemberMappingCache groupMemberMappingCache,
-                               final List<ConfigurationValidator> configurationValidators,
-                               final HttpAuthenticationPasswordEncoder httpAuthenticationPasswordEncoder)
+  public RepositoryManagerImpl(
+      final EventManager eventManager,
+      final ConfigurationStore store,
+      final RepositoryFactory factory,
+      final Provider<ConfigurationFacet> configFacet,
+      final Map<String, Recipe> recipes,
+      final RepositoryAdminSecurityContributor securityContributor,
+      final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
+      final FreezeService freezeService,
+      @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
+      final BlobStoreManager blobStoreManager,
+      final GroupMemberMappingCache groupMemberMappingCache,
+      final List<ConfigurationValidator> configurationValidators,
+      final HttpAuthenticationPasswordEncoder httpAuthenticationPasswordEncoder)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -324,11 +323,10 @@ public class RepositoryManagerImpl
   public Iterable<Repository> browseForBlobStore(final String blobStoreId) {
     Iterable<Repository> browseResult = browse();
 
-    if (browseResult != null && browseResult.iterator().hasNext()){
+    if (browseResult != null && browseResult.iterator().hasNext()) {
       return stream(browseResult.spliterator(), true)
           .filter(Repository::isStarted)
-          .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))
-          ::iterator;
+          .filter(r -> blobStoreId.equals(r.getConfiguration().attributes(STORAGE).get(BLOB_STORE_NAME)))::iterator;
     }
     else {
       return Collections.emptyList();
@@ -446,6 +444,8 @@ public class RepositoryManagerImpl
       // ensure configuration sanity
       repository.validate(configuration);
 
+      repository.stopSafe();
+
       if (!EventHelper.isReplicating()) {
         store.update(configuration);
         httpAuthenticationPasswordEncoder.removeSecret(oldConfiguration.getAttributes(), configuration.getAttributes());
@@ -456,7 +456,6 @@ public class RepositoryManagerImpl
       throw e;
     }
 
-    repository.stopSafe();
     repository.update(configuration);
     repository.start();
 
@@ -468,8 +467,7 @@ public class RepositoryManagerImpl
   private void validateConfiguration(final Configuration configuration) {
     Set<ConstraintViolation<?>> violations = new HashSet<>();
     configurationValidators.forEach(
-        validator -> maybeAdd(violations, validator.validate(configuration))
-    );
+        validator -> maybeAdd(violations, validator.validate(configuration)));
     maybePropagate(violations, log);
   }
 
@@ -509,8 +507,8 @@ public class RepositoryManagerImpl
    * @since 3.14
    *
    * @param repositoryName
-   * @return List of group(s) that contain the supplied repository.  Ordered from closest to the repo to farthest away
-   * i.e. if group A contains group B which contains repo C the returned list would be ordered B,A
+   * @return List of group(s) that contain the supplied repository. Ordered from closest to the repo to farthest away
+   *         i.e. if group A contains group B which contains repo C the returned list would be ordered B,A
    */
   @Override
   @Guarded(by = STARTED)
@@ -594,7 +592,7 @@ public class RepositoryManagerImpl
     String repositoryName = event.getRepositoryName();
 
     if (isRepositoryLoaded(repositoryName)) {
-      //Event shouldn't be propagated if repository isn't propagated yet to the current node
+      // Event shouldn't be propagated if repository isn't propagated yet to the current node
       RemoteConnectionStatusType statusType =
           RemoteConnectionStatusType.values()[event.getRemoteConnectionStatusTypeOrdinal()];
       // restore RemoteConnectionStatus from event
@@ -614,7 +612,8 @@ public class RepositoryManagerImpl
   @Override
   public Optional<Configuration> retrieveConfigurationByName(final String name) {
     String lcName = name.toLowerCase();
-    return store.list().stream()
+    return store.list()
+        .stream()
         .filter(candidate -> lcName.equals(candidate.getRepositoryName().toLowerCase()))
         .findAny();
   }

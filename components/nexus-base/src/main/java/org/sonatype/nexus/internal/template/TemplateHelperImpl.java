@@ -51,8 +51,9 @@ public class TemplateHelperImpl
   private final VelocityEngine velocityEngine;
 
   @Inject
-  public TemplateHelperImpl(final ApplicationVersion applicationVersion,
-                            final VelocityEngine velocityEngine)
+  public TemplateHelperImpl(
+      final ApplicationVersion applicationVersion,
+      final VelocityEngine velocityEngine)
   {
     this.applicationVersion = checkNotNull(applicationVersion);
     this.velocityEngine = checkNotNull(velocityEngine);

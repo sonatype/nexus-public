@@ -146,7 +146,7 @@ describe('MaliciousRisk unprotected', () => {
   it('should render malicious components contents', async () => {
     await renderView();
 
-    expect(selectors.getHeading('Open Source Malware Risk')).toBeInTheDocument();
+    expect(selectors.getHeading('Malware Risk')).toBeInTheDocument();
     expect(selectors.getHeading('What Is Open Source Malware?')).toBeInTheDocument();
     expect(selectors.getHeading('Attacks Are on a Sharp Rise')).toBeInTheDocument();
     expect(selectors.getHeading('700%')).toBeInTheDocument();

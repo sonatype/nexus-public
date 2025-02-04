@@ -40,13 +40,14 @@ public class Role
   public Role() {
   }
 
-  public Role(final String roleId,
-              final String name,
-              final String description,
-              final String source,
-              final boolean readOnly,
-              final Set<String> roles,
-              final Set<String> privileges)
+  public Role(
+      final String roleId,
+      final String name,
+      final String description,
+      final String source,
+      final boolean readOnly,
+      final Set<String> roles,
+      final Set<String> privileges)
   {
     this.roleId = roleId;
     this.name = name;

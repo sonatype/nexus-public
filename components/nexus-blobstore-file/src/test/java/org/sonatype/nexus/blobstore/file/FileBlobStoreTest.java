@@ -17,6 +17,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -34,6 +40,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.file.FileBlobStore.FileBlob;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.file.internal.datastore.metrics.DatastoreFileBlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
@@ -52,7 +59,6 @@ import com.squareup.tape.QueueFile;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -64,24 +70,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.blobstore.BlobStoreSupport.CONTENT_PREFIX;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
-import static org.sonatype.nexus.blobstore.file.FileBlobStore.TMP;
 
 /**
  * Tests {@link FileBlobStore}.
@@ -131,6 +131,9 @@ public class FileBlobStoreTest
   private FileBlobAttributes attributes;
 
   @Mock
+  FileBlobAttributes newBlobAttributes;
+
+  @Mock
   NodeAccess nodeAccess;
 
   @Mock
@@ -141,8 +144,7 @@ public class FileBlobStoreTest
 
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
-      BLOB_NAME_HEADER, "test/randomData.bin"
-  );
+      BLOB_NAME_HEADER, "test/randomData.bin");
 
   private FileBlobStore underTest;
 
@@ -184,7 +186,9 @@ public class FileBlobStoreTest
     underTest.setLiveBlobs(loadingCache);
 
     fullPath = underTest.getAbsoluteBlobDir()
-        .resolve(CONTENT_PREFIX).resolve("vol-03").resolve("chap-44");
+        .resolve(CONTENT_PREFIX)
+        .resolve("vol-03")
+        .resolve("chap-44");
     Files.createDirectories(fullPath);
 
     directFullPath = underTest.getAbsoluteBlobDir().resolve(CONTENT_PREFIX).resolve("directpath");
@@ -335,22 +339,53 @@ public class FileBlobStoreTest
     assertThat(subdir2.toFile().exists(), is(false));
   }
 
-  @Ignore("NEXUS-40608")
   @Test
-  public void testDeleteBlobTempFiles() throws Exception {
+  public void testDoDeleteHard() throws Exception {
     underTest.doStart();
 
-    Path tmpFilePath = underTest.getAbsoluteBlobDir()
-        .resolve(CONTENT_PREFIX).resolve(TMP).resolve("tmp$0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
+    BlobId blobId = new BlobId("0515c8b9-0de0-49d4-bcf0-7738c40c9c5e");
+    Path bytesPath = underTest.getAbsoluteBlobDir()
+        .resolve(CONTENT_PREFIX)
+        .resolve("vol-03")
+        .resolve("chap-44")
+        .resolve("0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.bytes");
+    bytesPath.toFile().getParentFile().mkdirs();
+    Path written = write(bytesPath, "hello".getBytes(StandardCharsets.UTF_8));
+    assertThat(written.toFile().exists(), is(true));
+    // oddly FileOperations is a mock here; we need to provide a real delete for this test
+    doAnswer(invocationOnMock -> {
+      Files.delete(bytesPath);
+      return true;
+    }).when(fileOperations).delete(bytesPath);
 
-    tmpFilePath.toFile().getParentFile().mkdirs();
-    write(tmpFilePath, "@BlobStore.created-by=system".getBytes(UTF_8));
+    Path propertiesPath = underTest.getAbsoluteBlobDir()
+        .resolve(CONTENT_PREFIX)
+        .resolve("vol-03")
+        .resolve("chap-44")
+        .resolve("0515c8b9-0de0-49d4-bcf0-7738c40c9c5e.properties");
 
-    assertThat(tmpFilePath.toFile().exists(), is(true));
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sha1", "a5aa215f17898e21986cb19d4b72f6bebf86c4bd");
+    properties.put("BlobStore.blob-name", "/content/foo/tree.txt");
+    properties.put("BlobStore.created-by", "admin");
+    properties.put("size", "5");
+    properties.put("creationTime", "1736870404222");
+    properties.put("Bucket.repo-name", "raw");
+    BlobMetrics blobMetrics =
+        new BlobMetrics(new DateTime(1736870404222L), "a5aa215f17898e21986cb19d4b72f6bebf86c4bd", 5);
+    FileBlobAttributes attributes = new FileBlobAttributes(propertiesPath, properties, blobMetrics);
+    attributes.store();
 
-    underTest.doDeleteTempFiles(0);
+    // oddly FileOperations is a mock here; we need to provide a real delete for this test
+    doAnswer(invocationOnMock -> {
+      Files.delete(propertiesPath);
+      return true;
+    }).when(fileOperations).delete(propertiesPath);
 
-    assertThat(tmpFilePath.toFile().exists(), is(false));
+    assertThat(propertiesPath.toFile().exists(), is(true));
+    boolean deleted = underTest.doDeleteHard(blobId);
+    assertThat(deleted, is(true));
+    assertThat(propertiesPath.toFile().exists(), is(false));
   }
 
   @Test
@@ -388,6 +423,7 @@ public class FileBlobStoreTest
     verify(attributes).getProperties();
     verify(attributes).isDeleted();
     verify(attributes).getDeletedReason();
+    verify(attributes).getOriginalLocation();
     verifyNoMoreInteractions(attributes);
   }
 
@@ -432,7 +468,7 @@ public class FileBlobStoreTest
     when(nodeAccess.isOldestNode()).thenReturn(true);
     underTest.doStart();
 
-    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"), 
+    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"),
         deletedBlobStoreProperties);
 
     setRebuildMetadataToTrue();
@@ -478,7 +514,8 @@ public class FileBlobStoreTest
   @Test
   public void toBlobNamePropertiesSuffix() {
     // /full/path/on/disk/to/content/directpath/some/direct/path/file.properties.properties
-    Path absolute = underTest.getContentDir().resolve(DIRECT_PATH_ROOT).resolve("some/direct/path/file.properties.properties");
+    Path absolute =
+        underTest.getContentDir().resolve(DIRECT_PATH_ROOT).resolve("some/direct/path/file.properties.properties");
     assertThat(underTest.toBlobName(absolute), is("some/direct/path/file.properties"));
   }
 
@@ -548,4 +585,115 @@ public class FileBlobStoreTest
     assertThat(metrics.getSha1Hash(), is(sha1));
     assertThat(metrics.getCreationTime(), is(creationTime));
   }
+
+  @Test
+  public void testGetBlobIdUpdatedSinceStream() {
+    OffsetDateTime fromDateTime = LocalDate.now().atTime(LocalTime.MIN).atOffset(ZoneOffset.UTC);
+    OffsetDateTime toDateTime = LocalDate.now().atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC);
+
+    ZoneId systemZone = ZoneId.systemDefault();
+    LocalDateTime fromSystemTime = fromDateTime.atZoneSameInstant(systemZone).toLocalDateTime();
+    LocalDateTime toSystemTime = toDateTime.atZoneSameInstant(systemZone).toLocalDateTime();
+
+    underTest.getBlobIdUpdatedSinceStream("test", fromDateTime, toDateTime, null, 10);
+    verify(reconciliationLogger, times(1)).getBlobsCreatedSince(any(),
+        eq(fromSystemTime), eq(toSystemTime), anyMap());
+  }
+
+  @Test
+  public void testDoDeleteWithDateBasedLayoutEnabled() throws Exception {
+
+    TestFileBlobStore underTest = createFixture();
+
+    BlobId blobId = new BlobId("test-blob-id");
+    Path path = underTest.attributePath(new BlobId(blobId.asUniqueString(), UTC.now()));
+    when(underTest.isDateBasedLayoutEnabled()).thenReturn(true);
+    when(attributes.isDeleted()).thenReturn(false);
+    when(underTest.getFileBlobAttributes(blobId)).thenReturn(attributes);
+    when(underTest.getFileBlobAttributes(path)).thenReturn(newBlobAttributes);
+
+    boolean result = underTest.doDelete(blobId, "test-reason");
+
+    assertTrue(result);
+    assertAttributes(blobId);
+
+    verify(attributes).setDeletedDateTime(any());
+    verify(attributes).setSoftDeletedLocation(anyString());
+    verify(newBlobAttributes).updateFrom(attributes);
+    verify(newBlobAttributes).setOriginalLocation(anyString());
+    verify(newBlobAttributes).store();
+  }
+
+  @Test
+  public void testDoDeleteWithDateBasedLayoutDisabled() throws Exception {
+
+    TestFileBlobStore underTest = createFixture();
+
+    BlobId blobId = new BlobId("test-blob-id");
+    when(underTest.isDateBasedLayoutEnabled()).thenReturn(false);
+    when(attributes.isDeleted()).thenReturn(false);
+    when(underTest.getFileBlobAttributes(blobId)).thenReturn(attributes);
+
+    boolean result = underTest.doDelete(blobId, "test-reason");
+
+    assertTrue(result);
+    assertAttributes(blobId);
+    verify(attributes, never()).setDeletedDateTime(any());
+    verifyNoInteractions(newBlobAttributes);
+  }
+
+  private TestFileBlobStore createFixture() {
+    BlobStoreConfiguration configuration = new MockBlobStoreConfiguration();
+
+    Map<String, Map<String, Object>> attributes1 = new HashMap<>();
+    Map<String, Object> fileMap = new HashMap<>();
+    fileMap.put("path", temporaryFolder.getRoot().toPath());
+    attributes1.put("file", fileMap);
+
+    configuration.setAttributes(attributes1);
+
+    TestFileBlobStore underTest = spy(new TestFileBlobStore(
+        util.createTempDir().toPath(), blobIdLocationResolver, fileOperations, metrics, configuration, appDirs,
+        nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex));
+
+    underTest.init(configuration);
+    underTest.setLiveBlobs(loadingCache);
+    return underTest;
+  }
+
+  private void assertAttributes(final BlobId blobId) throws Exception {
+    verify(attributes).setDeleted(true);
+    verify(attributes).setDeletedReason("test-reason");
+    verify(attributes).store();
+    verify(fileBlobDeletionIndex).createRecord(blobId);
+  }
+
+  // test class to provide isDateBasedLayoutEnabled() method
+  private class TestFileBlobStore
+      extends FileBlobStore
+  {
+    public TestFileBlobStore(
+        Path root,
+        BlobIdLocationResolver blobIdLocationResolver,
+        FileOperations fileOperations,
+        DatastoreFileBlobStoreMetricsService metrics,
+        BlobStoreConfiguration configuration,
+        ApplicationDirectories appDirs,
+        NodeAccess nodeAccess,
+        DryRunPrefix dryRunPrefix,
+        BlobStoreReconciliationLogger reconciliationLogger,
+        long blobStoreQuota,
+        BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
+        FileBlobDeletionIndex fileBlobDeletionIndex)
+    {
+      super(root, blobIdLocationResolver, fileOperations, metrics, configuration, appDirs, nodeAccess, dryRunPrefix,
+          reconciliationLogger, blobStoreQuota, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
+    }
+
+    @Override
+    public boolean isDateBasedLayoutEnabled() {
+      return false;
+    }
+  }
+
 }

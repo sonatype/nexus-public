@@ -160,9 +160,12 @@ public class TaskLogCustomizerTest
 
       @Override
       public void describeTo(final Description description) {
-        description.appendText("ContentSource[").appendValue(path)
-            .appendText(", ").appendValue(priority)
-            .appendText(", ").appendValue(type)
+        description.appendText("ContentSource[")
+            .appendValue(path)
+            .appendText(", ")
+            .appendValue(priority)
+            .appendText(", ")
+            .appendValue(type)
             .appendText("]");
       }
     };

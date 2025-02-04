@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.proxy;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -48,6 +47,8 @@ import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.message.BasicHttpResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Spy;
@@ -80,8 +81,14 @@ import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_
 public class ProxyFacetSupportTest
     extends TestSupport
 {
+  @Mock
+  ThrottlerInterceptor throttlerInterceptor;
+
+  @Mock
+  GracePeriodInterceptor gracePeriodInterceptor;
 
   @Spy
+  @InjectMocks
   ProxyFacetSupport underTest = new ProxyFacetSupport()
   {
     @Nullable
@@ -96,10 +103,12 @@ public class ProxyFacetSupportTest
     }
 
     @Override
-    protected void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo)
-        throws IOException
+    protected void indicateVerified(
+        final Context context,
+        final Content content,
+        final CacheInfo cacheInfo) throws IOException
     {
-
+      // Method intentionally left empty as no specific behavior is required for this test.
     }
 
     @Override
@@ -152,6 +161,9 @@ public class ProxyFacetSupportTest
 
   @Mock
   private Format format;
+
+  private final ArgumentCaptor<ProxyThrottledRequestEvent> captor =
+      ArgumentCaptor.forClass(ProxyThrottledRequestEvent.class);
 
   @Before
   public void setUp() throws Exception {
@@ -375,7 +387,8 @@ public class ProxyFacetSupportTest
    */
   @Test
   public void testLocalCooperationSelectedInNonClusteredMode() throws IOException {
-    // select default cooperation factory, when nexus.proxy.clustered.cooperation.enabled is enabled in non-clustered mode
+    // select default cooperation factory, when nexus.proxy.clustered.cooperation.enabled is enabled in non-clustered
+    // mode
     DefaultCooperation2Factory localCooperationFactory = spy(new DefaultCooperation2Factory());
     DefaultCooperation2Factory defaultCooperationFactory = spy(new DefaultCooperation2Factory());
 
@@ -470,13 +483,11 @@ public class ProxyFacetSupportTest
     doReturn("http://example.com").when(underTest).getUrl(cachedContext);
     doReturn(httpResponse).when(underTest).execute(eq(cachedContext), eq(httpClient), any(HttpRequestBase.class));
 
-
     try (MockedStatic<HttpClientUtils> httpClientUtils = mockStatic(HttpClientUtils.class)) {
       Configuration configuration = mock(Configuration.class);
       when(configuration.attributes("proxy")).thenReturn(new NestedAttributesMap(
           "proxy",
-          singletonMap("remoteUrl", "http://example.com")
-          ));
+          singletonMap("remoteUrl", "http://example.com")));
       underTest.doConfigure(configuration);
       underTest.doStart();
 
@@ -496,17 +507,41 @@ public class ProxyFacetSupportTest
   public void normalizeURLPath() throws Exception {
     assertEquals(
         URI.create("https://remoteserver/com/foo/this%20is%20a%20space/"),
-        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/this%20is%20a%20space/"))
-    );
+        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/this%20is%20a%20space/")));
 
     assertEquals(
         URI.create("https://remoteserver/com/foo/this%20is%20a%20space/"),
-        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/this%20is%20a%20space"))
-    );
+        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/this%20is%20a%20space")));
 
     assertEquals(
         URI.create("https://remoteserver/com/foo/thisisaspace/"),
-        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/thisisaspace"))
-    );
+        underTest.normalizeURLPath(URI.create("https://remoteserver/com/foo/thisisaspace")));
+  }
+
+  @Test
+  public void testGetPostsBlockedEvents() throws IOException {
+    when(throttlerInterceptor.shouldBlock()).thenReturn(true);
+    when(gracePeriodInterceptor.isInGracePeriod()).thenReturn(false);
+    doReturn(null).when(underTest).getCachedContent(cachedContext);
+
+    underTest.get(cachedContext);
+
+    verify(eventManager, times(2)).post(captor.capture());
+    assertThat(captor.getValue().isBlocked(), is(true));
+  }
+
+  @Test
+  public void testGetPostsGracePeriodEvents() throws IOException {
+    when(throttlerInterceptor.shouldBlock()).thenReturn(true);
+    when(gracePeriodInterceptor.isInGracePeriod()).thenReturn(true);
+
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+    when(cacheController.isStale(cacheInfo)).thenReturn(true);
+    doReturn(content).when(underTest).get(cachedContext, content);
+
+    underTest.get(cachedContext);
+
+    verify(eventManager, times(2)).post(captor.capture());
+    assertThat(captor.getValue().isBlocked(), is(false));
   }
 }

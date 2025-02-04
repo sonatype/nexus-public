@@ -59,6 +59,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("yum")
         .add("cargo")
         .add("composer")
+        .add("huggingface")
         .build();
   }
 }

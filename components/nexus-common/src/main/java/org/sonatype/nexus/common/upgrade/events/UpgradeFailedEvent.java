@@ -26,7 +26,12 @@ public class UpgradeFailedEvent
     // deserialization
   }
 
-  public UpgradeFailedEvent(@Nullable final String user, final String schemaVersion, final String errorMessage, final String... migrations) {
+  public UpgradeFailedEvent(
+      @Nullable final String user,
+      final String schemaVersion,
+      final String errorMessage,
+      final String... migrations)
+  {
     super(user, schemaVersion, migrations);
     this.errorMessage = errorMessage;
   }

@@ -43,6 +43,6 @@ public class TcclWrapper
       }
     };
 
-    return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[] { type }, handler);
+    return (T) Proxy.newProxyInstance(type.getClassLoader(), new Class[]{type}, handler);
   }
 }

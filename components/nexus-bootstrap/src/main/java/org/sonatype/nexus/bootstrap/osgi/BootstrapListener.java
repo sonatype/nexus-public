@@ -30,6 +30,7 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
 
@@ -90,10 +91,7 @@ public class BootstrapListener
     log.info("Initialized");
   }
 
-
-  private static void installNexusEdition(final BundleContext ctx, final Properties properties)
-      throws Exception
-  {
+  private static void installNexusEdition(final BundleContext ctx, final Properties properties) throws Exception {
     String editionName = properties.getProperty(NexusEditionPropertiesConfigurer.NEXUS_EDITION);
     if (editionName != null && !editionName.isEmpty()) {
       final ServiceTracker<?, FeaturesService> tracker = new ServiceTracker<>(ctx, FeaturesService.class, null);
@@ -101,9 +99,12 @@ public class BootstrapListener
       try {
         FeaturesService featuresService = tracker.waitForService(1000);
         Feature editionFeature = featuresService.getFeature(editionName);
+        checkNotNull(editionFeature, "Unable to find feature " + editionName);
         properties.put(NexusEditionPropertiesConfigurer.NEXUS_FULL_EDITION, editionFeature.toString());
 
-        Feature dbFeature = featuresService.getFeature(properties.getProperty(NexusEditionPropertiesConfigurer.NEXUS_DB_FEATURE));
+        String dbFeatureName = properties.getProperty(NexusEditionPropertiesConfigurer.NEXUS_DB_FEATURE);
+        Feature dbFeature = featuresService.getFeature(dbFeatureName);
+        checkNotNull(editionFeature, "Unable to find feature " + dbFeatureName);
 
         log.info("Installing: {} ({})", editionFeature, dbFeature);
 

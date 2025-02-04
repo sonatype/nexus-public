@@ -67,8 +67,10 @@ public class ErrorPageFilter
   }
 
   @Override
-  public void doFilter(final ServletRequest req, final ServletResponse resp, final FilterChain chain)
-      throws IOException, ServletException
+  public void doFilter(
+      final ServletRequest req,
+      final ServletResponse resp,
+      final FilterChain chain) throws IOException, ServletException
   {
     final HttpServletRequest request = (HttpServletRequest) req;
     final HttpServletResponse response = (HttpServletResponse) resp;

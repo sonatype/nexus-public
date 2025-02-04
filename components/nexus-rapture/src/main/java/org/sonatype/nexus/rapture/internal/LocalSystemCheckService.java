@@ -21,10 +21,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
-import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.systemchecks.NodeSystemCheckResult;
 import org.sonatype.nexus.systemchecks.SystemCheckService;
 
@@ -85,11 +85,11 @@ public class LocalSystemCheckService
 
     // Retrieving the hostname may be expensive so do this asynchronously
     nodeAccess.getHostName()
-      .thenAccept(value -> hostname = value)
-      .exceptionally(ex -> {
-        hostname = nodeAccess.getId();
-        return null;
-      });
+        .thenAccept(value -> hostname = value)
+        .exceptionally(ex -> {
+          hostname = nodeAccess.getId();
+          return null;
+        });
 
     metricsWritingJob = jobService.schedule(() -> {
       registry.getNames().forEach(k -> {
@@ -97,7 +97,7 @@ public class LocalSystemCheckService
         cache.refresh(k);
         // Refresh is lazy and doesn't refresh until the next request so force it to refresh.
         Result newResult = cache.getUnchecked(k);
-        if(oldResult.isHealthy() != newResult.isHealthy()) {
+        if (oldResult.isHealthy() != newResult.isHealthy()) {
           log.info("Health check status changed from {} to {} for {}", oldResult.isHealthy(), newResult.isHealthy(), k);
         }
       });

@@ -89,7 +89,8 @@ public class DatastoreLoggerOverrides
 
     // if override level is loaded from xml file but not presented in db - migrate it
 
-    List<LoggingOverridesData> levelsMigrateToDb = loggerLevels.entrySet().stream()
+    List<LoggingOverridesData> levelsMigrateToDb = loggerLevels.entrySet()
+        .stream()
         .filter(entry -> !loggingLevelsStore.exists(entry.getKey()))
         .map(entry -> new LoggingOverridesData(entry.getKey(), entry.getValue().toString()))
         .collect(Collectors.toList());
@@ -122,7 +123,8 @@ public class DatastoreLoggerOverrides
     LoggingOverridesData data = new LoggingOverridesData(name, level.toString());
     if (loggingLevelsStore.exists(name)) {
       loggingLevelsStore.update(data);
-    } else {
+    }
+    else {
       loggingLevelsStore.create(data);
     }
   }

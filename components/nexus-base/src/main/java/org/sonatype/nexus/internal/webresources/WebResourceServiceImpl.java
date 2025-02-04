@@ -43,8 +43,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @Named
 public class WebResourceServiceImpl
-  extends ComponentSupport
-  implements WebResourceService
+    extends ComponentSupport
+    implements WebResourceService
 {
   private final DevModeResources devModeResources;
 
@@ -53,8 +53,9 @@ public class WebResourceServiceImpl
   private final Map<String, WebResource> resourcePaths;
 
   @Inject
-  public WebResourceServiceImpl(final DevModeResources devModeResources,
-                                final MimeSupport mimeSupport)
+  public WebResourceServiceImpl(
+      final DevModeResources devModeResources,
+      final MimeSupport mimeSupport)
   {
     this.devModeResources = checkNotNull(devModeResources);
     this.mimeSupport = checkNotNull(mimeSupport);

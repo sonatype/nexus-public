@@ -62,8 +62,7 @@ public class SelectorFilterBuilderImplTest
   @Before
   public void setup() {
     SelectorFactory selectorFactory = new SelectorFactory(constraintViolationFactory, new DatastoreCselToSql());
-    SelectorManager
-        selectorManager =
+    SelectorManager selectorManager =
         new SelectorManagerImpl(selectorConfigurationStore, securitySystem, selectorFactory, cacheHelper,
             userCacheTimeout);
     underTest = new SelectorFilterBuilderImpl(selectorManager);

@@ -30,6 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -79,6 +81,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
@@ -564,9 +567,26 @@ public class FileBlobStore
         return false;
       }
 
+      if (isDateBasedLayoutEnabled()) {
+        BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());
+        String softDeletedPrefixLocation = getLocationPrefix(propRef);
+        Path path = attributePath(propRef);
+        DateTime deletedDateTime = new DateTime();
+        blobAttributes.setDeletedDateTime(deletedDateTime);
+        blobAttributes.setSoftDeletedLocation(softDeletedPrefixLocation);
+
+        // Save properties file under the new location
+        String originalPrefixLocation = getLocationPrefix(blobId);
+        if (!originalPrefixLocation.equals(softDeletedPrefixLocation)) {
+          FileBlobAttributes newBlobAttributes = getFileBlobAttributes(path);
+          newBlobAttributes.updateFrom(blobAttributes);
+          newBlobAttributes.setOriginalLocation(getLocationPrefix(blobId));
+          newBlobAttributes.store();
+        }
+      }
+
       blobAttributes.setDeleted(true);
       blobAttributes.setDeletedReason(reason);
-      blobAttributes.setDeletedDateTime(new DateTime());
       blobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs
@@ -590,8 +610,20 @@ public class FileBlobStore
     try {
       log.debug("Hard deleting blob {}", blobId);
 
+      // look for a softDeletedLocation from is blob's attributes, and if present, delete it first
+      FileBlobAttributes attributes = getFileBlobAttributes(blobId);
+      Optional.ofNullable(attributes).ifPresent(attr -> {
+        Optional<String> softDeletedLocation = attr.getSoftDeletedLocation();
+        // Remove copied soft-deleted attributes
+        softDeletedLocation.ifPresent(location -> deleteCopiedAttributes(blobId, location));
+      });
+
       Path attributePath = attributePath(blobId);
-      Long contentSize = getContentSizeForDeletion(blobId);
+      Long contentSize = null;
+      // attributes may still be null here if the file was removed from the filesystem out of band, e.g data loss
+      if (attributes != null && attributes.getMetrics() != null) {
+        contentSize = attributes.getMetrics().getContentSize();
+      }
 
       Path blobPath = contentPath(blobId);
 
@@ -600,6 +632,7 @@ public class FileBlobStore
 
       if (blobDeleted && contentSize != null) {
         metricsService.recordDeletion(contentSize);
+        fileOperations.deleteEmptyDirectory(blobPath.getParent());
       }
 
       return blobDeleted;
@@ -1139,7 +1172,7 @@ public class FileBlobStore
       Map<String, OffsetDateTime> dateBasedBlobIds = dateBasedWalkFile.getBlobIdToDateRef();
 
       LocalDateTime sinceDate = now().minusSeconds(duration.getSeconds());
-      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate, dateBasedBlobIds);
+      return reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, sinceDate, now(), dateBasedBlobIds);
     }
   }
 
@@ -1147,6 +1180,7 @@ public class FileBlobStore
   public PaginatedResult<BlobId> getBlobIdUpdatedSinceStream(
       String prefix,
       OffsetDateTime fromDateTime,
+      OffsetDateTime toDateTime,
       @Nullable final String continuationToken,
       final int pageSize)
   {
@@ -1154,7 +1188,9 @@ public class FileBlobStore
     Map<String, OffsetDateTime> dateBasedBlobIds =
         dateBasedWalkFile.getBlobIdToDateRef(contentDir.resolve(prefix).toString());
     List<BlobId> blobIds =
-        reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir, fromDateTime.toLocalDateTime(),
+        reconciliationLogger.getBlobsCreatedSince(reconciliationLogDir,
+            fromDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime(),
+            toDateTime.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime(),
             dateBasedBlobIds).collect(Collectors.toList());
     return new PaginatedResult<>(blobIds, null);
   }
@@ -1236,8 +1272,14 @@ public class FileBlobStore
   }
 
   @Nullable
-  private FileBlobAttributes getFileBlobAttributes(final BlobId blobId) {
+  @VisibleForTesting
+  FileBlobAttributes getFileBlobAttributes(final BlobId blobId) {
     return (FileBlobAttributes) getBlobAttributes(blobId);
+  }
+
+  @VisibleForTesting
+  FileBlobAttributes getFileBlobAttributes(final Path path) {
+    return new FileBlobAttributes(path);
   }
 
   /**
@@ -1275,5 +1317,11 @@ public class FileBlobStore
   @VisibleForTesting
   public void flushMetrics() throws IOException {
     metricsService.flush();
+  }
+
+  @Override
+  protected void deleteCopiedAttributes(final BlobId blobId, final String softDeletedLocation) {
+    log.trace("deleteCopiedAttributes for blobId: {}, softDeletedLocation: {}", blobId, softDeletedLocation);
+    fileOperations.deleteQuietly(attributePath(createBlobIdForTimePath(blobId, softDeletedLocation)));
   }
 }

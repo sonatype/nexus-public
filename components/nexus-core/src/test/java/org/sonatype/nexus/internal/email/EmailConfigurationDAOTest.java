@@ -34,7 +34,8 @@ import static org.mockito.Mockito.mock;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class EmailConfigurationDAOTest
-    extends TestSupport {
+    extends TestSupport
+{
 
   private final SecretsFactory secretsFactory = mock(SecretsFactory.class);
 
@@ -43,6 +44,7 @@ public class EmailConfigurationDAOTest
       new DataSessionRule().access(EmailConfigurationDAO.class).handle(new SecretTypeHandler(secretsFactory));
 
   private DataSession<?> session;
+
   private EmailConfigurationDAO dao;
 
   private Secret secret;

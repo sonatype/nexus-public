@@ -143,8 +143,10 @@ public class CooperatingFuture<T>
   /**
    * Cooperatively waits for the lead thread; may failover and repeat the request if allowed.
    */
-  protected T waitForCall(final Function<Boolean, T> request, final Duration initialTimeout, final boolean failover)
-      throws InterruptedException, ExecutionException, IOException
+  protected T waitForCall(
+      final Function<Boolean, T> request,
+      final Duration initialTimeout,
+      final boolean failover) throws InterruptedException, ExecutionException, IOException
   {
     if (initialTimeout.isZero() || initialTimeout.isNegative()) {
       log.debug("Attempt cooperative wait on {}", this);

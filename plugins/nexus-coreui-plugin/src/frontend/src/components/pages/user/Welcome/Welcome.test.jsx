@@ -16,12 +16,12 @@ import {render, screen, waitFor, within, waitForElementToBeRemoved} from '@testi
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 
-import {APIConstants, ExtJS, Permissions} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, Permissions} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import Welcome from './Welcome.jsx';
 import * as testData from './Welcome.testdata.js';
-import {METRICS_CONTENT} from './UsageMetrics.testdata';
+import {helperFunctions} from '../../../widgets/CELimits/UsageHelper';
 
 const {WELCOME: {
   ACTIONS: {
@@ -37,7 +37,6 @@ const {WELCOME: {
   CONNECT_MODAL,
 }} = UIStrings;
 
-const {USAGE_METRICS} = APIConstants.REST.INTERNAL;
 
 // Creates a selector function that uses getByRole by default but which can be customized per-use to use
 // queryByRole, findByRole, etc instead
@@ -71,7 +70,7 @@ describe('Welcome', function() {
     jest.spyOn(ExtJS, 'useLicense').mockReturnValue({});
     jest.spyOn(ExtJS, 'checkPermission').mockReturnValue({});
     jest.spyOn(ExtJS, 'useUser').mockImplementation(() => user);
-    jest.spyOn(ExtJS, 'state').mockReturnValue({ getUser: () => user, getValue: jest.fn()});
+    jest.spyOn(ExtJS, 'state').mockReturnValue({getUser: () => user, getValue: jest.fn(), getEdition: () => 'PRO'});
     jest.spyOn(ExtJS, 'isProEdition').mockReturnValue({});
     jest.spyOn(ExtJS, 'useState').mockReturnValue({});
     jest.spyOn(ExtJS, 'usePermission').mockReturnValue({});
@@ -80,6 +79,7 @@ describe('Welcome', function() {
 
     when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue([]);
     when(ExtJS.state().getValue).calledWith('status').mockReturnValue(status);
+    when(ExtJS.useState).calledWith(helperFunctions.useGracePeriodEndsDate).mockReturnValue(new Date(''));
   });
 
   it('renders a main content area', function() {
@@ -335,9 +335,6 @@ describe('Welcome', function() {
     it("renders metrics cards when an administrator", async () => {
       user = {administrator: true};
 
-      when(axios.get)
-          .calledWith(USAGE_METRICS).mockResolvedValue({data: METRICS_CONTENT});
-
       render(<Welcome />);
       await waitForElementToBeRemoved(selectors.loadingStatus());
 
@@ -346,9 +343,6 @@ describe('Welcome', function() {
 
     it("does not render any card when not an administrator", async () => {
       user = {administrator: false};
-
-      when(axios.get)
-          .calledWith(USAGE_METRICS).mockResolvedValue({data: METRICS_CONTENT});
 
       render(<Welcome />);
       await waitForElementToBeRemoved(selectors.loadingStatus());

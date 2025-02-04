@@ -186,7 +186,7 @@ public class SelectorManagerImplTest
   }
 
   @Test
-  public void browseActiveCachesRolesList()  throws Exception{
+  public void browseActiveCachesRolesList() throws Exception {
     // initial setup calls securitySystem.listRoles twice times
     createSelectorConfiguration("roleId", "rolePrivilegeId", "roleSelectorName", "repository");
     securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream().findFirst().get().getRoles().add("nestedRoleId");
@@ -350,9 +350,10 @@ public class SelectorManagerImplTest
     return selectorConfiguration;
   }
 
-  private void createRepositoryContentSelectorPrivilege(final String privilegeId,
-                                                        final String selectorConfigurationName,
-                                                        final String repositoryName)
+  private void createRepositoryContentSelectorPrivilege(
+      final String privilegeId,
+      final String selectorConfigurationName,
+      final String repositoryName)
   {
     Privilege privilege = new Privilege();
     privilege.setId(privilegeId);

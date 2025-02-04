@@ -23,7 +23,8 @@ import com.google.common.hash.HashCode;
  *
  * @since 3.15
  */
-public interface BlobStoreUtil {
+public interface BlobStoreUtil
+{
   /**
    * Get a count of the repositories using a blob store.
    *
@@ -33,7 +34,9 @@ public interface BlobStoreUtil {
   int usageCount(String blobStoreId);
 
   /**
-   * Returns true if the file path is valid. The path is valid if all the folder names in the path are less than the given maximum.
+   * Returns true if the file path is valid. The path is valid if all the folder names in the path are less than the
+   * given maximum.
+   * 
    * @since 3.20
    * @param filePath A file path
    * @param maxLength The max length

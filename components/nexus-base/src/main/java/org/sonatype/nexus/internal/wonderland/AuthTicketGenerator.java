@@ -40,8 +40,9 @@ public class AuthTicketGenerator
   // NOTE: Default size is 66 to make full use of base64 encoding w/o padding
 
   @Inject
-  public AuthTicketGenerator(final RandomBytesGenerator randomBytes,
-                             @Named(CPREFIX + ".defaultSize:-66}") final int defaultSize)
+  public AuthTicketGenerator(
+      final RandomBytesGenerator randomBytes,
+      @Named(CPREFIX + ".defaultSize:-66}") final int defaultSize)
   {
     this.randomBytes = checkNotNull(randomBytes);
     this.defaultSize = defaultSize;

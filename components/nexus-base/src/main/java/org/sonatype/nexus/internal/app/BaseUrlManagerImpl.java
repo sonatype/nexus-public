@@ -37,8 +37,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 @Singleton
 public class BaseUrlManagerImpl
-  extends ComponentSupport
-  implements BaseUrlManager
+    extends ComponentSupport
+    implements BaseUrlManager
 {
   private final Provider<HttpServletRequest> requestProvider;
 
@@ -47,8 +47,10 @@ public class BaseUrlManagerImpl
   private volatile boolean force;
 
   @Inject
-  public BaseUrlManagerImpl(final Provider<HttpServletRequest> requestProvider,
-                            @Named("${org.sonatype.nexus.internal.app.BaseUrlManagerImpl.force:-false}") final boolean force) {
+  public BaseUrlManagerImpl(
+      final Provider<HttpServletRequest> requestProvider,
+      @Named("${org.sonatype.nexus.internal.app.BaseUrlManagerImpl.force:-false}") final boolean force)
+  {
     this.requestProvider = checkNotNull(requestProvider);
     this.force = force;
     log.debug("Force: {}", force);
@@ -151,7 +153,7 @@ public class BaseUrlManagerImpl
     }
 
     StringBuilder sb = new StringBuilder();
-    for (int i=0; i<length; i++) {
+    for (int i = 0; i < length; i++) {
       sb.append("../");
     }
     // guarantee it does not end in a slash
@@ -162,7 +164,7 @@ public class BaseUrlManagerImpl
     int count = 0;
     // we start at 1 to avoid leading slashes
     int previousIndex = 0;
-    for (int i=1; i<path.length(); i++) {
+    for (int i = 1; i < path.length(); i++) {
       if (path.charAt(i) == '/') {
         // skip double slashes
         if (previousIndex != (i - 1)) {

@@ -25,12 +25,12 @@ import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.EventHelper;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
 import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -99,25 +99,17 @@ public class QueuingUpgradeTaskScheduler
 
   /**
    * On startup reschedule
+   * 
    * @throws Exception
    */
   @Override
-  protected void doStart() throws Exception {
+  protected void doStart() {
     if (!checkRequiresMigration) {
       log.warn("Configured not to reschedule failed upgrade tasks. This may lead to missing features or bugs.");
       return;
     }
 
-    periodicJobService.startUsing();
-
     periodicJobService.runOnce(this::maybeStartQueue, (int) delayOnStart.getSeconds());
-  }
-
-  @Override
-  protected void doStop() throws Exception {
-    if (checkRequiresMigration) {
-      periodicJobService.stopUsing();
-    }
   }
 
   /**
@@ -167,15 +159,15 @@ public class QueuingUpgradeTaskScheduler
   protected void maybeStartQueue() {
     try {
       cooperation.on(() -> {
-            Optional<UpgradeTaskData> next = upgradeTaskStore.next();
-            if (!next.isPresent()) {
-              return null;
-            }
-            if (notRunningAndNotDone(next.get())) {
-              scheduleTask(next.get());
-            }
-            return null;
-          })
+        Optional<UpgradeTaskData> next = upgradeTaskStore.next();
+        if (!next.isPresent()) {
+          return null;
+        }
+        if (notRunningAndNotDone(next.get())) {
+          scheduleTask(next.get());
+        }
+        return null;
+      })
           .checkFunction(Optional::empty)
           .cooperate("queue");
     }

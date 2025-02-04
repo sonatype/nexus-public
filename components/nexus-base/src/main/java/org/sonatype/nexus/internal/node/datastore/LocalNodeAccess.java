@@ -47,8 +47,7 @@ public class LocalNodeAccess
   private Map<String, String> memberAliases = Collections.emptyMap();
 
   @Inject
-  public LocalNodeAccess(final NodeIdStore nodeIdStore)
-  {
+  public LocalNodeAccess(final NodeIdStore nodeIdStore) {
     this.nodeIdStore = checkNotNull(nodeIdStore);
   }
 

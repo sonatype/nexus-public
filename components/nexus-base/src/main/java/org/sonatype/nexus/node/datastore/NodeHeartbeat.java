@@ -45,7 +45,8 @@ public interface NodeHeartbeat
   Map<String, Object> systemInfo();
 
   /**
-   * The Heartbeat ID of the node, this is a non-persistent value that is distinct from the NodeAccess ID. Only useful to
+   * The Heartbeat ID of the node, this is a non-persistent value that is distinct from the NodeAccess ID. Only useful
+   * to
    * determine whether the heartbeat was created while an instance is running.
    */
   String heartbeatId();

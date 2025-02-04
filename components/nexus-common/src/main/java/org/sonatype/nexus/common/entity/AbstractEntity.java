@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
  * @since 3.7
  */
 public abstract class AbstractEntity
-  implements Entity
+    implements Entity
 {
   private transient volatile EntityMetadata metadata;
 

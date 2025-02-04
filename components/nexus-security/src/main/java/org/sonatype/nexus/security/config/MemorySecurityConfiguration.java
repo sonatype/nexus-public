@@ -13,6 +13,8 @@
 package org.sonatype.nexus.security.config;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.security.config.memory.MemoryCPrivilege;
@@ -109,6 +111,11 @@ public class MemorySecurityConfiguration
     }
   }
 
+  public MemorySecurityConfiguration withUsers(final CUser... users) {
+    setUsers(Arrays.asList(users));
+    return this;
+  }
+
   @Override
   public void updateUser(final CUser user) throws UserNotFoundException {
     checkNotNull(user);
@@ -163,8 +170,7 @@ public class MemorySecurityConfiguration
     checkNotNull(mapping.getSource());
     checkState(
         userRoleMappings.putIfAbsent(userRoleMappingKey(mapping.getUserId(), mapping.getSource()), mapping) == null,
-        "%s/%s already exists", mapping.getUserId(), mapping.getSource()
-    );
+        "%s/%s already exists", mapping.getUserId(), mapping.getSource());
   }
 
   public void setUserRoleMappings(final Collection<CUserRoleMapping> mappings) {
@@ -174,6 +180,11 @@ public class MemorySecurityConfiguration
         addUserRoleMapping(mapping);
       }
     }
+  }
+
+  public MemorySecurityConfiguration withUserRoleMappings(final CUserRoleMapping... mappings) {
+    setUserRoleMappings(Arrays.asList(mappings));
+    return this;
   }
 
   @Override
@@ -208,7 +219,9 @@ public class MemorySecurityConfiguration
   @Override
   public CPrivilege getPrivilegeByName(final String name) {
     return Optional.ofNullable(name)
-        .flatMap(n -> privileges.values().stream().filter(p -> p.getName().equals(n))
+        .flatMap(n -> privileges.values()
+            .stream()
+            .filter(p -> p.getName().equals(n))
             .findFirst())
         .orElse(null);
   }
@@ -222,7 +235,7 @@ public class MemorySecurityConfiguration
     return ids.stream()
         .map(privileges::get)
         .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Override
@@ -240,6 +253,11 @@ public class MemorySecurityConfiguration
         addPrivilege(privilege);
       }
     }
+  }
+
+  public MemorySecurityConfiguration withPrivileges(final CPrivilege... privileges) {
+    setPrivileges(new ArrayList<>(Arrays.asList(privileges)));
+    return this;
   }
 
   @Override
@@ -296,6 +314,11 @@ public class MemorySecurityConfiguration
         addRole(role);
       }
     }
+  }
+
+  public MemorySecurityConfiguration withRoles(final CRole... roles) {
+    setRoles(Arrays.asList(roles));
+    return this;
   }
 
   @Override

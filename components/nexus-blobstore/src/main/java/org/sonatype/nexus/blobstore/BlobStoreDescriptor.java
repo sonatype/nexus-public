@@ -117,5 +117,7 @@ public interface BlobStoreDescriptor
     return Collections.emptyList();
   }
 
-  default Map<String, List<SelectOption>> getDropDownValues() {return null;}
+  default Map<String, List<SelectOption>> getDropDownValues() {
+    return null;
+  }
 }

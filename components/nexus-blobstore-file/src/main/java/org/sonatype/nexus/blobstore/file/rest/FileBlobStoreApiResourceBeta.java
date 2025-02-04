@@ -36,7 +36,7 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 @Path(RESOURCE_URI)
 @Deprecated
 public class FileBlobStoreApiResourceBeta
-  extends FileBlobStoreResource
+    extends FileBlobStoreResource
 {
   static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores/file";
 

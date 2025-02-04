@@ -81,8 +81,7 @@ public class FileBlobStoreResource
   @Validate
   public void updateFileBlobStore(
       @PathParam("name") final String name,
-      @Valid final FileBlobStoreApiUpdateRequest request)
-      throws Exception
+      @Valid final FileBlobStoreApiUpdateRequest request) throws Exception
   {
     // Confirm that the blobstore name and type are the expected name and type
     getBlobStoreConfiguration(name);
@@ -98,8 +97,7 @@ public class FileBlobStoreResource
   @RequiresPermissions("nexus:blobstores:read")
   @GET
   @Path("/file/{name}")
-  public FileBlobStoreApiModel getFileBlobStoreConfiguration(@PathParam("name") final String name)
-  {
+  public FileBlobStoreApiModel getFileBlobStoreConfiguration(@PathParam("name") final String name) {
     BlobStoreConfiguration configuration = getBlobStoreConfiguration(name);
 
     return new FileBlobStoreApiModel(configuration);
@@ -114,8 +112,7 @@ public class FileBlobStoreResource
       throw new WebApplicationMessageException(
           BAD_REQUEST,
           "\"Unable to read non-file blob store configuration (type was " + configuration.getType() + ")\"",
-          APPLICATION_JSON
-      );
+          APPLICATION_JSON);
     }
     return configuration;
   }

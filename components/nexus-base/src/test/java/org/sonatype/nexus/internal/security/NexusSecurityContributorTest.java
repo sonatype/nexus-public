@@ -55,6 +55,6 @@ public class NexusSecurityContributorTest
             "nx-users-all", "nx-users-create", "nx-users-read", "nx-users-update", "nx-users-delete",
             "nx-roles-all", "nx-roles-create", "nx-roles-read", "nx-roles-update", "nx-roles-delete",
             "nx-privileges-all", "nx-privileges-create", "nx-privileges-read", "nx-privileges-update",
-                "nx-privileges-delete"));
+            "nx-privileges-delete"));
   }
 }

@@ -90,7 +90,7 @@ public class EntityHelper
    */
   public static void clearMetadata(final Object entity) {
     if (entity instanceof Entity) {
-      ((Entity)entity).setEntityMetadata(null);
+      ((Entity) entity).setEntityMetadata(null);
     }
   }
 }

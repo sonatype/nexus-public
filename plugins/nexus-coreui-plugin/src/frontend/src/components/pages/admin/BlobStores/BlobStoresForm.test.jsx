@@ -204,7 +204,7 @@ describe('BlobStoresForm', function() {
           accessKeyId: () => getByLabelText('Access Key ID'),
           secretAccessKey: () => getByLabelText('Secret Access Key'),
           assumeRole: () => getByLabelText('Assume Role ARN (Optional)'),
-          sessionToken: () => getByLabelText('Session Token ARN (Optional)'),
+          sessionToken: () => getByLabelText('Session Token (Optional)'),
           encryptionType: () => getByLabelText('Encryption Type'),
           kmsKeyId: () => getByLabelText('KMS Key ID (Optional)'),
           endpointURL: () => getByLabelText('Endpoint URL'),
@@ -661,6 +661,21 @@ describe('BlobStoresForm', function() {
     );
   });
 
+  it('creates a new GCP blob store. region is a read-only', async function() {
+    const {
+      loadingMask,
+      typeSelect,
+      region,
+    } = render();
+
+    await waitForElementToBeRemoved(loadingMask);
+
+    userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
+    const regionElement = region();
+    expect(regionElement).toBeInTheDocument();
+    expect(regionElement).toHaveTextContent('The region is automatically set based on where Nexus Repository is running in GCP. Ensure the bucket is in the same region.');
+  });
+
   it('creates a new GCP blob store with default application authentication', async function() {
     const {
       name,
@@ -670,7 +685,6 @@ describe('BlobStoresForm', function() {
       softQuotaLimit,
       spaceUsedQuotaLabel,
       bucket,
-      region,
       prefix
     } = render();
 
@@ -685,7 +699,6 @@ describe('BlobStoresForm', function() {
         },
         bucket: {
           name: 'test-bucket',
-          region: 'us-central1',
           prefix: 'pre'
         }
       },
@@ -701,7 +714,6 @@ describe('BlobStoresForm', function() {
     userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
     userEvent.type(name(), data.name);
     userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
-    userEvent.type(region(), data.bucketConfiguration.bucket.region);
     userEvent.type(prefix(), data.bucketConfiguration.bucket.prefix);
 
     userEvent.click(selectors.getSoftQuota());
@@ -724,7 +736,6 @@ describe('BlobStoresForm', function() {
       loadingMask,
       typeSelect,
       bucket,
-      region,
       credentialAuthentication,
       fileInput
     } = render();
@@ -746,7 +757,6 @@ describe('BlobStoresForm', function() {
         },
         bucket: {
           name: 'test-bucket2',
-          region: 'us-central1'
         }
       },
     };
@@ -756,7 +766,6 @@ describe('BlobStoresForm', function() {
     userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
     userEvent.type(name(), data.name);
     userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
-    userEvent.type(region(), data.bucketConfiguration.bucket.region);
     userEvent.click(credentialAuthentication());
 
     const file = new File([new ArrayBuffer(1)], 'credentials.json', { type: 'application/json' });
@@ -783,7 +792,6 @@ describe('BlobStoresForm', function() {
       softQuotaLimit,
       spaceUsedQuotaLabel,
       bucket,
-      region,
       prefix
     } = render();
 
@@ -798,7 +806,6 @@ describe('BlobStoresForm', function() {
         },
         bucket: {
           name: 'test-bucket',
-          region: 'us-central1',
           prefix: 'pre'
         }
       },
@@ -814,7 +821,6 @@ describe('BlobStoresForm', function() {
     userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
     userEvent.type(name(), data.name);
     userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
-    userEvent.type(region(), data.bucketConfiguration.bucket.region);
     userEvent.type(prefix(), data.bucketConfiguration.bucket.prefix);
 
     userEvent.click(selectors.getSoftQuota());
@@ -857,7 +863,6 @@ describe('BlobStoresForm', function() {
         },
         bucket: {
           name: 'test-bucket',
-          region: 'us-central1',
           prefix: 'pre'
         }
       },
@@ -873,7 +878,6 @@ describe('BlobStoresForm', function() {
     userEvent.selectOptions(typeSelect(), 'Google Cloud Platform');
     userEvent.type(name(), data.name);
     userEvent.type(bucket(), data.bucketConfiguration.bucket.name);
-    userEvent.type(region(), data.bucketConfiguration.bucket.region);
     userEvent.type(prefix(), data.bucketConfiguration.bucket.prefix);
     userEvent.click(kmsEncryption());
     userEvent.type(kmsKeyResourceName(), data.bucketConfiguration.encryption.encryptionKey);

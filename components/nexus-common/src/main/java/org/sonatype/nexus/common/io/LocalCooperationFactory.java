@@ -45,7 +45,8 @@ public class LocalCooperationFactory
 
   @Override
   protected Stream<CooperatingFuture<?>> streamFutures(final String scope) {
-    return localFutures.entrySet().stream()
+    return localFutures.entrySet()
+        .stream()
         .filter(entry -> entry.getKey().startsWith(scope))
         .map(Entry::getValue);
   }

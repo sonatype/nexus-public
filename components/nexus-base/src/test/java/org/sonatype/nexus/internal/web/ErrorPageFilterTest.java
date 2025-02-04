@@ -31,7 +31,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 public class ErrorPageFilterTest
-  extends TestSupport
+    extends TestSupport
 {
   private ErrorPageFilter underTest;
 

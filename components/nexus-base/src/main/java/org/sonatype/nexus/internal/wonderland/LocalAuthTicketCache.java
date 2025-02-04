@@ -101,7 +101,7 @@ public class LocalAuthTicketCache
       expireTokens();
       UserAuthToken key = new UserAuthToken(user, token, realmName);
       // Sanity check we don't clobber tokens
-      checkState(!tokens.containsKey(key), "Duplicate token"); //NON-NLS
+      checkState(!tokens.containsKey(key), "Duplicate token"); // NON-NLS
       tokens.put(key, now());
     }
   }

@@ -30,11 +30,10 @@ public class DateBasedHelper
    * Returns the date path prefix based on the given date range.
    *
    * @param fromDateTime the start date
-   * @param toDateTime   the end date
+   * @param toDateTime the end date
    * @return the date path prefix
    */
-  public static String getDatePathPrefix(final OffsetDateTime fromDateTime, final OffsetDateTime toDateTime)
-  {
+  public static String getDatePathPrefix(final OffsetDateTime fromDateTime, final OffsetDateTime toDateTime) {
     StringBuilder datePathPrefix = new StringBuilder();
     if (fromDateTime.getYear() == toDateTime.getYear()) {
       datePathPrefix.append("yyyy").append("/");
@@ -56,13 +55,12 @@ public class DateBasedHelper
     return toDateTime.format(dateTimeFormatter);
   }
 
-  public static List<String> generatePrefixes(final OffsetDateTime now, final Duration duration) {
-    OffsetDateTime utcDateTime = now.withOffsetSameInstant(ZoneOffset.UTC); // Convert to UTC
-
+  public static List<String> generatePrefixes(final OffsetDateTime from, final OffsetDateTime to) {
     List<String> prefixes = new ArrayList<>();
-    OffsetDateTime startTime = utcDateTime.minus(duration).truncatedTo(ChronoUnit.MINUTES);
-    OffsetDateTime endTime = utcDateTime.truncatedTo(ChronoUnit.MINUTES);
+    OffsetDateTime startTime = from.truncatedTo(ChronoUnit.MINUTES).withOffsetSameInstant(ZoneOffset.UTC);
+    OffsetDateTime endTime = to.truncatedTo(ChronoUnit.MINUTES).withOffsetSameInstant(ZoneOffset.UTC);
 
+    Duration duration = Duration.between(startTime, endTime);
     if (duration.toDays() > 0) {
       while (isApplicable(startTime, endTime, ChronoUnit.DAYS)) {
         prefixes.add(startTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))); // Only days
@@ -95,7 +93,8 @@ public class DateBasedHelper
   }
 
   private static boolean isApplicable(
-      final OffsetDateTime startTime, final OffsetDateTime endTime,
+      final OffsetDateTime startTime,
+      final OffsetDateTime endTime,
       final ChronoUnit granularity)
   {
 

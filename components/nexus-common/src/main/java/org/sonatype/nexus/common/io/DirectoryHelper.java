@@ -145,7 +145,7 @@ public final class DirectoryHelper
     }
     catch (FileAlreadyExistsException e) {
       // this happens when last element of path exists, but is a symlink.
-      // A simple test with Files.isDirectory should be able to  detect this
+      // A simple test with Files.isDirectory should be able to detect this
       // case as by default, it follows symlinks.
       if (!Files.isDirectory(dir)) {
         throw e;
@@ -162,6 +162,7 @@ public final class DirectoryHelper
 
   /**
    * Given a parent directory, create the child directory using {@link #mkdir(File)}
+   * 
    * @since 3.5
    */
   public static File mkdir(final File parent, final String child) throws IOException {
@@ -187,8 +188,7 @@ public final class DirectoryHelper
             Files.delete(file);
             return FileVisitResult.CONTINUE;
           }
-        }
-    );
+        });
   }
 
   /**
@@ -234,8 +234,55 @@ public final class DirectoryHelper
             }
             return FileVisitResult.CONTINUE;
           }
+        });
+  }
+
+  /**
+   * Will walk a directory structure and prune any empty directories found that have modified timestamps that fall
+   * before the provided timestamp value. If null, all empty directories will be pruned
+   */
+  public static int deleteIfEmptyRecursively(final Path dir, final Long timestamp) throws IOException {
+    final AtomicInteger deleteCount = new AtomicInteger(0);
+
+    File rootDir = dir.toFile();
+
+    if (!rootDir.exists()) {
+      log.debug("Requested path {} doesn't exist, will not process for empty directories to remove.",
+          rootDir.getAbsolutePath());
+      return 0;
+    }
+
+    Files.walkFileTree(dir, new SimpleFileVisitor<Path>()
+    {
+      @Override
+      public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+        File dirFile = dir.toFile();
+        if (!dirFile.exists()) {
+          log.debug("Processing directory {} that no longer exists, will ignore and move on", dir.toAbsolutePath());
+          return FileVisitResult.CONTINUE;
         }
-    );
+        if (timestamp != null && dirFile.lastModified() > timestamp) {
+          log.debug("Processing directory {} has been modified recently and will not be removed.",
+              dir.toAbsolutePath());
+          return FileVisitResult.CONTINUE;
+        }
+
+        String[] items = dir.toFile().list();
+        if (items != null && items.length == 0) {
+          try {
+            Files.delete(dir);
+            deleteCount.incrementAndGet();
+          }
+          catch (IOException e) {
+            log.error("Failed to delete empty directory {} will stop processing.", dir.toAbsolutePath(), e);
+            return FileVisitResult.TERMINATE;
+          }
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
+    return deleteCount.intValue();
   }
 
   /**
@@ -357,8 +404,7 @@ public final class DirectoryHelper
                 return FileVisitResult.CONTINUE;
               }
             }
-          }
-      );
+          });
     }
     else {
       Files.delete(dir);
@@ -378,8 +424,9 @@ public final class DirectoryHelper
    * returned, and in any other case (path does not exists) {@code false} is returned.
    * The passed in filter can leave out a directory and it's complete subtree from operation.
    */
-  public static boolean deleteIfExists(final Path dir, @Nullable final Predicate<Path> excludeFilter)
-      throws IOException
+  public static boolean deleteIfExists(
+      final Path dir,
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     checkNotNull(dir);
     if (Files.exists(dir)) {
@@ -390,7 +437,6 @@ public final class DirectoryHelper
       return false;
     }
   }
-
 
   // COPY: recursive copy of whole directory tree
 
@@ -410,10 +456,12 @@ public final class DirectoryHelper
    * The passed in filter can leave out a directory and it's complete subtree from operation.
    *
    * @throws IllegalArgumentException if 'from' is a parent directory of the 'to' path, unless an excludeFilter is
-   *                                  provided
+   *           provided
    */
-  public static void copy(final Path from, final Path to, @Nullable final Predicate<Path> excludeFilter)
-      throws IOException
+  public static void copy(
+      final Path from,
+      final Path to,
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     validateDirectoryOrFile(from);
     checkNotNull(to);
@@ -442,8 +490,10 @@ public final class DirectoryHelper
    * "from" path does not exists, {@code false} is returned.
    * The passed in filter can leave out a directory and it's complete subtree from operation.
    */
-  public static boolean copyIfExists(final Path from, final Path to, @Nullable final Predicate<Path> excludeFilter)
-      throws IOException
+  public static boolean copyIfExists(
+      final Path from,
+      final Path to,
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     checkNotNull(from);
     if (Files.exists(from)) {
@@ -488,7 +538,8 @@ public final class DirectoryHelper
         return fromStore.equals(toStore);
       }
       else {
-        log.warn("No ultimate parent path found for '{}'", to, new RuntimeException("marker")); // record the stack trace?
+        log.warn("No ultimate parent path found for '{}'", to, new RuntimeException("marker")); // record the stack
+                                                                                                // trace?
         return false; // no ultimate parent? be on safe side
       }
     }
@@ -532,8 +583,10 @@ public final class DirectoryHelper
    * or a directory. While this method is not a real move (like {@link #move(Path, Path)} is), it is a bit more capable:
    * it can move a complete directory structure to it's one sub-directory.
    */
-  public static void copyDeleteMove(final Path from, final Path to, @Nullable final Predicate<Path> excludeFilter)
-      throws IOException
+  public static void copyDeleteMove(
+      final Path from,
+      final Path to,
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     copy(from, to, excludeFilter);
     delete(from, excludeFilter);
@@ -543,10 +596,10 @@ public final class DirectoryHelper
    * Invokes {@link #copyDeleteMove(Path, Path, Predicate)} if passed in "from" path exists and returns {@code true}. If
    * "from" path does not exists, {@code false} is returned.
    */
-  public static boolean copyDeleteMoveIfExists(final Path from,
-                                               final Path to,
-                                               @Nullable final Predicate<Path> excludeFilter)
-      throws IOException
+  public static boolean copyDeleteMoveIfExists(
+      final Path from,
+      final Path to,
+      @Nullable final Predicate<Path> excludeFilter) throws IOException
   {
     checkNotNull(from);
     if (Files.exists(from)) {

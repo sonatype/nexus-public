@@ -36,15 +36,14 @@ public class FreezeComponentTest
 
   @Before
   public void setup() {
-    underTest = new FreezeComponent();
-    underTest.setFreezeService(freezeService);
+    underTest = new FreezeComponent(freezeService);
   }
 
   @Test
   public void read() throws Exception {
     when(freezeService.isFrozen()).thenReturn(true);
     FreezeStatusXO freezeStatusXO = underTest.read();
-    assertThat(freezeStatusXO.getFrozen(), is(true));
+    assertThat(freezeStatusXO.isFrozen(), is(true));
   }
 
   @Test

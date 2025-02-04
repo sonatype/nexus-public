@@ -92,7 +92,7 @@ public class HttpClientFacetImpl
   private String unencryptedPassword;
 
   @VisibleForTesting
-  static class Config
+  public static class Config
   {
     @Valid
     @Nullable
@@ -115,12 +115,13 @@ public class HttpClientFacetImpl
   BlockingHttpClient httpClient;
 
   @Inject
-  public HttpClientFacetImpl(final HttpClientManager httpClientManager,
-                             final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
-                             final Map<String, RedirectStrategy> redirectStrategy,
-                             final Map<String, NormalizationStrategy> normalizationStrategies,
-                             final Map<String, ContentCompressionStrategy> contentCompressionStrategies,
-                             final Map<String, TargetAuthenticationStrategy> authenticationStrategies)
+  public HttpClientFacetImpl(
+      final HttpClientManager httpClientManager,
+      final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
+      final Map<String, RedirectStrategy> redirectStrategy,
+      final Map<String, NormalizationStrategy> normalizationStrategies,
+      final Map<String, ContentCompressionStrategy> contentCompressionStrategies,
+      final Map<String, TargetAuthenticationStrategy> authenticationStrategies)
   {
     this.httpClientManager = checkNotNull(httpClientManager);
     this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
@@ -131,13 +132,14 @@ public class HttpClientFacetImpl
   }
 
   @VisibleForTesting
-  HttpClientFacetImpl(final HttpClientManager httpClientManager,
-                      final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
-                      final Map<String, RedirectStrategy> redirectStrategy,
-                      final Map<String, NormalizationStrategy> normalizationStrategy,
-                      final Map<String, ContentCompressionStrategy> contentCompressionStrategies,
-                      final Map<String, TargetAuthenticationStrategy> authenticationStrategies,
-                      final Config config)
+  HttpClientFacetImpl(
+      final HttpClientManager httpClientManager,
+      final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
+      final Map<String, RedirectStrategy> redirectStrategy,
+      final Map<String, NormalizationStrategy> normalizationStrategy,
+      final Map<String, ContentCompressionStrategy> contentCompressionStrategies,
+      final Map<String, TargetAuthenticationStrategy> authenticationStrategies,
+      final Config config)
   {
     this(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategy,
         contentCompressionStrategies, authenticationStrategies);
@@ -249,7 +251,9 @@ public class HttpClientFacetImpl
     }
   }
 
-  private void logAutoBlockTimeIncreased(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus)
+  private void logAutoBlockTimeIncreased(
+      final RemoteConnectionStatus oldStatus,
+      final RemoteConnectionStatus newStatus)
   {
     String message = "Repository status for {} continued as {} until {} - reason {} (previous reason was {})";
     log.info(message,
@@ -257,8 +261,7 @@ public class HttpClientFacetImpl
         newStatus.getType(),
         newStatus.getBlockedUntil(),
         statusReason(newStatus),
-        statusReason(oldStatus)
-    );
+        statusReason(oldStatus));
   }
 
   private void logStatusUpdated(final RemoteConnectionStatus oldStatus, final RemoteConnectionStatus newStatus) {
@@ -268,8 +271,7 @@ public class HttpClientFacetImpl
         oldStatus.getType(),
         newStatus.getType(),
         statusBlockedUntil(newStatus),
-        statusReason(newStatus)
-    );
+        statusReason(newStatus));
   }
 
   private static String statusBlockedUntil(final RemoteConnectionStatus status) {
@@ -282,8 +284,7 @@ public class HttpClientFacetImpl
   private static String statusReason(final RemoteConnectionStatus status) {
     return format("%s for %s",
         status.getReason() != null ? status.getReason() : "n/a",
-        status.getRequestUrl() != null ? status.getRequestUrl() : "n/a"
-    );
+        status.getRequestUrl() != null ? status.getRequestUrl() : "n/a");
   }
 
   private void createHttpClient() {
@@ -358,7 +359,8 @@ public class HttpClientFacetImpl
 
     log.debug("Distribute repository block changed event: repository={}:{}", repositoryName, status.getType());
 
-    long blockUntilMillis = status.getBlockedUntil() == null ? DateTime.now().getMillis()
+    long blockUntilMillis = status.getBlockedUntil() == null
+        ? DateTime.now().getMillis()
         : status.getBlockedUntil().getMillis();
 
     RepositoryRemoteConnectionStatusEvent event = new RepositoryRemoteConnectionStatusEvent(

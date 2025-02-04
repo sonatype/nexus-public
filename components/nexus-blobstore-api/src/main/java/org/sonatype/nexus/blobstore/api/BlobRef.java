@@ -37,7 +37,7 @@ public class BlobRef
    * The pattern to match date based layout in a file system
    */
   public static final DateTimeFormatter DATE_TIME_PATH_FORMATTER = DateTimeFormatter.ofPattern(
-      "yyyy" + separator + "MM" + separator +  "dd" + separator +  "HH" + separator +  "mm");
+      "yyyy" + separator + "MM" + separator + "dd" + separator + "HH" + separator + "mm");
 
   /**
    * The pattern to match date based layout in an asset reference
