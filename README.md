@@ -12,29 +12,32 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-# Sonatype Nexus Repository Open Source Codebase 
+# Sonatype Nexus Repository Core source
+
+Sonatype Nexus Repository Core are the EPL 1.0 licensed sources for the core of the Sonatype Nexus Repository.
+This repository is a read-only export, Sonatype cannot accept contributions.
 
 ## Downloadable Bundles
 
- See: https://www.sonatype.com/download-oss-sonatype
+Sonatype does not bundle the Nexus Repository Core sources for download.
+
+Sonatype Nexus Repository Community and Pro distributions are available for download at:
+
+https://www.sonatype.com/download-oss-sonatype
 
 ## Support
 
-Using Sonatype Nexus Repository OSS and need to report an issue? [Open an issue here](https://github.com/sonatype/nexus-public/issues)
+Using Sonatype Nexus Repository Community Edition and need to report an issue? [Open an issue here](https://github.com/sonatype/nexus-public/issues)
 
 Sonatype Nexus Repository Pro customers can use https://support.sonatype.com/.
- 
+
 ## Build Requirements
 
 Builds use Apache Maven and require Java 17. Apache Maven wrapper scripts are included in the source tree.
 
-### Configuring Maven for SNAPSHOT Dependencies
-
-Following best practices, the nexus-public POM does not include any root `<repositories>` elements.
-
 ## Building From Source
 
-Released versions are tagged and branched using a name of the form `release-{version}`. For example: `release-3.72.0-04`
+Released versions are tagged and branched using a name of the form `release-{version}`. For example: `release-3.78.0-04`
 
 To build a tagged release, first fetch all tags:
 
@@ -45,34 +48,28 @@ git fetch --tags
 Then checkout the remote branch you want. For example:
 
 ```shell
-git checkout -b release-3.72.0-04 origin/release-3.72.0-04 --
+git checkout -b release-3.78.0-04 origin/release-3.78.0-04 --
 ```
 
 Then build using the included Maven wrapper script. For example:
 
 ```shell
-./mvnw clean install -Dpublic
+./mvnw clean install
 ```
-
-The `public` property is required outside of Sonatype's internal infrastructure.
 
 ## Running
 
-To run Nexus Repository, after building, unzip the assembly and start the server:
+To run Nexus Repository Core after building:
 
-    unzip -d target assemblies/nexus-base-template/target/nexus-base-template-*.zip
-    ./target/nexus-base-template-*/bin/nexus console
+1. Navigate to `assemblies/nexus-repository-core/target/assembly`
+2. Run `java -jar bin/nexus-repository-core-*.jar`
 
-The `nexus-base-template` assembly is used as the basis for the official Sonatype Nexus Repository distributions.
+The application will create a sonatype-work directory at `assemblies/nexus-repository-core/target/sonatype-work`,
+which will contain the default administrator credentials, database, and file blobstore.
 
 ## License
 
 This project is licensed under the Eclipse Public License - v 1.0, you can read the full text [here](LICENSE.txt)
 
-## Getting help
-
-Looking to contribute to our code but need some help? There's a few ways to get information or our attention:
-
-* Check out the [Nexus3](http://stackoverflow.com/questions/tagged/nexus3) tag on Stack Overflow
-* Check out the [Nexus Repository User List](https://groups.google.com/a/glists.sonatype.com/forum/?hl=en#!forum/nexus-users)
-* Connect with [@sonatypeDev](https://twitter.com/sonatypeDev) on Twitter
+Sonatype Nexus Repository Core is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon between Sonatype, Inc. and Sencha Inc.
+Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a closed source work.
