@@ -12,32 +12,35 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-# Sonatype Nexus Repository Core source
+# Sonatype Nexus Repository Core
 
-Sonatype Nexus Repository Core are the EPL 1.0 licensed sources for the core of the Sonatype Nexus Repository.
-This repository is a read-only export, Sonatype cannot accept contributions.
+Sonatype Nexus Repository is the single source of truth for all your internal and third-party binaries, components, and packages. Integrate all your development tools into a centralized binary repository manager so that you can choose the best open source components, optimize your build performance, and ship code quickly while increasing visibility across your SDLC.
 
-## Downloadable Bundles
+This is the open source codebase of Nexus Repository Core. This contains functionality for maven, raw, and APT repository formats, and uses an embedded H2 database that is appropriate for small workloads.
 
-Sonatype does not bundle the Nexus Repository Core sources for download.
+For a fully-featured version of Nexus Repository, download the Community Edition binary from https://www.sonatype.com/products/nexus-community-edition-download. Community Edition includes additional format support such as npm, Docker, NuGet, PyPI and many others. It also allows use of an external PostgreSQL database that allows you to deploy Nexus Repository under Kubernetes.
 
-Sonatype Nexus Repository Community and Pro distributions are available for download at:
+#### Issues
 
-https://www.sonatype.com/download-oss-sonatype
+If you are using Nexus Repository Core or Community Edition and need to report an issue or request an enhancement, [open an issue here](https://github.com/sonatype/nexus-public/issues).
 
-## Support
+For help with Nexus Repository Core or Community Edition, please join the [Sonatype Community](https://community.sonatype.com/) to get tips and tricks from other users.
 
-Using Sonatype Nexus Repository Community Edition and need to report an issue? [Open an issue here](https://github.com/sonatype/nexus-public/issues)
+To report a security vulnerability, please see https://www.sonatype.com/report-a-security-vulnerability
 
-Sonatype Nexus Repository Pro customers can use https://support.sonatype.com/.
+Sonatype Nexus Repository Pro customers can contact our world-class support team at https://support.sonatype.com/.
 
 ## Build Requirements
 
 Builds use Apache Maven and require Java 17. Apache Maven wrapper scripts are included in the source tree.
 
+### Configuring Maven for SNAPSHOT Dependencies
+
+Following best practices, the nexus-public POM does not include any root `<repositories>` elements.
+
 ## Building From Source
 
-Released versions are tagged and branched using a name of the form `release-{version}`. For example: `release-3.78.0-04`
+Released versions are tagged and branched using a name of the form `release-{version}`. For example: `release-3.72.0-04`
 
 To build a tagged release, first fetch all tags:
 
@@ -48,28 +51,26 @@ git fetch --tags
 Then checkout the remote branch you want. For example:
 
 ```shell
-git checkout -b release-3.78.0-04 origin/release-3.78.0-04 --
+git checkout -b release-3.77.0-08 origin/release-3.77.0-08 --
 ```
 
 Then build using the included Maven wrapper script. For example:
 
 ```shell
-./mvnw clean install
+./mvnw clean install -Dpublic
 ```
+
+The `public` property is required outside of Sonatype's internal infrastructure.
 
 ## Running
 
-To run Nexus Repository Core after building:
+To run Nexus Repository, after building, unzip the assembly and start the server:
 
-1. Navigate to `assemblies/nexus-repository-core/target/assembly`
-2. Run `java -jar bin/nexus-repository-core-*.jar`
+    unzip -d target assemblies/nexus-base-template/target/nexus-base-template-*.zip
+    ./target/nexus-base-template-*/bin/nexus console
 
-The application will create a sonatype-work directory at `assemblies/nexus-repository-core/target/sonatype-work`,
-which will contain the default administrator credentials, database, and file blobstore.
+The `nexus-base-template` assembly is used as the basis for the official Sonatype Nexus Repository distributions.
 
 ## License
 
 This project is licensed under the Eclipse Public License - v 1.0, you can read the full text [here](LICENSE.txt)
-
-Sonatype Nexus Repository Core is distributed with Sencha Ext JS pursuant to a FLOSS Exception agreed upon between Sonatype, Inc. and Sencha Inc.
-Sencha Ext JS is licensed under GPL v3 and cannot be redistributed as part of a closed source work.
