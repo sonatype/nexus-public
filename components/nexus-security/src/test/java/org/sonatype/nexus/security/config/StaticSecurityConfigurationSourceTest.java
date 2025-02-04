@@ -14,26 +14,28 @@ package org.sonatype.nexus.security.config;
 
 import java.io.IOException;
 
-import org.sonatype.nexus.security.AbstractSecurityTest;
+import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class StaticSecurityConfigurationSourceTest
-    extends AbstractSecurityTest
+    extends TestSupport
 {
-  private PasswordService passwordService = mock(PasswordService.class);
+  @Mock
+  private PasswordService passwordService;
 
-  private AdminPasswordFileManager adminPasswordFileManager = mock(AdminPasswordFileManager.class);
+  @Mock
+  private AdminPasswordFileManager adminPasswordFileManager;
 
   private StaticSecurityConfigurationSource underTest;
 

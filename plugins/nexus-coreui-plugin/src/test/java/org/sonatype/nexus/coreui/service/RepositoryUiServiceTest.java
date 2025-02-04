@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -30,9 +31,11 @@ import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
+import org.sonatype.nexus.repository.config.SimpleConfiguration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
@@ -41,16 +44,19 @@ import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.security.SecurityHelper;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -123,14 +129,15 @@ public class RepositoryUiServiceTest
     when(repository.getConfiguration()).thenReturn(configuration);
     when(configuration.copy()).thenReturn(configuration);
 
-    underTest = new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager, repositoryMetricsService,
+    underTest = Mockito.spy(new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager,
+        repositoryMetricsService,
         configurationStore, securityHelper, recipes, taskScheduler, typeLookup, formats, repositoryPermissionChecker)
     {
       @Override
       RepositoryXO asRepository(final Repository input) {
         return repositoryXO;
       }
-    };
+    });
   }
 
   @Test
@@ -206,6 +213,74 @@ public class RepositoryUiServiceTest
     Assert.assertEquals("hosted", repoXo.getType());
   }
 
+  @Test
+  public void testReadReferencesContainsExpectedInfo() {
+    List<Configuration> repoConfigurations = givenRepoConfigurations();
+    StoreLoadParameters parameters = createParameters();
+    doReturn(repoConfigurations).when(underTest).filter(parameters);
+
+    List<RepositoryReferenceXO> result = underTest.readReferences(parameters);
+
+    assertThat(result, hasSize(repoConfigurations.size()));
+
+    for (Configuration repoConfiguration : repoConfigurations) {
+      RepositoryReferenceXO reference = result.stream()
+          .filter(value -> Objects.equals(repoConfiguration.getRepositoryName(), value.getName()))
+          .findAny()
+          .orElseThrow(() -> new AssertionError(
+              String.format("Repository %s not found in results", repoConfiguration.getRepositoryName())));
+      Recipe recipe = recipes.get(repoConfiguration.getRecipeName());
+
+      assertThat(reference.getId(), is(repoConfiguration.getRepositoryName()));
+      assertThat(reference.getFormat(), is(recipe.getFormat().getValue()));
+      assertThat(reference.getBlobStoreName(), is(getAttribute(repoConfiguration, "storage.blobStoreName")));
+      assertThat(reference.getVersionPolicy(), is(getAttribute(repoConfiguration, "maven.versionPolicy")));
+      assertThat(reference.getType(), is(recipe.getType().getValue()));
+      assertThat(reference.getUrl(),
+          is(String.format("%s/repository/%s/", BaseUrlHolder.get(), repoConfiguration.getRepositoryName())));
+      assertThat(reference.getStatus().getRepositoryName(), is(repoConfiguration.getRepositoryName()));
+      assertThat(reference.getStatus().isOnline(), is(repoConfiguration.isOnline()));
+    }
+  }
+
+  private List<Configuration> givenRepoConfigurations() {
+    return List.of(
+        givenRepoConfiguration("repo1", "raw", "rawRecipe", "blobStore1", "strict", "testType", true),
+        givenRepoConfiguration("repo2", "maven", "mavenRecipe", "blobStore2", "none", "otherType", false));
+  }
+
+  private Configuration givenRepoConfiguration(
+      String repoName,
+      String formatValue,
+      String recipeName,
+      String blobStoreName,
+      String versionPolicy,
+      String typeValue,
+      boolean isOnline)
+  {
+    Configuration c = new SimpleConfiguration();
+    Recipe recipe = Mockito.mock(Recipe.class);
+    Type type = Mockito.mock(Type.class);
+    Format format = Mockito.mock(Format.class);
+
+    c.setRepositoryName(repoName);
+    c.setRecipeName(recipeName);
+    c.setOnline(isOnline);
+    c.setAttributes(ImmutableMap.of(
+        "storage", ImmutableMap.of("blobStoreName", blobStoreName),
+        "maven", ImmutableMap.of("versionPolicy", versionPolicy)));
+
+    doReturn(type).when(recipe).getType();
+    doReturn(typeValue).when(type).getValue();
+    doReturn(format).when(recipe).getFormat();
+    doReturn(formatValue).when(format).getValue();
+
+    underTest.addRecipe(recipeName, recipe);
+    recipes.put(recipeName, recipe);
+
+    return c;
+  }
+
   private List<RepositoryReferenceXO> getTestRepositories() {
     RepositoryReferenceXO nugetRepoProxy = mock(RepositoryReferenceXO.class);
     when(nugetRepoProxy.getName()).thenReturn("nuget-proxy");
@@ -237,5 +312,21 @@ public class RepositoryUiServiceTest
     StoreLoadParameters params = new StoreLoadParameters();
     params.setFilter(Collections.emptyList());
     return params;
+  }
+
+  private static Object getAttribute(final Configuration repository, String path) {
+    Object currentValue = repository.getAttributes();
+    String[] parts = path.split("\\.");
+
+    for (String part : parts) {
+      if (currentValue instanceof Map) {
+        currentValue = ((Map<?, ?>) currentValue).get(part);
+      }
+      else {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    return currentValue;
   }
 }

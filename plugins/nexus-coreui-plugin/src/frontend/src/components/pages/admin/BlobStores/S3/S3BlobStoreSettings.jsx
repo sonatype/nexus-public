@@ -185,6 +185,7 @@ export default function S3BlobStoreSettings({service}) {
       </NxFormGroup>
       <NxFormGroup label={FIELDS.S3BlobStore_Authentication_SessionToken}>
         <NxTextInput className="nx-text-input--long"
+                     type="password"
                    {...FormUtils.fieldProps(securityField('sessionToken'), current)}
                    onChange={FormUtils.handleUpdate(securityField('sessionToken'), send)}/>
       </NxFormGroup>

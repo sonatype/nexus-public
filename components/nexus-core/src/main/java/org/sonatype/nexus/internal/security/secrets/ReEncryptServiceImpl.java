@@ -79,7 +79,8 @@ public class ReEncryptServiceImpl
     this.eventManager = checkNotNull(eventManager);
     this.databaseCheck = checkNotNull(databaseCheck);
     this.cooperation = checkNotNull(cooperationFactory).configure()
-        .enabled(cooperationEnabled).build("re-encrypt-task");
+        .enabled(cooperationEnabled)
+        .build("re-encrypt-task");
   }
 
   private void checkKeyExists(final String secretKeyId) {
@@ -89,8 +90,9 @@ public class ReEncryptServiceImpl
   }
 
   @Override
-  public String submitReEncryption(final String secretKeyId, @Nullable final String notifyEmail)
-      throws MissingKeyException, ReEncryptionNotSupportedException
+  public String submitReEncryption(
+      final String secretKeyId,
+      @Nullable final String notifyEmail) throws MissingKeyException, ReEncryptionNotSupportedException
   {
     return submitTask(secretKeyId, notifyEmail);
   }
@@ -111,7 +113,7 @@ public class ReEncryptServiceImpl
   /**
    * Schedules re-encrypt task if there is not an existing one
    *
-   * @param keyId       the key to use for re-encryption
+   * @param keyId the key to use for re-encryption
    * @param notifyEmail the email address to notify when the re-encryption task is complete
    * @return the task id
    */
@@ -150,7 +152,8 @@ public class ReEncryptServiceImpl
   }
 
   private Optional<TaskInfo> getReEncryptTask() {
-    return taskScheduler.listsTasks().stream()
+    return taskScheduler.listsTasks()
+        .stream()
         .filter(taskInfo -> taskInfo.getTypeId().equals(ReEncryptTaskDescriptor.TYPE_ID))
         .findFirst();
   }

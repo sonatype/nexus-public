@@ -23,43 +23,13 @@
         </attachedOutputs>
         <projectVersioning calculateProjectVersionChecksum="true" />
     </configuration>
-
     <input>
         <global>
-            <glob>
-                {*.java,*.groovy,*.scala,*.properties,*.js,*.jsx,*.scss,*.css,*.png,*.gif}
-            </glob>
             <includes>
-                <include>src/</include>
-                <include glob="*.json,*.lock">./</include>
+                <include>src/frontend</include>
+                <include>src/main/art</include>
+                <include>src/main/baseapp</include>
             </includes>
         </global>
     </input>
-
-    <executionControl>
-      <!--
-        Make the build cache work better if you skip tests.
-        See https://maven.apache.org/extensions/maven-build-cache-extension/how-to.html#i-occasionally-cached-build-with-dskiptests-true-and-tests-do-no for details.
-      -->
-      <reconcile>
-          <plugins>
-              <plugin artifactId="maven-surefire-plugin" goal="test">
-                  <reconciles>
-                      <reconcile propertyName="skip" skipValue="true"/>
-                      <reconcile propertyName="skipExec" skipValue="true"/>
-                      <reconcile propertyName="skipTests" skipValue="true"/>
-                      <reconcile propertyName="testFailureIgnore" skipValue="true"/>
-                  </reconciles>
-              </plugin>
-              <plugin artifactId="maven-failsafe-plugin" goal="test">
-                  <reconciles>
-                      <reconcile propertyName="skip" skipValue="true"/>
-                      <reconcile propertyName="skipExec" skipValue="true"/>
-                      <reconcile propertyName="skipTests" skipValue="true"/>
-                      <reconcile propertyName="testFailureIgnore" skipValue="true"/>
-                  </reconciles>
-              </plugin>
-          </plugins>
-      </reconcile>
-    </executionControl>
 </cache>

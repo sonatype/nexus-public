@@ -27,7 +27,8 @@ public class UnavailableBlobStoreMetrics
 {
   private static final UnavailableBlobStoreMetrics INSTANCE = new UnavailableBlobStoreMetrics();
 
-  private UnavailableBlobStoreMetrics() { }
+  private UnavailableBlobStoreMetrics() {
+  }
 
   public static UnavailableBlobStoreMetrics getInstance() {
     return INSTANCE;
@@ -45,7 +46,7 @@ public class UnavailableBlobStoreMetrics
 
   @Override
   public long getAvailableSpace() {
-      return 0L;
+    return 0L;
   }
 
   @Override

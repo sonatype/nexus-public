@@ -67,9 +67,10 @@ public class WebResourceServlet
   private static final String INDEX_PATH = "/index.html";
 
   @Inject
-  public WebResourceServlet(final WebResourceService webResources,
-                            final XFrameOptions xframeOptions,
-                            @Named("${nexus.webresources.maxAge:-30days}") final Time maxAge)
+  public WebResourceServlet(
+      final WebResourceService webResources,
+      final XFrameOptions xframeOptions,
+      @Named("${nexus.webresources.maxAge:-30days}") final Time maxAge)
   {
     this.webResources = checkNotNull(webResources);
     this.maxAgeSeconds = checkNotNull(maxAge.toSeconds());
@@ -78,8 +79,9 @@ public class WebResourceServlet
   }
 
   @Override
-  protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
-      throws ServletException, IOException
+  protected void doGet(
+      final HttpServletRequest request,
+      final HttpServletResponse response) throws ServletException, IOException
   {
     String path = request.getPathInfo();
 
@@ -91,7 +93,8 @@ public class WebResourceServlet
       path += "index.html";
     }
     else if (INDEX_PATH.equals(path)) {
-      response.sendRedirect(BaseUrlHolder.getRelativePath()); // prevent browser from sending XHRs to incorrect URL - NEXUS-14593
+      response.sendRedirect(BaseUrlHolder.getRelativePath()); // prevent browser from sending XHRs to incorrect URL -
+                                                              // NEXUS-14593
       return;
     }
 
@@ -112,10 +115,10 @@ public class WebResourceServlet
     serveResource(resource, request, response);
   }
 
-  private void serveResource(WebResource resource,
-                             final HttpServletRequest request,
-                             final HttpServletResponse response)
-      throws IOException
+  private void serveResource(
+      WebResource resource,
+      final HttpServletRequest request,
+      final HttpServletResponse response) throws IOException
   {
     log.trace("Serving resource: {}", resource);
 

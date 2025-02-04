@@ -32,7 +32,11 @@ public abstract class NexusEdition
 
   public static final String NEXUS_LOAD_AS_OSS_PROP_NAME = "nexus.loadAsOSS";
 
+  public static final String NEXUS_LOAD_AS_CE_PROP_NAME = "nexus.loadAsCE";
+
   private static final String EDITION_PRO_PATH = "edition_pro";
+
+  private static final String EDITION_COMMUNITY_PATH = "edition_community";
 
   public static final String PRO_LICENSE_LOCATION = "/com/sonatype/nexus/professional";
 
@@ -48,7 +52,7 @@ public abstract class NexusEdition
 
   protected abstract void doApply(final Properties properties, final Path workDirPath);
 
-  protected abstract boolean shouldSwitchToOss(final Path workDirPath);
+  protected abstract boolean shouldSwitchToFree(final Path workDirPath);
 
   public boolean applies(final Properties properties, final Path workDirPath) {
     return doesApply(properties, workDirPath);
@@ -78,8 +82,8 @@ public abstract class NexusEdition
   protected boolean isNullJavaPrefLicensePath(final String licensePath) {
     Thread currentThread = Thread.currentThread();
     ClassLoader tccl = currentThread.getContextClassLoader();
-    //Java prefs spawns a Timer-Task that inherits the current TCCL;
-    //temporarily clear it so we can be GC'd if we bounce the KERNEL
+    // Java prefs spawns a Timer-Task that inherits the current TCCL;
+    // temporarily clear it so we can be GC'd if we bounce the KERNEL
     currentThread.setContextClassLoader(null);
     try {
       return userRoot().node(licensePath).get("license", null) == null;
@@ -95,7 +99,7 @@ public abstract class NexusEdition
         return workDirPath.resolve(EDITION_PRO_PATH).toFile();
       }
       default: {
-        throw new IllegalStateException("Marker for OSS edition not supported!");
+        throw new IllegalStateException("Marker for Core edition not supported!");
       }
     }
   }
@@ -113,4 +117,3 @@ public abstract class NexusEdition
   }
 
 }
-

@@ -43,10 +43,10 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
@@ -96,7 +96,6 @@ public class S3BlobStoreApiResource
     catch (Exception e) {
       throw new WebApplicationMessageException(BAD_REQUEST, e.getMessage());
     }
-
   }
 
   @PUT
@@ -111,7 +110,7 @@ public class S3BlobStoreApiResource
     s3BlobStoreApiUpdateValidation.validateUpdateRequest(request, blobStoreName);
 
     if (isPasswordUntouched(request)) {
-      //Did not update the password, just use the password we already have
+      // Did not update the password, just use the password we already have
       BlobStore currentS3Blobstore = blobStoreManager.get(blobStoreName);
       String secretId = currentS3Blobstore.getBlobStoreConfiguration()
           .getAttributes()
@@ -157,6 +156,10 @@ public class S3BlobStoreApiResource
         .map(S3BlobStoreApiConfigurationMapper::map);
     if (result.isPresent() && isAuthenticationDataPresent(result.get())) {
       result.get().getBucketConfiguration().getBucketSecurity().setSecretAccessKey(PasswordPlaceholder.get());
+
+      if (hasSessionToken(result.get())) {
+        result.get().getBucketConfiguration().getBucketSecurity().setSessionToken(PasswordPlaceholder.get());
+      }
     }
     return result;
   }
@@ -165,6 +168,11 @@ public class S3BlobStoreApiResource
     return s3BlobStoreApiModel.getBucketConfiguration().getBucketSecurity() != null &&
         s3BlobStoreApiModel.getBucketConfiguration().getBucketSecurity().getAccessKeyId() != null &&
         isNotEmpty(s3BlobStoreApiModel.getBucketConfiguration().getBucketSecurity().getAccessKeyId());
+  }
+
+  private boolean hasSessionToken(final S3BlobStoreApiModel s3BlobStoreApiModel) {
+    return s3BlobStoreApiModel.getBucketConfiguration().getBucketSecurity().getSessionToken() != null &&
+        isNotEmpty(s3BlobStoreApiModel.getBucketConfiguration().getBucketSecurity().getSessionToken());
   }
 
   private BlobStoreConfiguration ensureBlobStoreTypeIsS3(final BlobStoreConfiguration configuration) {
@@ -198,5 +206,3 @@ public class S3BlobStoreApiResource
     }
   }
 }
-
-

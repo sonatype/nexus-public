@@ -204,7 +204,7 @@ public class SecurityConfigurationSourceImplTest
       fail("NoSuchPrivilegeException should have been thrown");
     }
     catch (NoSuchPrivilegeException e) {
-      //good
+      // good
     }
   }
 
@@ -226,7 +226,7 @@ public class SecurityConfigurationSourceImplTest
       fail("DuplicatePrivilegeException should have been thrown");
     }
     catch (DuplicatePrivilegeException e) {
-      //good
+      // good
     }
   }
 
@@ -259,7 +259,7 @@ public class SecurityConfigurationSourceImplTest
       fail("NoSuchRoleException should have been thrown");
     }
     catch (NoSuchRoleException e) {
-      //good
+      // good
     }
   }
 
@@ -285,7 +285,7 @@ public class SecurityConfigurationSourceImplTest
       fail("DuplicateRoleException should have been thrown");
     }
     catch (DuplicateRoleException e) {
-      //good
+      // good
     }
   }
 
@@ -305,7 +305,7 @@ public class SecurityConfigurationSourceImplTest
       fail("UserNotFoundException should have been thrown");
     }
     catch (UserNotFoundException e) {
-      //good
+      // good
     }
   }
 
@@ -329,7 +329,7 @@ public class SecurityConfigurationSourceImplTest
       fail("DuplicateUserException should have been thrown");
     }
     catch (DuplicateUserException e) {
-      //good
+      // good
     }
   }
 
@@ -357,7 +357,7 @@ public class SecurityConfigurationSourceImplTest
       fail("NoSuchRoleMappingException should have been thrown");
     }
     catch (NoSuchRoleMappingException e) {
-      //good
+      // good
     }
 
     underTest.getConfiguration().removeUserRoleMapping(userId.toUpperCase(Locale.ENGLISH), src);

@@ -61,8 +61,9 @@ public class FileKeyStoreStorage
   }
 
   @Override
-  public void load(final KeyStore keyStore, final char[] password)
-      throws NoSuchAlgorithmException, CertificateException, IOException
+  public void load(
+      final KeyStore keyStore,
+      final char[] password) throws NoSuchAlgorithmException, CertificateException, IOException
   {
     long readStart = System.currentTimeMillis();
     try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(keyStoreFile))) {
@@ -72,8 +73,9 @@ public class FileKeyStoreStorage
   }
 
   @Override
-  public void save(final KeyStore keyStore, final char[] password)
-      throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException
+  public void save(
+      final KeyStore keyStore,
+      final char[] password) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException
   {
     keyStoreFile.getParentFile().mkdirs(); // NOSONAR
     try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(keyStoreFile))) {

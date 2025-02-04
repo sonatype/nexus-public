@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.replication;
 
+import java.util.List;
+
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Context;
 
@@ -22,7 +24,7 @@ public interface PullReplicationSupport
 {
   String IS_REPLICATION_REQUEST = "IS_REPLICATION_REQUEST";
 
-  String translatePath(final Repository repository, final String path);
+  List<String> translatePaths(final Repository repository, final List<String> paths);
 
   static boolean isReplicationRequest(final Context context) {
     if (context != null && context.getAttributes() != null) {

@@ -39,8 +39,9 @@ public class BlobStoreConfigurationBuilder
   /**
    * Creates a new builder using the specified name for the resulting blob store.
    */
-  public BlobStoreConfigurationBuilder(final String name,
-                                       final Supplier<BlobStoreConfiguration> configurationSupplier)
+  public BlobStoreConfigurationBuilder(
+      final String name,
+      final Supplier<BlobStoreConfiguration> configurationSupplier)
   {
     this.name = checkNotNull(name);
     this.configurationSupplier = checkNotNull(configurationSupplier);

@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.api;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 
 import org.joda.time.DateTime;
@@ -66,4 +67,25 @@ public interface BlobAttributes
    */
   void writeProperties();
 
+  /**
+   * Set attributes with the original location upon soft-deletion.
+   */
+  void setOriginalLocation(String path);
+
+  /**
+   * When this attributes represents a properties file which was copied to a new location upon soft-deletion, this
+   * method will return an optional containing the original location, empty otherwise.
+   */
+  Optional<String> getOriginalLocation();
+
+  /**
+   * When this attributes represents a properties file which was copied upon soft-deletion, this method will return an
+   * optional containing the changed location, empty otherwise.
+   */
+  Optional<String> getSoftDeletedLocation();
+
+  /**
+   * Set attributes with the new location upon soft-deletion.
+   */
+  void setSoftDeletedLocation(String path);
 }

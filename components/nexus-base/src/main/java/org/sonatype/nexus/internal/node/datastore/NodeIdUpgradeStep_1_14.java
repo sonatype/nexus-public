@@ -31,8 +31,7 @@ public class NodeIdUpgradeStep_1_14
     implements DatabaseMigrationStep
 {
   @Inject
-  public NodeIdUpgradeStep_1_14()
-  {
+  public NodeIdUpgradeStep_1_14() {
   }
 
   @Override

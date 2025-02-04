@@ -59,11 +59,11 @@ public class IdentityCapability
   }
 
   // FIXME: This does not actually work, will have to add some sort of hook/condition/magic
-  //@Override
-  //protected void onRemove(final IdentityCapabilityConfiguration config) throws Exception {
-  //  // HACK: until we have a condition to prevent this
-  //  throw new IllegalStateException("Capability can not be removed");
-  //}
+  // @Override
+  // protected void onRemove(final IdentityCapabilityConfiguration config) throws Exception {
+  // // HACK: until we have a condition to prevent this
+  // throw new IllegalStateException("Capability can not be removed");
+  // }
 
   @Override
   protected String renderDescription() throws Exception {
@@ -73,7 +73,6 @@ public class IdentityCapability
   @Override
   protected String renderStatus() throws Exception {
     return render(IdentityCapabilityDescriptor.TYPE_ID + "-status.vm", new TemplateParameters()
-        .set("nodeId", nodeAccess.getId())
-    );
+        .set("nodeId", nodeAccess.getId()));
   }
 }

@@ -59,7 +59,7 @@ public class EncodingUtil
     String[] result = null;
     if (strings != null) {
       result = new String[strings.length];
-      for (int i = 0 ; i < strings.length ; i++) {
+      for (int i = 0; i < strings.length; i++) {
         result[i] = urlDecode(strings[i]);
       }
     }

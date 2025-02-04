@@ -46,7 +46,7 @@ public class CleanupCapabilityDuplicatesService
       log.info("Cleaning up {} duplicates for {} capability", duplicates.size() - 1, typeId);
 
       duplicates.stream()
-          .skip(1)  // left one capability in the storage
+          .skip(1) // left one capability in the storage
           .forEach(identity -> {
             if (capabilityStorage.remove(identity)) {
               log.debug("Capability duplicate {} removed", identity);

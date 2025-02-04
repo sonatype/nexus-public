@@ -141,7 +141,7 @@ public class SimpleFileOperations
       mover.accept(source, target);
     }
     catch (AtomicMoveNotSupportedException atomicMoveNotSupported) {
-        throw atomicMoveNotSupported;
+      throw atomicMoveNotSupported;
     }
     catch (FileSystemException e) { // NOSONAR
       // Windows can throw a FileSystemException on move or moveAtomic
@@ -161,7 +161,7 @@ public class SimpleFileOperations
   @Override
   public StreamMetrics computeMetrics(final Path file) throws IOException {
     try (InputStream is = Files.newInputStream(file);
-         MetricsInputStream mis = new MetricsInputStream(is)) {
+        MetricsInputStream mis = new MetricsInputStream(is)) {
       ByteStreams.copy(mis, ByteStreams.nullOutputStream());
       return mis.getMetrics();
     }
@@ -175,9 +175,10 @@ public class SimpleFileOperations
 
   public boolean isBlobZeroLength(final Path path) {
     checkNotNull(path);
-    try{
+    try {
       return Files.exists(path) && Files.size(path) == 0L;
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       return false;
     }
   }

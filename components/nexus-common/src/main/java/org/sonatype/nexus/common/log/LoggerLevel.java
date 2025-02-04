@@ -19,10 +19,7 @@ package org.sonatype.nexus.common.log;
  */
 public enum LoggerLevel
 {
-  TRACE,
-  DEBUG,
-  INFO,
-  WARN,
+  TRACE, DEBUG, INFO, WARN,
 
   /**
    * @since 2.7

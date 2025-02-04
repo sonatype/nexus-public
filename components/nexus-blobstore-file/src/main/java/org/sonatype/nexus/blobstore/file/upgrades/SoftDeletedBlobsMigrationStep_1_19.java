@@ -72,7 +72,7 @@ public class SoftDeletedBlobsMigrationStep_1_19
       throw new SQLException("Unexpected DB engine type");
     }
 
-    try(PreparedStatement stmt = connection.prepareStatement(oldConstraintPresentCheckQuery)) {
+    try (PreparedStatement stmt = connection.prepareStatement(oldConstraintPresentCheckQuery)) {
       return stmt.executeQuery().next();
     }
   }

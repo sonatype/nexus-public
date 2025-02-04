@@ -15,10 +15,12 @@ package org.sonatype.nexus.common.hash;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 
@@ -37,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class MultiHashingInputStream
     extends FilterInputStream
 {
-  private final Map<HashAlgorithm, Hasher> hashers = new LinkedHashMap<>();
+  protected final Map<HashAlgorithm, Hasher> hashers = new LinkedHashMap<>();
 
   private long count;
 
@@ -51,11 +53,11 @@ public class MultiHashingInputStream
 
   @Override
   public int read() throws IOException {
+    waitForHashes();
+
     int b = in.read();
     if (b != -1) {
-      for (Hasher hasher : hashers.values()) {
-        hasher.putByte((byte) b);
-      }
+      submitHashing(hasher -> hasher.putByte((byte) b));
       count++;
     }
     return b;
@@ -63,11 +65,15 @@ public class MultiHashingInputStream
 
   @Override
   public int read(@Nonnull final byte[] bytes, final int off, final int len) throws IOException {
+    waitForHashes();
+
     int numRead = in.read(bytes, off, len);
     if (numRead != -1) {
-      for (Hasher hasher : hashers.values()) {
-        hasher.putBytes(bytes, off, numRead);
-      }
+      // Create a copy of the read bytes in case the provided buffer is externally modified
+      byte[] copy = new byte[numRead];
+      System.arraycopy(bytes, off, copy, 0, numRead);
+
+      submitHashing(hasher -> hasher.putBytes(copy, 0, numRead));
       count += numRead;
     }
     return numRead;
@@ -92,6 +98,13 @@ public class MultiHashingInputStream
    * Gets the {@link HashCode}s based on the data read from this stream.
    */
   public Map<HashAlgorithm, HashCode> hashes() {
+    try {
+      waitForHashes();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
     Map<HashAlgorithm, HashCode> hashes = new HashMap<>(hashers.size());
     for (Entry<HashAlgorithm, Hasher> entry : hashers.entrySet()) {
       hashes.put(entry.getKey(), entry.getValue().hash());
@@ -104,5 +117,13 @@ public class MultiHashingInputStream
    */
   public long count() {
     return count;
+  }
+
+  protected void submitHashing(final Consumer<Hasher> runnable) {
+    hashers.values().forEach(runnable::accept);
+  }
+
+  protected void waitForHashes() throws IOException {
+    // not required in this implementation
   }
 }

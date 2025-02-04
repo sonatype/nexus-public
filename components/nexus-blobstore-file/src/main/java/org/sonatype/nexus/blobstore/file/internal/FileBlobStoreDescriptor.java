@@ -54,6 +54,10 @@ import static org.sonatype.nexus.blobstore.BlobStoreSupport.MAX_NAME_LENGTH;
 public class FileBlobStoreDescriptor
     extends BlobStoreDescriptorSupport
 {
+
+  public static final String PATH_HELP_TEXT =
+      "An absolute path or a path relative to <data-directory>/blobs";
+
   private interface Messages
       extends MessageBundle
   {
@@ -63,7 +67,7 @@ public class FileBlobStoreDescriptor
     @DefaultMessage("Path")
     String pathLabel();
 
-    @DefaultMessage("An absolute path or a path relative to <data-directory>/blobs")
+    @DefaultMessage(PATH_HELP_TEXT)
     String pathHelpText();
   }
 
@@ -78,10 +82,11 @@ public class FileBlobStoreDescriptor
   private final FileBlobStorePathValidator pathValidator;
 
   @Inject
-  public FileBlobStoreDescriptor(final BlobStoreQuotaService quotaService,
-                                 final ApplicationDirectories applicationDirectories,
-                                 final BlobStoreUtil blobStoreUtil,
-                                 final FileBlobStorePathValidator pathValidator)
+  public FileBlobStoreDescriptor(
+      final BlobStoreQuotaService quotaService,
+      final ApplicationDirectories applicationDirectories,
+      final BlobStoreUtil blobStoreUtil,
+      final FileBlobStorePathValidator pathValidator)
   {
     super(quotaService);
     this.applicationDirectories = applicationDirectories;

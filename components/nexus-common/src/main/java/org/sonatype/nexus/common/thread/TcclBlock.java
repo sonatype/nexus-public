@@ -18,9 +18,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Helper to simplify boilerplate to begin (capture, set) and restore the current Thread's context-class-loader.
  *
  * <pre>{@code
- *   try (TcclBlock tccl = TcclBlock.begin(newClassLoader)) {
- *      // do something which requires TCCL to be newClassLoader
- *   }
+ * try (TcclBlock tccl = TcclBlock.begin(newClassLoader)) {
+ *   // do something which requires TCCL to be newClassLoader
+ * }
  * }</pre>
  *
  * @since 3.0

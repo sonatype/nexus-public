@@ -40,7 +40,9 @@ public class BlobStoreTaskServiceImpl
 
   @Override
   public int countTasksInUseForBlobStore(final String blobStoreName) {
-    return blobStoreConsumers.stream().map(blobStoreConsumer -> blobStoreConsumer.blobStoreUsageCount(blobStoreName))
-        .mapToInt(Integer::intValue).sum();
+    return blobStoreConsumers.stream()
+        .map(blobStoreConsumer -> blobStoreConsumer.blobStoreUsageCount(blobStoreName))
+        .mapToInt(Integer::intValue)
+        .sum();
   }
 }

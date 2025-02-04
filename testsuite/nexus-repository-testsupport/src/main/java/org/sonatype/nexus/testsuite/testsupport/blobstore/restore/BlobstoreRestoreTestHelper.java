@@ -72,7 +72,7 @@ public interface BlobstoreRestoreTestHelper
   /**
    * Clean tables from previous data
    */
-  void truncateTables();
+  void truncateTables(String format);
 
   /**
    * Deletes the file with specified extension

@@ -92,7 +92,7 @@ public final class BaseUrlHolder
     return baseUrl.get() != null;
   }
 
-  public static <R> R  with(final String url, final String relative, final Supplier<R> operation) {
+  public static <R> R with(final String url, final String relative, final Supplier<R> operation) {
     set(url, relative);
     try {
       return operation.get();
@@ -102,7 +102,7 @@ public final class BaseUrlHolder
     }
   }
 
-  public static <R> R  call(final String url, final String relative, final Callable<R> operation) throws Exception {
+  public static <R> R call(final String url, final String relative, final Callable<R> operation) throws Exception {
     set(url, relative);
     try {
       return operation.call();

@@ -50,13 +50,21 @@
     ORDER BY asset_blob_id LIMIT #{limit};
   </select>
 
-  <select id="browseAssetBlobsWithinDuration" resultType="AssetBlobData">
-    SELECT * FROM ${format}_asset_blob
-    WHERE added_to_repository BETWEEN #{end} AND #{start}
+  <select id="browseAssetBlobsWithinDuration" resultType="org.sonatype.nexus.repository.content.AssetReconcileData">
+    SELECT AB.blob_ref, R.name as repository, A.path, AB.asset_blob_id FROM ${format}_asset_blob AB
+                    JOIN ${format}_asset A ON AB.asset_blob_id = A.asset_blob_id
+                    JOIN ${format}_content_repository CR ON CR.repository_id = A.repository_id
+                    JOIN repository R ON R.id = cr.config_repository_id
+    WHERE AB.added_to_repository BETWEEN #{start} AND #{end}
     <if test="continuationToken != null">
-      AND asset_blob_id > #{continuationToken}
+      AND AB.asset_blob_id > #{continuationToken}
     </if>
-    ORDER BY asset_blob_id LIMIT #{limit};
+    ORDER BY AB.asset_blob_id LIMIT #{limit};
+  </select>
+
+  <select id="countAssetBlobsWithinDuration" resultType="int">
+    SELECT count(1) FROM ${format}_asset_blob
+    WHERE added_to_repository BETWEEN #{start} AND #{end}
   </select>
 
   <select id="browseUnusedAssetBlobs" resultType="AssetBlobData">
@@ -178,13 +186,38 @@
     JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
     JOIN ${format}_content_repository cr ON cr.repository_id = a.repository_id
     JOIN repository r ON r.id = cr.config_repository_id
-    WHERE ab.blob_ref LIKE CONCAT(CAST(#{blobRef} AS VARCHAR), '%');
+    WHERE ab.blob_ref = #{blobRef};
   </select>
 
   <select id="getPathByBlobRef" resultType="String">
     SELECT a.path
     FROM ${format}_asset a
     JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
-    WHERE ab.blob_ref LIKE CONCAT(CAST(#{blobRef} AS VARCHAR), '%');
+    WHERE ab.blob_ref = #{blobRef};
+  </select>
+  <select id="browseAssetBlobsByBlobRefs" resultType="org.sonatype.nexus.repository.content.AssetReconcileData">
+    SELECT AB.blob_ref, R.name as repository, A.path, AB.asset_blob_id FROM ${format}_asset_blob AB
+    JOIN ${format}_asset A ON AB.asset_blob_id = A.asset_blob_id
+    JOIN ${format}_content_repository CR ON CR.repository_id = A.repository_id
+    JOIN repository R ON R.id = cr.config_repository_id
+    WHERE AB.blob_ref IN
+    <foreach item="item" collection="blobRefs" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </select>
+
+  <select id="readAssetBlobByPathAndRepository" resultType="AssetBlobData">
+    SELECT *
+    FROM ${format}_asset_blob
+    WHERE blob_ref = #{blobRef}
+       or blob_ref in (SELECT blob_ref
+                       FROM ${format}_asset a
+                              JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
+                              JOIN ${format}_content_repository cr
+                                   ON a.repository_id = cr.repository_id
+                              JOIN repository
+                                   ON repository.id = cr.config_repository_id
+                       where a.path = #{path}
+                         AND repository.name = #{repository});
   </select>
 </mapper>

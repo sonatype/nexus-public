@@ -26,7 +26,8 @@ import static java.lang.String.format;
  *
  * @since 3.21
  */
-public class PerformanceLogger {
+public class PerformanceLogger
+{
 
   private static final String IOSTAT_LOGGER_NAME = "org.sonatype.nexus.blobstore.iostat";
 

@@ -84,6 +84,11 @@ public class SupportZipGeneratorRequest
    */
   private boolean limitZipSize;
 
+  /**
+   * Include archived logs up to 3, 5, 7 days
+   */
+  private int archivedLog;
+
   private String hostname;
 
   public boolean isSystemInformation() {
@@ -190,6 +195,14 @@ public class SupportZipGeneratorRequest
     this.hostname = hostname;
   }
 
+  public void setArchivedLog(final int archivedLog) {
+    this.archivedLog = archivedLog;
+  }
+
+  public int getArchivedLog() {
+    return this.archivedLog;
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
@@ -206,6 +219,7 @@ public class SupportZipGeneratorRequest
         ", limitFileSizes=" + limitFileSizes +
         ", limitZipSize=" + limitZipSize +
         ", hostname=" + hostname +
+        ", archivedLog=" + archivedLog +
         '}';
   }
 }

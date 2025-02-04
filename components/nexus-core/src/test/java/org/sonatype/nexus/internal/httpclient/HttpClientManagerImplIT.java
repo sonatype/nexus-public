@@ -72,7 +72,6 @@ public class HttpClientManagerImplIT
 
   private HttpClientManagerImpl underTest;
 
-
   @BeforeClass
   public static void beforeClass() throws Exception {
     targetServerSSL = createHeaderValidatingServerSSL().start();
@@ -166,8 +165,8 @@ public class HttpClientManagerImplIT
     }
   }
 
-  private void setSSL(HttpClientBuilder builder)
-      throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException
+  private void setSSL(
+      HttpClientBuilder builder) throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException
   {
     SSLContext sslContext = SSLContexts.custom()
         .loadTrustMaterial(this.getClass().getClassLoader().getResource("testkeystore"), "password".toCharArray(),
@@ -181,7 +180,8 @@ public class HttpClientManagerImplIT
   private static Server createHeaderValidatingServerSSL() {
     return Server.server()
         .withKeystore(HttpClientManagerImplIT.class.getClassLoader().getResource("testkeystore").getFile(), "password")
-        .serve("").withBehaviours(httpsValidatingBehaviour);
+        .serve("")
+        .withBehaviours(httpsValidatingBehaviour);
   }
 
   private static Server createHeaderValidatingServer() {

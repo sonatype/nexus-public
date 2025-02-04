@@ -20,6 +20,8 @@
  * - Takari (optional but recommended. Much quicker builds.) - see http://takari.io/book/30-team-maven.html#takari-smart-builder
  *      To enable: Add 'takari=true' to .nxrm/nxrmrc.groovy
  */
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 @Grab(group = 'com.aestasit.infrastructure.sshoogr', module = 'sshoogr', version = '0.9.26')
 @Grab(group = 'com.caseyscarborough.colorizer', module = 'groovy-colorizer', version = '1.0.0')
 @Grab(group = 'jline', module = 'jline', version = '2.14.2')
@@ -34,6 +36,8 @@ import java.nio.file.Paths
 import java.time.ZonedDateTime
 
 import com.caseyscarborough.colorizer.Colorizer
+import com.google.common.base.Stopwatch
+import groovy.xml.XmlNodePrinter
 import org.ajoberstar.grgit.*
 import org.ajoberstar.grgit.operation.*
 import org.ajoberstar.grgit.service.*
@@ -42,17 +46,9 @@ import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.rauschig.jarchivelib.ArchiveFormat
 import org.rauschig.jarchivelib.ArchiverFactory
-import com.google.common.base.Stopwatch
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import groovy.xml.XmlNodePrinter
 
-import static com.aestasit.infrastructure.ssh.DefaultSsh.*
 import static java.time.ZoneId.systemDefault
 import static java.time.format.DateTimeFormatter.ofPattern
-import java.util.zip.*
-
 
 ant = new AntBuilder()
 ant.project.buildListeners[0].messageOutputLevel = 0
@@ -65,7 +61,6 @@ SONATYPE_WORK_BACKUP = System.getProperty("java.io.tmpdir") + "/nxrm-sonatype-wo
 TAKARI_SMART_BUILD_VERSION = "0.6.6"
 TAKARI_LOCAL_REPO_VERSION = "0.11.3"
 TAKARI_FILE_MANAGER_VERSION = "0.8.3"
-MAVEN_BUILD_CACHE_VERSION = "1.2.0"
 
 env = System.getenv()
 changedProjects = [] as Set
@@ -90,7 +85,6 @@ testProjects = [':functional-testsuite', ':nexus-analytics-testsupport', ':nexus
    elastic=false
    takari=false
    deploy=true
-   caching=false
    //backup=false
    //restore=false
    //tests="custom Maven test arguments here"
@@ -109,7 +103,6 @@ configDefaults = [
     ssl          : true,   // SSL is enabled by default
     elastic      : false,  // Elastic is disabled by default
     takari       : false,  // Takari is disabled by default
-    caching      : false,  // Maven build caching disabled by default
     deploy       : true,   // Deployment is performed by default
     backup       : false,   // Backup sonatype-work disabled by default
     restore      : false,   // Restore backup of sonatype-work disabled by default
@@ -658,21 +651,6 @@ def processBuilder() {
   else if (cliOptions['single-threaded']) {
     rcConfig.builder = ''
   }
-
-  if (rcConfig.caching) {
-    if (!extensionsXml.'**'.artifactId*.children()*.first()*.trim().contains('maven-build-cache-extension')) {
-      error('Maven Build Cache Extension enabled but not detected in .mvn/extensions.xml')
-      warn('Installing Maven Build Cache Extension now')
-
-      extensionsXml.children() << new NodeBuilder().extension {
-        groupId('org.apache.maven.extensions')
-        artifactId('maven-build-cache-extension')
-        version(MAVEN_BUILD_CACHE_VERSION)
-      }
-
-      new XmlNodePrinter(new PrintWriter(Files.newBufferedWriter(extensionsPath))).print(extensionsXml)
-    }
-  }
 }
 
 def processMavenCommand() {
@@ -878,9 +856,7 @@ def runDeploy() {
 
 def deploy() {
   extract("./assemblies/nexus-base-template/target/", "nexus-base-template-*.zip")
-  extract("./private/assemblies/distributions/nexus-oss/target/", "nexus-*-bundle.zip")
   extract("./private/assemblies/distributions/nexus-pro/target/", "nexus-professional-*-bundle.zip")
-  extract("./private/assemblies/distributions/nexus-pro-starter/target/", "nexus-pro-starter-*-bundle.zip")
 
   // Tell Karaf to load bundles from local .m2 folder
   def files = new FileNameFinder().getFileNames("$TARGET_DIR", "nexus*/**/org.ops4j.pax.url.mvn.cfg")
@@ -1098,20 +1074,14 @@ def runNxrm() {
   }
 
   switch (assembly) {
-    case "oss":
-      run("nexus-")
-      break
     case "pro":
       run("nexus-professional-")
       break
-    case "pro-starter":
-      run("nexus-pro-starter-")
-      break
-    case "base":
+    case "core":
       run("nexus-base-template-")
       break
     default:
-      error("Usage: ./nxrm.groovy -r { base | oss | pro | pro-starter } [nexus-options]")
+      error("Usage: ./nxrm.groovy -r { core | pro } [nexus-options]")
   }
 }
 

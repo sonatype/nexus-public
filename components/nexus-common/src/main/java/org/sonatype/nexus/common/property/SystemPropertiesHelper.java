@@ -64,7 +64,7 @@ public class SystemPropertiesHelper
 
   public static boolean getBoolean(final String key, final boolean defaultValue) {
     return getBoolean(key)
-      .orElse(defaultValue);
+        .orElse(defaultValue);
   }
 
   public static Optional<Boolean> getBoolean(final String key) {

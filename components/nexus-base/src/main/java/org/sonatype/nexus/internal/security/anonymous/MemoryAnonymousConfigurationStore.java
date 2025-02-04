@@ -32,8 +32,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Priority(Integer.MIN_VALUE)
 @VisibleForTesting
 public class MemoryAnonymousConfigurationStore
-  extends ComponentSupport
-  implements AnonymousConfigurationStore
+    extends ComponentSupport
+    implements AnonymousConfigurationStore
 {
   private AnonymousConfiguration model;
 

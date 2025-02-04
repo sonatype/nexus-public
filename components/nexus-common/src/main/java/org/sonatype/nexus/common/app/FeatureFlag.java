@@ -26,7 +26,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * @since 3.19
  */
 @Retention(RUNTIME)
-@Target({ PACKAGE, TYPE })
+@Target({PACKAGE, TYPE})
 @Repeatable(FeatureFlagGroup.class)
 public @interface FeatureFlag
 {

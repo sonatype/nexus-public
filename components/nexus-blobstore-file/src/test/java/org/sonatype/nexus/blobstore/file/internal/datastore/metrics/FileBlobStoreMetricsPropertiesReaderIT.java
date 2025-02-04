@@ -71,11 +71,13 @@ public class FileBlobStoreMetricsPropertiesReaderIT
     }
   }
 
-  @SuppressWarnings("java:S2699") // sonar doesn't detect assertions in awaitility https://jira.sonarsource.com/browse/SONARJAVA-3334
+  @SuppressWarnings("java:S2699") // sonar doesn't detect assertions in awaitility
+                                  // https://jira.sonarsource.com/browse/SONARJAVA-3334
   @Test
   public void metricsLoadsExistingPropertyFile() throws Exception {
     PropertiesFile props = new PropertiesFile(
-        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + FileBlobStoreMetricsPropertiesReader.METRICS_FILENAME).toFile());
+        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + FileBlobStoreMetricsPropertiesReader.METRICS_FILENAME)
+            .toFile());
 
     props.put(FileBlobStoreMetricsPropertiesReader.BLOB_COUNT_PROP_NAME, "32");
     props.put(FileBlobStoreMetricsPropertiesReader.TOTAL_SIZE_PROP_NAME, "200");
@@ -97,9 +99,9 @@ public class FileBlobStoreMetricsPropertiesReaderIT
     when(blobStore.getAbsoluteBlobDir()).thenReturn(blobStoreDirectory);
     underTest.init(blobStore);
 
-
     PropertiesFile props = new PropertiesFile(
-        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + FileBlobStoreMetricsPropertiesReader.METRICS_FILENAME).toFile());
+        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + FileBlobStoreMetricsPropertiesReader.METRICS_FILENAME)
+            .toFile());
     props.store();
 
     backingFiles = underTest.backingFiles();

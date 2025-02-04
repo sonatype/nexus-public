@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.support;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -48,17 +47,21 @@ import static java.util.stream.Collectors.toMap;
 public class DbDiagnostics
 {
   private static final Logger log = LoggerFactory.getLogger(DbDiagnostics.class);
+
   private final ApplicationDirectories directories;
+
   private final DataStoreManager dataStoreManager;
+
   private static final String DATABASE_NAME = "Database Name: ";
+
   private static final String DATABASE_VERSION = "Database Version: ";
+
   private static final String DATABASE_SIZE = "Database Size (Bytes): ";
+
   private static final String MICROSECONDS = " microseconds";
 
-
-
   @Inject
-  public DbDiagnostics(ApplicationDirectories directories, final DataStoreManager dataStoreManager){
+  public DbDiagnostics(ApplicationDirectories directories, final DataStoreManager dataStoreManager) {
     this.directories = checkNotNull(directories);
     this.dataStoreManager = checkNotNull(dataStoreManager);
   }
@@ -77,14 +80,17 @@ public class DbDiagnostics
       databaseProductName = metaData.getDatabaseProductName();
       databaseProductVersion = metaData.getDatabaseMajorVersion() + "." + metaData.getDatabaseMinorVersion();
 
-      if((databaseProductName).equalsIgnoreCase("H2")){
+      if ((databaseProductName).equalsIgnoreCase("H2")) {
         final File h2Db = new File(getH2DB().toString());
         h2DBPath = h2Db.getPath();
         databaseSize = h2Db.length();
 
-        getH2Settings(connection).forEach((name, value) -> dbSettingsSB.append(name).append(": ").append(value).append("\n"));
-      }else{
-        getPostgresSettings(connection).forEach((name, value) -> dbSettingsSB.append(name).append(": ").append(value).append("\n"));
+        getH2Settings(connection)
+            .forEach((name, value) -> dbSettingsSB.append(name).append(": ").append(value).append("\n"));
+      }
+      else {
+        getPostgresSettings(connection)
+            .forEach((name, value) -> dbSettingsSB.append(name).append(": ").append(value).append("\n"));
       }
       latencySB = getLatencyInformation(dataStore);
     }
@@ -115,7 +121,7 @@ public class DbDiagnostics
     dbInfo.append(DATABASE_NAME).append(metricsByDbType.get(DATABASE_NAME)).append("\n");
     dbInfo.append(DATABASE_VERSION).append(metricsByDbType.get(DATABASE_VERSION)).append("\n");
 
-    if(metricsByDbType.get(DATABASE_NAME).equals("H2")){
+    if (metricsByDbType.get(DATABASE_NAME).equals("H2")) {
       dbInfo.append(DATABASE_SIZE).append(metricsByDbType.get(DATABASE_SIZE)).append("\n");
       dbInfo.append("H2DB Path: ").append(metricsByDbType.get("H2DB PATH: ")).append("\n");
     }
@@ -127,13 +133,14 @@ public class DbDiagnostics
     return dbInfo.toString();
   }
 
-  public Path getH2DB(){
+  public Path getH2DB() {
     Path dbPath = directories.getWorkDirectory("db").toPath();
     Path h2Db = dbPath.resolve("nexus.mv.db");
 
-    if (Files.exists(h2Db)){
+    if (Files.exists(h2Db)) {
       return h2Db;
-    } else{
+    }
+    else {
       return null;
     }
   }
@@ -141,7 +148,7 @@ public class DbDiagnostics
   public StringBuilder getLatencyInformation(final DataStore<?> dataStore) throws SQLException {
     StringBuilder sb = new StringBuilder();
 
-    try (Connection connection = dataStore.getDataSource().getConnection()){
+    try (Connection connection = dataStore.getDataSource().getConnection()) {
       long latencyMinimum = Long.MAX_VALUE;
       long latencyMaximum = Long.MIN_VALUE;
       long latencyCumulative = 0;
@@ -175,18 +182,18 @@ public class DbDiagnostics
   private static SortedMap<String, String> getPostgresSettings(Connection connection) throws SQLException {
     SortedMap<String, String> postgresSettingsMap = new TreeMap<>();
 
-      String query = "SHOW ALL";
-      try (Statement stmt = connection.createStatement()){
-        ResultSet rs = stmt.executeQuery(query);
-        while (rs.next()){
-          String name = rs.getString(1);
-          String value = rs.getString(2);
-          postgresSettingsMap.put(name, value);
-        }
+    String query = "SHOW ALL";
+    try (Statement stmt = connection.createStatement()) {
+      ResultSet rs = stmt.executeQuery(query);
+      while (rs.next()) {
+        String name = rs.getString(1);
+        String value = rs.getString(2);
+        postgresSettingsMap.put(name, value);
       }
-      catch (SQLException e) {
-        throw new SQLException("Failed execute SHOW ALL query", e);
-      }
+    }
+    catch (SQLException e) {
+      throw new SQLException("Failed execute SHOW ALL query", e);
+    }
 
     return postgresSettingsMap;
   }
@@ -196,19 +203,20 @@ public class DbDiagnostics
 
     try (
         PreparedStatement stmt =
-             connection.prepareStatement("SELECT SETTING_NAME, SETTING_VALUE FROM INFORMATION_SCHEMA.SETTINGS");
-         ResultSet rs = stmt.executeQuery()){
-      while (rs.next()){
+            connection.prepareStatement("SELECT SETTING_NAME, SETTING_VALUE FROM INFORMATION_SCHEMA.SETTINGS");
+        ResultSet rs = stmt.executeQuery()) {
+      while (rs.next()) {
         String name = rs.getString(1);
         String value = rs.getString(2);
         h2SettingsMap.put(name, value);
       }
     }
     catch (SQLException e) {
-      throw new SQLException("Failed to execute query, SELECT SETTING_NAME, SETTING_VALUE FROM INFORMATION_SCHEMA.SETTINGS", e);
+      throw new SQLException(
+          "Failed to execute query, SELECT SETTING_NAME, SETTING_VALUE FROM INFORMATION_SCHEMA.SETTINGS", e);
     }
 
     return h2SettingsMap;
   }
-  
+
 }

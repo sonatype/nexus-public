@@ -23,8 +23,9 @@ import {
 import UIStrings from '../../../../constants/UIStrings';
 import welcomeMachine from './WelcomeMachine';
 import OutreachActions from './OutreachActions';
-import UsageMetrics from './UsageMetrics';
-import MaliciousRiskOnDisk from '../../maliciousrisk/riskondisk/MaliciousRiskOnDisk';
+import UsageCenter from './UsageCenter/UsageCenter';
+import MaliciousRiskOnDisk from '../../../widgets/riskondisk/MaliciousRiskOnDisk';
+import CEHardLimitAlerts from './CEHardLimitAlerts/CEHardLimitAlerts';
 
 import './Welcome.scss';
 
@@ -76,7 +77,7 @@ export default function Welcome() {
   const onLoad = () => {
     if (ref.current?.contentWindow) {
       setIframeHeight(
-          ref.current.contentWindow.document.body.scrollHeight + iframePadding
+          ref.current.contentWindow.document.body.scrollHeight + iframePadding * 4
       )
     }
   };
@@ -122,8 +123,9 @@ export default function Welcome() {
         </NxPageTitle>
         <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
           <div className="nxrm-welcome__outreach nx-viewport-sized__scrollable">
-            <MaliciousRiskOnDisk/>
-            {isAdmin && <UsageMetrics/>}
+            <CEHardLimitAlerts />
+            <MaliciousRiskOnDisk />
+            {isAdmin && <UsageCenter />}
             <OutreachActions/>
             {state.context.data?.showOutreachIframe &&
                 <iframe

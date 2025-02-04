@@ -83,7 +83,8 @@ public class BlobStoreReconciliationLoggerTest
 
     // mock logger used to actually log blob ids
     mockedStatic.when(() -> LoggerFactory.getLogger("blobstore-reconciliation-log")).thenReturn(logger);
-    mockedStatic.when(() -> LoggerFactory.getLogger(BlobStoreReconciliationLogger.class)).thenReturn(mock(Logger.class));
+    mockedStatic.when(() -> LoggerFactory.getLogger(BlobStoreReconciliationLogger.class))
+        .thenReturn(mock(Logger.class));
 
     underTest = new BlobStoreReconciliationLogger(applicationDirectories);
   }
@@ -130,7 +131,8 @@ public class BlobStoreReconciliationLoggerTest
         StandardOpenOption.CREATE);
 
     List<String> result = underTest.getBlobsCreatedSince(
-        Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2021-04-14T00:00:00"), emptyMap())
+        Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2021-04-14T00:00:00"),
+            LocalDateTime.parse("2021-04-15T23:59:59.999999999") ,emptyMap())
         .map(BlobId::asUniqueString)
         .collect(toList());
 
@@ -154,7 +156,8 @@ public class BlobStoreReconciliationLoggerTest
             .getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
 
     List<String> result = underTest.getBlobsCreatedSince(
-            Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2024-05-01T00:00:00"), emptyMap())
+            Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2024-05-01T00:00:00"),
+            LocalDateTime.parse("2024-05-01T23:59:59.999999999") ,emptyMap())
         .map(BlobId::asUniqueString)
         .collect(toList());
 

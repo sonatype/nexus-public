@@ -71,7 +71,7 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
     return false;
   }
 
-   public abstract Blob getBlobFromCache(final BlobId blobId);
+  public abstract Blob getBlobFromCache(final BlobId blobId);
 
   private Map<String, String> removeTemporaryBlobHeaderIfPresent(final Map<String, String> headers) {
     Map<String, String> headersCopy = headers;

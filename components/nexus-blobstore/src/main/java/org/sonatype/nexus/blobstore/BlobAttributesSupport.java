@@ -27,14 +27,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.CONTENT_SIZE_ATTRIBUTE;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.CREATION_TIME_ATTRIBUTE;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_ATTRIBUTE;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_REASON_ATTRIBUTE;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_DATETIME_ATTRIBUTE;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.LAST_DOWNLOADED_ATTRIBUTE;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.SHA1_HASH_ATTRIBUTE;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.*;
 
 /**
  * A data holder for the content of each blob's .attribs.
@@ -56,9 +49,15 @@ public abstract class BlobAttributesSupport<T extends Properties>
 
   protected final T propertiesFile;
 
-  protected BlobAttributesSupport(final T propertiesFile,
-                                  @Nullable final Map<String, String> headers,
-                                  @Nullable final BlobMetrics metrics) {
+  private String originalLocation;
+
+  private String softDeletedLocation;
+
+  protected BlobAttributesSupport(
+      final T propertiesFile,
+      @Nullable final Map<String, String> headers,
+      @Nullable final BlobMetrics metrics)
+  {
     this.propertiesFile = checkNotNull(propertiesFile);
     this.headers = headers;
     this.metrics = metrics;
@@ -142,6 +141,8 @@ public abstract class BlobAttributesSupport<T extends Properties>
     deletedDateTime = Optional.ofNullable(properties.getProperty(DELETED_DATETIME_ATTRIBUTE))
         .map(p -> new DateTime(Long.parseLong(p)))
         .orElse(null);
+    softDeletedLocation = properties.getProperty(SOFT_DELETED_LOCATION_ATTRIBUTE);
+    originalLocation = properties.getProperty(ORIGINAL_LOCATION_ATTRIBUTE);
   }
 
   protected void writeTo(final Properties properties) {
@@ -163,6 +164,12 @@ public abstract class BlobAttributesSupport<T extends Properties>
       if (deletedDateTime != null) {
         properties.put(DELETED_DATETIME_ATTRIBUTE, Long.toString(deletedDateTime.getMillis()));
       }
+      if (softDeletedLocation != null) {
+        properties.put(SOFT_DELETED_LOCATION_ATTRIBUTE, softDeletedLocation);
+      }
+      if (originalLocation != null) {
+        properties.put(ORIGINAL_LOCATION_ATTRIBUTE, originalLocation);
+      }
     }
     else {
       properties.remove(DELETED_ATTRIBUTE);
@@ -171,7 +178,28 @@ public abstract class BlobAttributesSupport<T extends Properties>
     }
   }
 
+  @Override
   public String toString() {
     return propertiesFile.toString();
+  }
+
+  @Override
+  public void setOriginalLocation(final String path) {
+    originalLocation = path;
+  }
+
+  @Override
+  public Optional<String> getOriginalLocation() {
+    return Optional.ofNullable(originalLocation);
+  }
+
+  @Override
+  public void setSoftDeletedLocation(final String path) {
+    softDeletedLocation = path;
+  }
+
+  @Override
+  public Optional<String> getSoftDeletedLocation() {
+    return Optional.ofNullable(softDeletedLocation);
   }
 }

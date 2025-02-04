@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,8 +33,8 @@ import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsData;
 import org.sonatype.nexus.blobstore.file.store.SoftDeletedBlobsStore;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.property.PropertiesFile;
+import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
-import org.sonatype.nexus.scheduling.PeriodicJobService;
 
 import com.squareup.tape.QueueFile;
 
@@ -88,7 +89,7 @@ public class DatastoreFileBlobDeletionIndex
 
   @Override
   public void stopIndex() throws IOException {
-    //  no special procedure is required
+    // no special procedure is required
   }
 
   @Override
@@ -105,18 +106,19 @@ public class DatastoreFileBlobDeletionIndex
     deletionContinuation = softDeletedBlobsStore.readRecords(token,
         Math.abs(deletedFileCacheLimit), blobStoreName);
 
-    if(!deletionContinuation.isEmpty()) {
+    if (!deletionContinuation.isEmpty()) {
       currentBatchIterator = this.deletionContinuation.stream()
           .map(value -> new BlobId(value.getBlobId(), value.getDatePathRef()))
           .iterator();
-    } else {
+    }
+    else {
       currentBatchIterator = null;
     }
   }
 
   @Override
   public final BlobId getNextAvailableRecord() {
-    if(Objects.isNull(currentBatchIterator) || !currentBatchIterator.hasNext() ) {
+    if (Objects.isNull(currentBatchIterator) || !currentBatchIterator.hasNext()) {
       populateInternalCache();
     }
 
@@ -139,7 +141,6 @@ public class DatastoreFileBlobDeletionIndex
   }
 
   private void scheduleMigrateIndex(final PropertiesFile metadata) {
-    invoke(periodicJobService::startUsing);
     periodicJobService.runOnce(() -> {
       try {
         migrateDeletionIndexFromFiles(metadata);
@@ -147,7 +148,6 @@ public class DatastoreFileBlobDeletionIndex
       catch (IOException e) {
         log.error("Failed to migrate soft deleted blobs to the database", e);
       }
-      invoke(periodicJobService::stopUsing);
     }, (int) migrationDelay.getSeconds());
   }
 
@@ -176,8 +176,7 @@ public class DatastoreFileBlobDeletionIndex
     }
     catch (IOException e) {
       log.error(
-          "Unable to load deletions index file {}, run the compact blobstore task to rebuild", oldDeletionIndexFile, e
-      );
+          "Unable to load deletions index file {}, run the compact blobstore task to rebuild", oldDeletionIndexFile, e);
       oldDeletionIndex = null;
       metadata.setProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "true");
       metadata.store();
@@ -200,9 +199,10 @@ public class DatastoreFileBlobDeletionIndex
           if (!persistedRecords.contains(blobId)) {
             softDeletedBlobsStore.createRecord(blobId, blobStore.getBlobStoreConfiguration().getName());
             persistedRecords.add(blobId);
-          } else {
+          }
+          else {
             log.debug("Old deletion index contain duplicate entry with blobId - {} for blobstore - {}, " +
-                    "duplicate record will be skipped", blobId, blobStoreName);
+                "duplicate record will be skipped", blobId, blobStoreName);
           }
 
           oldDeletionIndex.remove();
@@ -216,20 +216,4 @@ public class DatastoreFileBlobDeletionIndex
       log.error("Unable to delete 'deletion index' file, path = {}", oldDeletionIndexFile.getAbsolutePath());
     }
   }
-
-  private void invoke(final ThrowingRunnable callable) {
-    try {
-      callable.run();
-    }
-    catch (Exception e) {
-      log.debug("Failed to start or stop using the PeriodicJobService", e);
-    }
-  }
-
-  @FunctionalInterface
-  private static interface ThrowingRunnable
-  {
-    void run() throws Exception;
-  }
 }
-

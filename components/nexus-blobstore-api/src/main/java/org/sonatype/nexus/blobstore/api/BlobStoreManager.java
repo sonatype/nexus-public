@@ -25,7 +25,7 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
  * @since 3.0
  */
 public interface BlobStoreManager
-  extends Lifecycle
+    extends Lifecycle
 {
   /**
    * Default blob store name.
@@ -95,6 +95,7 @@ public interface BlobStoreManager
 
   /**
    * Returns true if the blob store is convertable
+   * 
    * @param blobStoreName
    * @return true if the blob store can be converted to a group
    *
@@ -104,6 +105,7 @@ public interface BlobStoreManager
 
   /**
    * Returns true if the specified blob store has conflicting tasks
+   * 
    * @param blobStoreName
    * @return a boolean indicating if the blob store has conflicting tasks
    */
@@ -111,6 +113,7 @@ public interface BlobStoreManager
 
   /**
    * Returns the parent group of the blob store if it exists
+   * 
    * @param blobStoreName
    * @return {@link java.util.Optional<String>} containing the parent group name if it exists
    *
@@ -128,7 +131,7 @@ public interface BlobStoreManager
    * Validates {@link BlobStoreConfiguration}
    *
    * @param configuration config
-   * @param sanitize      set true to sanitize configuration before validation
+   * @param sanitize set true to sanitize configuration before validation
    */
   void validateConfiguration(final BlobStoreConfiguration configuration, final boolean sanitize);
 

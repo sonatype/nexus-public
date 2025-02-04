@@ -43,15 +43,16 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 @Path(RESOURCE_URI)
 @Deprecated
 public class BlobStoreResourceBeta
-  extends BlobStoreResource
+    extends BlobStoreResource
 {
   static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores";
 
   @Inject
-  public BlobStoreResourceBeta(final BlobStoreManager blobStoreManager,
-                               final BlobStoreConfigurationStore store,
-                               final BlobStoreQuotaService quotaService,
-                               final Map<String, ConnectionChecker> connectionCheckers)
+  public BlobStoreResourceBeta(
+      final BlobStoreManager blobStoreManager,
+      final BlobStoreConfigurationStore store,
+      final BlobStoreQuotaService quotaService,
+      final Map<String, ConnectionChecker> connectionCheckers)
   {
     super(blobStoreManager, store, quotaService, connectionCheckers);
   }

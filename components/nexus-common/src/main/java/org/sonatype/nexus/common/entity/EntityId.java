@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  *
  * @since 3.0
  */
-@JsonDeserialize(as=EntityUUID.class)
+@JsonDeserialize(as = EntityUUID.class)
 public interface EntityId
 {
   /**

@@ -30,6 +30,7 @@ public interface ManagedLifecycleResourceDoc
   @ApiOperation("Move to new lifecycle phase")
   void setPhase(@ApiParam("The phase to move to") final String phase);
 
-  @ApiOperation(value = "Bounce lifecycle phase", notes = "Re-runs all phases from the given phase to the current phase")
+  @ApiOperation(value = "Bounce lifecycle phase",
+      notes = "Re-runs all phases from the given phase to the current phase")
   void bounce(@ApiParam("The phase to bounce") final String phase);
 }

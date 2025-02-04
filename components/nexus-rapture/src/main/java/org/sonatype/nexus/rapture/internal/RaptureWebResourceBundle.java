@@ -69,8 +69,6 @@ public class RaptureWebResourceBundle
     extends ComponentSupport
     implements WebResourceBundle
 {
-  public static final String PRO_STARTER = "PRO-STARTER";
-
   private final ApplicationVersion applicationVersion;
 
   private final Provider<HttpServletRequest> servletRequestProvider;
@@ -92,14 +90,15 @@ public class RaptureWebResourceBundle
   public final static String PROPERTY_WEBRESOURCES_CACHEBUSTER = "nexus.webresources.cachebuster";
 
   @Inject
-  public RaptureWebResourceBundle(final ApplicationVersion applicationVersion,
-                                  final Provider<HttpServletRequest> servletRequestProvider,
-                                  final Provider<StateComponent> stateComponentProvider,
-                                  final TemplateHelper templateHelper,
-                                  final List<UiPluginDescriptor> pluginDescriptors,
-                                  final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors,
-                                  @Nullable @Named("${" + PROPERTY_WEBRESOURCES_CACHEBUSTER + "}") final String cacheBuster,
-                                  @Named("${nexus.analytics.enabled:-true}") final boolean analyticsEnabled)
+  public RaptureWebResourceBundle(
+      final ApplicationVersion applicationVersion,
+      final Provider<HttpServletRequest> servletRequestProvider,
+      final Provider<StateComponent> stateComponentProvider,
+      final TemplateHelper templateHelper,
+      final List<UiPluginDescriptor> pluginDescriptors,
+      final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors,
+      @Nullable @Named("${" + PROPERTY_WEBRESOURCES_CACHEBUSTER + "}") final String cacheBuster,
+      @Named("${nexus.analytics.enabled:-true}") final boolean analyticsEnabled)
   {
     this.applicationVersion = checkNotNull(applicationVersion);
     this.servletRequestProvider = checkNotNull(servletRequestProvider);
@@ -110,8 +109,10 @@ public class RaptureWebResourceBundle
     this.analyticsEnabled = analyticsEnabled;
     if (cacheBuster == null) {
       this.cacheBuster = applicationVersion.getBuildTimestamp();
-    } else {
-      log.info("Setting web resources cache buster value to {} from property {}", cacheBuster, PROPERTY_WEBRESOURCES_CACHEBUSTER);
+    }
+    else {
+      log.info("Setting web resources cache buster value to {} from property {}", cacheBuster,
+          PROPERTY_WEBRESOURCES_CACHEBUSTER);
       this.cacheBuster = cacheBuster;
     }
     log.info("UI plugin descriptors:");
@@ -139,8 +140,7 @@ public class RaptureWebResourceBundle
         bootstrap_js(),
         baseapp_css(),
         app_js(),
-        copyright_html()
-    );
+        copyright_html());
   }
 
   private abstract class TemplateWebResource
@@ -185,15 +185,14 @@ public class RaptureWebResourceBundle
       @Override
       protected byte[] generate() throws IOException {
         return render("index.vm", new TemplateParameters()
-                .set("baseUrl", BaseUrlHolder.get())
-                .set("relativePath", BaseUrlHolder.getRelativePath())
-                .set("debug", isDebug())
-                .set("urlSuffix", generateUrlSuffix())
-                .set("styles", getStyles())
-                .set("scripts", getScripts())
-                .set("util", new TemplateUtil())
-                .set("analyticsEnabled", (applicationVersion.getEdition().equals(PRO_STARTER) || analyticsEnabled))
-        );
+            .set("baseUrl", BaseUrlHolder.get())
+            .set("relativePath", BaseUrlHolder.getRelativePath())
+            .set("debug", isDebug())
+            .set("urlSuffix", generateUrlSuffix())
+            .set("styles", getStyles())
+            .set("scripts", getScripts())
+            .set("util", new TemplateUtil())
+            .set("analyticsEnabled", analyticsEnabled));
       }
     };
   }
@@ -217,12 +216,11 @@ public class RaptureWebResourceBundle
       @Override
       protected byte[] generate() throws IOException {
         return render("bootstrap.vm", new TemplateParameters()
-                .set("baseUrl", BaseUrlHolder.get())
-                .set("relativePath", BaseUrlHolder.getRelativePath())
-                .set("debug", isDebug())
-                .set("urlSuffix", generateUrlSuffix())
-                .set("namespaces", getExtJsNamespaces())
-        );
+            .set("baseUrl", BaseUrlHolder.get())
+            .set("relativePath", BaseUrlHolder.getRelativePath())
+            .set("debug", isDebug())
+            .set("urlSuffix", generateUrlSuffix())
+            .set("namespaces", getExtJsNamespaces()));
       }
     };
   }
@@ -247,8 +245,7 @@ public class RaptureWebResourceBundle
       protected byte[] generate() throws IOException {
         return render("baseapp_css.vm", new TemplateParameters()
             .set("debug", isDebug())
-            .set("urlSuffix", generateUrlSuffix())
-        );
+            .set("urlSuffix", generateUrlSuffix()));
       }
     };
   }
@@ -271,15 +268,12 @@ public class RaptureWebResourceBundle
 
       @Override
       protected byte[] generate() throws IOException {
-        String edition = "OSS".equals(applicationVersion.getEdition()) ? "oss" : "pro";
 
         return render("COPYRIGHT.vm", new TemplateParameters()
-            .set("edition",  edition)
-        );
+            .set("edition", applicationVersion.getEdition()));
       }
     };
   }
-
 
   /**
    * The app.js resource.
@@ -300,11 +294,10 @@ public class RaptureWebResourceBundle
       @Override
       protected byte[] generate() throws IOException {
         return render("app.vm", new TemplateParameters()
-                .set("baseUrl", BaseUrlHolder.getRelativePath())
-                .set("debug", isDebug())
-                .set("state", gson.toJson(getState()))
-                .set("pluginConfigs", getExtJsPluginConfigs())
-        );
+            .set("baseUrl", BaseUrlHolder.getRelativePath())
+            .set("debug", isDebug())
+            .set("state", gson.toJson(getState()))
+            .set("pluginConfigs", getExtJsPluginConfigs()));
       }
     };
   }
@@ -458,8 +451,11 @@ public class RaptureWebResourceBundle
     scripts.add(uri("bootstrap.js"));
 
     scripts.addAll(
-        extJsPluginDescriptors.stream().map(descriptor -> descriptor.getScripts(debug)).flatMap(Collection::stream)
-            .map(this::relativeToAbsoluteUri).collect(toList()));
+        extJsPluginDescriptors.stream()
+            .map(descriptor -> descriptor.getScripts(debug))
+            .flatMap(Collection::stream)
+            .map(this::relativeToAbsoluteUri)
+            .collect(toList()));
 
     List<URI> resources = pluginDescriptors.stream()
         .map(descriptor -> descriptor.getScripts(debug))

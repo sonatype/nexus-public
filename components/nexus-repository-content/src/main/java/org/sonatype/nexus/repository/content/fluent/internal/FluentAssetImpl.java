@@ -115,7 +115,9 @@ public class FluentAssetImpl
   }
 
   @Override
-  public long assetBlobSize() { return asset.assetBlobSize(); }
+  public long assetBlobSize() {
+    return asset.assetBlobSize();
+  }
 
   @Override
   public NestedAttributesMap attributes() {
@@ -140,8 +142,8 @@ public class FluentAssetImpl
   @Override
   public FluentAsset attributes(final AttributeOperation change, final String key, final Object value) {
     facet.stores().assetStore.updateAssetAttributes(asset, new AttributeChangeSet(change, key, value));
-    asset.blob().ifPresent(blob ->
-        facet.blobMetadataStorage()
+    asset.blob()
+        .ifPresent(blob -> facet.blobMetadataStorage()
             .attach(facet.stores().blobStoreProvider.get(), blob.blobRef().getBlobId(), null, asset.attributes(),
                 asset.blob().get().checksums()));
     return this;
@@ -150,8 +152,8 @@ public class FluentAssetImpl
   @Override
   public FluentAsset attributes(final AttributeChangeSet changes) {
     facet.stores().assetStore.updateAssetAttributes(asset, changes);
-    asset.blob().ifPresent(blob ->
-        facet.blobMetadataStorage()
+    asset.blob()
+        .ifPresent(blob -> facet.blobMetadataStorage()
             .attach(facet.stores().blobStoreProvider.get(), blob.blobRef().getBlobId(), null, asset.attributes(),
                 blob.checksums()));
     return this;
@@ -181,7 +183,8 @@ public class FluentAssetImpl
 
     BlobRef blobRef = assetBlob.blobRef();
     Blob blob = Optional.ofNullable(facet.stores().blobStoreProvider.get().get(blobRef.getBlobId()))
-        .orElseGet(() -> facet.dependencies().getMoveService()
+        .orElseGet(() -> facet.dependencies()
+            .getMoveService()
             .map(service -> service.getIfBeingMoved(blobRef, repository().getName()))
             .orElseThrow(() -> new MissingBlobException(blobRef)));
 
@@ -206,7 +209,8 @@ public class FluentAssetImpl
       }
 
       contentAttributes.set(CONTENT_LAST_MODIFIED, new DateTime(lastModified));
-      contentAttributes.set(CONTENT_ETAG, contentHeaders.get(CONTENT_ETAG));
+      contentAttributes.set(CONTENT_ETAG, Optional.ofNullable(contentHeaders.get(CONTENT_ETAG))
+          .orElseGet(blob.getMetrics()::getSha1Hash));
     }
     else {
       // otherwise use the blob to supply details for external caching

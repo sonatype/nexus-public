@@ -55,12 +55,13 @@ public class AuditDTO
       .registerModule(new JavaTimeModule());
 
   public AuditDTO() {
-    //deserialization
+    // deserialization
   }
 
   public AuditDTO(final AuditData auditData) {
     if (auditData.getTimestamp() != null) {
-      this.timestamp = auditData.getTimestamp().toInstant().atZone(ZoneId.systemDefault()).toOffsetDateTime().format(DATE_FORMAT);
+      this.timestamp =
+          auditData.getTimestamp().toInstant().atZone(ZoneId.systemDefault()).toOffsetDateTime().format(DATE_FORMAT);
     }
     this.nodeId = auditData.getNodeId();
     this.initiator = auditData.getInitiator();

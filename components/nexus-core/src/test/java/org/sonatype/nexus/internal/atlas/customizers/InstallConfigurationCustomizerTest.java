@@ -53,7 +53,9 @@ public class InstallConfigurationCustomizerTest
   public TemporaryFolder tempFolder = new TemporaryFolder();
 
   private File installDir;
+
   private File workDir;
+
   private File etcDir;
 
   @Before
@@ -149,7 +151,8 @@ public class InstallConfigurationCustomizerTest
     File temp = new File(etcDir, "nexus.properties");
 
     Files.write(temp.toPath(), Collections.singleton("nexus.datastore.nexus.password=secret\n" +
-        "nexus.datastore.nexus.jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password=secret&password=secret&pass\n" +
+        "nexus.datastore.nexus.jdbcUrl=jdbc\\:postgresql\\://localhost\\:5432/postgres?password=secret&password=secret&pass\n"
+        +
         "nexus.datastore.nexus.username=postgres"));
 
     ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);

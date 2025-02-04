@@ -42,7 +42,8 @@ public class CapabilitySecretsMigrator
 
   @Override
   public void migrate() {
-    List<CapabilityReference> maybeEncrypted = capabilityRegistry.getAll().stream()
+    List<CapabilityReference> maybeEncrypted = capabilityRegistry.getAll()
+        .stream()
         .filter(containsEncryptedField())
         .collect(Collectors.toList());
 
@@ -53,7 +54,10 @@ public class CapabilitySecretsMigrator
   }
 
   private Predicate<CapabilityReference> containsEncryptedField() {
-    return reference -> reference.context().descriptor()
-        .formFields().stream().anyMatch(f -> f instanceof Encrypted);
+    return reference -> reference.context()
+        .descriptor()
+        .formFields()
+        .stream()
+        .anyMatch(f -> f instanceof Encrypted);
   }
 }

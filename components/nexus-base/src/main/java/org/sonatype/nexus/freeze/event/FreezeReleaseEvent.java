@@ -13,7 +13,7 @@
 package org.sonatype.nexus.freeze.event;
 
 public class FreezeReleaseEvent
-  extends FreezeEvent
+    extends FreezeEvent
 {
   public FreezeReleaseEvent() {
     super(FreezeEventTypes.RELEASE);

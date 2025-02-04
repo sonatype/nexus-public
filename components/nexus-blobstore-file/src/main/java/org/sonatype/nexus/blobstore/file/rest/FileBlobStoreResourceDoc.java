@@ -50,8 +50,7 @@ public interface FileBlobStoreResourceDoc
   @Validate
   void updateFileBlobStore(
       @ApiParam("The name of the file blob store to update") final String name,
-      @Valid final FileBlobStoreApiUpdateRequest request
-  ) throws Exception;
+      @Valid final FileBlobStoreApiUpdateRequest request) throws Exception;
 
   @ApiOperation("Get a file blob store configuration by name")
   @ApiResponses(value = {
@@ -60,6 +59,5 @@ public interface FileBlobStoreResourceDoc
       @ApiResponse(code = 404, message = BLOBSTORE_NOT_FOUND)
   })
   FileBlobStoreApiModel getFileBlobStoreConfiguration(
-      @ApiParam(value = "The name of the file blob store to read", example = "default") final String name
-  );
+      @ApiParam(value = "The name of the file blob store to read", example = "default") final String name);
 }

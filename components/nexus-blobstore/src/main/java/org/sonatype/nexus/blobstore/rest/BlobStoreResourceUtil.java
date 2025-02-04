@@ -34,8 +34,7 @@ public class BlobStoreResourceUtil
     throw new WebApplicationMessageException(
         BAD_REQUEST,
         "\"" + message + "\"",
-        APPLICATION_JSON
-    );
+        APPLICATION_JSON);
   }
 
   /**
@@ -52,8 +51,7 @@ public class BlobStoreResourceUtil
     return new WebApplicationMessageException(
         NOT_FOUND,
         String.format("Unable to find %s '%s' blobstore", blobStoreType, blobStoreName),
-        APPLICATION_JSON
-    );
+        APPLICATION_JSON);
   }
 
   /**

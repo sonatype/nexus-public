@@ -226,8 +226,7 @@ public class DatastoreOrphanedBlobFinderTest
   private void setupRepository(final Repository repository) {
     Configuration repositoryConfiguration = mock(Configuration.class);
     when(repositoryConfiguration.getAttributes()).thenReturn(
-        of("storage", of("blobStoreName", BLOB_STORE_NAME))
-    );
+        of("storage", of("blobStoreName", BLOB_STORE_NAME)));
     when(repository.getConfiguration()).thenReturn(repositoryConfiguration);
   }
 
@@ -282,6 +281,26 @@ public class DatastoreOrphanedBlobFinderTest
 
     @Override
     public Properties getProperties() {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void setOriginalLocation(final String path) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Optional<String> getOriginalLocation() {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Optional<String> getSoftDeletedLocation() {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void setSoftDeletedLocation(final String path) {
       throw new UnsupportedOperationException("Not implemented");
     }
 

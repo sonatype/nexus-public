@@ -449,12 +449,22 @@
   <select id="assetRecordsExist" resultType="boolean">
     SELECT EXISTS (SELECT 1
                    FROM ${format}_asset a
-                   JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
-                   WHERE ab.blob_ref = #{blobRef} AND (a.component_id IS NULL
-                   OR a.component_id = (SELECT a.component_id
-                                        FROM ${format}_component c
-                                        WHERE a.component_id = c.component_id))
-                   );
+                          JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
+                   WHERE (ab.blob_ref = #{blobRef} OR ab.blob_ref in (SELECT blob_ref
+                                                                         FROM ${format}_asset a
+                                                                                JOIN ${format}_asset_blob ab ON ab.asset_blob_id = a.asset_blob_id
+                                                                                JOIN ${format}_content_repository cr
+                                                                                     ON a.repository_id = cr.repository_id
+                                                                                JOIN repository
+                                                                                     ON repository.id = cr.config_repository_id
+                                                                         where a.path = #{path}
+                                                                           AND repository.name = #{repository}))
+             AND (a.component_id IS NULL
+        OR a.component_id = (SELECT a.component_id
+                             FROM ${format}_component c
+                             WHERE a.component_id = c.component_id))
+      );
+
   </select>
 
   <sql id="componentEntityVersionIncrement">

@@ -23,7 +23,7 @@ import org.joda.time.DateTime;
  * @since 3.0
  */
 public class BlobMetrics
-  implements Serializable
+    implements Serializable
 {
   private final DateTime creationTime;
 

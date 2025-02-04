@@ -44,12 +44,10 @@ public class DatastoreBlobStoreMetricsContainer
         .values()
         .stream()
         .anyMatch(
-            operationMetrics ->
-                operationMetrics.getBlobSize() > 0 ||
-                    operationMetrics.getErrorRequests() > 0 ||
-                    operationMetrics.getSuccessfulRequests() > 0 ||
-                    operationMetrics.getTimeOnRequests() > 0
-        );
+            operationMetrics -> operationMetrics.getBlobSize() > 0 ||
+                operationMetrics.getErrorRequests() > 0 ||
+                operationMetrics.getSuccessfulRequests() > 0 ||
+                operationMetrics.getTimeOnRequests() > 0);
   }
 
   public Map<OperationType, OperationMetrics> getOperationMetricsDelta() {

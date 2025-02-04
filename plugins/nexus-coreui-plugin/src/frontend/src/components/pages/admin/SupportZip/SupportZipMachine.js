@@ -33,6 +33,7 @@ export default Machine(
           metrics: true,
           jmx: true,
           replication: true,
+          archivedLog: 0,
           limitFileSizes: true,
           limitZipSize: true
         },

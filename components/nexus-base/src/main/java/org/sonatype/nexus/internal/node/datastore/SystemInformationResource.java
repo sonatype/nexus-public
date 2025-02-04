@@ -36,7 +36,8 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 @Path(SystemInformationResource.PATH)
 @Named
 @Singleton
-public class SystemInformationResource extends ComponentSupport
+public class SystemInformationResource
+    extends ComponentSupport
     implements Resource, SystemInformationResourceDoc
 {
   public static final String PATH = BETA_API_PREFIX + "/system/information";

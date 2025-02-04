@@ -23,6 +23,11 @@ import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
+
 // FIXME: resolve with other UserManagerTest
 
 /**
@@ -47,21 +52,21 @@ public class UserManager2Test
   @Test
   public void testListUserIds() throws Exception {
     Set<String> userIds = underTest.listUserIds();
-    Assert.assertTrue(userIds.contains("test-user"));
-    Assert.assertTrue(userIds.contains("anonymous"));
-    Assert.assertTrue(userIds.contains("admin"));
+    assertThat(userIds, hasItem("test-user"));
+    assertThat(userIds, hasItem("anonymous"));
+    assertThat(userIds, hasItem("admin"));
 
-    Assert.assertEquals(4, userIds.size());
+    assertThat(userIds, hasSize(4));
   }
 
   @Test
   public void testListUsers() throws Exception {
     Set<User> users = underTest.listUsers();
-    Map<String, User> userMap = this.toUserMap(users);
+    Map<String, User> userMap = toUserMap(users);
 
-    Assert.assertTrue(userMap.containsKey("test-user"));
-    Assert.assertTrue(userMap.containsKey("anonymous"));
-    Assert.assertTrue(userMap.containsKey("admin"));
+    assertThat(userMap, hasKey("test-user"));
+    assertThat(userMap, hasKey("anonymous"));
+    assertThat(userMap, hasKey("admin"));
 
     Assert.assertEquals(4, users.size());
   }
@@ -77,8 +82,8 @@ public class UserManager2Test
     // test roles
     Map<String, RoleIdentifier> roleMap = this.toRoleMap(testUser.getRoles());
 
-    Assert.assertTrue(roleMap.containsKey("role1"));
-    Assert.assertTrue(roleMap.containsKey("role2"));
+    assertThat(roleMap, hasKey("role1"));
+    assertThat(roleMap, hasKey("role2"));
     Assert.assertEquals(2, roleMap.size());
   }
 
@@ -93,24 +98,24 @@ public class UserManager2Test
     // test roles
     Map<String, RoleIdentifier> roleMap = this.toRoleMap(testUser.getRoles());
 
-    Assert.assertTrue(roleMap.containsKey("empty-role"));
-    Assert.assertTrue(roleMap.containsKey("role1"));
-    Assert.assertTrue(roleMap.containsKey("role2"));
+    assertThat(roleMap, hasKey("empty-role"));
+    assertThat(roleMap, hasKey("role1"));
+    assertThat(roleMap, hasKey("role2"));
     Assert.assertEquals(3, roleMap.size());
   }
 
   @Test
   public void testSearchUser() throws Exception {
     Set<User> users = underTest.searchUsers(new UserSearchCriteria("test"));
-    Map<String, User> userMap = this.toUserMap(users);
+    Map<String, User> userMap = toUserMap(users);
 
-    Assert.assertTrue(userMap.containsKey("test-user"));
-    Assert.assertTrue(userMap.containsKey("test-user-with-empty-role"));
+    assertThat(userMap, hasKey("test-user"));
+    assertThat(userMap, hasKey("test-user-with-empty-role"));
 
     Assert.assertEquals(2, users.size());
   }
 
-  private Map<String, RoleIdentifier> toRoleMap(Set<RoleIdentifier> roles) {
+  private Map<String, RoleIdentifier> toRoleMap(final Set<RoleIdentifier> roles) {
     Map<String, RoleIdentifier> results = new HashMap<String, RoleIdentifier>();
 
     for (RoleIdentifier plexusRole : roles) {
@@ -119,7 +124,7 @@ public class UserManager2Test
     return results;
   }
 
-  private Map<String, User> toUserMap(Set<User> users) {
+  private static Map<String, User> toUserMap(final Set<User> users) {
     Map<String, User> results = new HashMap<String, User>();
 
     for (User plexusUser : users) {

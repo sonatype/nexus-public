@@ -120,7 +120,8 @@ public interface FileOperations
    * @since 3.5
    */
   @FunctionalInterface
-  interface Mover {
+  interface Mover
+  {
     void accept(Path source, Path destination) throws IOException;
   }
 }

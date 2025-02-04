@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui.internal.blobstore;
 
 import java.util.Map;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -20,12 +21,9 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
-import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.upgrade.events.UpgradeEventSupport;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.eventbus.Subscribe;
 
 import static org.sonatype.nexus.blobstore.s3.internal.upgrade.S3FailoverMigrationStep_2_6.S3_FAILOVER_MIGRATION_VERSION;
 import static org.sonatype.nexus.common.app.FeatureFlags.CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED;
@@ -38,13 +36,11 @@ import static org.sonatype.nexus.common.app.FeatureFlags.CLUSTERED_ZERO_DOWNTIME
 @Singleton
 public class S3FailoverStateContributor
     extends ComponentSupport
-    implements StateContributor, EventAware
+    implements StateContributor
 {
   private final DatabaseCheck databaseCheck;
 
   private final boolean zduEnabled;
-
-  private boolean isAvailable;
 
   @Inject
   public S3FailoverStateContributor(
@@ -53,25 +49,12 @@ public class S3FailoverStateContributor
   {
     this.databaseCheck = databaseCheck;
     this.zduEnabled = zduEnabled;
-    this.isAvailable = isAvailable();
   }
 
   @Nullable
   @Override
   public Map<String, Object> getState() {
-    return ImmutableMap.of("S3FailoverEnabled", isAvailable);
-  }
-
-  @Subscribe
-  public void on(final UpgradeEventSupport event) {
-    if (!isAvailable) {
-      log.debug("Updating S3 failover state due to event {}", event);
-      // Schema version derived from event due to a race condition with DatabaseCheck
-      // listening for the same events
-      isAvailable = event.getSchemaVersion()
-          .map(v -> v.equals(S3_FAILOVER_MIGRATION_VERSION))
-          .orElse(false);
-    }
+    return ImmutableMap.of("S3FailoverEnabled", isAvailable());
   }
 
   private boolean isAvailable() {

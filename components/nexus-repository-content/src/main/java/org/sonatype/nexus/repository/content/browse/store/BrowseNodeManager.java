@@ -42,6 +42,8 @@ public class BrowseNodeManager
 
   private final int repositoryId;
 
+  static final int MAX_CHILDREN = 2000;
+
   public BrowseNodeManager(final BrowseNodeStore<BrowseNodeDAO> browseNodeStore, final int repositoryId) {
     this.browseNodeStore = checkNotNull(browseNodeStore);
     this.repositoryId = repositoryId;
@@ -50,9 +52,9 @@ public class BrowseNodeManager
   /**
    * Retrieves the browse nodes directly under the given hierarchical display path.
    *
-   * @param displayPath  the hierarchical path leading up to the browse nodes
-   * @param limit        when positive limits the number of browse nodes returned
-   * @param filter       optional filter to apply to the browse nodes
+   * @param displayPath the hierarchical path leading up to the browse nodes
+   * @param limit when positive limits the number of browse nodes returned
+   * @param filter optional filter to apply to the browse nodes
    * @param filterParams parameter map for the optional filter
    * @return browse nodes found directly under the display path
    */
@@ -112,10 +114,10 @@ public class BrowseNodeManager
             repositoryId,
             node.getName(),
             node.getPath(),
-            paths.stream().map(path -> "(" + path.getDisplayName() + ", " + path.getRequestPath() + ")")
+            paths.stream()
+                .map(path -> "(" + path.getDisplayName() + ", " + path.getRequestPath() + ")")
                 .collect(Collectors.joining(", ")),
-            e
-        );
+            e);
 
         return;
       }
@@ -148,7 +150,7 @@ public class BrowseNodeManager
   }
 
   /**
-   * Retrieves the browse node by its internal id.
+   * Retrieves a list of browse node parents by its internal id.
    */
   public List<BrowseNode> getNodeParents(final Long internalNodeId) {
     return browseNodeStore.getNodeParents(internalNodeId);
@@ -166,5 +168,36 @@ public class BrowseNodeManager
    */
   public BrowseNode getByRequestPath(final String requestPath) {
     return browseNodeStore.getByRequestPath(repositoryId, requestPath);
+  }
+
+  /**
+   * Checks if the browse node has any children asset or component.
+   */
+  public boolean hasAnyAssetOrComponentChildren(final Long parentNodeId) {
+    int offset = 0;
+    boolean isAssetOrComponent = false;
+
+    while (!isAssetOrComponent) {
+      List<BrowseNode> browseNodes = browseNodeStore.getChildByParentNodeId(parentNodeId, MAX_CHILDREN, offset);
+      if (browseNodes.isEmpty()) {
+        break;
+      }
+
+      for (BrowseNode browseNode : browseNodes) {
+        BrowseNodeData childNodeData = (BrowseNodeData) browseNode;
+        if (childNodeData.getAssetId() != null || childNodeData.getComponentId() != null) {
+          log.debug("Found child asset or component in browse node {}", browseNode.getPath());
+          isAssetOrComponent = true;
+          break;
+        }
+
+        if (hasAnyAssetOrComponentChildren(childNodeData.getNodeId())) {
+          isAssetOrComponent = true;
+          break;
+        }
+      }
+      offset += MAX_CHILDREN;
+    }
+    return isAssetOrComponent;
   }
 }

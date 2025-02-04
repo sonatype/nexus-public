@@ -72,6 +72,7 @@ public abstract class ManagedLifecycleManager
   /**
    * Shutdown Nexus, and provide a custom exit code to the calling system/process. This should ensure that all services
    * and phases are stopped and safe before ending.
+   * 
    * @param exitCode the exit code to provide to the calling system/process
    * @throws Exception the lifecycle manager may propagate exceptions if the change is not possible
    */

@@ -159,7 +159,6 @@ public class HeaderPatternFilterTest
     verify(filterChain).doFilter(request, response);
   }
 
-
   @Test
   public void testFilter_JustInvalidProto() throws Exception {
     testHeaderForwardedValue("proto=<script>");

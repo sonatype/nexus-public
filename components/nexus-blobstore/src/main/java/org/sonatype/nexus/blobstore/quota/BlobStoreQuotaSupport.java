@@ -37,9 +37,10 @@ public abstract class BlobStoreQuotaSupport
 
   public static final String LIMIT_KEY = "quotaLimitBytes";
 
-  public static Runnable createQuotaCheckJob(final BlobStore blobStore,
-                                             final BlobStoreQuotaService quotaService,
-                                             final Logger logger)
+  public static Runnable createQuotaCheckJob(
+      final BlobStore blobStore,
+      final BlobStoreQuotaService quotaService,
+      final Logger logger)
   {
     return () -> quotaCheckJob(blobStore, quotaService, logger);
   }

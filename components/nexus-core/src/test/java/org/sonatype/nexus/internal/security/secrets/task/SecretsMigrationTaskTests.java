@@ -28,7 +28,7 @@ public class SecretsMigrationTaskTests
     extends TestSupport
 {
   @Test
-  public void testTaskMigratesSeveralSources() throws Exception{
+  public void testTaskMigratesSeveralSources() throws Exception {
     List<SecretsMigrator> migrators = getMigrators();
     SecretsMigrationTask underTest = new SecretsMigrationTask(migrators);
 

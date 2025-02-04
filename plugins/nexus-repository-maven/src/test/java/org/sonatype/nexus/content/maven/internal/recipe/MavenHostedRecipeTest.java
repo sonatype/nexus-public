@@ -47,11 +47,10 @@ public class MavenHostedRecipeTest
 
   @Before
   public void setup() {
-    underTest = new MavenHostedRecipe(new HostedType(), new Maven2Format());
+    underTest = new MavenHostedRecipe(new HostedType(), new Maven2Format(), mavenHostedIndexFacetProvider,
+        mavenPurgeUnusedSnapshotsFacetProvider);
     mockFacets(underTest);
     mockHandlers(underTest);
-    underTest.setMavenIndexFacet(mavenHostedIndexFacetProvider);
-    underTest.setMavenPurgeSnapshotsFacet(mavenPurgeUnusedSnapshotsFacetProvider);
   }
 
   @Test

@@ -112,6 +112,41 @@ public class MemoryCUser
     this.version = version;
   }
 
+  public MemoryCUser withEmail(final String email) {
+    setEmail(email);
+    return this;
+  }
+
+  public MemoryCUser withFirstName(final String firstName) {
+    setFirstName(firstName);
+    return this;
+  }
+
+  public MemoryCUser withId(final String id) {
+    setId(id);
+    return this;
+  }
+
+  public MemoryCUser withLastName(final String lastName) {
+    setLastName(lastName);
+    return this;
+  }
+
+  public MemoryCUser withPassword(final String password) {
+    setPassword(password);
+    return this;
+  }
+
+  public MemoryCUser withStatus(final String status) {
+    setStatus(status);
+    return this;
+  }
+
+  public MemoryCUser withVersion(final int version) {
+    setVersion(version);
+    return this;
+  }
+
   @Override
   public MemoryCUser clone() {
     try {

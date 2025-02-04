@@ -25,7 +25,7 @@ import static java.lang.String.format;
  * @since 3.8
  */
 public class DirectPathLocationStrategy
-  extends LocationStrategySupport
+    extends LocationStrategySupport
 {
   public static final String DIRECT_PATH_ROOT = "directpath";
 

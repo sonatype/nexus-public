@@ -22,7 +22,7 @@ import com.google.inject.matcher.Matchers;
  * @since 3.0
  */
 public class StateGuardModule
-  extends AbstractInterceptorModule
+    extends AbstractInterceptorModule
 {
   @Override
   protected void configure() {

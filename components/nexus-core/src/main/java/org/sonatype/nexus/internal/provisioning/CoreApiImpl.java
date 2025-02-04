@@ -58,8 +58,11 @@ public class CoreApiImpl
   private final SecretsService secretsService;
 
   @Inject
-  public CoreApiImpl(final CapabilityRegistry capabilityRegistry, final HttpClientManager httpClientManager,
-                     final SecretsService secretsService) {
+  public CoreApiImpl(
+      final CapabilityRegistry capabilityRegistry,
+      final HttpClientManager httpClientManager,
+      final SecretsService secretsService)
+  {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
     this.httpClientManager = checkNotNull(httpClientManager);
     this.secretsService = checkNotNull(secretsService);
@@ -68,9 +71,13 @@ public class CoreApiImpl
   @Override
   public void baseUrl(final String url) {
     checkNotNull(url);
-    DefaultCapabilityReference existing = (DefaultCapabilityReference) capabilityRegistry.getAll().stream().filter(
-        capabilityReference -> BaseUrlCapabilityDescriptor.TYPE.equals(
-            capabilityReference.context().descriptor().type())).findFirst().orElse(null);
+    DefaultCapabilityReference existing = (DefaultCapabilityReference) capabilityRegistry.getAll()
+        .stream()
+        .filter(
+            capabilityReference -> BaseUrlCapabilityDescriptor.TYPE.equals(
+                capabilityReference.context().descriptor().type()))
+        .findFirst()
+        .orElse(null);
 
     if (existing != null) {
       log.info("BaseUrl capability updated to: {}",
@@ -85,9 +92,13 @@ public class CoreApiImpl
 
   @Override
   public void removeBaseUrl() {
-    DefaultCapabilityReference existing = (DefaultCapabilityReference) capabilityRegistry.getAll().stream().filter(
-        capabilityReference -> BaseUrlCapabilityDescriptor.TYPE.equals(
-            capabilityReference.context().descriptor().type())).findFirst().orElse(null);
+    DefaultCapabilityReference existing = (DefaultCapabilityReference) capabilityRegistry.getAll()
+        .stream()
+        .filter(
+            capabilityReference -> BaseUrlCapabilityDescriptor.TYPE.equals(
+                capabilityReference.context().descriptor().type()))
+        .findFirst()
+        .orElse(null);
 
     if (existing != null) {
       log.info("Deleting BaseUrl capability");

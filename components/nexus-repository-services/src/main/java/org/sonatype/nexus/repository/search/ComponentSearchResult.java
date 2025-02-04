@@ -112,7 +112,7 @@ public class ComponentSearchResult
   }
 
   public List<AssetSearchResult> getAssets() {
-    return assets;
+    return assets != null ? assets : List.of();
   }
 
   public void setAssets(final List<AssetSearchResult> assets) {

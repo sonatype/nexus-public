@@ -29,7 +29,8 @@ import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
 
-public class MavenGroupRecipeTest extends MavenRecipeTestSupport
+public class MavenGroupRecipeTest
+    extends MavenRecipeTestSupport
 {
   @Mock
   private Repository mavenGroupRepository;
@@ -62,15 +63,11 @@ public class MavenGroupRecipeTest extends MavenRecipeTestSupport
 
   @Before
   public void setup() {
-    underTest = new MavenGroupRecipe(new GroupType(), new Maven2Format());
+    underTest = new MavenGroupRecipe(new GroupType(), new Maven2Format(), mavenContentIndexFacetProvider,
+        mavenGroupFacetProvider, purgeUnusedSnapshotsFacetProvider, groupHandler, mergingGroupHandler,
+        mavenContentIndexGroupHandler);
     mockFacets(underTest);
     mockHandlers(underTest);
-    underTest.setIndexGroupHandler(mavenContentIndexGroupHandler);
-    underTest.setMergingGroupHandler(mergingGroupHandler);
-    underTest.setGroupHandler(groupHandler);
-    underTest.setMavenGroupFacet(mavenGroupFacetProvider);
-    underTest.setMavenGroupIndexFacet(mavenContentIndexFacetProvider);
-    underTest.setMavenPurgeSnapshotsFacet(purgeUnusedSnapshotsFacetProvider);
   }
 
   @Test

@@ -43,7 +43,7 @@ import static org.sonatype.nexus.common.event.EventBusFactory.reentrantEventBus;
  */
 @Named
 @ManagedLifecycle(phase = EVENTS)
-@ManagedObject(typeClass=EventManager.class)
+@ManagedObject(typeClass = EventManager.class)
 @Singleton
 public class EventManagerImpl
     extends LifecycleSupport
@@ -61,8 +61,7 @@ public class EventManagerImpl
   private final EventBus asyncBus;
 
   @Inject
-  public EventManagerImpl(final BeanLocator beanLocator, final EventExecutor eventExecutor)
-  {
+  public EventManagerImpl(final BeanLocator beanLocator, final EventExecutor eventExecutor) {
     this.beanLocator = checkNotNull(beanLocator);
     this.eventExecutor = checkNotNull(eventExecutor);
 
@@ -74,7 +73,7 @@ public class EventManagerImpl
    * Mediator to register and unregister {@link EventAware} components.
    */
   private static class EventAwareMediator
-    implements Mediator<Named, EventAware, EventManagerImpl>
+      implements Mediator<Named, EventAware, EventManagerImpl>
   {
     @Override
     public void add(final BeanEntry<Named, EventAware> entry, final EventManagerImpl watcher) {

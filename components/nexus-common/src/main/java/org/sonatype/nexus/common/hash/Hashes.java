@@ -53,14 +53,14 @@ public final class Hashes
   /**
    * Computes the hash of the given stream using multiple algorithms in one pass.
    */
-  public static Map<HashAlgorithm, HashCode> hash(final Iterable<HashAlgorithm> algorithms,
-                                                  final InputStream inputStream)
-      throws IOException
+  public static Map<HashAlgorithm, HashCode> hash(
+      final Iterable<HashAlgorithm> algorithms,
+      final InputStream inputStream) throws IOException
   {
     checkNotNull(algorithms);
     checkNotNull(inputStream);
 
-    try (MultiHashingInputStream hashingStream = new MultiHashingInputStream(algorithms, inputStream)) {
+    try (MultiHashingInputStream hashingStream = MultiHashingInputStreamFactory.input(algorithms, inputStream)) {
       ByteStreams.copy(hashingStream, ByteStreams.nullOutputStream());
       return hashingStream.hashes();
     }

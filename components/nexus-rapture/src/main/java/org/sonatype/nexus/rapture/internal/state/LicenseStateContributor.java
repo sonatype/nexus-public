@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -65,11 +64,12 @@ public class LicenseStateContributor
     result.setInstalled(applicationLicense.isInstalled());
     result.setValid(applicationLicense.isValid());
     Map<String, Object> attributes = applicationLicense.getAttributes();
-    if (attributes.get(Attributes.EXPIRATION_DATE.getKey()) != null) {
+    if (attributes != null && attributes.get(Attributes.EXPIRATION_DATE.getKey()) != null) {
       Date expirationDate = (Date) attributes.get(Attributes.EXPIRATION_DATE.getKey());
       result.setDaysToExpiry(Math.toIntExact(ChronoUnit.DAYS.between(Instant.now(), expirationDate.toInstant())));
     }
-    if (attributes.get(Attributes.FEATURES.getKey()) != null) {
+    if (attributes != null && attributes.get(Attributes.FEATURES.getKey()) != null) {
+      // noinspection unchecked
       result.setFeatures((List<String>) attributes.get(Attributes.FEATURES.getKey()));
     }
     else {

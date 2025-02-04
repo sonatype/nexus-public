@@ -33,8 +33,9 @@ public class FileBlobStoreConfigurationBuilder
    * Creates a new builder using the specified name for the resulting blob store. Unless customized, the name is also
    * used as the path for the blob store.
    */
-  public FileBlobStoreConfigurationBuilder(final String name,
-                                           final Supplier<BlobStoreConfiguration> configurationSupplier)
+  public FileBlobStoreConfigurationBuilder(
+      final String name,
+      final Supplier<BlobStoreConfiguration> configurationSupplier)
   {
     super(name, configurationSupplier);
     type(FileBlobStore.TYPE);

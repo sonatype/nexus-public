@@ -12,17 +12,18 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
-import java.lang.annotation.Annotation;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.httpbridge.legacy.LegacyUrlCapabilityDescriptor;
 import org.sonatype.nexus.repository.httpbridge.legacy.LegacyUrlEnabledHelper;
@@ -31,7 +32,6 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.eclipse.sisu.inject.InjectorBindings;
 import org.eclipse.sisu.inject.MutableBeanLocator;
@@ -49,7 +49,9 @@ import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 @Named
 @Singleton
 @FeatureFlag(name = SESSION_ENABLED)
+@ManagedLifecycle(phase = Phase.TASKS)
 public class LegacyHttpBridgeService
+    extends LifecycleSupport
     implements EventAware
 {
   private final MutableBeanLocator locator;
@@ -59,11 +61,16 @@ public class LegacyHttpBridgeService
   private InjectorBindings legacyBridgeInjector;
 
   @Inject
-  public LegacyHttpBridgeService(final MutableBeanLocator locator,
-                                 final LegacyUrlEnabledHelper legacyUrlEnabledHelper)
+  public LegacyHttpBridgeService(
+      final MutableBeanLocator locator,
+      final LegacyUrlEnabledHelper legacyUrlEnabledHelper)
   {
     this.locator = checkNotNull(locator);
     this.legacyUrlEnabledHelper = checkNotNull(legacyUrlEnabledHelper);
+  }
+
+  @Override
+  protected void doStart() {
     toggleLegacyHttpBridgeModule();
   }
 
@@ -102,7 +109,7 @@ public class LegacyHttpBridgeService
               Optional.ofNullable(locator.locate(ParameterKeys.PROPERTIES))
                   .map(Iterable::iterator)
                   .map(Iterator::next)
-                  .map(b -> ((BeanEntry<Annotation, Map>) b).getValue())
+                  .map(b -> b.getValue())
                   .ifPresent(m -> bind(ParameterKeys.PROPERTIES).toInstance(m));
             }
           })));

@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore.secrets.migration;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -40,8 +40,7 @@ public class BlobStoreConfigSecretsMigrator
   @VisibleForTesting
   static final String S3_TYPE = "s3";
 
-  @VisibleForTesting
-  static final String SECRET_ACCESS_KEY_KEY = "secretAccessKey";
+  static final List<String> secretKeys = List.of("secretAccessKey", "sessionToken");
 
   private final BlobStoreManager blobStoreManager;
 
@@ -76,15 +75,29 @@ public class BlobStoreConfigSecretsMigrator
     BlobStoreConfiguration blobStoreConfigurationCopy = blobStoreConfiguration.copy(blobStoreConfiguration.getName());
     Map<String, Object> s3Attributes = blobStoreConfigurationCopy.getAttributes().get(S3_TYPE);
 
-    if (Objects.nonNull(s3Attributes) && s3Attributes.containsKey(SECRET_ACCESS_KEY_KEY)) {
-      String secretAccessKey = (String) s3Attributes.get(SECRET_ACCESS_KEY_KEY);
-      Secret existing = secretsService.from(secretAccessKey);
+    if (s3Attributes == null) {
+      return;
+    }
 
-      if (isLegacyEncryptedString(existing)) {
-        //put decrypted value in the map, so that it can be encrypted and saved back
-        s3Attributes.put(SECRET_ACCESS_KEY_KEY, new String(existing.decrypt()));
-        blobStoreManager.update(blobStoreConfigurationCopy);
+    boolean requiresUpdate = false;
+
+    for (String secretKey : secretKeys) {
+      if (s3Attributes.containsKey(secretKey)) {
+        String secret = (String) s3Attributes.get(secretKey);
+        Secret existing = secretsService.from(secret);
+
+        if (isLegacyEncryptedString(existing)) {
+          requiresUpdate = true;
+          // put decrypted value in the map, so that it can be encrypted and saved back
+          s3Attributes.put(secretKey, new String(existing.decrypt()));
+        }
       }
     }
+
+    if (!requiresUpdate) {
+      return;
+    }
+    // update after all secrets have been migrated
+    blobStoreManager.update(blobStoreConfigurationCopy);
   }
 }

@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.0
  */
 public class NestedAttributesMap
-  extends AttributesMap
+    extends AttributesMap
 {
   @VisibleForTesting
   static final String SEPARATOR = "::";
@@ -50,9 +50,10 @@ public class NestedAttributesMap
   }
 
   @VisibleForTesting
-  NestedAttributesMap(@Nullable final NestedAttributesMap parent,
-                      final String key,
-                      final Map<String, Object> backing)
+  NestedAttributesMap(
+      @Nullable final NestedAttributesMap parent,
+      final String key,
+      final Map<String, Object> backing)
   {
     super(backing);
     this.parent = parent;
@@ -108,7 +109,7 @@ public class NestedAttributesMap
   /**
    * Create new backing for new children attributes backing.
    */
-  protected Map<String,Object> newChildBacking() {
+  protected Map<String, Object> newChildBacking() {
     return Maps.newHashMap();
   }
 
@@ -127,7 +128,7 @@ public class NestedAttributesMap
     else {
       checkState(child instanceof Map, "child '%s' not a Map", name);
     }
-    //noinspection unchecked,ConstantConditions
+    // noinspection unchecked,ConstantConditions
     return new NestedAttributesMap(this, name, (Map<String, Object>) child);
   }
 

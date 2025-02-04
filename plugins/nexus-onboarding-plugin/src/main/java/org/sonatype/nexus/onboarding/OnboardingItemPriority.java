@@ -16,9 +16,13 @@ public interface OnboardingItemPriority
 {
   Integer CHANGE_ADMIN_PASSWORD_ONBOARDING = 0;
 
-  Integer CONFIGURE_ANONYMOUS_ACCESS = 1;
+  Integer COMMUNITY_DISCOVER_ONBOARDING = 1;
 
-  Integer SELECT_LICENSE = 2;
+  Integer COMMUNITY_EULA_ONBOARDING = 2;
 
-  Integer UPLOAD_LICENSE = 3;
+  Integer CONFIGURE_ANONYMOUS_ACCESS = 3;
+
+  Integer SELECT_LICENSE = 4;
+
+  Integer UPLOAD_LICENSE = 5;
 }

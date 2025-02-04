@@ -35,25 +35,22 @@ public class ObjectInputStreamWithClassLoader
 
   private final LoadingFunction classLoading;
 
-  public ObjectInputStreamWithClassLoader(final InputStream inputStream, final LoadingFunction classLoading)
-      throws IOException
+  public ObjectInputStreamWithClassLoader(
+      final InputStream inputStream,
+      final LoadingFunction classLoading) throws IOException
   {
     super(inputStream);
     this.classLoading = checkNotNull(classLoading);
   }
 
-  public ObjectInputStreamWithClassLoader(final InputStream inputStream, final ClassLoader loader)
-      throws IOException
-  {
+  public ObjectInputStreamWithClassLoader(final InputStream inputStream, final ClassLoader loader) throws IOException {
     super(inputStream);
     checkNotNull(loader);
     this.classLoading = name -> Class.forName(name, false, loader);
   }
 
   @Override
-  protected Class<?> resolveClass(final ObjectStreamClass classDesc)
-      throws ClassNotFoundException
-  {
+  protected Class<?> resolveClass(final ObjectStreamClass classDesc) throws ClassNotFoundException {
     return classLoading.loadClass(classDesc.getName());
   }
 }

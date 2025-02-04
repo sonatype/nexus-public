@@ -38,15 +38,15 @@ public class LocalAuthTicketCacheTest
   @Test
   public void neverAddedRemove() {
     LocalAuthTicketCache tokens = new LocalAuthTicketCache();
-    assertThat(tokens.remove("user","foo", "NexusAuthorizingRealm"), is(false));
+    assertThat(tokens.remove("user", "foo", "NexusAuthorizingRealm"), is(false));
   }
 
   @Test(expected = IllegalStateException.class)
   public void addDoesNotAllowDuplicates() {
     LocalAuthTicketCache tokens = new LocalAuthTicketCache();
-    tokens.add("user","foo", "NexusAuthorizingRealm");
+    tokens.add("user", "foo", "NexusAuthorizingRealm");
     // this should fail
-    tokens.add("user","foo", "NexusAuthorizingRealm");
+    tokens.add("user", "foo", "NexusAuthorizingRealm");
   }
 
   @Test

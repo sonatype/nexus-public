@@ -72,6 +72,7 @@ function extractErrorMessage(event) {
 }
 
 const bucketRegionMismatchException = UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchException;
+const bucketEncryptionMismatchException = UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketEncryptionMismatchException;
 
 function transformIfNecessary(context, errorMessage) {
   if (errorMessage && errorMessage.includes(bucketRegionMismatchException)) {
@@ -79,12 +80,20 @@ function transformIfNecessary(context, errorMessage) {
     return 'Error cause' + errorMessage.substring(
         errorMessage.indexOf(bucketRegionMismatchException) + bucketRegionMismatchException.length);
   }
+  if (errorMessage && errorMessage.includes(bucketEncryptionMismatchException)) {
+    context.bucketEncryptionMismatch = true;
+    return 'Error cause' + errorMessage.substring(
+        errorMessage.indexOf(bucketEncryptionMismatchException) + bucketEncryptionMismatchException.length);
+  }
   return errorMessage;
 }
 
 function messageToShow(errorMessage) {
   if (errorMessage && errorMessage.includes(bucketRegionMismatchException)) {
     return UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketRegionMismatchMessage;
+  }
+  if (errorMessage && errorMessage.includes(bucketEncryptionMismatchException)) {
+    return UIStrings.BLOB_STORES.GOOGLE.ERROR.bucketEncryptionMismatchMessage;
   }
   return errorMessage;
 }
@@ -99,7 +108,8 @@ export default FormUtils.buildFormMachine({
       ...config.context,
       type: '',
       types: [],
-      bucketRegionMismatch: false
+      bucketRegionMismatch: false,
+      bucketEncryptionMismatch: false
     },
 
     states: {

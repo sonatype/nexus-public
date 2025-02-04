@@ -103,14 +103,12 @@ public abstract class FileBlobStoreITSupport
 
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
-      BLOB_NAME_HEADER, "test/randomData.bin"
-  );
+      BLOB_NAME_HEADER, "test/randomData.bin");
 
   public static final ImmutableMap<String, String> TEMP_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
       BLOB_NAME_HEADER, "test/randomData.bin",
-      TEMPORARY_BLOB_HEADER, ""
-  );
+      TEMPORARY_BLOB_HEADER, "");
 
   private FileBlobStore underTest;
 
@@ -200,7 +198,8 @@ public abstract class FileBlobStoreITSupport
 
     final BlobStoreMetrics storeMetrics = underTest.getMetrics();
     verify(metricsStore).recordAddition(TEST_DATA_LENGTH);
-    await().atMost(METRICS_FLUSH_TIMEOUT + 1, SECONDS).untilAsserted(() -> verifyBlobMetricsStore(TEST_DATA_LENGTH, 1l));
+    await().atMost(METRICS_FLUSH_TIMEOUT + 1, SECONDS)
+        .untilAsserted(() -> verifyBlobMetricsStore(TEST_DATA_LENGTH, 1l));
 
     assertThat(storeMetrics.getAvailableSpace(), is(greaterThan(0L)));
 
@@ -212,7 +211,8 @@ public abstract class FileBlobStoreITSupport
 
     underTest.compact(null);
     verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
-    await().atMost(METRICS_FLUSH_TIMEOUT + 1, SECONDS).untilAsserted(() -> verifyBlobMetricsStore(-TEST_DATA_LENGTH, -1));
+    await().atMost(METRICS_FLUSH_TIMEOUT + 1, SECONDS)
+        .untilAsserted(() -> verifyBlobMetricsStore(-TEST_DATA_LENGTH, -1));
 
     final Blob deletedBlob = underTest.get(blob.getId());
     assertThat(deletedBlob, is(nullValue()));
@@ -225,8 +225,7 @@ public abstract class FileBlobStoreITSupport
     final Blob blob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
         CREATED_BY_HEADER, "test",
         BLOB_NAME_HEADER, "health-check/repositoryName/bundle.gz",
-        DIRECT_PATH_BLOB_HEADER, "true"
-    ));
+        DIRECT_PATH_BLOB_HEADER, "true"));
     verifyMoveOperationsAtomic(blob);
 
     final byte[] output = extractContent(blob);
@@ -266,15 +265,14 @@ public abstract class FileBlobStoreITSupport
     final ImmutableMap<String, String> DIRECT_PATH_HEADERS = ImmutableMap.of(
         CREATED_BY_HEADER, "test",
         BLOB_NAME_HEADER, "health-check/repositoryName/file.txt",
-        DIRECT_PATH_BLOB_HEADER, "true"
-    );
+        DIRECT_PATH_BLOB_HEADER, "true");
     BlobId blobId = blobIdResolver.fromHeaders(DIRECT_PATH_HEADERS);
-    //At this point the exist test should return false
+    // At this point the exist test should return false
     assertThat(underTest.exists(blobId), is(false));
 
     final Blob blob = underTest.create(new ByteArrayInputStream(content), DIRECT_PATH_HEADERS);
     assertThat(blobId.asUniqueString(), is(blob.getId().asUniqueString()));
-    //Now the exist test should be true
+    // Now the exist test should be true
     assertThat(underTest.exists(blob.getId()), is(true));
   }
 
@@ -284,8 +282,7 @@ public abstract class FileBlobStoreITSupport
     Blob blob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
         CREATED_BY_HEADER, "test",
         BLOB_NAME_HEADER, "health-check/repositoryName/file.txt",
-        DIRECT_PATH_BLOB_HEADER, "true"
-    ));
+        DIRECT_PATH_BLOB_HEADER, "true"));
     verifyMoveOperationsAtomic(blob);
 
     assertThat(underTest.getDirectPathBlobIdStream("health-check").count(), is(1L));
@@ -313,8 +310,7 @@ public abstract class FileBlobStoreITSupport
     Blob directPathBlob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
         CREATED_BY_HEADER, "test",
         BLOB_NAME_HEADER, "health-check/repositoryName/file.txt",
-        DIRECT_PATH_BLOB_HEADER, "true"
-    ));
+        DIRECT_PATH_BLOB_HEADER, "true"));
 
     List<BlobId> blobIds = underTest.getBlobIdStream().collect(Collectors.toList());
     assertThat(blobIds.size(), is(equalTo(2)));
@@ -333,8 +329,7 @@ public abstract class FileBlobStoreITSupport
     Blob blob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
         CREATED_BY_HEADER, "test",
         BLOB_NAME_HEADER, "health-check/repositoryName/file.txt",
-        DIRECT_PATH_BLOB_HEADER, "true"
-    ));
+        DIRECT_PATH_BLOB_HEADER, "true"));
     verifyMoveOperationsAtomic(blob);
 
     byte[] output = extractContent(blob);
@@ -354,8 +349,7 @@ public abstract class FileBlobStoreITSupport
     blob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
         CREATED_BY_HEADER, "test",
         BLOB_NAME_HEADER, "health-check/repositoryName/file.txt",
-        DIRECT_PATH_BLOB_HEADER, "true"
-    ));
+        DIRECT_PATH_BLOB_HEADER, "true"));
     verifyOverwriteOperationsAtomic(blob);
 
     output = extractContent(blob);
@@ -394,11 +388,11 @@ public abstract class FileBlobStoreITSupport
     // we don't care about the additions in this test
     reset(metricsStore);
 
-    //Standard delete will not update metrics
+    // Standard delete will not update metrics
     underTest.delete(blob.getId(), "testSoftDeleteMetricsOnlyUpdateOnCompact");
     verifyNoInteractions(metricsStore);
 
-    //Compact triggers hard delete, so metrics will be updated
+    // Compact triggers hard delete, so metrics will be updated
     underTest.compact(null);
     verify(metricsStore).recordDeletion(TEST_DATA_LENGTH);
   }
@@ -592,7 +586,6 @@ public abstract class FileBlobStoreITSupport
     underTest = null; // The store is stopped, no cleanup required
   }
 
-
   @Test
   public void blobstoreRemovalDeletesInternalFiles() throws Exception {
 
@@ -613,7 +606,8 @@ public abstract class FileBlobStoreITSupport
     Path sourceFile = testFile(content);
 
     doThrow(new FileSystemException("The process cannot access the file because it is being used by another process."))
-        .when(fileOperations).moveAtomic(any(), any());
+        .when(fileOperations)
+        .moveAtomic(any(), any());
 
     underTest.create(sourceFile, TEST_HEADERS, content.length, sha1);
 

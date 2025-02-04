@@ -32,8 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class FileBlobAttributes
     extends BlobAttributesSupport<PropertiesFile>
 {
-  public FileBlobAttributes(final Path path)
-  {
+  public FileBlobAttributes(final Path path) {
     super(new PropertiesFile(path.toFile()), null, null);
   }
 
@@ -52,12 +51,12 @@ public class FileBlobAttributes
    * Returns {@code false} if the attribute file is not found.
    */
   public boolean load() throws IOException {
-      if (!Files.exists(getPath())) {
-        return false;
-      }
-      propertiesFile.load();
-      readFrom(propertiesFile);
-      return true;
+    if (!Files.exists(getPath())) {
+      return false;
+    }
+    propertiesFile.load();
+    readFrom(propertiesFile);
+    return true;
   }
 
   @Override
@@ -67,7 +66,7 @@ public class FileBlobAttributes
   }
 
   @Override
-  public void writeProperties(){
+  public void writeProperties() {
     writeTo(propertiesFile);
   }
 }

@@ -51,7 +51,7 @@ public class ExceptionSummarizerTest
   public void summarizeExceptionsByType() throws Exception {
     underTest = new TestExceptionSummarizer(sameType(), warn(log));
 
-    underTest.log("oops", firstCause);  // <-- full stack
+    underTest.log("oops", firstCause); // <-- full stack
 
     underTest.log("oops", secondCause); // <-- full stack, because type changed
 
@@ -78,10 +78,13 @@ public class ExceptionSummarizerTest
     InOrder inOrder = inOrder(log);
     inOrder.verify(log).warn("oops", firstCause);
     inOrder.verify(log).warn("oops", secondCause);
-    inOrder.verify(log).warn("oops: java.lang.IllegalStateException - occurred 3 times in last 5 seconds", (Exception) null);
-    inOrder.verify(log).warn("oops: java.lang.IllegalStateException - occurred 5 times in last 10 seconds", (Exception) null);
+    inOrder.verify(log)
+        .warn("oops: java.lang.IllegalStateException - occurred 3 times in last 5 seconds", (Exception) null);
+    inOrder.verify(log)
+        .warn("oops: java.lang.IllegalStateException - occurred 5 times in last 10 seconds", (Exception) null);
     inOrder.verify(log).warn("oops", repeatCause);
-    inOrder.verify(log).warn("oops: java.lang.IllegalStateException - occurred 1 times in last 5 seconds", (Exception) null);
+    inOrder.verify(log)
+        .warn("oops: java.lang.IllegalStateException - occurred 1 times in last 5 seconds", (Exception) null);
     inOrder.verifyNoMoreInteractions();
   }
 
@@ -89,11 +92,11 @@ public class ExceptionSummarizerTest
   public void summarizeExceptionsByText() throws Exception {
     underTest = new TestExceptionSummarizer(sameText(), warn(log));
 
-    underTest.log("oops", firstCause);  // <-- full stack
+    underTest.log("oops", firstCause); // <-- full stack
 
     underTest.log("oops", secondCause); // <-- full stack, because type changed
 
-    underTest.log("oops", thirdCause);  // <-- full stack, because text changed
+    underTest.log("oops", thirdCause); // <-- full stack, because text changed
 
     underTest.log("oops", repeatCause); // <-- full stack, because text changed
 
@@ -120,10 +123,13 @@ public class ExceptionSummarizerTest
     inOrder.verify(log).warn("oops", secondCause);
     inOrder.verify(log).warn("oops", thirdCause);
     inOrder.verify(log).warn("oops", repeatCause);
-    inOrder.verify(log).warn("oops: java.lang.IllegalStateException - occurred 1 times in last 5 seconds", (Exception) null);
-    inOrder.verify(log).warn("oops: java.lang.IllegalStateException - occurred 5 times in last 10 seconds", (Exception) null);
+    inOrder.verify(log)
+        .warn("oops: java.lang.IllegalStateException - occurred 1 times in last 5 seconds", (Exception) null);
+    inOrder.verify(log)
+        .warn("oops: java.lang.IllegalStateException - occurred 5 times in last 10 seconds", (Exception) null);
     inOrder.verify(log).warn("oops", repeatCause);
-    inOrder.verify(log).warn("oops: java.lang.IllegalStateException - occurred 1 times in last 5 seconds", (Exception) null);
+    inOrder.verify(log)
+        .warn("oops: java.lang.IllegalStateException - occurred 1 times in last 5 seconds", (Exception) null);
     inOrder.verifyNoMoreInteractions();
   }
 
@@ -135,8 +141,9 @@ public class ExceptionSummarizerTest
   {
     private long currentTimeMillis = System.currentTimeMillis();
 
-    TestExceptionSummarizer(final BiPredicate<Exception, Exception> matcher,
-                            final BiConsumer<String, Exception> logger)
+    TestExceptionSummarizer(
+        final BiPredicate<Exception, Exception> matcher,
+        final BiConsumer<String, Exception> logger)
     {
       super(matcher, logger);
     }

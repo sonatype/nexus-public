@@ -50,8 +50,10 @@ public class SanitizingJsonOutputStream
   /**
    * Constructor.
    */
-  public SanitizingJsonOutputStream(final OutputStream out, final Collection<String> fields, final String replacement)
-      throws IOException
+  public SanitizingJsonOutputStream(
+      final OutputStream out,
+      final Collection<String> fields,
+      final String replacement) throws IOException
   {
     generator = new SanitizingJsonGenerator(jsonFactory.createGenerator(out), fields, replacement);
     PipedInputStream pipedInput = new PipedInputStream(this);
@@ -103,9 +105,10 @@ public class SanitizingJsonOutputStream
     /**
      * Constructor.
      */
-    public SanitizingJsonGenerator(final JsonGenerator delegate,
-                                   final Collection<String> fields,
-                                   final String replacement)
+    public SanitizingJsonGenerator(
+        final JsonGenerator delegate,
+        final Collection<String> fields,
+        final String replacement)
     {
       super(delegate, false);
       this.fields = new HashSet<>(fields);

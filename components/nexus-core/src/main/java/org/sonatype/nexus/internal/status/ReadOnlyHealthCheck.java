@@ -41,7 +41,8 @@ public class ReadOnlyHealthCheck
 
   @Override
   protected Result check() {
-    return freezeService.currentFreezeRequests().stream()
+    return freezeService.currentFreezeRequests()
+        .stream()
         .findFirst()
         .map(this::describe)
         .map(Result::unhealthy)

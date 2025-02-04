@@ -35,7 +35,9 @@ public interface NexusTestDistribution
 
   enum Distribution
   {
-    BASE, OSS, PRO, PRO_STARTER
+    BASE,
+    OSS,
+    PRO
   }
 
   int priority(TestDatabase database, Distribution dist);
@@ -64,8 +66,7 @@ public interface NexusTestDistribution
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
         wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*"),
-        javaVMCompositeOption()
-    );
+        javaVMCompositeOption());
   }
 
   static boolean isBase(final Distribution dist) {
@@ -73,7 +74,7 @@ public interface NexusTestDistribution
   }
 
   static boolean isOss(final Distribution dist) {
-    return Distribution.OSS.equals(dist) || Distribution.PRO_STARTER.equals(dist);
+    return Distribution.OSS.equals(dist);
   }
 
   static boolean isPro(final Distribution dist) {

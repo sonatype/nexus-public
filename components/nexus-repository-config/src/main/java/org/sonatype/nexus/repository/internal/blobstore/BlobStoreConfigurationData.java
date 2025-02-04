@@ -13,8 +13,11 @@
 package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
@@ -40,9 +43,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BlobStoreConfigurationData
     implements HasEntityId, HasName, BlobStoreConfiguration
 {
+
   private static final String STATE = "state";
 
   private static final String WRITABLE = "writable";
+
+  public static final String ACCESS_KEY_ID = "accessKeyId";
+
+  public static final String SECRET_ACCESS_KEY = "secretAccessKey";
+
+  public static final String S_3 = "s3";
 
   // do not serialize EntityId, it can be generated on the fly
   @JsonIgnore
@@ -106,7 +116,7 @@ public class BlobStoreConfigurationData
       attributes = Maps.newHashMap();
     }
 
-    Map<String,Object> map = attributes.get(key);
+    Map<String, Object> map = attributes.get(key);
     if (map == null) {
       map = Maps.newHashMap();
       attributes.put(key, map);
@@ -120,8 +130,23 @@ public class BlobStoreConfigurationData
     return getClass().getSimpleName() + "{" +
         "name='" + name + '\'' +
         ", type='" + type + '\'' +
-        ", attributes=" + attributes +
+        ", attributes=" + sanitizeAttributes(attributes) +
         '}';
+  }
+
+  private Map<String, Map<String, Object>> sanitizeAttributes(Map<String, Map<String, Object>> attributes) {
+    if (attributes != null && attributes.containsKey(S_3)) {
+      Map<String, Object> cleanedS3 = attributes.get(S_3)
+          .entrySet()
+          .stream()
+          .filter(e -> !ACCESS_KEY_ID.equals(e.getKey()))
+          .filter(e -> !SECRET_ACCESS_KEY.equals(e.getKey()))
+          .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+      Map<String, Map<String, Object>> newAttributes = new HashMap<>(attributes);
+      newAttributes.replace(S_3, cleanedS3);
+      return newAttributes;
+    }
+    return attributes;
   }
 
   private static final ObjectMapper MAPPER = makeObjectMapper();
@@ -139,23 +164,30 @@ public class BlobStoreConfigurationData
     clone.setName(name);
     clone.setType(getType());
     if (attributes != null && attributes.size() > 0) {
-      String attribsJson;
-      try {
-        attribsJson = MAPPER.writer().writeValueAsString(getAttributes());
-      }
-      catch (JsonProcessingException e) {
-        throw new BlobStoreException("failed to marshal blob store configuration attributes to JSON", e, null);
-      }
-      Map<String, Map<String,Object>> clonedAttributes;
-      try {
-        clonedAttributes = MAPPER.readValue(attribsJson, new TypeReference<Map<String,Map<String,Object>>>(){});
-      }
-      catch (IOException e) {
-        throw new BlobStoreException("failed to parse blob store configuration attributes from JSON", e, null);
-      }
-      clone.setAttributes(clonedAttributes);
+      String attribsJson = getAttribsJson();
+      clone.setAttributes(getClonedAttributes(attribsJson));
     }
     return clone;
+  }
+
+  private Map<String, Map<String, Object>> getClonedAttributes(final String attribsJson) {
+    try {
+      return MAPPER.readValue(attribsJson, new TypeReference<Map<String, Map<String, Object>>>()
+      {
+      });
+    }
+    catch (IOException e) {
+      throw new BlobStoreException("failed to parse blob store configuration attributes from JSON", e, null);
+    }
+  }
+
+  private String getAttribsJson() {
+    try {
+      return MAPPER.writer().writeValueAsString(getAttributes());
+    }
+    catch (JsonProcessingException e) {
+      throw new BlobStoreException("failed to marshal blob store configuration attributes to JSON", e, null);
+    }
   }
 
   @Override

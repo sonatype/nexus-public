@@ -20,7 +20,8 @@ import java.time.ZoneOffset;
  * 
  * @since 3.24
  */
-public class UTC {
+public class UTC
+{
   private UTC() {
     // empty
   }

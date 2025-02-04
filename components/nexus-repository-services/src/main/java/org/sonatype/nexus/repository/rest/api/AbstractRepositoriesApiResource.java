@@ -34,6 +34,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -82,6 +83,8 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   protected HighAvailabilitySupportChecker highAvailabilitySupportChecker;
 
+  private Map<String, Recipe> recipesByFormat;
+
   @Inject
   public void setHighAvailabilitySupportChecker(final HighAvailabilitySupportChecker highAvailabilitySupportChecker) {
     this.highAvailabilitySupportChecker = highAvailabilitySupportChecker;
@@ -103,7 +106,9 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   }
 
   @Inject
-  public void setConfigurationAdapter(final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter) {
+  public void setConfigurationAdapter(
+      final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter)
+  {
     this.configurationAdapter = checkNotNull(configurationAdapter);
   }
 
@@ -115,6 +120,11 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @Inject
   public void setDefaultAdapter(final ApiRepositoryAdapter defaultAdapter) {
     this.defaultAdapter = checkNotNull(defaultAdapter);
+  }
+
+  @Inject
+  public void setRecipesByFormat(final Map<String, Recipe> recipesByFormat) {
+    this.recipesByFormat = checkNotNull(recipesByFormat);
   }
 
   @POST
@@ -170,7 +180,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
       }
       String message = stringJoiner.toString();
       log.debug("Failed to edit a repository via REST: {}", message, e);
-      
+
       throw new WebApplicationMessageException(BAD_REQUEST, message, APPLICATION_JSON);
     }
   }
@@ -180,8 +190,9 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @RequiresAuthentication
   @Validate
   @ApiOperation("Get repository")
-  public AbstractApiRepository getRepository(@ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
-                                             @PathParam("repositoryName") final String repositoryName)
+  public AbstractApiRepository getRepository(
+      @ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+      @PathParam("repositoryName") final String repositoryName)
   {
     return authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
         .filter(r -> r.getType().getValue().equals(formatAndType.type()) &&
@@ -192,6 +203,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   /**
    * By default, the API is enabled in High Availability, otherwise it should be overridden by a format.
+   * 
    * @return {@code true} in case of API is enabled or {@code false} otherwise.
    */
   public boolean isApiEnabled() {
@@ -199,6 +211,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   }
 
   private void validateRequest(final Configuration newConfig, final String repositoryName) {
+    validateFormatEnabled(newConfig.getRecipeName());
     ensureRepositoryNameMatches(newConfig, repositoryName);
     validateBlobStoreName(newConfig, repositoryName);
   }
@@ -211,7 +224,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   private void validateBlobStoreName(final Configuration newConfiguration, final String repositoryName) {
     String blobStoreName = (String) newConfiguration.getAttributes().get("storage").get("blobStoreName");
-    if(!blobStoreManager.exists(blobStoreName)) {
+    if (!blobStoreManager.exists(blobStoreName)) {
       throw new ValidationErrorsException("BlobStoreName", BLOBSTORE_NOT_FOUND);
     }
 
@@ -221,10 +234,11 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     }
 
     Function<Map<String, Map<String, Object>>, String> getBlobStorageFromAttributes =
-            storageAttr -> (String) storageAttr.get("storage").get("blobStoreName");
+        storageAttr -> (String) storageAttr.get("storage").get("blobStoreName");
 
     String newBlobStoreName = Optional.ofNullable(newConfiguration.getAttributes())
-            .map(getBlobStorageFromAttributes).orElse("");
+        .map(getBlobStorageFromAttributes)
+        .orElse("");
     String currentBlobStore = getBlobStorageFromAttributes.apply(repository.getConfiguration().getAttributes());
 
     if (!newBlobStoreName.equals(currentBlobStore)) {
@@ -236,6 +250,13 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     if (!isApiEnabled()) {
       String message = String.format("Format %s is disabled in High Availability", format);
       throw new WebApplicationMessageException(METHOD_NOT_ALLOWED, message, APPLICATION_JSON);
+    }
+  }
+
+  private void validateFormatEnabled(final String recipeName) {
+    Recipe recipe = recipesByFormat.get(recipeName);
+    if (recipe != null && !recipe.isFeatureEnabled()) {
+      throw new ValidationErrorsException("This format is not currently enabled");
     }
   }
 }

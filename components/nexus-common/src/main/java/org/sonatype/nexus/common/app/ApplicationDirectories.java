@@ -48,7 +48,7 @@ public interface ApplicationDirectories
   /**
    * Work sub-directory.
    *
-   * @param path   Sub-directory path.
+   * @param path Sub-directory path.
    * @param create True to create the directory if it does not exist.
    */
   File getWorkDirectory(String path, boolean create);

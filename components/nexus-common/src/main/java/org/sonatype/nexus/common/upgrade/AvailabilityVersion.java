@@ -18,13 +18,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.google.inject.BindingAnnotation;
+
 /**
- * Marks a class as available from a specified database schema version onwards
+ * Marks a class or a method as available from a specified database schema version onwards
  * 
  */
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@BindingAnnotation
+@Target({ElementType.TYPE, ElementType.METHOD})
 public @interface AvailabilityVersion
 {
   String from();

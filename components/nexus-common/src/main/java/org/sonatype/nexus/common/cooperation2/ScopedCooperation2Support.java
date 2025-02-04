@@ -62,7 +62,8 @@ public abstract class ScopedCooperation2Support
 
   @Override
   public Map<String, Integer> getThreadCountPerKey() {
-    return localFutures.values().stream()
+    return localFutures.values()
+        .stream()
         .collect(toMap(CooperatingFuture::getRequestKey, CooperatingFuture::getThreadCount));
   }
 

@@ -33,7 +33,7 @@ public interface BlobStoreMetrics
   long getTotalSize();
 
   /**
-   * An estimate of the remaining space available in the blob store, in bytes.  Return {@link Long#MAX_VALUE} if the
+   * An estimate of the remaining space available in the blob store, in bytes. Return {@link Long#MAX_VALUE} if the
    * available space can't be estimated or is not limited.
    */
   long getAvailableSpace();

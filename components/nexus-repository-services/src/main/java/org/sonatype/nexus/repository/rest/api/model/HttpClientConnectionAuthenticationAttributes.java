@@ -25,7 +25,7 @@ import javax.validation.constraints.NotEmpty;
  */
 public class HttpClientConnectionAuthenticationAttributes
 {
-  @ApiModelProperty(value = "Authentication type", allowableValues = "username,ntlm")
+  @ApiModelProperty(value = "Authentication type", allowableValues = "username,ntlm,bearerToken")
   @NotEmpty
   protected final String type;
 
@@ -41,19 +41,24 @@ public class HttpClientConnectionAuthenticationAttributes
   @ApiModelProperty
   protected final String ntlmDomain;
 
+  @ApiModelProperty
+  protected final String bearerToken;
+
   @JsonCreator
   public HttpClientConnectionAuthenticationAttributes(
       @JsonProperty("type") final String type,
       @JsonProperty("username") final String username,
       @JsonProperty(value = "password", access = Access.WRITE_ONLY) final String password,
       @JsonProperty("ntlmHost") final String ntlmHost,
-      @JsonProperty("ntlmDomain") final String ntlmDomain)
+      @JsonProperty("ntlmDomain") final String ntlmDomain,
+      @JsonProperty(value = "bearerToken", access = Access.WRITE_ONLY) final String bearerToken)
   {
     this.type = type;
     this.username = username;
     this.password = password;
     this.ntlmHost = ntlmHost;
     this.ntlmDomain = ntlmDomain;
+    this.bearerToken = bearerToken;
   }
 
   public String getType() {
@@ -75,4 +80,9 @@ public class HttpClientConnectionAuthenticationAttributes
   public String getNtlmDomain() {
     return ntlmDomain;
   }
+
+  public String getBearerToken() {
+    return bearerToken;
+  }
+
 }

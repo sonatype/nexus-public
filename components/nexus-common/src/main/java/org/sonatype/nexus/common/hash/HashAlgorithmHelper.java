@@ -45,8 +45,7 @@ public class HashAlgorithmHelper
   private final int bufferSize;
 
   @Inject
-  public HashAlgorithmHelper(@Named("${nexus.calculateChecksums.bufferSize:-32768}") final int bufferSize)
-  {
+  public HashAlgorithmHelper(@Named("${nexus.calculateChecksums.bufferSize:-32768}") final int bufferSize) {
     checkState(bufferSize > 0, String.format("Buffer size should be a positive value: %s", bufferSize));
     this.bufferSize = bufferSize;
   }
@@ -94,8 +93,7 @@ public class HashAlgorithmHelper
         .collect(Collectors.toMap(
             Entry::getKey,
             x -> HashCode.fromBytes(x.getValue().digest()),
-            (x, y) -> x, LinkedHashMap::new
-        ));
+            (x, y) -> x, LinkedHashMap::new));
   }
 
   private MessageDigest getInstance(final String algorithm) {

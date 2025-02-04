@@ -18,6 +18,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 /**
  * All of the configuration for a particular {@link BlobStore}
+ * 
  * @since 3.0
  */
 public interface BlobStoreConfiguration
@@ -40,5 +41,5 @@ public interface BlobStoreConfiguration
 
   boolean isWritable();
 
-   void setWritable(final boolean writable);
+  void setWritable(final boolean writable);
 }

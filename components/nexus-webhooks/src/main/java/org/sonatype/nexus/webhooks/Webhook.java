@@ -43,7 +43,7 @@ public abstract class Webhook
 {
   private EventManager eventManager;
 
-  private final Set<SubscriptionImpl> subscriptions = new CopyOnWriteArraySet<>();
+  protected final Set<SubscriptionImpl> subscriptions = new CopyOnWriteArraySet<>();
 
   @Inject
   public void setEventManager(final EventManager eventManager) {
@@ -74,7 +74,7 @@ public abstract class Webhook
     return ImmutableSet.copyOf(subscriptions);
   }
 
-  private class SubscriptionImpl
+  protected class SubscriptionImpl
       implements WebhookSubscription
   {
     private final WebhookConfiguration configuration;
