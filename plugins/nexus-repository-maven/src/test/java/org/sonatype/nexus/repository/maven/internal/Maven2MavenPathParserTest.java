@@ -324,6 +324,34 @@ public class Maven2MavenPathParserTest
     assertThat(mavenPath.getCoordinates().getClassifier(), equalTo("some.strange.classifier"));
     assertThat(mavenPath.getCoordinates().getExtension(), equalTo("pom.asc.sha1"));
     assertThat(mavenPath.getCoordinates().getSignatureType(), equalTo(SignatureType.GPG));
+
+    mavenPath = pathParser.parsePath("/com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.pom.md5.sha1");
+    assertThat(mavenPath, notNullValue());
+    assertThat(mavenPath.getFileName(), equalTo("jsr305-1.3.9.pom.md5.sha1"));
+    assertThat(mavenPath.getPath(), equalTo("com/google/code/findbugs/jsr305/1.3.9/jsr305-1.3.9.pom.md5.sha1"));
+    assertThat(mavenPath.getHashType(), equalTo(HashType.SHA1));
+    assertThat(mavenPath.getCoordinates(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getGroupId(), equalTo("com.google.code.findbugs"));
+    assertThat(mavenPath.getCoordinates().getArtifactId(), equalTo("jsr305"));
+    assertThat(mavenPath.getCoordinates().getVersion(), equalTo("1.3.9"));
+    assertThat(mavenPath.getCoordinates().getBaseVersion(), equalTo("1.3.9"));
+    assertThat(mavenPath.getCoordinates().getClassifier(), nullValue());
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("pom.md5.sha1"));
+    assertThat(mavenPath.getCoordinates().getSignatureType(), nullValue());
+
+    mavenPath = pathParser.parsePath("/com/netflix/spectator/spectator-ext-ipc/0.103.0/spectator-ext-ipc-0.103.0.pom.md5.asc");
+    assertThat(mavenPath, notNullValue());
+    assertThat(mavenPath.getFileName(), equalTo("spectator-ext-ipc-0.103.0.pom.md5.asc"));
+    assertThat(mavenPath.getPath(), equalTo("com/netflix/spectator/spectator-ext-ipc/0.103.0/spectator-ext-ipc-0.103.0.pom.md5.asc"));
+    assertThat(mavenPath.getHashType(), nullValue());
+    assertThat(mavenPath.getCoordinates(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getGroupId(), equalTo("com.netflix.spectator"));
+    assertThat(mavenPath.getCoordinates().getArtifactId(), equalTo("spectator-ext-ipc"));
+    assertThat(mavenPath.getCoordinates().getVersion(), equalTo("0.103.0"));
+    assertThat(mavenPath.getCoordinates().getBaseVersion(), equalTo("0.103.0"));
+    assertThat(mavenPath.getCoordinates().getClassifier(), nullValue());
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("pom.md5.asc"));
+    assertThat(mavenPath.getCoordinates().getSignatureType(), equalTo(SignatureType.GPG));
   }
 
   @Test
