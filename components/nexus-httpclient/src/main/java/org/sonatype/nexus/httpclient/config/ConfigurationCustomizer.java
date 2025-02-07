@@ -288,6 +288,10 @@ public class ConfigurationCustomizer
       credentials = null;
       authSchemes = emptyList();
     }
+    else if (authentication instanceof GoogleAuthenticationConfiguration) {
+      credentials = null;
+      authSchemes = emptyList();
+    }
     else {
       throw new IllegalArgumentException("Unsupported authentication configuration: " + authentication);
     }

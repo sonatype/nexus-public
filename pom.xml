@@ -592,7 +592,6 @@
         <version>3.77.0-08</version>
         <type>zip</type>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
 

@@ -49,6 +49,7 @@ export default {
         USERNAME: 'Username',
         PASSWORD: 'Password',
         HOST_NAME: 'Windows NTLM Hostname',
+        
         DOMAIN: 'Windows NTLM Domain'
       },
       EXCLUDE: {
