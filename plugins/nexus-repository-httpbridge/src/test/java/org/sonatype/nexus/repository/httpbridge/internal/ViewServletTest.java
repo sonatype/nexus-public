@@ -184,7 +184,7 @@ public class ViewServletTest
     underTest.service(httpServletRequest, servletResponse);
 
     verify(servletResponse).setHeader(HttpHeaders.CONTENT_SECURITY_POLICY,
-        "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation");
+        "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation allow-downloads");
   }
 
   @Test

@@ -64,7 +64,7 @@ public class ViewServlet
 {
   private static final Logger log = LoggerFactory.getLogger(ViewServlet.class);
 
-  private static final String SANDBOX = "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation";
+  private static final String SANDBOX = "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation allow-downloads";
 
   @VisibleForTesting
   static final String P_DESCRIBE = "describe";
