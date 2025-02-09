@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Collections;
 
+import org.assertj.db.type.AssertDbConnectionFactory;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.repository.Format;
@@ -100,7 +101,10 @@ public class BrowseNodeMigrationStep_1_1Test
       upgradeStep.migrate(conn);
     }
 
-    assertThat(new Table(store.getDataSource(), "test_browse_node")).isEmpty();
+    Table testBrowseNode = AssertDbConnectionFactory
+            .of(store.getDataSource()).create()
+            .table("test_browse_node").build();
+    assertThat(testBrowseNode).isEmpty();
 
     verify(rebuildBrowseNodesManager).setRebuildOnSart(true);
   }

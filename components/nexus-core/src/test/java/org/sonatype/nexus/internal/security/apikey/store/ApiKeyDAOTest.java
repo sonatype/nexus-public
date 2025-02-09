@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.assertj.db.type.AssertDbConnectionFactory;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -359,7 +360,9 @@ public class ApiKeyDAOTest
 
   private Table table() {
     DataStore<?> dataStore = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(RuntimeException::new);
-    return new Table(dataStore.getDataSource(), "api_key");
+    return AssertDbConnectionFactory
+            .of(dataStore.getDataSource()).create()
+            .table("api_key").build();
   }
 
   private void withDao(final Consumer<ApiKeyDAO> consumer) {

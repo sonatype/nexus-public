@@ -15,6 +15,7 @@ package org.sonatype.nexus.upgrade.datastore.internal.steps;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
+import org.assertj.db.type.AssertDbConnectionFactory;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -74,6 +75,8 @@ public class DistributedAuthTicketMigrationStep_1_30Test
 
   private Table table() {
     DataStore<?> dataStore = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(RuntimeException::new);
-    return new Table(dataStore.getDataSource(), "distributed_auth_ticket_cache");
+    return AssertDbConnectionFactory
+            .of(dataStore.getDataSource()).create()
+            .table("distributed_auth_ticket_cache").build();
   }
 }

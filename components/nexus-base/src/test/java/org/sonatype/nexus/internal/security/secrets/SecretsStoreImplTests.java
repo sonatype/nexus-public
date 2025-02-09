@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.security.secrets;
 import java.util.List;
 import java.util.Optional;
 
+import org.assertj.db.type.AssertDbConnectionFactory;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.SecretData;
@@ -217,7 +218,9 @@ public class SecretsStoreImplTests
 
   private Table table() {
     DataStore<?> dataStore = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(RuntimeException::new);
-    return new Table(dataStore.getDataSource(), "secrets");
+    return AssertDbConnectionFactory
+            .of(dataStore.getDataSource()).create()
+            .table("secrets").build();
   }
 
   private static void assertSecret(

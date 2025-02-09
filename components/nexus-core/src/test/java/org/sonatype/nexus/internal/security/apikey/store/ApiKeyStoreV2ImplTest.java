@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.assertj.db.type.AssertDbConnectionFactory;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.Secret;
@@ -327,6 +328,8 @@ public class ApiKeyStoreV2ImplTest
 
   private Table table() {
     DataStore<?> dataStore = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(RuntimeException::new);
-    return new Table(dataStore.getDataSource(), "api_key_v2");
+    return AssertDbConnectionFactory
+            .of(dataStore.getDataSource()).create()
+            .table("api_key_v2").build();
   }
 }

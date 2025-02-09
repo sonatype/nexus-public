@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.assertj.db.type.AssertDbConnectionFactory;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
@@ -358,7 +359,9 @@ public class ApiKeyV2DAOTest
 
   private Table table() {
     DataStore<?> dataStore = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(RuntimeException::new);
-    return new Table(dataStore.getDataSource(), "api_key_v2");
+    return AssertDbConnectionFactory
+            .of(dataStore.getDataSource()).create()
+            .table("api_key_v2").build();
   }
 
   private <E> E callDao(final Function<ApiKeyV2DAO, E> consumer) {
