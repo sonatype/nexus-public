@@ -75,7 +75,7 @@
   </select>
 
   <select id="getByDisplayPath" resultMap="browseNodeResult">
-    <bind name="isConanFormat" value="'${format}' == 'conan'"/>
+    <bind name="isConanFormat" value="'${format}'.equals('conan')"/>
     SELECT B.*,
       <if test="isConanFormat">
         COALESCE(C.last_updated, A.last_updated) AS last_updated,
