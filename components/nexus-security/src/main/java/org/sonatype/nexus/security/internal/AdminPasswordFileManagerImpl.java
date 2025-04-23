@@ -61,7 +61,19 @@ public class AdminPasswordFileManagerImpl
     }
 
     try {
-      log.info("Writing admin user temporary password to {}", adminPasswordFile.toString());
+// Show a friendly message in logs to help users locate the default admin password file,
+// especially when running Nexus in a containerized environment (like Jenkins does).
+
+      log.info("\n***************************************************************\n" +
+         "*  Nexus is running in a containerized environment.            *\n" +
+         "*                                                             *\n" +
+         "*  The default admin password is stored in:                   *\n" +
+         "*  {}  *\n" +
+         "*                                                             *\n" +
+         "*  Use this password to log in to the UI with username 'admin'*\n" +
+         "***************************************************************\n",
+         adminPasswordFile.getAbsolutePath());
+
       Files.write(adminPasswordFile.toPath(), password.getBytes(StandardCharsets.UTF_8));
     }
     catch (Exception e) {
