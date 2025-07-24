@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -197,7 +198,7 @@ public class AptContentFacetImpl
 
     return controlFile.getParagraphs().get(0)
         .withFields(Arrays.asList(
-            new ControlFile.ControlField("Filename", asset.path()),
+            new ControlFile.ControlField("Filename", Paths.get("/").relativize(Paths.get(asset.path())).toString()),
             new ControlFile.ControlField("Size", Long.toString(assetBlob.blobSize())),
             new ControlFile.ControlField("MD5Sum", checksums.get(MD5.name())),
             new ControlFile.ControlField("SHA1", checksums.get(SHA1.name())),
