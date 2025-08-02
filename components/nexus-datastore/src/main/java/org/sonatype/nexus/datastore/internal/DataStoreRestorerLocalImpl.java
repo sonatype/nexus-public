@@ -99,7 +99,11 @@ public class DataStoreRestorerLocalImpl
     try (ZipFile zip = new ZipFile(backupArchive)) {
       return zip.stream().filter(entry -> entry.getName().equals(dataStoreFileName)).findFirst().map(entry -> {
         try {
-          Files.copy(zip.getInputStream(entry), dbDirectory.resolve(entry.getName()));
+          Path targetPath = dbDirectory.resolve(entry.getName()).normalize();
+          if (!targetPath.startsWith(dbDirectory.normalize())) {
+            throw new IOException("Entry is outside of the target dir: " + entry.getName());
+          }
+          Files.copy(zip.getInputStream(entry), targetPath);
           log.info("Restored {}", entry.getName());
           return true;
         }
