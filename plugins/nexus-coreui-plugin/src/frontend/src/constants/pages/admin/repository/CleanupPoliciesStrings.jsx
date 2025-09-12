@@ -68,7 +68,7 @@ export default {
     ASSET_NAME_DESCRIPTION: 'Remove components that have at least one asset name matching the following regular expression pattern:',
 
     LAST_UPDATED_SUB_LABEL: 'Components published over “x” days ago (e.g 1-9999)',
-    LAST_DOWNLOADED_SUB_LABEL: 'Components downloaded in “x” amount of days (e.g 1-9999)',
+    LAST_DOWNLOADED_SUB_LABEL: 'Components never downloaded in “x” amount of days (e.g 1-9999)',
 
     PLACEHOLDER: 'e.g 100 days',
 
