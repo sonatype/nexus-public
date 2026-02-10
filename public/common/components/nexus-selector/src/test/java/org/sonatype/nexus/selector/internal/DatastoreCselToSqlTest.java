@@ -19,6 +19,7 @@ import org.sonatype.nexus.selector.SelectorSqlBuilder;
 import org.apache.commons.jexl3.parser.ASTJexlScript;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -30,12 +31,8 @@ public class DatastoreCselToSqlTest
 
   private SelectorSqlBuilder builder;
 
+  @InjectMocks
   private DatastoreCselToSql underTest;
-
-  @Before
-  public void setup() {
-    underTest = new DatastoreCselToSql();
-  }
 
   @Before
   public void createSqlBuilder() {
@@ -142,7 +139,7 @@ public class DatastoreCselToSqlTest
 
     script.childrenAccept(underTest, builder);
 
-    assertThat(builder.getQueryParameters().get("param_0"), is("^woof"));
+    assertThat(builder.getQueryParameters().get("param_0"), is("^(^woof)$"));
 
     reset();
 
@@ -150,7 +147,7 @@ public class DatastoreCselToSqlTest
 
     script.childrenAccept(underTest, builder);
 
-    assertThat(builder.getQueryParameters().get("param_0"), is("^/woof|/woof/foo"));
+    assertThat(builder.getQueryParameters().get("param_0"), is("^(^/woof|/woof/foo)$"));
   }
 
   @Test

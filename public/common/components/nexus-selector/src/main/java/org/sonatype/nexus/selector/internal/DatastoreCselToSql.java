@@ -12,28 +12,15 @@
  */
 package org.sonatype.nexus.selector.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.selector.CselToSql;
 import org.sonatype.nexus.selector.ParserVisitorSupport;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
+import jakarta.inject.Singleton;
 import org.apache.commons.jexl3.JexlException;
-import org.apache.commons.jexl3.parser.ASTAndNode;
-import org.apache.commons.jexl3.parser.ASTEQNode;
-import org.apache.commons.jexl3.parser.ASTERNode;
-import org.apache.commons.jexl3.parser.ASTIdentifier;
-import org.apache.commons.jexl3.parser.ASTIdentifierAccess;
-import org.apache.commons.jexl3.parser.ASTJexlScript;
-import org.apache.commons.jexl3.parser.ASTNENode;
-import org.apache.commons.jexl3.parser.ASTOrNode;
-import org.apache.commons.jexl3.parser.ASTReference;
-import org.apache.commons.jexl3.parser.ASTReferenceExpression;
-import org.apache.commons.jexl3.parser.ASTSWNode;
-import org.apache.commons.jexl3.parser.ASTStringLiteral;
-import org.apache.commons.jexl3.parser.JexlNode;
-import org.springframework.stereotype.Component;
+import org.apache.commons.jexl3.parser.*;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 /**
  * Walks the script, transforming CSEL expressions into data store appropriate SQL clauses.
@@ -191,7 +178,7 @@ public class DatastoreCselToSql
     builder.appendOperator(operator);
     if (rightChild instanceof ASTStringLiteral) {
       String pattern = ((ASTStringLiteral) rightChild).getLiteral();
-      if (pattern.charAt(0) != '^') {
+      if (pattern.charAt(0) != '^' || pattern.charAt(pattern.length() - 1) != '$') {
         pattern = "^(" + pattern + ")$"; // match entire string
       }
       builder.appendLiteral(pattern);

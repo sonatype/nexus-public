@@ -190,22 +190,17 @@ public class BrowseNodeQueryServiceImpl
         .map(facet -> facet.getByDisplayPath(displayPath, maxNodes, contentFilter, filterParams))
         .orElse(ImmutableList.of());
 
-    String repositoryName = repository.getName();
-    String format = repository.getFormat().getValue();
+    if (hasJexl) {
+      // additional filtering that we couldn't do in SQL
+      String repositoryName = repository.getName();
+      String format = repository.getFormat().getValue();
 
-    if (!hasBrowsePermission(repositoryName, format)) {
-      if (hasJexl) {
+      // PRIVILEGE HIERARCHY: If user has full browse permission, skip content selector filtering
+      // Full repository permissions take precedence over content selector restrictions
+      if (!hasBrowsePermission(repositoryName, format)) {
         nodes = nodes.stream()
             .filter(node -> contentAuthHelper.checkPathPermissionsJexlOnly(node.getPath(), format, repositoryName))
             .collect(toList());
-      }
-      else if (contentFilter != null) {
-        nodes = nodes.stream()
-            .filter(node -> contentAuthHelper.checkPathPermissions(node.getPath(), format, repositoryName))
-            .collect(toList());
-      }
-      else {
-        return emptyList();
       }
     }
 

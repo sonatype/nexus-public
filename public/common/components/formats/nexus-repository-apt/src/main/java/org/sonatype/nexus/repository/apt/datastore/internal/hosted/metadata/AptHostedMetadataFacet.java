@@ -17,6 +17,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -80,7 +81,6 @@ import static org.sonatype.nexus.repository.apt.internal.AptProperties.BZ2;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.GZ;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_ARCHITECTURE;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_INDEX_SECTION;
-import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_NAME;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG;
@@ -232,37 +232,34 @@ public class AptHostedMetadataFacet
           .map(this::deserialize)
           .toList();
 
-      // Single-pass deduplication and grouping by architecture
-      // Deduplicate by (architecture, package name) to handle KV store duplicate entries
-      Map<String, Map<String, Map<String, Object>>> packagesByArchAndName = new HashMap<>();
+      // Group packages by architecture only - we need to preserve all versions
+      Map<String, List<Map<String, Object>>> packagesByArch = new HashMap<>();
       for (Map<String, Object> pkg : allPackagesMetadata) {
         Object architectureObj = pkg.get(P_ARCHITECTURE);
-        Object packageNameObj = pkg.get(P_PACKAGE_NAME);
-        if (architectureObj == null || packageNameObj == null) {
-          log.warn("Skipping package with missing architecture or name: {}", pkg);
+        if (architectureObj == null) {
+          log.warn("Skipping package with missing architecture: {}", pkg);
           continue;
         }
         String architecture = architectureObj.toString();
-        String packageName = packageNameObj.toString();
-        packagesByArchAndName
-            .computeIfAbsent(architecture, k -> new HashMap<>())
-            .put(packageName, pkg);
+        packagesByArch
+            .computeIfAbsent(architecture, k -> new ArrayList<>())
+            .add(pkg);
       }
 
-      int totalUniquePackages = packagesByArchAndName.values()
+      int totalPackages = packagesByArch.values()
           .stream()
-          .mapToInt(Map::size)
+          .mapToInt(List::size)
           .sum();
-      log.debug("Building package indexes: {} architectures, {} unique packages from {} KV entries",
-          packagesByArchAndName.size(), totalUniquePackages, allPackagesMetadata.size());
+      log.debug("Building package indexes: {} architectures, {} packages from {} KV entries",
+          packagesByArch.size(), totalPackages, allPackagesMetadata.size());
 
       // Write package indexes for each architecture
-      for (Map.Entry<String, Map<String, Map<String, Object>>> archEntry : packagesByArchAndName.entrySet()) {
+      for (Map.Entry<String, List<Map<String, Object>>> archEntry : packagesByArch.entrySet()) {
         String architecture = archEntry.getKey();
-        Map<String, Map<String, Object>> packagesForArch = archEntry.getValue();
+        List<Map<String, Object>> packagesForArch = archEntry.getValue();
         Writer outWriter = writersByArch.computeIfAbsent(architecture, result::openOutput);
 
-        for (Map<String, Object> pkg : packagesForArch.values()) {
+        for (Map<String, Object> pkg : packagesForArch) {
           final String indexSection = (String) pkg.get(P_INDEX_SECTION);
           outWriter.write(indexSection);
           outWriter.write("\n\n");

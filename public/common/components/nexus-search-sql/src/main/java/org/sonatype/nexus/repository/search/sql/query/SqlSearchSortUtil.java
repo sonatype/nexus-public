@@ -51,8 +51,6 @@ import org.springframework.stereotype.Component;
 public class SqlSearchSortUtil
     extends ComponentSupport
 {
-  public static final String JSON_PATH_FORMAT = "%s #> '{%s}'";
-
   public static final String MAVEN_2 = "maven2";
 
   public static final String DOCKER_LAYER_ANCESTRY = "layerAncestry";
@@ -92,8 +90,7 @@ public class SqlSearchSortUtil
   }
 
   private Function<String, Optional<String>> sortExpressionForAttributesColumn(final Optional<String> sortAlias) {
-    return column -> sortAlias.map(alias -> alias.replace('.', ','))
-        .map(alias -> String.format(JSON_PATH_FORMAT, column, alias));
+    return column -> sortAlias.map(alias -> searchDatabase.formatJsonPath(column, alias));
   }
 
   private Optional<String> isAttributesField(final String value) {

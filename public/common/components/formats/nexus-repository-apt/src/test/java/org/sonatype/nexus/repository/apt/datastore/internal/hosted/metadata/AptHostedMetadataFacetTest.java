@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
@@ -39,7 +41,9 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -47,8 +51,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -180,40 +183,78 @@ public class AptHostedMetadataFacetTest
     Optional<Content> result = underTest.rebuildMetadata();
 
     // Verify: Package indexes created for both architectures
-    assertThat(result.isPresent(), is(true));
+    assertThat(result).isPresent();
 
     // Should create 3 files per architecture (plain, gz, bz2) = 6 total Package files
     ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
     verify(contentFacet, times(9)).put(pathCaptor.capture(), any()); // 6 Package files + 3 Release files
 
     // Verify amd64 indexes were created
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.contains("binary-amd64")), is(true));
+    assertThat(pathCaptor.getAllValues())
+        .as("Should create binary-amd64 indexes")
+        .anyMatch(p -> p.contains("binary-amd64"));
     // Verify arm64 indexes were created
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.contains("binary-arm64")), is(true));
+    assertThat(pathCaptor.getAllValues())
+        .as("Should create binary-arm64 indexes")
+        .anyMatch(p -> p.contains("binary-arm64"));
   }
 
   @Test
   public void testRebuildMetadata_WithDuplicatePackages_DeduplicatesCorrectly() throws Exception {
-    // Setup: Duplicate package names (simulating KV store duplicates)
+    // Setup: Multiple versions of the same package - all versions should be included
     Map<String, Object> helloV1 = createPackageMetadata("hello", "amd64", "Package: hello\nVersion: 1.0");
     Map<String, Object> helloV2 = createPackageMetadata("hello", "amd64", "Package: hello\nVersion: 2.0");
 
     when(keyValueFacet.browsePackagesMetadata())
         .thenReturn(Stream.of(
             objectMapper.writeValueAsString(helloV1),
-            objectMapper.writeValueAsString(helloV2) // Duplicate - should keep this one (last)
+            objectMapper.writeValueAsString(helloV2) // Both versions should be included
         ));
 
-    setupMockPutOperations();
+    // Capture the content written to the Packages file
+    final Map<String, String> capturedContent = new HashMap<>();
+    when(contentFacet.put(anyString(), any())).thenAnswer(invocation -> {
+      String path = invocation.getArgument(0);
+      Payload payload = invocation.getArgument(1);
+
+      // Capture content from StreamPayload for Package files
+      if (path.contains("binary-amd64/Packages") && !path.endsWith(".gz") && !path.endsWith(".bz2")) {
+        if (payload instanceof StreamPayload streamPayload) {
+          try (InputStream is = streamPayload.openInputStream()) {
+            capturedContent.put(path, new String(is.readAllBytes(), StandardCharsets.UTF_8));
+          }
+        }
+      }
+
+      // Setup AssetBlob with checksums for Release file generation
+      Map<String, String> checksums = new HashMap<>();
+      checksums.put("MD5", "d41d8cd98f00b204e9800998ecf8427e");
+      checksums.put("SHA256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+      when(assetBlob.checksums()).thenReturn(checksums);
+      when(assetBlob.blobSize()).thenReturn(1024L);
+      when(releaseAsset.blob()).thenReturn(Optional.of(assetBlob));
+      when(releaseAsset.download()).thenReturn(new Content(new BytesPayload("test".getBytes(), "text/plain")));
+
+      return releaseAsset;
+    });
 
     // Execute
     Optional<Content> result = underTest.rebuildMetadata();
 
-    // Verify: Deduplicated packages result in correct file count
-    assertThat(result.isPresent(), is(true));
+    // Verify: All package versions are included in the index files
+    assertThat(result).isPresent();
 
     // Should create 3 Package files (plain, gz, bz2) + 3 Release files = 6 total
     verify(contentFacet, times(6)).put(anyString(), any());
+
+    // Verify: Both versions are present in the Package file content
+    assertThat(capturedContent)
+        .as("Should have captured Package file content")
+        .hasSize(1);
+    String packageContent = capturedContent.values().iterator().next();
+    assertThat(packageContent)
+        .as("Package file should contain both versions")
+        .contains("Version: 1.0", "Version: 2.0");
   }
 
   @Test
@@ -225,7 +266,7 @@ public class AptHostedMetadataFacetTest
     Optional<Content> result = underTest.rebuildMetadata();
 
     // Verify: No release file created when no packages exist
-    assertThat(result.isPresent(), is(false));
+    assertThat(result).isEmpty();
 
     // Verify: deleteAssetsByPrefix called to clean up old metadata
     verify(contentFacet).deleteAssetsByPrefix(anyString());
@@ -248,14 +289,17 @@ public class AptHostedMetadataFacetTest
     Optional<Content> result = underTest.rebuildMetadata();
 
     // Verify: Indexes only for amd64
-    assertThat(result.isPresent(), is(true));
+    assertThat(result).isPresent();
 
     ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
     verify(contentFacet, times(6)).put(pathCaptor.capture(), any());
 
     // Should have amd64 but not arm64
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.contains("binary-amd64")), is(true));
-    assertThat(pathCaptor.getAllValues().stream().noneMatch(p -> p.contains("binary-arm64")), is(true));
+    assertThat(pathCaptor.getAllValues())
+        .as("Should create binary-amd64 indexes")
+        .anyMatch(p -> p.contains("binary-amd64"))
+        .as("Should not create binary-arm64 indexes")
+        .noneMatch(p -> p.contains("binary-arm64"));
   }
 
   @Test
@@ -272,12 +316,14 @@ public class AptHostedMetadataFacetTest
     Optional<Content> result = underTest.rebuildMetadata();
 
     // Verify: Index created for "all" architecture
-    assertThat(result.isPresent(), is(true));
+    assertThat(result).isPresent();
 
     ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
     verify(contentFacet, times(6)).put(pathCaptor.capture(), any());
 
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.contains("binary-all")), is(true));
+    assertThat(pathCaptor.getAllValues())
+        .as("Should create binary-all indexes")
+        .anyMatch(p -> p.contains("binary-all"));
   }
 
   @Test
@@ -316,9 +362,11 @@ public class AptHostedMetadataFacetTest
     verify(contentFacet, times(6)).put(pathCaptor.capture(), any());
 
     // Should create: Release, InRelease, Release.gpg
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.endsWith("/Release")), is(true));
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.endsWith("/InRelease")), is(true));
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.endsWith("/Release.gpg")), is(true));
+    assertThat(pathCaptor.getAllValues())
+        .as("Should create all three release files")
+        .anyMatch(p -> p.endsWith("/Release"))
+        .anyMatch(p -> p.endsWith("/InRelease"))
+        .anyMatch(p -> p.endsWith("/Release.gpg"));
   }
 
   @Test
@@ -340,15 +388,17 @@ public class AptHostedMetadataFacetTest
     Optional<Content> result = underTest.rebuildMetadata();
 
     // Verify: Indexes created for all three architectures
-    assertThat(result.isPresent(), is(true));
+    assertThat(result).isPresent();
 
     ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
     verify(contentFacet, times(12)).put(pathCaptor.capture(), any());
 
     // Should create indexes for all three architectures
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.contains("binary-amd64")), is(true));
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.contains("binary-arm64")), is(true));
-    assertThat(pathCaptor.getAllValues().stream().anyMatch(p -> p.contains("binary-all")), is(true));
+    assertThat(pathCaptor.getAllValues())
+        .as("Should create indexes for all three architectures")
+        .anyMatch(p -> p.contains("binary-amd64"))
+        .anyMatch(p -> p.contains("binary-arm64"))
+        .anyMatch(p -> p.contains("binary-all"));
   }
 
   @Test

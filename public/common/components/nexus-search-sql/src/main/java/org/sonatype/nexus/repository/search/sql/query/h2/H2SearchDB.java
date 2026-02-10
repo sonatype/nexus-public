@@ -57,6 +57,12 @@ public class H2SearchDB
         .flatMap(H2SearchColumn::getSortColumnName);
   }
 
+  @Override
+  public String formatJsonPath(final String columnName, final String sortAlias) {
+    // H2 doesn't support JSON functions or operators like (JSON_VALUE, #>) it may be added in future H2 releases
+    return null;
+  }
+
   private static Map<SearchField, H2SearchColumn> columns() {
     EnumMap<SearchField, H2SearchColumn> columns = new EnumMap<>(SearchField.class);
 
@@ -75,13 +81,15 @@ public class H2SearchDB
     // Only mark columns as tokenized where we're certain they always contain tokenized data
     columns.put(KEYWORDS,
         new H2SearchColumn(addComponentPrefix("keywords"), addComponentPrefix("search_component_name"), true));
-    columns.put(FORMAT_FIELD_1, new H2SearchColumn(addComponentPrefix("format_field_values_1"), ATTRIBUTES, true));
-    columns.put(FORMAT_FIELD_2, new H2SearchColumn(addComponentPrefix("format_field_values_2"), ATTRIBUTES, true));
-    columns.put(FORMAT_FIELD_3, new H2SearchColumn(addComponentPrefix("format_field_values_3"), ATTRIBUTES, true));
-    columns.put(FORMAT_FIELD_4, new H2SearchColumn(addComponentPrefix("format_field_values_4"), ATTRIBUTES, true));
-    columns.put(FORMAT_FIELD_5, new H2SearchColumn(addComponentPrefix("format_field_values_5"), ATTRIBUTES, true));
-    columns.put(FORMAT_FIELD_6, new H2SearchColumn(addComponentPrefix("format_field_values_6"), ATTRIBUTES, true));
-    columns.put(FORMAT_FIELD_7, new H2SearchColumn(addComponentPrefix("format_field_values_7"), ATTRIBUTES, true));
+    // FORMAT_FIELD columns can't use attributes JSON column for sorting because H2 doesn't support JSON functions or
+    // operators
+    columns.put(FORMAT_FIELD_1, new H2SearchColumn(addComponentPrefix("format_field_values_1"), true));
+    columns.put(FORMAT_FIELD_2, new H2SearchColumn(addComponentPrefix("format_field_values_2"), true));
+    columns.put(FORMAT_FIELD_3, new H2SearchColumn(addComponentPrefix("format_field_values_3"), true));
+    columns.put(FORMAT_FIELD_4, new H2SearchColumn(addComponentPrefix("format_field_values_4"), true));
+    columns.put(FORMAT_FIELD_5, new H2SearchColumn(addComponentPrefix("format_field_values_5"), true));
+    columns.put(FORMAT_FIELD_6, new H2SearchColumn(addComponentPrefix("format_field_values_6"), true));
+    columns.put(FORMAT_FIELD_7, new H2SearchColumn(addComponentPrefix("format_field_values_7"), true));
 
     columns.put(MD5, new H2SearchColumn(addComponentPrefix("md5"), true));
     columns.put(SHA1, new H2SearchColumn(addComponentPrefix("sha1"), true));

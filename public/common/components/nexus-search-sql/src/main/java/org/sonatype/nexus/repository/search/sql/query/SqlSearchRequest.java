@@ -52,10 +52,10 @@ public class SqlSearchRequest
   public final String sortDirection;
 
   // Column name to be used for default/secondary sort
-  public static final String defaultSortColumnName = SearchViewColumns.FORMAT.name();
+  public static final String defaultSortColumnName = "cs." + SearchViewColumns.FORMAT.name();
 
   // Column name to be used for second default sort
-  public static final String secondDefaultSortColumnName = SearchViewColumns.COMPONENT_ID.name();
+  public static final String secondDefaultSortColumnName = "cs." + SearchViewColumns.COMPONENT_ID.name();
 
   public final boolean distinctNameAndNamespace;
 

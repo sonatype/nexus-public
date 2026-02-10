@@ -16,39 +16,44 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
 import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
+import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorFilterBuilder;
 import org.sonatype.nexus.selector.SelectorManager;
 
-import java.util.ArrayList;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class BrowseNodeQueryServiceImplTest
-    extends TestSupport
+class BrowseNodeQueryServiceImplTest
+    extends Test5Support
 {
   @Mock
   private SecurityHelper securityHelper;
@@ -75,8 +80,8 @@ public class BrowseNodeQueryServiceImplTest
 
   private BrowseNodeQueryServiceImpl underTest;
 
-  @Before
-  public void setup() {
+  @BeforeEach
+  void setup() {
     defaultBrowseNodeComparator = mock(BrowseNodeComparator.class, DefaultBrowseNodeComparator.NAME);
 
     underTest = new BrowseNodeQueryServiceImpl(
@@ -91,37 +96,14 @@ public class BrowseNodeQueryServiceImplTest
     when(repository.getName()).thenReturn("test-repo");
     when(repository.getFormat()).thenReturn(format);
     when(format.getValue()).thenReturn("maven2");
-    when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
+    lenient().when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
   }
 
   @Test
-  public void testNoAccessWhenNoValidFilteringAvailable() {
+  void testAccessGrantedWhenUserHasFullBrowsePermission() {
     BrowseNode mockNode = mock(BrowseNode.class);
-    when(mockNode.getPath()).thenReturn("/test/path");
 
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), any(), any()))
-        .thenReturn(new ArrayList<>(asList(mockNode)));
-
-    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
-
-    SelectorConfiguration unknownSelector = mock(SelectorConfiguration.class);
-    when(unknownSelector.getType()).thenReturn("UNKNOWN_TYPE");
-    when(selectorManager.browseActive(anyList(), anyList())).thenReturn(asList(unknownSelector));
-
-    when(selectorFilterBuilder.buildFilter(anyString(), anyString(), anyList(), any()))
-        .thenReturn(null);
-
-    Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
-
-    assertThat(result, is(emptyIterable()));
-  }
-
-  @Test
-  public void testAccessGrantedWhenUserHasFullBrowsePermission() {
-    BrowseNode mockNode = mock(BrowseNode.class);
-    when(mockNode.getPath()).thenReturn("/test/path");
-
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), any(), any()))
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), any(), any()))
         .thenReturn(new ArrayList<>(asList(mockNode)));
 
     when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(true);
@@ -132,11 +114,11 @@ public class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  public void testJexlFilteringAppliedWhenNoSeclSelectors() {
+  void testJexlFilteringAppliedWhenNoSeclSelectors() {
     BrowseNode mockNode = mock(BrowseNode.class);
     when(mockNode.getPath()).thenReturn("/test/path");
 
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), any(), any()))
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), any(), any()))
         .thenReturn(new ArrayList<>(asList(mockNode)));
 
     when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
@@ -157,14 +139,11 @@ public class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  public void testSeclFilteringAppliedWhenNoJexlSelectors() {
+  void testCeslFilteringAppliedWhenNoJexlSelectors() {
     BrowseNode mockNode = mock(BrowseNode.class);
-    when(mockNode.getPath()).thenReturn("/test/path");
 
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), eq("filter"), any()))
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq("filter"), any()))
         .thenReturn(new ArrayList<>(asList(mockNode)));
-
-    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
 
     SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
     when(seclSelector.getType()).thenReturn("csel");
@@ -173,24 +152,17 @@ public class BrowseNodeQueryServiceImplTest
     when(selectorFilterBuilder.buildFilter(anyString(), anyString(), anyList(), any()))
         .thenReturn("filter");
 
-    when(contentAuthHelper.checkPathPermissions(anyString(), anyString(), anyString()))
-        .thenReturn(true);
-
     Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
 
     assertThat(((List<BrowseNode>) result).size(), is(1));
   }
 
   @Test
-  public void testContentSelectorsAppliedEvenWithBrowsePermission() {
+  void testContentSelectorsAppliedEvenWithBrowsePermission() {
     BrowseNode mockNode = mock(BrowseNode.class);
-    when(mockNode.getPath()).thenReturn("/team-a/artifact.jar");
 
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), eq("path_filter"), any()))
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq("path_filter"), any()))
         .thenReturn(new ArrayList<>(asList(mockNode)));
-
-    // User has full browse permission
-    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(true);
 
     // But content selectors are active and should be applied
     SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
@@ -207,13 +179,7 @@ public class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  public void testNoResultsWhenNoPermissionAndNoSelectors() {
-    BrowseNode mockNode = mock(BrowseNode.class);
-    when(mockNode.getPath()).thenReturn("/test/path");
-
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), any(), any()))
-        .thenReturn(new ArrayList<>(asList(mockNode)));
-
+  void testNoResultsWhenNoPermissionAndNoSelectors() {
     // No browse permission
     when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
 
@@ -227,11 +193,10 @@ public class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  public void testSelectorManagerExceptionHandledGracefully() {
+  void testSelectorManagerExceptionHandledGracefully() {
     BrowseNode mockNode = mock(BrowseNode.class);
-    when(mockNode.getPath()).thenReturn("/test/path");
 
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), any(), any()))
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), any(), any()))
         .thenReturn(new ArrayList<>(asList(mockNode)));
 
     // Selector manager throws exception when fetching selectors
@@ -248,13 +213,7 @@ public class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  public void testSelectorManagerExceptionWithoutBrowsePermission() {
-    BrowseNode mockNode = mock(BrowseNode.class);
-    when(mockNode.getPath()).thenReturn("/test/path");
-
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), any(), any()))
-        .thenReturn(new ArrayList<>(asList(mockNode)));
-
+  void testSelectorManagerExceptionWithoutBrowsePermission() {
     // Selector manager throws exception
     when(selectorManager.browseActive(anyList(), anyList()))
         .thenThrow(new RuntimeException("Selector service unavailable"));
@@ -269,11 +228,11 @@ public class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  public void testMixedJexlAndCselSelectors() {
+  void testMixedJexlAndCselSelectors() {
     BrowseNode mockNode = mock(BrowseNode.class);
     when(mockNode.getPath()).thenReturn("/test/path");
 
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), eq("csel_filter"), any()))
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq("csel_filter"), any()))
         .thenReturn(new ArrayList<>(asList(mockNode)));
 
     when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
@@ -283,7 +242,6 @@ public class BrowseNodeQueryServiceImplTest
     when(jexlSelector.getType()).thenReturn("jexl");
 
     SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
-    when(seclSelector.getType()).thenReturn("csel");
 
     when(selectorManager.browseActive(anyList(), anyList()))
         .thenReturn(asList(jexlSelector, seclSelector));
@@ -302,11 +260,11 @@ public class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  public void testJexlFilterRejectsNodes() {
+  void testJexlFilterRejectsNodes() {
     BrowseNode mockNode = mock(BrowseNode.class);
     when(mockNode.getPath()).thenReturn("/test/path");
 
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), any(), any()))
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), any(), any()))
         .thenReturn(new ArrayList<>(asList(mockNode)));
 
     when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
@@ -329,17 +287,11 @@ public class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  public void testCselFilterRejectsNodes() {
+  void testCselFilterRejectsNodes() {
     BrowseNode allowedNode = mock(BrowseNode.class);
-    when(allowedNode.getPath()).thenReturn("/allowed/path");
 
-    BrowseNode rejectedNode = mock(BrowseNode.class);
-    when(rejectedNode.getPath()).thenReturn("/rejected/path");
-
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), eq("filter"), any()))
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq("filter"), any()))
         .thenReturn(new ArrayList<>(asList(allowedNode)));
-
-    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
 
     SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
     when(seclSelector.getType()).thenReturn("csel");
@@ -347,44 +299,67 @@ public class BrowseNodeQueryServiceImplTest
 
     when(selectorFilterBuilder.buildFilter(anyString(), anyString(), anyList(), any()))
         .thenReturn("filter");
-
-    // Only allowed node passes post-filter
-    when(contentAuthHelper.checkPathPermissions(eq("/allowed/path"), anyString(), anyString()))
-        .thenReturn(true);
-    when(contentAuthHelper.checkPathPermissions(eq("/rejected/path"), anyString(), anyString()))
-        .thenReturn(false);
 
     Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
 
     // Should return only the allowed node
-    assertThat(((List<BrowseNode>) result).size(), is(1));
+    assertThat(((List<BrowseNode>) result), hasSize(1));
     assertThat(((List<BrowseNode>) result).get(0), is(allowedNode));
   }
 
   @Test
-  public void testEmptyResultsWhenAllNodesFiltered() {
-    BrowseNode mockNode = mock(BrowseNode.class);
-    when(mockNode.getPath()).thenReturn("/test/path");
+  void testGroupRepositoryDeduplication() {
+    // Setup group repository
+    when(repository.getType()).thenReturn(new GroupType());
 
-    when(browseFacet.getByDisplayPath(anyList(), any(Integer.class), eq("filter"), any()))
-        .thenReturn(new ArrayList<>(asList(mockNode)));
+    GroupFacet groupFacet = mock();
+    when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
 
-    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
+    // Setup member repositories
+    Repository member1 = mock();
+    Repository member2 = mock();
 
-    SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
-    when(seclSelector.getType()).thenReturn("csel");
-    when(selectorManager.browseActive(anyList(), anyList())).thenReturn(asList(seclSelector));
+    BrowseFacet member1BrowseFacet = mock();
+    BrowseFacet member2BrowseFacet = mock();
 
-    when(selectorFilterBuilder.buildFilter(anyString(), anyString(), anyList(), any()))
-        .thenReturn("filter");
+    when(member1.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(member1BrowseFacet));
+    when(member2.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(member2BrowseFacet));
 
-    // Post-filter rejects all nodes
-    when(contentAuthHelper.checkPathPermissions(anyString(), anyString(), anyString()))
-        .thenReturn(false);
+    // Setup nodes with duplicates (same name)
+    BrowseNodeData node1FromMember1 = mock();
+    when(node1FromMember1.getName()).thenReturn("duplicate-node");
 
-    Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
+    BrowseNodeData node2FromMember1 = mock();
+    when(node2FromMember1.getName()).thenReturn("unique-node-1");
 
-    // Should return empty - all nodes filtered out
-    assertThat(result, is(emptyIterable()));
+    BrowseNodeData node1FromMember2 = mock();
+    when(node1FromMember2.getName()).thenReturn("duplicate-node");
+
+    BrowseNodeData node2FromMember2 = mock();
+    when(node2FromMember2.getName()).thenReturn("unique-node-2");
+
+    // Member1 returns 2 nodes, Member2 returns 2 nodes (one duplicate)
+    when(member1BrowseFacet.getByDisplayPath(anyList(), anyInt(), any(), any()))
+        .thenReturn(List.of(node1FromMember1, node2FromMember1));
+
+    when(member2BrowseFacet.getByDisplayPath(anyList(), anyInt(), any(), any()))
+        .thenReturn(List.of(node1FromMember2, node2FromMember2));
+
+    // Configure group facet to return both members
+    when(groupFacet.allMembers()).thenReturn(List.of(member1, member2));
+
+    // User has browse permission
+    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(true);
+
+    List<BrowseNode> resultList = (List<BrowseNode>) underTest.getByPath(repository, List.of("test"), 100);
+
+    // Should return 3 unique nodes (duplicate removed, first-one-wins)
+    assertThat(resultList.size(), is(3));
+
+    // Verify deduplication
+    List<String> nodeNames = resultList.stream()
+        .map(BrowseNode::getName)
+        .toList();
+    assertThat(nodeNames, containsInAnyOrder("duplicate-node", "unique-node-1", "unique-node-2"));
   }
 }

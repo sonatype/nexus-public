@@ -65,4 +65,9 @@ public class SearchDatabaseFactory
   public Optional<String> getSortColumn(final SearchField field) {
     return getDelegate().getSortColumn(field);
   }
+
+  @Override
+  public String formatJsonPath(final String columnName, final String jsonPath) {
+    return getDelegate().formatJsonPath(columnName, jsonPath);
+  }
 }

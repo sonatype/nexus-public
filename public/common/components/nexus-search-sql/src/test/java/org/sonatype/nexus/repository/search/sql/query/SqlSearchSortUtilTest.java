@@ -30,7 +30,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.GROUP_RAW;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
-import static org.sonatype.nexus.repository.search.sql.query.SqlSearchSortUtil.JSON_PATH_FORMAT;
 
 public class SqlSearchSortUtilTest
     extends TestSupport
@@ -56,18 +55,19 @@ public class SqlSearchSortUtilTest
   }
 
   @Test
-  public void shouldBeJsonKey() {
+  public void shouldNotBeJsonKeyForH2() {
+    // H2 uses format_field_values columns instead of attributes JSON column
     assertThat(underTest.getSortExpression("assets.attributes.maven2.extension"),
-        is(of(String.format(JSON_PATH_FORMAT, "cs.attributes", "maven2,extension"))));
+        is(of("cs.format_field_values_2")));
 
     assertThat(underTest.getSortExpression("attributes.nuget.id"),
-        is(of(String.format(JSON_PATH_FORMAT, "cs.attributes", "nuget,id"))));
+        is(of("cs.format_field_values_1")));
 
     assertThat(underTest.getSortExpression("assets.attributes.docker.content_digest"),
-        is(of(String.format(JSON_PATH_FORMAT, "cs.attributes", "docker,content_digest"))));
+        is(of("cs.format_field_values_2")));
 
     assertThat(underTest.getSortExpression("attributes.docker.layerAncestry"),
-        is(of(String.format(JSON_PATH_FORMAT, "cs.attributes", "docker,layerAncestry"))));
+        is(of("cs.format_field_values_1")));
   }
 
   @Test
