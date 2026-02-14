@@ -247,7 +247,9 @@ public class MavenContentFacetImpl
   }
 
   private boolean isMetadataAndValidationEnabled(final MavenPath mavenPath) {
-    return mavenPath.getFileName().equals(METADATA_FILENAME) && metadataValidationEnabled;
+    return mavenPath.getFileName().equals(METADATA_FILENAME)
+        && metadataValidationEnabled
+        && config.layoutPolicy != LayoutPolicy.PERMISSIVE;
   }
 
   private void validate(final MavenPath mavenPath, final TempBlob blob) {
