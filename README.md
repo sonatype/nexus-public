@@ -84,3 +84,9 @@ which will contain the default administrator credentials, database, and file blo
 ## License
 
 This project is licensed under the Eclipse Public License - v 1.0, you can read the full text [here](LICENSE.txt)
+
+# Nexus Public Project
+
+Project description here.
+
+This project was updated for GitHub collaboration practice.
