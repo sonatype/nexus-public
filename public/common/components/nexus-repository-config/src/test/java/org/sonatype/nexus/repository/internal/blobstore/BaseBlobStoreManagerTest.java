@@ -528,7 +528,6 @@ class BaseBlobStoreManagerTest
         TEST_USER);
   }
 
-
   @Test
   public void moveBlobMarksDestinationAsStaleWhenSoftDeleted() throws Exception {
     MoveBlobTestContext context = setupMoveBlobTest(true, false);
@@ -564,7 +563,6 @@ class BaseBlobStoreManagerTest
     verify(context.destBlobStore()).setBlobAttributes(eq(context.newBlobId()), any(BlobAttributes.class));
     verify(context.srcBlobStore()).deleteHard(context.blobId());
   }
-
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   private BaseBlobStoreManager newBlobStoreManager(
