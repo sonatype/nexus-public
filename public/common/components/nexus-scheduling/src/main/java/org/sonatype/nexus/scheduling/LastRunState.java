@@ -27,9 +27,14 @@ public interface LastRunState
   TaskState getEndState();
 
   /**
-   * Returns the date of last run start.
+   * Returns the date when the task actually started running (after any blocking/waiting).
    */
   Date getRunStarted();
+
+  /**
+   * Returns the date when the task was scheduled to run (may be earlier than runStarted if task was blocked).
+   */
+  Date getRunScheduled();
 
   /**
    * Returns the last run duration.

@@ -16,11 +16,28 @@ import java.util.regex.Pattern;
 
 public class SearchTokenizer
 {
-  public static final Pattern TOKENIZER = Pattern.compile("[.\\-\\/\\\\ ]");
+  public static final Pattern TOKENIZER = Pattern.compile("[_.\\-/\\\\ ]");
 
   private static final String QUOTE = "'";
 
   public static String tsEscape(final String term) {
     return QUOTE + term.toLowerCase().replace("\\", "\\\\").replace(QUOTE, "\\'") + QUOTE;
+  }
+
+  /**
+   * Strips leading token separators from the provided term string
+   */
+  public static String stripLeadingSeparators(final String term) {
+    int index = -1;
+
+    for (int i = 0; i < term.length(); i++) {
+      char c = term.charAt(i);
+      if (!(c == ' ' || c == '-' || c == '\\' || c == '/' || c == '.' || c == '_')) {
+        break;
+      }
+      index = i;
+    }
+
+    return index > -1 ? term.substring(index + 1) : term;
   }
 }

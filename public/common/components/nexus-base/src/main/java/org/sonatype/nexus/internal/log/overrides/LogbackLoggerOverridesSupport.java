@@ -29,7 +29,6 @@ import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.internal.log.LoggerOverrides;
 
-import ch.qos.logback.classic.Logger;
 import com.google.common.collect.Maps;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -82,9 +81,6 @@ public abstract class LogbackLoggerOverridesSupport
           final String qName,
           final Attributes attributes) throws SAXException
       {
-        // NOTE: ATM we are ignoring 'property' elements, this is needed for root, but is only needed
-        // NOTE: to persist as a property for use in top-level logback.xml file
-
         if ("logger".equals(localName)) {
           String name = attributes.getValue("name");
           String level = attributes.getValue("level");
@@ -116,12 +112,7 @@ public abstract class LogbackLoggerOverridesSupport
         out.write("<included>");
         out.newLine();
         for (Entry<String, LoggerLevel> entry : overrides.entrySet()) {
-          if (Logger.ROOT_LOGGER_NAME.equals(entry.getKey())) {
-            out.write(String.format("  <property name='root.level' value='%s'/>%n", entry.getValue()));
-          }
-          else {
-            out.write(String.format("  <logger name='%s' level='%s'/>%n", entry.getKey(), entry.getValue()));
-          }
+          out.write(String.format("  <logger name='%s' level='%s'/>%n", entry.getKey(), entry.getValue()));
         }
         out.write("</included>");
         out.newLine();

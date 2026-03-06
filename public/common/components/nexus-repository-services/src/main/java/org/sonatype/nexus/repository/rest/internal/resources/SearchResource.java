@@ -231,20 +231,13 @@ public class SearchResource
       final Integer seconds,
       final UriInfo uriInfo)
   {
-    // Use component-level filters only for the main search query.
-    // Asset-level filters are applied post-query
-    // in filterComponentAssets() to ensure correct filtering of individual assets.
-    // However, if there are ONLY asset-level parameters (no component filters),
-    // we must include them in the search query to enable database-level filtering,
-    // otherwise pagination will return arbitrary components that don't match the criteria.
-    List<SearchFilter> searchFilters = searchUtils.getComponentSearchFilters(uriInfo);
-    MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
-
-    // Hybrid approach: When searching with only asset parameters (e.g., ?md5=abc123),
-    // use database-level filtering instead of post-query filtering
-    if (searchFilters.isEmpty() && !assetParams.isEmpty()) {
-      searchFilters = searchUtils.getSearchFilters(uriInfo);
-    }
+    // All search params (component + asset filters) are included in the SQL search for more accurate results,
+    // the search records include asset specific fields such as asset checksums, that can be used for filtering at the
+    // component level.
+    // A second round of asset-level filtering can be performed later via
+    // SearchResultFilterUtils.filterComponentAssets()
+    // if the desire is to filter at asset level only.
+    List<SearchFilter> searchFilters = searchUtils.getSearchFilters(uriInfo);
 
     fireSearchEvent(searchFilters);
 

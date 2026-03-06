@@ -15,7 +15,7 @@ package org.sonatype.nexus.datastore.h2.task;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Optional;
+
 import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -32,8 +32,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * A {@link Task} for backing up an embedded H2 datastore.
- *
- * @since 3.21
  */
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -57,29 +55,83 @@ public class H2BackupTask
 
   @Override
   protected Object execute() throws Exception {
-    Optional<DataStore<?>> dataStore = dataStoreManager.get(DEFAULT_DATASTORE_NAME);
+    DataStore<?> dataStore = dataStoreManager.get(DEFAULT_DATASTORE_NAME)
+        .orElseThrow(() -> new IllegalStateException(
+            "Unable to locate datastore with name " + DEFAULT_DATASTORE_NAME));
 
-    if (!dataStore.isPresent()) {
-      throw new RuntimeException("Unable to locate datastore with name " + DEFAULT_DATASTORE_NAME);
+    // Trim whitespace from location to prevent silent failures
+    String configuredLocation = checkNotNull(
+        getConfiguration().getString(H2BackupTaskDescriptor.LOCATION),
+        "Backup location not configured");
+    String trimmedLocation = configuredLocation.trim();
+
+    if (trimmedLocation.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Backup location cannot be empty or whitespace: '" + configuredLocation + "'");
     }
 
-    File backupFolder = applicationDirectories.getWorkDirectory(
-        checkNotNull(getConfiguration().getString(H2BackupTaskDescriptor.LOCATION), "Backup location not configured"));
+    // Resolve backup location (supports both relative and absolute paths)
+    File backupFolder = applicationDirectories.getWorkDirectory(trimmedLocation);
     File backupFile = new File(backupFolder, getBackupFileName());
 
-    if (backupFile.isFile()) {
-      throw new IOException("File already exists at backup file location: " + backupFile.getAbsolutePath());
-    }
+    // Prepare backup location and verify preconditions
+    prepareBackupLocation(backupFolder, backupFile);
 
     log.info("Starting backup of {} to {}", DEFAULT_DATASTORE_NAME, backupFile.getAbsolutePath());
 
     long start = System.currentTimeMillis();
 
-    dataStore.get().backup(backupFile.getAbsolutePath());
+    dataStore.backup(backupFile.getAbsolutePath());
 
-    log.info("Completed backup of {} in {} ms", DEFAULT_DATASTORE_NAME, System.currentTimeMillis() - start);
+    // Verify backup succeeded
+    verifyBackupCreated(backupFile);
+
+    long backupSize = backupFile.length();
+    long duration = System.currentTimeMillis() - start;
+    log.info("Completed backup of {} in {} ms ({} bytes)", DEFAULT_DATASTORE_NAME, duration, backupSize);
 
     return null;
+  }
+
+  /**
+   * Prepares the backup location by ensuring the directory exists and the target file doesn't exist yet.
+   * This prevents overwriting existing backups and ensures we have a valid location to write to.
+   *
+   * @param backupFolder the directory where backup will be stored
+   * @param backupFile the target backup file
+   * @throws IOException if directory cannot be created or file already exists
+   */
+  private void prepareBackupLocation(final File backupFolder, final File backupFile) throws IOException {
+    // Create backup directory if needed - check exists() to distinguish "already exists" from "creation failed"
+    if (!backupFolder.mkdirs() && !backupFolder.exists()) {
+      throw new IOException("Failed to create backup directory: " + backupFolder.getAbsolutePath());
+    }
+
+    // Verify backup folder is actually a directory, not a file
+    if (!backupFolder.isDirectory()) {
+      throw new IOException("Backup path exists but is not a directory: " + backupFolder.getAbsolutePath());
+    }
+
+    // Ensure backup file doesn't already exist (prevents accidental overwrite)
+    if (backupFile.exists()) {
+      throw new IOException("File already exists at backup file location: " + backupFile.getAbsolutePath());
+    }
+  }
+
+  /**
+   * Verifies that the backup operation successfully created a valid backup file.
+   * This prevents silent failures where the backup operation returns without error but doesn't create a file.
+   *
+   * @param backupFile the backup file to verify
+   * @throws IOException if file doesn't exist or is empty
+   */
+  private void verifyBackupCreated(final File backupFile) throws IOException {
+    if (!backupFile.exists()) {
+      throw new IOException("Backup file was not created: " + backupFile.getAbsolutePath());
+    }
+    if (backupFile.length() == 0) {
+      throw new IOException("Backup file is empty (0 bytes): " + backupFile.getAbsolutePath());
+    }
   }
 
   private String getBackupFileName() {

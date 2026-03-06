@@ -42,4 +42,12 @@ public interface ContentFacet
    * Manage assets.
    */
   FluentAssets assets();
+
+  /**
+   * Invoked when converting a temporary blob into a permanently blob to identify which headers to keep for the
+   * permanent blob.
+   */
+  default boolean shouldKeepBlobHeader(final String blobHeaderName) {
+    return false;
+  }
 }

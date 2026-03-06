@@ -26,12 +26,13 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.scheduling.RecoveryModeService;
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.BlobRefTypeHandler;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
-import org.sonatype.nexus.scheduling.Cancelable;
+import org.sonatype.nexus.scheduling.CancelableByRecoveryMode;
 import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
@@ -57,7 +58,7 @@ import org.springframework.stereotype.Component;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AssetBlobCleanupTask
     extends TaskSupport
-    implements Cancelable
+    implements CancelableByRecoveryMode
 {
   static final String PROPERTY_PREFIX = "nexus.assetBlobCleanupTask.";
 
@@ -77,6 +78,8 @@ public class AssetBlobCleanupTask
 
   private final BlobStoreManager blobStoreManager;
 
+  private final RecoveryModeService recoveryModeService;
+
   private Boolean batchDeleteEnabled = true;
 
   private ExecutorService batchDeleteExecutorService;
@@ -84,10 +87,12 @@ public class AssetBlobCleanupTask
   @Inject
   public AssetBlobCleanupTask(
       final List<FormatStoreManager> formatStoreManagersList,
-      final BlobStoreManager blobStoreManager)
+      final BlobStoreManager blobStoreManager,
+      final RecoveryModeService recoveryModeService)
   {
     this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersList));
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.recoveryModeService = checkNotNull(recoveryModeService);
   }
 
   protected void initBatchDeleteIfEnabled(final String format) {
@@ -107,6 +112,8 @@ public class AssetBlobCleanupTask
 
   @Override
   protected Void execute() throws Exception {
+    recoveryModeService.ensureNotInRecoveryMode(getName());
+
     String format = getConfiguration().getString(FORMAT_FIELD_ID);
     String contentStore = getConfiguration().getString(CONTENT_STORE_FIELD_ID);
     initBatchDeleteIfEnabled(format);

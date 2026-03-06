@@ -32,10 +32,17 @@ Ext.define('NX.coreui.view.repository.facet.DockerStorageFacetHosted', {
    * @override
    */
   initComponent: function() {
-    var me = this, writePolicyComponent, latestCheckbox, writePolicyFieldSet;
+    var me = this, writePolicyComponent, latestCheckbox, writePolicyFieldSet, proprietaryCheckbox;
 
     me.callParent();
     writePolicyFieldSet = me.down('#writePolicyFieldset');
+
+    // Hide proprietary components checkbox for Docker (format does not support namespace confusion protection)
+    proprietaryCheckbox = me.down('[name=attributes.component.proprietaryComponents]');
+    if (proprietaryCheckbox) {
+      proprietaryCheckbox.setVisible(false);
+    }
+
     writePolicyFieldSet.add({
       xtype: 'checkboxfield',
       name: 'attributes.storage.latestPolicy',

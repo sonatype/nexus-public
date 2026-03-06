@@ -79,4 +79,10 @@
     display: flex;
     justify-content: space-between;
   }
+
+  // create appropriate space between text and view details button in recovery mode message
+  .nxrm-recovery-mode-alert {
+    display: flex;
+    justify-content: space-between;
+  }
 }

@@ -110,6 +110,8 @@ public abstract class PrivilegeApiResourceSupport
     PrivilegeDescriptor privilegeDescriptor = privilegeDescriptors.get(privilege.getType());
 
     if (privilegeDescriptor == null) {
+      log.warn("Skipping privilege '{}' with unknown or unsupported type '{}'", privilege.getName(),
+          privilege.getType());
       return null;
     }
 

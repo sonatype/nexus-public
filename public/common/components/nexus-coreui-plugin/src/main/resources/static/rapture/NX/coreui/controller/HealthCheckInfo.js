@@ -160,6 +160,11 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
         infoPanel,
         info = {};
 
+    // Defensive check: panel may be destroyed
+    if (!panel || panel.destroying || panel.destroyed) {
+      return;
+    }
+
     if (me.healthCheckAllowed) {
       if (model) {
         if (panel.setInfo) {
@@ -170,10 +175,12 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
         }
         else {
           infoPanel = me.getOrAddInfoPanel(panel);
-          info[NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label')] = me.renderMostPopularVersion(model);
-          info[NX.I18n.get('HealthCheckInfo_Age_Label')] = me.renderAge(model);
-          info[NX.I18n.get('HealthCheckInfo_Popularity_Label')] = me.renderPopularity(model);
-          infoPanel.showInfo(info);
+          if (infoPanel) {
+            info[NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label')] = me.renderMostPopularVersion(model);
+            info[NX.I18n.get('HealthCheckInfo_Age_Label')] = me.renderAge(model);
+            info[NX.I18n.get('HealthCheckInfo_Popularity_Label')] = me.renderPopularity(model);
+            infoPanel.showInfo(info);
+          }
         }
       }
       panel.fireEvent('healthCheckLoaded', panel, model);
@@ -181,6 +188,11 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
   },
 
   getOrAddInfoPanel: function(panel) {
+    // Defensive check: panel may be destroyed
+    if (!panel || panel.destroying || panel.destroyed) {
+      return null;
+    }
+
     var infoPanel = panel.down('#healthCheckInfo');
     if (!infoPanel) {
       infoPanel = panel.add({

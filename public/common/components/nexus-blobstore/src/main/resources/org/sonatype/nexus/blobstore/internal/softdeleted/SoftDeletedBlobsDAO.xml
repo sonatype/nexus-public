@@ -99,4 +99,25 @@
     ORDER BY deleted_date ASC LIMIT 20
   </select>
 
+  <update id="batchUpdateBlobLocation">
+    UPDATE soft_deleted_blobs
+    SET source_blob_store_name = CASE blob_id
+      <foreach item="update" collection="updates">
+        WHEN #{update.blobId} THEN #{update.newSourceBlobStoreName}
+      </foreach>
+      ELSE source_blob_store_name
+      END,
+      date_path_ref = CASE blob_id
+      <foreach item="update" collection="updates">
+        WHEN #{update.blobId} THEN #{update.newDatePathRef}
+      </foreach>
+      ELSE date_path_ref
+      END
+    WHERE source_blob_store_name = #{oldSourceBlobStoreName}
+      AND blob_id IN
+      <foreach item="update" collection="updates" open="(" separator="," close=")">
+        #{update.blobId}
+      </foreach>
+  </update>
+
 </mapper>

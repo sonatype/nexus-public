@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.search.sql.query;
 
 import java.util.Map;
 
-import com.google.common.base.Objects;
-
 import static java.util.Collections.unmodifiableMap;
 
 /**
@@ -23,56 +21,18 @@ import static java.util.Collections.unmodifiableMap;
  * its associated values (which in the example given will be a <code>Map&lt;String, String&gt;</code> of named
  * parameters and their associated values).
  *
+ * @param Sql condition format string e.g. <code>field IN (#{field0}, #{field1}, #{field2})</code>
+ * @param Mapped of named values to apply to the Sql condition format string.
+ *
  * @since 3.38
  */
-public class SqlSearchQueryCondition
+public record SqlSearchQueryCondition(String sqlFilter, Map<String, Object> parameters)
 {
-  /**
-   * Sql condition format string e.g. <code>field IN (#{field0}, #{field1}, #{field2})</code>
-   */
-  private final String sqlConditionFormat;
-
-  /**
-   * Mapped of named values to apply to the Sql condition format string.
-   */
-  private final Map<String, String> values;
-
-  public SqlSearchQueryCondition(final String sqlConditionFormat, final Map<String, String> values) {
-    this.sqlConditionFormat = sqlConditionFormat;
-    this.values = values;
+  public String getSqlFilter() {
+    return sqlFilter;
   }
 
-  public String getSqlConditionFormat() {
-    return sqlConditionFormat;
-  }
-
-  public Map<String, String> getValues() {
-    return unmodifiableMap(values);
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    SqlSearchQueryCondition that = (SqlSearchQueryCondition) o;
-    return Objects.equal(sqlConditionFormat, that.sqlConditionFormat) &&
-        Objects.equal(values, that.values);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(sqlConditionFormat, values);
-  }
-
-  @Override
-  public String toString() {
-    return "SqlSearchQueryCondition{" +
-        "sqlConditionFormat='" + sqlConditionFormat + '\'' +
-        ", values=" + values +
-        '}';
+  public Map<String, Object> getParameters() {
+    return unmodifiableMap(parameters);
   }
 }

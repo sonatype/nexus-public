@@ -39,6 +39,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
@@ -184,5 +186,27 @@ class SelectorComponentTest
     when(constraintViolationFactory.createViolation("*", "a message")).thenReturn(constraintViolation);
 
     assertThrows(ConstraintViolationException.class, () -> underTest.remove("someSelector"), "a message");
+  }
+
+  @Test
+  void testReadReferences_sortedAlphabeticallyIgnoringCase() {
+    List<SelectorConfiguration> selectors = List.of(
+        selector("zeta"),
+        selector("Alpha"),
+        selector("alpha"),
+        selector("beta"),
+        selector("ALPHA"));
+    when(mockSelectorManager.browse()).thenReturn(selectors);
+
+    List<ReferenceXO> result = underTest.readReferences();
+
+    assertThat(result.stream().map(ReferenceXO::getName).toList(),
+        is(List.of("ALPHA", "Alpha", "alpha", "beta", "zeta")));
+  }
+
+  private SelectorConfiguration selector(final String name) {
+    SelectorConfiguration selector = mock(SelectorConfiguration.class);
+    when(selector.getName()).thenReturn(name);
+    return selector;
   }
 }

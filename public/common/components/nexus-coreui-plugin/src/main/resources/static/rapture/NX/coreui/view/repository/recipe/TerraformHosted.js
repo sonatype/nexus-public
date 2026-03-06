@@ -25,7 +25,7 @@ Ext.define('NX.coreui.view.repository.recipe.TerraformHosted', {
     requires: [
         'NX.coreui.view.repository.facet.TerraformSigningFacet',
         'NX.coreui.view.repository.facet.StorageFacet',
-        'NX.coreui.view.repository.facet.StorageFacetHosted',
+        'NX.coreui.view.repository.facet.StorageFacetHostedTerraform',
         'NX.coreui.view.repository.facet.CleanupPolicyFacet'
     ],
 
@@ -38,7 +38,7 @@ Ext.define('NX.coreui.view.repository.recipe.TerraformHosted', {
         me.items = [
             {xtype: 'nx-coreui-repository-terraformsigning-facet'},
             {xtype: 'nx-coreui-repository-storage-facet'},
-            {xtype: 'nx-coreui-repository-storage-hosted-facet'},
+            {xtype: 'nx-coreui-repository-storage-hosted-terraform-facet'},
             {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
         ];
 

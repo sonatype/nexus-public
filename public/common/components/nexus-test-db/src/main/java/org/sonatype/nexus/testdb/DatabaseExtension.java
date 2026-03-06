@@ -202,7 +202,7 @@ public class DatabaseExtension
     // 14 is the minimum support version as of November 2025
     // switch to alpine images due to policy violations
     postgres = new PostgreSQLContainer<>(
-        DockerImageName.parse("docker-all.repo.sonatype.com/postgres:15.15-alpine")
+        DockerImageName.parse("sonatype.repo.sonatype.app/docker-all/postgres:15.15-alpine")
             .asCompatibleSubstituteFor("postgres"));
 
     postgres.withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("postgres")))

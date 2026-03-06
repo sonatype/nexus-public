@@ -169,6 +169,15 @@ public class MyBatisDataStore
 
   private static final int DEFAULT_CONTENT_STORE_MAX_POOL_SIZE = 100;
 
+  /**
+   * Default initialization timeout for HikariCP in milliseconds.
+   * Applies to all PostgreSQL database connections managed by this data store and
+   * allows up to 10 seconds for database connectivity to be established during startup.
+   * This is especially beneficial for cloud deployments, such as ECS/Fargate task
+   * restarts, where network latency or database provisioning delays may occur.
+   */
+  private static final long DEFAULT_INITIALIZATION_FAIL_TIMEOUT_MS = 10000L;
+
   private final List<TransactionalStoreSupport> declaredAccessTypes;
 
   private final List<TypeHandler> declaredTypeHandlers;
@@ -531,7 +540,8 @@ public class MyBatisDataStore
   /**
    * Supplies the populated Hikari configuration for this store.
    */
-  private HikariConfig configureHikari(final String storeName, final Map<String, String> attributes) {
+  @VisibleForTesting
+  HikariConfig configureHikari(final String storeName, final Map<String, String> attributes) {
     Properties properties = new Properties();
     properties.put("poolName", storeName);
     properties.putAll(attributes);
@@ -553,6 +563,9 @@ public class MyBatisDataStore
       properties.put("dataSource.stringtype", "unspecified");
 
       properties.putIfAbsent("maximumPoolSize", DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
+      // Allow more time for database connectivity during startup, especially in cloud environments
+      // where network latency or database provisioning delays may occur
+      properties.putIfAbsent("initializationFailTimeout", DEFAULT_INITIALIZATION_FAIL_TIMEOUT_MS);
     }
 
     // Hikari doesn't like blank schemas in its config

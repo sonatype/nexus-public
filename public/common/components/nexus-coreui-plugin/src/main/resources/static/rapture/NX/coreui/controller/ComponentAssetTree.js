@@ -74,8 +74,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     {ref: 'deleteAssetButton', selector: 'nx-coreui-component-componentassetinfo button[action=deleteAsset]'},
     {ref: 'deleteAssetFolderButton', selector: 'nx-coreui-component-componentassetinfo button[action=deleteFolder]'},
     {ref: 'deleteFolderButton', selector: 'nx-coreui-component-componentfolderinfo button[action=deleteFolder]'},
-    {ref: 'analyzeApplicationButton', selector: 'nx-coreui-component-componentinfo button[action=analyzeApplication]'},
-    {ref: 'analyzeApplicationWindow', selector: 'nx-coreui-component-analyze-window'},
     {ref: 'rootContainer', selector: 'nx-main'},
     {ref: 'treeWarning', selector: 'nx-coreui-componentassettreefeature nx-coreui-component-asset-tree #warning'}
   ],
@@ -135,9 +133,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         },
         'nx-coreui-component-componentinfo button[action=deleteComponent]': {
           click: me.deleteComponent
-        },
-        'nx-coreui-component-componentinfo button[action=analyzeApplication]': {
-          click: me.mixins.componentUtils.openAnalyzeApplicationWindow
         },
         'nx-coreui-component-componentassetinfo button[action=deleteAsset]': {
           click: me.deleteAsset
@@ -459,7 +454,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
     componentInfoPanel.setModel(componentModel);
     this.updateDeleteComponentButton(this.getCurrentRepository(), componentModel);
-    this.updateAnalyzeButton(componentModel);
     this.setDependencySnippets(componentInfoPanel.getDependencySnippetPanel(), componentModel);
   },
 

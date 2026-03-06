@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Provider;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -46,6 +45,7 @@ import org.sonatype.nexus.security.ClientInfo;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.hash.HashCode;
+import jakarta.inject.Provider;
 import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -90,7 +90,7 @@ public class FluentBlobsImpl
       @Nullable final String contentType,
       final Iterable<HashAlgorithm> hashing)
   {
-    return ingest(in, contentType, ImmutableMap.of(), hashing);
+    return ingest(in, contentType, Map.of(), hashing);
   }
 
   @Override
@@ -165,9 +165,13 @@ public class FluentBlobsImpl
   }
 
   @Override
-  public TempBlob ingest(final Payload payload, final Iterable<HashAlgorithm> hashing) {
+  public TempBlob ingest(
+      final Payload payload,
+      final Map<String, String> headers,
+      final Iterable<HashAlgorithm> hashing)
+  {
     if (payload instanceof Content) {
-      return ingest(((Content) payload).getPayload(), hashing);
+      return ingest(((Content) payload).getPayload(), headers, hashing);
     }
     else if (payload instanceof TempBlobPayload) {
       return ((TempBlobPayload) payload).getTempBlob();
@@ -178,7 +182,7 @@ public class FluentBlobsImpl
       return new AttachableBlob(detachedBlobPayload.getBlob(), hashes, true, blobStore.get());
     }
     try (InputStream in = payload.openInputStream()) {
-      return ingest(in, cleanupContentType(payload.getContentType()), hashing);
+      return ingest(in, cleanupContentType(payload.getContentType()), headers, hashing);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -208,7 +212,7 @@ public class FluentBlobsImpl
    * We often use Content-Type and MIME type interchangeably throughout NXRM.
    * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
    * This method transforms the content type into the mime type that we expect
-   * 
+   *
    * @param contentType
    * @return just the mime type, which is what we mean when we say content type
    */

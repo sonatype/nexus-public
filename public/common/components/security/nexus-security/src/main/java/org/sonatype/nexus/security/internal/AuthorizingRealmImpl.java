@@ -55,7 +55,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE;
+import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES_NAMED_VALUE;
+import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES_NAMED_VALUE;
+import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE_NAMED_VALUE;
+import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS_NAMED_VALUE;
 
 /**
  * Default {@link AuthorizingRealm}.
@@ -80,10 +85,7 @@ public class AuthorizingRealmImpl
 
   private final Map<String, UserManager> userManagerMap;
 
-  private final Cache<PrincipalCollection, Collection<Permission>> principalPermissionsCache = CacheBuilder.newBuilder()
-      .expireAfterWrite(60, TimeUnit.MINUTES)
-      .softValues()
-      .build();
+  private final Cache<PrincipalCollection, Collection<Permission>> principalPermissionsCache;
 
   private final boolean principalPermissionsCacheEnabled;
 
@@ -92,12 +94,36 @@ public class AuthorizingRealmImpl
       final RealmSecurityManager realmSecurityManager,
       final UserManager userManager,
       final List<UserManager> userManagerList,
-      @Value(PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE) final boolean principalPermissionsCacheEnabled)
+      @Value(PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE) final boolean principalPermissionsCacheEnabled,
+      @Value(PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE_NAMED_VALUE) final int cacheMaximumSize,
+      @Value(PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES_NAMED_VALUE) final int cacheExpireAfterWriteMinutes,
+      @Value(PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES_NAMED_VALUE) final int cacheExpireAfterAccessMinutes,
+      @Value(PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS_NAMED_VALUE) final boolean cacheRecordStats,
+      @Value(PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL_NAMED_VALUE) final int cacheConcurrencyLevel)
   {
     this.realmSecurityManager = realmSecurityManager;
     this.userManager = userManager;
     this.userManagerMap = QualifierUtil.buildQualifierBeanMap(userManagerList);
     this.principalPermissionsCacheEnabled = principalPermissionsCacheEnabled;
+
+    // Build cache with configurable parameters
+    CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder()
+        .concurrencyLevel(cacheConcurrencyLevel)
+        .expireAfterWrite(cacheExpireAfterWriteMinutes, TimeUnit.MINUTES)
+        .expireAfterAccess(cacheExpireAfterAccessMinutes, TimeUnit.MINUTES)
+        .softValues();
+
+    // Apply maximum size if configured (use -1 to disable size limit)
+    if (cacheMaximumSize > 0) {
+      cacheBuilder.maximumSize(cacheMaximumSize);
+    }
+
+    if (cacheRecordStats) {
+      cacheBuilder.recordStats();
+    }
+
+    this.principalPermissionsCache = cacheBuilder.build();
+
     HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
     credentialsMatcher.setHashAlgorithmName(Sha1Hash.ALGORITHM_NAME);
     setCredentialsMatcher(credentialsMatcher);

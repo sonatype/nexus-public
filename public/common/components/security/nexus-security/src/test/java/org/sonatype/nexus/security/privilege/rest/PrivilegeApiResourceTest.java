@@ -108,6 +108,23 @@ class PrivilegeApiResourceTest
   }
 
   @Test
+  void testGetPrivileges_skipsUnknownPrivilegeTypes() {
+    Privilege priv1 = createPrivilege("application", "priv1", "priv1desc", false, DOMAIN_KEY, "testDomain", ACTIONS_KEY,
+        "create,read");
+    Privilege unknownPriv = createPrivilege("unknown-type", "unknownPriv", "unknown privilege type", false);
+    Privilege priv2 = createPrivilege("wildcard", "priv2", "priv2desc", false, PATTERN_KEY, "a:pattern");
+
+    when(securitySystem.listPrivileges()).thenReturn(new LinkedHashSet<>(Arrays.asList(priv1, unknownPriv, priv2)));
+
+    List<ApiPrivilege> apiPrivileges = new ArrayList<>(underTest.getPrivileges());
+
+    assertThat(apiPrivileges.size(), is(2));
+    assertApiPrivilegeApplication(apiPrivileges.get(0), "priv1", "priv1desc", false, "testDomain", PrivilegeAction.ADD,
+        PrivilegeAction.READ);
+    assertApiPrivilegeWildcard(apiPrivileges.get(1), "priv2", "priv2desc", false, "a:pattern");
+  }
+
+  @Test
   void testGetPrivilege_application() {
     Privilege priv = createPrivilege("application", "priv", "privdesc", true, DOMAIN_KEY, "testDomain", ACTIONS_KEY,
         "create,update");
@@ -143,7 +160,7 @@ class PrivilegeApiResourceTest
       assertThat(e.getResponse().getStatus(), is(404));
       assertThat(e.getResponse().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
       assertThat(e.getResponse().getEntity().toString(),
-              is(ErrorMessageUtil.getFormattedMessage("\"Privilege 'priv' not found.\"")));
+          is(ErrorMessageUtil.getFormattedMessage("\"Privilege 'priv' not found.\"")));
     }
   }
 

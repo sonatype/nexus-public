@@ -287,4 +287,117 @@ public class GroupHandlerTest
     verify(viewFacet1, times(0)).dispatch(request, context);
     verify(viewFacet2, times(0)).dispatch(request, context);
   }
+
+  @Test
+  public void getAllSkipsAlreadyDispatchedMembersWhenParentIsFresh() throws Exception {
+    // Test that when isStale=false (parent cache is fresh), already-dispatched members are skipped
+    Repository parentGroup = mock(Repository.class);
+    when(parentGroup.getName()).thenReturn("Parent Group");
+    when(context.getRepository()).thenReturn(parentGroup);
+
+    Repository childGroup = mock(Repository.class);
+    when(childGroup.getName()).thenReturn("Child Group");
+    when(childGroup.facet(ViewFacet.class)).thenReturn(viewFacet1);
+    when(childGroup.getType()).thenReturn(new org.sonatype.nexus.repository.types.GroupType());
+    Configuration groupConfig = mock(Configuration.class);
+    when(childGroup.getConfiguration()).thenReturn(groupConfig);
+    when(groupConfig.isOnline()).thenReturn(true);
+
+    DispatchedRepositories dispatched = new DispatchedRepositories();
+    dispatched.add(childGroup); // Mark child group as already dispatched
+
+    Response ok1 = ok();
+    Response ok2 = ok();
+    when(viewFacet1.dispatch(request, context)).thenReturn(ok1);
+    when(viewFacet2.dispatch(request, context)).thenReturn(ok2);
+
+    // Call getAll with isStale=false (parent is fresh)
+    underTest.getAll(context, asList(childGroup, proxy2), dispatched, false);
+
+    // Verify the already-dispatched group was skipped
+    verify(viewFacet1, times(0)).dispatch(request, context);
+    // Verify proxy2 was still dispatched
+    verify(viewFacet2, times(1)).dispatch(request, context);
+  }
+
+  @Test
+  public void getAllRefetchesAlreadyDispatchedMembersWhenParentIsStale() throws Exception {
+    // Test that when isStale=true (parent cache is stale), already-dispatched members are re-fetched
+    Repository parentGroup = mock(Repository.class);
+    when(parentGroup.getName()).thenReturn("Parent Group");
+    when(context.getRepository()).thenReturn(parentGroup);
+
+    Repository childGroup = mock(Repository.class);
+    when(childGroup.getName()).thenReturn("Child Group");
+    when(childGroup.facet(ViewFacet.class)).thenReturn(viewFacet1);
+    when(childGroup.getType()).thenReturn(new org.sonatype.nexus.repository.types.GroupType());
+    Configuration groupConfig = mock(Configuration.class);
+    when(childGroup.getConfiguration()).thenReturn(groupConfig);
+    when(groupConfig.isOnline()).thenReturn(true);
+
+    DispatchedRepositories dispatched = new DispatchedRepositories();
+    dispatched.add(childGroup); // Mark child group as already dispatched
+
+    Response ok1 = ok();
+    Response ok2 = ok();
+    when(viewFacet1.dispatch(request, context)).thenReturn(ok1);
+    when(viewFacet2.dispatch(request, context)).thenReturn(ok2);
+
+    // Call getAll with isStale=true (parent cache is stale)
+    underTest.getAll(context, asList(childGroup, proxy2), dispatched, true);
+
+    // Verify the already-dispatched group was re-fetched (not skipped)
+    verify(viewFacet1, times(1)).dispatch(request, context);
+    // Verify proxy2 was also dispatched
+    verify(viewFacet2, times(1)).dispatch(request, context);
+  }
+
+  @Test
+  public void getAllWithDefaultIsStaleBehavior() throws Exception {
+    // Test that the default behavior (without isStale parameter) is isStale=false
+    Repository parentGroup = mock(Repository.class);
+    when(parentGroup.getName()).thenReturn("Parent Group");
+    when(context.getRepository()).thenReturn(parentGroup);
+
+    Repository childGroup = mock(Repository.class);
+    when(childGroup.getName()).thenReturn("Child Group");
+    when(childGroup.facet(ViewFacet.class)).thenReturn(viewFacet1);
+    when(childGroup.getType()).thenReturn(new org.sonatype.nexus.repository.types.GroupType());
+    Configuration groupConfig = mock(Configuration.class);
+    when(childGroup.getConfiguration()).thenReturn(groupConfig);
+    when(groupConfig.isOnline()).thenReturn(true);
+
+    DispatchedRepositories dispatched = new DispatchedRepositories();
+    dispatched.add(childGroup);
+
+    Response ok1 = ok();
+    Response ok2 = ok();
+    when(viewFacet1.dispatch(request, context)).thenReturn(ok1);
+    when(viewFacet2.dispatch(request, context)).thenReturn(ok2);
+
+    // Call getAll without isStale parameter (should default to false)
+    underTest.getAll(context, asList(childGroup, proxy2), dispatched);
+
+    // Verify already-dispatched member was skipped (default behavior)
+    verify(viewFacet1, times(0)).dispatch(request, context);
+    verify(viewFacet2, times(1)).dispatch(request, context);
+  }
+
+  @Test
+  public void getAllPreservesDispatchedTrackingWithIsStale() throws Exception {
+    // Test that isStale=true still adds newly dispatched members to the tracker
+    Response ok1 = ok();
+    Response ok2 = ok();
+    when(viewFacet1.dispatch(request, context)).thenReturn(ok1);
+    when(viewFacet2.dispatch(request, context)).thenReturn(ok2);
+
+    DispatchedRepositories dispatched = new DispatchedRepositories();
+
+    // Call getAll with isStale=true
+    underTest.getAll(context, asList(proxy1, proxy2), dispatched, true);
+
+    // Verify both were added to dispatched tracker
+    assertThat(dispatched.contains(proxy1), is(true));
+    assertThat(dispatched.contains(proxy2), is(true));
+  }
 }

@@ -23,6 +23,8 @@ public interface UserManager
 {
   String DEFAULT_SOURCE = "default";
 
+  String SAML_SOURCE = "SAML";
+
   /**
    * Get the source string of this UserManager
    */

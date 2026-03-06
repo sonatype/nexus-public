@@ -98,9 +98,50 @@ public interface ApiKeyStore
   void persistApiKey(String domain, PrincipalCollection principals, char[] apiKey, @Nullable OffsetDateTime created);
 
   /**
+   * Persists an API-Key with creator tracking.
+   */
+  default void persistApiKey(
+      String domain,
+      PrincipalCollection principals,
+      char[] apiKey,
+      @Nullable OffsetDateTime created,
+      @Nullable String creatorUserId,
+      @Nullable String creatorRealm)
+  {
+    persistApiKey(domain, principals, apiKey, created);
+  }
+
+  /**
    * Updates an existing API-key.
    */
   void updateApiKey(ApiKeyInternal from, PrincipalCollection newPrincipal);
 
   Iterable<PrincipalCollection> browsePrincipals();
+
+  /**
+   * Browse tokens in the domain with filtering and pagination.
+   *
+   * @param domain the domain
+   * @param realm optional realm filter (null for all realms)
+   * @param username optional username filter (null for all users)
+   * @param skip number of records to skip
+   * @param limit maximum number of records to return
+   * @return filtered and paginated collection
+   */
+  Collection<ApiKeyInternal> browseFiltered(
+      String domain,
+      @Nullable String realm,
+      @Nullable String username,
+      int skip,
+      int limit);
+
+  /**
+   * Count tokens in the domain matching the filters.
+   *
+   * @param domain the domain
+   * @param realm optional realm filter (null for all realms)
+   * @param username optional username filter (null for all users)
+   * @return count of matching tokens
+   */
+  int countFiltered(String domain, @Nullable String realm, @Nullable String username);
 }

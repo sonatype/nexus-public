@@ -29,15 +29,16 @@ public class AssetBlobRefMigrationTaskDescriptor
 {
   public static final String TYPE_ID = "assetBlob.blobRef.migration";
 
-  static final String FORMAT_FIELD_ID = "format";
+  public static final String FORMAT_FIELD_ID = "format";
 
-  static final String CONTENT_STORE_FIELD_ID = "contentStore";
+  public static final String CONTENT_STORE_FIELD_ID = "contentStore";
 
   public AssetBlobRefMigrationTaskDescriptor() {
     super(TYPE_ID,
         AssetBlobRefMigrationTask.class,
         "Admin - Migrate blobRef to new column",
         NOT_VISIBLE,
-        NOT_EXPOSED);
+        NOT_EXPOSED,
+        REQUEST_RECOVERY);
   }
 }

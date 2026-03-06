@@ -126,6 +126,18 @@ public class GroupFacetImplTest
   }
 
   @Test
+  public void testDoValidate_pass_when_member_repository_does_not_exist() {
+    // Simulate HA race condition where a member repository is being deleted concurrently
+    // The repository is not mocked, so repositoryManager.get() will return null
+    Config config = new Config();
+    config.memberNames = Set.of("non-existent-repository", "repository1");
+
+    // Before the fix: this would throw NullPointerException
+    // After the fix: this should return null (no violation) and skip the deleted repository
+    assertNull(underTest.validateGroupDoesNotContainItself("repositoryUnderTest", config));
+  }
+
+  @Test
   public void testLeafMembers() throws Exception {
     Repository hosted1 = hostedRepository("hosted1");
     Repository hosted2 = hostedRepository("hosted2");

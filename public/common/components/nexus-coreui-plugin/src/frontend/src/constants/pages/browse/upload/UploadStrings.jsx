@@ -41,5 +41,6 @@ export default {
       COORDINATES_EXTRACTED_FROM_POM_MESSAGE: 'Component details will be extracted from the provided POM file.'
     },
     URL_COPIED_MESSAGE: 'URL Copied to Clipboard',
+    URL_COPY_ERROR_MESSAGE: 'Failed to copy URL to clipboard'
   }
 };

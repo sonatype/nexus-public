@@ -49,7 +49,7 @@ public class SecretsAuditorTest
 
   @Before
   public void setup() {
-    underTest.setAuditRecorder(() -> auditRecorder);
+    underTest.setAuditRecorder(auditRecorder);
   }
 
   @Test

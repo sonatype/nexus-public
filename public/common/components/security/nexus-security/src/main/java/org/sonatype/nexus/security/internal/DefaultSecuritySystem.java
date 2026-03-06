@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -444,7 +445,11 @@ public class DefaultSecuritySystem
 
   @Override
   public Set<User> searchUsers(UserSearchCriteria criteria) {
-    Set<User> result = new HashSet<>();
+    // A LinkedHashSet has the properties of HashSet but unlike HashSet it will preserve the order
+    // in which items were returned from the database. As we move towards a paginated API we need
+    // to guarantee sort order at the database level. It is best to preserve that order as we progress
+    // through the business logic so that we don't have to reapply the sort later
+    final Set<User> result = new LinkedHashSet<>();
 
     // if the source is not set search all realms.
     if (Strings2.isBlank(criteria.getSource())) {

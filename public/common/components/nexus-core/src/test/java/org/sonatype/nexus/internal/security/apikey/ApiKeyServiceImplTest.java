@@ -21,6 +21,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.datastore.mybatis.handlers.SecretTypeHandler;
 import org.sonatype.nexus.internal.security.apikey.store.ApiKeyStore;
 import org.sonatype.nexus.internal.security.apikey.store.ApiKeyStoreImpl;
@@ -44,11 +45,13 @@ import org.mockito.internal.stubbing.defaultanswers.ReturnsMocks;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -226,6 +229,125 @@ public class ApiKeyServiceImplTest
     underTest.createApiKey(NUGET, PRINCIPALS);
     verify(v1).persistApiKey(anyString(), any(), any());
     verifyNoInteractions(v2);
+  }
+
+  @Test
+  public void testCreateApiKey_handlesConcurrentCreation_migrationComplete() {
+    setMigrationComplete();
+
+    // Mock v2 to throw DuplicateKeyException on persist
+    doThrow(DuplicateKeyException.class).when(v2).persistApiKey(anyString(), any(), any());
+
+    // Mock v2 to return existing key on getApiKey
+    ApiKeyInternal existingKey = mock(ApiKeyInternal.class);
+    when(existingKey.getApiKey()).thenReturn(TOKEN);
+    when(v2.getApiKey(NUGET, PRINCIPALS)).thenReturn(Optional.of(existingKey));
+
+    // Should successfully return the existing token
+    char[] result = underTest.createApiKey(NUGET, PRINCIPALS);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result, is(TOKEN));
+    verify(v2).persistApiKey(anyString(), any(), any());
+    verify(v2).getApiKey(NUGET, PRINCIPALS);
+    verifyNoInteractions(v1);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testCreateApiKey_throwsIllegalStateIfRetrievalFailsAfterDuplicate_migrationComplete() {
+    setMigrationComplete();
+
+    // Mock v2 to throw DuplicateKeyException on persist
+    doThrow(DuplicateKeyException.class).when(v2).persistApiKey(anyString(), any(), any());
+
+    // Mock v2 to return empty on getApiKey (retrieval fails)
+    when(v2.getApiKey(NUGET, PRINCIPALS)).thenReturn(Optional.empty());
+
+    // Should throw IllegalStateException
+    underTest.createApiKey(NUGET, PRINCIPALS);
+  }
+
+  @Test
+  public void testCreateApiKey_handlesConcurrentCreation_migrationInProgress() {
+    setMigrationInProgress();
+
+    // Mock v2 to throw DuplicateKeyException on persist (v1 succeeds)
+    doThrow(DuplicateKeyException.class).when(v2).persistApiKey(anyString(), any(), any());
+
+    // Mock v2 to return existing key on getApiKey
+    ApiKeyInternal existingKey = mock(ApiKeyInternal.class);
+    when(existingKey.getApiKey()).thenReturn(TOKEN);
+    when(v2.getApiKey(NUGET, PRINCIPALS)).thenReturn(Optional.of(existingKey));
+
+    // Should successfully return the existing token from v2
+    char[] result = underTest.createApiKey(NUGET, PRINCIPALS);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result, is(TOKEN));
+    verify(v1).persistApiKey(anyString(), any(), any());
+    verify(v2).persistApiKey(anyString(), any(), any());
+    verify(v2).getApiKey(NUGET, PRINCIPALS);
+  }
+
+  @Test
+  public void testCreateApiKey_handlesConcurrentCreation_migrationInProgress_fallbackToV1() {
+    setMigrationInProgress();
+
+    // Mock v1 to throw DuplicateKeyException on persist
+    doThrow(DuplicateKeyException.class).when(v1).persistApiKey(anyString(), any(), any());
+
+    // Mock v2 returns empty, v1 returns existing key (key only in v1, not yet migrated)
+    ApiKeyInternal existingKey = mock(ApiKeyInternal.class);
+    when(existingKey.getApiKey()).thenReturn(TOKEN);
+    when(v2.getApiKey(NUGET, PRINCIPALS)).thenReturn(Optional.empty());
+    when(v1.getApiKey(NUGET, PRINCIPALS)).thenReturn(Optional.of(existingKey));
+
+    // Should successfully return the existing token from v1
+    char[] result = underTest.createApiKey(NUGET, PRINCIPALS);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result, is(TOKEN));
+    verify(v1).persistApiKey(anyString(), any(), any());
+    verify(v2).getApiKey(NUGET, PRINCIPALS);
+    verify(v1).getApiKey(NUGET, PRINCIPALS);
+  }
+
+  @Test
+  public void testCreateApiKey_handlesConcurrentCreation_migrationNotStarted() {
+    setMigrationNotStarted();
+
+    // Mock v1 to throw DuplicateKeyException on persist
+    doThrow(DuplicateKeyException.class).when(v1).persistApiKey(anyString(), any(), any());
+
+    // Mock v1 to return existing key on getApiKey
+    ApiKeyInternal existingKey = mock(ApiKeyInternal.class);
+    when(existingKey.getApiKey()).thenReturn(TOKEN);
+    when(v1.getApiKey(NUGET, PRINCIPALS)).thenReturn(Optional.of(existingKey));
+
+    // Should successfully return the existing token from v1
+    char[] result = underTest.createApiKey(NUGET, PRINCIPALS);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result, is(TOKEN));
+    verify(v1).persistApiKey(anyString(), any(), any());
+    verify(v1).getApiKey(NUGET, PRINCIPALS);
+    verifyNoInteractions(v2);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testCreateApiKey_throwsIllegalStateIfRetrievalFailsAfterDuplicate_migrationInProgress() {
+    setMigrationInProgress();
+
+    // Mock both stores to throw DuplicateKeyException on persist
+    doThrow(DuplicateKeyException.class).when(v1).persistApiKey(anyString(), any(), any());
+    doThrow(DuplicateKeyException.class).when(v2).persistApiKey(anyString(), any(), any());
+
+    // Mock both stores to return empty on getApiKey (retrieval fails from both)
+    when(v2.getApiKey(NUGET, PRINCIPALS)).thenReturn(Optional.empty());
+    when(v1.getApiKey(NUGET, PRINCIPALS)).thenReturn(Optional.empty());
+
+    // Should throw IllegalStateException with migration status in message
+    underTest.createApiKey(NUGET, PRINCIPALS);
   }
 
   @Test

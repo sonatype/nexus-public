@@ -141,4 +141,32 @@ public interface ApiKeyV2DAO
    * @param token the token
    */
   void updatePrincipal(ApiKeyV2Data token);
+
+  /**
+   * Browse API Keys with filters and pagination for admin listing.
+   *
+   * @param domain the domain
+   * @param realm optional realm filter (null means all realms)
+   * @param username optional username filter (null means all users)
+   * @param skip the amount of records to skip/offset
+   * @param limit the amount of records to limit the query to
+   */
+  Collection<ApiKeyInternal> browseFiltered(
+      @Param("domain") String domain,
+      @Param("realm") String realm,
+      @Param("username") String username,
+      @Param("skip") int skip,
+      @Param("limit") int limit);
+
+  /**
+   * Count API Keys matching the filters.
+   *
+   * @param domain the domain
+   * @param realm optional realm filter (null means all realms)
+   * @param username optional username filter (null means all users)
+   */
+  int countFiltered(
+      @Param("domain") String domain,
+      @Param("realm") String realm,
+      @Param("username") String username);
 }

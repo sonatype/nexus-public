@@ -138,18 +138,25 @@ public class MergingGroupHandler
 
     Content content = maybeCooperate(repository, mavenPath, () -> {
       try {
-        // Check members to prime
-        Map<Repository, Response> passThroughResponses = getAll(context, proxiesOrGroups, dispatched);
 
         Optional<Content> cached = checkCache(groupFacet, mavenPath, repository);
 
-        if (cached.isPresent()) {
+        boolean isStale = !cached.isPresent();
+
+        if (!isStale) {
           log.trace("Serving cached content {} : {}", repository.getName(), mavenPath.getPath());
           return cached.get();
         }
 
+        // Check members to prime
+        Map<Repository, Response> passThroughResponses = getAll(context, proxiesOrGroups, dispatched, isStale);
+
+        // Content is stale or missing - rebuild from members
+        log.trace("Parent group {} is stale or has no cached content, rebuilding from members",
+            repository.getName());
+
         // this will fetch the remaining responses, thanks to the 'dispatched' tracking
-        Map<Repository, Response> remainingResponses = getAll(context, members, dispatched);
+        Map<Repository, Response> remainingResponses = getAll(context, members, dispatched, isStale);
 
         // merge the two sets of responses according to member order
         LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();

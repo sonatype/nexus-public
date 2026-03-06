@@ -13,10 +13,12 @@
 package org.sonatype.nexus.blobstore.internal.softdeleted;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.softdeleted.BlobLocationUpdate;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlob;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataAccess;
@@ -98,4 +100,17 @@ public interface SoftDeletedBlobsDAO
   int countBefore(
       @Param("sourceBlobStoreName") String blobStoreName,
       @Param("blobsDeletedBefore") OffsetDateTime blobsDeletedBefore);
+
+  /**
+   * Batch update the blob location (source_blob_store_name and date_path_ref) for multiple soft deleted blob records.
+   * Each blob can be updated with different values for newSourceBlobStoreName and newDatePathRef.
+   *
+   * @param updates list of {@link BlobLocationUpdate} objects containing blobId, newSourceBlobStoreName, and
+   *          newDatePathRef
+   * @param oldSourceBlobStoreName the current/old blob store name in the records
+   * @return number of rows updated
+   */
+  int batchUpdateBlobLocation(
+      @Param("updates") List<BlobLocationUpdate> updates,
+      @Param("oldSourceBlobStoreName") String oldSourceBlobStoreName);
 }

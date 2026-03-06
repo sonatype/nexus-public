@@ -19,8 +19,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -34,6 +32,7 @@ import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -57,7 +56,7 @@ public class AssetBlobRefMigrationTask
 
   private final int readAssetsBatchSize;
 
-  @Inject
+  @Autowired
   public AssetBlobRefMigrationTask(
       final List<FormatStoreManager> formatStoreManagersList,
       @Value("${nexus.assetBlobRef.migration.read.batchSize:100}") final int readAssetsBatchSize)

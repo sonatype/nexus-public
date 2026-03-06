@@ -51,6 +51,7 @@ Ext.define('NX.ext.form.field.ItemSelector', {
 
   maskOnDisable: false,
   selectionPlaceholder: null,
+  _toFieldSortersCleared: false,
 
   /**
    * Override super *private* impl so we can control the button configuration.
@@ -178,6 +179,50 @@ Ext.define('NX.ext.form.field.ItemSelector', {
   },
 
   /**
+   * The "up/down" controls are meant to allow manual ordering in the selected (toField) list.
+   * However, the base implementation copies the main store's sorters into the toField store,
+   * which forces the selection to remain alphabetically sorted and makes manual reordering
+   * appear to do nothing. To keep the initial alphabetical order but allow manual ordering
+   * afterward, clear the toField store sorters once after initial population.
+   *
+   * @private
+   */
+  clearToFieldSortersOnce: function () {
+    const me = this;
+
+    if (me._toFieldSortersCleared) {
+      return;
+    }
+    if (!me.toField || !me.toField.getStore) {
+      return;
+    }
+    // Only do this for selectors that expose ordering controls.
+    if (!Ext.Array.contains(me.buttons || [], 'up') && !Ext.Array.contains(me.buttons || [], 'down') &&
+        !Ext.Array.contains(me.buttons || [], 'top') && !Ext.Array.contains(me.buttons || [], 'bottom')) {
+      return;
+    }
+
+    const toStore = me.toField.getStore();
+    if (!toStore) {
+      return;
+    }
+
+    // Ensure the current selection is alphabetically ordered once, then drop sorters
+    // so future up/down reordering sticks.
+    if (toStore.getCount && toStore.getCount() > 1 && me.displayField) {
+      toStore.sort(me.displayField, 'ASC');
+    }
+    if (toStore.getSorters && toStore.getSorters().removeAll) {
+      toStore.getSorters().removeAll();
+    }
+    else if (toStore.sorters && toStore.sorters.clear) {
+      toStore.sorters.clear();
+    }
+
+    me._toFieldSortersCleared = true;
+  },
+
+  /**
    * Ext.ux.form.ItemSelector defers setting value if store is not loaded,
    * which messes up the logic in Ext.form.Basic.setValues()
    * when Ext.form.Basic.trackResetOnLoad is true.
@@ -201,6 +246,20 @@ Ext.define('NX.ext.form.field.ItemSelector', {
 
     // HACK: force original value to reset, to prevent always dirty forms when store has not loaded when form initially sets values.
     this.resetOriginalValue();
+
+    // Allow manual ordering after the initial (alphabetical) population.
+    this.clearToFieldSortersOnce();
+  },
+
+  /**
+   * Ensure we also handle the create-flow where values are built via add/remove actions
+   * (and not necessarily through setValue).
+   *
+   * @override
+   */
+  syncValue: function () {
+    this.callParent(arguments);
+    this.clearToFieldSortersOnce();
   },
 
   getValue: function() {

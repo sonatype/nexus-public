@@ -34,7 +34,7 @@ public interface UserApiResourceDoc
 
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
 
-  @ApiOperation("Retrieve a list of users.")
+  @ApiOperation("Retrieve a list of users. For SAML user sources a limit of 1000 users will be applied.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
   Collection<ApiUser> getUsers(

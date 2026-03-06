@@ -67,7 +67,9 @@ public class SecurityFacetSupportTest
     when(request.getPath()).thenReturn("/some/path.txt");
     when(request.getAction()).thenReturn(HttpMethods.GET);
 
-    when(repository.getFormat()).thenReturn(new Format("test") { });
+    when(repository.getFormat()).thenReturn(new Format("test")
+    {
+    });
     when(repository.getName()).thenReturn("SecurityFacetSupportTest");
 
     testSecurityFacetSupport = new TestSecurityFacetSupport(securityContributor,
@@ -78,7 +80,7 @@ public class SecurityFacetSupportTest
 
   @Test
   public void testEnsurePermitted_permitted() throws Exception {
-    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any()))
+    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any()))
         .thenReturn(true);
     try {
       testSecurityFacetSupport.ensurePermitted(request);
@@ -90,7 +92,7 @@ public class SecurityFacetSupportTest
 
   @Test
   public void testEnsurePermitted_notPermitted() throws Exception {
-    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any()))
+    when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any()))
         .thenReturn(false);
 
     try {
@@ -98,9 +100,9 @@ public class SecurityFacetSupportTest
       fail("AuthorizationException should have been thrown");
     }
     catch (AuthorizationException e) {
-      //expected
+      // expected
     }
 
-    verify(contentPermissionChecker).isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any());
+    verify(contentPermissionChecker).isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any(), any());
   }
 }

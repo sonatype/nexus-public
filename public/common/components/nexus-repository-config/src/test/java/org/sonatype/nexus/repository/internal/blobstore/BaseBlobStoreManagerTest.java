@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore;
 
+import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,7 +25,10 @@ import java.util.stream.StreamSupport;
 
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -60,6 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -223,7 +228,7 @@ class BaseBlobStoreManagerTest
     when(secret.getId()).thenReturn(SECRET_ID);
     when(
         secretsService.encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(), TEST_USER))
-        .thenReturn(secret);
+            .thenReturn(secret);
     Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
     Map<String, Object> blobConfigMap = new HashMap<>();
     blobConfigMap.put(SECRET_FIELD_KEY, SECRET_FIELD_VALUE);
@@ -523,6 +528,44 @@ class BaseBlobStoreManagerTest
         TEST_USER);
   }
 
+
+  @Test
+  public void moveBlobMarksDestinationAsStaleWhenSoftDeleted() throws Exception {
+    MoveBlobTestContext context = setupMoveBlobTest(true, false);
+    context.executeMove();
+
+    // Blob is marked as stale because it is soft-deleted in source
+    verify(context.destBlob()).markStale();
+    verify(context.destBlobStore()).create(any(InputStream.class), any(Map.class), eq(context.blobId()));
+    verify(context.destBlobStore()).setBlobAttributes(eq(context.newBlobId()), any(BlobAttributes.class));
+    verify(context.srcBlobStore()).deleteHard(context.blobId());
+  }
+
+  @Test
+  public void moveBlobDoesNotMarkAsStaleWhenNotDeleted() throws Exception {
+    MoveBlobTestContext context = setupMoveBlobTest(false, false);
+    context.executeMove();
+
+    // Blob is never marked as stale because it is not soft-deleted
+    verify(context.destBlob(), never()).markStale();
+    verify(context.destBlobStore()).create(any(InputStream.class), any(Map.class), eq(context.blobId()));
+    verify(context.destBlobStore()).setBlobAttributes(eq(context.newBlobId()), any(BlobAttributes.class));
+    verify(context.srcBlobStore()).deleteHard(context.blobId());
+  }
+
+  @Test
+  public void moveBlobHandlesBlobStoreExceptionWhenMarkingStale() throws Exception {
+    MoveBlobTestContext context = setupMoveBlobTest(true, true);
+    context.executeMove();
+
+    // Exception was thrown while marking stale, but move continued
+    verify(context.destBlob(), never()).markStale();
+    verify(context.destBlobStore()).create(any(InputStream.class), any(Map.class), eq(context.blobId()));
+    verify(context.destBlobStore()).setBlobAttributes(eq(context.newBlobId()), any(BlobAttributes.class));
+    verify(context.srcBlobStore()).deleteHard(context.blobId());
+  }
+
+
   @SuppressWarnings({"unchecked", "rawtypes"})
   private BaseBlobStoreManager newBlobStoreManager(
       final Boolean provisionDefaults,
@@ -568,5 +611,65 @@ class BaseBlobStoreManagerTest
     configuration.setName(DEFAULT_BLOBSTORE_NAME);
     configuration.setType(FileBlobStore.TYPE);
     return configuration;
+  }
+
+  private MoveBlobTestContext setupMoveBlobTest(
+      boolean srcDeleted,
+      boolean throwOnGet) throws Exception
+  {
+    BaseBlobStoreManager manager = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore srcBlobStore = mock(BlobStore.class);
+    BlobStore destBlobStore = mock(BlobStore.class);
+    BlobId blobId = new BlobId("test-blob");
+    BlobId newBlobId = new BlobId("test-blob-new");
+
+    BlobStoreConfiguration srcConfig = mock(BlobStoreConfiguration.class);
+    when(srcConfig.getName()).thenReturn("source-blobstore");
+    when(srcBlobStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
+
+    BlobStoreConfiguration destConfig = mock(BlobStoreConfiguration.class);
+    when(destConfig.getName()).thenReturn("dest-blobstore");
+    when(destBlobStore.getBlobStoreConfiguration()).thenReturn(destConfig);
+
+    BlobAttributes srcAttributes = mock(BlobAttributes.class);
+    when(srcAttributes.isDeleted()).thenReturn(srcDeleted);
+    when(srcAttributes.getHeaders()).thenReturn(Map.of());
+    when(srcBlobStore.getBlobAttributes(blobId)).thenReturn(srcAttributes);
+
+    BlobAttributes destAttributes = mock(BlobAttributes.class);
+    when(destAttributes.isDeleted()).thenReturn(srcDeleted);
+    when(destBlobStore.getBlobAttributes(newBlobId)).thenReturn(destAttributes);
+
+    BlobSupport destBlob = mock(BlobSupport.class);
+    if (throwOnGet) {
+      lenient().when(destBlobStore.get(newBlobId, true)).thenThrow(new BlobStoreException("Test error", newBlobId));
+    }
+    else {
+      lenient().when(destBlobStore.get(newBlobId, true)).thenReturn(destBlob);
+    }
+
+    Blob srcBlob = mock(Blob.class);
+    when(srcBlobStore.isInternalMoveSupported(destBlobStore)).thenReturn(false);
+    when(srcBlobStore.get(blobId, true)).thenReturn(srcBlob);
+    when(srcBlob.getInputStream()).thenReturn(mock(InputStream.class));
+
+    Blob newBlob = mock(Blob.class);
+    when(newBlob.getId()).thenReturn(newBlobId);
+    when(destBlobStore.create(any(InputStream.class), any(Map.class), any(BlobId.class))).thenReturn(newBlob);
+
+    return new MoveBlobTestContext(manager, srcBlobStore, destBlobStore, blobId, newBlobId, destBlob);
+  }
+
+  private record MoveBlobTestContext(
+      BaseBlobStoreManager manager,
+      BlobStore srcBlobStore,
+      BlobStore destBlobStore,
+      BlobId blobId,
+      BlobId newBlobId,
+      BlobSupport destBlob)
+  {
+    void executeMove() {
+      manager.moveBlob(blobId, srcBlobStore, destBlobStore);
+    }
   }
 }

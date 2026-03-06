@@ -43,6 +43,9 @@ export default Machine(
             target: 'loading',
             actions: 'updateStatus',
           },
+          SET_STATUS_LOCAL: {
+            actions: 'updateStatus',
+          },
         },
         after: {
           TIMEOUT: {

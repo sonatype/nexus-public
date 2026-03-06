@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {
   NxSystemNotice,
 } from '@sonatype/react-shared-components';
@@ -20,12 +21,15 @@ import CEHardLimitAlert from './CELimits/CEHardLimitAlert';
 import './SystemNotices.scss';
 import UpgradeAlert from './UpgradeAlert/UpgradeAlert';
 import LicenseExpiryAlert from './LicenseExpiryAlert/LicenseExpiryAlert';
+import RecoveryModeAlert from './RecoveryModeAlert/RecoveryModeAlert';
 
 export default function SystemNotices () {
+  const recoveryModeEnabled = ExtJS.useState(() => ExtJS.state().getValue('recovery.mode.enabled'));
+
   return <NxSystemNotice.Container className="nxrm-system-notices">
     <CEHardLimitAlert />
 
-    <UpgradeAlert />
+    {recoveryModeEnabled ? <RecoveryModeAlert /> : <UpgradeAlert />}
 
     <LicenseExpiryAlert />
   </NxSystemNotice.Container>

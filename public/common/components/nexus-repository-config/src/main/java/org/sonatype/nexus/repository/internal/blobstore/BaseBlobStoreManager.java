@@ -21,10 +21,10 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -632,9 +632,9 @@ public abstract class BaseBlobStoreManager
       InputStream srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
       newBlob = destBlobStore.create(srcInputStream, headers, blobId);
     }
-    destBlobStore.setBlobAttributes(blobId, srcBlobAttributes);
+    destBlobStore.setBlobAttributes(newBlob.getId(), srcBlobAttributes);
 
-    ensureDeletedStateTransferred(blobId, srcBlobStore, destBlobStore, isSrcDeleted);
+    ensureDeletedStateTransferred(blobId, newBlob.getId(), srcBlobStore, destBlobStore, isSrcDeleted);
     log.debug("Created blobId {} in blob store '{}'", blobId, destBlobStore.getBlobStoreConfiguration().getName());
 
     try {
@@ -649,22 +649,53 @@ public abstract class BaseBlobStoreManager
   }
 
   /**
-   * A blob may be deleted or un-deleted while it is being copied. To ensure that this is captured we need to
-   * propagate the change to the destination blob store. Once the copy is complete all updates should be routed to
-   * the blob in its new member blob store so it can be assumed that it will no longer change in the source and can be
-   * safely deleted.
+   * A blob may be deleted or un-deleted while it is being copied. To ensure that this is captured we need to propagate
+   * the change to the destination blob store. Once the copy is complete all updates should be routed to the blob in its
+   * new member blob store so it can be assumed that it will no longer change in the source and can be safely deleted.
    */
   private void ensureDeletedStateTransferred(
-      final BlobId blobId,
+      final BlobId oldBlobId,
+      final BlobId newBlobId,
       final BlobStore srcBlobStore,
       final BlobStore destBlobStore,
       final boolean isSrcDeleted)
   {
-    BlobAttributes currentSrcAttributes = srcBlobStore.getBlobAttributes(blobId);
-    if (currentSrcAttributes != null && currentSrcAttributes.isDeleted() != isSrcDeleted) {
-      BlobAttributes outOfDateAttributes = destBlobStore.getBlobAttributes(blobId);
-      outOfDateAttributes.setDeleted(!isSrcDeleted);
-      destBlobStore.setBlobAttributes(blobId, outOfDateAttributes);
+    BlobAttributes currentSrcAttributes = srcBlobStore.getBlobAttributes(oldBlobId);
+    BlobAttributes destAttributes = destBlobStore.getBlobAttributes(newBlobId);
+
+    // Handle race condition - deleted state changed during move
+    if (currentSrcAttributes != null && destAttributes != null &&
+        currentSrcAttributes.isDeleted() != isSrcDeleted) {
+      destAttributes.setDeleted(!isSrcDeleted);
+      destBlobStore.setBlobAttributes(newBlobId, destAttributes);
+    }
+
+    // Mark soft-deleted blobs as stale so Compact task can clean them up
+    if (destAttributes != null && destAttributes.isDeleted()) {
+      markBlobAsStale(destBlobStore, newBlobId);
+    }
+  }
+
+  /**
+   * Marks a blob as stale in the destination blob store's cache.
+   * This syncs the in-memory stale flag with the persisted deleted flag.
+   */
+  private void markBlobAsStale(final BlobStore blobStore, final BlobId blobId) {
+    try {
+      Blob blob = blobStore.get(blobId, true);
+
+      if (blob == null) {
+        log.warn("Blob {} not found in destination after move, cannot mark as stale", blobId);
+        return;
+      }
+
+      if (blob instanceof BlobSupport cacheableBlob) {
+        cacheableBlob.markStale();
+        log.debug("Marked blob {} as stale in '{}'", blobId, blobStore.getBlobStoreConfiguration().getName());
+      }
+    }
+    catch (BlobStoreException e) {
+      log.warn("Failed to mark blob {} as stale: {}", blobId, e.getMessage(), e);
     }
   }
 

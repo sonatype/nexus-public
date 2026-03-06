@@ -12,17 +12,47 @@
  */
 package org.sonatype.nexus.coreui;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Validator for {@link DockerRepositoryNameConstraint} that ensures Docker repository names are lowercase.
+ * Existing repositories with mixed-case names are exempted to allow configuration updates.
  */
+@Named
 public class DockerRepositoryNameValidator
     implements ConstraintValidator<DockerRepositoryNameConstraint, RepositoryXO>
 {
+  private static final Logger log = LoggerFactory.getLogger(DockerRepositoryNameValidator.class);
+
+  private RepositoryManager repositoryManager;
+
+  /**
+   * No-arg constructor for Bean Validation API compatibility and other cases where validators are
+   * instantiated directly (for example, {@code Validation.buildDefaultValidatorFactory()} in tests).
+   * In such non-DI scenarios, {@link RepositoryManager}-based existing-repository exemption logic is
+   * not available because the dependency is not injected.
+   */
+  public DockerRepositoryNameValidator() {
+    this.repositoryManager = null;
+  }
+
+  /**
+   * Constructor with dependency injection for full validation logic including existing repository exemption.
+   */
+  @Inject
+  public DockerRepositoryNameValidator(final RepositoryManager repositoryManager) {
+    this.repositoryManager = repositoryManager;
+  }
+
   // Constants matching org.sonatype.nexus.repository.docker.internal.DockerFormat.NAME
   // the coreui plugin doesn't have a dependency on the docker plugin, so we can't import this constant directly
   private static final String DOCKER_FORMAT = "docker";
@@ -57,7 +87,31 @@ public class DockerRepositoryNameValidator
     }
 
     String name = value.getName();
-    // Check if name is lowercase
-    return name.equals(Strings2.lower(name));
+
+    // If the name is already lowercase, it's valid
+    if (name.equals(Strings2.lower(name))) {
+      return true;
+    }
+
+    // CRITICAL FIX: Exempt existing repositories to allow updates
+    // Check if repository already exists - if so, allow the update
+    // Only perform this check if RepositoryManager is available (injected via DI)
+    if (repositoryManager != null) {
+      try {
+        if (repositoryManager.exists(name)) {
+          log.debug("Allowing update to existing Docker repository with mixed-case name: {}", name);
+          return true;
+        }
+      }
+      catch (Exception e) {
+        log.warn("Could not check repository existence for: {}", name, e);
+        // On error, fail safe and allow the operation
+        return true;
+      }
+    }
+
+    // Only enforce lowercase for NEW repository creation
+    log.debug("Blocking creation of new Docker repository with mixed-case name: {}", name);
+    return false;
   }
 }

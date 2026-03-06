@@ -179,7 +179,24 @@ public class GroupHandler
       @Nonnull final Iterable<Repository> members,
       @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
-    return getAll(context.getRequest(), context, members, dispatched);
+    return getAll(context.getRequest(), context, members, dispatched, false);
+  }
+
+  /**
+   * Returns all responses from all members as a linked map, where order is group member order.
+   *
+   * @param context the context
+   * @param members the members to fetch from
+   * @param dispatched the dispatched repositories tracker
+   * @param isParentStale whether the parent group's cached metadata is stale and needs rebuilding
+   */
+  protected LinkedHashMap<Repository, Response> getAll(
+      @Nonnull final Context context,
+      @Nonnull final Iterable<Repository> members,
+      @Nonnull final DispatchedRepositories dispatched,
+      final boolean isParentStale) throws Exception
+  {
+    return getAll(context.getRequest(), context, members, dispatched, isParentStale);
   }
 
   /**
@@ -200,7 +217,30 @@ public class GroupHandler
       @Nonnull final Iterable<Repository> members,
       @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
+    return getAll(request, context, members, dispatched, false);
+  }
+
+  /**
+   * Similar to {@link #getAll(Context, Iterable, DispatchedRepositories)}, but allows for using a
+   * different request and provides control over staleness checking behavior.
+   *
+   * @param request {@link Request} that could be different then the {@link Context#getRequest()}
+   * @param context {@link Context}
+   * @param members {@link Repository}'s
+   * @param dispatched {@link DispatchedRepositories}
+   * @param isParentStale whether the parent group's cached metadata is stale and needs rebuilding
+   * @return LinkedHashMap of all responses from all members where order is group member order.
+   * @throws Exception throw for any issues dispatching the request
+   */
+  protected LinkedHashMap<Repository, Response> getAll(
+      @Nonnull final Request request,
+      @Nonnull final Context context,
+      @Nonnull final Iterable<Repository> members,
+      @Nonnull final DispatchedRepositories dispatched,
+      final boolean isParentStale) throws Exception
+  {
     final LinkedHashMap<Repository, Response> responses = Maps.newLinkedHashMap();
+
     for (Repository member : members) {
       log.trace("Trying member: {}", member);
 
@@ -212,8 +252,17 @@ public class GroupHandler
 
       // track repositories we have dispatched to, prevent circular dispatch for nested groups
       if (dispatched.contains(member)) {
-        log.trace("Skipping already dispatched member: {}", member);
-        continue;
+        final String currentRepositoryName = context.getRepository().getName();
+        // Check if parent is stale - if so, we need to re-fetch from all members to rebuild metadata
+        if (!isParentStale) {
+          // Parent is fresh, we can skip this already-dispatched member (group or non-group)
+          log.trace("Skipping already dispatched member {} (parent {} is fresh)",
+              member, currentRepositoryName);
+          continue;
+        }
+        // Parent is stale, re-fetch from member even though it was dispatched
+        log.trace("Re-fetching already dispatched member {} (parent {} is stale)",
+            member, currentRepositoryName);
       }
       dispatched.add(member);
 

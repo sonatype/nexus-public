@@ -129,6 +129,9 @@ public class AptProxyRecipe
   AptSnapshotHandler snapshotHandler;
 
   @Inject
+  AptDistributionValidationHandler distributionValidationHandler;
+
+  @Inject
   LastDownloadedHandler lastDownloadedHandler;
 
   @Inject
@@ -166,6 +169,7 @@ public class AptProxyRecipe
         .handler(routingRuleHandler)
         .handler(exceptionHandler)
         .handler(handlerContributor)
+        .handler(distributionValidationHandler)
         .handler(negativeCacheHandler)
         .handler(conditionalRequestHandler)
         .handler(partialFetchHandler)

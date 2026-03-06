@@ -46,6 +46,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
+import org.sonatype.nexus.blobstore.api.BlobStoreMigrationStateProvider;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
@@ -83,6 +84,7 @@ import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -194,9 +196,10 @@ public class S3BlobStore
       final DryRunPrefix dryRunPrefix,
       final BucketManager bucketManager,
       final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
-      @Value("${nexus.s3.loadFromDb:true}") final boolean loadFromDb)
+      @Value("${nexus.s3.loadFromDb:true}") final boolean loadFromDb,
+      @Nullable final BlobStoreMigrationStateProvider migrationStateProvider)
   {
-    super(blobIdLocationResolver, dryRunPrefix, loadFromDb);
+    super(blobIdLocationResolver, dryRunPrefix, loadFromDb, migrationStateProvider);
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
     this.copier = checkNotNull(copier);
     this.uploader = checkNotNull(uploader);
@@ -243,6 +246,23 @@ public class S3BlobStore
   @Override
   protected BlobSupport initializeBlob(final BlobId blobId) {
     return new S3Blob(blobId);
+  }
+
+  @Override
+  protected boolean blobExistsInStorage(final BlobId blobId) {
+    try {
+      s3.getObjectMetadata(getConfiguredBucket(), contentPath(blobId));
+      return true;
+    }
+    catch (NoSuchKeyException e) {
+      log.debug("Blob {} does not exist in S3 bucket {}", blobId, getConfiguredBucket());
+      return false;
+    }
+    catch (Exception e) {
+      log.warn("Error checking blob existence for {} in S3", blobId, e);
+      // Assume exists on error to avoid false negatives that could break normal operations
+      return true;
+    }
   }
 
   @Override
@@ -819,7 +839,6 @@ public class S3BlobStore
 
   @Nullable
   @Override
-  @Timed
   public BlobAttributes getBlobAttributes(final BlobId blobId) {
     try {
       return getBlobAttributesWithException(blobId);
@@ -830,7 +849,6 @@ public class S3BlobStore
   }
 
   @Override
-  @Timed
   public BlobAttributes getBlobAttributes(final S3AttributesLocation attributesFilePath) throws IOException {
     try {
       S3BlobAttributes s3BlobAttributes = new S3BlobAttributes(
@@ -1017,7 +1035,6 @@ public class S3BlobStore
 
   @Nullable
   @Override
-  @Timed
   public BlobAttributes getBlobAttributesWithException(final BlobId blobId) throws BlobStoreException {
     try {
       S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));

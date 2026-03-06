@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,11 +49,14 @@ import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.firewall.FirewallHeaderProvider;
+import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.OutboundRequestMetricRecorder;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.replication.PullReplicationSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.payloads.HeaderOnlyPayload;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
 import org.sonatype.nexus.transaction.RetryDeniedException;
 import org.sonatype.nexus.validation.constraint.Url;
@@ -74,6 +78,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.client.utils.HttpClientUtils;
@@ -140,6 +145,15 @@ public abstract class ProxyFacetSupport
     public Integer metadataMaxAge = (int) Duration.ofHours(24).toMinutes();
 
     /**
+     * Preserve encoded characters in URLs when proxying to the remote repository.
+     * When true, preserves encoded characters like %2B (plus), %23 (hash), and %20 (space).
+     * When false (default), uses standard encoding that preserves literal + characters.
+     * Only used when the feature flag nexus.proxy.urlEncodingMode.enabled is true.
+     */
+    @NotNull
+    public boolean preserveEncodedCharacters = false;
+
+    /**
      * Content max-age.
      */
     @Override
@@ -187,6 +201,10 @@ public abstract class ProxyFacetSupport
   private Cooperation2 proxyCooperation;
 
   private EscapeHelper escapeHelper;
+
+  private EncodingHelper encodingHelper;
+
+  private boolean urlEncodingModeEnabled;
 
   private static final String CTX_REQ_STOPWATCH = "request.stopwatch";
 
@@ -238,6 +256,13 @@ public abstract class ProxyFacetSupport
       @Nullable @Value("${nexus.proxy.url.escape.rules:#{null}}") final String urlEscapeRulesConfig)
   {
     this.escapeHelper = new EscapeHelper(urlEscapeRulesConfig);
+  }
+
+  @Inject
+  protected void configureUrlEncodingMode(
+      @Value("${nexus.proxy.urlEncodingMode.enabled:false}") final boolean enabled)
+  {
+    this.urlEncodingModeEnabled = enabled;
   }
 
   @Inject
@@ -295,6 +320,16 @@ public abstract class ProxyFacetSupport
 
     // normalize URL path to contain trailing slash
     config.remoteUrl = normalizeURLPath(config.remoteUrl);
+
+    // Initialize EncodingHelper only if feature is enabled
+    if (urlEncodingModeEnabled) {
+      this.encodingHelper = new EncodingHelper(escapeHelper, config.preserveEncodedCharacters);
+      log.debug("URL encoding mode enabled. Preserve encoded characters: {}", config.preserveEncodedCharacters);
+    }
+    else {
+      this.encodingHelper = null;
+      log.debug("URL encoding mode feature disabled, using legacy behavior");
+    }
 
     log.debug("Config: {}", config);
   }
@@ -416,6 +451,16 @@ public abstract class ProxyFacetSupport
    */
   protected Content doGet(final Context context, @Nullable final Content staleContent) throws IOException {
     Content remote = null, content = staleContent;
+
+    try {
+      if (isHeadRequest(context) && content != null && !isStale(context, content)) {
+        log.debug("HEAD request - returning cached metadata");
+        return content;
+      }
+    }
+    catch (Exception e) {
+      log.warn("Error checking stale content for HEAD request, proceeding with normal flow", e);
+    }
     boolean nested = isDownloading();
     try {
       if (!nested) {
@@ -424,10 +469,17 @@ public abstract class ProxyFacetSupport
       context.setAttribute(CTX_REQ_STOPWATCH, Stopwatch.createStarted());
       remote = fetch(context, content);
       if (remote != null) {
-        content = store(context, remote);
-        if (remote.equals(content)) {
-          // remote wasn't stored; make reusable copy for cooperation
-          content = new TempContent(remote);
+        // HEAD requests return metadata immediately without storing/caching
+        if (isHeadRequest(context)) {
+          log.debug("HEAD request - returning remote metadata without caching");
+          content = remote;
+        }
+        else {
+          content = store(context, remote);
+          if (remote.equals(content)) {
+            // remote wasn't stored; make reusable copy for cooperation
+            content = new TempContent(remote);
+          }
         }
       }
     }
@@ -492,6 +544,17 @@ public abstract class ProxyFacetSupport
    */
   protected String getRequestKey(final Context context) {
     return context.getRequest().getPath() + '?' + context.getRequest().getParameters();
+  }
+
+  /**
+   * Check if the current request is a HEAD request.
+   *
+   * @param context the request context
+   * @return true if this is a HEAD request, false for GET or other methods
+   */
+  private boolean isHeadRequest(final Context context) {
+    return context.getRequest() != null &&
+        HttpMethods.HEAD.equalsIgnoreCase(context.getRequest().getAction());
   }
 
   protected <X extends Throwable> void logContentOrThrow(
@@ -617,10 +680,29 @@ public abstract class ProxyFacetSupport
 
     URI uri;
     try {
-      uri = config.remoteUrl.resolve(encodeUrl(url));
+      // Handle absolute URLs (e.g., NPM tarball URLs from package metadata)
+      // These already contain full URL and should not be encoded or resolved
+      if (url.contains("://")) {
+        uri = new URI(url);
+      }
+      // Check if feature is enabled before using EncodingHelper
+      else if (urlEncodingModeEnabled && encodingHelper != null) {
+        // New two-stage encoding (feature enabled)
+        String baseEncoded = encodingHelper.encodeUrlSegments(url);
+        String finalEncoded = encodeUrl(baseEncoded);
+        uri = config.remoteUrl.resolve(finalEncoded);
+      }
+      else {
+        // Legacy behavior (feature disabled or not configured)
+        uri = config.remoteUrl.resolve(encodeUrl(url));
+      }
     }
     catch (IllegalArgumentException e) { // NOSONAR
       log.warn("Unable to resolve url. Reason: {}", e.getMessage());
+      throw new BadRequestException("Invalid repository path");
+    }
+    catch (URISyntaxException e) { // NOSONAR
+      log.warn("Invalid absolute URL: {}. Reason: {}", url, e.getMessage());
       throw new BadRequestException("Invalid repository path");
     }
     validateNotPrivateNetwork(uri);
@@ -771,7 +853,13 @@ public abstract class ProxyFacetSupport
    * Create {@link Content} out of HTTP response.
    */
   protected Content createContent(final Context context, final HttpResponse response) {
-    return new Content(new HttpEntityPayload(response, response.getEntity()));
+    HttpEntity entity = response.getEntity();
+    if (isHeadRequest(context) && entity == null) {
+      // HEAD responses don't have entity - using HeaderOnlyPayload as entity is mandatory in HttpEntityPayload
+      log.debug("Creating HeaderOnlyPayload for HEAD response");
+      return new Content(new HeaderOnlyPayload(response));
+    }
+    return new Content(new HttpEntityPayload(response, entity));
   }
 
   /**
@@ -836,15 +924,37 @@ public abstract class ProxyFacetSupport
       final HttpRequestBase request) throws IOException
   {
     HttpContext httpContext = new BasicHttpContext();
+
+    // Only set encoding mode in context if feature is enabled
+    if (urlEncodingModeEnabled && encodingHelper != null) {
+      httpContext.setAttribute("preserveEncodedCharacters", encodingHelper.shouldPreserveEncodedCharacters());
+    }
+
+    // Set repository info for outbound request telemetry
+    Repository repository = getRepository();
+    if (repository != null && repository.getFormat() != null && repository.getType() != null) {
+      httpContext.setAttribute(OutboundRequestMetricRecorder.CONTEXT_FORMAT, repository.getFormat().getValue());
+      httpContext.setAttribute(OutboundRequestMetricRecorder.CONTEXT_REPOSITORY_TYPE, repository.getType().getValue());
+    }
+
     HttpResponse response = client.execute(request, httpContext);
     context.setAttribute(HTTP_CONTEXT, httpContext);
     return response;
   }
 
   /**
-   * Builds the {@link HttpRequestBase} for a particular set of parameters (mapping to GET by default).
+   * Builds the {@link HttpRequestBase} for a particular set of parameters.
+   * Returns HttpHead for HEAD requests, HttpGet for GET requests.
+   *
+   * @param uri the target URI for the request
+   * @param context the request context (getRequest() may be null in cases during cleanup/error handling)
+   * @return HttpHead for HEAD requests, HttpGet otherwise
    */
   protected HttpRequestBase buildFetchHttpRequest(final URI uri, final Context context) {
+    if (context.getRequest() != null && isHeadRequest(context)) {
+      log.debug("Creating HttpHead request");
+      return new HttpHead(uri);
+    }
     return new HttpGet(uri);
   }
 
@@ -912,6 +1022,36 @@ public abstract class ProxyFacetSupport
 
   protected EscapeHelper getEscapeHelper() {
     return escapeHelper;
+  }
+
+  /**
+   * Get the encoding helper for URL encoding based on configured mode.
+   * Returns null if the feature is disabled or not configured.
+   *
+   * @return the encoding helper, or null if feature is disabled
+   */
+  protected EncodingHelper getEncodingHelper() {
+    return encodingHelper;
+  }
+
+  /**
+   * Encode a path for remote access using the two-stage encoding pipeline.
+   *
+   * Stage 1: Base URL encoding (via EncodingHelper) - applies when feature is enabled
+   * Stage 2: Format-specific encoding (via encodeUrl()) - always applied
+   *
+   * @param path the path to encode
+   * @return the encoded path
+   * @throws UnsupportedEncodingException if encoding fails
+   */
+  protected String encodePathForRemote(final String path) throws UnsupportedEncodingException {
+    if (urlEncodingModeEnabled && encodingHelper != null) {
+      // New two-stage encoding (feature enabled)
+      String baseEncoded = encodingHelper.encodeUrlSegments(path);
+      return encodeUrl(baseEncoded);
+    }
+    // Legacy behavior (feature disabled or not configured)
+    return encodeUrl(path);
   }
 
   private void validateNotPrivateNetwork(final URI uri) throws RemoteBlockedIOException {

@@ -23,6 +23,7 @@ import org.sonatype.nexus.datastore.TransactionalStoreSupport;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.security.PasswordHelper;
 
+import com.zaxxer.hikari.HikariConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,8 +32,10 @@ import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
@@ -120,5 +123,47 @@ class MyBatisDataStoreTest
     postgresStore.setConfiguration(postgresConfig);
 
     assertThat(postgresStore.isH2Database(), is(false));
+  }
+
+  @Test
+  void testPostgresHikariConfigIncludesInitializationTimeout() throws Exception {
+    // Test that PostgreSQL databases get the initialization timeout configured
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of("jdbcUrl", "jdbc:postgresql://localhost:5432/test");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
+
+    assertNotNull(hikariConfig);
+    assertThat("PostgreSQL should have initializationFailTimeout configured",
+        hikariConfig.getInitializationFailTimeout(), equalTo(10000L));
+    assertThat("PostgreSQL should have maximumPoolSize configured",
+        hikariConfig.getMaximumPoolSize(), equalTo(100));
+  }
+
+  @Test
+  void testPostgresHikariConfigAllowsTimeoutOverride() throws Exception {
+    // Test that the initialization timeout can be overridden via advanced configuration
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of(
+        "jdbcUrl", "jdbc:postgresql://localhost:5432/test",
+        "advanced", "initializationFailTimeout=120000");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
+
+    assertNotNull(hikariConfig);
+    assertThat("Advanced config should override default initializationFailTimeout",
+        hikariConfig.getInitializationFailTimeout(), equalTo(120000L));
   }
 }

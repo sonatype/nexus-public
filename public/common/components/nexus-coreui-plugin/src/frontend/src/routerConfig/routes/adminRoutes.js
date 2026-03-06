@@ -40,6 +40,7 @@ const SystemInformation = lazyLoad(() => import('../../components/pages/admin/Sy
 const MetricHealth = lazyLoad(() => import('../../components/pages/admin/MetricHealth/MetricHealth'));
 const SupportZip = lazyLoad(() => import('../../components/pages/admin/SupportZip/SupportZip'));
 const Logs = lazyLoad(() => import('../../components/pages/admin/Logs/Logs'));
+const RecoveryMode = lazyLoad(() => import('../../components/pages/admin/RecoveryMode/RecoveryMode'));
 const Api = lazyLoad(() => import('../../components/pages/admin/Api/Api'));
 const HTTP = lazyLoad(() => import('../../components/pages/admin/Http/Http'));
 const Licensing = lazyLoad(() => import('../../components/pages/admin/Licensing/Licensing'));
@@ -638,6 +639,18 @@ export const adminRoutes = [
         raw: true,
         dynamic: true,
       },
+    },
+  },
+
+  {
+    name: ADMIN.SUPPORT.RECOVERY.ROOT,
+    url: '/recovery',
+    component: RecoveryMode,
+    data: {
+      visibilityRequirements: {
+        permissions: [Permissions.ADMIN],
+      },
+      title: ADMIN.SUPPORT.RECOVERY.TITLE,
     },
   },
 

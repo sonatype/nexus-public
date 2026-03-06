@@ -22,11 +22,12 @@ import org.sonatype.nexus.common.sequence.FibonacciNumberSequence;
 import org.sonatype.nexus.common.sequence.NumberSequence;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
 import org.sonatype.nexus.repository.httpclient.FilteredHttpClientSupport;
+import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
+import org.sonatype.nexus.repository.httpclient.OutboundRequestMetricRecorder;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
-import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.http.HttpHost;
@@ -80,8 +81,13 @@ public class BlockingHttpClient
 
   private final RemoteConnectionStatusObserver statusObserver;
 
+  private final OutboundRequestMetricRecorder outboundRequestRecorder;
+
   private RemoteConnectionStatus status = new RemoteConnectionStatus(UNINITIALISED);
 
+  /**
+   * Constructor without outbound request metric recording.
+   */
   public BlockingHttpClient(
       final CloseableHttpClient delegate,
       final HttpClientConfig config,
@@ -89,10 +95,22 @@ public class BlockingHttpClient
       final boolean repositoryOnline,
       final AutoBlockConfiguration autoBlockConfiguration)
   {
+    this(delegate, config, statusObserver, repositoryOnline, autoBlockConfiguration, null);
+  }
+
+  public BlockingHttpClient(
+      final CloseableHttpClient delegate,
+      final HttpClientConfig config,
+      final RemoteConnectionStatusObserver statusObserver,
+      final boolean repositoryOnline,
+      final AutoBlockConfiguration autoBlockConfiguration,
+      final OutboundRequestMetricRecorder outboundRequestRecorder)
+  {
     super(delegate);
     checkNotNull(config);
     this.statusObserver = checkNotNull(statusObserver);
     this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
+    this.outboundRequestRecorder = outboundRequestRecorder;
 
     blocked = config.blocked != null ? config.blocked : false;
     autoBlock = config.autoBlock != null ? config.autoBlock : false;
@@ -137,6 +155,8 @@ public class BlockingHttpClient
       }
       else {
         updateStatusToAvailable();
+        // Record non-blocked outbound request for telemetry
+        recordOutboundRequest(filterable);
       }
       return response;
     }
@@ -145,6 +165,27 @@ public class BlockingHttpClient
         updateStatusToUnavailable(getReason(e), null, target);
       }
       throw e;
+    }
+  }
+
+  private void recordOutboundRequest(final Filterable filterable) {
+    if (outboundRequestRecorder == null) {
+      return;
+    }
+    try {
+      Object formatAttr = filterable.getContext().getAttribute(OutboundRequestMetricRecorder.CONTEXT_FORMAT);
+      String format = formatAttr instanceof String ? (String) formatAttr : "unknown";
+
+      Object repositoryTypeAttr =
+          filterable.getContext().getAttribute(OutboundRequestMetricRecorder.CONTEXT_REPOSITORY_TYPE);
+      String repositoryType = repositoryTypeAttr instanceof String ? (String) repositoryTypeAttr : "unknown";
+
+      String httpMethod = filterable.getRequest().getRequestLine().getMethod();
+
+      outboundRequestRecorder.record(format, repositoryType, httpMethod);
+    }
+    catch (Exception e) {
+      log.warn("Failed to record outbound request metric", e);
     }
   }
 

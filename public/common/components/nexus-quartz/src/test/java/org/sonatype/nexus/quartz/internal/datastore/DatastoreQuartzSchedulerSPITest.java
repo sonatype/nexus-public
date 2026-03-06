@@ -820,6 +820,77 @@ public class DatastoreQuartzSchedulerSPITest
     return triggerKey;
   }
 
+  /**
+   * Reproduces the issue: java.lang.IllegalStateException: Replication in progress
+   *
+   * This test demonstrates that scheduling a task while in replication mode throws
+   * an IllegalStateException. This is the expected behavior to prevent task scheduling
+   * during cluster event replication.
+   */
+  @Test
+  void schedulingTaskDuringReplicationThrowsException() {
+    TaskConfiguration taskConfiguration = validTaskConfiguration();
+    taskConfiguration.setTypeId("test.task.type");
+    taskConfiguration.setName("Test Task During Replication");
+
+    Schedule schedule = new Manual();
+
+    // Verify scheduling works normally (without replication)
+    TaskInfo taskInfo = underTest.scheduleTask(taskConfiguration, schedule);
+    assertThat(taskInfo, notNullValue());
+    assertThat(taskInfo.getId(), equalTo(taskConfiguration.getId()));
+
+    // Now try to schedule a task during replication mode
+    TaskConfiguration anotherTaskConfig = validTaskConfiguration();
+    anotherTaskConfig.setTypeId("another.task.type");
+    anotherTaskConfig.setName("Another Test Task");
+
+    // This should throw IllegalStateException with message "Replication in progress"
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+      EventHelper.asReplicating(() -> {
+        // Attempting to schedule task during replication should fail
+        underTest.scheduleTask(anotherTaskConfig, schedule);
+      });
+    });
+
+    // Verify the exception message
+    assertThat(exception.getMessage(), equalTo("Replication in progress"));
+  }
+
+  /**
+   * Verify that EventHelper.isReplicating() correctly tracks replication state
+   */
+  @Test
+  void eventHelperReplicationFlagIsProperlyManaged() {
+    // Initially, should not be replicating
+    assertThat(EventHelper.isReplicating(), equalTo(false));
+
+    // Inside asReplicating block, flag should be true
+    EventHelper.asReplicating(() -> {
+      assertThat(EventHelper.isReplicating(), equalTo(true));
+    });
+
+    // After asReplicating block, flag should be false again
+    assertThat(EventHelper.isReplicating(), equalTo(false));
+  }
+
+  /**
+   * Verify that nested replication calls throw IllegalStateException
+   */
+  @Test
+  void nestedReplicationCallsThrowException() {
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+      EventHelper.asReplicating(() -> {
+        // Nested replication should fail
+        EventHelper.asReplicating(() -> {
+          // This should never execute
+        });
+      });
+    });
+
+    assertThat(exception.getMessage(), equalTo("Replication already in progress"));
+  }
+
   private static <T> Provider<T> provider(final FactoryBean<T> factory) {
     return () -> {
       try {

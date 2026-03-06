@@ -95,11 +95,13 @@ public class AptContentFacetImpl
 
   static class Config
   {
-    @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
+    @NotNull(groups = {HostedType.ValidationGroup.class})
     public String distribution;
 
     @NotNull(groups = {ProxyType.ValidationGroup.class})
     public boolean flat;
+
+    public boolean enforceDistribution;
   }
 
   private Config config;
@@ -135,6 +137,11 @@ public class AptContentFacetImpl
   @Override
   public boolean isFlat() {
     return config.flat;
+  }
+
+  @Override
+  public boolean isEnforceDistribution() {
+    return config.enforceDistribution;
   }
 
   @Override

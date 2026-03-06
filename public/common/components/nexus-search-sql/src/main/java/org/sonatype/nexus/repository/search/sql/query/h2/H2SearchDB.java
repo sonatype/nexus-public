@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.sql.query.SearchDatabase;
+import org.sonatype.nexus.repository.search.sql.query.h2.H2SearchColumn.Type;
 
 import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -54,7 +55,7 @@ public class H2SearchDB
   public Optional<String> getSortColumn(final SearchField field) {
     return Optional.ofNullable(field)
         .map(columns::get)
-        .flatMap(H2SearchColumn::getSortColumnName);
+        .flatMap(H2SearchColumn::sortColumnName);
   }
 
   @Override
@@ -75,7 +76,7 @@ public class H2SearchDB
     columns.put(NAMESPACE, new H2SearchColumn(addComponentPrefix("namespace")));
     columns.put(NAME, new H2SearchColumn(addComponentPrefix("search_component_name")));
     columns.put(VERSION, new H2SearchColumn(addComponentPrefix("version"), addComponentPrefix("normalised_version")));
-    columns.put(PRERELEASE, new H2SearchColumn(addComponentPrefix("prerelease")));
+    columns.put(PRERELEASE, new H2SearchColumn(addComponentPrefix("prerelease"), Type.BOOLEAN));
 
     // Text search columns - H2 uses VARCHAR instead of TSVECTOR
     // Only mark columns as tokenized where we're certain they always contain tokenized data
@@ -96,8 +97,8 @@ public class H2SearchDB
     columns.put(SHA256, new H2SearchColumn(addComponentPrefix("sha256"), true));
     columns.put(SHA512, new H2SearchColumn(addComponentPrefix("sha512"), true));
 
-    columns.put(TAGS, new H2SearchColumn(addComponentPrefix("tags"), true, true));
-    columns.put(PATHS, new H2SearchColumn(addComponentPrefix("paths"), true, true));
+    columns.put(TAGS, new H2SearchColumn(addComponentPrefix("tags"), true, Type.JSON));
+    columns.put(PATHS, new H2SearchColumn(addComponentPrefix("paths"), true, Type.JSON));
     columns.put(UPLOADERS, new H2SearchColumn(addComponentPrefix("uploaders"), true));
     columns.put(UPLOADER_IPS, new H2SearchColumn(addComponentPrefix("uploader_ips"), true));
 

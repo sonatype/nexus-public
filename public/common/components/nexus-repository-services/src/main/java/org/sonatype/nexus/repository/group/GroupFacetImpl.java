@@ -153,6 +153,12 @@ public class GroupFacetImpl
     Set<Repository> checkedGroups = new HashSet<>();
     for (String memberName : config.memberNames) {
       Repository repository = repositoryManager.get(memberName);
+      if (repository == null) {
+        // Repository is being deleted or no longer exists
+        // Skip validation as a non-existent repository cannot create circular dependencies
+        log.debug("Member repository '{}' not found during validation, skipping", memberName);
+        continue;
+      }
       if (repository.getName().equals(repositoryName) ||
           (groupType.equals(repository.getType()) && containsGroup(repository, repositoryName, checkedGroups))) {
         return constraintViolationFactory.createViolation(CONFIG_KEY + ".memberNames",

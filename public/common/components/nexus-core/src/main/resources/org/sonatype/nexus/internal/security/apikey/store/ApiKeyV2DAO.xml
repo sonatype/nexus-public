@@ -16,6 +16,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.sonatype.nexus.internal.security.apikey.store.ApiKeyV2DAO">
 
+  <resultMap id="ApiKeyV2DataResultMap" type="ApiKeyV2Data">
+    <result property="createdByUserId" column="created_by_user_id"/>
+    <result property="createdByRealm" column="created_by_realm"/>
+  </resultMap>
+
   <insert id="createSchema">
     CREATE TABLE IF NOT EXISTS api_key_v2 (
       username          VARCHAR(200)   NOT NULL,
@@ -26,6 +31,8 @@
       secret            VARCHAR(200)   NOT NULL,
 
       created           TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_by_user_id VARCHAR(200),
+      created_by_realm   VARCHAR(200),
 
       <!--
       Optimization: put the primary principal before the domain in the primary key,
@@ -43,20 +50,20 @@
     SELECT DISTINCT principals FROM api_key_v2;
   </select>
 
-  <select id="findApiKey" resultType="ApiKeyV2Data">
+  <select id="findApiKey" resultMap="ApiKeyV2DataResultMap">
     SELECT *
       FROM api_key_v2
      WHERE username   = #{username}
        AND domain = #{domain};
   </select>
 
-  <select id="findApiKeysForUser" resultType="ApiKeyV2Data">
+  <select id="findApiKeysForUser" resultMap="ApiKeyV2DataResultMap">
     SELECT * 
       FROM api_key_v2
      WHERE username   = #{username};
   </select>
 
-  <select id="findPrincipals" resultType="ApiKeyV2Data">
+  <select id="findPrincipals" resultMap="ApiKeyV2DataResultMap">
     SELECT *
       FROM api_key_v2
      WHERE domain = #{domain}
@@ -65,8 +72,14 @@
 
   <insert id="save" parameterType="ApiKeyV2Data">
     INSERT INTO api_key_v2
-           (username, principals, domain, access_key, secret <if test="created != null">, created</if>)
-    VALUES (#{username}, #{principals}, #{domain}, #{accessKey}, #{secret} <if test="created != null">, #{created}</if>);
+           (username, principals, domain, access_key, secret
+            <if test="created != null">, created</if>
+            <if test="createdByUserId != null">, created_by_user_id</if>
+            <if test="createdByRealm != null">, created_by_realm</if>)
+    VALUES (#{username}, #{principals}, #{domain}, #{accessKey}, #{secret}
+            <if test="created != null">, #{created}</if>
+            <if test="createdByUserId != null">, #{createdByUserId}</if>
+            <if test="createdByRealm != null">, #{createdByRealm}</if>);
   </insert>
 
   <delete id="deleteApiKey">
@@ -84,28 +97,28 @@
        AND created &lt; #{expiration};
   </delete>
 
-  <select id="browse" resultType="ApiKeyV2Data">
+  <select id="browse" resultMap="ApiKeyV2DataResultMap">
     SELECT *
       FROM api_key_v2
     WHERE domain = #{domain}
     ORDER BY created;
   </select>
 
-  <select id="browseCreatedAfter" resultType="ApiKeyV2Data">
+  <select id="browseCreatedAfter" resultMap="ApiKeyV2DataResultMap">
     SELECT *
       FROM api_key_v2
     WHERE created &gt; #{created}
     ORDER BY created;
   </select>
 
-  <select id="browseCreatedBefore" resultType="ApiKeyV2Data">
+  <select id="browseCreatedBefore" resultMap="ApiKeyV2DataResultMap">
     SELECT *
       FROM api_key_v2
     WHERE created &lt; #{created}
     ORDER BY created;
   </select>
 
-  <select id="browseByDomainCreatedBefore" resultType="ApiKeyV2Data">
+  <select id="browseByDomainCreatedBefore" resultMap="ApiKeyV2DataResultMap">
     SELECT *
       FROM api_key_v2
     WHERE domain = #{domain}
@@ -127,12 +140,33 @@
        AND access_key = #{accessKey};
   </update>
 
-  <select id="browsePaginated" resultType="ApiKeyV2Data">
+  <select id="browsePaginated" resultMap="ApiKeyV2DataResultMap">
     SELECT *
       FROM api_key_v2
      WHERE domain = #{domain}
   ORDER BY created
      LIMIT #{limit}
     OFFSET #{skip};
+  </select>
+
+  <select id="browseFiltered" resultMap="ApiKeyV2DataResultMap">
+    SELECT *
+      FROM api_key_v2
+     WHERE domain = #{domain}
+        <if test="username != null">
+       AND username = #{username}
+        </if>
+  ORDER BY created
+     LIMIT #{limit}
+    OFFSET #{skip};
+  </select>
+
+  <select id="countFiltered" resultType="java.lang.Integer">
+    SELECT count(*)
+      FROM api_key_v2
+     WHERE domain = #{domain}
+        <if test="username != null">
+       AND username = #{username}
+        </if>
   </select>
 </mapper>

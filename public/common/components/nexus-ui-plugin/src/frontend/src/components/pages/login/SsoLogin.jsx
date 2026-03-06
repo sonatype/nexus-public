@@ -18,7 +18,7 @@ import UIStrings from '../../../constants/UIStrings';
 import { useRouter } from '@uirouter/react';
 import {RouteNames} from "../../../constants/RouteNames";
 
-const { SSO_BUTTON, SSO_BUTTON_LOADING } = UIStrings;
+const { SSO_BUTTON, SSO_BUTTON_CLOUD, SSO_BUTTON_LOADING } = UIStrings;
 
 /**
  * SSO Login Button component that redirects to the appropriate authentication endpoint
@@ -29,6 +29,7 @@ export default function SsoLogin() {
   const samlEnabled = ExtJS.useState(() => ExtJS.state().getValue('samlEnabled', false));
   const oauth2Enabled = ExtJS.useState(() => ExtJS.state().getValue('oauth2Enabled', false));
   const contextPath = ExtJS.useState(() => ExtJS.state().getValue('nexus-context-path', ''));
+  const isCloud = ExtJS.useState(() => ExtJS.state().getValue('isCloud', false));
   const contextPrefix = contextPath === '/' ? '' : contextPath;
   const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
@@ -73,7 +74,7 @@ export default function SsoLogin() {
           {SSO_BUTTON_LOADING}
         </NxLoadingSpinner>
       ) : (
-        SSO_BUTTON
+        isCloud ? SSO_BUTTON_CLOUD : SSO_BUTTON
       )}
     </NxButton>
   );

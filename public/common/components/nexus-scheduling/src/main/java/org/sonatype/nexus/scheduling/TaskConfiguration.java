@@ -64,6 +64,8 @@ public class TaskConfiguration
 
   public static final String LAST_RUN_STATE_RUN_STARTED = "lastRunState.runStarted";
 
+  public static final String LAST_RUN_STATE_RUN_SCHEDULED = "lastRunState.runScheduled";
+
   public static final String LAST_RUN_STATE_RUN_DURATION = "lastRunState.runDuration";
 
   public static final String PROGRESS_KEY = ".progress";
@@ -290,19 +292,32 @@ public class TaskConfiguration
     if (hasLastRunState()) {
       String endStateString = getString(LAST_RUN_STATE_END_STATE);
       long runStarted = getLong(LAST_RUN_STATE_RUN_STARTED, System.currentTimeMillis());
+      long runScheduled = getLong(LAST_RUN_STATE_RUN_SCHEDULED, runStarted);
       long runDuration = getLong(LAST_RUN_STATE_RUN_DURATION, 0);
-      return new LastRunStateImpl(TaskState.valueOf(endStateString), new Date(runStarted), runDuration);
+      return new LastRunStateImpl(TaskState.valueOf(endStateString), new Date(runStarted), new Date(runScheduled),
+          runDuration);
     }
     return null;
   }
 
   public void setLastRunState(final TaskState endState, final Date runStarted, final long runDuration) {
+    setLastRunState(endState, runStarted, runStarted, runDuration);
+  }
+
+  public void setLastRunState(
+      final TaskState endState,
+      final Date runStarted,
+      final Date runScheduled,
+      final long runDuration)
+  {
     checkNotNull(endState);
     checkNotNull(runStarted);
+    checkNotNull(runScheduled);
     checkArgument(runDuration >= 0);
 
     setString(LAST_RUN_STATE_END_STATE, endState.name());
     setLong(LAST_RUN_STATE_RUN_STARTED, runStarted.getTime());
+    setLong(LAST_RUN_STATE_RUN_SCHEDULED, runScheduled.getTime());
     setLong(LAST_RUN_STATE_RUN_DURATION, runDuration);
   }
 
@@ -429,11 +444,19 @@ public class TaskConfiguration
 
     private final Date runStarted;
 
+    private final Date runScheduled;
+
     private final long runDuration;
 
-    public LastRunStateImpl(final TaskState endState, final Date runStarted, final long runDuration) {
+    public LastRunStateImpl(
+        final TaskState endState,
+        final Date runStarted,
+        final Date runScheduled,
+        final long runDuration)
+    {
       this.endState = endState;
       this.runStarted = runStarted;
+      this.runScheduled = runScheduled;
       this.runDuration = runDuration;
     }
 
@@ -448,13 +471,18 @@ public class TaskConfiguration
     }
 
     @Override
+    public Date getRunScheduled() {
+      return runScheduled;
+    }
+
+    @Override
     public long getRunDuration() {
       return runDuration;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(endState, runDuration, runStarted);
+      return Objects.hash(endState, runDuration, runStarted, runScheduled);
     }
 
     @Override
@@ -470,7 +498,8 @@ public class TaskConfiguration
       }
       LastRunStateImpl other = (LastRunStateImpl) obj;
       return endState == other.endState && runDuration == other.runDuration
-          && Objects.equals(runStarted, other.runStarted);
+          && Objects.equals(runStarted, other.runStarted)
+          && Objects.equals(runScheduled, other.runScheduled);
     }
 
     @Override
@@ -478,6 +507,7 @@ public class TaskConfiguration
       return getClass().getSimpleName() + "{" +
           "endState=" + endState +
           ", runStarted=" + runStarted +
+          ", runScheduled=" + runScheduled +
           ", runDuration=" + runDuration +
           '}';
     }

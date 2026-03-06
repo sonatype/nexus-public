@@ -37,6 +37,7 @@ import NugetGroupConfiguration from './facets/NugetGroupConfiguration';
 import WritableRepositoryConfiguration from './facets/WritableRepositoryConfiguration';
 import PreEmptiveAuthConfiguration from './facets/PreEmptiveAuthConfiguration';
 import AptDistributionConfiguration from './facets/AptDistributionConfiguration';
+import AptEnforceDistributionConfiguration from './facets/AptEnforceDistributionConfiguration';
 import AptSigningConfiguration from './facets/AptSigningConfiguration';
 import AptFlatConfiguration from './facets/AptFlatConfiguration';
 import TerraformSigningConfiguration from './facets/TerraformSigningConfiguration';
@@ -102,18 +103,21 @@ const repositoryFormats = {
     })
   },
   apt_proxy: {
-    facets: [AptDistributionConfiguration, AptFlatConfiguration, ...genericFacets.proxy],
+    facets: [AptEnforceDistributionConfiguration, AptDistributionConfiguration, AptFlatConfiguration, ...genericFacets.proxy],
     defaultValues: {
       ...genericDefaultValues.proxy,
       apt: {
         distribution: null,
-        flat: false
+        flat: false,
+        enforceDistribution: false
       }
     },
     validators: (data) => ({
       ...genericValidators.proxy(data),
       apt: {
-        distribution: ValidationUtils.validateNotBlank(data.apt?.distribution)
+        distribution: data.apt?.enforceDistribution
+          ? ValidationUtils.validateNotBlank(data.apt?.distribution)
+          : null
       }
     })
   },

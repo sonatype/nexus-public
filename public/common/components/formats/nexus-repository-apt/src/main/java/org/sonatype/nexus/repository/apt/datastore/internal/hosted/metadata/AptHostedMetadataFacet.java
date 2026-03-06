@@ -126,7 +126,7 @@ public class AptHostedMetadataFacet
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
-    this.cooperation = cooperationBuilder.build(getRepository().getName() + ":repomd");
+    this.cooperation = cooperationBuilder.build(getRepository().getName() + ":apt-metadata");
   }
 
   public void addPackageMetadata(final FluentAsset asset) {

@@ -14,6 +14,7 @@ package org.sonatype.nexus.security.privilege.rest;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import jakarta.inject.Inject;
@@ -68,6 +69,7 @@ public class PrivilegeApiResource
     return getSecuritySystem().listPrivileges()
         .stream()
         .map(this::toApiPrivilege)
+        .filter(Objects::nonNull)
         .sorted(Comparator.comparing(ApiPrivilege::getName))
         .collect(Collectors.toList());
   }

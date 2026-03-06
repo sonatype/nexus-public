@@ -41,6 +41,15 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   },
 }));
 
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+  useRouter: jest.fn(() => ({
+    stateService: {
+      go: jest.fn()
+    }
+  }))
+}));
+
 const {UPGRADE_ALERT: {PENDING, PROGRESS, ERROR, COMPLETE, WARN}} = UIStrings;
 
 describe('SystemNotices - Upgrade Alert', () => {
@@ -104,8 +113,22 @@ describe('SystemNotices - Upgrade Alert', () => {
     expect(axios.delete).toHaveBeenCalledWith('service/rest/v1/clustered/upgrade-database-schema');
   });
 
-  function renderComponent(currentState, message) {
-    return renderView(null, null, currentState, message);
+  it('hides upgrade alert when recovery mode is enabled', () => {
+    renderComponent('needsUpgrade', null, true);
+
+    expect(screen.queryByText(UpgradeAlertStrings.UPGRADE_ALERT.PENDING.TEXT)).not.toBeInTheDocument();
+  });
+
+  it('shows upgrade alert when recovery mode is disabled', async () => {
+    renderComponent('needsUpgrade', null, false);
+
+    const expectedMessage = UpgradeAlertStrings.UPGRADE_ALERT.PENDING.TEXT;
+    const expectedTitle = UpgradeAlertStrings.UPGRADE_ALERT.PENDING.LABEL;
+    assertCommunityEditionLimitMessageShowing(expectedMessage, expectedTitle);
+  });
+
+  function renderComponent(currentState, message, recoveryModeEnabled) {
+    return renderView(null, null, currentState, message, recoveryModeEnabled);
   }
 
   function assertDismissButtonNotShown(alert) {

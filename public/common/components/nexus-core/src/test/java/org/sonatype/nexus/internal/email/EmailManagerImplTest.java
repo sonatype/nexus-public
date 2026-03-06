@@ -104,7 +104,8 @@ public class EmailManagerImplTest
     assertThat(email.isSSLOnConnect(), is(false));
     assertThat(email.isSSLCheckServerIdentity(), is(false));
     assertThat(email.getMailSession().getProperties().containsKey("mail.smtp.ssl.socketFactory"), is(true));
-    assertThat(email.getMailSession().getProperties().containsKey(EmailConstants.MAIL_SMTP_SSL_ENABLE), is(true));
+    // MAIL_SMTP_SSL_ENABLE should not be set when using STARTTLS (only for SSL on connect)
+    assertThat(email.getMailSession().getProperties().containsKey(EmailConstants.MAIL_SMTP_SSL_ENABLE), is(false));
     assertThat(email.getMailSession().getProperties().containsKey("mail.smtp.socketFactory.class"), is(false));
     verify(mail).setAuthentication("user", "pass");
   }
@@ -213,6 +214,65 @@ public class EmailManagerImplTest
     emailManager.send(email);
 
     verify(email, never()).send();
+  }
+
+  @Test
+  public void testSslOnConnectWithTrustStoreEnabled() throws Exception {
+    when(trustStore.getSSLContext()).thenReturn(SSLContext.getDefault());
+
+    EmailConfiguration emailConfig = mock(EmailConfiguration.class);
+    when(emailConfig.getHost()).thenReturn("example.com");
+    when(emailConfig.getPort()).thenReturn(465);
+    when(emailConfig.getFromAddress()).thenReturn("sender@example.com");
+    when(emailConfig.getUsername()).thenReturn("user");
+    when(emailConfig.isStartTlsEnabled()).thenReturn(false);
+    when(emailConfig.isStartTlsRequired()).thenReturn(false);
+    when(emailConfig.isSslOnConnectEnabled()).thenReturn(true);
+    when(emailConfig.isSslCheckServerIdentityEnabled()).thenReturn(true);
+    when(emailConfig.isNexusTrustStoreEnabled()).thenReturn(true);
+
+    SimpleEmail mail = spy(SimpleEmail.class);
+
+    Email email = emailManager.apply(emailConfig, mail, "pass");
+
+    assertThat(email.isStartTLSEnabled(), is(false));
+    assertThat(email.isStartTLSRequired(), is(false));
+    assertThat(email.isSSLOnConnect(), is(true));
+    assertThat(email.isSSLCheckServerIdentity(), is(true));
+    // SSL socket factory and MAIL_SMTP_SSL_ENABLE should be set for SSL on connect
+    assertThat(email.getMailSession().getProperties().containsKey("mail.smtp.ssl.socketFactory"), is(true));
+    assertThat(email.getMailSession().getProperties().containsKey(EmailConstants.MAIL_SMTP_SSL_ENABLE), is(true));
+    assertThat(email.getMailSession().getProperties().get(EmailConstants.MAIL_SMTP_SSL_ENABLE), is(true));
+    verify(mail).setAuthentication("user", "pass");
+  }
+
+  @Test
+  public void testNonSslEmailServerWithTrustStoreEnabled() throws Exception {
+    when(trustStore.getSSLContext()).thenReturn(SSLContext.getDefault());
+
+    EmailConfiguration emailConfig = mock(EmailConfiguration.class);
+    when(emailConfig.getHost()).thenReturn("example.com");
+    when(emailConfig.getPort()).thenReturn(25);
+    when(emailConfig.getFromAddress()).thenReturn("sender@example.com");
+    when(emailConfig.getUsername()).thenReturn("user");
+    when(emailConfig.isStartTlsEnabled()).thenReturn(false);
+    when(emailConfig.isStartTlsRequired()).thenReturn(false);
+    when(emailConfig.isSslOnConnectEnabled()).thenReturn(false);
+    when(emailConfig.isSslCheckServerIdentityEnabled()).thenReturn(false);
+    when(emailConfig.isNexusTrustStoreEnabled()).thenReturn(true);
+
+    SimpleEmail mail = spy(SimpleEmail.class);
+
+    Email email = emailManager.apply(emailConfig, mail, "pass");
+
+    assertThat(email.isStartTLSEnabled(), is(false));
+    assertThat(email.isStartTLSRequired(), is(false));
+    assertThat(email.isSSLOnConnect(), is(false));
+    assertThat(email.isSSLCheckServerIdentity(), is(false));
+    // SSL socket factory should NOT be set because neither SSL nor STARTTLS is enabled
+    assertThat(email.getMailSession().getProperties().containsKey("mail.smtp.ssl.socketFactory"), is(false));
+    assertThat(email.getMailSession().getProperties().containsKey(EmailConstants.MAIL_SMTP_SSL_ENABLE), is(false));
+    verify(mail).setAuthentication("user", "pass");
   }
 
   @Test

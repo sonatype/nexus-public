@@ -208,23 +208,39 @@ public abstract class QuartzSchedulerSPI
 
   private void reattachListeners() {
     final Optional<Date> lastShutdownTime = lastShutdownTimeService.estimateLastShutdownTime();
-    forEachNexusJob((final Trigger trigger, final JobDetail jobDetail) -> {
-      try {
-        updateLastRunStateInfo(jobDetail, lastShutdownTime);
-      }
-      catch (SchedulerException e) {
-        log.error("Error updating last run state for {}", jobDetail.getKey(), e);
-      }
-    });
 
-    forEachNexusJob((final Trigger trigger, final JobDetail jobDetail) -> {
+    // NEXUS-50273: Cache getNexusJobs() result to avoid redundant database queries during startup.
+    // Previously, each forEachNexusJob() call fetched all jobs from database (~4 queries per call),
+    // causing 40+ minute delays for deployments with hundreds of scheduled tasks.
+    final Map<Trigger, JobDetail> nexusJobs;
+    try {
+      nexusJobs = getNexusJobs();
+      log.debug("Loaded {} Nexus jobs for listener reattachment", nexusJobs.size());
+    }
+    catch (SchedulerException e) {
+      log.error("Error loading jobs during listener reattachment", e);
+      return;
+    }
+
+    // Update last run state info for all jobs
+    for (Entry<Trigger, JobDetail> entry : nexusJobs.entrySet()) {
       try {
-        stubJobListener(jobDetail);
+        updateLastRunStateInfo(entry.getValue(), lastShutdownTime);
       }
       catch (SchedulerException e) {
-        log.error("Error attaching job listener to {}", jobDetail.getKey(), e);
+        log.error("Error updating last run state for {}", entry.getValue().getKey(), e);
       }
-    });
+    }
+
+    // Attach stub listeners for all jobs
+    for (Entry<Trigger, JobDetail> entry : nexusJobs.entrySet()) {
+      try {
+        stubJobListener(entry.getValue());
+      }
+      catch (SchedulerException e) {
+        log.error("Error attaching job listener to {}", entry.getValue().getKey(), e);
+      }
+    }
 
     delayedExecutor.execute(() -> {
       forEachNexusJob((final Trigger trigger, final JobDetail jobDetail) -> {

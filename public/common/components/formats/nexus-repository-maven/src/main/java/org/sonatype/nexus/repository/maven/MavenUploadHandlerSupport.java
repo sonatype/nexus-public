@@ -249,7 +249,8 @@ public abstract class MavenUploadHandlerSupport
           new UploadFieldDefinition(EXTENSION, false, Type.STRING));
 
       UploadRegexMap regexMap = new UploadRegexMap(
-          "-(?:(?:\\.?\\d)+)(?:-(?:SNAPSHOT|\\d+))?(?:-(\\w+))?\\.((?:\\.?\\w)+)$", CLASSIFIER, EXTENSION);
+          "-(?:(?:\\.?\\d)+(?:-(?:SNAPSHOT|[\\w]+))*?)(?:-(sources|javadoc|tests|test-sources|test-jar|client|server|shaded))?\\.((?:\\.?\\w)+)$",
+          CLASSIFIER, EXTENSION);
 
       definition = getDefinition(Maven2Format.NAME, true, componentFields, assetFields, regexMap);
     }

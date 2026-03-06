@@ -460,6 +460,160 @@ class BrowseNodeDAOTest
     }
   }
 
+  @Test
+  void testTrimBrowseNodes_removesOrphanedDirectoriesWithComponentId() {
+    // NEXUS-45497: Test that trimBrowseNodes removes orphaned directory nodes even when they have component_id set
+    // This simulates the scenario where duplicate RPMs are uploaded to different paths and one is deleted
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      // Create a directory node that has component_id set but no asset_id and no children
+      // This represents an orphaned directory after an asset deletion
+      BrowseNodeData orphanedDir = createNode(null, "orphaned", "/orphaned/");
+      orphanedDir.dbComponentId = internalComponentId(component1); // Set component_id
+      dao.mergeBrowseNode(orphanedDir);
+
+      // Create another directory node without component_id or asset_id (standard orphaned directory)
+      BrowseNodeData orphanedDir2 = createNode(null, "orphaned2", "/orphaned2/");
+      dao.mergeBrowseNode(orphanedDir2);
+
+      session.getTransaction().commit();
+    }
+
+    // Verify both orphaned directories exist
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      List<BrowseNode> listing = getListing(dao);
+      assertThat(listing.size(), is(5)); // original 3 + 2 new orphaned directories
+
+      // Find the orphaned directories in the listing
+      boolean foundOrphaned1 = listing.stream().anyMatch(node -> node.getName().equals("orphaned"));
+      boolean foundOrphaned2 = listing.stream().anyMatch(node -> node.getName().equals("orphaned2"));
+      assertThat(foundOrphaned1, is(true));
+      assertThat(foundOrphaned2, is(true));
+    }
+
+    // Run trimBrowseNodes to clean up orphaned directories
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      // trimBrowseNodes returns true if any nodes were deleted, false otherwise
+      // Run it in a loop until no more orphaned nodes are found
+      int trimCount = 0;
+      while (dao.trimBrowseNodes(1)) {
+        trimCount++;
+      }
+
+      // Should have run at least once (to delete the orphaned directories)
+      assertThat(trimCount, is(greaterThan(0)));
+
+      session.getTransaction().commit();
+    }
+
+    // Verify orphaned directories are removed but other nodes remain
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      List<BrowseNode> listing = getListing(dao);
+
+      // Note: "alpha" is also an orphaned node (no asset_id, no component_id, no children)
+      // so it will be cleaned up along with the two orphaned directories we created
+      // Only beta and gamma directories should remain at the root level
+      assertThat(listing.size(), is(2)); // beta and gamma
+
+      // Verify orphaned directories are gone
+      boolean foundOrphaned1 = listing.stream().anyMatch(node -> node.getName().equals("orphaned"));
+      boolean foundOrphaned2 = listing.stream().anyMatch(node -> node.getName().equals("orphaned2"));
+      boolean foundAlpha = listing.stream().anyMatch(node -> node.getName().equals("alpha"));
+      assertThat(foundOrphaned1, is(false));
+      assertThat(foundOrphaned2, is(false));
+      assertThat(foundAlpha, is(false)); // alpha was also orphaned
+
+      // Verify beta and gamma still exist
+      assertThat(listing.get(0), sameNode(beta));
+      assertThat(listing.get(1), sameNode(gamma));
+    }
+  }
+
+  @Test
+  void testTrimBrowseNodes_preservesDirectoriesWithChildren() {
+    // Test that trimBrowseNodes does NOT remove directory nodes that have children
+    // but DOES remove orphaned nodes like alpha (no asset, no children) and betaTwo (component-only node)
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      // Run trimBrowseNodes - will delete orphaned nodes
+      boolean deletedAny = dao.trimBrowseNodes(1);
+
+      // Should delete orphaned nodes (alpha has no asset/children, betaTwo has component but no asset/children)
+      assertThat(deletedAny, is(true));
+
+      session.getTransaction().commit();
+    }
+
+    // Verify directories with children are preserved, but orphaned nodes are gone
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      List<BrowseNode> listing = getListing(dao);
+      // beta and gamma should remain (they have children)
+      assertThat(listing.size(), is(2));
+      assertThat(listing.get(0), sameNode(beta));
+      assertThat(listing.get(1), sameNode(gamma));
+
+      // Verify beta still has its child with asset
+      List<BrowseNode> betaChildren = getListing(dao, "beta");
+      assertThat(betaChildren.size(), is(1)); // only betaThree (with asset) should remain
+      assertThat(betaChildren.get(0), sameNode(betaThree));
+    }
+  }
+
+  @Test
+  void testTrimBrowseNodes_preservesNodesWithAssets() {
+    // Test that trimBrowseNodes does NOT remove nodes that have asset_id set
+    // We'll use the existing betaThree node which already has an asset
+
+    // First, let's clean up any orphaned nodes from the initial setup
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+      // Run trim to clean up orphaned nodes (alpha and betaTwo)
+      while (dao.trimBrowseNodes(1)) {
+        // Continue until no more nodes are deleted
+      }
+      session.getTransaction().commit();
+    }
+
+    // Verify that nodes with assets are preserved
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+
+      // Check that betaThree (which has asset2) still exists
+      List<BrowseNode> betaChildren = getListing(dao, "beta");
+      assertThat(betaChildren.size(), is(1)); // only betaThree should remain (betaTwo was trimmed)
+      assertThat(betaChildren.get(0), sameNode(betaThree));
+
+      // Check that gammaOneAlpha (which has asset1) still exists
+      List<BrowseNode> gammaOneChildren = getListing(dao, "gamma", "one");
+      assertThat(gammaOneChildren.size(), is(1));
+      assertThat(gammaOneChildren.get(0), sameNode(gammaOneAlpha));
+    }
+
+    // Run trimBrowseNodes again - should not delete anything since all remaining nodes
+    // either have assets or have children
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+      boolean deletedAny = dao.trimBrowseNodes(1);
+
+      // Should not delete any more nodes
+      assertThat(deletedAny, is(false));
+
+      session.getTransaction().commit();
+    }
+  }
+
   private static List<BrowseNode> getListing(final BrowseNodeDAO dao, final String... paths) {
     List<BrowseNode> listing = dao.getByDisplayPath(1, asList(paths), 100, null, null);
     listing.sort(byName);

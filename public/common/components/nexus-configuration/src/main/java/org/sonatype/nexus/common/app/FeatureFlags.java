@@ -32,9 +32,6 @@ public class FeatureFlags
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 
-  /* Terraform Group repository type is hidden behind the feature flag. Default value: false */
-  public static final String TERRAFORM_GROUP_ENABLED = "nexus.format.terraform.group.enabled";
-
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   public static final String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 
@@ -283,10 +280,45 @@ public class FeatureFlags
 
   public static final String REACT_CAPABILITIES_NAMED_VALUE = "${nexus.react.capabilities.enabled:true}";
 
-  // Swift Hosted repository type. Default value: false
-  public static final String SWIFT_HOSTED_ENABLED = "nexus.format.swift.hosted.enabled";
+  // Swift Group repository type. Default value: false
+  public static final String SWIFT_GROUP_ENABLED = "nexus.format.swift.group.enabled";
 
   /* Enable principal permissions cache. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE =
       "${nexus.security.principal.permissions.cache.enabled:true}";
+
+  /* Principal permissions cache maximum size. Default value: 250 */
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE =
+      "nexus.authorizingrealm.permissionscache.maximumsize";
+
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE_NAMED_VALUE =
+      "${nexus.authorizingrealm.permissionscache.maximumsize:250}";
+
+  /* Principal permissions cache expire after write in minutes. Default value: 60 */
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES =
+      "nexus.authorizingrealm.permissionscache.expireafterwrite.minutes";
+
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES_NAMED_VALUE =
+      "${nexus.authorizingrealm.permissionscache.expireafterwrite.minutes:60}";
+
+  /* Principal permissions cache expire after access in minutes. Default value: 5 */
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES =
+      "nexus.authorizingrealm.permissionscache.expireafteraccess.minutes";
+
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES_NAMED_VALUE =
+      "${nexus.authorizingrealm.permissionscache.expireafteraccess.minutes:5}";
+
+  /* Principal permissions cache record statistics. Default value: true */
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS =
+      "nexus.authorizingrealm.permissionscache.recordstats";
+
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS_NAMED_VALUE =
+      "${nexus.authorizingrealm.permissionscache.recordstats:true}";
+
+  /* Principal permissions cache concurrency level. Default value: 16 */
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL =
+      "nexus.authorizingrealm.permissionscache.concurrencylevel";
+
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL_NAMED_VALUE =
+      "${nexus.authorizingrealm.permissionscache.concurrencylevel:16}";
 }

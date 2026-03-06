@@ -186,7 +186,7 @@ public class MavenPath
 
   public MavenPath(final String path, final Coordinates coordinates) {
     checkNotNull(path);
-    String normalizedPath = normalizePath(path);
+    final String normalizedPath = normalizePath(path);
     checkArgument(!normalizedPath.startsWith("/"), "Path must not start with '/'");
     this.path = normalizedPath;
     this.fileName = this.path.substring(normalizedPath.lastIndexOf('/') + 1);
@@ -275,9 +275,15 @@ public class MavenPath
   @Nonnull
   public MavenPath subordinateOf() {
     if (hashType != null) {
-      int hashSuffixLen = hashType.getExt().length() + 1; // the dot
+      final String hashExt = "." + hashType.getExt();
+      final int hashSuffixLen = hashExt.length();
       Coordinates mainCoordinates = null;
       if (coordinates != null) {
+        final String ext = coordinates.getExtension();
+        // Only trim extension if it actually ends with the hash suffix and is long enough
+        final String newExt = (ext.endsWith(hashExt) && ext.length() > hashSuffixLen)
+            ? ext.substring(0, ext.length() - hashSuffixLen)
+            : ext;
         mainCoordinates = new Coordinates(
             coordinates.isSnapshot(),
             coordinates.getGroupId(),
@@ -287,7 +293,7 @@ public class MavenPath
             coordinates.getBuildNumber(),
             coordinates.getBaseVersion(),
             coordinates.getClassifier(),
-            coordinates.getExtension().substring(0, coordinates.getExtension().length() - hashSuffixLen),
+            newExt,
             coordinates.getSignatureType());
       }
       return new MavenPath(
@@ -295,8 +301,14 @@ public class MavenPath
           mainCoordinates);
     }
     else if (coordinates != null && coordinates.getSignatureType() != null) {
-      int signatureSuffixLen = coordinates.getSignatureType().getExt().length() + 1; // the dot
-      Coordinates mainCoordinates = new Coordinates(
+      final String sigExt = "." + coordinates.getSignatureType().getExt();
+      final int signatureSuffixLen = sigExt.length();
+      final String ext = coordinates.getExtension();
+      // Only trim extension if it actually ends with the signature suffix and is long enough
+      final String newExt = (ext.endsWith(sigExt) && ext.length() > signatureSuffixLen)
+          ? ext.substring(0, ext.length() - signatureSuffixLen)
+          : ext;
+      final Coordinates mainCoordinates = new Coordinates(
           coordinates.isSnapshot(),
           coordinates.getGroupId(),
           coordinates.getArtifactId(),
@@ -305,7 +317,7 @@ public class MavenPath
           coordinates.getBuildNumber(),
           coordinates.getBaseVersion(),
           coordinates.getClassifier(),
-          coordinates.getExtension().substring(0, coordinates.getExtension().length() - signatureSuffixLen),
+          newExt,
           null);
       return new MavenPath(
           path.substring(0, path.length() - signatureSuffixLen),
@@ -365,7 +377,7 @@ public class MavenPath
     checkArgument(hashType == null, "This path is already a hash: %s", this);
     checkArgument(coordinates != null, "Only artifact paths may have signatures: %s", this);
     checkArgument(coordinates.getSignatureType() == null, "This path is already a signature: %s", this);
-    Coordinates signatureCoordinates = new Coordinates(
+    final Coordinates signatureCoordinates = new Coordinates(
         coordinates.isSnapshot(),
         coordinates.getGroupId(),
         coordinates.getArtifactId(),
@@ -390,8 +402,8 @@ public class MavenPath
     checkNotNull(extension);
     checkArgument(coordinates != null, "Only artifact paths may locate: %s", this);
 
-    MavenPath origin = main();
-    Coordinates newCoordinates = new Coordinates(
+    final MavenPath origin = main();
+    final Coordinates newCoordinates = new Coordinates(
         origin.coordinates.isSnapshot(),
         origin.coordinates.getGroupId(),
         origin.coordinates.getArtifactId(),
@@ -443,7 +455,7 @@ public class MavenPath
     if (!(o instanceof MavenPath)) {
       return false;
     }
-    MavenPath that = (MavenPath) o;
+    final MavenPath that = (MavenPath) o;
     return path.equals(that.path);
   }
 

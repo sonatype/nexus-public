@@ -37,12 +37,12 @@ import UIStrings from '../../../../constants/UIStrings';
 import './UploadList.scss';
 import { useRouter } from '@uirouter/react';
 import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
-import { copyUrl } from '../BrowseUtils';
+import { copyUrl as defaultCopyUrl } from '../BrowseUtils';
 
 const {UPLOAD, FILTER} = UIStrings;
 const {COLUMNS, COPY_URL_TITLE} = UPLOAD.LIST;
 
-export default function UploadList() {
+export default function UploadList({copyUrl = defaultCopyUrl} = {}) {
   const router = useRouter();
   const onEdit = useCallback(itemId => router.stateService.go(ROUTE_NAMES.BROWSE.UPLOAD.EDIT, { itemId }));
 

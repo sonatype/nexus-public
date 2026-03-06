@@ -26,6 +26,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
 import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
+import org.sonatype.nexus.scheduling.RecoveryModeService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskUtils;
 
@@ -69,6 +70,9 @@ public class CompactBlobStoreTaskTest
   TaskUtils taskUtils;
 
   @Mock
+  RecoveryModeService recoveryModeService;
+
+  @Mock
   BlobStoreManager blobStoreManager;
 
   @Mock
@@ -88,7 +92,8 @@ public class CompactBlobStoreTaskTest
     configuration.setTypeId(TYPE_ID);
     configuration.setId(TASK_NAME);
 
-    underTest = new CompactBlobStoreTask(changeBlobstoreStore, blobStoreUsageChecker, taskUtils, 5, 20);
+    underTest =
+        new CompactBlobStoreTask(changeBlobstoreStore, blobStoreUsageChecker, taskUtils, recoveryModeService, 5, 20);
     underTest.install(blobStoreManager);
   }
 
@@ -203,6 +208,21 @@ public class CompactBlobStoreTaskTest
     assertThat("Result should return number of processed blob stores", underTest.result(), is(2));
     verify(blobStores.get(0), times(1)).compact(any(BlobStoreUsageChecker.class), any(Duration.class));
     verify(blobStores.get(1), times(1)).compact(any(BlobStoreUsageChecker.class), any(Duration.class));
+  }
+
+  @Test
+  public void testCompact_failsWhenRecoveryModeActive() throws Exception {
+    configuration.setString(BLOBSTORE_NAME_FIELD_ID, "blobstore-one");
+    doThrow(
+        new IllegalStateException("expected exception"))
+            .when(recoveryModeService)
+            .ensureNotInRecoveryMode(any());
+
+    List<BlobStore> blobStores = runCompact("blobstore-one");
+
+    verify(recoveryModeService).ensureNotInRecoveryMode(any());
+    verify(blobStores.get(0), times(0)).compact(any(BlobStoreUsageChecker.class), any(Duration.class));
+    assertThat("No blob stores should be processed when recovery mode is active", underTest.result(), is(0));
   }
 
   private List<BlobStore> runCompact(final String... names) throws Exception {

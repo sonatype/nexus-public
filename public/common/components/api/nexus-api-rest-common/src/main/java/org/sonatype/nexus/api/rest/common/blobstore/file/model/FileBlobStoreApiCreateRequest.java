@@ -13,8 +13,10 @@
 package org.sonatype.nexus.api.rest.common.blobstore.file.model;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 /**
  * @since 3.19
@@ -23,6 +25,7 @@ public class FileBlobStoreApiCreateRequest
     extends FileBlobStoreApiModel
 {
   @NotEmpty(message = "Name is required")
+  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   private String name;
 
   public String getName() {

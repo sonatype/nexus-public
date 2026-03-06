@@ -38,6 +38,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
+import org.sonatype.nexus.blobstore.api.BlobStoreMigrationStateProvider;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.HeavyBlobRef;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobIndex;
@@ -690,7 +691,7 @@ public class S3BlobStoreTest
 
   private S3BlobStore createBlobStore() {
     S3BlobStore blobstore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
-        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true);
+        false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null);
 
     ReflectionTestUtils.setField(blobstore, "maxRetries", 1);
     ReflectionTestUtils.setField(blobstore, "retryDelayMs", 500L);
@@ -767,5 +768,179 @@ public class S3BlobStoreTest
     assertThat(originalCachedBlob.getHeaders().keySet(), not(empty()));
 
     assertThat(dbDerivedBlob.getMetrics(), is(metrics));
+  }
+
+  @Test
+  public void testBlobExistsInStorage_blobExists() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    String path = "myPrefix/content/" + new VolumeChapterLocationStrategy().location(blobId) + ".bytes";
+
+    // Mock successful HEAD request (blob exists)
+    HeadObjectResponse headResponse = mock(HeadObjectResponse.class);
+    when(s3.getObjectMetadata("mybucket", path)).thenReturn(headResponse);
+
+    // Test
+    boolean exists = blobStore.blobExistsInStorage(blobId);
+
+    assertThat(exists, is(true));
+    verify(s3).getObjectMetadata("mybucket", path);
+  }
+
+  @Test
+  public void testBlobExistsInStorage_blobDoesNotExist() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    String path = "myPrefix/content/" + new VolumeChapterLocationStrategy().location(blobId) + ".bytes";
+
+    // Mock NoSuchKeyException (blob doesn't exist - 404)
+    NoSuchKeyException noSuchKeyException = (NoSuchKeyException) NoSuchKeyException.builder()
+        .message("The specified key does not exist")
+        .build();
+    when(s3.getObjectMetadata("mybucket", path)).thenThrow(noSuchKeyException);
+
+    // Test
+    boolean exists = blobStore.blobExistsInStorage(blobId);
+
+    assertThat(exists, is(false));
+    verify(s3).getObjectMetadata("mybucket", path);
+  }
+
+  @Test
+  public void testBlobExistsInStorage_s3Exception() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    String path = "myPrefix/content/" + new VolumeChapterLocationStrategy().location(blobId) + ".bytes";
+
+    // Mock S3 exception (not 404 - could be permission error, network timeout, etc.)
+    S3Exception s3Exception = (S3Exception) S3Exception.builder()
+        .message("Access Denied")
+        .statusCode(403)
+        .build();
+    when(s3.getObjectMetadata("mybucket", path)).thenThrow(s3Exception);
+
+    // Test - should return true to avoid false negatives
+    boolean exists = blobStore.blobExistsInStorage(blobId);
+
+    assertThat(exists, is(true));
+    verify(s3).getObjectMetadata("mybucket", path);
+  }
+
+  @Test
+  public void testBlobExistsInStorage_genericException() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    String path = "myPrefix/content/" + new VolumeChapterLocationStrategy().location(blobId) + ".bytes";
+
+    // Mock generic exception (network error, etc.)
+    when(s3.getObjectMetadata("mybucket", path)).thenThrow(new RuntimeException("Network error"));
+
+    // Test - should return true to avoid false negatives
+    boolean exists = blobStore.blobExistsInStorage(blobId);
+
+    assertThat(exists, is(true));
+    verify(s3).getObjectMetadata("mybucket", path);
+  }
+
+  @Test
+  public void testGet_heavyBlobRefReturnsNullWhenBlobDoesNotExistInStorage() throws Exception {
+    // Create blob store with migration state provider that indicates migration is active
+    BlobStoreMigrationStateProvider migrationStateProvider = mock(BlobStoreMigrationStateProvider.class);
+    when(migrationStateProvider.isMigrationActive()).thenReturn(true);
+
+    S3BlobStore blobStoreWithMigration = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(),
+        uploader, copier, false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager,
+        blobStoreQuotaUsageChecker, true, migrationStateProvider);
+    ReflectionTestUtils.setField(blobStoreWithMigration, "maxRetries", 1);
+    ReflectionTestUtils.setField(blobStoreWithMigration, "retryDelayMs", 500L);
+
+    blobStoreWithMigration.init(config);
+    blobStoreWithMigration.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    String path = "myPrefix/content/" + new VolumeChapterLocationStrategy().location(blobId) + ".bytes";
+
+    // Mock NoSuchKeyException - blob doesn't exist in S3 storage
+    NoSuchKeyException noSuchKeyException = (NoSuchKeyException) NoSuchKeyException.builder()
+        .message("The specified key does not exist")
+        .build();
+    when(s3.getObjectMetadata("mybucket", path)).thenThrow(noSuchKeyException);
+
+    // Also mock getObject to throw exception for both properties and bytes
+    when(s3.getObject("mybucket", path)).thenThrow(noSuchKeyException);
+    when(s3.getObject(eq("mybucket"), contains(".properties"))).thenThrow(noSuchKeyException);
+
+    BlobMetrics metrics = mock();
+    HeavyBlobRef heavyBlobRef = new HeavyBlobRef(new BlobRef("blobstore", blobId.asUniqueString()), metrics);
+
+    // Test - should return null to trigger fallback mechanism (NEXUS-50554)
+    Blob result = blobStoreWithMigration.get(heavyBlobRef);
+
+    assertThat(result, is(nullValue()));
+    verify(s3).getObjectMetadata("mybucket", path);
+  }
+
+  @Test
+  public void testGet_heavyBlobRefReturnsNonNullWhenBlobExistsInStorage() throws Exception {
+    // Create blob store with migration state provider that indicates migration is active
+    BlobStoreMigrationStateProvider migrationStateProvider = mock(BlobStoreMigrationStateProvider.class);
+    when(migrationStateProvider.isMigrationActive()).thenReturn(true);
+
+    S3BlobStore blobStoreWithMigration = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(),
+        uploader, copier, false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager,
+        blobStoreQuotaUsageChecker, true, migrationStateProvider);
+    ReflectionTestUtils.setField(blobStoreWithMigration, "maxRetries", 1);
+    ReflectionTestUtils.setField(blobStoreWithMigration, "retryDelayMs", 500L);
+
+    blobStoreWithMigration.init(config);
+    blobStoreWithMigration.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    String path = "myPrefix/content/" + new VolumeChapterLocationStrategy().location(blobId) + ".bytes";
+
+    // Mock successful HEAD request - blob exists
+    HeadObjectResponse headResponse = mock(HeadObjectResponse.class);
+    when(s3.getObjectMetadata("mybucket", path)).thenReturn(headResponse);
+
+    BlobMetrics metrics = mock();
+    HeavyBlobRef heavyBlobRef = new HeavyBlobRef(new BlobRef("blobstore", blobId.asUniqueString()), metrics);
+
+    // Test - should return non-null blob
+    Blob result = blobStoreWithMigration.get(heavyBlobRef);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getMetrics(), is(metrics));
+    verify(s3).getObjectMetadata("mybucket", path);
+  }
+
+  @Test
+  public void testGet_regularBlobRefNotAffectedByExistenceCheck() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    String path = "content/" + blobId.asUniqueString() + ".bytes";
+
+    // Mock NoSuchKeyException - blob doesn't exist
+    NoSuchKeyException noSuchKeyException = NoSuchKeyException.builder()
+        .message("The specified key does not exist")
+        .build();
+    when(s3.getObjectMetadata("mybucket", path)).thenThrow(noSuchKeyException);
+
+    // Use regular BlobRef (not HeavyBlobRef) - should use standard get(BlobId) path
+    BlobRef regularBlobRef = new BlobRef("blobstore", blobId.asUniqueString());
+    Blob result = blobStore.get(regularBlobRef);
+
+    // Regular BlobRef should use get(BlobId) which doesn't check existence
+    // getObjectMetadata should NOT be called for regular BlobRef
+    verify(s3, never()).getObjectMetadata(anyString(), anyString());
   }
 }

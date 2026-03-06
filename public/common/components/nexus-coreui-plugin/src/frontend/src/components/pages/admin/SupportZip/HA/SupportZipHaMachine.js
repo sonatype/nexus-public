@@ -100,7 +100,10 @@ export default FormUtils.buildFormMachine({
               on: sharedEvents,
               invoke: {
                 src: 'createAllNodeSupportZip',
-                onDone: '#loaded',
+                onDone: {
+                  target: '#loaded',
+                  actions: 'updateAllNodesAfterGenerate',
+                },
                 onError: {
                   target: '#loaded',
                   actions: 'setLoadError',
@@ -111,7 +114,10 @@ export default FormUtils.buildFormMachine({
               on: sharedEvents,
               invoke: {
                 src: 'createSupportZip',
-                onDone: '#loaded',
+                onDone: {
+                  target: '#loaded',
+                  actions: 'updateNodeAfterGenerate',
+                },
                 onError: '#loaded',
               },
             },
@@ -147,8 +153,10 @@ export default FormUtils.buildFormMachine({
     }),
     updateNodeStatus: assign({
       selectedNode: (context) => {
+        // Update local status optimistically without triggering a fetch
+        // The fetch will happen after POST completes in updateNodeAfterGenerate
         context.selectedNode.machineRef.send({
-          type: 'UPDATE_STATUS',
+          type: 'SET_STATUS_LOCAL',
           status: 'CREATING',
         });
         return context.selectedNode;
@@ -156,15 +164,35 @@ export default FormUtils.buildFormMachine({
     }),
     updateAllNodeStatus: assign({
       nxrmNodes: (context) => {
+        // Update local status optimistically without triggering fetches
+        // The fetches will happen after POST completes in updateAllNodesAfterGenerate
         context.nxrmNodes.forEach((node) => {
           node.machineRef.send({
-            type: 'UPDATE_STATUS',
+            type: 'SET_STATUS_LOCAL',
             status: 'CREATING',
           });
         });
         return context.nxrmNodes;
       },
     }),
+    updateNodeAfterGenerate: (context) => {
+      // Trigger the selected node's machine to refresh its status from the server
+      if (context.selectedNode && context.selectedNode.machineRef) {
+        context.selectedNode.machineRef.send({
+          type: 'UPDATE_STATUS',
+          status: 'CREATING',
+        });
+      }
+    },
+    updateAllNodesAfterGenerate: (context) => {
+      // Trigger all node machines to refresh their status from the server
+      context.nxrmNodes.forEach((node) => {
+        node.machineRef.send({
+          type: 'UPDATE_STATUS',
+          status: 'CREATING',
+        });
+      });
+    },
   },
   services: {
     fetchData: () => {

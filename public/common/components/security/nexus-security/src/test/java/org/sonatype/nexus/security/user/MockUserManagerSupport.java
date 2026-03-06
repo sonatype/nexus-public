@@ -15,13 +15,13 @@ package org.sonatype.nexus.security.user;
 import org.sonatype.nexus.common.event.EventManager;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public abstract class MockUserManagerSupport
     extends AbstractUserManager
 {
-  private Set<User> users = new HashSet<User>();
+  private Set<User> users = new LinkedHashSet<>();
 
   public MockUserManagerSupport(final EventManager eventManager) {
     super(eventManager);
@@ -72,7 +72,7 @@ public abstract class MockUserManagerSupport
   }
 
   public Set<String> listUserIds() {
-    Set<String> userIds = new HashSet<String>();
+    Set<String> userIds = new LinkedHashSet<>();
 
     for (User user : this.getUsers()) {
       userIds.add(user.getUserId());
@@ -86,7 +86,7 @@ public abstract class MockUserManagerSupport
   }
 
   public Set<User> searchUsers(UserSearchCriteria criteria) {
-    return this.filterListInMemeory(this.getUsers(), criteria);
+    return this.filterListInMemory(this.getUsers(), criteria);
   }
 
   protected Set<User> getUsers() {

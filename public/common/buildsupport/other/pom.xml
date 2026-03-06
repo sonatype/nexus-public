@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.89.1-02</version>
+    <version>3.90.0-21</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -41,6 +41,8 @@
     <azure-storage-blob.version>12.31.2</azure-storage-blob.version>
     <azure-identity.version>1.18.0</azure-identity.version>
     <azure-json.version>1.5.0</azure-json.version>
+    <!-- Override jakarta.mail version to fix NEXUS-50522 (SMTP Injection vulnerability CVE-2025-7962) -->
+    <jakarta-mail.version>1.6.8</jakarta-mail.version>
   </properties>
 
   <dependencyManagement>
@@ -422,6 +424,16 @@
         <groupId>com.azure</groupId>
         <artifactId>azure-core-http-netty</artifactId>
         <version>1.16.2</version>
+      </dependency>
+
+      <!--
+      Force jakarta.mail to 1.6.8 to fix NEXUS-50522 (SMTP Injection vulnerability CVE-2025-7962).
+      This overrides the version pulled in transitively by org.jboss.resteasy:resteasy-multipart-provider
+      -->
+      <dependency>
+        <groupId>com.sun.mail</groupId>
+        <artifactId>jakarta.mail</artifactId>
+        <version>${jakarta-mail.version}</version>
       </dependency>
 
     </dependencies>

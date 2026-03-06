@@ -21,6 +21,14 @@ import { ExtJS, isVisible } from '@sonatype/nexus-ui-plugin';
 
 const PERMISSIONS_UPDATE_DELAY_MS = 100;
 
+function clearUnsavedChanges() {
+  // React-side unsaved changes guard relies on a global window.dirty array.
+  // When a logout happens we always want to discard that state so it can't block navigation.
+  if (typeof window !== 'undefined') {
+    window.dirty = [];
+  }
+}
+
 /**
  * Custom hook that handles redirecting the user to the welcome page
  * if the current route becomes inaccessible after logout (i.e., it is no longer visible).
@@ -55,6 +63,7 @@ export function useRedirectOnLogout() {
     const timer = setTimeout(() => {
       if (shouldRedirect) {
         console.debug("Redirecting to welcome page. Not enough permissions");
+        clearUnsavedChanges();
         router.stateService.go("browse.welcome");
       }
     }, PERMISSIONS_UPDATE_DELAY_MS);

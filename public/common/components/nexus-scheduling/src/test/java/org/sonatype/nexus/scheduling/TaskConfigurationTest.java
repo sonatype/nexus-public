@@ -343,4 +343,84 @@ public class TaskConfigurationTest
 
     assertThat(underTest.getString(FOOBAR), equalTo(date2String.apply(date)));
   }
+
+  @Test
+  public void setGetLastRunState_withThreeParameters() {
+    Date runStarted = DateTime.parse("2000-01-01T10:05:00").toDate();
+    long duration = 30000L; // 30 seconds
+
+    underTest.setLastRunState(TaskState.OK, runStarted, duration);
+
+    assertThat(underTest.hasLastRunState(), equalTo(true));
+
+    LastRunState lastRunState = underTest.getLastRunState();
+    assertThat(lastRunState.getEndState(), equalTo(TaskState.OK));
+    assertThat(lastRunState.getRunStarted(), equalTo(runStarted));
+    assertThat(lastRunState.getRunScheduled(), equalTo(runStarted));
+    assertThat(lastRunState.getRunDuration(), equalTo(duration));
+  }
+
+  @Test
+  public void setGetLastRunState_withFourParameters() {
+    Date runStarted = DateTime.parse("2000-01-01T10:05:00").toDate();
+    Date runScheduled = DateTime.parse("2000-01-01T10:00:00").toDate();
+    long duration = 30000L; // 30 seconds
+
+    underTest.setLastRunState(TaskState.OK, runStarted, runScheduled, duration);
+
+    assertThat(underTest.hasLastRunState(), equalTo(true));
+
+    LastRunState lastRunState = underTest.getLastRunState();
+    assertThat(lastRunState.getEndState(), equalTo(TaskState.OK));
+    assertThat(lastRunState.getRunStarted(), equalTo(runStarted));
+    assertThat(lastRunState.getRunScheduled(), equalTo(runScheduled));
+    assertThat(lastRunState.getRunDuration(), equalTo(duration));
+  }
+
+  @Test
+  public void setGetLastRunState_blockedTaskScenario() {
+    // Simulate a task that was scheduled at 10:00 but didn't actually start until 10:05
+    // because it was blocked by another task
+    Date scheduledTime = DateTime.parse("2000-01-01T10:00:00").toDate();
+    Date actualStartTime = DateTime.parse("2000-01-01T10:05:00").toDate();
+    long duration = 30000L; // 30 seconds
+
+    underTest.setLastRunState(TaskState.OK, actualStartTime, scheduledTime, duration);
+
+    LastRunState lastRunState = underTest.getLastRunState();
+
+    // Verify the actual start time is 5 minutes after scheduled time
+    assertThat(lastRunState.getRunStarted(), equalTo(actualStartTime));
+    assertThat(lastRunState.getRunScheduled(), equalTo(scheduledTime));
+
+    // Verify 5 minute difference
+    long timeDifference = actualStartTime.getTime() - scheduledTime.getTime();
+    assertThat(timeDifference, equalTo(300000L)); // 5 minutes in milliseconds
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void setLastRunState_nullEndState() {
+    underTest.setLastRunState(null, new Date(), new Date(), 1000L);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void setLastRunState_nullRunStarted() {
+    underTest.setLastRunState(TaskState.OK, null, new Date(), 1000L);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void setLastRunState_nullRunScheduled() {
+    underTest.setLastRunState(TaskState.OK, new Date(), null, 1000L);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void setLastRunState_negativeDuration() {
+    underTest.setLastRunState(TaskState.OK, new Date(), new Date(), -1L);
+  }
+
+  @Test
+  public void lastRunState_notSet() {
+    assertThat(underTest.hasLastRunState(), equalTo(false));
+    assertThat(underTest.getLastRunState(), nullValue());
+  }
 }

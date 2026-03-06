@@ -89,7 +89,23 @@ public class DeleteCleanupMethod
       deleteBrowseNodes(components);
     }
 
+    logAssetsBeingDeleted(components);
+
     progress.addComponentCount(maintenance.deleteComponents(components.stream()));
+  }
+
+  private void logAssetsBeingDeleted(final List<FluentComponent> components) {
+    if (log.isDebugEnabled()) {
+      components.forEach(component -> component.assets().forEach(asset -> {
+        String repositoryName = asset.repository().getName();
+        String assetPath = asset.path();
+
+        asset.blob().ifPresent(blob -> {
+          log.debug("Deleting asset - repository: {}, path: {}, blobRef: {}, size: {} bytes",
+              repositoryName, assetPath, blob.blobRef(), blob.blobSize());
+        });
+      }));
+    }
   }
 
   private void deleteBrowseNodes(final List<FluentComponent> components) {

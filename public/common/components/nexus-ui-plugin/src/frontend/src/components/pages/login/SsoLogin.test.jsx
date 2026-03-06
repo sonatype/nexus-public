@@ -53,7 +53,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
         .mockReturnValueOnce(false) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
 
       render(<SsoLogin />);
       expect(screen.getByRole('button', { name: /continue with sso/i })).toBeInTheDocument();
@@ -63,7 +64,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(false) // samlEnabled
         .mockReturnValueOnce(true)  // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
 
       render(<SsoLogin />);
       expect(screen.getByRole('button', { name: /continue with sso/i })).toBeInTheDocument();
@@ -71,9 +73,10 @@ describe('SsoLogin', () => {
 
     it('renders button when both SAML and OAuth2 are enabled', () => {
       mockUseState
-        .mockReturnValueOnce(true) // samlEnabled
-        .mockReturnValueOnce(true) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce(true)  // samlEnabled
+        .mockReturnValueOnce(true)  // oauth2Enabled
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
 
       render(<SsoLogin />);
       expect(screen.getByRole('button', { name: /continue with sso/i })).toBeInTheDocument();
@@ -85,7 +88,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
         .mockReturnValueOnce(false) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
     });
 
     it('has correct attributes', () => {
@@ -97,9 +101,21 @@ describe('SsoLogin', () => {
       expect(button).toHaveClass('sso-login-button');
     });
 
-    it('displays correct text when not loading', () => {
+    it('displays correct text when not loading (self-hosted)', () => {
       render(<SsoLogin />);
       expect(screen.getByText('Continue with SSO')).toBeInTheDocument();
+    });
+
+    it('displays "Login" text in cloud environment', () => {
+      mockUseState.mockReset();
+      mockUseState
+        .mockReturnValueOnce(true)  // samlEnabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(true); // isCloud
+
+      render(<SsoLogin />);
+      expect(screen.getByText('Login')).toBeInTheDocument();
     });
   });
 
@@ -108,7 +124,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
         .mockReturnValueOnce(false) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
       mockRouterParams.returnTo = undefined;
 
       render(<SsoLogin />);
@@ -123,9 +140,10 @@ describe('SsoLogin', () => {
 
     it('redirects to /saml with hash parameter', async () => {
       mockUseState
-          .mockReturnValueOnce(true)  // samlEnabled
-          .mockReturnValueOnce(false) // oauth2Enabled
-          .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce(true)  // samlEnabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
       mockRouterParams.returnTo = '#admin/repository/repositories';
 
       render(<SsoLogin />);
@@ -140,9 +158,10 @@ describe('SsoLogin', () => {
 
     it('redirects to context path + /saml when context path is set', async () => {
       mockUseState
-          .mockReturnValueOnce(true)      // samlEnabled
-          .mockReturnValueOnce(false)     // oauth2Enabled
-          .mockReturnValueOnce('/nexus'); // contextPath
+        .mockReturnValueOnce(true)      // samlEnabled
+        .mockReturnValueOnce(false)     // oauth2Enabled
+        .mockReturnValueOnce('/nexus')  // contextPath
+        .mockReturnValueOnce(false);    // isCloud
       mockRouterParams.returnTo = undefined;
 
       render(<SsoLogin />);
@@ -157,9 +176,10 @@ describe('SsoLogin', () => {
 
     it('redirects to context path + /saml with hash parameter when context path is set', async () => {
       mockUseState
-          .mockReturnValueOnce(true)      // samlEnabled
-          .mockReturnValueOnce(false)     // oauth2Enabled
-          .mockReturnValueOnce('/nexus'); // contextPath
+        .mockReturnValueOnce(true)      // samlEnabled
+        .mockReturnValueOnce(false)     // oauth2Enabled
+        .mockReturnValueOnce('/nexus')  // contextPath
+        .mockReturnValueOnce(false);    // isCloud
       mockRouterParams.returnTo = '#admin/repository/repositories';
 
       render(<SsoLogin />);
@@ -178,7 +198,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(false) // samlEnabled
         .mockReturnValueOnce(true)  // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
       mockRouterParams.returnTo = undefined;
 
       render(<SsoLogin />);
@@ -193,9 +214,10 @@ describe('SsoLogin', () => {
 
     it('redirects to /oidc/login with hash parameter', async () => {
       mockUseState
-          .mockReturnValueOnce(false) // samlEnabled
-          .mockReturnValueOnce(true)  // oauth2Enabled
-          .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce(false) // samlEnabled
+        .mockReturnValueOnce(true)  // oauth2Enabled
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
       mockRouterParams.returnTo = '#admin/repository/repositories';
 
       render(<SsoLogin />);
@@ -210,9 +232,10 @@ describe('SsoLogin', () => {
 
     it('redirects to context path + /oidc/login when context path is set', async () => {
       mockUseState
-          .mockReturnValueOnce(false)     // samlEnabled
-          .mockReturnValueOnce(true)      // oauth2Enabled
-          .mockReturnValueOnce('/nexus'); // contextPath
+        .mockReturnValueOnce(false)     // samlEnabled
+        .mockReturnValueOnce(true)      // oauth2Enabled
+        .mockReturnValueOnce('/nexus')  // contextPath
+        .mockReturnValueOnce(false);    // isCloud
       mockRouterParams.returnTo = undefined;
 
       render(<SsoLogin />);
@@ -227,9 +250,10 @@ describe('SsoLogin', () => {
 
     it('redirects to context path + /oidc/login with hash parameter when context path is set', async () => {
       mockUseState
-          .mockReturnValueOnce(false)     // samlEnabled
-          .mockReturnValueOnce(true)      // oauth2Enabled
-          .mockReturnValueOnce('/nexus'); // contextPath
+        .mockReturnValueOnce(false)     // samlEnabled
+        .mockReturnValueOnce(true)      // oauth2Enabled
+        .mockReturnValueOnce('/nexus')  // contextPath
+        .mockReturnValueOnce(false);    // isCloud
       mockRouterParams.returnTo = '#admin/repository/repositories';
 
       render(<SsoLogin />);
@@ -246,9 +270,10 @@ describe('SsoLogin', () => {
   describe('SAML priority', () => {
     it('prefers SAML when both SAML and OAuth2 are enabled', async () => {
       mockUseState
-        .mockReturnValueOnce(true) // samlEnabled
-        .mockReturnValueOnce(true) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce(true)  // samlEnabled
+        .mockReturnValueOnce(true)  // oauth2Enabled
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
       mockRouterParams.returnTo = undefined;
 
       render(<SsoLogin />);
@@ -267,7 +292,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
         .mockReturnValueOnce(false) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
     });
 
     it('is keyboard accessible', () => {
@@ -285,7 +311,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
         .mockReturnValueOnce(false) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
     });
 
     it('has analytics attribute', () => {
@@ -302,7 +329,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
         .mockReturnValueOnce(false) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
 
       render(<SsoLogin />);
       const button = screen.getByRole('button');
@@ -317,7 +345,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
         .mockReturnValueOnce(false) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
 
       render(<SsoLogin />);
       const button = screen.getByRole('button');
@@ -335,9 +364,10 @@ describe('SsoLogin', () => {
   describe('edge cases', () => {
     it('handles returnTo with special characters', async () => {
       mockUseState
-          .mockReturnValueOnce(true)  // samlEnabled
-          .mockReturnValueOnce(false) // oauth2Enabled
-          .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce(true)  // samlEnabled
+        .mockReturnValueOnce(false) // oauth2Enabled
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
 
       useRouter.mockReturnValue({
         globals: {
@@ -363,7 +393,8 @@ describe('SsoLogin', () => {
       mockUseState
         .mockReturnValueOnce(true)  // samlEnabled
         .mockReturnValueOnce(false) // oauth2Enabled
-        .mockReturnValueOnce('/');  // contextPath
+        .mockReturnValueOnce('/')   // contextPath
+        .mockReturnValueOnce(false); // isCloud
     });
 
     it('always focuses button on mount', async () => {

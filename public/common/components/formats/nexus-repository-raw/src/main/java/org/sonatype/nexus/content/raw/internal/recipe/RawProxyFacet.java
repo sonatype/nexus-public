@@ -37,7 +37,12 @@ import org.springframework.stereotype.Component;
 public class RawProxyFacet
     extends ContentProxyFacetSupport
 {
-  private static final ImmutableSet<String> CHARS_TO_ENCODE = ImmutableSet.of("^", "#", "?", "\u202F", "[", "]");
+  // Characters that ONLY raw format needs to encode (unique to raw)
+  // When preserveEncodedCharacters is true, EncodingHelper already handles: #, ?, [, ]
+  private static final ImmutableSet<String> CHARS_UNIQUE_TO_RAW = ImmutableSet.of("^", "\u202F");
+
+  // All characters that raw format needs when feature is disabled
+  private static final ImmutableSet<String> CHARS_ALL_RAW = ImmutableSet.of("^", "#", "?", "\u202F", "[", "]");
 
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
@@ -56,8 +61,17 @@ public class RawProxyFacet
 
   @Override
   protected String encodeUrl(final String url) throws UnsupportedEncodingException {
+    // ALWAYS apply format-specific raw encoding (required for raw repos to work correctly)
+    // When preserveEncodedCharacters is true, EncodingHelper already encoded: #, ?, [, ]
+    // So we only encode chars unique to raw format: ^, \u202F
+    // When preserveEncodedCharacters is false, encode all raw-specific chars
+    ImmutableSet<String> charsToEncode =
+        (getEncodingHelper() != null && getEncodingHelper().shouldPreserveEncodedCharacters())
+            ? CHARS_UNIQUE_TO_RAW // Only encode ^, \u202F (avoid double-encoding #, ?, [, ])
+            : CHARS_ALL_RAW; // Encode all when feature disabled
+
     String encodedUrl = url;
-    for (String ch : CHARS_TO_ENCODE) {
+    for (String ch : charsToEncode) {
       encodedUrl = encodedUrl.replace(ch, URLEncoder.encode(ch, "UTF-8"));
     }
     return encodedUrl;

@@ -13,12 +13,14 @@
 package org.sonatype.nexus.blobstore.internal.softdeleted;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.softdeleted.BlobLocationUpdate;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlob;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobsStore;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -112,5 +114,14 @@ public class SoftDeletedBlobsStoreImpl
   @Override
   public int countBefore(final String blobStoreName, final OffsetDateTime blobsDeletedBefore) {
     return dao().countBefore(blobStoreName, blobsDeletedBefore);
+  }
+
+  @Transactional
+  @Override
+  public int batchUpdateBlobLocation(final List<BlobLocationUpdate> updates, final String oldSourceBlobStoreName) {
+    if (updates.isEmpty()) {
+      return 0;
+    }
+    return dao().batchUpdateBlobLocation(updates, oldSourceBlobStoreName);
   }
 }

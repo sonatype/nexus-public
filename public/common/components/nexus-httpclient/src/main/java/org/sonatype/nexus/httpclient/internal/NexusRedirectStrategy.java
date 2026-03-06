@@ -18,6 +18,8 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
+import jakarta.inject.Singleton;
+
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -27,37 +29,51 @@ import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.net.HttpHeaders.LOCATION;
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTP;
 
-// FIXME: Sort out where this was used/needed apply or remove
 /**
- * This special strategy will kick in only if Nexus performs content retrieval.
- * In every other case (non-GET method or GET method used in remote
- * availability check) this strategy defaults to {@link DefaultRedirectStrategy} behavior.
- * <p/>
- * In case of content retrieval, the "do not follow redirect to index pages (collections), but accept and follow
- * any other redirects" strategy kicks in. If index page redirect is detected (by checking the URL path for trailing
- * slash), redirection mechanism of HC4 is stopped, and hence, the response will return with redirect response code
- * (301, 302 or 307). Main goal of this {@link org.apache.http.client.RedirectStrategy} is to save the
- * subsequent (the one following the redirect) request once we learn it would lead us to index page, as we
- * don't need index pages (hence, we do not fetch it only to throw it away).
- * <p/>
- * Usual problems are misconfiguration, where a repository published over HTTPS is configured with HTTP (ie.
- * admin mistyped the URL). Seemingly all work, but that is a source of performance issue, as every outgoing
- * Nexus request will "bounce", as usually HTTP port will redirect Nexus to HTTPS port, and then the artifact
- * will be fetched. Remedy for these scenarios is to edit the proxy repository configuration and update the
- * URL to proper protocol.
- * <p/>
- * This code <strong>assumes</strong> that remote repository is set up by best practices and common conventions,
- * hence, index page redirect means that target URL ends with slash. For more about this topic, read the
- * "To slash or not to slash" Google blog entry.
+ * Default redirect strategy for all repository formats that provides:
+ * <ul>
+ * <li>Prevention of redirects to index pages (paths ending with /) during content retrieval</li>
+ * <li>Path traversal attack prevention by normalizing .. and . sequences in redirect URLs</li>
+ * <li>Preservation of percent-encoding for signed URLs when preserveEncodedCharacters flag is enabled</li>
+ * </ul>
  *
+ * <p>
+ * During content retrieval (marked with CONTENT_RETRIEVAL_MARKER_KEY), this strategy:
+ * <ul>
+ * <li>Blocks redirects to index pages to save unnecessary requests</li>
+ * <li>Follows all other redirects normally</li>
+ * </ul>
+ *
+ * <p>
+ * When preserveEncodedCharacters is enabled in the HttpContext:
+ * <ul>
+ * <li>Detects path traversal sequences in redirect URLs (both literal .. and encoded %2e%2e)</li>
+ * <li>Normalizes paths with traversal sequences for security</li>
+ * <li>Preserves exact percent-encoding for legitimate URLs (critical for AWS S3, Cloudflare R2, etc.)</li>
+ * </ul>
+ *
+ * <p>
+ * Common use cases:
+ * <ul>
+ * <li>Misconfigured repositories: HTTP URL redirecting to HTTPS causes performance issues</li>
+ * <li>CDN redirects: Signed URLs require exact encoding preservation</li>
+ * <li>Security: Path traversal attacks via redirect URLs</li>
+ * </ul>
+ *
+ * @see SecurePathNormalizer
  * @see <a href="http://googlewebmastercentral.blogspot.hu/2010/04/to-slash-or-not-to-slash.html">To slash or not to
  *      slash</a>
  * @since 3.0
  */
+@Component
+@Qualifier("default")
+@Singleton
 public class NexusRedirectStrategy
     extends DefaultRedirectStrategy
 {
@@ -125,6 +141,142 @@ public class NexusRedirectStrategy
     }
 
     return false;
+  }
+
+  @Override
+  public URI getLocationURI(
+      final HttpRequest request,
+      final HttpResponse response,
+      final HttpContext context) throws ProtocolException
+  {
+    if (!shouldPreserveEncoding(context)) {
+      // When preserveEncodedCharacters is false or not set, use default behavior (normalize)
+      return super.getLocationURI(request, response, context);
+    }
+
+    // When preserveEncodedCharacters is true, handle redirect URL with encoding preservation
+    try {
+      Header locationHeader = extractLocationHeader(response);
+      URI redirectUri = parseRedirectUri(locationHeader);
+
+      // Handle path traversal attacks (security takes precedence over encoding preservation)
+      URI secureUri = handlePathTraversalIfNeeded(redirectUri);
+      if (secureUri != redirectUri) {
+        return secureUri;
+      }
+
+      // Encode special characters for signed URLs (AWS S3, Cloudflare R2, etc.)
+      return encodeSpecialCharactersIfNeeded(redirectUri);
+    }
+    catch (Exception e) {
+      throw new ProtocolException("Invalid redirect URI: " + response.getFirstHeader(LOCATION).getValue(), e);
+    }
+  }
+
+  /**
+   * Check if encoding preservation is enabled in the HTTP context.
+   */
+  private boolean shouldPreserveEncoding(final HttpContext context) {
+    Object preserveEncodedChars = context.getAttribute("preserveEncodedCharacters");
+    return Boolean.TRUE.equals(preserveEncodedChars);
+  }
+
+  /**
+   * Extract and validate the Location header from the redirect response.
+   */
+  private Header extractLocationHeader(final HttpResponse response) throws ProtocolException {
+    Header locationHeader = response.getFirstHeader(LOCATION);
+    if (locationHeader == null) {
+      throw new ProtocolException("Received redirect response " + response.getStatusLine() +
+          " but no location present");
+    }
+    return locationHeader;
+  }
+
+  /**
+   * Parse the redirect URI from the Location header value.
+   */
+  private URI parseRedirectUri(final Header locationHeader) throws Exception {
+    String locationValue = locationHeader.getValue();
+    log.debug("Original Location header: {}", locationValue);
+
+    URI uri = new URI(locationValue);
+    log.debug("Parsed URI - getRawPath(): {}, getPath(): {}", uri.getRawPath(), uri.getPath());
+
+    return uri;
+  }
+
+  /**
+   * Detect and handle path traversal sequences in redirect URLs.
+   * Returns a new URI with normalized path if traversal is detected, otherwise returns the original URI.
+   */
+  private URI handlePathTraversalIfNeeded(final URI uri) throws Exception {
+    String rawPath = uri.getRawPath();
+    if (rawPath == null) {
+      return uri;
+    }
+
+    // Decode the path to detect encoded path traversal sequences like %2e%2e (encoded ..)
+    // This is critical for security - attackers can use percent-encoding to hide .. sequences
+    String decodedPath = uri.getPath();
+
+    if (decodedPath == null) {
+      log.error("Redirect URI has null path, cannot check for path traversal: {}", uri);
+      return uri; // Cannot safely check for traversal, return original URI
+    }
+
+    if (!SecurePathNormalizer.containsPathTraversal(decodedPath)) {
+      return uri; // No path traversal detected
+    }
+
+    // Path traversal detected - security takes precedence over preserving encoding
+    log.warn("Path traversal sequences detected in redirect: {}", uri);
+
+    String normalizedPath = SecurePathNormalizer.normalizePath(decodedPath);
+    URI normalizedUri = buildUri(uri, normalizedPath);
+
+    log.debug("Normalized URI with path traversal removed: {}", normalizedUri);
+    return normalizedUri;
+  }
+
+  /**
+   * Encode literal special characters for signed URLs while preserving already-encoded sequences.
+   * Returns a new URI with encoded path if encoding is needed, otherwise returns the original URI.
+   */
+  private URI encodeSpecialCharactersIfNeeded(final URI uri) throws Exception {
+    String rawPath = uri.getRawPath();
+    if (rawPath == null) {
+      return uri;
+    }
+
+    // For signed URLs (AWS S3, Cloudflare R2), encode literal special characters
+    // like + to %2B while preserving already-encoded sequences
+    String encodedPath = SecurePathNormalizer.encodeSpecialCharacters(rawPath);
+
+    if (rawPath.equals(encodedPath)) {
+      log.debug("No special characters to encode, returning original URI: {}", uri);
+      return uri;
+    }
+
+    log.debug("Encoding special characters in redirect path: {} -> {}", rawPath, encodedPath);
+    URI encodedUri = buildUri(uri, encodedPath);
+
+    log.debug("Returning URI with encoded special characters: {}", encodedUri);
+    return encodedUri;
+  }
+
+  /**
+   * Build a new URI with the specified path while preserving other URI components.
+   */
+  private URI buildUri(final URI originalUri, final String newPath) throws Exception {
+    return new URI(
+        originalUri.getScheme(),
+        originalUri.getUserInfo(),
+        originalUri.getHost(),
+        originalUri.getPort(),
+        newPath,
+        originalUri.getQuery(),
+        originalUri.getFragment());
   }
 
   /**

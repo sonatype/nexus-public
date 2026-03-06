@@ -302,22 +302,28 @@ const setDisabledAction = assign(context => {
         map(prop('name'), componentFieldsByGroup[TERRAFORM_PROVIDER_COORDS_GROUP]) : [];
 
     const disabledFields = {};
+    let clearedData = data;
 
-    // Disable Provider Coordinates when uploadType is "module"
+    // Disable and clear Provider Coordinates when uploadType is "module"
     if (uploadType === TERRAFORM_UPLOAD_TYPE_MODULE) {
       providerCoordFieldNames.forEach(fieldName => {
         disabledFields[fieldName] = true;
+        // Clear the field value by removing it from data
+        clearedData = dissoc(fieldName, clearedData);
       });
     }
-    // Disable Module Coordinates when uploadType is "provider"
+    // Disable and clear Module Coordinates when uploadType is "provider"
     else if (uploadType === TERRAFORM_UPLOAD_TYPE_PROVIDER) {
       moduleCoordFieldNames.forEach(fieldName => {
         disabledFields[fieldName] = true;
+        // Clear the field value by removing it from data
+        clearedData = dissoc(fieldName, clearedData);
       });
     }
 
     return {
-      disabledFields
+      disabledFields,
+      data: clearedData
     };
   }
   else {

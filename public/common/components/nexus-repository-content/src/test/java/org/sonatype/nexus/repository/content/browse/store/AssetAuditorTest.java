@@ -54,7 +54,7 @@ public class AssetAuditorTest
 
     AuditRecorder auditRecorder = mock(AuditRecorder.class);
     when(auditRecorder.isEnabled()).thenReturn(true);
-    assetAuditor.setAuditRecorder(() -> auditRecorder);
+    assetAuditor.setAuditRecorder(auditRecorder);
 
     try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
       mockedStatic.when(EventHelper::isReplicating).thenReturn(false);
@@ -81,7 +81,7 @@ public class AssetAuditorTest
     AuditRecorder auditRecorder = mock(AuditRecorder.class);
     when(auditRecorder.isEnabled()).thenReturn(true);
 
-    assetAuditor.setAuditRecorder(() -> auditRecorder);
+    assetAuditor.setAuditRecorder(auditRecorder);
 
     try (MockedStatic<EventHelper> mockedStatic = mockStatic(EventHelper.class)) {
       mockedStatic.when(EventHelper::isReplicating).thenReturn(false);

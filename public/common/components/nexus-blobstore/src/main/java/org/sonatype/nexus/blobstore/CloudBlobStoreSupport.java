@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.BlobStoreMigrationStateProvider;
 import org.sonatype.nexus.blobstore.api.HeavyBlobRef;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -42,13 +43,17 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
 {
   protected final boolean loadFromDb;
 
+  protected final BlobStoreMigrationStateProvider migrationStateProvider;
+
   protected CloudBlobStoreSupport(
       final BlobIdLocationResolver blobIdLocationResolver,
       final DryRunPrefix dryRunPrefix,
-      final boolean loadFromDb)
+      final boolean loadFromDb,
+      @Nullable final BlobStoreMigrationStateProvider migrationStateProvider)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.loadFromDb = loadFromDb;
+    this.migrationStateProvider = migrationStateProvider;
   }
 
   /**
@@ -69,6 +74,18 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
     StopWatch stopWatch = new StopWatch();
     stopWatch.start("Loading blob from DB " + blobRef.getBlobId());
     BlobSupport blob = initializeBlob(blobRef.getBlobId());
+
+    // Check if blob physically exists in cloud storage before returning
+    // This check is ONLY performed during active migrations to allow the fallback mechanism to work (NEXUS-50554)
+    // Outside of migrations, we skip this check to avoid the performance overhead of an extra cloud API call
+    if (migrationStateProvider != null && migrationStateProvider.isMigrationActive()) {
+      if (!blobExistsInStorage(blob.getId())) {
+        log.debug("Blob {} not found in cloud storage during migration, returning null to allow fallback",
+            blob.getId());
+        return null;
+      }
+    }
+
     blob.refresh(Collections.emptyMap(), ((HeavyBlobRef) blobRef).getMetrics());
     stopWatch.stop();
     log.debug("elapsed time for Loading blob from DB {}: {} ms", blobRef.getBlobId(),
@@ -80,6 +97,15 @@ public abstract class CloudBlobStoreSupport<T extends AttributesLocation>
    * Used to create {@link Blob} instances for the BlobStore, it will be used when bypassing storage for serving assets.
    */
   protected abstract BlobSupport initializeBlob(BlobId blobId);
+
+  /**
+   * Checks if a blob physically exists in cloud storage.
+   * Used during blob store migration to determine if fallback to source blob store is needed.
+   *
+   * @param blobId the blob ID to check
+   * @return true if the blob exists in cloud storage, false otherwise
+   */
+  protected abstract boolean blobExistsInStorage(BlobId blobId);
 
   protected abstract Blob writeBlobProperties(BlobId blobId, Map<String, String> headers);
 

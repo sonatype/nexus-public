@@ -50,6 +50,8 @@ export { default as HelpTile } from './components/widgets/HelpTile/HelpTile';
 export * from './interface/urlUtil';
 export * from './interface/versionUtil';
 
+export * from './utils/clipboardUtils';
+
 export * from './interface/LocationUtils';
 export * from './interface/NavigationUtils';
 export { default as TokenMachine } from './interface/TokenMachine';

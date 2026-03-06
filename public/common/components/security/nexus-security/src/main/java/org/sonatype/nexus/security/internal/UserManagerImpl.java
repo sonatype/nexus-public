@@ -270,7 +270,7 @@ public class UserManagerImpl
   public Set<User> searchUsers(final UserSearchCriteria criteria) {
     final Set<User> users = new HashSet<User>();
 
-    users.addAll(filterListInMemeory(listUsers(), criteria));
+    users.addAll(filterListInMemory(listUsers(), criteria));
 
     if (criteria.getSource() == null) {
       // we also need to search through the user role mappings.

@@ -28,6 +28,7 @@ import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.scheduling.RecoveryModeService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
 import com.google.common.collect.ImmutableMap;
@@ -44,8 +45,10 @@ import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
@@ -82,6 +85,9 @@ public class AssetBlobCleanupTaskTest
 
   @Mock
   private BlobRef blobRefBecomesUsed;
+
+  @Mock
+  private RecoveryModeService recoveryModeService;
 
   ContinuationArrayList<AssetBlobData> firstPage;
 
@@ -136,7 +142,8 @@ public class AssetBlobCleanupTaskTest
   @Test
   public void testUnusedBlobsAreDeleted() throws Exception {
     setBatchDeleteIgnoreFinalField("raw");
-    AssetBlobCleanupTask task = new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager);
+    AssetBlobCleanupTask task =
+        new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager, recoveryModeService);
 
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
@@ -178,14 +185,15 @@ public class AssetBlobCleanupTaskTest
 
     inOrder.verify(assetBlobStore)
         .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, "EOL");
-
+    verify(recoveryModeService).ensureNotInRecoveryMode(any());
     inOrder.verifyNoMoreInteractions();
   }
 
   @Test
   public void testDefaultBatchSize() throws Exception {
     setBatchDeleteIgnoreFinalField("raw");
-    AssetBlobCleanupTask task = new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager);
+    AssetBlobCleanupTask task =
+        new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager, recoveryModeService);
 
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
@@ -198,12 +206,14 @@ public class AssetBlobCleanupTaskTest
 
     int expectedBatchSize = 1000;
     verify(assetBlobStore).browseUnusedAssetBlobs(expectedBatchSize, BLOB_CREATED_DELAY_MINUTE, null);
+    verify(recoveryModeService).ensureNotInRecoveryMode(any());
   }
 
   @Test
   public void testExecutorServiceShutdown() throws Exception {
     setBatchDeleteIgnoreFinalField(null);
-    AssetBlobCleanupTask task = spy(new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager));
+    AssetBlobCleanupTask task =
+        spy(new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager, recoveryModeService));
 
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
@@ -224,6 +234,7 @@ public class AssetBlobCleanupTaskTest
 
     task.execute();
 
+    verify(recoveryModeService).ensureNotInRecoveryMode(any());
     verify(batchDeleteExecutorService).isShutdown();
     verify(batchDeleteExecutorService).shutdown();
   }
@@ -232,7 +243,8 @@ public class AssetBlobCleanupTaskTest
   public void testUnusedBlobsAreDeletedBatch() throws Exception {
     setBatchDeleteIgnoreFinalField(null);
 
-    AssetBlobCleanupTask task = new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager);
+    AssetBlobCleanupTask task =
+        new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager, recoveryModeService);
 
     TaskConfiguration taskConfiguration = new TaskConfiguration();
     taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
@@ -257,8 +269,29 @@ public class AssetBlobCleanupTaskTest
     inOrder.verify(assetBlobStore).deleteAssetBlobBatch(blobRefIdCaptor.capture());
     inOrder.verify(assetBlobStore)
         .browseUnusedAssetBlobs(BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, "EOL");
-
+    verify(recoveryModeService).ensureNotInRecoveryMode(any());
     inOrder.verifyNoMoreInteractions();
+  }
+
+  @Test
+  public void testExecute_failsWhenRecoveryModeActive() {
+    doThrow(
+        new IllegalStateException("expected exception"))
+            .when(recoveryModeService)
+            .ensureNotInRecoveryMode(any());
+
+    AssetBlobCleanupTask task =
+        new AssetBlobCleanupTask(List.of(formatStoreManager), blobStoreManager, recoveryModeService);
+
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setString(FORMAT_FIELD_ID, "raw");
+    taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "content");
+    taskConfiguration.setId(UUID.randomUUID().toString());
+    taskConfiguration.setTypeId(TYPE_ID);
+    task.configure(taskConfiguration);
+
+    assertThrows(IllegalStateException.class, task::execute);
+    verify(recoveryModeService).ensureNotInRecoveryMode(any());
   }
 
   private void setBatchDeleteIgnoreFinalField(String batchDeleteFormats) {

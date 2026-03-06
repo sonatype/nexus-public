@@ -64,7 +64,6 @@ public class ApiUser
       + "When false only roles are considered during update.")
   private boolean readOnly;
 
-  @NotEmpty
   @ApiModelProperty(NexusSecurityApiConstants.ROLES_DESCRIPTION)
   private Set<String> roles;
 
@@ -184,7 +183,9 @@ public class ApiUser
     user.setVersion(1);
 
     Set<RoleIdentifier> roleIdentifiers = new HashSet<>();
-    roles.stream().map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r)).forEach(roleIdentifiers::add);
+    if (roles != null) {
+      roles.stream().map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r)).forEach(roleIdentifiers::add);
+    }
     if (externalRoles != null) {
       externalRoles.stream().map(r -> new RoleIdentifier(source, r)).forEach(roleIdentifiers::add);
     }

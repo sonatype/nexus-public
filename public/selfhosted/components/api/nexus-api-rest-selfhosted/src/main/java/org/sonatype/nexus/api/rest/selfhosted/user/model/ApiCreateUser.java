@@ -13,6 +13,7 @@
 
 package org.sonatype.nexus.api.rest.selfhosted.user.model;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,7 +60,6 @@ public class ApiCreateUser
   @ApiModelProperty(NexusSecurityApiConstants.STATUS_DESCRIPTION)
   private ApiUserStatus status;
 
-  @NotEmpty
   @ApiModelProperty(NexusSecurityApiConstants.ROLES_DESCRIPTION)
   private Set<String> roles;
 
@@ -152,9 +152,14 @@ public class ApiCreateUser
     user.setReadOnly(false);
     user.setVersion(1);
     user.setSource(UserManager.DEFAULT_SOURCE);
-    user.setRoles(roles.stream()
-        .map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r))
-        .collect(Collectors.toSet()));
+    if (roles != null) {
+      user.setRoles(roles.stream()
+          .map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r))
+          .collect(Collectors.toSet()));
+    }
+    else {
+      user.setRoles(Collections.emptySet());
+    }
     return user;
   }
 }

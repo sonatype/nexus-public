@@ -19,8 +19,6 @@ import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 
-import static org.sonatype.nexus.common.text.Strings2.isBlank;
-
 /**
  * A holder of {@link ComponentUpload} that's meant to validate it based on provided {@link UploadDefinition} for Maven
  *
@@ -50,7 +48,7 @@ public class MavenValidatingComponentUpload
   private Optional<AssetUpload> findPomAsset() {
     return componentUpload.getAssetUploads()
         .stream()
-        .filter(asset -> "pom".equals(asset.getField(EXTENSION)) && isBlank(asset.getField(CLASSIFIER)))
+        .filter(asset -> "pom".equals(asset.getField(EXTENSION)))
         .findFirst();
   }
 }

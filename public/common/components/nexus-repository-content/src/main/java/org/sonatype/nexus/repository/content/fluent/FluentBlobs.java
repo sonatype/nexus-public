@@ -53,7 +53,14 @@ public interface FluentBlobs
   /**
    * Ingests the given payload as a temporary blob with the requested hashing.
    */
-  TempBlob ingest(Payload payload, Iterable<HashAlgorithm> hashing);
+  default TempBlob ingest(final Payload payload, final Iterable<HashAlgorithm> hashing) {
+    return ingest(payload, Map.of(), hashing);
+  }
+
+  /**
+   * Ingests the given payload as a temporary blob with the requested hashing.
+   */
+  TempBlob ingest(Payload payload, Map<String, String> headers, Iterable<HashAlgorithm> hashing);
 
   TempBlob ingest(final Blob srcBlob, final BlobStore srcStore, final Map<HashAlgorithm, HashCode> hashes);
 

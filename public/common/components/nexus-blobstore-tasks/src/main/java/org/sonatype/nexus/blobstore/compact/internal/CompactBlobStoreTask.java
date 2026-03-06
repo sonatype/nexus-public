@@ -25,6 +25,7 @@ import jakarta.inject.Inject;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.common.BlobStoreParallelTaskSupport;
+import org.sonatype.nexus.scheduling.RecoveryModeService;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +33,7 @@ import org.springframework.beans.factory.annotation.Value;
 import static org.sonatype.nexus.blobstore.common.BlobStoreParallelTaskSupport.ALL;
 import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreConfiguration;
 import org.sonatype.nexus.repository.move.ChangeRepositoryBlobStoreStore;
-import org.sonatype.nexus.scheduling.Cancelable;
+import org.sonatype.nexus.scheduling.CancelableByRecoveryMode;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskUtils;
 
@@ -57,7 +58,7 @@ import org.springframework.stereotype.Component;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CompactBlobStoreTask
     extends BlobStoreParallelTaskSupport
-    implements Cancelable
+    implements CancelableByRecoveryMode
 {
 
   private final Optional<ChangeRepositoryBlobStoreStore> changeBlobstoreStore;
@@ -66,6 +67,8 @@ public class CompactBlobStoreTask
 
   private final TaskUtils taskUtils;
 
+  private final RecoveryModeService recoveryModeService;
+
   private final AtomicInteger processed = new AtomicInteger();
 
   @Inject
@@ -73,6 +76,7 @@ public class CompactBlobStoreTask
       @Nullable final ChangeRepositoryBlobStoreStore changeBlobstoreStore,
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final TaskUtils taskUtils,
+      final RecoveryModeService recoveryModeService,
       @Value("${nexus.compact.blobstore.concurrencyLimit:5}") final int concurrencyLimit,
       @Value("${nexus.compact.blobstore.queueCapacity:5}") final int queueCapacity)
   {
@@ -80,10 +84,12 @@ public class CompactBlobStoreTask
     this.changeBlobstoreStore = Optional.ofNullable(changeBlobstoreStore);
     this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
     this.taskUtils = checkNotNull(taskUtils);
+    this.recoveryModeService = checkNotNull(recoveryModeService);
   }
 
   @VisibleForTesting
   void checkForConflicts(final String blobStoreName) {
+    recoveryModeService.ensureNotInRecoveryMode(getName());
     taskUtils.checkForConflictingTasks(getId(), getName(), asList("repository.move"), ImmutableMap
         .of("moveInitialBlobstore", asList(blobStoreName), "moveTargetBlobstore", asList(blobStoreName)));
 

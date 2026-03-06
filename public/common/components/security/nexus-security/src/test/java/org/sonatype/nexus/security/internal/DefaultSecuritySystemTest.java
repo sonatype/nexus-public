@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.internal;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -31,6 +32,7 @@ import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
+import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
 
 import org.apache.shiro.authc.AuthenticationException;
@@ -212,14 +214,14 @@ public class DefaultSecuritySystemTest
 
     user.addRole(new RoleIdentifier("default", "test-role1"));
 
-    assertNotNull(securitySystem.addUser(user, "test123"));
+    assertNotNull(securitySystem.addUser(user, "test1234"));
   }
 
   @Test
   void testUpdateUser_changePasswordStatus() throws Exception {
     SecuritySystem securitySystem = this.getSecuritySystem();
 
-    securitySystem.addUser(createUser("testUpdateUser", UserStatus.changepassword), "test123");
+    securitySystem.addUser(createUser("testUpdateUser", UserStatus.changepassword), "test1234");
 
     securitySystem.updateUser(createUser("testUpdateUser", UserStatus.disabled));
 
@@ -251,6 +253,58 @@ public class DefaultSecuritySystemTest
     // change another user's password
     assertThrows(AuthorizationException.class, () -> securitySystem.changePassword("fakeuser", "newpassword"),
         "jcoder is not permitted to change the password for fakeuser");
+  }
+
+  @Test
+  void testDefaultSecuritySystem_SearchUsersPreservesOrder() throws Exception {
+    // use a unique prefix so we can filter out pre-existing users added in test setup
+    final String prefixForTest = "testDefaultSecuritySystem_SearchUsersPreservesOrder_";
+
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // Add users, the order we add them in should not get changed by code inside DefaultSecuritySystem->searchUsers
+    securitySystem.addUser(createUser(prefixForTest + "delta", UserStatus.active), "password");
+    securitySystem.addUser(createUser(prefixForTest + "alpha", UserStatus.active), "password");
+    securitySystem.addUser(createUser(prefixForTest + "charlie", UserStatus.active), "password");
+    securitySystem.addUser(createUser(prefixForTest + "bravo", UserStatus.active), "password");
+
+    // Search for all users from this source
+    final UserSearchCriteria criteria = new UserSearchCriteria();
+    criteria.setSource("MockUserManagerA");
+
+    Set<User> result = securitySystem.searchUsers(criteria);
+
+    assertTrue(result.size() >= 4, "Should have at least 4 users");
+    List<String> ourUserIds = result.stream()
+        .map(User::getUserId)
+        .filter(id -> id.startsWith(prefixForTest))
+        .toList();
+
+    assertEquals(prefixForTest + "delta", ourUserIds.get(0), "First user should be user-delta");
+    assertEquals(prefixForTest + "alpha", ourUserIds.get(1), "Second user should be user-alpha");
+    assertEquals(prefixForTest + "charlie", ourUserIds.get(2), "Third user should be user-charlie");
+    assertEquals(prefixForTest + "bravo", ourUserIds.get(3), "Fourth user should be user-bravo");
+  }
+
+  @Test
+  void testSearchUsersWithSourcePreservesOrder() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // Add users in a specific order
+    securitySystem.addUser(createUser("search-zebra", UserStatus.active), "password");
+    securitySystem.addUser(createUser("search-apple", UserStatus.active), "password");
+    securitySystem.addUser(createUser("search-mango", UserStatus.active), "password");
+
+    // Search for users from specific source
+    org.sonatype.nexus.security.user.UserSearchCriteria criteria =
+        new org.sonatype.nexus.security.user.UserSearchCriteria();
+    criteria.setSource("MockUserManagerA");
+
+    Set<User> users = securitySystem.searchUsers(criteria);
+
+    // Verify LinkedHashSet preserves insertion order from user manager
+    assertNotNull(users);
+    assertThat(users.getClass().getName(), is("java.util.LinkedHashSet"));
   }
 
   private static User createUser(final String name, final UserStatus status) {

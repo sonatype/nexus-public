@@ -313,9 +313,9 @@ public class SearchTableDAOTest
 
     SqlSearchQueryCondition queryCondition = conditionBuilder.build(
         new ExpressionGroup(new SqlPredicate(EQ, NAME, new WildcardTerm("component*")), null)).getComponentCondition();
-    Map<String, String> values = queryCondition.getValues();
+    Map<String, Object> values = queryCondition.getParameters();
 
-    String conditionFormat = queryCondition.getSqlConditionFormat();
+    String conditionFormat = queryCondition.getSqlFilter();
 
     SqlSearchRequest firstRequest = prepareSearchRequest(10, 0, queryCondition);
 
@@ -407,8 +407,8 @@ public class SearchTableDAOTest
 
     SqlSearchQueryConditionGroup queryCondition =
         conditionBuilder.build(new ExpressionGroup(clause, null));
-    String conditionFormat = queryCondition.getComponentCondition().getSqlConditionFormat();
-    Map<String, String> values = queryCondition.getComponentCondition().getValues();
+    String conditionFormat = queryCondition.getComponentCondition().getSqlFilter();
+    Map<String, Object> values = queryCondition.getComponentCondition().getParameters();
 
     Collection<SearchResult> results = searchDAO.searchComponents(
         SqlSearchRequest.builder()
@@ -502,8 +502,8 @@ public class SearchTableDAOTest
             .getComponentCondition();
 
     Collection<?> results = searchDAO.searchComponents(SqlSearchRequest.builder()
-        .searchFilter(queryCondition.getSqlConditionFormat())
-        .searchFilterValues(queryCondition.getValues())
+        .searchFilter(queryCondition.getSqlFilter())
+        .searchFilterValues(queryCondition.getParameters())
         .build());
 
     assertThat(results, hasSize(GENERATED_DATA.size()));
@@ -602,10 +602,10 @@ public class SearchTableDAOTest
       componentFilterQuery = condition;
     }
     String filterFormat = null;
-    Map<String, String> formatValues = null;
+    Map<String, Object> formatValues = null;
     if (Objects.nonNull(componentFilterQuery)) {
-      filterFormat = componentFilterQuery.getSqlConditionFormat();
-      formatValues = componentFilterQuery.getValues();
+      filterFormat = componentFilterQuery.getSqlFilter();
+      formatValues = componentFilterQuery.getParameters();
     }
 
     // Regular search request

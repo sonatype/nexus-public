@@ -41,6 +41,10 @@ public class ApiKeyV2Data
 
   private OffsetDateTime created;
 
+  private String createdByUserId;
+
+  private String createdByRealm;
+
   ApiKeyV2Data() {
   }
 
@@ -51,12 +55,26 @@ public class ApiKeyV2Data
       final Secret secret,
       @Nullable final OffsetDateTime created)
   {
+    this(domain, principals, accessKey, secret, created, null, null);
+  }
+
+  ApiKeyV2Data(
+      final String domain,
+      final PrincipalCollection principals,
+      final String accessKey,
+      final Secret secret,
+      @Nullable final OffsetDateTime created,
+      @Nullable final String createdByUserId,
+      @Nullable final String createdByRealm)
+  {
     this.domain = checkNotNull(domain);
     this.principals = checkNotNull(principals);
     this.username = principals.getPrimaryPrincipal().toString();
     this.accessKey = checkNotNull(accessKey);
     this.secret = checkNotNull(secret);
     this.created = created;
+    this.createdByUserId = createdByUserId;
+    this.createdByRealm = createdByRealm;
   }
 
   public String getAccessKey() {
@@ -120,5 +138,21 @@ public class ApiKeyV2Data
 
   public void setSecret(final Secret secret) {
     this.secret = secret;
+  }
+
+  public String getCreatedByUserId() {
+    return createdByUserId;
+  }
+
+  public void setCreatedByUserId(final String createdByUserId) {
+    this.createdByUserId = createdByUserId;
+  }
+
+  public String getCreatedByRealm() {
+    return createdByRealm;
+  }
+
+  public void setCreatedByRealm(final String createdByRealm) {
+    this.createdByRealm = createdByRealm;
   }
 }

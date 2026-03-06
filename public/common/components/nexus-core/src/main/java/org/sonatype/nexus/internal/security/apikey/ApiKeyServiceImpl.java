@@ -129,6 +129,25 @@ public class ApiKeyServiceImpl
   }
 
   @Override
+  public Collection<ApiKey> browseFiltered(
+      final String domain,
+      final String realm,
+      final String username,
+      final int skip,
+      final int limit)
+  {
+    return callBrowse(store -> store.browseFiltered(domain, realm, username, skip, limit)
+        .stream()
+        .map(ApiKey.class::cast)
+        .collect(Collectors.toList()));
+  }
+
+  @Override
+  public int countFiltered(final String domain, final String realm, final String username) {
+    return callModify(store -> store.countFiltered(domain, realm, username));
+  }
+
+  @Override
   public int count(final String domain) {
     return callModify(store -> store.count(domain));
   }
@@ -136,10 +155,54 @@ public class ApiKeyServiceImpl
   @Override
   public char[] createApiKey(final String domain, final PrincipalCollection principals) {
     char[] apiKey = makeApiKey(domain, principals);
+    try {
+      modify(store -> store.persistApiKey(domain, principals, apiKey));
+      return apiKey;
+    }
+    catch (org.sonatype.nexus.datastore.api.DuplicateKeyException e) {
+      return handleConcurrentCreation(domain, principals, e);
+    }
+  }
 
-    modify(store -> store.persistApiKey(domain, principals, apiKey));
+  private char[] handleConcurrentCreation(
+      final String domain,
+      final PrincipalCollection principals,
+      final org.sonatype.nexus.datastore.api.DuplicateKeyException cause)
+  {
+    String migrationStatus = getMigrationStatus();
+    log.debug("Concurrent API key creation for domain={}, principals={}, migrationStatus={}",
+        domain, principals, migrationStatus);
 
-    return apiKey;
+    Optional<ApiKey> existingKey;
+    if (isMigrationComplete()) {
+      existingKey = apiKeyStoreV2.getApiKey(domain, principals).map(ApiKey.class::cast);
+    }
+    else if (!isOnDBVersion()) {
+      existingKey = apiKeyStore.getApiKey(domain, principals).map(ApiKey.class::cast);
+    }
+    else {
+      existingKey = apiKeyStoreV2.getApiKey(domain, principals)
+          .map(ApiKey.class::cast)
+          .or(() -> apiKeyStore.getApiKey(domain, principals).map(ApiKey.class::cast));
+    }
+
+    return existingKey.map(ApiKey::getApiKey)
+        .orElseThrow(() -> new IllegalStateException(
+            "Concurrent API key creation detected but no existing key found for domain=" + domain +
+                ", principals=" + principals + ", migrationStatus=" + migrationStatus,
+            cause));
+  }
+
+  private String getMigrationStatus() {
+    if (isMigrationComplete()) {
+      return "complete";
+    }
+    else if (!isOnDBVersion()) {
+      return "not-started";
+    }
+    else {
+      return "in-progress";
+    }
   }
 
   @Override
@@ -188,6 +251,18 @@ public class ApiKeyServiceImpl
       final OffsetDateTime created)
   {
     modify(store -> store.persistApiKey(domain, principals, apiKey, created));
+  }
+
+  @Override
+  public void persistApiKey(
+      final String domain,
+      final PrincipalCollection principals,
+      final char[] apiKey,
+      final OffsetDateTime created,
+      final String creatorUserId,
+      final String creatorRealm)
+  {
+    modify(store -> store.persistApiKey(domain, principals, apiKey, created, creatorUserId, creatorRealm));
   }
 
   @Override

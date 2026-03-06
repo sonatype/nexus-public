@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -189,5 +190,29 @@ public class ApiKeyStoreImpl
     Set<String> realms = principals.getRealmNames();
     return key -> key.getPrincipals().getRealmNames().equals(realms)
         && key.getPrincipals().getPrimaryPrincipal().equals(primaryPrincipal);
+  }
+
+  @Override
+  public Collection<ApiKeyInternal> browseFiltered(
+      final String domain,
+      final String realm,
+      final String username,
+      final int skip,
+      final int limit)
+  {
+    // V1 store doesn't support SQL filtering, fall back to browse + filter
+    return browse(domain).stream()
+        .filter(key -> username == null || username.equals(key.getPrincipals().getPrimaryPrincipal()))
+        .skip(skip)
+        .limit(limit)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public int countFiltered(final String domain, final String realm, final String username) {
+    // V1 store doesn't support SQL filtering, fall back to browse + count
+    return (int) browse(domain).stream()
+        .filter(key -> username == null || username.equals(key.getPrincipals().getPrimaryPrincipal()))
+        .count();
   }
 }

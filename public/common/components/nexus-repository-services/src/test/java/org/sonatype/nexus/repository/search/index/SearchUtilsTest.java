@@ -254,7 +254,7 @@ public class SearchUtilsTest
               "Maven extension", SearchField.FORMAT_FIELD_2),
           new SearchMapping("maven.classifier", "assets.attributes.maven2.classifier",
               "Maven classifier", SearchField.FORMAT_FIELD_3),
-          new SearchMapping("swift.scope", "assets.attributes.swift.scope",
+          new SearchMapping("swift.scope", "attributes.swift.scope",
               "Swift scope", SearchField.FORMAT_FIELD_1),
           new SearchMapping("maven.groupId", "attributes.maven2.groupId",
               "Maven groupId", SearchField.NAMESPACE));

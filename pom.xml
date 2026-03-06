@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.89.1-02</version>
+  <version>3.90.0-21</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.89.1-02</nexus.version>
+    <nexus.version>3.90.0-21</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <spring-boot.version>3.3.11</spring-boot.version>
@@ -73,7 +73,12 @@
 
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
     <node.version>v22.19.0</node.version>
-    <yarn.version>v1.22.19</yarn.version>
+    <!-- NOTE: Yarn 1.22.22 is downloaded by frontend-maven-plugin but not used at runtime.
+         The actual yarn version used is 4.9.1 (see .yarnrc.yml which points to .yarn/releases/yarn-4.9.1.cjs).
+         This resolves CVE-2025-9308 and CVE-2025-8262 as the vulnerable yarn 1.x is never executed.
+         While 1.22.22 is still technically vulnerable to CVE-2025-8262 (patch not officially released),
+         the risk is mitigated by using Yarn 4.9.1 at runtime. Upgrading to 1.22.22 shows due diligence. -->
+    <yarn.version>v1.22.22</yarn.version>
     <npm.install>install --immutable</npm.install>
     <npm.skipTests>false</npm.skipTests>
     <npm.build>build-all</npm.build>
@@ -224,7 +229,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.89.1-02</version>
+          <version>3.90.0-21</version>
           <executions>
             <execution>
               <goals>
@@ -623,7 +628,7 @@
           <!-- see developer-documentation/development/formatting.md -->
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>2.43.0</version>
+          <version>3.1.0</version>
 
           <configuration>
             <ratchetFrom>origin/main</ratchetFrom>

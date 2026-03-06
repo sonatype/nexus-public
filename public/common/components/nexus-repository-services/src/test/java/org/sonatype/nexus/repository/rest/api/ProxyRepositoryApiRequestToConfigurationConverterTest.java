@@ -67,7 +67,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     StorageAttributes storage = new StorageAttributes("default", true);
     when(request.getStorage()).thenReturn(storage);
 
-    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440);
+    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
     when(request.getProxy()).thenReturn(proxy);
 
     HttpClientConnectionAuthenticationAttributes authentication =
@@ -101,7 +101,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     StorageAttributes storage = new StorageAttributes("default", true);
     when(request.getStorage()).thenReturn(storage);
 
-    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440);
+    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
     when(request.getProxy()).thenReturn(proxy);
 
     HttpClientConnectionAuthenticationAttributes authentication =
@@ -139,7 +139,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     StorageAttributes storage = new StorageAttributes("default", true);
     when(request.getStorage()).thenReturn(storage);
 
-    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440);
+    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
     when(request.getProxy()).thenReturn(proxy);
 
     HttpClientConnectionAuthenticationAttributes authentication =
@@ -175,7 +175,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     StorageAttributes storage = new StorageAttributes("default", true);
     when(request.getStorage()).thenReturn(storage);
 
-    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440);
+    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
     when(request.getProxy()).thenReturn(proxy);
 
     HttpClientAttributes httpClient = new HttpClientAttributes(false, true, null, null);

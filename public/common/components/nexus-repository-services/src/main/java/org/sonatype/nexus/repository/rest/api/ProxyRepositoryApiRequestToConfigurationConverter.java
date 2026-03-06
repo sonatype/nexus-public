@@ -134,6 +134,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
       proxyConfiguration.set("remoteUrl", proxy.getRemoteUrl());
       proxyConfiguration.set("contentMaxAge", proxy.getContentMaxAge());
       proxyConfiguration.set("metadataMaxAge", proxy.getMetadataMaxAge());
+      proxyConfiguration.set("preserveEncodedCharacters", proxy.getPreserveEncodedCharacters());
     }
   }
 

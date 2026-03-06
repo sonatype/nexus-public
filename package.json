@@ -18,11 +18,13 @@
     "dompurify": "=3.2.4",
     "form-data": "=4.0.4",
     "js-yaml": "=4.1.1",
+    "lodash": "=4.17.23",
     "node-gyp": "=12.0.0",
     "prismjs": "=1.30.0",
     "ramda": "=0.28.0",
     "ramda-adjunct": "=4.1.1",
     "sha.js": "=2.4.12",
+    "tar": "=7.5.7",
     "tmp": "=0.2.4"
   },
   "dependencies": {

@@ -247,7 +247,10 @@ export default {
       },
       get PRIVILEGES_TYPES() {
         return `${this.BASE_URL}privileges/types`;
-      }
+      },
+      get RECOVERY_MODE() {
+        return `${this.BASE_URL}recovery-mode`;
+      },
     },
     PUBLIC: {
       BASE_URL: 'service/rest/v1/',
@@ -316,6 +319,9 @@ export default {
       },
       get MALWARE_COMPONENTS_CSV() {
         return `${this.BASE_URL}malicious-risk/malware-components-csv`;
+      },
+      get RECOVERY_MODE() {
+        return `${this.BASE_URL}recovery-mode`;
       },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',

@@ -156,8 +156,12 @@
   </insert>
 
   <delete id="trimBrowseNodes">
+    <!-- NEXUS-45497: Remove component_id IS NULL check to allow cleanup of orphaned directory nodes
+         that may have component_id set. Directory nodes should only be deleted when they have no
+         asset_id and no children, regardless of component_id value. This fixes the issue where
+         duplicate RPMs uploaded to different paths leave ghost directories after deletion. -->
     DELETE FROM ${format}_browse_node B WHERE
-        B.repository_id = #{repositoryId} AND B.component_id IS NULL AND B.asset_id IS NULL AND
+        B.repository_id = #{repositoryId} AND B.asset_id IS NULL AND
         NOT EXISTS (SELECT 1 FROM ${format}_browse_node C WHERE
             C.repository_id = #{repositoryId} AND C.parent_id = B.node_id LIMIT 1);
   </delete>

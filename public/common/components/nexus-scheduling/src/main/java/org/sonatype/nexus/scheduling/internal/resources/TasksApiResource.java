@@ -17,7 +17,6 @@ import java.util.concurrent.Future;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
@@ -56,7 +55,6 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Path(TasksApiResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
-@Consumes(APPLICATION_JSON)
 public class TasksApiResource
     extends ComponentSupport
     implements Resource, TasksApiResourceDoc

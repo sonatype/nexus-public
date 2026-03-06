@@ -51,6 +51,11 @@ import org.springframework.stereotype.Component;
 public class ProprietaryRepositoriesComponent
     extends DirectComponentSupport
 {
+  /**
+   * Formats that do not support namespace confusion protection via Firewall
+   */
+  private static final Set<String> UNSUPPORTED_NAMESPACE_CONFUSION_FORMATS = Set.of("docker");
+
   private final AuthorizingRepositoryManager repositoryManager;
 
   @Inject
@@ -71,6 +76,8 @@ public class ProprietaryRepositoriesComponent
     List<String> enabledRepositories = repositoryManager.getRepositoriesWithAdmin()
         .stream()
         .filter(ProprietaryRepositoriesComponent::isProprietary)
+
+        .filter(ProprietaryRepositoriesComponent::supportsNamespaceConfusion)
         .map(Repository::getName)
         .sorted()
         .collect(Collectors.toList()); // NOSONAR
@@ -92,6 +99,7 @@ public class ProprietaryRepositoriesComponent
     return repositoryManager.getRepositoriesWithAdmin()
         .stream()
         .filter(ProprietaryRepositoriesComponent::isHosted)
+        .filter(ProprietaryRepositoriesComponent::supportsNamespaceConfusion)
         .map(repo -> new ReferenceXO(repo.getName(), repo.getName()))
         .sorted(Comparator.comparing(ReferenceXO::getName))
         .collect(Collectors.toList()); // NOSONAR
@@ -113,6 +121,7 @@ public class ProprietaryRepositoriesComponent
     repositoryManager.getRepositoriesWithAdmin()
         .stream()
         .filter(ProprietaryRepositoriesComponent::isHosted)
+        .filter(ProprietaryRepositoriesComponent::supportsNamespaceConfusion)
         .filter(repo -> (!isProprietary(repo) && shouldBeEnabled.contains(repo.getName()))
             || (isProprietary(repo) && !shouldBeEnabled.contains(repo.getName())))
         .forEach(repo -> setProprietaryStatus(repo, shouldBeEnabled.contains(repo.getName())));
@@ -121,6 +130,10 @@ public class ProprietaryRepositoriesComponent
 
   private static boolean isHosted(final Repository repository) {
     return HostedType.NAME.equals(repository.getType().getValue());
+  }
+
+  private static boolean supportsNamespaceConfusion(final Repository repository) {
+    return !UNSUPPORTED_NAMESPACE_CONFUSION_FORMATS.contains(repository.getFormat().getValue());
   }
 
   private static boolean isProprietary(final Repository repository) {

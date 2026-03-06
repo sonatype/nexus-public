@@ -19,6 +19,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.OutboundRequestMetricRecorder;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
@@ -33,6 +34,8 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -66,7 +69,13 @@ public abstract class ContentProxyFacetSupport
     HttpGet request = new HttpGet(uri);
     log.debug("Fetching: {}", request);
 
-    HttpResponse response = client.execute(request);
+    HttpContext httpContext = new BasicHttpContext();
+    // Populate context with repository metadata for telemetry
+    if (proxy != null && proxy.getFormat() != null && proxy.getType() != null) {
+      httpContext.setAttribute(OutboundRequestMetricRecorder.CONTEXT_FORMAT, proxy.getFormat().getValue());
+      httpContext.setAttribute(OutboundRequestMetricRecorder.CONTEXT_REPOSITORY_TYPE, proxy.getType().getValue());
+    }
+    HttpResponse response = client.execute(request, httpContext);
     StatusLine status = response.getStatusLine();
     log.debug("Response: {}, status: {}", response, status);
 

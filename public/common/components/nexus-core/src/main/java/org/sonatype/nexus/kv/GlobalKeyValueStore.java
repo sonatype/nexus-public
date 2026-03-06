@@ -136,6 +136,10 @@ public class GlobalKeyValueStore
   @Override
   @Transactional
   public boolean removeKey(final String key) {
-    return dao().remove(key);
+    boolean removed = dao().remove(key);
+    if (removed) {
+      super.postCommitEvent(() -> new KeyValueEvent(key, null));
+    }
+    return removed;
   }
 }

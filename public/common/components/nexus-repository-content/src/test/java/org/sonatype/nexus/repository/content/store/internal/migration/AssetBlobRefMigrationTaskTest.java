@@ -101,7 +101,8 @@ public class AssetBlobRefMigrationTaskTest
 
   @Test
   public void testUpdateDuplicatedBlobRef() {
-    AssetBlobRefMigrationTask assetBlobRefMigrationTask = new AssetBlobRefMigrationTask(List.of(), 3);
+    AssetBlobRefMigrationTask assetBlobRefMigrationTask =
+        new AssetBlobRefMigrationTask(List.of(), 3);
 
     String uuid = UUID.randomUUID().toString();
     AssetBlobData blobData1 = new AssetBlobData();
@@ -140,6 +141,27 @@ public class AssetBlobRefMigrationTaskTest
     verify(assetBlobStore).browseAssetsWithLegacyBlobRef(READ_ASSETS_BATCH_SIZE, "NEXT");
     verify(assetBlobStore).browseAssetsWithLegacyBlobRef(READ_ASSETS_BATCH_SIZE, "EOL");
 
+    verify(assetBlobStore, times(2)).updateBlobRefs(any());
+  }
+
+  @Test
+  public void testMigrationCompletesSuccessfully() throws Exception {
+    when(QualifierUtil.buildQualifierBeanMap(anyList())).thenReturn(Map.of("maven2", formatStoreManager));
+    when(formatStoreManager.assetBlobStore("nexus")).thenReturn(assetBlobStore);
+
+    AssetBlobRefMigrationTask underTest = new AssetBlobRefMigrationTask(List.of(formatStoreManager),
+        READ_ASSETS_BATCH_SIZE);
+
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    taskConfiguration.setString(FORMAT_FIELD_ID, "maven2");
+    taskConfiguration.setString(CONTENT_STORE_FIELD_ID, "nexus");
+    taskConfiguration.setId(UUID.randomUUID().toString());
+    taskConfiguration.setTypeId(TYPE_ID);
+    underTest.configure(taskConfiguration);
+
+    underTest.execute();
+
+    // Verify migration executed successfully
     verify(assetBlobStore, times(2)).updateBlobRefs(any());
   }
 

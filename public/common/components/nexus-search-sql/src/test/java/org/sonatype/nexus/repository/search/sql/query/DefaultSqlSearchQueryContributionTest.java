@@ -14,9 +14,8 @@ package org.sonatype.nexus.repository.search.sql.query;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -24,16 +23,7 @@ import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SearchMappingService;
-import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
-import org.sonatype.nexus.repository.search.sql.query.syntax.LenientTerm;
-import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
-import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
-import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
-import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
-import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
-import org.sonatype.nexus.repository.search.sql.query.syntax.Term;
-import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
-import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.*;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.junit.Before;
@@ -147,29 +137,29 @@ public class DefaultSqlSearchQueryContributionTest
   @Test
   public void testExactMatchField() {
     // Test that name.raw field (which has exactMatch=true) creates ExactTerm
-    Collection<StringTerm> result = splitForField("name.raw", "hello");
+    Collection<SingleValueTerm<?>> result = splitForField("name.raw", "hello");
     assertThat(result, contains(new ExactTerm("hello")));
   }
 
   @Test
   public void testExactMatchFieldWithMultipleTerms() {
     // Test that name.raw field with multiple space-separated terms creates multiple ExactTerms
-    Collection<StringTerm> result = splitForField("name.raw", "hello world");
+    Collection<SingleValueTerm<?>> result = splitForField("name.raw", "hello world");
     assertThat(result, contains(new ExactTerm("hello"), new ExactTerm("world")));
   }
 
   @Test
   public void testLenientMatchField() {
     // Test that group.raw field now creates ExactTerm (changed to exactMatch=true for NEXUS-49265)
-    Collection<StringTerm> result = splitForField(GROUP_RAW, "support");
+    Collection<SingleValueTerm<?>> result = splitForField(GROUP_RAW, "support");
     assertThat(result, contains(new ExactTerm("support")));
   }
 
-  private Collection<StringTerm> split(final String value) {
+  private Collection<SingleValueTerm<?>> split(final String value) {
     return splitForField(GROUP_RAW, value);
   }
 
-  private Collection<StringTerm> splitForField(final String field, final String value) {
+  private Collection<SingleValueTerm<?>> splitForField(final String field, final String value) {
     Optional<Expression> expression = underTest.createPredicate(new SearchFilter(field, value));
 
     assertTrue(expression.isPresent());
@@ -183,24 +173,24 @@ public class DefaultSqlSearchQueryContributionTest
           .stream()
           .map(e -> ((SqlPredicate) e).getTerm())
           .flatMap(term -> {
-            if (term instanceof StringTerm) {
-              return Stream.of((StringTerm) term);
+            if (term instanceof StringTerm st) {
+              return Stream.of(st);
             }
-            else if (term instanceof TermCollection) {
-              return ((TermCollection) term).get().stream();
+            else if (term instanceof TermCollection tc) {
+              return tc.get().stream();
             }
             return Stream.empty();
           })
-          .collect(Collectors.toList());
+          .toList();
     }
     else if (expr instanceof SqlPredicate) {
       Term term = ((SqlPredicate) expr).getTerm();
 
-      if (term instanceof StringTerm) {
-        return Collections.singleton((StringTerm) term);
+      if (term instanceof StringTerm st) {
+        return List.of(st);
       }
-      else if (term instanceof TermCollection) {
-        return ((TermCollection) term).get().stream().map(StringTerm.class::cast).collect(Collectors.toList());
+      else if (term instanceof TermCollection tc) {
+        return tc.get();
       }
     }
 

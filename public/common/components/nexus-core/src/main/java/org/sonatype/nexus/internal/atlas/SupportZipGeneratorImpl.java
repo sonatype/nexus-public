@@ -73,6 +73,8 @@ public class SupportZipGeneratorImpl
    */
   private final ByteSize maxFileSize;
 
+  private static final int SKIP_BUFFER_SIZE = 64 * 1024; // 64KB for efficient skip operations
+
   /**
    * The maximum (compressed) size of the entire ZIP file when limit ZIP size is enabled.
    */
@@ -351,11 +353,62 @@ public class SupportZipGeneratorImpl
               byte[] buff = new byte[chunkSize];
               int len;
               long writtenBytes = 0;
+
+              // Check if log file needs truncation upfront (either file size or ZIP size limit)
+              long sourceSize = source.getSize();
+              boolean needsFileSizeTruncation = isLogFile && limitFileSizes && sourceSize > maxContentSize;
+
+              // Check if adding this log file will likely exceed ZIP size limit
+              // We use uncompressed size as estimate since we can't predict compression ratio
+              long remainingZipSpace = maxZipSize - stream.getCount();
+              boolean needsZipSizeTruncation = isLogFile && limitZipSize && sourceSize > remainingZipSpace;
+
+              boolean needsTruncation = needsFileSizeTruncation || needsZipSizeTruncation;
+
+              if (needsTruncation) {
+                // For log files, keep the tail (most recent entries) instead of the head
+                String reason = needsFileSizeTruncation ? "file size limit" : "ZIP size limit";
+                log.warn("Truncating source contents from beginning; {} reached: {}", reason, source.getPath());
+
+                // Write truncation marker at the beginning
+                zip.write(TRUNCATED_TOKEN.getBytes());
+                zip.write("\n".getBytes());
+                writtenBytes += TRUNCATED_TOKEN.length() + 1;
+                truncated.set(true);
+
+                // Calculate how many bytes to skip to get to the tail
+                // Reserve space for the truncation marker
+                long maxBytesToKeep;
+                if (needsFileSizeTruncation) {
+                  maxBytesToKeep = maxContentSize - TRUNCATED_TOKEN.length() - 1;
+                }
+                else {
+                  // For ZIP size limit, use remaining space (estimate, since compression varies)
+                  maxBytesToKeep = remainingZipSpace - TRUNCATED_TOKEN.length() - 1;
+                }
+
+                long bytesToKeep;
+                long bytesToSkip;
+                // Ensure maxBytesToKeep is non-negative to prevent incorrect skip calculations
+                if (maxBytesToKeep <= 0) {
+                  log.warn("Insufficient space for file content after truncation marker; skipping all content: {}",
+                      source.getPath());
+                  bytesToKeep = 0;
+                  bytesToSkip = sourceSize;
+                }
+                else {
+                  bytesToKeep = Math.min(maxBytesToKeep, sourceSize);
+                  bytesToSkip = sourceSize - bytesToKeep;
+                }
+
+                // Skip to the tail of the file
+                skipToTail(source, bytesToSkip, input);
+              }
+
               while ((len = input.read(buff)) != -1) {
-                // truncate content if max file size or max ZIP size reached
-                if ((isLogFile && limitFileSizes && writtenBytes + len > maxContentSize) ||
-                    (limitZipSize && stream.getCount() + len > maxZipSize)) {
-                  log.warn("Truncating source contents; limit reached: {}", source.getPath());
+                // Check if ZIP size limit is reached (defensive check for when we didn't truncate upfront)
+                if (limitZipSize && stream.getCount() + len > maxZipSize) {
+                  log.warn("Truncating source contents; ZIP size limit reached during write: {}", source.getPath());
                   zip.write(TRUNCATED_TOKEN.getBytes());
                   truncated.set(true);
                   break;
@@ -459,6 +512,36 @@ public class SupportZipGeneratorImpl
         // must end with "/"
         closeEntry(zip, entry);
       });
+    }
+  }
+
+  private void skipToTail(
+      final ContentSource source,
+      final long bytesToSkip,
+      final InputStream input) throws IOException
+  {
+    long skipped = 0;
+    byte[] skipBuffer = null; // lazily initialized for efficiency
+    while (skipped < bytesToSkip) {
+      long remaining = bytesToSkip - skipped;
+      long skipAmount = input.skip(remaining);
+      if (skipAmount <= 0) {
+        log.debug("skip() failed for {}, falling back to read/discard method", source.getPath());
+        // skip() returned 0 or -1, try reading and discarding instead
+        // Use a larger dedicated skip buffer for better I/O efficiency
+        if (skipBuffer == null) {
+          skipBuffer = new byte[SKIP_BUFFER_SIZE];
+        }
+        int toRead = (int) Math.min(skipBuffer.length, remaining);
+        int read = input.read(skipBuffer, 0, toRead);
+        if (read <= 0) {
+          break; // Unable to skip further
+        }
+        skipped += read;
+      }
+      else {
+        skipped += skipAmount;
+      }
     }
   }
 }

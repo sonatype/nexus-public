@@ -64,6 +64,8 @@ describe('useRedirectOnLogout', () => {
         }),
       }),
     };
+
+    window.dirty = [];
   });
 
   afterEach(() => {
@@ -83,6 +85,22 @@ describe('useRedirectOnLogout', () => {
 
     jest.advanceTimersByTime(150);
 
+    expect(goMock).toHaveBeenCalledWith('browse.welcome');
+  });
+
+  it('should clear unsaved changes before redirecting', () => {
+    ExtJS.useUser.mockReturnValue(null);
+    isVisible.mockReturnValue(false);
+    window.dirty = ['some unsaved changes'];
+
+    renderHook(() => useRedirectOnLogout());
+
+    const [, permissionsChangedHandler] = onMock.mock.calls[0];
+    permissionsChangedHandler();
+
+    jest.advanceTimersByTime(150);
+
+    expect(window.dirty).toEqual([]);
     expect(goMock).toHaveBeenCalledWith('browse.welcome');
   });
 

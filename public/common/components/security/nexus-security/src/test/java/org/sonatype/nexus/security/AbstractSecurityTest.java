@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.bootstrap.entrypoint.jetty.JettyServer;
 import org.sonatype.nexus.bootstrap.jetty.ManagedJetty;
 import org.sonatype.nexus.bootstrap.security.WebSecurityConfiguration;
@@ -169,6 +170,11 @@ public abstract class AbstractSecurityTest
     @Bean
     public SecretsStore secretsStore() {
       return mock(SecretsStore.class);
+    }
+
+    @Bean
+    public AuditRecorder auditRecorder() {
+      return mock(AuditRecorder.class);
     }
 
     @Bean

@@ -14,6 +14,7 @@ package org.sonatype.nexus.security.user;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -41,7 +42,7 @@ public abstract class AbstractUserManager
 
   /**
    * Delegates to {@link #doAddUser(User, String)} and then posts a {@link UserCreatedEvent}.
-   * 
+   *
    * @param user the user to add
    * @param password the user's password
    * @return the added user
@@ -57,7 +58,7 @@ public abstract class AbstractUserManager
 
   /**
    * Delegates to {@link #doUpdateUser(User)} and then posts a {@link UserUpdatedEvent}.
-   * 
+   *
    * @param user the user to update
    * @return the updated user
    * @throws UserNotFoundException if the user does not exist
@@ -84,8 +85,9 @@ public abstract class AbstractUserManager
 
   public abstract User doDeleteUser(final String userId) throws UserNotFoundException;
 
-  protected Set<User> filterListInMemeory(final Set<User> users, final UserSearchCriteria criteria) {
-    HashSet<User> result = new HashSet<>();
+  protected Set<User> filterListInMemory(final Set<User> users, final UserSearchCriteria criteria) {
+    // use LinkedHashSet to avoid changing sort order
+    Set<User> result = new LinkedHashSet<>();
 
     for (User user : users) {
       if (userMatchesCriteria(user, criteria)) {

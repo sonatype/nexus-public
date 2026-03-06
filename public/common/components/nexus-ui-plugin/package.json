@@ -9,6 +9,7 @@
   "scripts": {
     "build": "npm-run-all build-all",
     "build-all": "npm-run-all lint format compile-js copy-scss copy-package-json",
+    "build-no-lint": "npm-run-all compile-js copy-scss copy-package-json",
     "check-format": "biome format --changed --no-errors-on-unmatched",
     "lint": "eslint",
     "format": "biome format --changed --write --no-errors-on-unmatched",
@@ -18,6 +19,7 @@
     "copy-scss": "cpx \"src/frontend/src/**/*.scss\" target/dist",
     "copy-package-json": "cpx package.json target/dist",
     "test": "npm-run-all check-format test-coverage",
+    "test-no-lint": "npm-run-all test-coverage",
     "test-coverage": "jest --config src/frontend/jest.config.js --coverage",
     "test-watch": "jest --config src/frontend/jest.config.js --watch",
     "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config src/frontend/jest.config.js --runInBand --watchAll"

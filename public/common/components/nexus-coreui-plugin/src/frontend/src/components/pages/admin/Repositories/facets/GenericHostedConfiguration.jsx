@@ -23,10 +23,15 @@ const {EDITOR} = UIStrings.REPOSITORIES;
 
 const deploymentPolicies = Object.entries(EDITOR.DEPLOYMENT_POLICY_OPTIONS);
 
+    // Formats that do not support namespace confusion protection via Firewall
+const UNSUPPORTED_NAMESPACE_CONFUSION_FORMATS = ['docker'];
+
 export default function GenericHostedConfiguration({parentMachine}) {
   const [parentState, sendParent] = parentMachine;
 
   const {format, type} = parentState.context.data;
+
+  const supportsNamespaceConfusion = !UNSUPPORTED_NAMESPACE_CONFUSION_FORMATS.includes(format);
 
   return (
     <>
@@ -50,17 +55,19 @@ export default function GenericHostedConfiguration({parentMachine}) {
         </NxFormSelect>
       </NxFormGroup>
 
-      <NxFieldset
-        label={EDITOR.PROPRIETARY_COMPONENTS_LABEL}
-        className="nxrm-form-group-is-proprietary"
-      >
-        <NxCheckbox
-          {...FormUtils.checkboxProps('component.proprietaryComponents', parentState)}
-          onChange={FormUtils.handleUpdate('component.proprietaryComponents', sendParent)}
+      {supportsNamespaceConfusion && (
+        <NxFieldset
+          label={EDITOR.PROPRIETARY_COMPONENTS_LABEL}
+          className="nxrm-form-group-is-proprietary"
         >
-          {EDITOR.PROPRIETARY_COMPONENTS_DESCR}
-        </NxCheckbox>
-      </NxFieldset>
+          <NxCheckbox
+            {...FormUtils.checkboxProps('component.proprietaryComponents', parentState)}
+            onChange={FormUtils.handleUpdate('component.proprietaryComponents', sendParent)}
+          >
+            {EDITOR.PROPRIETARY_COMPONENTS_DESCR}
+          </NxCheckbox>
+        </NxFieldset>
+      )}
 
       {format === 'docker' && <DockerRedeployLatesConfiguration parentMachine={parentMachine} />}
     </>

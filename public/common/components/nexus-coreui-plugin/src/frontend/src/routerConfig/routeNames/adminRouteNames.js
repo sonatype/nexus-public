@@ -165,6 +165,10 @@ export default {
       CREATE: 'admin.support.logging.create',
       EDIT: 'admin.support.logging.edit',
     },
+    RECOVERY: {
+      ROOT: 'admin.support.recovery',
+      TITLE: 'Recovery Mode',
+    },
     STATUS: {
       ROOT: 'admin.support.status',
       TITLE: 'Status',

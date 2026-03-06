@@ -18,31 +18,30 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryCondition;
-
-import com.google.common.collect.Iterables;
-import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryConditionGroup;
-import org.sonatype.nexus.repository.search.sql.query.SqlSearchRequest;
 
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.sql.SearchAssetRecord;
 import org.sonatype.nexus.repository.search.sql.SearchResult;
+import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryCondition;
+import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryConditionGroup;
+import org.sonatype.nexus.repository.search.sql.query.SqlSearchRequest;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.Iterables;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
-import org.springframework.stereotype.Component;
 
 /**
  * Store for the single table search implementation.
@@ -290,11 +289,11 @@ public class SearchStore
   }
 
   private String getFilterFormat(SqlSearchQueryCondition componentFilterQuery) {
-    return Objects.nonNull(componentFilterQuery) ? componentFilterQuery.getSqlConditionFormat() : null;
+    return Objects.nonNull(componentFilterQuery) ? componentFilterQuery.getSqlFilter() : null;
   }
 
-  private Map<String, String> getFormatValues(SqlSearchQueryCondition componentFilterQuery) {
-    return Objects.nonNull(componentFilterQuery) ? componentFilterQuery.getValues() : null;
+  private Map<String, Object> getFormatValues(SqlSearchQueryCondition componentFilterQuery) {
+    return Objects.nonNull(componentFilterQuery) ? componentFilterQuery.getParameters() : null;
   }
 
   private String getSortDirection(SortDirection sortDirectionEnum) {
@@ -305,7 +304,7 @@ public class SearchStore
       int limit,
       int offset,
       String filterFormat,
-      Map<String, String> formatValues,
+      Map<String, Object> formatValues,
       Optional<SqlSearchQueryCondition> assetFilterQuery,
       @Nullable final String sortColumnName,
       @Nullable final String sortDirection,
@@ -317,8 +316,8 @@ public class SearchStore
         .offset(offset)
         .searchFilter(filterFormat)
         .searchFilterValues(formatValues)
-        .searchAssetFilter(assetFilterQuery.map(SqlSearchQueryCondition::getSqlConditionFormat).orElse(null))
-        .searchAssetFilterValues(assetFilterQuery.map(SqlSearchQueryCondition::getValues).orElse(null))
+        .searchAssetFilter(assetFilterQuery.map(SqlSearchQueryCondition::getSqlFilter).orElse(null))
+        .searchAssetFilterValues(assetFilterQuery.map(SqlSearchQueryCondition::getParameters).orElse(null))
         .distinctNameAndNamespace(distinct);
 
     if (Objects.nonNull(sortColumnName)) {
@@ -342,7 +341,7 @@ public class SearchStore
     Optional<SqlSearchQueryCondition> assetFilterQuery = getAssetFilterQuery(sqlSearchQueryConditionGroup);
 
     String filterFormat = getFilterFormat(componentFilterQuery);
-    Map<String, String> formatValues = getFormatValues(componentFilterQuery);
+    Map<String, Object> formatValues = getFormatValues(componentFilterQuery);
 
     String sortDirection = getSortDirection(sortDirectionEnum);
 
@@ -355,22 +354,22 @@ public class SearchStore
     Optional<SqlSearchQueryCondition> assetFilterQuery = getAssetFilterQuery(sqlSearchQueryConditionGroup);
 
     String filterFormat = getFilterFormat(componentFilterQuery);
-    Map<String, String> formatValues = getFormatValues(componentFilterQuery);
+    Map<String, Object> formatValues = getFormatValues(componentFilterQuery);
 
     return buildSearchRequest(filterFormat, formatValues, assetFilterQuery);
   }
 
   private SqlSearchRequest buildSearchRequest(
       String filterFormat,
-      Map<String, String> formatValues,
+      Map<String, Object> formatValues,
       Optional<SqlSearchQueryCondition> assetFilterQuery)
   {
     SqlSearchRequest.Builder builder = SqlSearchRequest
         .builder()
         .searchFilter(filterFormat)
         .searchFilterValues(formatValues)
-        .searchAssetFilter(assetFilterQuery.map(SqlSearchQueryCondition::getSqlConditionFormat).orElse(null))
-        .searchAssetFilterValues(assetFilterQuery.map(SqlSearchQueryCondition::getValues).orElse(null));
+        .searchAssetFilter(assetFilterQuery.map(SqlSearchQueryCondition::getSqlFilter).orElse(null))
+        .searchAssetFilterValues(assetFilterQuery.map(SqlSearchQueryCondition::getParameters).orElse(null));
 
     return builder.build();
   }

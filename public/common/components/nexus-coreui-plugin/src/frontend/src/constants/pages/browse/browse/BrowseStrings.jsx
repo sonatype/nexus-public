@@ -35,6 +35,7 @@ export default {
       EMPTY_MESSAGE: 'There are no repositories available',
       COPY_URL_TITLE: 'Copy URL to Clipboard',
       URL_COPIED_MESSAGE: 'URL Copied to Clipboard',
+      URL_COPY_ERROR_MESSAGE: 'Failed to copy URL to clipboard'
     }
   }
 };

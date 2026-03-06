@@ -19,6 +19,7 @@ export default {
   LOGIN_TITLE: 'Welcome',
   LOGIN_SUBTITLE: 'Login to continue',
   SSO_BUTTON: 'Continue with SSO',
+  SSO_BUTTON_CLOUD: 'Login',
   SSO_BUTTON_LOADING: 'Redirecting...',
   SSO_DIVIDER_LABEL: 'Or',
   USERNAME_LABEL: 'Username',

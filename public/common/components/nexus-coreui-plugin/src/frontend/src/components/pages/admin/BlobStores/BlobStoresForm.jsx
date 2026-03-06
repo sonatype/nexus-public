@@ -178,7 +178,7 @@ export default function BlobStoresForm() {
         }
         {isTypeSelected &&
         <>
-          {(isCreate || (isEdit && hasUpdatePermissions)) && <BlobStoreWarning type={type} />}
+          {(isCreate || (isEdit && hasUpdatePermissions)) && <BlobStoreWarning type={type} service={service} />}
           {isCreate &&
               <NxFormGroup
                   className="blob-store-name"

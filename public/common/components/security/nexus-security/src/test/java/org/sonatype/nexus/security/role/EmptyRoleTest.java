@@ -70,7 +70,7 @@ class EmptyRoleTest
     user.setRoles(Collections.singleton(new RoleIdentifier(emptyRole.getSource(), emptyRole.getRoleId())));
 
     // create the user, this user only has an empty role
-    assertThat(securitySystem.addUser(user, "test123"), notNullValue());
+    assertThat(securitySystem.addUser(user, "test1234"), notNullValue());
 
     Set<RoleIdentifier> emptyRoleSet = Collections.emptySet();
     user.setRoles(emptyRoleSet);
@@ -152,7 +152,7 @@ class EmptyRoleTest
     user.setRoles(Collections.singleton(new RoleIdentifier(emptyRole.getSource(), emptyRole.getRoleId())));
 
     // create the user, this user only has an empty role
-    securitySystem.addUser(user, "test123");
+    securitySystem.addUser(user, "test1234");
 
     Set<User> userSearchResult = securitySystem.searchUsers(
         new UserSearchCriteria(null, Collections.singleton(emptyRole.getRoleId()), null));

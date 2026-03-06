@@ -17,9 +17,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.repository.search.sql.query.syntax.BooleanTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.LenientTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SingleValueTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
 
@@ -45,7 +47,7 @@ public class H2FulltextSearchConditionBuilder
   protected Optional<CharSequence> createQuery(
       final H2SearchColumn column,
       final Operand op,
-      final Collection<StringTerm> terms)
+      final Collection<SingleValueTerm<?>> terms)
   {
     if (requiresTextSearch(column, terms)) {
       return createTextSearch(column, op, terms);
@@ -59,26 +61,31 @@ public class H2FulltextSearchConditionBuilder
    * is stored as space-separated values (e.g., "0.1 0 1"), not in PostgreSQL TSVECTOR format.
    * For non-tokenized columns, we use exact matching for single exact terms.
    */
-  private static boolean requiresTextSearch(final H2SearchColumn column, final Collection<StringTerm> terms) {
+  private static boolean requiresTextSearch(final H2SearchColumn column, final Collection<SingleValueTerm<?>> terms) {
     if (!column.supportsTextSearch()) {
       return false;
     }
 
     // Tokenized columns always need LIKE matching
-    if (column.isTokenized()) {
+    if (column.tokenized()) {
       return true;
     }
 
     // Non-tokenized columns: use exact matching when there is a single exact term
-    return terms.size() != 1 || !(Iterables.getOnlyElement(terms) instanceof ExactTerm);
+    if (terms.size() > 1) {
+      return true;
+    }
+    SingleValueTerm<?> term = Iterables.getOnlyElement(terms);
+
+    return !(term instanceof ExactTerm || term instanceof BooleanTerm);
   }
 
   private Optional<CharSequence> createTextSearch(
       final H2SearchColumn column,
       final Operand operand,
-      final Collection<StringTerm> terms)
+      final Collection<SingleValueTerm<?>> terms)
   {
-    if (terms.stream().map(StringTerm::get).allMatch(Strings2::isBlank)) {
+    if (terms.stream().allMatch(term -> term instanceof StringTerm st && Strings2.isBlank(st.get()))) {
       return Optional.empty();
     }
 
@@ -112,14 +119,14 @@ public class H2FulltextSearchConditionBuilder
    * Creates a LIKE expression for the term.
    * H2 doesn't support full-text search, so we use case-insensitive LIKE queries.
    */
-  private Optional<CharSequence> createLikeExpression(final H2SearchColumn column, final StringTerm term) {
-    String value = term.get();
+  private Optional<CharSequence> createLikeExpression(final H2SearchColumn column, final SingleValueTerm<?> term) {
+    String value = term.get().toString();
 
     if (Strings2.isBlank(value)) {
       return Optional.empty();
     }
 
-    String param = param(column.getColumnName());
+    String param = param(column.columnName());
     String likePattern;
 
     if (term instanceof ExactTerm) {
@@ -142,7 +149,7 @@ public class H2FulltextSearchConditionBuilder
     parameters.put(param, likePattern);
 
     // Use LOWER() for case-insensitive search
-    return Optional.of("LOWER(" + column.getColumnName() + ") LIKE LOWER(" + placeholder(param) + ")");
+    return Optional.of("LOWER(" + column.columnName() + ") LIKE LOWER(" + placeholder(param) + ")");
   }
 
   /**

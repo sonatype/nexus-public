@@ -23,7 +23,9 @@ export default {
     MENU: 'Usage',
     MENU_DESCRIPTION: 'Monitor historical usage trends.',
     TITLE: 'Historical Usage',
-    DESCRIPTION: <>Monitor your repository usage trends over time. <NxTextLink external href="http://links.sonatype.com/products/nxrm3/license/historical-usage">Learn how usage is calculated</NxTextLink></>,
+    DESCRIPTION: <>Monitor your repository usage trends over time. <NxTextLink external
+                                                                               href="http://links.sonatype.com/products/nxrm3/license/historical-usage">Learn
+      how usage is calculated</NxTextLink></>,
     MONTH: 'Month',
     PEAK_COMPONENTS: 'Peak Components',
     COMPONENTS_CHANGE: 'Components % Change',
@@ -38,6 +40,8 @@ export default {
     TOTAL_EGRESS_TOOLTIP: 'Egress is based on application-level tracking and may differ from actual network transfer measured by your cloud provider.',
     EGRESS_CHANGE: 'Egress % Change',
     EGRESS_CHANGE_TOOLTIP: 'Change rate of the total monthly egress from the previous month.',
+    TOTAL_USAGE: 'Total Usage',
+    TOTAL_USAGE_TOOLTIP: 'Combined total of egress and storage usage. This is your total usage value.',
     ICON: faServer,
     CHART: {
       LEGEND_EGRESS: 'Total Egress',

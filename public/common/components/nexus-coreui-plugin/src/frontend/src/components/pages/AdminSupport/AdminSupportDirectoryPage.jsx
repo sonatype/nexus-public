@@ -41,6 +41,13 @@ export default function AdminSupportDirectoryPage() {
           />
 
           <DirectoryList.DirectoryListItem
+              data-analytics-id="nxrm-admin-support-directory-recovery-lnk"
+              text={UIStrings.RECOVERY_MODE.MENU.text}
+              description={UIStrings.RECOVERY_MODE.MENU.description}
+              routeName={ROUTE_NAMES.ADMIN.SUPPORT.RECOVERY.ROOT}
+          />
+
+          <DirectoryList.DirectoryListItem
               data-analytics-id="nxrm-admin-support-directory-status-lnk"
               text={UIStrings.METRIC_HEALTH.MENU.text}
               description={UIStrings.METRIC_HEALTH.MENU.description}

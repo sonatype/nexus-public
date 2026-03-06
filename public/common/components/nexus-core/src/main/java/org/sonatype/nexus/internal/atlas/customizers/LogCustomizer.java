@@ -88,10 +88,6 @@ public class LogCustomizer
         LOW);
     includeFileIfExists(supportBundle, new File(applicationDirectories.getWorkDirectory(), "log/outbound-request.log"),
         "log", LOW);
-    logManager.getLogFor("clusterLogFile").ifPresent(clusterLogFile -> {
-      includeFileIfExists(supportBundle, new File(applicationDirectories.getWorkDirectory(), "log/" + clusterLogFile),
-          "log", LOW);
-    });
   }
 
   private void includeFileIfExists(

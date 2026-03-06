@@ -91,6 +91,7 @@ public class AptApiRepositoryAdapter
     NestedAttributesMap aptAttributes = repository.getConfiguration().attributes(AptFormat.NAME);
     String distribution = aptAttributes.get("distribution", String.class);
     Boolean flat = aptAttributes.get("flat", Boolean.class);
-    return new AptProxyRepositoriesAttributes(distribution, flat);
+    Boolean enforceDistribution = aptAttributes.get("enforceDistribution", Boolean.class);
+    return new AptProxyRepositoriesAttributes(distribution, flat, enforceDistribution);
   }
 }

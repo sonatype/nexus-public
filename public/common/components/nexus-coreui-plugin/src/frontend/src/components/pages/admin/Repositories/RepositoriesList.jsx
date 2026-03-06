@@ -12,7 +12,7 @@
  */
 import React, {useState, useEffect} from 'react';
 
-import {ExtJS, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, ListMachineUtils, copyToClipboard} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxButtonBar,
@@ -210,8 +210,12 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
   );
 }
 
-function doCopyUrl(event, url) {
+async function doCopyUrl(event, url) {
   event.stopPropagation();
-  navigator.clipboard.writeText(url);
-  ExtJS.showSuccessMessage('URL Copied to Clipboard');
+  const success = await copyToClipboard(url);
+  if (success) {
+    ExtJS.showSuccessMessage(REPOSITORIES.LIST.URL_COPIED_MESSAGE);
+  } else {
+    ExtJS.showErrorMessage(REPOSITORIES.LIST.URL_COPY_ERROR_MESSAGE);
+  }
 }

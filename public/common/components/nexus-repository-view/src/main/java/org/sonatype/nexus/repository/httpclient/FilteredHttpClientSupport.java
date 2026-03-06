@@ -56,7 +56,23 @@ public abstract class FilteredHttpClientSupport
       final HttpContext context) throws IOException
   {
     try {
-      return filter(target, () -> delegate.execute(target, request, context));
+      return filter(target, new Filterable()
+      {
+        @Override
+        public CloseableHttpResponse call() throws IOException {
+          return delegate.execute(target, request, context);
+        }
+
+        @Override
+        public HttpRequest getRequest() {
+          return request;
+        }
+
+        @Override
+        public HttpContext getContext() {
+          return context;
+        }
+      });
     }
     catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -77,6 +93,10 @@ public abstract class FilteredHttpClientSupport
   public interface Filterable
   {
     CloseableHttpResponse call() throws IOException;
+
+    HttpRequest getRequest();
+
+    HttpContext getContext();
   }
 
   @Override

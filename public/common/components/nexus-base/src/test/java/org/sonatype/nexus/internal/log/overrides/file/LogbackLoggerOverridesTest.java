@@ -118,7 +118,7 @@ public class LogbackLoggerOverridesTest
     if (!afterReset) {
       xml.append("  <logger name='bar' level='INFO'/>");
       xml.append(System.lineSeparator());
-      xml.append("  <property name='root.level' value='WARN'/>");
+      xml.append("  <logger name='ROOT' level='WARN'/>");
       xml.append(System.lineSeparator());
       xml.append("  <logger name='foo' level='ERROR'/>");
       xml.append(System.lineSeparator());

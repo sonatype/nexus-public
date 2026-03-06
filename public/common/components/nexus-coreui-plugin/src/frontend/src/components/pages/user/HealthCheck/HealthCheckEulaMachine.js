@@ -16,7 +16,9 @@
  */
 import {Machine} from "xstate";
 import Axios from "axios";
-import {applicationHealthCheckUrl} from "../AnalyzeApplication/AnalyzeApplicationMachine";
+
+// EULA acceptance endpoint for Health Check features
+const healthCheckEulaUrl = 'service/rest/internal/ui/healthcheck/eula';
 
 export default Machine(
     {
@@ -46,6 +48,6 @@ export default Machine(
     },
     {
       services: {
-        acceptEula: () => Axios.put(applicationHealthCheckUrl)
+        acceptEula: () => Axios.put(healthCheckEulaUrl)
       }
     });

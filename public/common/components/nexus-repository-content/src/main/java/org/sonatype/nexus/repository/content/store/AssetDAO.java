@@ -235,7 +235,7 @@ public interface AssetDAO
   Collection<Asset> findByComponentIds(
       @Param("componentIds") Set<Integer> componentIds,
       @Param("assetFilter") final String assetFilter,
-      @Param("assetFilterParams") final Map<String, String> assetFilterParams);
+      @Param("assetFilterParams") final Map<String, Object> assetFilterParams);
 
   /**
    * Updates the kind of the given asset in the content data store.

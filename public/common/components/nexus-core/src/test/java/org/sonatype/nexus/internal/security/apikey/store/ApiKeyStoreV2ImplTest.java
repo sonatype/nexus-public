@@ -301,6 +301,28 @@ public class ApiKeyStoreV2ImplTest
     assertThat(ApiKeyStoreV2Impl.secret("abcdefg".toCharArray()), is("defg".toCharArray()));
   }
 
+  @Test
+  public void testPersistApiKeyWithCreatorTracking() {
+    underTest.persistApiKey(NPM, PRINCIPALS, KEY, OffsetDateTime.now(), "adminUser", "AdminRealm");
+
+    Optional<ApiKeyInternal> result = underTest.getApiKey(NPM, PRINCIPALS);
+
+    assertTrue(result.isPresent());
+    assertThat(result.get().getCreatedByUserId(), is("adminUser"));
+    assertThat(result.get().getCreatedByRealm(), is("AdminRealm"));
+  }
+
+  @Test
+  public void testPersistApiKeyWithoutCreatorTracking() {
+    underTest.persistApiKey(NPM, PRINCIPALS, KEY, OffsetDateTime.now(), null, null);
+
+    Optional<ApiKeyInternal> result = underTest.getApiKey(NPM, PRINCIPALS);
+
+    assertTrue(result.isPresent());
+    assertThat(result.get().getCreatedByUserId(), is((String) null));
+    assertThat(result.get().getCreatedByRealm(), is((String) null));
+  }
+
   private Table table() {
     DataStore<?> dataStore = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).orElseThrow(RuntimeException::new);
     return new Table(dataStore.getDataSource(), "api_key_v2");

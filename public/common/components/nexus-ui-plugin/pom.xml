@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.89.1-02</version>
+    <version>3.90.0-21</version>
   </parent>
 
   <artifactId>nexus-ui-plugin</artifactId>
@@ -109,4 +109,47 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>public</id>
+      <activation>
+        <property>
+          <name>public</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.eirslett</groupId>
+            <artifactId>frontend-maven-plugin</artifactId>
+
+              <executions>
+                <!-- Skip yarn install - workspaces must be initialized at root first -->
+                <execution>
+                  <id>yarn install</id>
+                  <phase>none</phase>
+                </execution>
+                <!-- Skip yarn build - not needed for OSS release, frontend already built by Copybara -->
+                <execution>
+                  <id>yarn run build</id>
+                  <phase>none</phase>
+                </execution>
+                <!-- Use test-no-lint to avoid arch-specific native modules -->
+                <execution>
+                  <id>js-unit-test</id>
+                  <goals>
+                    <goal>yarn</goal>
+                  </goals>
+                  <phase>test</phase>
+                  <configuration>
+                    <arguments>test-no-lint --reporters=jest-junit --reporters=default</arguments>
+                    <skip>${npm.skipTests}</skip>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

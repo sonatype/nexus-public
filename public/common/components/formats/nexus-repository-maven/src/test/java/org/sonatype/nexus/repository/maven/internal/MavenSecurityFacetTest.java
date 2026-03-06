@@ -68,8 +68,8 @@ public class MavenSecurityFacetTest
   @Test
   public void testEnsurePermitted() throws Exception {
     when(contentPermissionChecker
-        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any()))
-        .thenReturn(true);
+        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any(), any()))
+            .thenReturn(true);
 
     try {
       mavenSecurityFacet.ensurePermitted(request);
@@ -90,6 +90,6 @@ public class MavenSecurityFacetTest
     }
 
     verify(contentPermissionChecker)
-        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any());
+        .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any(), any());
   }
 }

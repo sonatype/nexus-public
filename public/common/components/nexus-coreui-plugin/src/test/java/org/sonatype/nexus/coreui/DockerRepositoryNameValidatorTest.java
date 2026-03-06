@@ -16,27 +16,41 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.validation.ConstraintValidatorContext;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
- * Tests for Docker repository name validation in RepositoryXO
+ * Tests for Docker repository name validation in RepositoryXO.
+ * Includes both Bean Validation API tests and unit tests with mocked RepositoryManager
+ * for testing the existing repository exemption logic.
  */
 public class DockerRepositoryNameValidatorTest
     extends TestSupport
 {
   private Validator validator;
+
+  @Mock
+  private RepositoryManager repositoryManager;
+
+  @Mock
+  private ConstraintValidatorContext context;
 
   @Before
   public void setUp() {
@@ -182,5 +196,81 @@ public class DockerRepositoryNameValidatorTest
     attributes.put("storage", new HashMap<>());
     xo.setAttributes(attributes);
     return xo;
+  }
+
+  // Unit tests with mocked RepositoryManager for testing existing repository exemption
+
+  @Test
+  public void testMixedCaseName_newRepository_isInvalid_withMock() {
+    DockerRepositoryNameValidator validatorWithMock = new DockerRepositoryNameValidator(repositoryManager);
+    RepositoryXO xo = createRepository("MyDockerRepo", "docker-hosted", "docker");
+
+    when(repositoryManager.exists("MyDockerRepo")).thenReturn(false);
+
+    boolean result = validatorWithMock.isValid(xo, context);
+
+    assertThat("Mixed case name for NEW repository should be invalid", result, is(false));
+    verify(repositoryManager).exists("MyDockerRepo");
+  }
+
+  @Test
+  public void testMixedCaseName_existingRepository_isValid_withMock() {
+    DockerRepositoryNameValidator validatorWithMock = new DockerRepositoryNameValidator(repositoryManager);
+    RepositoryXO xo = createRepository("MyDockerRepo", "docker-hosted", "docker");
+
+    when(repositoryManager.exists("MyDockerRepo")).thenReturn(true);
+
+    boolean result = validatorWithMock.isValid(xo, context);
+
+    assertThat("Mixed case name for EXISTING repository should be valid (exempted)", result, is(true));
+    verify(repositoryManager).exists("MyDockerRepo");
+  }
+
+  @Test
+  public void testUppercaseName_existingRepository_isValid_withMock() {
+    DockerRepositoryNameValidator validatorWithMock = new DockerRepositoryNameValidator(repositoryManager);
+    RepositoryXO xo = createRepository("MYDOCKERREPO", "docker-hosted", "docker");
+
+    when(repositoryManager.exists("MYDOCKERREPO")).thenReturn(true);
+
+    boolean result = validatorWithMock.isValid(xo, context);
+
+    assertThat("Uppercase name for EXISTING repository should be valid (exempted)", result, is(true));
+    verify(repositoryManager).exists("MYDOCKERREPO");
+  }
+
+  @Test
+  public void testRepositoryManagerException_failsSafeAndAllows_withMock() {
+    DockerRepositoryNameValidator validatorWithMock = new DockerRepositoryNameValidator(repositoryManager);
+    RepositoryXO xo = createRepository("MyDockerRepo", "docker-hosted", "docker");
+
+    when(repositoryManager.exists("MyDockerRepo")).thenThrow(new RuntimeException("Database error"));
+
+    boolean result = validatorWithMock.isValid(xo, context);
+
+    assertThat("When RepositoryManager throws exception, validator should fail safe and allow", result, is(true));
+    verify(repositoryManager).exists("MyDockerRepo");
+  }
+
+  @Test
+  public void testLowercaseName_doesNotCheckRepository_withMock() {
+    DockerRepositoryNameValidator validatorWithMock = new DockerRepositoryNameValidator(repositoryManager);
+    RepositoryXO xo = createRepository("my-docker-repo", "docker-hosted", "docker");
+
+    boolean result = validatorWithMock.isValid(xo, context);
+
+    assertThat("Lowercase name should be valid without checking repository existence", result, is(true));
+    verify(repositoryManager, never()).exists("my-docker-repo");
+  }
+
+  @Test
+  public void testNonDockerRepository_doesNotCheckRepository_withMock() {
+    DockerRepositoryNameValidator validatorWithMock = new DockerRepositoryNameValidator(repositoryManager);
+    RepositoryXO xo = createRepository("MyMavenRepo", "maven2-hosted", "maven2");
+
+    boolean result = validatorWithMock.isValid(xo, context);
+
+    assertThat("Non-Docker repository should be valid without checking repository existence", result, is(true));
+    verify(repositoryManager, never()).exists("MyMavenRepo");
   }
 }

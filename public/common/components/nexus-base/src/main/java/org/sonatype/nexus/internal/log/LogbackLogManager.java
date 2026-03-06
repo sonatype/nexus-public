@@ -193,7 +193,7 @@ public class LogbackLogManager
 
   @VisibleForTesting
   void logFileNotFound(final String fileName) {
-    log.info("Unable to find log file: {}", fileName);
+    log.debug("Log file not found or empty: {}", fileName);
   }
 
   @Override

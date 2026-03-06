@@ -35,7 +35,7 @@ public class SqlSearchRequest
 
   // Optional values map for filter (required if filter is not null)
   @Nullable
-  public final Map<String, String> filterParams;
+  public final Map<String, Object> filterParams;
 
   // Optional assetFilter to apply
   @Nullable
@@ -43,7 +43,7 @@ public class SqlSearchRequest
 
   // Optional values map for assetFilterParams (required if contentSelectorFilter is not null)
   @Nullable
-  public final Map<String, String> assetFilterParams;
+  public final Map<String, Object> assetFilterParams;
 
   // Optional column name to be used for sorting
   public final String sortColumnName;
@@ -83,7 +83,7 @@ public class SqlSearchRequest
 
     private String filter;
 
-    private Map<String, String> filterParams;
+    private Map<String, Object> filterParams;
 
     private String sortColumnName;
 
@@ -91,7 +91,7 @@ public class SqlSearchRequest
 
     private String assetFilter;
 
-    private Map<String, String> assetFilterValues;
+    private Map<String, Object> assetFilterValues;
 
     private boolean distinctNameAndNamespace = false;
 
@@ -110,7 +110,7 @@ public class SqlSearchRequest
       return this;
     }
 
-    public Builder searchFilterValues(final Map<String, String> values) {
+    public Builder searchFilterValues(final Map<String, Object> values) {
       this.filterParams = values;
       return this;
     }
@@ -130,7 +130,7 @@ public class SqlSearchRequest
       return this;
     }
 
-    public Builder searchAssetFilterValues(final Map<String, String> assetFilterValues) {
+    public Builder searchAssetFilterValues(final Map<String, Object> assetFilterValues) {
       this.assetFilterValues = assetFilterValues;
       return this;
     }

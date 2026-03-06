@@ -16,8 +16,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.event.EventAware;
@@ -28,6 +26,7 @@ import org.sonatype.nexus.security.authc.NexusAuthenticationEvent;
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 
 /**
@@ -39,7 +38,7 @@ import org.springframework.stereotype.Component;
 @Singleton
 public class NexusAuthenticationEventAuditor
     extends AuditorSupport
-    implements EventAware
+    implements EventAware.Asynchronous
 {
   private static final String DOMAIN = "security.user";
 

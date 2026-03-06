@@ -45,7 +45,7 @@ public class MavenValidatingComponentUploadTest
 {
 
   private static final String MAVEN_CLASSIFIER_AND_EXTENSION_EXTRACTOR_REGEX =
-      "-(?:(?:\\.?\\d)+)(?:-(?:SNAPSHOT|\\d+))?(?:-(\\w+))?\\.((?:\\.?\\w)+)$";
+      "-(?:(?:\\.?\\d)+(?:-(?:SNAPSHOT|[\\w]+))*?)(?:-(sources|javadoc|tests|test-sources|test-jar|client|server|shaded))?\\.((?:\\.?\\w)+)$";
 
   private static final String GROUP_NAME_COORDINATES = "Component coordinates";
 
@@ -149,6 +149,47 @@ public class MavenValidatingComponentUploadTest
     componentUpload.getAssetUploads().addAll(asList(assetUploadOne, assetUploadTwo, assetUploadThree));
 
     expectExceptionOnValidate(componentUpload, "The assets 1 and 2 have identical coordinates");
+  }
+
+  @Test
+  public void testValidate_pomWithVersionSuffixAndClassifierFromRegex() {
+    // NEXUS-44467: POM files with version suffixes like "0.0.3-test" should be accepted
+    // even if the regex incorrectly extracts "test" as a classifier
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.setPayload(jarPayload);
+    assetUpload.getFields().put("extension", "pom");
+    // Simulate regex extracting version suffix as classifier
+    assetUpload.getFields().put("classifier", "test");
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    MavenValidatingComponentUpload validated = new MavenValidatingComponentUpload(uploadDefinition, componentUpload);
+    assertThat(validated.getComponentUpload(), notNullValue());
+  }
+
+  @Test
+  public void testValidate_pomWithEmptyClassifier() {
+    // POM files should be detected even with an empty classifier
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.setPayload(jarPayload);
+    assetUpload.getFields().put("extension", "pom");
+    assetUpload.getFields().put("classifier", "");
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    MavenValidatingComponentUpload validated = new MavenValidatingComponentUpload(uploadDefinition, componentUpload);
+    assertThat(validated.getComponentUpload(), notNullValue());
+  }
+
+  @Test
+  public void testValidate_pomWithAnyClassifierValue() {
+    // POM files should be detected regardless of classifier value (alpha, beta, RC, etc.)
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.setPayload(jarPayload);
+    assetUpload.getFields().put("extension", "pom");
+    assetUpload.getFields().put("classifier", "alpha");
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    MavenValidatingComponentUpload validated = new MavenValidatingComponentUpload(uploadDefinition, componentUpload);
+    assertThat(validated.getComponentUpload(), notNullValue());
   }
 
   private void expectExceptionOnValidate(final ComponentUpload component, final String... message) {

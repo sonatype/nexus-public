@@ -30,45 +30,6 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
     'NX.Messages'
   ],
 
-  /**
-   * Open the analyze application form window
-   *
-   */
-  openAnalyzeApplicationWindow: function() {
-    var me = this,
-        componentModel = me.fetchComponentModelFromView();
-
-    var modalWindow = Ext.first('nx-coreui-component-analyze-window');
-
-    modalWindow.component = componentModel.getData();
-    modalWindow.show();
-  },
-
-  updateAnalyzeButton: function(componentModel) {
-    this.user = NX.State.getUser();
-    var analyzeApplicationButton = this.getAnalyzeApplicationButton();
-
-    if (!componentModel || !NX.direct.ahc_Component) {
-      analyzeApplicationButton.disable();
-    }
-    else if (this.user && this.user.authenticated) {
-      NX.direct.ahc_Component.containsApplication(JSON.stringify(componentModel.getData()), function(response) {
-        if (Ext.isObject(response) && response.success) {
-          if (response.data) {
-            analyzeApplicationButton.enable();
-          }
-          else {
-            analyzeApplicationButton.disableWithTooltip(
-                NX.I18n.get('AnalyzeApplicationWindow_No_Assets_Error_Message'));
-          }
-        }
-      });
-    }
-    else {
-      analyzeApplicationButton.disableWithTooltip(NX.I18n.get('AnalyzeApplication_Button_Unauthenticated'));
-    }
-  },
-
   viewVulnerabilities: function() {
     var info = this.getComponentInfo || this.getComponentAssetInfo;
     var vulnerabilityPanel = info().getVulnerabilityPanel();

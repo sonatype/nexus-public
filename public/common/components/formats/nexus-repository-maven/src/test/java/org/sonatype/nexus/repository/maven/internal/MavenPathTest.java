@@ -264,4 +264,86 @@ public class MavenPathTest
     MavenPath mavenPath = new MavenPath(path, null);
     assertThat(mavenPath.getPath(), is("org/some/group/id/artifactId/1.0.0/artifactId-1.0.0.jar"));
   }
+
+  /**
+   * Tests parsing and unwrapping of signature files for hash files (e.g., *.jar.md5.asc).
+   * This is a regression test for NEXUS-50362 where such paths caused a StringIndexOutOfBoundsException.
+   */
+  @Test
+  public void signatureOfHashFile() {
+    // Test case: signature of an md5 hash file
+    final String path = "/com/itextpdf/itext-xtra/5.5.13.2/itext-xtra-5.5.13.2-javadoc.jar.md5.asc";
+    final MavenPath mavenPath = pathParser.parsePath(path);
+    assertThat(mavenPath, is(notNullValue()));
+
+    assertThat(mavenPath.getPath(), equalTo(path.substring(1)));
+    assertThat(mavenPath.getFileName(), equalTo("itext-xtra-5.5.13.2-javadoc.jar.md5.asc"));
+    // The file ends with .asc, so hashType should be null (based on filename ending)
+    assertThat(mavenPath.getHashType(), nullValue());
+    assertThat(mavenPath.getCoordinates(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getGroupId(), equalTo("com.itextpdf"));
+    assertThat(mavenPath.getCoordinates().getArtifactId(), equalTo("itext-xtra"));
+    assertThat(mavenPath.getCoordinates().getVersion(), equalTo("5.5.13.2"));
+    assertThat(mavenPath.getCoordinates().getClassifier(), equalTo("javadoc"));
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("jar.md5.asc"));
+    assertThat(mavenPath.getCoordinates().getSignatureType(), equalTo(SignatureType.GPG));
+
+    // The path is subordinate (it's a signature)
+    assertThat(mavenPath.isSubordinate(), is(true));
+    assertThat(mavenPath.isSignature(), is(true));
+
+    // main() should unwrap to the base artifact without throwing exceptions
+    MavenPath main = mavenPath.main();
+    assertThat(main, is(notNullValue()));
+    assertThat(main.isSubordinate(), is(false));
+    assertThat(main.getPath(), equalTo("com/itextpdf/itext-xtra/5.5.13.2/itext-xtra-5.5.13.2-javadoc.jar"));
+    assertThat(main.getCoordinates().getExtension(), equalTo("jar"));
+    assertThat(main.getCoordinates().getClassifier(), equalTo("javadoc"));
+  }
+
+  /**
+   * Tests parsing of a simple hash signature (*.jar.asc) to ensure we didn't break existing behavior.
+   */
+  @Test
+  public void signatureOfJarFile() {
+    final String path = "/com/example/artifact/1.0/artifact-1.0.jar.asc";
+    final MavenPath mavenPath = pathParser.parsePath(path);
+    assertThat(mavenPath, is(notNullValue()));
+
+    assertThat(mavenPath.getCoordinates(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getGroupId(), equalTo("com.example"));
+    assertThat(mavenPath.getCoordinates().getArtifactId(), equalTo("artifact"));
+    assertThat(mavenPath.getCoordinates().getVersion(), equalTo("1.0"));
+    assertThat(mavenPath.getCoordinates().getClassifier(), nullValue());
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("jar.asc"));
+    assertThat(mavenPath.getCoordinates().getSignatureType(), equalTo(SignatureType.GPG));
+
+    assertThat(mavenPath.isSubordinate(), is(true));
+    assertThat(mavenPath.isSignature(), is(true));
+
+    MavenPath main = mavenPath.main();
+    assertThat(main.getPath(), equalTo("com/example/artifact/1.0/artifact-1.0.jar"));
+    assertThat(main.getCoordinates().getExtension(), equalTo("jar"));
+  }
+
+  /**
+   * Tests parsing of a simple hash file (*.jar.md5) to ensure we didn't break existing behavior.
+   */
+  @Test
+  public void hashOfJarFile() {
+    final String path = "/com/example/artifact/1.0/artifact-1.0.jar.md5";
+    final MavenPath mavenPath = pathParser.parsePath(path);
+    assertThat(mavenPath, is(notNullValue()));
+
+    assertThat(mavenPath.getHashType(), equalTo(HashType.MD5));
+    assertThat(mavenPath.getCoordinates(), notNullValue());
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("jar.md5"));
+
+    assertThat(mavenPath.isSubordinate(), is(true));
+    assertThat(mavenPath.isHash(), is(true));
+
+    MavenPath main = mavenPath.main();
+    assertThat(main.getPath(), equalTo("com/example/artifact/1.0/artifact-1.0.jar"));
+    assertThat(main.getCoordinates().getExtension(), equalTo("jar"));
+  }
 }

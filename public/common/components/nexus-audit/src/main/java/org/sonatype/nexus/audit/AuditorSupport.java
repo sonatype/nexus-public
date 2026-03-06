@@ -18,7 +18,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -71,7 +70,7 @@ public abstract class AuditorSupport
    */
   private static final Joiner LIST_JOINER = Joiner.on(", ").skipNulls();
 
-  private Provider<AuditRecorder> auditRecorder;
+  private AuditRecorder auditRecorder;
 
   /**
    * Mapping of class to simple type names for auditing.
@@ -79,7 +78,7 @@ public abstract class AuditorSupport
   private Map<Class, String> typeLookup = new HashMap<>();
 
   @Inject
-  public void setAuditRecorder(final Provider<AuditRecorder> auditRecorder) {
+  public void setAuditRecorder(final AuditRecorder auditRecorder) {
     this.auditRecorder = auditRecorder;
   }
 
@@ -105,7 +104,7 @@ public abstract class AuditorSupport
 
   private AuditRecorder recorder() {
     checkState(auditRecorder != null, "Missing audit-recorder");
-    return auditRecorder.get();
+    return auditRecorder;
   }
 
   /**

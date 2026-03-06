@@ -389,8 +389,8 @@ public class SqlSearchService
       final Optional<SqlSearchQueryCondition> assetCondition = Optional.ofNullable(queryCondition)
           .flatMap(SqlSearchQueryConditionGroup::getAssetCondition);
       componentIdToAsset.putAll(assetStore.findByComponentIds(componentIds,
-          assetCondition.map(SqlSearchQueryCondition::getSqlConditionFormat).orElse(null),
-          assetCondition.map(SqlSearchQueryCondition::getValues).orElse(null))
+          assetCondition.map(SqlSearchQueryCondition::getSqlFilter).orElse(null),
+          assetCondition.map(SqlSearchQueryCondition::getParameters).orElse(null))
           .stream()
           .collect(
               groupingBy(asset -> getFormatComponentKey(formatComponentIds.getKey(),

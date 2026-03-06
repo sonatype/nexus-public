@@ -24,6 +24,7 @@ import BlobStoresStrings from './pages/admin/repository/BlobStoresStrings';
 import ContentSelectorsStrings from './pages/admin/repository/ContentSelectorsStrings';
 import LoggingStrings from './pages/admin/support/LoggingStrings';
 import LogsStrings from './pages/admin/support/LogsStrings';
+import RecoveryModeStrings from './pages/admin/support/RecoveryModeStrings';
 import RepositoriesStrings from './pages/admin/repository/RepositoriesStrings';
 import RoutingRulesStrings from './pages/admin/repository/RoutingRulesStrings';
 import Log4jVisualizerStrings from './pages/browse/Log4jVisualizerStrings';
@@ -52,6 +53,7 @@ import BrowseStrings from './pages/browse/browse/BrowseStrings';
 import UpgradeAlertStrings from './UpgradeAlertStrings';
 import UpgradeTriggerModalStrings from './UpgradeTriggerModalStrings';
 import ZDUMarketingModalStrings from './ZDUMarketingModalStrings';
+import RecoveryModeAlertStrings from './RecoveryModeAlertStrings';
 import MaliciousRiskStrings  from "./pages/maliciousrisk/MaliciousRiskStrings";
 import SearchStrings from './pages/browse/search/SearchStrings';
 import UpgradeStrings from "./pages/admin/system/UpgradeStrings";
@@ -103,6 +105,7 @@ export default {
   // admin/support
   ...LoggingStrings,
   ...LogsStrings,
+  ...RecoveryModeStrings,
   ...StatusStrings,
   ...SupportRequestStrings,
   ...SupportZipStrings,
@@ -126,6 +129,7 @@ export default {
   ...UpgradeAlertStrings,
   ...UpgradeTriggerModalStrings,
   ...ZDUMarketingModalStrings,
+  ...RecoveryModeAlertStrings,
 
   // system/upgrade
   ...UpgradeStrings,

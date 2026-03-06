@@ -110,6 +110,8 @@ public class Maven2MavenPathParser
 
       StringBuilder extSuffix = new StringBuilder();
       SignatureType signatureType = null;
+
+      // First pass: strip hash suffix if present at the end (e.g., .md5, .sha1)
       for (HashType hashType : HashType.values()) {
         if (str.endsWith("." + hashType.getExt())) {
           extSuffix.insert(0, "." + hashType.getExt());
@@ -118,11 +120,23 @@ public class Maven2MavenPathParser
         }
       }
 
+      // Strip signature suffix if present (e.g., .asc)
       for (SignatureType sType : SignatureType.values()) {
         if (str.endsWith("." + sType.getExt())) {
           extSuffix.insert(0, "." + sType.getExt());
           str = str.substring(0, str.length() - (sType.getExt().length() + 1));
           signatureType = sType;
+        }
+      }
+
+      // Second pass: after stripping signature, check again for hash suffix.
+      // This handles signatures of hash files like "*.jar.md5.asc" where after
+      // stripping ".asc" we still have ".md5" at the end.
+      for (HashType hashType : HashType.values()) {
+        if (str.endsWith("." + hashType.getExt())) {
+          extSuffix.insert(0, "." + hashType.getExt());
+          str = str.substring(0, str.length() - (hashType.getExt().length() + 1));
+          break;
         }
       }
 

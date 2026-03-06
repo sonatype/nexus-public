@@ -12,7 +12,7 @@
  */
 import React, {useEffect} from 'react';
 
-import {ExtJS, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, ListMachineUtils, copyToClipboard} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxButtonBar,
@@ -49,7 +49,8 @@ const {
   FILTER_PLACEHOLDER,
   EMPTY_MESSAGE,
   COPY_URL_TITLE,
-  URL_COPIED_MESSAGE
+  URL_COPIED_MESSAGE,
+  URL_COPY_ERROR_MESSAGE
 } = BROWSE.LIST;
 
 export default function BrowseList({onEdit, copyUrl = doCopyUrl}) {
@@ -155,9 +156,12 @@ export default function BrowseList({onEdit, copyUrl = doCopyUrl}) {
   </div>
 }
 
-function doCopyUrl(event, url) {
+async function doCopyUrl(event, url) {
   event.stopPropagation();
-  navigator.clipboard.writeText(url).then(() => {
+  const success = await copyToClipboard(url);
+  if (success) {
     ExtJS.showSuccessMessage(URL_COPIED_MESSAGE);
-  });
+  } else {
+    ExtJS.showErrorMessage(URL_COPY_ERROR_MESSAGE);
+  }
 }

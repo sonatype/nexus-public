@@ -90,6 +90,7 @@ class SearchResourceTest
 
     lenient().when(searchUtils.getSearchFilters(any())).thenReturn(List.of(new SearchFilter("q", "example")));
     lenient().when(searchUtils.getComponentSearchFilters(any())).thenReturn(Collections.emptyList());
+    lenient().when(searchUtils.isAssetSearchParam(any())).thenReturn(false);
     lenient().when(searchService.search(any(SearchRequest.class))).thenReturn(new SearchResponse());
     lenient().when(searchUtils.getRepository(any())).thenReturn(repository);
 
@@ -137,16 +138,8 @@ class SearchResourceTest
 
   @Test
   void doSearchWithOnlyAssetParametersFilters() {
-    // Setup: UriInfo with only asset-level parameters
+    // Asset-level parameters (checksums) should be included in the SQL search query
     UriInfo uriInfo = mock(UriInfo.class);
-    MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-    queryParams.add("md5", "abc123");
-    queryParams.add("sha1", "xyz789");
-
-    when(uriInfo.getQueryParameters()).thenReturn(queryParams);
-    when(searchUtils.getComponentSearchFilters(uriInfo)).thenReturn(Collections.emptyList());
-    when(searchUtils.isAssetSearchParam("md5")).thenReturn(true);
-    when(searchUtils.isAssetSearchParam("sha1")).thenReturn(true);
     when(searchUtils.getSearchFilters(uriInfo)).thenReturn(List.of(
         new SearchFilter("assets.attributes.checksum.md5", "abc123"),
         new SearchFilter("assets.attributes.checksum.sha1", "xyz789")));
@@ -154,6 +147,21 @@ class SearchResourceTest
     underTest.doSearch(null, null, null, null, uriInfo);
 
     verify(searchUtils).getSearchFilters(uriInfo);
+    ArgumentCaptor<SearchRequest> requestCaptor = ArgumentCaptor.forClass(SearchRequest.class);
+    verify(searchService).search(requestCaptor.capture());
+    SearchRequest capturedRequest = requestCaptor.getValue();
+    assertThat(capturedRequest.getSearchFilters().size(), is(2));
+  }
+
+  @Test
+  void doSearchComponentAndAssetFilters() {
+    // Both component-level (name) and asset-level (md5) filters should be included in the SQL query
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(searchUtils.getSearchFilters(uriInfo)).thenReturn(List.of(
+        new SearchFilter("name.raw", "junit"),
+        new SearchFilter("assets.attributes.checksum.md5", "abc123")));
+
+    underTest.doSearch(null, null, null, null, uriInfo);
 
     ArgumentCaptor<SearchRequest> requestCaptor = ArgumentCaptor.forClass(SearchRequest.class);
     verify(searchService).search(requestCaptor.capture());
@@ -164,38 +172,9 @@ class SearchResourceTest
   @Test
   void doSearchComponentFiltersOnly() {
     UriInfo uriInfo = mock(UriInfo.class);
-    MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-    queryParams.add("name", "junit");
-    queryParams.add("md5", "abc123");
-
-    when(uriInfo.getQueryParameters()).thenReturn(queryParams);
-    when(searchUtils.getComponentSearchFilters(uriInfo)).thenReturn(List.of(
-        new SearchFilter("name.raw", "junit")));
-    when(searchUtils.isAssetSearchParam("md5")).thenReturn(true);
-    when(searchUtils.isAssetSearchParam("name")).thenReturn(false);
-
-    underTest.doSearch(null, null, null, null, uriInfo);
-
-    ArgumentCaptor<SearchRequest> requestCaptor = ArgumentCaptor.forClass(SearchRequest.class);
-    verify(searchService).search(requestCaptor.capture());
-    SearchRequest capturedRequest = requestCaptor.getValue();
-    assertThat(capturedRequest.getSearchFilters().size(), is(1));
-    assertThat(capturedRequest.getSearchFilters().get(0).getProperty(), is("name.raw"));
-  }
-
-  @Test
-  void doSearchComponentComponentFiltersOnly() {
-    UriInfo uriInfo = mock(UriInfo.class);
-    MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-    queryParams.add("name", "junit");
-    queryParams.add("repository", "maven-central");
-
-    when(uriInfo.getQueryParameters()).thenReturn(queryParams);
-    when(searchUtils.getComponentSearchFilters(uriInfo)).thenReturn(List.of(
+    when(searchUtils.getSearchFilters(uriInfo)).thenReturn(List.of(
         new SearchFilter("name.raw", "junit"),
         new SearchFilter("repository_name", "maven-central")));
-    when(searchUtils.isAssetSearchParam("name")).thenReturn(false);
-    when(searchUtils.isAssetSearchParam("repository")).thenReturn(false);
 
     underTest.doSearch(null, null, null, null, uriInfo);
 

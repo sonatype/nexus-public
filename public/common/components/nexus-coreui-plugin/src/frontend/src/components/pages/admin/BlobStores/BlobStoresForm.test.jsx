@@ -19,6 +19,7 @@ import userEvent from '@testing-library/user-event';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import BlobStoresForm from './BlobStoresForm';
+import FileBlobStoreWarning from './File/FileBlobStoreWarning';
 
 import { URLs } from './BlobStoresHelper';
 
@@ -60,6 +61,15 @@ let BlobStoresFormTestPermissions = {};
 
 function givenBlobStoresPermissions(permissionLookup) {
   BlobStoresFormTestPermissions = permissionLookup;
+}
+
+function givenClusteringState(isClustered, workDirectory = '/nexus-data') {
+  jest.requireMock('@sonatype/nexus-ui-plugin').ExtJS.state.mockReturnValue({
+    getValue: jest.fn().mockReturnValue({
+      isClustered,
+      workDirectory,
+    }),
+  });
 }
 
 jest.mock('swagger-ui-react', () => jest.fn());
@@ -140,8 +150,18 @@ describe('BlobStoresForm', function () {
     window.BlobStoreTypes = {
     s3: {
       Warning: () => 'Some S3 Warning',
+    },
+    file: {
+      Warning: FileBlobStoreWarning,
     }
   };
+    // Mock ExtJS.state for clustering tests
+    jest.requireMock('@sonatype/nexus-ui-plugin').ExtJS.state.mockReturnValue({
+      getValue: jest.fn().mockReturnValue({
+        isClustered: false,
+        workDirectory: '',
+      }),
+    });
   });
 
   afterEach(() => {
@@ -543,7 +563,7 @@ describe('BlobStoresForm', function () {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
     // Should show the warning alert and disable the submit button
     expect(
-      screen.getByText('You don’t have permission to edit this page. Contact your administrator to request access.')
+      screen.getByText('You don\'t have permission to edit this page. Contact your administrator to request access.')
     ).toBeInTheDocument();
     expect(selectors.querySubmitButton()).toHaveClass('disabled');
     expect(selectors.queryConvertToGroupButton()).toBeDisabled();
@@ -615,5 +635,136 @@ describe('BlobStoresForm', function () {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     expect(selectors.s3warning()).not.toBeInTheDocument();
+  });
+
+  it('renders the File HA warning when clustered and path is relative in create', async function () {
+    givenClusteringState(true, '/nexus-data');
+    renderCreateView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.selectOptions(selectors.queryTypeSelect(), 'file');
+    userEvent.type(selectors.queryName(), 'test');
+    userEvent.clear(selectors.queryPath());
+    userEvent.type(selectors.queryPath(), 'relative/path');
+
+    await waitFor(() => {
+      expect(screen.getByText('High Availability Path Warning')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the File HA warning when clustered and path is under work directory in create', async function () {
+    givenClusteringState(true, '/nexus-data');
+    renderCreateView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.selectOptions(selectors.queryTypeSelect(), 'file');
+    userEvent.type(selectors.queryName(), 'test');
+    userEvent.clear(selectors.queryPath());
+    userEvent.type(selectors.queryPath(), '/nexus-data/blobs');
+
+    await waitFor(() => {
+      expect(screen.getByText('High Availability Path Warning')).toBeInTheDocument();
+    });
+  });
+
+  it('does not render the File HA warning when clustered but path is absolute outside work directory', async function () {
+    givenClusteringState(true, '/nexus-data');
+    renderCreateView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.selectOptions(selectors.queryTypeSelect(), 'file');
+    userEvent.type(selectors.queryName(), 'test');
+    userEvent.clear(selectors.queryPath());
+    userEvent.type(selectors.queryPath(), '/mnt/shared-storage/blobs');
+
+    expect(screen.queryByText('High Availability Path Warning')).not.toBeInTheDocument();
+  });
+
+  it('does not render the File HA warning when not clustered', async function () {
+    givenClusteringState(false);
+    renderCreateView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.selectOptions(selectors.queryTypeSelect(), 'file');
+    userEvent.type(selectors.queryName(), 'test');
+    userEvent.clear(selectors.queryPath());
+    userEvent.type(selectors.queryPath(), '/nexus-data/blobs');
+
+    expect(screen.queryByText('High Availability Path Warning')).not.toBeInTheDocument();
+  });
+
+  it('renders the File HA warning when clustered and path is under work directory in edit', async function () {
+    givenClusteringState(true, '/nexus-data');
+    when(axios.get)
+      .calledWith('service/rest/v1/blobstores/file/test')
+      .mockResolvedValue({
+        data: {
+          path: '/nexus-data/blobs',
+          softQuota: {
+            type: 'spaceRemainingQuota',
+            limit: SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES,
+          },
+        },
+      });
+    renderEditView('file/test');
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    await waitFor(() => {
+      expect(screen.getByText('High Availability Path Warning')).toBeInTheDocument();
+    });
+  });
+
+  it('does not render the File HA warning when clustered and path is under work directory in edit read only', async function () {
+    givenClusteringState(true, '/nexus-data');
+    givenBlobStoresPermissions({ 'nexus:blobstores:update': false });
+    when(axios.get)
+      .calledWith('service/rest/v1/blobstores/file/test')
+      .mockResolvedValue({
+        data: {
+          path: '/nexus-data/blobs',
+          softQuota: {
+            type: 'spaceRemainingQuota',
+            limit: SOFT_QUOTA_1_TERABYTE_IN_MEGABYTES,
+          },
+        },
+      });
+    renderEditView('file/test');
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    expect(screen.queryByText('High Availability Path Warning')).not.toBeInTheDocument();
+  });
+
+  it('does not show File HA warning for sibling directory with prefix name', async function () {
+    givenClusteringState(true, '/nexus-data');
+    renderCreateView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.selectOptions(selectors.queryTypeSelect(), 'file');
+    userEvent.type(selectors.queryName(), 'test');
+    userEvent.clear(selectors.queryPath());
+    userEvent.type(selectors.queryPath(), '/nexus-data-backup/blobs');
+
+    expect(screen.queryByText('High Availability Path Warning')).not.toBeInTheDocument();
+  });
+
+  it('does not show File HA warning when work directory is prefix of path component', async function () {
+    givenClusteringState(true, '/nexus-data/info');
+    renderCreateView();
+
+    await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+    userEvent.selectOptions(selectors.queryTypeSelect(), 'file');
+    userEvent.type(selectors.queryName(), 'test');
+    userEvent.clear(selectors.queryPath());
+    userEvent.type(selectors.queryPath(), '/nexus-data/information/blobs');
+
+    expect(screen.queryByText('High Availability Path Warning')).not.toBeInTheDocument();
   });
 });

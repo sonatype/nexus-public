@@ -44,15 +44,28 @@ public class ProxyAttributes
   @NotNull
   protected final Integer metadataMaxAge;
 
+  @ApiModelProperty(value = "When true, preserves encoded characters like %2B (plus), %23 (hash), and %20 (space) " +
+      "in their encoded form when proxying to the remote repository. " +
+      "Enable this when proxying to AWS S3, Cloudflare CDN, or Azure Blob Storage, which require encoded characters to remain encoded. "
+      +
+      "When false (default), uses standard encoding that preserves literal + characters (works for crates.io and most remotes). "
+      +
+      "This feature is only available when nexus.proxy.urlEncodingMode.enabled=true is set. " +
+      "SECURITY NOTE: Only enable this for trusted remote repositories. Path traversal sequences (..) in redirects are automatically normalized.",
+      example = "false")
+  protected final Boolean preserveEncodedCharacters;
+
   @JsonCreator
   public ProxyAttributes(
       @JsonProperty("remoteUrl") final String remoteUrl,
       @JsonProperty("contentMaxAge") final Integer contentMaxAge,
-      @JsonProperty("metadataMaxAge") final Integer metadataMaxAge)
+      @JsonProperty("metadataMaxAge") final Integer metadataMaxAge,
+      @JsonProperty("preserveEncodedCharacters") final Boolean preserveEncodedCharacters)
   {
     this.remoteUrl = remoteUrl;
     this.contentMaxAge = contentMaxAge;
     this.metadataMaxAge = metadataMaxAge;
+    this.preserveEncodedCharacters = preserveEncodedCharacters != null ? preserveEncodedCharacters : false;
   }
 
   public String getRemoteUrl() {
@@ -65,5 +78,9 @@ public class ProxyAttributes
 
   public Integer getMetadataMaxAge() {
     return metadataMaxAge;
+  }
+
+  public Boolean getPreserveEncodedCharacters() {
+    return preserveEncodedCharacters;
   }
 }

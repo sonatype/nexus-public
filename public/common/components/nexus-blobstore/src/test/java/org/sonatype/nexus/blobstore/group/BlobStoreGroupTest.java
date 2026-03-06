@@ -56,6 +56,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -169,8 +170,8 @@ class BlobStoreGroupTest
     blobStore.start();
     when(one.exists(any())).thenAnswer(invocation -> invocation.getArgument(0).equals(new BlobId("in_one")));
     when(two.exists(any())).thenAnswer(invocation -> invocation.getArgument(0).equals(new BlobId("in_two")));
-    when(one.get(new BlobId("in_one"))).thenReturn(blobOne);
-    when(two.get(new BlobId("in_two"))).thenReturn(blobTwo);
+    when(one.get(new BlobId("in_one"), false)).thenReturn(blobOne);
+    when(two.get(new BlobId("in_two"), false)).thenReturn(blobTwo);
 
     Blob foundBlob = blobStore.get(new BlobId("in_one"));
     assertThat(foundBlob, is(blobOne));
@@ -363,7 +364,7 @@ class BlobStoreGroupTest
 
     when(one.exists(blobId)).thenReturn(true);
 
-    Optional<BlobStore> locatedMember = blobStore.locate(blobId);
+    Optional<BlobStore> locatedMember = blobStore.locateBlobStore(blobId);
 
     verify(one).exists(blobId);
     verify(two, never()).exists(blobId);
@@ -386,12 +387,184 @@ class BlobStoreGroupTest
     when(one.exists(blobId)).thenReturn(false);
     when(two.exists(blobId)).thenReturn(true);
 
-    Optional<BlobStore> locatedMember = blobStore.locate(blobId);
+    Optional<BlobStore> locatedMember = blobStore.locateBlobStore(blobId);
 
     verify(one).exists(blobId);
     verify(two).exists(blobId);
     assertThat(locatedMember.get(), is(two));
     verify(cache, never()).put(any(), any());
+  }
+
+  @Test
+  void locateBlobStore_withValidCacheEntry_returnsCachedMemberWithoutSearch() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+
+    when(cache.get(blobId)).thenReturn("one");
+    when(blobStoreManager.get("one")).thenReturn(one);
+
+    Optional<BlobStore> result = blobStore.locateBlobStore(blobId);
+
+    assertThat(result.get(), is(one));
+    verify(one, never()).exists(any());
+    verify(two, never()).exists(any());
+  }
+
+  @Test
+  void locateBlobStore_withMemberGoneFromManager_evictsAndSearchesOtherMembers() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+
+    when(cache.get(blobId)).thenReturn("removed-member");
+    when(blobStoreManager.get("removed-member")).thenReturn(null);
+    when(one.exists(blobId)).thenReturn(true);
+    when(one.isWritable()).thenReturn(true);
+
+    Optional<BlobStore> locatedMember = blobStore.locateBlobStore(blobId);
+
+    assertThat(locatedMember.get(), is(one));
+    verify(cache).remove(blobId);
+    verify(cache).put(blobId, "one");
+  }
+
+  @Test
+  void locateBlobStore_blobNotFoundInAnyMember_returnsEmpty() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+    when(one.exists(blobId)).thenReturn(false);
+    when(two.exists(blobId)).thenReturn(false);
+
+    Optional<BlobStore> result = blobStore.locateBlobStore(blobId);
+
+    assertThat(result.isPresent(), is(false));
+    verify(cache, never()).put(any(), any());
+  }
+
+  @Test
+  void locateBlob_withValidCacheEntry_returnsBlobWithoutSearch() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+    Blob blob = mock(Blob.class);
+
+    when(cache.get(blobId)).thenReturn("one");
+    when(blobStoreManager.get("one")).thenReturn(one);
+    when(one.get(blobId, false)).thenReturn(blob);
+
+    Optional<Blob> result = blobStore.locateBlob(blobId, false);
+
+    assertThat(result.get(), is(blob));
+    verify(two, never()).exists(any());
+    verify(two, never()).get(any(), anyBoolean());
+  }
+
+  @Test
+  void locateBlob_withStaleCacheEntry_evictsAndSearchesOtherMembers() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+    Blob blob = mock(Blob.class);
+
+    when(cache.get(blobId)).thenReturn("one");
+    when(blobStoreManager.get("one")).thenReturn(one);
+    when(one.get(blobId, false)).thenReturn(null);
+    when(one.exists(blobId)).thenReturn(false);
+    when(two.exists(blobId)).thenReturn(true);
+    when(two.get(blobId, false)).thenReturn(blob);
+    when(two.isWritable()).thenReturn(true);
+
+    Optional<Blob> result = blobStore.locateBlob(blobId, false);
+
+    assertThat(result.get(), is(blob));
+    verify(cache).remove(blobId);
+    verify(cache).put(blobId, "two");
+  }
+
+  @Test
+  void locateBlob_withStaleCacheEntry_foundInNonWritableMember_doesNotCache() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+    Blob blob = mock(Blob.class);
+
+    when(cache.get(blobId)).thenReturn("one");
+    when(blobStoreManager.get("one")).thenReturn(one);
+    when(one.get(blobId, false)).thenReturn(null);
+    when(one.exists(blobId)).thenReturn(false);
+    when(two.exists(blobId)).thenReturn(true);
+    when(two.get(blobId, false)).thenReturn(blob);
+    when(two.isWritable()).thenReturn(false);
+
+    Optional<Blob> result = blobStore.locateBlob(blobId, false);
+
+    assertThat(result.get(), is(blob));
+    verify(cache).remove(blobId);
+    verify(cache, never()).put(any(), any());
+  }
+
+  @Test
+  void locateBlob_withSoftDeletedBlob_doesNotEvictCacheOrSearch() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+
+    when(cache.get(blobId)).thenReturn("one");
+    when(blobStoreManager.get("one")).thenReturn(one);
+    // get() returns null because the blob is soft-deleted, but exists() is true
+    when(one.get(blobId, false)).thenReturn(null);
+    when(one.exists(blobId)).thenReturn(true);
+
+    Optional<Blob> result = blobStore.locateBlob(blobId, false);
+
+    assertThat(result.isPresent(), is(false));
+    verify(cache, never()).remove(blobId);
+    verify(two, never()).exists(any());
+  }
+
+  @Test
+  void locateBlob_blobNotFoundInAnyMember_returnsEmpty() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+    when(one.exists(blobId)).thenReturn(false);
+    when(two.exists(blobId)).thenReturn(false);
+
+    Optional<Blob> result = blobStore.locateBlob(blobId, false);
+
+    assertThat(result.isPresent(), is(false));
+    verify(cache, never()).put(any(), any());
+  }
+
+  @Test
+  void invalidateCachedLocation_removesEntryFromCache() throws Exception {
+    config.setAttributes(buildAttributes(Arrays.asList("one", "two"), "test"));
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId("BLOB_ID_VALUE");
+
+    blobStore.invalidateCachedLocation(blobId);
+
+    verify(cache).remove(blobId);
   }
 
   @Test

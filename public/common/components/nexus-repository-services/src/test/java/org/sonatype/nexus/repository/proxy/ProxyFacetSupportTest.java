@@ -32,6 +32,7 @@ import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
@@ -209,7 +210,7 @@ public class ProxyFacetSupportTest
     underTest.installDependencies(eventManager);
     underTest.attach(repository);
     DefaultCooperation2Factory cooperationFactory = new DefaultCooperation2Factory();
-    underTest.configureCooperation(cooperationFactory,false, Duration.ofSeconds(0),
+    underTest.configureCooperation(cooperationFactory, false, Duration.ofSeconds(0),
         Duration.ofSeconds(60), 10);
     underTest.buildCooperation();
   }
@@ -283,7 +284,8 @@ public class ProxyFacetSupportTest
     doReturn(content).when(underTest).getCachedContent(cachedContext);
 
     doThrow(new ProxyServiceException(new BasicHttpResponse(null, 503, "Offline")))
-        .when(underTest).fetch(cachedContext, content);
+        .when(underTest)
+        .fetch(cachedContext, content);
 
     Content foundContent = underTest.get(cachedContext);
 
@@ -296,7 +298,8 @@ public class ProxyFacetSupportTest
     doReturn(null).when(underTest).getCachedContent(cachedContext);
 
     doThrow(new ProxyServiceException(new BasicHttpResponse(null, 503, "Offline")))
-        .when(underTest).fetch(missingContext, null);
+        .when(underTest)
+        .fetch(missingContext, null);
 
     underTest.get(missingContext);
   }
@@ -642,6 +645,133 @@ public class ProxyFacetSupportTest
     catch (BypassHttpErrorException expected) {
       // Expected - BypassHttpErrorException should be logged at DEBUG level and then thrown
     }
+  }
+
+  @Test
+  public void testBuildFetchHttpRequest_HeadRequest() throws Exception {
+    URI uri = URI.create("http://example.com/test.jar");
+    Request request = mock(Request.class);
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    HttpRequestBase httpRequest = underTest.buildFetchHttpRequest(uri, cachedContext);
+
+    assertThat(httpRequest.getMethod(), is("HEAD"));
+    assertThat(httpRequest.getURI(), is(uri));
+  }
+
+  @Test
+  public void testDoGet_HeadRequest_DoesNotCallStore() throws Exception {
+    Request request = mock(Request.class);
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    doReturn(null).when(underTest).getCachedContent(cachedContext);
+    doReturn(reFetchedContent).when(underTest).fetch(cachedContext, null);
+
+    Content result = underTest.doGet(cachedContext, null);
+
+    assertThat(result, is(reFetchedContent));
+    verify(underTest, never()).store(any(), any());
+  }
+
+  @Test
+  public void testCreateContent_WithoutEntity_HeadResponse() {
+    // Setup HEAD request context
+    Request request = mock(Request.class);
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    HttpResponse response = mock(HttpResponse.class);
+    when(response.getEntity()).thenReturn(null);
+    Header contentLengthHeader = new BasicHeader(HttpHeaders.CONTENT_LENGTH, "1557794");
+    Header contentTypeHeader = new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/java-archive");
+    when(response.getFirstHeader(HttpHeaders.CONTENT_LENGTH)).thenReturn(contentLengthHeader);
+    when(response.getFirstHeader(HttpHeaders.CONTENT_TYPE)).thenReturn(contentTypeHeader);
+
+    Content content = underTest.createContent(cachedContext, response);
+
+    assertThat(content, is(org.hamcrest.Matchers.notNullValue()));
+    assertThat(content.getSize(), is(1557794L));
+    assertThat(content.getContentType(), is("application/java-archive"));
+  }
+
+  @Test
+  public void testHeadRequest_ReturnsCachedContent_WhenFresh() throws Exception {
+    // Setup: Fresh cached content exists
+    Request request = mock(Request.class);
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+    when(cacheController.isStale(cacheInfo)).thenReturn(false);
+
+    // When: HEAD request made
+    Content result = underTest.doGet(cachedContext, content);
+
+    // Then: Should return cached content, not attempt remote fetch
+    assertThat(result, is(content));
+    verify(underTest, never()).fetch(any(), any());
+    verify(underTest, never()).store(any(), any());
+  }
+
+  @Test
+  public void testHeadRequest_RefetchesFromRemote_WhenStale() throws Exception {
+    // Setup: Stale cached content exists
+    Request request = mock(Request.class);
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+    when(cacheController.isStale(cacheInfo)).thenReturn(true);
+    doReturn(reFetchedContent).when(underTest).fetch(cachedContext, content);
+
+    // When: HEAD request made
+    Content result = underTest.doGet(cachedContext, content);
+
+    // Then: Should fetch from remote and return without storing
+    assertThat(result, is(reFetchedContent));
+    verify(underTest, times(1)).fetch(cachedContext, content);
+    verify(underTest, never()).store(any(), any());
+  }
+
+  @Test
+  public void testHeadRequest_ReturnsCachedContent_WhenRemoteUnavailable() throws Exception {
+    // Setup: Stale cached content exists, but remote is unavailable
+    Request request = mock(Request.class);
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+    when(cacheController.isStale(cacheInfo)).thenReturn(true);
+    doThrow(new IOException("Remote unavailable")).when(underTest).fetch(cachedContext, content);
+
+    // When: HEAD request made
+    Content result = underTest.doGet(cachedContext, content);
+
+    // Then: Should return cached content despite fetch failure
+    assertThat(result, is(content));
+    verify(underTest, times(1)).fetch(cachedContext, content);
+    verify(underTest, never()).store(any(), any());
+  }
+
+  @Test
+  public void testHeadRequest_FetchesFromRemote_WhenNoCachedContent() throws Exception {
+    // Setup: No cached content exists
+    Request request = mock(Request.class);
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    doReturn(null).when(underTest).getCachedContent(cachedContext);
+    doReturn(reFetchedContent).when(underTest).fetch(cachedContext, null);
+
+    // When: HEAD request made
+    Content result = underTest.doGet(cachedContext, null);
+
+    // Then: Should fetch from remote
+    assertThat(result, is(reFetchedContent));
+    verify(underTest, times(1)).fetch(cachedContext, null);
+    verify(underTest, never()).store(any(), any());
   }
 
 }

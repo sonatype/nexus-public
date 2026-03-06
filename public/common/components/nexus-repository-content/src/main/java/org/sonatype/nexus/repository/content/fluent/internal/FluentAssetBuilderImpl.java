@@ -176,7 +176,7 @@ public class FluentAssetBuilderImpl
     return asset;
   }
 
-  private Asset updateAssetBlob(Asset asset) {
+  private Asset updateAssetBlob(final Asset asset) {
     if (blob != null) {
       ((AssetData) asset).setAssetBlob(getOrCreateAssetBlob(blob, checksums));
       facet.stores().assetStore.updateAssetBlobLink(asset);
@@ -214,6 +214,12 @@ public class FluentAssetBuilderImpl
     Map<String, String> headers = new HashMap<>();
 
     Map<String, String> tempHeaders = blob.getHeaders();
+
+    tempHeaders.entrySet()
+        .stream()
+        .filter(entry -> facet.shouldKeepBlobHeader(entry.getKey()))
+        .forEach(entry -> headers.put(entry.getKey(), entry.getValue()));
+
     headers.put(REPO_NAME_HEADER, tempHeaders.get(REPO_NAME_HEADER));
     headers.put(BLOB_NAME_HEADER, assetData.path());
     headers.put(CREATED_BY_HEADER, tempHeaders.get(CREATED_BY_HEADER));

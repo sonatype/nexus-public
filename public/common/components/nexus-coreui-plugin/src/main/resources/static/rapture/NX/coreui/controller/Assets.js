@@ -40,8 +40,7 @@ Ext.define('NX.coreui.controller.Assets', {
     'component.AssetInfo',
     'component.AssetAttributes',
     'component.AssetList',
-    'component.ComponentDetails',
-    'component.AnalyzeApplicationWindow'
+    'component.ComponentDetails'
   ],
 
   refs: [
@@ -54,9 +53,7 @@ Ext.define('NX.coreui.controller.Assets', {
     {ref: 'componentList', selector: 'grid[componentList=true]'},
     {ref: 'componentDetails', selector: 'nx-coreui-component-details'},
     {ref: 'deleteComponentButton', selector: 'nx-coreui-component-details button[action=deleteComponent]'},
-    {ref: 'analyzeApplicationButton', selector: 'nx-coreui-component-details button[action=analyzeApplication]'},
     {ref: 'browseComponentButton', selector: 'nx-coreui-component-details button[action=browseComponent]'},
-    {ref: 'analyzeApplicationWindow', selector: 'nx-coreui-component-analyze-window'},
     {ref: 'rootContainer', selector: 'nx-main'}
   ],
 
@@ -130,10 +127,7 @@ Ext.define('NX.coreui.controller.Assets', {
         },
         'nx-coreui-component-details button[action=browseComponent]': {
           click: me.browseComponent
-        },
-        'nx-coreui-component-details button[action=analyzeApplication]': {
-          click: me.mixins.componentUtils.openAnalyzeApplicationWindow
-        },
+        }
       }
     });
 
@@ -233,7 +227,6 @@ Ext.define('NX.coreui.controller.Assets', {
 
     this.updateDeleteButtonVisibility();
     this.updateBrowseButtonVisibility();
-    this.updateAnalyzeButton(componentModel);
   },
 
   /**

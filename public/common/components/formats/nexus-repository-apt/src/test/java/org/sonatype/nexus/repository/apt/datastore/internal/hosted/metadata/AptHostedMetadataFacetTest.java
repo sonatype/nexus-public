@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -53,6 +54,7 @@ import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -399,6 +401,34 @@ public class AptHostedMetadataFacetTest
         .anyMatch(p -> p.contains("binary-amd64"))
         .anyMatch(p -> p.contains("binary-arm64"))
         .anyMatch(p -> p.contains("binary-all"));
+  }
+
+  @Test
+  public void testUsesCorrectCooperationScope() throws Exception {
+    Cooperation2Factory testCooperationFactory = mock(Cooperation2Factory.class);
+    Cooperation2Factory.Builder testBuilder = mock(Cooperation2Factory.Builder.class);
+
+    when(testCooperationFactory.configure()).thenReturn(testBuilder);
+    when(testBuilder.enabled(true)).thenReturn(testBuilder);
+    when(testBuilder.majorTimeout(any())).thenReturn(testBuilder);
+    when(testBuilder.minorTimeout(any())).thenReturn(testBuilder);
+    when(testBuilder.threadsPerKey(anyInt())).thenReturn(testBuilder);
+    when(testBuilder.build(anyString())).thenReturn(mock(Cooperation2.class));
+
+    AptHostedMetadataFacet testFacet = new AptHostedMetadataFacet(
+        objectMapper,
+        clock,
+        testCooperationFactory,
+        true,
+        Duration.ZERO,
+        Duration.ofSeconds(30),
+        100);
+
+    testFacet.installDependencies(eventManager);
+    testFacet.attach(repository);
+    testFacet.init();
+
+    verify(testBuilder).build(REPO_NAME + ":apt-metadata");
   }
 
   @Test

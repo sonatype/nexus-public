@@ -184,7 +184,8 @@ public class SimpleApiRepositoryAdapter
     String remoteUrl = configuration.get("remoteUrl", String.class);
     Integer contentMaxAge = toInt(configuration.get("contentMaxAge", Number.class), 1440);
     Integer metadataMaxAge = toInt(configuration.get("metadataMaxAge", Number.class), 1440);
-    return new ProxyAttributes(remoteUrl, contentMaxAge, metadataMaxAge);
+    Boolean preserveEncodedCharacters = configuration.get("preserveEncodedCharacters", Boolean.class, false);
+    return new ProxyAttributes(remoteUrl, contentMaxAge, metadataMaxAge, preserveEncodedCharacters);
   }
 
   protected NegativeCacheAttributes getNegativeCacheAttributes(final Repository repository) {

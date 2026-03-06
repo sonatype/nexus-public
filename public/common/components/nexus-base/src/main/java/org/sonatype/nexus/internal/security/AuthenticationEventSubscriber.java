@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.security;
 
+import com.google.common.eventbus.AllowConcurrentEvents;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -52,6 +53,7 @@ public class AuthenticationEventSubscriber
   }
 
   @Subscribe
+  @AllowConcurrentEvents
   public void on(final AuthenticationEvent event) {
     final ClientInfo clientInfo = clientInfoProvider.get().getCurrentThreadClientInfo();
 

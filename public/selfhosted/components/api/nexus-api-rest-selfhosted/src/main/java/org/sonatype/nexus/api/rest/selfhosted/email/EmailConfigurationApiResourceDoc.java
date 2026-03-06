@@ -14,6 +14,7 @@ package org.sonatype.nexus.api.rest.selfhosted.email;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
@@ -23,6 +24,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Example;
+import io.swagger.annotations.ExampleProperty;
 
 import static org.sonatype.nexus.repository.http.HttpStatus.BAD_REQUEST;
 import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
@@ -53,11 +56,17 @@ public interface EmailConfigurationApiResourceDoc
 
   @ApiOperation("Send a test email to the email address provided in the request body")
   @ApiResponses(value = {
-      @ApiResponse(code = OK, message = "Validation was complete, look at the body to determine success",
+      @ApiResponse(code = OK, message = "Test email was sent successfully",
           response = ApiEmailValidation.class),
+      @ApiResponse(code = BAD_REQUEST, message = "There was a problem sending the test email",
+          response = ApiEmailValidation.class,
+          examples = @Example({
+              @ExampleProperty(mediaType = "application/json",
+                  value = "{ \"success\": false, \"message\": \"string\" }")
+          })),
       @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to verify the email configuration")
   })
-  ApiEmailValidation testEmailConfiguration(
+  Response testEmailConfiguration(
       @ApiParam(required = true, value = "An email address to send a test email to") @NotNull String validationEmail);
 
   @ApiOperation("Disable and clear the email configuration")

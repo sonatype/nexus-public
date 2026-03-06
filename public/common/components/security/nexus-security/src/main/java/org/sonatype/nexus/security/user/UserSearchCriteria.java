@@ -22,6 +22,9 @@ import java.util.Set;
  */
 public class UserSearchCriteria
 {
+  // https://sonatype.atlassian.net/browse/NEXUS-44226?focusedCommentId=826355
+  public static final int FALL_BACK_USER_LIMIT_TO_AVOID_OOM = 1000;
+
   private String userId;
 
   private Set<String> oneOfRoleIds = new HashSet<>();

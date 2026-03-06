@@ -171,6 +171,12 @@ export default function SettingsSidebar() {
           data-analytics-id="nxrm-global-secondary-navbar-support-logs"
         />
         <LeftNavigationMenuCollapsibleChildItem
+          name={ADMIN.SUPPORT.RECOVERY.ROOT}
+          text={UIStrings.RECOVERY_MODE.MENU.text}
+          params={{ itemId: null }}
+          data-analytics-id="nxrm-global-secondary-navbar-support-recovery"
+        />
+        <LeftNavigationMenuCollapsibleChildItem
           name={ADMIN.SUPPORT.STATUS.ROOT}
           text={UIStrings.METRIC_HEALTH.MENU.text}
           params={{ itemId: null }}

@@ -14,8 +14,10 @@ package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
+import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,6 +33,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 public class S3BlobStoreApiModel
 {
   @NotNull
+  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @ApiModelProperty(value = "The name of the S3 blob store.", example = "s3", required = true)
   private String name;
 

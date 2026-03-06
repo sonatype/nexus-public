@@ -39,9 +39,30 @@ public class WebApplicationMessageException
         .build());
   }
 
+  public WebApplicationMessageException(
+      final Status status,
+      final String id,
+      final Object message,
+      final String mediaType)
+  {
+    super(Response.status(checkNotNull(status))
+        .entity(
+            new GenericEntity<>(new ValidationErrorXO(id, checkNotNull(message).toString()), ValidationErrorXO.class))
+        .type(mediaType)
+        .build());
+  }
+
   public WebApplicationMessageException(int status, final Object message, final String mediaType) {
     super(Response.status(status)
         .entity(new GenericEntity<>(new ValidationErrorXO(checkNotNull(message).toString()), ValidationErrorXO.class))
+        .type(mediaType)
+        .build());
+  }
+
+  public WebApplicationMessageException(int status, final String id, final Object message, final String mediaType) {
+    super(Response.status(status)
+        .entity(
+            new GenericEntity<>(new ValidationErrorXO(id, checkNotNull(message).toString()), ValidationErrorXO.class))
         .type(mediaType)
         .build());
   }

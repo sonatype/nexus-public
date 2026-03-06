@@ -5,6 +5,7 @@
   "scripts": {
     "build": "npm-run-all --parallel build-dev build-prod",
     "build-all": "npm-run-all format build-dev build-prod",
+    "build-no-lint": "npm-run-all --parallel build-dev build-prod",
     "build-dev": "rspack --config rspack.dev.js",
     "build-prod": "rspack --config rspack.prod.js",
     "check-format": "biome format --changed --no-errors-on-unmatched",

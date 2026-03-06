@@ -216,7 +216,12 @@ Ext.define('NX.view.SettingsForm', {
       return;
     }
 
-    itemsToDisable = me.getChildItemsToDisable().filter(function(item){
+    itemsToDisable = me.getChildItemsToDisable();
+    if (!itemsToDisable) {
+      return;
+    }
+
+    itemsToDisable = itemsToDisable.filter(function(item){
       return [
         'button',
         'textfield',

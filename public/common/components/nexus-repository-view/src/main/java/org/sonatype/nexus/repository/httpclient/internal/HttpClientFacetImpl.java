@@ -36,6 +36,7 @@ import org.sonatype.nexus.repository.httpclient.ContentCompressionStrategy;
 import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.NormalizationStrategy;
+import org.sonatype.nexus.repository.httpclient.OutboundRequestMetricRecorder;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusEvent;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
@@ -91,6 +92,8 @@ public class HttpClientFacetImpl
 
   private final Map<String, TargetAuthenticationStrategy> authenticationStrategies;
 
+  private final OutboundRequestMetricRecorder outboundRequestRecorder;
+
   private String unencryptedPassword;
 
   private HttpClientConfig config;
@@ -105,7 +108,8 @@ public class HttpClientFacetImpl
       final List<RedirectStrategy> redirectStrategyList,
       final List<NormalizationStrategy> normalizationStrategiesList,
       final List<ContentCompressionStrategy> contentCompressionStrategiesList,
-      final List<TargetAuthenticationStrategy> authenticationStrategiesList)
+      final List<TargetAuthenticationStrategy> authenticationStrategiesList,
+      @Nullable final OutboundRequestMetricRecorder outboundRequestRecorder)
   {
     this.httpClientManager = checkNotNull(httpClientManager);
     this.autoBlockConfiguration = QualifierUtil.buildQualifierBeanMap(checkNotNull(autoBlockConfigurationList));
@@ -114,6 +118,7 @@ public class HttpClientFacetImpl
     this.contentCompressionStrategies =
         QualifierUtil.buildQualifierBeanMap(checkNotNull(contentCompressionStrategiesList));
     this.authenticationStrategies = QualifierUtil.buildQualifierBeanMap(checkNotNull(authenticationStrategiesList));
+    this.outboundRequestRecorder = outboundRequestRecorder;
   }
 
   @VisibleForTesting
@@ -127,9 +132,25 @@ public class HttpClientFacetImpl
       final HttpClientConfig config)
   {
     this(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategy,
-        contentCompressionStrategies, authenticationStrategies);
+        contentCompressionStrategies, authenticationStrategies, (OutboundRequestMetricRecorder) null);
     this.config = checkNotNull(config);
     checkNotNull(this.autoBlockConfiguration.get(DEFAULT));
+  }
+
+  /**
+   * Constructor without outbound request metric recording.
+   */
+  @VisibleForTesting
+  HttpClientFacetImpl(
+      final HttpClientManager httpClientManager,
+      final List<AutoBlockConfiguration> autoBlockConfigurationList,
+      final List<RedirectStrategy> redirectStrategyList,
+      final List<NormalizationStrategy> normalizationStrategiesList,
+      final List<ContentCompressionStrategy> contentCompressionStrategiesList,
+      final List<TargetAuthenticationStrategy> authenticationStrategiesList)
+  {
+    this(httpClientManager, autoBlockConfigurationList, redirectStrategyList, normalizationStrategiesList,
+        contentCompressionStrategiesList, authenticationStrategiesList, (OutboundRequestMetricRecorder) null);
   }
 
   @Override
@@ -281,7 +302,8 @@ public class HttpClientFacetImpl
 
     boolean online = getRepository().getConfiguration().isOnline();
     // wrap delegate with auto-block aware client
-    httpClient = new BlockingHttpClient(delegate, config, this, online, getAutoBlockConfiguration());
+    httpClient = new BlockingHttpClient(delegate, config, this, online, getAutoBlockConfiguration(),
+        outboundRequestRecorder);
     log.debug("Created HTTP client: {}", httpClient);
   }
 
@@ -311,7 +333,13 @@ public class HttpClientFacetImpl
   }
 
   protected RedirectStrategy getRedirectStrategy() {
-    return this.redirectStrategy.get(getRepository().getFormat().getValue());
+    RedirectStrategy strategy = this.redirectStrategy.get(getRepository().getFormat().getValue());
+
+    if (strategy == null) {
+      strategy = this.redirectStrategy.get(DEFAULT);
+    }
+
+    return strategy;
   }
 
   protected void setNormalizationStrategy(final HttpClientConfiguration delegateConfig) {

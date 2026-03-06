@@ -5,6 +5,7 @@
   "scripts": {
     "build": "npm-run-all --parallel build-dev build-prod",
     "build-all": "npm-run-all --parallel build-dev build-prod",
+    "build-no-lint": "npm-run-all --parallel build-dev build-prod",
     "build-dev": "rspack --config rspack.dev.js",
     "build-prod": "rspack --config rspack.prod.js",
     "watch": "rspack --config rspack.dev.js  --watch"

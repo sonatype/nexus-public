@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.rest.SearchMapping;
@@ -31,11 +30,14 @@ import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 import org.sonatype.nexus.repository.search.sql.query.syntax.LenientTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SingleValueTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
 import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
 import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
+
+import jakarta.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -141,12 +143,12 @@ public abstract class SqlSearchQueryContributionSupport
    * @param exact indicates whether the associated {@link SearchMapping} indicated exact matching
    * @param value a string from {@link #split} to tokenize
    */
-  protected Collection<StringTerm> tokenize(final boolean exact, final String value) {
+  protected Collection<SingleValueTerm<?>> tokenize(final boolean exact, final String value) {
     if (isBlank(value)) {
       return Collections.singleton(new ExactTerm(""));
     }
 
-    Set<StringTerm> tokens = new LinkedHashSet<>();
+    Set<SingleValueTerm<?>> tokens = new LinkedHashSet<>();
     char[] chars = value.toCharArray();
 
     StringBuilder token = new StringBuilder();

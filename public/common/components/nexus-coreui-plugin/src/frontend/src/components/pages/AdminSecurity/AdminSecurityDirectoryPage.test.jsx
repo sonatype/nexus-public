@@ -188,6 +188,8 @@ describe('AdminSecurityDirectoryPage', () => {
   }
 
   function defaultExtState() {
-    return { usertoken: { licenseValid: true } };
+    return { 
+        usertoken: { licenseValid: true }
+    };
   }
 });

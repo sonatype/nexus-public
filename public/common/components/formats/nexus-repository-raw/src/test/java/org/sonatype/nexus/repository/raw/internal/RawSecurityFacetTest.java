@@ -57,7 +57,9 @@ public class RawSecurityFacetTest
     when(request.getPath()).thenReturn("/some/path.txt");
     when(request.getAction()).thenReturn(HttpMethods.GET);
 
-    when(repository.getFormat()).thenReturn(new Format("raw") { });
+    when(repository.getFormat()).thenReturn(new Format("raw")
+    {
+    });
     when(repository.getName()).thenReturn("RawSecurityFacetTest");
 
     rawSecurityFacet = new RawSecurityFacet(securityContributor,
@@ -68,7 +70,7 @@ public class RawSecurityFacetTest
 
   @Test
   public void testEnsurePermitted_permitted() throws Exception {
-    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any()))
+    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any()))
         .thenReturn(true);
 
     try {
@@ -81,16 +83,16 @@ public class RawSecurityFacetTest
 
   @Test
   public void testEnsurePermitted_notPermitted() throws Exception {
-    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any()))
+    when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any()))
         .thenReturn(false);
     try {
       rawSecurityFacet.ensurePermitted(request);
       fail("AuthorizationException should have been thrown");
     }
     catch (AuthorizationException e) {
-      //expected
+      // expected
     }
 
-    verify(contentPermissionChecker).isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any());
+    verify(contentPermissionChecker).isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any(), any());
   }
 }

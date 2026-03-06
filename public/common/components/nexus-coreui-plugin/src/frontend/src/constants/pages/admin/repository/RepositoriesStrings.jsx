@@ -36,6 +36,8 @@ export default {
       FILTER_PLACEHOLDER: 'Filter by name',
       EMPTY_LIST: 'There are no repositories available',
       COPY_URL_TITLE: 'Copy URL to Clipboard',
+      URL_COPIED_MESSAGE: 'URL Copied to Clipboard',
+      URL_COPY_ERROR_MESSAGE: 'Failed to copy URL to clipboard',
       HELP: {
         TITLE: 'What is a repository?',
         TEXT: <>
@@ -177,6 +179,10 @@ export default {
         DISTRIBUTION: {
           LABEL: 'Distribution',
           SUBLABEL: 'Distribution to fetch (e.g., bionic)'
+        },
+        ENFORCE_DISTRIBUTION: {
+          LABEL: 'Enforce Distribution',
+          DESCR: 'Only allow requests for the specified distribution'
         },
         FLAT: {
           LABEL: 'Flat',

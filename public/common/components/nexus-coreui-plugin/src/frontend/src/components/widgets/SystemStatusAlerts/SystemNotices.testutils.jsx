@@ -26,19 +26,22 @@ const {
   useThrottlingStatusValue
 } = helperFunctions;
 
-export function renderView(gracePeriodEnd, throttlingStatus, currentState, message) {
-  givenInitialState(gracePeriodEnd, throttlingStatus, currentState, message)
+export function renderView(gracePeriodEnd, throttlingStatus, currentState, message, recoveryModeEnabled) {
+  givenInitialState(gracePeriodEnd, throttlingStatus, currentState, message, recoveryModeEnabled)
 
   return render(<SystemNotices onClose={jest.fn()} />);
 }
 
-export function givenInitialState(gracePeriodEnd, throttlingStatus, currentState, message) {
-  givenGetValue(currentState, message)
+export function givenInitialState(gracePeriodEnd, throttlingStatus, currentState, message, recoveryModeEnabled) {
+  givenGetValue(currentState, message, recoveryModeEnabled, throttlingStatus, gracePeriodEnd)
   givenUseState(throttlingStatus, gracePeriodEnd, currentState, message);
 
   when(ExtJS.usePermission)
     .calledWith(UpgradeAlertFunctions.checkPermissions)
     .mockReturnValue(true);
+
+  // Mock NX.State.getUser to return a user so hasUser() returns true
+  global.NX.State.getUser.mockReturnValue({ username: 'test-user' });
 }
 
 function givenUseState(throttlingStatus, gracePeriodEnd, currentState, message) {
@@ -60,14 +63,18 @@ function givenUseState(throttlingStatus, gracePeriodEnd, currentState, message) 
       .calledWith(UpgradeAlertFunctions.message)
       .mockReturnValue(message);
 
+  when(ExtJS.useState)
+      .calledWith(expect.any(Function))
+      .mockImplementation((fn) => fn());
+
 }
 
-function givenGetValue(currentState, message) {
+function givenGetValue(currentState, message, recoveryModeEnabled, throttlingStatus, gracePeriodEnd) {
   when(ExtJS.state().getValue)
       .calledWith('contentUsageEvaluationResult', [])
       .mockReturnValue(USAGE_CENTER_CONTENT_CE);
   when(ExtJS.state().getValue)
-      .calledWith('dbUpgrade')
+      .calledWith('dbUpgrade', expect.anything())
       .mockReturnValue({ currentState, message });
   when(ExtJS.state().getValue)
       .calledWith('nexus.node.id')
@@ -78,6 +85,15 @@ function givenGetValue(currentState, message) {
   when(ExtJS.state().getValue)
       .calledWith('nexus.malware.count')
       .mockReturnValue({ totalCount: 3 });
+  when(ExtJS.state().getValue)
+      .calledWith('recovery.mode.enabled')
+      .mockReturnValue(recoveryModeEnabled);
+  when(ExtJS.state().getValue)
+      .calledWith('nexus.community.throttlingStatus')
+      .mockReturnValue(throttlingStatus);
+  when(ExtJS.state().getValue)
+      .calledWith('nexus.community.gracePeriodEnds')
+      .mockReturnValue(gracePeriodEnd);
 }
 
 

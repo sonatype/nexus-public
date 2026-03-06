@@ -49,6 +49,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.security.user.UserSearchCriteria.FALL_BACK_USER_LIMIT_TO_AVOID_OOM;
 
 /**
  * Resource for REST API to perform operations on the user.
@@ -87,8 +88,16 @@ public class UserApiResource
   {
     UserSearchCriteria criteria = new UserSearchCriteria(userId, null, source);
 
-    if (!UserManager.DEFAULT_SOURCE.equals(source)) {
-      // we limit the number of users here to avoid issues with remote sources
+    if (UserManager.SAML_SOURCE.equals(source)) {
+      // This limit was chosen to prevent OOM while not inconveniencing users
+      // https://sonatype.atlassian.net/browse/NEXUS-44226?focusedCommentId=826355
+      // Ideally we would implement pagination around this endpoint
+      criteria.setLimit(FALL_BACK_USER_LIMIT_TO_AVOID_OOM);
+    }
+    else if (!UserManager.DEFAULT_SOURCE.equals(source)) {
+      // We limit the number of users here to avoid issues with remote sources.
+      // Note: The way we currently implement LDAP the limit will be 100 * number of configured LDAP servers
+      // https://github.com/sonatype/nexus-internal/blob/3520164540301bc0a9d09c8d880e6287abfebf55/private/plugins/nexus-ldap-plugin/src/main/java/org/sonatype/nexus/ldap/internal/realms/EnterpriseLdapManager.java#L332
       criteria.setLimit(100);
     }
 

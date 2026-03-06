@@ -60,14 +60,14 @@ public class SecurityHandlerTest
   @Test
   public void testHandle() throws Exception {
     underTest.handle(context);
-    verify(securityFacet).ensurePermitted(any());
+    verify(securityFacet).ensurePermitted(any(), any(SelectorEvaluationCache.class));
   }
 
   @Test
   public void testHandle_alreadyAuthorized() throws Exception {
     attributesMap.set(SecurityHandler.AUTHORIZED_KEY, true);
     underTest.handle(context);
-    verify(securityFacet, never()).ensurePermitted(any());
+    verify(securityFacet, never()).ensurePermitted(any(), any());
   }
 
   @Test

@@ -42,6 +42,10 @@ public class UserTokenAuditor
     registerType(UserTokenDeletedEvent.class, DELETED_TYPE);
     registerType(UserTokenPurgedEvent.class, PURGE_TYPE);
     registerType(UserTokenConfigChangedEvent.class, "configChanged");
+    registerType(UserTokenAdminCreatedEvent.class, "adminCreated");
+    registerType(UserTokenAdminReadEvent.class, "adminRead");
+    registerType(UserTokenAdminListedEvent.class, "adminListed");
+    registerType(UserTokenAdminDeletedEvent.class, "adminDeleted");
   }
 
   @Subscribe
@@ -57,6 +61,45 @@ public class UserTokenAuditor
         if (configChangedEvent.isExpirationEnabled()) {
           attributes.put("Expiration Days", configChangedEvent.getExpirationDays());
         }
+      }
+      else if (event instanceof UserTokenAdminCreatedEvent) {
+        UserTokenAdminCreatedEvent adminEvent = (UserTokenAdminCreatedEvent) event;
+        Map<String, Object> attributes = data.getAttributes();
+        attributes.put("targetUserId", adminEvent.getTargetUserId());
+        attributes.put("targetRealm", adminEvent.getTargetRealm());
+        attributes.put("adminUserId", adminEvent.getAdminUserId());
+        attributes.put("adminRealm", adminEvent.getAdminRealm());
+        attributes.put("nameCode", adminEvent.getNameCode());
+      }
+      else if (event instanceof UserTokenAdminReadEvent) {
+        UserTokenAdminReadEvent adminEvent = (UserTokenAdminReadEvent) event;
+        Map<String, Object> attributes = data.getAttributes();
+        attributes.put("targetUserId", adminEvent.getTargetUserId());
+        attributes.put("targetRealm", adminEvent.getTargetRealm());
+        attributes.put("adminUserId", adminEvent.getAdminUserId());
+        attributes.put("adminRealm", adminEvent.getAdminRealm());
+      }
+      else if (event instanceof UserTokenAdminListedEvent) {
+        UserTokenAdminListedEvent adminEvent = (UserTokenAdminListedEvent) event;
+        Map<String, Object> attributes = data.getAttributes();
+        attributes.put("adminUserId", adminEvent.getAdminUserId());
+        attributes.put("adminRealm", adminEvent.getAdminRealm());
+        if (adminEvent.getRealmFilter() != null) {
+          attributes.put("realmFilter", adminEvent.getRealmFilter());
+        }
+        if (adminEvent.getUserIdFilter() != null) {
+          attributes.put("userIdFilter", adminEvent.getUserIdFilter());
+        }
+        attributes.put("includeExpired", adminEvent.isIncludeExpired());
+        attributes.put("resultCount", adminEvent.getResultCount());
+      }
+      else if (event instanceof UserTokenAdminDeletedEvent) {
+        UserTokenAdminDeletedEvent adminEvent = (UserTokenAdminDeletedEvent) event;
+        Map<String, Object> attributes = data.getAttributes();
+        attributes.put("targetUserId", adminEvent.getUsername());
+        attributes.put("targetRealm", adminEvent.getTargetRealm());
+        attributes.put("adminUserId", adminEvent.getAdminUserId());
+        attributes.put("adminRealm", adminEvent.getAdminRealm());
       }
       else if (event instanceof UserTokenDeletedEvent) {
         UserTokenDeletedEvent deletedEvent = (UserTokenDeletedEvent) event;

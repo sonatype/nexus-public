@@ -39,6 +39,8 @@ public interface AptContentFacet
 
   boolean isFlat();
 
+  boolean isEnforceDistribution();
+
   Optional<FluentAsset> getAsset(String path);
 
   Optional<Content> get(String assetPath);

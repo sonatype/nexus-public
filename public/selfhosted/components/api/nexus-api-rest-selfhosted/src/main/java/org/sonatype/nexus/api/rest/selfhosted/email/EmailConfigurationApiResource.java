@@ -13,7 +13,6 @@
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
 import jakarta.inject.Inject;
-import javax.mail.internet.AddressException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
@@ -22,6 +21,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
@@ -29,10 +29,10 @@ import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.rest.Resource;
-import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.validation.Validate;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -73,26 +73,30 @@ public class EmailConfigurationApiResource
   @Path("/verify")
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
-  public ApiEmailValidation testEmailConfiguration(@NotNull String verificationAddress) {
+  public Response testEmailConfiguration(@NotNull String verificationAddress) {
     EmailConfiguration emailConfiguration = emailManager.getConfiguration();
 
     if (emailConfiguration == null) {
-      return new ApiEmailValidation(false, "Email Settings are not yet configured");
+      return Response.status(BAD_REQUEST)
+          .entity(new ApiEmailValidation(false, "Email Settings are not yet configured"))
+          .type(APPLICATION_JSON)
+          .build();
     }
 
     try {
       emailManager.sendVerification(emailConfiguration, verificationAddress);
-      return new ApiEmailValidation(true);
+      return Response.ok(new ApiEmailValidation(true), APPLICATION_JSON)
+          .build();
     }
     catch (EmailException e) {
-      log.debug("Unable to send verification", e);
-      String exceptionMessage = e.getMessage().replace(e.getCause().getClass().getName() + ": ", "");
-      if (e.getCause() instanceof AddressException) {
-        throw new WebApplicationMessageException(BAD_REQUEST, '"' + exceptionMessage + '"', APPLICATION_JSON);
-      }
-      else {
-        return new ApiEmailValidation(false, exceptionMessage);
-      }
+      log.warn("Unable to send verification", e);
+      Throwable rootCause = ExceptionUtils.getRootCause(e);
+      String exceptionMessage = rootCause.getMessage().replace(rootCause.getClass().getName() + ": ", "");
+
+      return Response.status(BAD_REQUEST)
+          .entity(new ApiEmailValidation(false, exceptionMessage))
+          .type(APPLICATION_JSON)
+          .build();
     }
   }
 

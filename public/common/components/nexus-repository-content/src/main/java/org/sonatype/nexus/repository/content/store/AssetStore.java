@@ -349,7 +349,7 @@ public class AssetStore<T extends AssetDAO>
   public Collection<Asset> findByComponentIds(
       final Set<Integer> componentIds,
       final String assetFilter,
-      final Map<String, String> assetFilterParams)
+      final Map<String, Object> assetFilterParams)
   {
     if (CollectionUtils.isEmpty(componentIds)) {
       return List.of();

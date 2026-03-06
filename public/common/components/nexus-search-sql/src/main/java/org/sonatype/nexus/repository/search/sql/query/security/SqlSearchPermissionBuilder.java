@@ -27,9 +27,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
@@ -41,9 +38,9 @@ import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SingleValueTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
-import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.BreadActions;
@@ -51,12 +48,15 @@ import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.springframework.stereotype.Component;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
-import org.springframework.stereotype.Component;
 
 /**
  * Appends the query parameters necessary for permission
@@ -161,11 +161,20 @@ public class SqlSearchPermissionBuilder
       return Optional.empty();
     }
 
-    Set<StringTerm> repositoryNames = repositories.stream()
+    Set<SingleValueTerm<?>> repositoryNames = repositories.stream()
         .map(Repository::getName)
         .distinct()
         .map(ExactTerm::new)
         .collect(Collectors.toCollection(LinkedHashSet::new));
+
+    if (log.isDebugEnabled()) {
+      log.debug("Creating repository condition for {} repositories: {}",
+          repositoryNames.size(),
+          repositoryNames.stream()
+              .map(term -> ((ExactTerm) term).term())
+              .limit(10)
+              .collect(Collectors.toList()) + (repositoryNames.size() > 10 ? "..." : ""));
+    }
 
     SqlPredicate predicate =
         new SqlPredicate(Operand.IN, SearchField.REPOSITORY_NAME, TermCollection.create(repositoryNames));
@@ -225,8 +234,10 @@ public class SqlSearchPermissionBuilder
   }
 
   private Set<Repository> getAllRepositories() {
-    return StreamSupport.stream(repositoryManager.browse().spliterator(), true)
-        .collect(toSet());
+    Set<Repository> repositories = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
+    log.debug("getAllRepositories found {} repositories", repositories.size());
+    return repositories;
   }
 
   private Collection<String> getRepositoriesInRequest(final SearchRequest request) {

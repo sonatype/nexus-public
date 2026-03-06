@@ -30,7 +30,7 @@ export default function SearchSwiftExt() {
       icon={UIStrings.SEARCH.SWIFT.MENU.icon}
       criterias={[
         {
-          id: 'assets.attributes.swift.scope',
+          id: 'attributes.swift.scope',
           group: CRITERIA.GROUP,
           config: {
             format: 'swift',
@@ -48,7 +48,7 @@ export default function SearchSwiftExt() {
         criterias: [
           { id: 'format', value: 'swift', hidden: true },
           { id: 'name.raw' },
-          { id: 'assets.attributes.swift.scope' },
+          { id: 'attributes.swift.scope' },
           { id: 'version' }
         ]
       }}

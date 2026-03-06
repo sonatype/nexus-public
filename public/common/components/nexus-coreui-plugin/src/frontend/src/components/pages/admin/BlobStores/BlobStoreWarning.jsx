@@ -11,11 +11,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-export default function BlobStoreWarning({type}) {
+export default function BlobStoreWarning({type, service}) {
   const Warning = window.BlobStoreTypes[type.id]?.Warning;
 
   if (Warning) {
-    return <Warning/>;
+    return <Warning service={service} />;
   }
 
   return null;

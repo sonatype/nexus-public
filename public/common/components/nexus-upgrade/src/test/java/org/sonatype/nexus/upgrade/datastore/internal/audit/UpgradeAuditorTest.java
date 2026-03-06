@@ -74,7 +74,7 @@ public class UpgradeAuditorTest
   public void setup() {
     when(applicationVersion.getVersion()).thenReturn(V3_99);
     underTest = new UpgradeAuditor(applicationVersion);
-    underTest.setAuditRecorder(() -> recorder);
+    underTest.setAuditRecorder(recorder);
 
     when(recorder.isEnabled()).thenReturn(true);
   }

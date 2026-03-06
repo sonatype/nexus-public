@@ -217,14 +217,22 @@ public class EmailManagerImpl
       mail.setSubject(String.format("%s %s", subjectPrefix, subject));
     }
 
+    boolean sslOnConnect = configuration.isSslOnConnectEnabled();
+    boolean startTls = configuration.isStartTlsEnabled();
     // do this last (mail properties are set up from the email fields when you get the mail session)
-    if (configuration.isNexusTrustStoreEnabled()) {
+    if (configuration.isNexusTrustStoreEnabled() && (sslOnConnect || startTls)) {
       SSLContext context = trustStore.getSSLContext();
       Session session = mail.getMailSession();
       Properties properties = session.getProperties();
       properties.remove(EmailConstants.MAIL_SMTP_SOCKET_FACTORY_CLASS);
-      properties.put(EmailConstants.MAIL_SMTP_SSL_ENABLE, true);
       properties.put("mail.smtp.ssl.socketFactory", context.getSocketFactory());
+
+      if (sslOnConnect) {
+        properties.put(EmailConstants.MAIL_SMTP_SSL_ENABLE, true); // mail.smtp.ssl.enable=true
+      }
+      else {
+        properties.remove(EmailConstants.MAIL_SMTP_SSL_ENABLE); // remove to avoid forcing SSL
+      }
     }
 
     return mail;

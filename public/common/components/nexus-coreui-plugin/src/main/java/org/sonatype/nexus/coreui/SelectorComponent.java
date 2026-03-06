@@ -42,6 +42,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -165,6 +166,8 @@ public class SelectorComponent
     return selectorManager.browse()
         .stream()
         .map(config -> new ReferenceXO(config.getName(), config.getName()))
+        .sorted(Comparator.comparing(ReferenceXO::getName, String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(ReferenceXO::getName))
         .collect(Collectors.toList()); // NOSONAR
   }
 

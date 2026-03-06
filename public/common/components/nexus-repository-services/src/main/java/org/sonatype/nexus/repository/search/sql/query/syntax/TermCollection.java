@@ -15,9 +15,9 @@ package org.sonatype.nexus.repository.search.sql.query.syntax;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,16 +28,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TermCollection
     implements Term
 {
-  private final Collection<StringTerm> terms;
+  private final Collection<SingleValueTerm<?>> terms;
 
   /*
    * To keep things simple we only accept StringTerm to avoid nested TermCollections
    */
-  private TermCollection(final Collection<StringTerm> terms) {
-    this.terms = ImmutableList.copyOf(checkNotNull(terms));
+  private TermCollection(final Collection<SingleValueTerm<?>> terms) {
+    this.terms = List.copyOf(checkNotNull(terms));
   }
 
-  public Collection<StringTerm> get() {
+  public Collection<SingleValueTerm<?>> get() {
     return Collections.unmodifiableCollection(terms);
   }
 
@@ -48,12 +48,15 @@ public class TermCollection
 
   @Override
   public boolean equals(final Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     TermCollection other = (TermCollection) obj;
     return Objects.equals(terms, other.terms);
   }
@@ -67,7 +70,7 @@ public class TermCollection
    * Helper method to create a Term with the provided collection. If the provided collection has only one element that
    * element will be returned instead of creating an instance.
    */
-  public static Term create(final Collection<StringTerm> terms) {
+  public static Term create(final Collection<SingleValueTerm<?>> terms) {
     // We use a private constructor to avoid creating
     if (terms.size() == 1) {
       return Iterables.getOnlyElement(terms);
@@ -79,7 +82,7 @@ public class TermCollection
    * Helper method to create a Term with the provided collection. If the provided collection has only one element that
    * element will be returned instead of creating an instance.
    */
-  public static Term create(final StringTerm... terms) {
+  public static Term create(final SingleValueTerm<?>... terms) {
     // We use a private constructor to avoid creating
     if (terms.length == 1) {
       return terms[0];

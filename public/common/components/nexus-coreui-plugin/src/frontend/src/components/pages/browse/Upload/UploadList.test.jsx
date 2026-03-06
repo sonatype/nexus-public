@@ -52,12 +52,12 @@ describe('UploadList', function() {
     when(axios.post).calledWith(URL, FORMATS_REQUEST).mockResolvedValue({data: TestUtils.makeExtResult(FORMATS)});
   };
 
-  async function renderView(data = REPOS) {
+  async function renderView(data = REPOS, copyUrl) {
     mockApiResponses(data);
     const router = getRouter();
     const view = (
         <UIRouter router={router}>
-          <UploadList />
+          <UploadList copyUrl={copyUrl} />
         </UIRouter>
     )
     render(view);
@@ -107,10 +107,6 @@ describe('UploadList', function() {
       });
     });
 
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('renders copy button in each row with tooltips of "Copy URL to Clipboard" when hovering',
       async function() {
         await renderView();
@@ -127,25 +123,19 @@ describe('UploadList', function() {
         await TestUtils.expectToSeeTooltipOnHover(row3CopyBtn, 'Copy URL to Clipboard');
     });
   
-    it('calls onCopyUrl when copy button is clicked', async function () {
-      const onCopyUrl = jest.fn((event) => event.stopPropagation());
-  
-      mockApiResponses(REPOS);
-      const router = getRouter();
-      const view = (
-          <UIRouter router={router}>
-            <UploadList copyUrl={onCopyUrl} />
-          </UIRouter>
-      )
-      render(view);
-      await waitForElementToBeRemoved(selectors.queryLoadingMask());
-  
+    it('calls copyUrl when copy button is clicked', async function () {
+      const mockCopyUrl = jest.fn();
+      await renderView(REPOS, mockCopyUrl);
+
       const copyBtn = within(selectors.rows()[1]).getAllByRole('button')[0];
       await TestUtils.expectToSeeTooltipOnHover(copyBtn, 'Copy URL to Clipboard');
-  
+
       userEvent.click(copyBtn);
-  
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('http://localhost:8081/repository/maven-releases');
+
+      expect(mockCopyUrl).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'click' }),
+        'http://localhost:8081/repository/maven-releases'
+      );
     });
   })
 

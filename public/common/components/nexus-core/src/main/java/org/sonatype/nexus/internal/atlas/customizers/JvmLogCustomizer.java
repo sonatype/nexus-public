@@ -18,13 +18,16 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -51,9 +54,12 @@ public class JvmLogCustomizer
 
   private final LogManager logManager;
 
+  private final ApplicationDirectories applicationDirectories;
+
   @Inject
-  public JvmLogCustomizer(final LogManager logManager) {
+  public JvmLogCustomizer(final LogManager logManager, final ApplicationDirectories applicationDirectories) {
     this.logManager = checkNotNull(logManager);
+    this.applicationDirectories = checkNotNull(applicationDirectories);
   }
 
   @Override
@@ -62,9 +68,9 @@ public class JvmLogCustomizer
     {
       @Override
       protected void generate(final File file) {
-        File logFile = logManager.getLogFile("jvm.log");
+        File logFile = resolveJvmLogFile();
 
-        if (logFile != null) {
+        if (logFile.exists()) {
           try (BufferedReader reader = new BufferedReader(new FileReader(logFile));
               BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
 
@@ -93,4 +99,47 @@ public class JvmLogCustomizer
       }
     });
   }
+
+  private File resolveJvmLogFile() {
+    File logFile = logManager.getLogFile("jvm.log");
+    if (logFile != null) {
+      log.debug("Resolved jvm.log via LogManager: {}", logFile);
+      return logFile;
+    }
+    Optional<File> runtimeLog = resolveFromRuntimeArgs();
+    if (runtimeLog.isPresent()) {
+      log.debug("Couldn't find jvm.log via LogManager, resolved via runtime args: {}", runtimeLog.get());
+      return runtimeLog.get();
+    }
+    log.debug("Couldn't find jvm.log via LogManager or runtime args, falling back to default location");
+    return new File(applicationDirectories.getWorkDirectory(), "log/jvm.log");
+  }
+
+  private Optional<File> resolveFromRuntimeArgs() {
+    List<String> args = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    log.debug("Runtime JVM args: {}", args);
+    for (String arg : args) {
+      String trimmed = arg.trim();
+      if (trimmed.startsWith("-XX:LogFile=")) {
+        String value = trimmed.substring("-XX:LogFile=".length()).trim();
+        if (!value.isEmpty()) {
+          return Optional.of(resolveLogPath(value));
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  private File resolveLogPath(final String value) {
+    // Expand common karaf placeholders and resolve relative paths against the install directory.
+    String resolved = value
+        .replace("${karaf.data}", applicationDirectories.getWorkDirectory().getAbsolutePath())
+        .replace("${karaf.base}", applicationDirectories.getInstallDirectory().getAbsolutePath());
+    File file = new File(resolved);
+    if (file.isAbsolute()) {
+      return file;
+    }
+    return new File(applicationDirectories.getInstallDirectory(), resolved);
+  }
+
 }

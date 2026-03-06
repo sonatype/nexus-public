@@ -91,29 +91,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     ComponentUtils_Delete_Asset_No_Permissions: 'You do not have permission to delete this asset',
     ComponentUtils_Delete_Component_No_Permissions: 'You do not have permission to delete this component',
 
-    AnalyzeApplication_Button_Unauthenticated: 'Please sign in first',
-
-    AnalyzeApplicationWindow_Title: 'Analyze Application',
-    AnalyzeApplicationWindow_Form_Asset_FieldLabel: 'Application asset',
-    AnalyzeApplicationWindow_Form_Asset_HelpText: 'Select the asset that contains the application',
-    AnalyzeApplicationWindow_Form_Asset_EmptyText: 'Select an asset',
-    AnalyzeApplicationWindow_Form_Email_FieldLabel: 'Email address',
-    AnalyzeApplicationWindow_Form_Email_HelpText: 'The address where the summary report will be sent',
-    AnalyzeApplicationWindow_Form_Password_FieldLabel: 'Report password',
-    AnalyzeApplicationWindow_Form_Password_HelpText: 'A password to gain access to the detailed report',
-    AnalyzeApplicationWindow_Form_ProprietaryPackages_FieldLabel: 'Proprietary packages',
-    AnalyzeApplicationWindow_Form_ProprietaryPackages_HelpText: 'A comma separated list of proprietary packages',
-    AnalyzeApplicationWindow_Form_Label_FieldLabel: 'Report label',
-    AnalyzeApplicationWindow_Form_Label_HelpText: 'The name the report will be given',
-    AnalyzeApplicationWindow_Analyze_Button: 'Analyze',
-    AnalyzeApplicationWindow_Cancel_Button: 'Cancel',
-    AnalyzeApplicationWindow_Form_Html: '<p>Application analysis performs a deep inspection of this application, ' +
-        'identifying potential risks.  More information is available ' +
-        '<a href="http://links.sonatype.com/products/insight/ac/home" target="_blank" rel="noopener" class="x-link">here</a>.</p>',
-    AnalyzeApplicationWindow_Loading_Mask: 'Loading',
-    AnalyzeApplicationWindow_No_Assets_Error_Title: 'Component has no application assets',
-    AnalyzeApplicationWindow_No_Assets_Error_Message: 'This component has no application assets or you do not have read permission for any of its application assets',
-
     // see NEXUS-46990
     FirewallRepositoryColumn_Header: 'Firewall Report',
 
@@ -445,6 +422,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_AptFacet_Title: 'APT Settings',
     Repository_Facet_AptFacet_Distribution_FieldLabel: 'Distribution',
     Repository_Facet_AptFacet_Distribution_HelpText: 'Distribution to fetch e.g. bionic',
+    Repository_Facet_AptFacet_EnforceDistribution_FieldLabel: 'Enforce Distribution',
+    Repository_Facet_AptFacet_EnforceDistribution_HelpText: 'Only allow requests for the specified distribution',
     Repository_Facet_AptFacet_Flat_FieldLabel: 'Flat',
     Repository_Facet_AptFacet_Flat_HelpText: 'Is this repository flat?',
     Repository_Facet_AptSigningFacet_Keypair_FieldLabel: 'Signing Key',
@@ -521,6 +500,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
         'For more information check out our <a target="_blank" href="https://links.sonatype.com/products/nxrm3/docs/pull-replication/asset-name-matcher">documentation for format specific options</a>',
     Repository_Facet_ProxyFacet_AssetNameMatcher_EmptyText: 'Entry',
     Repository_Facet_ProxyFacet_AssetNameMatcher_InvalidText: 'Invalid Regex',
+    Repository_Facet_ProxyFacet_PreserveEncodedChars_FieldLabel: 'Preserve Encoded Characters',
+    Repository_Facet_ProxyFacet_PreserveEncodedChars_HelpText: 'When checked, keeps encoded characters like %2B (plus), %23 (hash), and %20 (space) in their encoded form when proxying to the remote repository. ' +
+        'Enable this when proxying to AWS S3, Cloudflare CDN, or Azure Blob Storage, which require encoded characters to remain encoded. ' +
+        'Leave unchecked (default) for most repositories including crates.io and Cargo registries, which expect literal + characters. ' +
+        '<br/><strong>When to enable:</strong> If you see 403 Forbidden or 404 Not Found errors for files with special characters like + in their names when proxying to AWS S3 or similar CDN/cloud storage services. ' +
+        '<br/><strong>Security:</strong> Only enable for trusted remote repositories. Path traversal sequences (..) in redirects are automatically normalized.',
     Repository_Facet_ProxyFacet_Docker_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry-1.docker.io',
     Repository_Facet_ProxyFacet_Huggingface_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://huggingface.co/',
     Repository_Facet_ProxyFacet_Maven_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo1.maven.org/maven2/',

@@ -44,4 +44,18 @@ public interface ApiKeyInternal
    * representation of primary principal and the first realm.
    */
   void setPrincipals(PrincipalCollection principals);
+
+  /**
+   * Gets the userId of the admin who created this API key.
+   */
+  default String getCreatedByUserId() {
+    return null;
+  }
+
+  /**
+   * Gets the realm of the admin who created this API key.
+   */
+  default String getCreatedByRealm() {
+    return null;
+  }
 }

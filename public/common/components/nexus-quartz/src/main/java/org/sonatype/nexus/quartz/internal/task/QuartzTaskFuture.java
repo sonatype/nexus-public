@@ -59,7 +59,7 @@ public class QuartzTaskFuture
 
   private final String taskLogName;
 
-  private final Date startedAt;
+  private final Date scheduledAt;
 
   private final Schedule startedBy;
 
@@ -71,6 +71,8 @@ public class QuartzTaskFuture
 
   private volatile TaskState runState;
 
+  private volatile Date startedAt;
+
   private Exception exception;
 
   private Object result;
@@ -79,14 +81,14 @@ public class QuartzTaskFuture
       final QuartzSchedulerSPI scheduler,
       final JobKey jobKey,
       final String taskLogName,
-      final Date startedAt,
+      final Date scheduledAt,
       final Schedule startedBy,
       @Nullable final String triggerSource)
   {
     this.scheduler = checkNotNull(scheduler);
     this.jobKey = checkNotNull(jobKey);
     this.taskLogName = checkNotNull(taskLogName);
-    this.startedAt = checkNotNull(startedAt);
+    this.scheduledAt = checkNotNull(scheduledAt);
     this.startedBy = checkNotNull(startedBy);
     this.triggerSource = triggerSource;
     this.countDownLatch = new CountDownLatch(1);
@@ -106,8 +108,14 @@ public class QuartzTaskFuture
     countDownLatch.countDown();
   }
 
+  public Date getScheduledAt() {
+    return new Date(scheduledAt.getTime());
+  }
+
   public Date getStartedAt() {
-    return startedAt;
+    Date effectiveStart;
+    effectiveStart = startedAt != null ? startedAt : scheduledAt;
+    return new Date(effectiveStart.getTime());
   }
 
   public Schedule getStartedBy() {
@@ -123,6 +131,16 @@ public class QuartzTaskFuture
         "Illegal run state transition: %s -> %s", this.runState, runState);
 
     log.debug("Task {} : {} runState transition {} -> {}", jobKey.getName(), taskLogName, this.runState, runState);
+
+    // Capture the actual start time when task transitions to RUNNING state
+    if (runState == TaskState.RUNNING && startedAt == null) {
+      synchronized (this) {
+        if (startedAt == null) {
+          startedAt = new Date();
+        }
+      }
+    }
+
     this.runState = runState;
   }
 

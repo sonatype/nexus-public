@@ -23,10 +23,10 @@ import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/Az
 import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
 import GoogleBlobStoreSettings from './components/pages/admin/BlobStores/Google/GoogleBlobStoreSettings';
 import GoogleBlobStoreActions from './components/pages/admin/BlobStores/Google/GoogleBlobStoreActions';
+import FileBlobStoreWarning from './components/pages/admin/BlobStores/File/FileBlobStoreWarning';
 import CommunityEulaOnboarding from './components/pages/onboarding/CommunityEulaOnboarding';
 import CommunityDiscoverOnboarding from './components/pages/onboarding/CommunityDiscoverOnboarding';
 import './styles/extjs.scss';
-import AnalyzeApplication from './components/pages/user/AnalyzeApplication/AnalyzeApplication';
 
 window.BlobStoreTypes = {
   ...window.BlobStoreTypes,
@@ -42,6 +42,9 @@ window.BlobStoreTypes = {
   google: {
     Settings: GoogleBlobStoreSettings,
     Actions: GoogleBlobStoreActions
+  },
+  file: {
+    Warning: FileBlobStoreWarning
   }
 }
 
@@ -49,5 +52,4 @@ window.ReactComponents = {
   ...window.ReactComponents,
   CommunityEulaOnboarding,
   CommunityDiscoverOnboarding,
-  AnalyzeApplication,
 };

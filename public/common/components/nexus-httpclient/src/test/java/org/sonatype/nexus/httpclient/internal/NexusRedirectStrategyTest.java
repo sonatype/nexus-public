@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.httpclient.internal;
 
+import java.net.URI;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.apache.http.HttpResponse;
@@ -100,5 +102,219 @@ public class NexusRedirectStrategyTest
     when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
         .thenReturn(new BasicHeader(LOCATION, "http://hostB/dir/"));
     assertThat(underTest.isRedirected(request, response, new BasicHttpContext()), is(true));
+  }
+
+  @Test
+  public void preserveEncodedCharactersTrue_KeepsEncodedCharacters() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Test when preserveEncodedCharacters is true, keeps %2B as %2B
+    request = new HttpGet("http://localhost/file%2Bname.txt");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.TRUE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "http://localhost/redirect/file%2Bname.txt"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Should preserve %2B without normalization
+    assertThat(redirectUri.toString(), is("http://localhost/redirect/file%2Bname.txt"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersFalse_KeepsLiteralPlusCharacters() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Test when preserveEncodedCharacters is false, keeps + as + (default behavior for crates.io compatibility)
+    request = new HttpGet("http://localhost/libgit2-sys-0.13.1+1.4.2.crate");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.FALSE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "http://s3.amazonaws.com/crates/libgit2-sys-0.13.1+1.4.2.crate"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Should preserve + as literal character (default HttpClient behavior)
+    assertThat(redirectUri.toString(), is("http://s3.amazonaws.com/crates/libgit2-sys-0.13.1+1.4.2.crate"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersFalse_UsesDefaultBehavior() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Test when preserveEncodedCharacters is false, uses default behavior (normalization)
+    request = new HttpGet("http://localhost/file+name.txt");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.FALSE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "http://localhost/redirect/file+name.txt"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Should normalize (default behavior)
+    assertThat(redirectUri.getPath(), is("/redirect/file+name.txt"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersNotSet_UsesDefaultBehavior() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Test when preserveEncodedCharacters is not set in context (legacy behavior)
+    request = new HttpGet("http://localhost/file+name.txt");
+    HttpContext httpContext = new BasicHttpContext();
+    // No preserveEncodedCharacters attribute set
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "http://localhost/redirect/file+name.txt"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Should use default behavior (normalization)
+    assertThat(redirectUri.getPath(), is("/redirect/file+name.txt"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersTrue_RealWorldAwsS3Redirect() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Real-world AWS S3 scenario: C++ package with %2B encoding
+    // When preserveEncodedCharacters is true, keeps %2B as %2B
+    request = new HttpGet("http://localhost/packages/ncurses-c%2B%2B-libs-6.2-4.rpm");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.TRUE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "https://s3.amazonaws.com/bucket/ncurses-c%2B%2B-libs-6.2-4.rpm"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Should keep %2B as %2B for AWS S3 compatibility
+    assertThat(redirectUri.toString(), is("https://s3.amazonaws.com/bucket/ncurses-c%2B%2B-libs-6.2-4.rpm"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersFalse_RealWorldCratesIoRedirect() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Real-world crates.io scenario: version with literal +
+    // When preserveEncodedCharacters is false (default), preserves + for backward compatibility
+    request = new HttpGet("http://localhost/crates/libgit2-sys/libgit2-sys-0.13.1+1.4.2.crate");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.FALSE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(
+            new BasicHeader(LOCATION, "https://static.crates.io/crates/libgit2-sys/libgit2-sys-0.13.1+1.4.2.crate"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Should keep + as + for crates.io compatibility (default HttpClient behavior)
+    assertThat(redirectUri.toString(),
+        is("https://static.crates.io/crates/libgit2-sys/libgit2-sys-0.13.1+1.4.2.crate"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersTrue_NormalizesPathTraversal() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Test that path traversal sequences are normalized (security fix)
+    request = new HttpGet("http://localhost/packages/file.rpm");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.TRUE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "https://s3.amazonaws.com/bucket/../../../etc/passwd"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Path traversal should be normalized: /bucket/../../../etc/passwd -> /etc/passwd
+    assertThat(redirectUri.toString(), is("https://s3.amazonaws.com/etc/passwd"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersTrue_NormalizesEncodedPathTraversal() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Test that encoded path traversal sequences are normalized
+    request = new HttpGet("http://localhost/packages/file.rpm");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.TRUE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "https://s3.amazonaws.com/bucket/%2e%2e/%2e%2e/etc/passwd"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Encoded path traversal should be normalized
+    assertThat(redirectUri.getPath(), is("/etc/passwd"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersTrue_PreservesEncodingWithoutTraversal() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Test that percent-encoding is preserved when there's no path traversal
+    request = new HttpGet("http://localhost/packages/file.rpm");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.TRUE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "https://s3.amazonaws.com/bucket/file%2Bname%23test.rpm"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Percent-encoding should be preserved (%2B and %23 remain encoded)
+    assertThat(redirectUri.toString(), is("https://s3.amazonaws.com/bucket/file%2Bname%23test.rpm"));
+  }
+
+  @Test
+  public void preserveEncodedCharactersTrue_NormalizesCurrentDirectoryReferences() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
+
+    // Test that current directory references (.) are normalized
+    request = new HttpGet("http://localhost/packages/file.rpm");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.TRUE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "https://s3.amazonaws.com/bucket/./subdir/./file.rpm"));
+
+    URI redirectUri = underTest.getLocationURI(request, response, httpContext);
+
+    // Current directory references should be removed: /bucket/./subdir/./file.rpm -> /bucket/subdir/file.rpm
+    assertThat(redirectUri.toString(), is("https://s3.amazonaws.com/bucket/subdir/file.rpm"));
   }
 }

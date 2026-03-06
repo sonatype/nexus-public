@@ -56,7 +56,7 @@ public class JvmLogCustomizerTest
   public void setup() throws IOException {
     when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory.getRoot());
     mkdir(temporaryWorkDirectory.getRoot(), "log");
-    underTest = new JvmLogCustomizer(mockLogManager);
+    underTest = new JvmLogCustomizer(mockLogManager, mockApplicationDirectories);
   }
 
   @Test
@@ -77,6 +77,27 @@ public class JvmLogCustomizerTest
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(contentSource.getContent()))) {
       assertThat(reader.readLine(), equalTo("-Dnexus.password=**** -Dnexus.token=****"));
+    }
+  }
+
+  @Test
+  public void customizeJvmLogFallsBackToWorkDir() throws Exception {
+    File file = createLogFile();
+    when(mockLogManager.getLogFile(anyString())).thenReturn(null);
+    try (FileWriter writer = new FileWriter(file)) {
+      writer.write("-Dnexus.secret=shh");
+    }
+    SupportBundle supportBundle = new SupportBundle();
+    underTest.customize(supportBundle);
+
+    List<ContentSource> list = supportBundle.getSources();
+    assertThat(list.size(), equalTo(1));
+
+    ContentSource contentSource = list.get(0);
+    contentSource.prepare();
+
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(contentSource.getContent()))) {
+      assertThat(reader.readLine(), equalTo("-Dnexus.secret=****"));
     }
   }
 

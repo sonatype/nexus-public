@@ -13,21 +13,20 @@
 package org.sonatype.nexus.repository.search.sql.query.h2;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryCondition;
-
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 import org.sonatype.nexus.repository.search.sql.query.syntax.NullTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SingleValueTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
-import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Term;
 import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -50,7 +49,7 @@ abstract class H2SearchConditionBuilder
 
   protected final H2SearchDB db;
 
-  protected final Map<String, String> parameters = new HashMap<>();
+  protected final Map<String, Object> parameters = new HashMap<>();
 
   protected final ValidationErrorsException errors = new ValidationErrorsException();
 
@@ -98,11 +97,11 @@ abstract class H2SearchConditionBuilder
   private Optional<CharSequence> process(final Expression expression) {
     Optional<CharSequence> query;
 
-    if (expression instanceof SqlClause) {
-      query = process((SqlClause) expression);
+    if (expression instanceof SqlClause clause) {
+      query = process(clause);
     }
-    else if (expression instanceof SqlPredicate) {
-      query = process((SqlPredicate) expression);
+    else if (expression instanceof SqlPredicate predicate) {
+      query = process(predicate);
     }
     else {
       errors.withError("Unknown expression " + expression);
@@ -137,7 +136,7 @@ abstract class H2SearchConditionBuilder
     }
 
     H2SearchColumn column = optColumn.get();
-    Collection<StringTerm> terms = toList(predicate.getTerm());
+    Collection<SingleValueTerm<?>> terms = toList(predicate.getTerm());
     Operand op = predicate.operand();
 
     if (!op.supportsMultiple() && terms.size() != 1) {
@@ -158,7 +157,7 @@ abstract class H2SearchConditionBuilder
   protected Optional<CharSequence> createQuery(
       final H2SearchColumn column,
       final Operand op,
-      final Collection<StringTerm> terms)
+      final Collection<SingleValueTerm<?>> terms)
   {
     return createExactPredicate(column, op, terms);
   }
@@ -169,17 +168,17 @@ abstract class H2SearchConditionBuilder
   private Optional<CharSequence> createExactPredicate(
       final H2SearchColumn column,
       final Operand op,
-      final Collection<StringTerm> terms)
+      final Collection<SingleValueTerm<?>> terms)
   {
     switch (op) {
       case EQ:
         if (isNullTerm(terms)) {
-          return Optional.of(column.getColumnName() + " IS NULL");
+          return Optional.of(column.columnName() + " IS NULL");
         }
         return createSimpleExpression(column, "=", Iterables.getOnlyElement(terms));
       case NOT_EQ:
         if (isNullTerm(terms)) {
-          return Optional.of(column.getColumnName() + " IS NOT NULL");
+          return Optional.of(column.columnName() + " IS NOT NULL");
         }
         return createSimpleExpression(column, "<>", Iterables.getOnlyElement(terms));
       case REGEX:
@@ -198,12 +197,12 @@ abstract class H2SearchConditionBuilder
   private Optional<CharSequence> createSimpleExpression(
       final H2SearchColumn column,
       final String operator,
-      final StringTerm term)
+      final SingleValueTerm<?> term)
   {
-    String param = param(column.getColumnName());
+    String param = param(column.columnName());
 
     StringBuilder sb = new StringBuilder();
-    sb.append(column.getColumnName());
+    sb.append(column.columnName());
     sb.append(' ').append(operator).append(' ');
     sb.append(placeholder(param));
 
@@ -217,13 +216,13 @@ abstract class H2SearchConditionBuilder
    */
   private Optional<CharSequence> createRegexExpression(
       final H2SearchColumn column,
-      final StringTerm term)
+      final SingleValueTerm<?> term)
   {
-    String param = param(column.getColumnName());
+    String param = param(column.columnName());
 
     StringBuilder sb = new StringBuilder();
     sb.append("REGEXP_LIKE(");
-    sb.append(column.getColumnName());
+    sb.append(column.columnName());
     sb.append(", ");
     sb.append(placeholder(param));
     sb.append(")");
@@ -238,16 +237,16 @@ abstract class H2SearchConditionBuilder
    */
   private Optional<CharSequence> createInExpression(
       final H2SearchColumn column,
-      final Collection<StringTerm> terms)
+      final Collection<SingleValueTerm<?>> terms)
   {
-    Map<String, String> predicateParams =
-        terms.stream().collect(Collectors.toMap(__ -> param(column.getColumnName()), StringTerm::get));
+    Map<String, Object> predicateParams =
+        terms.stream().collect(Collectors.toMap(__ -> param(column.columnName()), SingleValueTerm::get));
 
     String predicate = predicateParams.keySet()
         .stream()
         .sorted()
         .map(this::placeholder)
-        .collect(Collectors.joining(", ", column.getColumnName() + " IN (", BRACKET_CLOSE));
+        .collect(Collectors.joining(", ", column.columnName() + " IN (", BRACKET_CLOSE));
 
     parameters.putAll(predicateParams);
 
@@ -273,19 +272,19 @@ abstract class H2SearchConditionBuilder
   }
 
   /**
-   * Convert a {@link Term} which may be a {@link TermCollection} into Collection of {@link StringTerm}
+   * Convert a {@link Term} which may be a {@link TermCollection} into Collection of {@link SingleValueTerm}
    */
-  protected static Collection<StringTerm> toList(final Term term) {
-    if (term instanceof TermCollection) {
-      return ((TermCollection) term).get();
+  protected static Collection<SingleValueTerm<?>> toList(final Term term) {
+    if (term instanceof TermCollection tc) {
+      return tc.get();
     }
-    return Collections.singleton((StringTerm) term);
+    return List.of((SingleValueTerm<?>) term);
   }
 
   /**
    * Check whether the provided terms are {@code null}
    */
-  private static boolean isNullTerm(final Collection<StringTerm> terms) {
+  private static boolean isNullTerm(final Collection<SingleValueTerm<?>> terms) {
     return terms.stream().allMatch(NullTerm.class::isInstance);
   }
 }

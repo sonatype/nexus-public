@@ -127,8 +127,17 @@ public class SearchComponent
     return Optional.ofNullable(filters)
         .map(List::stream)
         .orElseGet(Stream::empty)
-        .map(filter -> new SearchFilter(filter.getProperty(), filter.getValue()))
+        .map(filter -> new SearchFilter(filter.getProperty(),
+            stripSurroundingQuotes(filter.getProperty(), filter.getValue())))
         .collect(Collectors.toList());
+  }
+
+  private static String stripSurroundingQuotes(final String property, final String value) {
+    if (property.equalsIgnoreCase("keyword") && value != null && value.length() >= 2 && value.startsWith("\"")
+        && value.endsWith("\"")) {
+      return value.substring(1, value.length() - 1);
+    }
+    return value;
   }
 
   private LimitedPagedResponse<ComponentXO> componentSearch(

@@ -17,6 +17,7 @@ import java.io.IOException;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
 import org.sonatype.nexus.repository.httpclient.FilteredHttpClientSupport.Filterable;
+import org.sonatype.nexus.repository.httpclient.OutboundRequestMetricRecorder;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
@@ -24,6 +25,8 @@ import org.sonatype.nexus.repository.httpclient.HttpClientConfig;
 
 import org.apache.http.HttpHost;
 import org.apache.http.StatusLine;
+import org.apache.http.HttpRequest;
+import org.apache.http.RequestLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.protocol.HttpContext;
@@ -42,6 +45,8 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.joda.time.DateTime.now;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -76,6 +81,12 @@ public class BlockingHttpClientTest
   @Mock
   AutoBlockConfiguration autoBlockConfiguration;
 
+  @Mock
+  OutboundRequestMetricRecorder outboundRequestRecorder;
+
+  @Mock
+  HttpContext httpContext;
+
   HttpHost httpHost;
 
   BlockingHttpClient underTest;
@@ -94,7 +105,8 @@ public class BlockingHttpClientTest
     when(autoBlockConfiguration.shouldBlock(UNRECOGNIZED_ERROR_CODE)).thenReturn(true);
 
     httpHost = HttpHost.create("localhost");
-    underTest = new BlockingHttpClient(httpClient, new HttpClientConfig(), statusObserver, true, autoBlockConfiguration);
+    underTest =
+        new BlockingHttpClient(httpClient, new HttpClientConfig(), statusObserver, true, autoBlockConfiguration);
   }
 
   @After
@@ -275,5 +287,64 @@ public class BlockingHttpClientTest
     catch (IOException e) {
       // Intentionally not logged as this exception is expected in the test and doesn't give us any more information.
     }
+  }
+
+  @Test
+  public void recordOutboundRequest_recordsMetricOnSuccessfulResponse() throws Exception {
+    HttpRequest httpRequest = mock(HttpRequest.class);
+    RequestLine requestLine = mock(RequestLine.class);
+    when(httpRequest.getRequestLine()).thenReturn(requestLine);
+    when(requestLine.getMethod()).thenReturn("GET");
+    when(filterable.getRequest()).thenReturn(httpRequest);
+    when(filterable.getContext()).thenReturn(httpContext);
+    when(httpContext.getAttribute(OutboundRequestMetricRecorder.CONTEXT_FORMAT)).thenReturn("maven2");
+    when(httpContext.getAttribute(OutboundRequestMetricRecorder.CONTEXT_REPOSITORY_TYPE)).thenReturn("proxy");
+
+    underTest = new BlockingHttpClient(httpClient, new HttpClientConfig(), statusObserver, true,
+        autoBlockConfiguration, outboundRequestRecorder);
+
+    underTest.filter(httpHost, filterable);
+
+    verify(outboundRequestRecorder).record("maven2", "proxy", "GET");
+  }
+
+  @Test
+  public void recordOutboundRequest_recordsUnknownWhenFormatIsNull() throws Exception {
+    HttpRequest httpRequest = mock(HttpRequest.class);
+    RequestLine requestLine = mock(RequestLine.class);
+    when(httpRequest.getRequestLine()).thenReturn(requestLine);
+    when(requestLine.getMethod()).thenReturn("GET");
+    when(filterable.getRequest()).thenReturn(httpRequest);
+    when(filterable.getContext()).thenReturn(httpContext);
+    when(httpContext.getAttribute(OutboundRequestMetricRecorder.CONTEXT_FORMAT)).thenReturn(null);
+    when(httpContext.getAttribute(OutboundRequestMetricRecorder.CONTEXT_REPOSITORY_TYPE)).thenReturn("proxy");
+
+    underTest = new BlockingHttpClient(httpClient, new HttpClientConfig(), statusObserver, true,
+        autoBlockConfiguration, outboundRequestRecorder);
+
+    underTest.filter(httpHost, filterable);
+
+    verify(outboundRequestRecorder).record("unknown", "proxy", "GET");
+  }
+
+  @Test
+  public void recordOutboundRequest_doesNotRecordOnBlockedResponse() throws Exception {
+    when(statusLine.getStatusCode()).thenReturn(SC_BAD_GATEWAY);
+
+    HttpRequest httpRequest = mock(HttpRequest.class);
+    RequestLine requestLine = mock(RequestLine.class);
+    when(httpRequest.getRequestLine()).thenReturn(requestLine);
+    when(requestLine.getMethod()).thenReturn("GET");
+    when(filterable.getRequest()).thenReturn(httpRequest);
+    when(filterable.getContext()).thenReturn(httpContext);
+    when(httpContext.getAttribute(OutboundRequestMetricRecorder.CONTEXT_FORMAT)).thenReturn("maven2");
+    when(httpContext.getAttribute(OutboundRequestMetricRecorder.CONTEXT_REPOSITORY_TYPE)).thenReturn("proxy");
+
+    underTest = new BlockingHttpClient(httpClient, new HttpClientConfig(), statusObserver, true,
+        autoBlockConfiguration, outboundRequestRecorder);
+
+    underTest.filter(httpHost, filterable);
+
+    verify(outboundRequestRecorder, never()).record(any(), any(), any());
   }
 }

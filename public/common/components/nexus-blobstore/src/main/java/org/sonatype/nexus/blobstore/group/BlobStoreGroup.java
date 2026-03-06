@@ -21,7 +21,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -217,7 +216,7 @@ public class BlobStoreGroup
 
   @Override
   public void createBlobAttributes(final BlobId blobId, final Map<String, String> headers, final BlobMetrics metrics) {
-    locate(blobId)
+    locateBlobStore(blobId)
         .orElseThrow(() -> new BlobStoreException(
             "Unable to find a member Blob Store of '" + this + "' for create properties", null))
         .createBlobAttributes(blobId, headers, metrics);
@@ -239,7 +238,7 @@ public class BlobStoreGroup
   @Override
   @Guarded(by = STARTED)
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
-    BlobStore target = locate(blobId)
+    BlobStore target = locateBlobStore(blobId)
         .orElseThrow(() -> new BlobStoreException("Unable to find blob", blobId));
     Blob blob = target.copy(blobId, headers);
     locatedBlobs.put(blob.getId(), target.getBlobStoreConfiguration().getName());
@@ -277,9 +276,7 @@ public class BlobStoreGroup
   @Guarded(by = STARTED)
   @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
   public Blob get(final BlobId blobId) {
-    return locate(blobId)
-        .map(target -> target.get(blobId))
-        .orElse(null);
+    return locateBlob(blobId, false).orElse(null);
   }
 
   @Nullable
@@ -287,19 +284,7 @@ public class BlobStoreGroup
   @Guarded(by = STARTED)
   @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
   public Blob get(final BlobId blobId, final boolean includeDeleted) {
-    if (includeDeleted) {
-      // check directly without using cache
-      return members.get()
-          .stream()
-          .filter(member -> member.exists(blobId))
-          .map(member -> member.get(blobId, true))
-          .filter(Objects::nonNull)
-          .findAny()
-          .orElse(null);
-    }
-    return locate(blobId)
-        .map(target -> target.get(blobId, false))
-        .orElse(null);
+    return locateBlob(blobId, includeDeleted).orElse(null);
   }
 
   @Override
@@ -511,14 +496,14 @@ public class BlobStoreGroup
   @Nullable
   @Override
   public BlobAttributes getBlobAttributes(final BlobId blobId) {
-    return locate(blobId)
+    return locateBlobStore(blobId)
         .map(target -> target.getBlobAttributes(blobId))
         .orElse(null);
   }
 
   @Override
   public void setBlobAttributes(final BlobId blobId, final BlobAttributes blobAttributes) {
-    locate(blobId)
+    locateBlobStore(blobId)
         .ifPresent(target -> target.setBlobAttributes(blobId, blobAttributes));
   }
 
@@ -546,22 +531,92 @@ public class BlobStoreGroup
     }
   }
 
-  @VisibleForTesting
-  Optional<BlobStore> locate(final BlobId blobId) {
+  private Optional<BlobStore> locate(final BlobId blobId) {
     String blobStoreName = locatedBlobs.get(blobId);
-    if (blobStoreName != null) {
-      log.trace("{} location was cached as {}", blobId, blobStoreName);
-      return Optional.ofNullable(blobStoreManager.get(blobStoreName));
+    if (blobStoreName == null) {
+      return Optional.empty();
     }
-
-    BlobStore blobStore = search(blobId);
-    if (blobStore != null && blobStore.isWritable()) {
-      String memberName = blobStore.getBlobStoreConfiguration().getName();
-      log.trace("Caching {} in member {}", blobId, memberName);
-      locatedBlobs.put(blobId, memberName);
+    BlobStore cached = blobStoreManager.get(blobStoreName);
+    if (cached == null) {
+      log.debug("Cached member {} for {} is no longer available, evicting", blobStoreName, blobId);
+      locatedBlobs.remove(blobId);
+      return Optional.empty();
     }
+    return Optional.of(cached);
+  }
 
-    return Optional.ofNullable(blobStore);
+  /**
+   * Returns the cached member {@link BlobStore} for the given blob without any existence check.
+   * Falls back to searching all members when there is no valid cache entry.
+   * The result is cached if the owning member is writable.
+   *
+   * @return the owning member, or empty if not found in any member
+   */
+  @VisibleForTesting
+  Optional<BlobStore> locateBlobStore(final BlobId blobId) {
+    Optional<BlobStore> located = locate(blobId);
+    if (located.isPresent()) {
+      log.trace("{} location was cached as {}", blobId,
+          located.get().getBlobStoreConfiguration().getName());
+      return located;
+    }
+    BlobStore found = search(blobId);
+    if (found != null && found.isWritable()) {
+      log.trace("Caching {} in member {}", blobId, found.getBlobStoreConfiguration().getName());
+      locatedBlobs.put(blobId, found.getBlobStoreConfiguration().getName());
+    }
+    return Optional.ofNullable(found);
+  }
+
+  /**
+   * Retrieves the {@link Blob} for the given id, handling stale cache entries.
+   * <p>
+   * Uses the cache for a fast lookup first. If the cached member returns null for the blob
+   * (e.g. after a move to another member), the stale entry is evicted, the remaining members
+   * are searched, the cache is updated, and the blob is fetched from the new location.
+   *
+   * @param blobId the blob to retrieve
+   * @param includeDeleted whether to include soft-deleted blobs
+   * @return the blob, or empty if not found in any member
+   */
+  @VisibleForTesting
+  Optional<Blob> locateBlob(final BlobId blobId, final boolean includeDeleted) {
+    Optional<BlobStore> located = locate(blobId);
+    if (located.isPresent()) {
+      Blob blob = located.get().get(blobId, includeDeleted);
+      if (blob != null) {
+        log.trace("{} retrieved from cached member {}", blobId,
+            located.get().getBlobStoreConfiguration().getName());
+        return Optional.of(blob);
+      }
+      // get() returning null could mean soft-deleted; only evict if the blob is truly absent
+      if (!located.get().exists(blobId)) {
+        log.debug("Stale cache entry for {} in member {}, evicting and searching members", blobId,
+            located.get().getBlobStoreConfiguration().getName());
+        locatedBlobs.remove(blobId);
+      }
+      else {
+        log.debug("Blob {} is soft-deleted in cached member {}, returning empty without cache eviction", blobId,
+            located.get().getBlobStoreConfiguration().getName());
+        return Optional.empty();
+      }
+    }
+    BlobStore found = search(blobId);
+    if (found == null) {
+      return Optional.empty();
+    }
+    Blob blob = found.get(blobId, includeDeleted);
+    if (blob != null && found.isWritable()) {
+      log.trace("Caching {} in member {}", blobId, found.getBlobStoreConfiguration().getName());
+      locatedBlobs.put(blobId, found.getBlobStoreConfiguration().getName());
+    }
+    return Optional.ofNullable(blob);
+  }
+
+  public void invalidateCachedLocation(final BlobId blobId) {
+    if (locatedBlobs != null) {
+      locatedBlobs.remove(blobId);
+    }
   }
 
   @VisibleForTesting

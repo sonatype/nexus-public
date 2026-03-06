@@ -1127,7 +1127,8 @@ describe('RepositoriesForm', () => {
         },
         apt: {
           distribution: 'bionic',
-          flat: true
+          flat: true,
+          enforceDistribution: false
         }
       };
 

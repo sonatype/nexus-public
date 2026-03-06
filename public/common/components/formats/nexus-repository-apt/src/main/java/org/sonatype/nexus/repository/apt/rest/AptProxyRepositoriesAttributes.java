@@ -17,28 +17,43 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotEmpty;
 
 /**
+ * REST API model for apt-specific proxy attributes.
+ *
  * @since 3.20
  */
 public class AptProxyRepositoriesAttributes
 {
-  @ApiModelProperty(value = "Distribution to fetch", example = "bionic")
-  @NotEmpty
+  @ApiModelProperty(
+      value = "Distribution name. When enforceDistribution is false (default), this field is optional and informational only - "
+          +
+          "proxy repositories forward all distribution requests to upstream transparently. " +
+          "When enforceDistribution is true, this field is required and restricts requests to only the specified distribution.",
+      example = "bionic",
+      required = false)
   private final String distribution;
 
-  @ApiModelProperty(value = "Whether this repository is flat", example = "false")
+  @ApiModelProperty(
+      value = "Whether the upstream repository uses a flat structure (without distribution subdirectories). " +
+          "Set to true for flat repositories, false for standard hierarchical repositories.",
+      example = "false",
+      required = true)
   @NotNull
   private final Boolean flat;
+
+  @ApiModelProperty(value = "Whether to restrict requests to only the specified distribution", example = "false")
+  private final Boolean enforceDistribution;
 
   @JsonCreator
   public AptProxyRepositoriesAttributes(
       @JsonProperty("distribution") final String distribution,
-      @JsonProperty("flat") final Boolean flat)
+      @JsonProperty("flat") final Boolean flat,
+      @JsonProperty("enforceDistribution") final Boolean enforceDistribution)
   {
     this.distribution = distribution;
     this.flat = flat;
+    this.enforceDistribution = enforceDistribution;
   }
 
   public String getDistribution() {
@@ -47,5 +62,9 @@ public class AptProxyRepositoriesAttributes
 
   public Boolean getFlat() {
     return flat;
+  }
+
+  public Boolean getEnforceDistribution() {
+    return enforceDistribution;
   }
 }

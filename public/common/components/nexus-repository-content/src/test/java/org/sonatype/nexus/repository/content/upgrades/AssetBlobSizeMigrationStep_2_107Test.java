@@ -1,0 +1,138 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+package org.sonatype.nexus.repository.content.upgrades;
+
+import java.sql.Connection;
+import java.sql.Statement;
+import java.util.List;
+
+import org.sonatype.goodies.testsupport.Test5Support;
+import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.testdb.DataSessionConfiguration;
+import org.sonatype.nexus.testdb.DatabaseExtension;
+import org.sonatype.nexus.testdb.TestDataSessionSupplier;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(DatabaseExtension.class)
+class AssetBlobSizeMigrationStep_2_107Test
+    extends Test5Support
+{
+  private static final List<String> TEST_FORMATS = List.of("maven2", "npm", "raw");
+
+  @DataSessionConfiguration(daos = {})
+  TestDataSessionSupplier dataSessionSupplier;
+
+  @Mock
+  private Format maven2Format;
+
+  @Mock
+  private Format npmFormat;
+
+  @Mock
+  private Format rawFormat;
+
+  @Test
+  void testMigrate_addsColumnToAssetTables() throws Exception {
+    when(maven2Format.getValue()).thenReturn("maven2");
+    when(npmFormat.getValue()).thenReturn("npm");
+    when(rawFormat.getValue()).thenReturn("raw");
+
+    AssetBlobSizeMigrationStep_2_107 underTest =
+        new AssetBlobSizeMigrationStep_2_107(List.of(maven2Format, npmFormat, rawFormat));
+
+    try (Connection conn = dataSessionSupplier.openConnection(); Statement statement = conn.createStatement()) {
+      // Create asset tables without asset_blob_size column (simulating pre-3.67.0 schema)
+      for (String format : TEST_FORMATS) {
+        statement.execute(createAssetTableWithoutBlobSize(format, underTest.isH2(conn)));
+      }
+
+      // Run migration
+      underTest.migrate(conn);
+
+      // Verify column was added to all format asset tables
+      for (String format : TEST_FORMATS) {
+        assertTrue(underTest.columnExists(conn, format + "_asset", "asset_blob_size"),
+            "asset_blob_size column should exist in " + format + "_asset table");
+      }
+    }
+  }
+
+  @Test
+  void testMigrate_idempotent() throws Exception {
+    when(maven2Format.getValue()).thenReturn("maven2");
+    when(npmFormat.getValue()).thenReturn("npm");
+    when(rawFormat.getValue()).thenReturn("raw");
+
+    AssetBlobSizeMigrationStep_2_107 underTest =
+        new AssetBlobSizeMigrationStep_2_107(List.of(maven2Format, npmFormat, rawFormat));
+
+    try (Connection conn = dataSessionSupplier.openConnection(); Statement statement = conn.createStatement()) {
+      // Create asset tables without asset_blob_size column
+      for (String format : TEST_FORMATS) {
+        statement.execute(createAssetTableWithoutBlobSize(format, underTest.isH2(conn)));
+      }
+
+      // Run migration twice to verify idempotency
+      underTest.migrate(conn);
+      assertDoesNotThrow(() -> underTest.migrate(conn),
+          "Migration should be idempotent and not fail when column already exists");
+
+      // Verify column still exists
+      for (String format : TEST_FORMATS) {
+        assertTrue(underTest.columnExists(conn, format + "_asset", "asset_blob_size"),
+            "asset_blob_size column should exist after second migration");
+      }
+    }
+  }
+
+  @Test
+  void testMigrate_noTables() throws Exception {
+    when(maven2Format.getValue()).thenReturn("maven2");
+    AssetBlobSizeMigrationStep_2_107 underTest = new AssetBlobSizeMigrationStep_2_107(List.of(maven2Format));
+
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      // No tables created, should not throw exception
+      assertDoesNotThrow(() -> underTest.migrate(conn),
+          "Migration should handle missing tables gracefully");
+    }
+  }
+
+  /**
+   * Creates a minimal asset table without the asset_blob_size column to simulate pre-3.67.0 schema
+   */
+  private String createAssetTableWithoutBlobSize(final String format, final boolean isH2) {
+    return String.format("""
+        CREATE TABLE IF NOT EXISTS %s_asset (
+          asset_id        INT GENERATED BY DEFAULT AS IDENTITY,
+          repository_id   INT NOT NULL,
+          path            VARCHAR NOT NULL,
+          kind            VARCHAR NOT NULL,
+          component_id    INT,
+          asset_blob_id   INT,
+          last_downloaded TIMESTAMP WITH TIME ZONE,
+          attributes      %s NOT NULL,
+          created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          last_updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+          CONSTRAINT pk_%s_asset_id PRIMARY KEY (asset_id)
+        );
+        """, format, isH2 ? "VARCHAR" : "JSONB", format);
+  }
+}

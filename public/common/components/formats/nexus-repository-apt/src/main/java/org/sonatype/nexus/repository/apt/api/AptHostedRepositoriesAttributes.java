@@ -24,7 +24,12 @@ import javax.validation.constraints.NotEmpty;
  */
 public class AptHostedRepositoriesAttributes
 {
-  @ApiModelProperty(value = "Distribution to fetch", example = "bionic")
+  @ApiModelProperty(
+      value = "Distribution name for this repository. " +
+          "Defines the distribution path used in metadata structure (e.g., dists/{distribution}/Release). " +
+          "Clients must configure this exact distribution name in their APT sources.",
+      example = "bionic",
+      required = true)
   @NotEmpty
   protected final String distribution;
 

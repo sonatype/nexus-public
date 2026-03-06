@@ -20,7 +20,12 @@ public class UserTokenEvent
     DELETED("Deleted"),
     ALL_DELETED("All Deleted"),
     PURGED("Purged"),
-    CONFIG_UPDATED("Configuration Changed");
+    CONFIG_UPDATED("Configuration Changed"),
+    ADMIN_CREATED("Admin Created"),
+    ADMIN_READ("Admin Read"),
+    ADMIN_DELETED("Admin Deleted"),
+    ADMIN_LISTED("Admin Listed"),
+    ADMIN_FAILED("Admin Operation Failed");
 
     private final String type;
 

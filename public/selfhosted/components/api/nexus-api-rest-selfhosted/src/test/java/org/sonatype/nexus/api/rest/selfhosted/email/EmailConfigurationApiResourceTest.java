@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
+import javax.ws.rs.core.Response;
+
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
+import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailManager;
@@ -29,7 +32,9 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -112,12 +117,75 @@ class EmailConfigurationApiResourceTest
   }
 
   @Test
-  void testEmailConfigurationSendsTestEmail() throws EmailException {
+  void testEmailConfiguration_Success() throws EmailException {
     when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
     String destinationAddress = "test@example.com";
 
-    underTest.testEmailConfiguration(destinationAddress);
+    Response response = underTest.testEmailConfiguration(destinationAddress);
+
+    assertThat(response, is(notNullValue()));
+    assertThat(response.getStatus(), is(200));
+    assertThat(response.hasEntity(), is(true));
+
+    ApiEmailValidation validation = (ApiEmailValidation) response.getEntity();
+    assertThat(validation.isSuccess(), is(true));
+    assertThat(validation.getReason(), is(""));
 
     verify(emailManager).sendVerification(emailConfiguration, destinationAddress);
+  }
+
+  @Test
+  void testEmailConfiguration_NullConfiguration() {
+    when(emailManager.getConfiguration()).thenReturn(null);
+    String destinationAddress = "test@example.com";
+
+    Response response = underTest.testEmailConfiguration(destinationAddress);
+
+    assertThat(response, is(notNullValue()));
+    assertThat(response.getStatus(), is(400));
+    assertThat(response.hasEntity(), is(true));
+
+    ApiEmailValidation validation = (ApiEmailValidation) response.getEntity();
+    assertThat(validation.isSuccess(), is(false));
+    assertThat(validation.getReason(), is("Email Settings are not yet configured"));
+  }
+
+  @Test
+  void testEmailConfiguration_EmailExceptionWithRootCause() throws EmailException {
+    when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
+    String destinationAddress = "test@example.com";
+
+    IllegalStateException rootCause = new IllegalStateException("Connection refused");
+    EmailException emailException = new EmailException("Failed to send email", rootCause);
+    doThrow(emailException).when(emailManager).sendVerification(emailConfiguration, destinationAddress);
+
+    Response response = underTest.testEmailConfiguration(destinationAddress);
+
+    assertThat(response, is(notNullValue()));
+    assertThat(response.getStatus(), is(400));
+    assertThat(response.hasEntity(), is(true));
+
+    ApiEmailValidation validation = (ApiEmailValidation) response.getEntity();
+    assertThat(validation.isSuccess(), is(false));
+    assertThat(validation.getReason(), is("Connection refused"));
+  }
+
+  @Test
+  void testEmailConfiguration_EmailExceptionWithoutRootCause() throws EmailException {
+    when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
+    String destinationAddress = "test@example.com";
+
+    EmailException emailException = new EmailException("Invalid email address");
+    doThrow(emailException).when(emailManager).sendVerification(emailConfiguration, destinationAddress);
+
+    Response response = underTest.testEmailConfiguration(destinationAddress);
+
+    assertThat(response, is(notNullValue()));
+    assertThat(response.getStatus(), is(400));
+    assertThat(response.hasEntity(), is(true));
+
+    ApiEmailValidation validation = (ApiEmailValidation) response.getEntity();
+    assertThat(validation.isSuccess(), is(false));
+    assertThat(validation.getReason(), is("Invalid email address"));
   }
 }

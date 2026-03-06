@@ -84,7 +84,17 @@ export default {
         Updating the blob store configuration will cause it to be temporarily unavailable for a short period of time. \
         Edits to configuration may also leave the blob store in a non-functional state.\
       ',
-      NO_PERMISSION_WARNING: 'You don’t have permission to edit this page. Contact your administrator to request access.',
+      NO_PERMISSION_WARNING: 'You don\'t have permission to edit this page. Contact your administrator to request access.',
+      FILE_WARNING: {
+        TITLE: 'High Availability Path Warning',
+        MESSAGE: '\
+          Using a relative path or a path under the working directory (e.g., /nexus-data/) in HA mode can cause \
+          severe performance issues and data inconsistency. The path may not be shared between HA pods, leading to \
+          random request failures. Additionally, initContainer recursive operations can cause severe I/O bottlenecks \
+          and startup delays (10+ minutes). It is strongly recommended to use an absolute shared path outside the \
+          working directory for file blob stores in HA deployments.\
+        '
+      },
       EDIT_TILE: (name) => `Edit ${name}`,
       EDIT_DESCRIPTION: (type) => `${type} Blob Store`,
       CONVERT_TO_GROUP_BUTTON: 'Convert to Group',

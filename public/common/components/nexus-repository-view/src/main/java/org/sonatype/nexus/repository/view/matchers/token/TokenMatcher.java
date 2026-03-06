@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.view.matchers.token;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.view.Context;
@@ -53,16 +54,27 @@ public class TokenMatcher
   public boolean matches(final Context context) {
     checkNotNull(context);
 
-    String path = context.getRequest().getPath();
-    log.debug("Matching: {}~={}", path, parser);
-    final Map<String, String> tokens = parser.parse(path);
-    if (tokens == null) {
-      // There was no match.
+    Optional<State> state = match(context.getRequest().getPath());
+
+    if (state.isEmpty()) {
       return false;
     }
 
     // matched expose tokens in context
-    context.getAttributes().set(State.class, new State()
+    context.getAttributes().set(State.class, state.get());
+    return true;
+  }
+
+  public Optional<State> match(final String path) {
+    log.debug("Matching: {}~={}", path, parser);
+    final Map<String, String> tokens = parser.parse(path);
+    if (tokens == null) {
+      // There was no match.
+      return Optional.empty();
+    }
+
+    // matched expose tokens in context
+    return Optional.of(new State()
     {
       @Override
       public String pattern() {
@@ -74,7 +86,6 @@ public class TokenMatcher
         return tokens;
       }
     });
-    return true;
   }
 
   @Override

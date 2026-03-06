@@ -142,6 +142,51 @@ class UserApiResourceTest
     assertThat(criteria.getLimit(), is(100));
   }
 
+  @Test
+  void testGetUsers_samlSourceLimit() {
+    when(securitySystem.searchUsers(any())).thenReturn(Collections.singleton(createUser()));
+
+    underTest.getUsers("js", UserManager.SAML_SOURCE);
+
+    ArgumentCaptor<UserSearchCriteria> captor = ArgumentCaptor.forClass(UserSearchCriteria.class);
+    verify(securitySystem).searchUsers(captor.capture());
+
+    UserSearchCriteria criteria = captor.getValue();
+    assertThat(criteria.getUserId(), is("js"));
+    assertThat(criteria.getSource(), is(UserManager.SAML_SOURCE));
+    assertThat(criteria.getLimit(), is(1000));
+  }
+
+  @Test
+  void testGetUsers_ldapSourceLimit() {
+    when(securitySystem.searchUsers(any())).thenReturn(Collections.singleton(createUser()));
+
+    underTest.getUsers("js", "LDAP");
+
+    ArgumentCaptor<UserSearchCriteria> captor = ArgumentCaptor.forClass(UserSearchCriteria.class);
+    verify(securitySystem).searchUsers(captor.capture());
+
+    UserSearchCriteria criteria = captor.getValue();
+    assertThat(criteria.getUserId(), is("js"));
+    assertThat(criteria.getSource(), is("LDAP"));
+    assertThat(criteria.getLimit(), is(100));
+  }
+
+  @Test
+  void testGetUsers_defaultSourceNoLimit() {
+    when(securitySystem.searchUsers(any())).thenReturn(Collections.singleton(createUser()));
+
+    underTest.getUsers("js", UserManager.DEFAULT_SOURCE);
+
+    ArgumentCaptor<UserSearchCriteria> captor = ArgumentCaptor.forClass(UserSearchCriteria.class);
+    verify(securitySystem).searchUsers(captor.capture());
+
+    UserSearchCriteria criteria = captor.getValue();
+    assertThat(criteria.getUserId(), is("js"));
+    assertThat(criteria.getSource(), is(UserManager.DEFAULT_SOURCE));
+    assertNull(criteria.getLimit());
+  }
+
   /*
    * Delete user
    */
@@ -215,7 +260,7 @@ class UserApiResourceTest
     when(securitySystem.isValidRealm(NEXUS_AUTHENTICATING_REALM_NAME)).thenReturn(true);
     when(securitySystem.getUser(USER_ID,
         RealmToSource.getSource(NEXUS_AUTHENTICATING_REALM_NAME))).thenReturn(
-        createUserWithSource(NEXUS_AUTHENTICATING_REALM_NAME));
+            createUserWithSource(NEXUS_AUTHENTICATING_REALM_NAME));
     underTest.deleteUser(USER_ID, NEXUS_AUTHENTICATING_REALM_NAME);
 
     verify(securitySystem).deleteUser(USER_ID, "default");

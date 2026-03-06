@@ -155,7 +155,19 @@ public class ApiKeyStoreV2Impl
       final char[] apiKey,
       final OffsetDateTime created)
   {
-    ApiKeyV2Data token = (ApiKeyV2Data) newApiKey(domain, principals, apiKey, created);
+    persistApiKey(domain, principals, apiKey, created, null, null);
+  }
+
+  @Override
+  public void persistApiKey(
+      final String domain,
+      final PrincipalCollection principals,
+      final char[] apiKey,
+      final OffsetDateTime created,
+      final String creatorUserId,
+      final String creatorRealm)
+  {
+    ApiKeyV2Data token = (ApiKeyV2Data) newApiKey(domain, principals, apiKey, created, creatorUserId, creatorRealm);
 
     try {
       persistApiKey(token, 1);
@@ -175,9 +187,20 @@ public class ApiKeyStoreV2Impl
       final char[] apiKey,
       final OffsetDateTime created)
   {
+    return newApiKey(domain, principals, apiKey, created, null, null);
+  }
+
+  private ApiKeyInternal newApiKey(
+      final String domain,
+      final PrincipalCollection principals,
+      final char[] apiKey,
+      final OffsetDateTime created,
+      final String creatorUserId,
+      final String creatorRealm)
+  {
     Secret encrypted = secretsService.encrypt(domain, secret(apiKey), principals.getPrimaryPrincipal().toString());
 
-    return new ApiKeyV2Data(domain, principals, accessKey(apiKey), encrypted, created);
+    return new ApiKeyV2Data(domain, principals, accessKey(apiKey), encrypted, created, creatorUserId, creatorRealm);
   }
 
   private void persistApiKey(final ApiKeyV2Data token, final int retryCount) {
@@ -259,6 +282,24 @@ public class ApiKeyStoreV2Impl
     return dao().findApiKeysForUser(principals.getPrimaryPrincipal().toString())
         .stream()
         .filter(principalMatcher(principals));
+  }
+
+  @Transactional
+  @Override
+  public Collection<ApiKeyInternal> browseFiltered(
+      final String domain,
+      final String realm,
+      final String username,
+      final int skip,
+      final int limit)
+  {
+    return dao().browseFiltered(domain, realm, username, skip, limit);
+  }
+
+  @Transactional
+  @Override
+  public int countFiltered(final String domain, final String realm, final String username) {
+    return dao().countFiltered(domain, realm, username);
   }
 
   @Transactional

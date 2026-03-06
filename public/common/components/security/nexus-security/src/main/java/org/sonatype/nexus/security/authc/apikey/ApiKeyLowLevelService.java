@@ -55,7 +55,61 @@ public interface ApiKeyLowLevelService
   void persistApiKey(String domain, PrincipalCollection principals, char[] apiKey, @Nullable OffsetDateTime created);
 
   /**
+   * Persists an API-Key with a predetermined value and creator tracking.
+   */
+  default void persistApiKey(
+      String domain,
+      PrincipalCollection principals,
+      char[] apiKey,
+      @Nullable OffsetDateTime created,
+      @Nullable String creatorUserId,
+      @Nullable String creatorRealm)
+  {
+    persistApiKey(domain, principals, apiKey, created);
+  }
+
+  /**
    * Updates an existing API-key.
    */
   void updateApiKeyRealm(ApiKey from, PrincipalCollection newPrincipal);
+
+  /**
+   * Browse tokens in the domain with filtering and pagination support.
+   *
+   * @param domain the domain
+   * @param realm optional realm filter (null for all realms)
+   * @param username optional username filter (null for all users)
+   * @param skip number of records to skip
+   * @param limit maximum number of records to return
+   * @return filtered and paginated collection
+   */
+  default Collection<ApiKey> browseFiltered(
+      String domain,
+      @Nullable String realm,
+      @Nullable String username,
+      int skip,
+      int limit)
+  {
+    // Default implementation: fall back to browse with in-memory filtering
+    return browse(domain).stream()
+        .filter(key -> username == null || username.equals(key.getPrincipals().getPrimaryPrincipal()))
+        .skip(skip)
+        .limit(limit)
+        .toList();
+  }
+
+  /**
+   * Count tokens in the domain matching the filters.
+   *
+   * @param domain the domain
+   * @param realm optional realm filter (null for all realms)
+   * @param username optional username filter (null for all users)
+   * @return count of matching tokens
+   */
+  default int countFiltered(String domain, @Nullable String realm, @Nullable String username) {
+    // Default implementation: fall back to browse with in-memory filtering
+    return (int) browse(domain).stream()
+        .filter(key -> username == null || username.equals(key.getPrincipals().getPrimaryPrincipal()))
+        .count();
+  }
 }

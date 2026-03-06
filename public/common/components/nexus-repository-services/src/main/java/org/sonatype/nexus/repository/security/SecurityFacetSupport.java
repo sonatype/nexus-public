@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.security;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -61,6 +63,11 @@ public abstract class SecurityFacetSupport
 
   @Override
   public void ensurePermitted(final Request request) {
+    ensurePermitted(request, null);
+  }
+
+  @Override
+  public void ensurePermitted(final Request request, @Nullable final SelectorEvaluationCache selectorCache) {
     checkNotNull(request);
 
     // determine permission action from request
@@ -69,7 +76,8 @@ public abstract class SecurityFacetSupport
     Repository repo = getRepository();
 
     VariableSource variableSource = variableResolverAdapter.fromRequest(request, getRepository());
-    if (!contentPermissionChecker.isPermitted(repo.getName(), repo.getFormat().getValue(), action, variableSource)) {
+    if (!contentPermissionChecker.isPermitted(repo.getName(), repo.getFormat().getValue(), action, variableSource,
+        selectorCache)) {
       throw new AuthorizationException();
     }
   }

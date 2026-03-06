@@ -12,8 +12,9 @@
  */
 package org.sonatype.nexus.scheduling;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
+import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 import org.sonatype.nexus.thread.internal.MDCAwareRunnable;
@@ -37,6 +39,8 @@ public abstract class ParallelTaskSupport
   private final int concurrencyLimit;
 
   private final int queueCapacity;
+
+  private final List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
 
   /**
    * @param concurrencyLimit the number of concurrent threads processing the queue allowed
@@ -60,7 +64,7 @@ public abstract class ParallelTaskSupport
   }
 
   @Override
-  protected final Object execute() throws ExecutionException {
+  protected final Object execute() throws Exception {
     String name = getClass().getSimpleName();
     ThreadPoolExecutor executor = new ThreadPoolExecutor(0, concurrencyLimit, 500L, TimeUnit.MILLISECONDS,
         new LinkedBlockingQueue<>(queueCapacity), new NexusThreadFactory(name, name), new CallerRunsPolicy());
@@ -69,7 +73,7 @@ public abstract class ParallelTaskSupport
       List<Future<Object>> futures = jobStream(progress).map(runnable -> {
         // check cancellation before scheduling job so the primary thread throws an exception and stops queuing jobs
         CancelableHelper.checkCancellation();
-        return executor.submit(new MDCAwareRunnable(runnable), new Object());
+        return executor.submit(new MDCAwareRunnable(exceptionHandler(runnable)), new Object());
       })
           .toList();
 
@@ -85,6 +89,13 @@ public abstract class ParallelTaskSupport
           CancelableHelper.checkCancellation();
         }
       }
+
+      if (exceptions.size() > 0) {
+        MultipleFailures failures = new MultipleFailures();
+        exceptions.forEach(failures::add);
+        failures.maybePropagate();
+      }
+
       return result();
     }
     catch (InterruptedException e) {
@@ -95,6 +106,22 @@ public abstract class ParallelTaskSupport
     finally {
       executor.shutdownNow();
     }
+  }
+
+  private Runnable exceptionHandler(final Runnable runnable) {
+    return () -> {
+      try {
+        runnable.run();
+      }
+      catch (Exception e) {
+        if (exceptions.size() < 20) {
+          exceptions.add(e);
+        }
+        else {
+          log.warn("Too many exceptions, {}", e.getMessage(), log.isDebugEnabled() ? e : null);
+        }
+      }
+    };
   }
 
   protected abstract Object result();
