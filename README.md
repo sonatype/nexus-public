@@ -90,3 +90,5 @@ This project is licensed under the Eclipse Public License - v 1.0, you can read 
 Project description here.
 
 This project was updated for GitHub collaboration practice.
+
+This line was added to demonstrate Git branching and merge conflict resolution.
