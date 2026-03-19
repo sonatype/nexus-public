@@ -491,6 +491,241 @@ class BaseBlobStoreManagerTest
   }
 
   @Test
+  public void canCreateBlobStoreWithExistingSecretIds() throws Exception {
+    // Test that existing secret IDs (from configuration import) are not re-encrypted
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
+    when(provider.get()).thenReturn(blobStore);
+
+    // Mock an existing secret with ID "_1"
+    Secret existingSecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(existingSecret);
+
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID); // Use existing secret ID
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore createdBlobStore = underTest.create(configuration);
+
+    // Verify the secret ID is preserved (not changed)
+    assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(SECRET_ID));
+    assertThat(createdBlobStore, is(blobStore));
+
+    // Verify secretsService.from() was called to retrieve the existing secret
+    verify(secretsService).from(SECRET_ID);
+
+    // Verify encryptMaven was NOT called (no re-encryption)
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+
+    verify(store).create(configuration);
+    verify(blobStore).start();
+  }
+
+  @Test
+  public void canCreateBlobStoreWithMultipleExistingSecretIds() throws Exception {
+    // Test handling multiple existing secret IDs
+    String sessionTokenKey = "sessionToken";
+    String sessionTokenSecretId = "_2";
+
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY, sessionTokenKey));
+    when(provider.get()).thenReturn(blobStore);
+
+    Secret secretAccessKeySecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(secretAccessKeySecret);
+
+    Secret sessionTokenSecret = mock(Secret.class);
+    when(secretsService.from(sessionTokenSecretId)).thenReturn(sessionTokenSecret);
+
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID);
+    blobConfigMap.put(sessionTokenKey, sessionTokenSecretId);
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore createdBlobStore = underTest.create(configuration);
+
+    // Verify both secret IDs are preserved
+    assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(SECRET_ID));
+    assertThat(configuration.getAttributes().get("test").get(sessionTokenKey), is(sessionTokenSecretId));
+    assertThat(createdBlobStore, is(blobStore));
+
+    // Verify both secrets were retrieved but not re-encrypted
+    verify(secretsService).from(SECRET_ID);
+    verify(secretsService).from(sessionTokenSecretId);
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+
+    verify(store).create(configuration);
+    verify(blobStore).start();
+  }
+
+  @Test
+  public void canCreateBlobStoreWithMixOfSecretIdsAndPlaintext() throws Exception {
+    // Test handling mix of existing secret IDs and plaintext values
+    String sessionTokenKey = "sessionToken";
+    String sessionTokenPlaintext = "newSessionTokenValue";
+
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY, sessionTokenKey));
+    when(provider.get()).thenReturn(blobStore);
+
+    // Mock existing secret for secretAccessKey
+    Secret existingSecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(existingSecret);
+
+    // Mock new secret for sessionToken
+    Secret newSecret = mock(Secret.class);
+    when(newSecret.getId()).thenReturn("_2");
+    when(secretsService.encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, sessionTokenPlaintext.toCharArray(),
+        TEST_USER))
+            .thenReturn(newSecret);
+
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID); // Existing secret ID
+    blobConfigMap.put(sessionTokenKey, sessionTokenPlaintext); // New plaintext value
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore createdBlobStore = underTest.create(configuration);
+
+    // Verify existing secret ID is preserved
+    assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(SECRET_ID));
+    // Verify plaintext value was encrypted and replaced with new secret ID
+    assertThat(configuration.getAttributes().get("test").get(sessionTokenKey), is("_2"));
+    assertThat(createdBlobStore, is(blobStore));
+
+    // Verify existing secret was retrieved but not re-encrypted
+    verify(secretsService).from(SECRET_ID);
+    // Verify plaintext value was encrypted
+    verify(secretsService).encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, sessionTokenPlaintext.toCharArray(),
+        TEST_USER);
+
+    verify(store).create(configuration);
+    verify(blobStore).start();
+  }
+
+  @Test
+  public void doesNotTreatNonSecretIdPatternsAsSecretIds() throws Exception {
+    // Test that values starting with "_" but not matching secret ID pattern are treated as plaintext
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
+    when(provider.get()).thenReturn(blobStore);
+
+    Secret newSecret = mock(Secret.class);
+    when(newSecret.getId()).thenReturn(SECRET_ID);
+
+    // Test various non-secret-ID patterns
+    String[] nonSecretIdValues = {
+        "_abc", // underscore followed by letters
+        "_", // just underscore
+        "__123", // double underscore
+        "_xyz123", // underscore followed by letters then numbers
+        "plaintext" // no underscore at all
+    };
+
+    for (String value : nonSecretIdValues) {
+      when(secretsService.encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, value.toCharArray(), TEST_USER))
+          .thenReturn(newSecret);
+
+      Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+      Map<String, Object> blobConfigMap = new HashMap<>();
+      blobConfigMap.put(SECRET_FIELD_KEY, value);
+      blobStoreAttributes.put("test", blobConfigMap);
+      blobStoreAttributes.put("file", Map.of("path", "foo"));
+      BlobStoreConfiguration configuration = createConfig("test-" + value.replace("_", "u"), blobStoreAttributes);
+
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+      underTest.create(configuration);
+
+      // Verify the value was encrypted (treated as plaintext, not as secret ID)
+      verify(secretsService).encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, value.toCharArray(), TEST_USER);
+    }
+  }
+
+  @Test
+  public void recognizesVariousSecretIdPatterns() throws Exception {
+    // Test that various valid secret ID patterns are correctly recognized
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
+    when(provider.get()).thenReturn(blobStore);
+
+    // Test various valid secret ID patterns
+    String[] validSecretIds = {
+        "_1",
+        "_2",
+        "_10",
+        "_999",
+        "_12345"
+    };
+
+    for (String secretId : validSecretIds) {
+      Secret existingSecret = mock(Secret.class);
+      when(secretsService.from(secretId)).thenReturn(existingSecret);
+
+      Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+      Map<String, Object> blobConfigMap = new HashMap<>();
+      blobConfigMap.put(SECRET_FIELD_KEY, secretId);
+      blobStoreAttributes.put("test", blobConfigMap);
+      blobStoreAttributes.put("file", Map.of("path", "foo"));
+      BlobStoreConfiguration configuration = createConfig("test-" + secretId.substring(1), blobStoreAttributes);
+
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+      underTest.create(configuration);
+
+      // Verify secretsService.from() was called (secret ID was recognized)
+      verify(secretsService).from(secretId);
+      // Verify the secret ID is preserved in the configuration
+      assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(secretId));
+    }
+
+    // Verify encryptMaven was never called (all were treated as existing secret IDs)
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+  }
+
+  @Test
+  public void updateBlobStorePreservesExistingSecretIds() throws Exception {
+    // Test that updating a blob store with unchanged secret IDs skips re-encryption
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
+
+    Map<String, Map<String, Object>> oldBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> oldBlobConfigMap = new HashMap<>();
+    oldBlobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID);
+    oldBlobStoreAttributes.put("test", oldBlobConfigMap);
+    oldBlobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration oldBlobStoreConfig = createConfig("test", oldBlobStoreAttributes);
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(oldBlobStoreConfig);
+
+    Secret existingSecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(existingSecret);
+
+    // Create new config with same secret ID (unchanged)
+    Map<String, Map<String, Object>> newBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> newBlobConfigMap = new HashMap<>();
+    newBlobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID);
+    newBlobStoreAttributes.put("test", newBlobConfigMap);
+    newBlobStoreAttributes.put("file", Map.of("path", "bar")); // Changed something else
+    BlobStoreConfiguration newBlobStoreConfig = createConfig("test", newBlobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    underTest.track("test", blobStore);
+
+    underTest.update(newBlobStoreConfig);
+
+    // When secret ID is unchanged, it should retrieve it but NOT re-encrypt
+    verify(secretsService).from(SECRET_ID);
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+
+    // The secret should NOT be removed since the value is unchanged
+    verify(secretsService, never()).remove(any());
+    verify(store).update(newBlobStoreConfig);
+  }
+
+  @Test
   public void cannotUpdateBlobStoreFromNewConfig() throws Exception {
     when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
     Map<String, Map<String, Object>> oldBlobStoreAttributes = new HashMap<>();

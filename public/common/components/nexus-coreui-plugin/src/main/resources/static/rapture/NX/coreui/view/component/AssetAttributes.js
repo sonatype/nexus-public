@@ -29,7 +29,7 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
   ],
 
   statics: {
-    HIDDEN_FACETS: ['npm_rev']
+    HIDDEN_FACETS: ['npm_rev', 'upstream_sonatype_filtered_versions']
   },
 
   cls: 'nx-coreui-component-assetattributes',

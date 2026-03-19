@@ -42,6 +42,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -121,7 +125,7 @@ public class SecretsServiceImplTest
     char[] secret = "my-secret".toCharArray();
 
     Secret encrypted = underTestSha1.encryptMaven("testing", secret, null);
-    //validate encrypted value was encrypted using maven cipher
+    // validate encrypted value was encrypted using maven cipher
     assertTrue(mavenCipher.isPasswordCipher(encrypted.getId()));
 
     verifyNoInteractions(secretsStore, encryptionKeySource);
@@ -610,5 +614,139 @@ public class SecretsServiceImplTest
         getMockSecretData(newId, null, reEncryptedValue.getValue())));
     char[] decrypted = imported.decrypt();
     assertThat(decrypted, is(secret));
+  }
+
+  @Test
+  public void testImportEncryptedWithMigrationCipherPassword() throws Exception {
+    // Setup: Create an encrypted value using a custom password
+    char[] secret = "my-secret-password".toCharArray();
+    String customPassword = "migration-cipher-key";
+
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+
+    // Create a cipher with the custom password and encrypt the secret
+    HashingHandlerFactory hashingHandlerFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+    PbeCipherFactory cipherFactory =
+        new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA256", null);
+    SecretEncryptionKey customKey = new SecretEncryptionKey(null, customPassword);
+    String encryptedValue = cipherFactory.create(customKey).encrypt(toBytes(secret)).toPhcString();
+
+    // Now import it with the migration cipher password
+    int newId = random.nextInt();
+    when(secretsStore.create(eq("email"), any(), anyString(), eq("testUser"))).thenReturn(newId);
+
+    Secret imported = underTestSha256.importEncrypted("email", encryptedValue, "testUser", customPassword);
+
+    // Verify it created a new entry
+    assertThat(imported.getId(), is("_" + newId));
+    verify(secretsStore).create(eq("email"), eq(null), anyString(), eq("testUser"));
+  }
+
+  @Test
+  public void testImportEncryptedWithoutMigrationCipherPassword_usesDefaultKey() throws Exception {
+    // Create an encrypted value using the default password
+    char[] secret = "test-password".toCharArray();
+    int originalId = random.nextInt();
+
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(originalId);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+
+    Secret encrypted = underTestSha256.encrypt("test", secret, null);
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    String realEncryptedValue = encryptedValue.getValue();
+
+    // Import without migration cipher password (null)
+    int newId = random.nextInt() + 1000;
+    when(secretsStore.create(eq("email"), any(), anyString(), eq("testUser"))).thenReturn(newId);
+
+    Secret imported = underTestSha256.importEncrypted("email", realEncryptedValue, "testUser", null);
+
+    // Should successfully import using default key
+    assertThat(imported.getId(), is("_" + newId));
+    verify(secretsStore).create(eq("email"), eq(null), anyString(), eq("testUser"));
+  }
+
+  @Test
+  public void testImportEncryptedWithEmptyMigrationCipherPassword_usesDefaultKey() throws Exception {
+    // Create an encrypted value using the default password
+    char[] secret = "test-password".toCharArray();
+    int originalId = random.nextInt();
+
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(originalId);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+
+    Secret encrypted = underTestSha256.encrypt("test", secret, null);
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    String realEncryptedValue = encryptedValue.getValue();
+
+    // Import with empty migration cipher password
+    int newId = random.nextInt() + 1000;
+    when(secretsStore.create(eq("email"), any(), anyString(), eq("testUser"))).thenReturn(newId);
+
+    Secret imported = underTestSha256.importEncrypted("email", realEncryptedValue, "testUser", "");
+
+    // Should successfully import using default key
+    assertThat(imported.getId(), is("_" + newId));
+    verify(secretsStore).create(eq("email"), eq(null), anyString(), eq("testUser"));
+  }
+
+  @Test
+  public void testImportEncryptedWithWrongMigrationCipherPassword_throwsException() throws Exception {
+    // Create an encrypted value using a custom password
+    char[] secret = "my-secret".toCharArray();
+    String correctPassword = "correct-password";
+    String wrongPassword = "wrong-password";
+
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+
+    // Encrypt with correct password
+    HashingHandlerFactory hashingHandlerFactory = new HashingHandlerFactoryImpl(cryptoHelper);
+    PbeCipherFactory cipherFactory =
+        new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA256", null);
+    SecretEncryptionKey correctKey = new SecretEncryptionKey(null, correctPassword);
+    String encryptedValue = cipherFactory.create(correctKey).encrypt(toBytes(secret)).toPhcString();
+
+    // Try to import with wrong password
+    assertThrows(CipherException.class,
+        () -> underTestSha256.importEncrypted("email", encryptedValue, "testUser", wrongPassword));
+  }
+
+  @Test
+  public void testImportEncryptedDelegatesWithoutCipherPassword() throws Exception {
+    // Test that the 3-parameter method delegates to the 4-parameter method with null
+    char[] secret = "test-password".toCharArray();
+    int originalId = random.nextInt();
+
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(originalId);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+
+    Secret encrypted = underTestSha256.encrypt("test", secret, null);
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    String realEncryptedValue = encryptedValue.getValue();
+
+    // Import using the 3-parameter method
+    int newId = random.nextInt() + 1000;
+    when(secretsStore.create(eq("email"), any(), anyString(), eq(null))).thenReturn(newId);
+
+    Secret imported = underTestSha256.importEncrypted("email", realEncryptedValue, null);
+
+    // Should successfully import
+    assertThat(imported.getId(), is("_" + newId));
+    verify(secretsStore).create(eq("email"), eq(null), anyString(), eq(null));
+  }
+
+  /**
+   * Helper method to convert char[] to byte[] for encryption.
+   */
+  private static byte[] toBytes(final char[] chars) {
+    ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(chars));
+    byte[] bytes = new byte[byteBuffer.limit()];
+    byteBuffer.get(bytes);
+    return bytes;
   }
 }

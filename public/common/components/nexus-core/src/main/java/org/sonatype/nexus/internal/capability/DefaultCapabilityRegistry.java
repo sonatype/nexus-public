@@ -782,10 +782,12 @@ public class DefaultCapabilityRegistry
     return encrypted;
   }
 
+  private boolean isExistingSecretId(final String value) {
+    return value.matches("_\\d+") && secretsStore.read(Integer.parseInt(value.substring(1))).isPresent();
+  }
+
   /**
    * Encrypts value of properties marked to be stored encrypted.
-   *
-   * @since 2.7
    */
   private Map<String, String> encryptValuesIfNeeded(
       final CapabilityDescriptor descriptor,
@@ -811,6 +813,11 @@ public class DefaultCapabilityRegistry
               log.debug("Reusing existing secret for field {}", formField.getId());
               // existing secret matches
               encrypted.put(formField.getId(), oldSecretId);
+            }
+            else if (isExistingSecretId(value)) {
+              log.debug("Value for field {} is already a Secret ID, skipping re-encryption",
+                  formField.getId());
+              encrypted.put(formField.getId(), value);
             }
             else {
               log.debug("Encrypting new value for field {}", formField.getId());
@@ -853,26 +860,6 @@ public class DefaultCapabilityRegistry
           }
         }
       }
-    }
-  }
-
-  private String safelyLoadSecret(@Nullable final String secretId) {
-    try {
-      if (secretId == null || secretId.isEmpty()) {
-        return secretId;
-      }
-
-      // Decrypt using the secret ID directly - secretsService.from() expects the secret ID string
-      return String.valueOf(secretsService.from(secretId).decrypt());
-    }
-    catch (NumberFormatException e) {
-      // If not a valid secret ID, return the value as-is (for backwards compatibility)
-      log.debug("Secret ID is not a valid integer format, returning as-is: {}", secretId);
-      return secretId;
-    }
-    catch (Exception e) {
-      log.error("Error decrypting secret ID: {}", secretId, e);
-      return null;
     }
   }
 

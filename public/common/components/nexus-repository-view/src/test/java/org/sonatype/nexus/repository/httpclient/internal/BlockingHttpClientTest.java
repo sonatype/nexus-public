@@ -347,4 +347,22 @@ public class BlockingHttpClientTest
 
     verify(outboundRequestRecorder, never()).record(any(), any(), any());
   }
+
+  @Test
+  public void recordOutboundRequest_recordsUnknownWhenContextIsNull() throws Exception {
+    HttpRequest httpRequest = mock(HttpRequest.class);
+    RequestLine requestLine = mock(RequestLine.class);
+    when(httpRequest.getRequestLine()).thenReturn(requestLine);
+    when(requestLine.getMethod()).thenReturn("GET");
+    when(filterable.getRequest()).thenReturn(httpRequest);
+    when(filterable.getContext()).thenReturn(null); // <-- null context (Docker token path)
+
+    underTest = new BlockingHttpClient(httpClient, new HttpClientConfig(), statusObserver, true,
+        autoBlockConfiguration, outboundRequestRecorder);
+
+    underTest.filter(httpHost, filterable);
+
+    verify(outboundRequestRecorder).record("unknown", "unknown", "GET");
+  }
+
 }

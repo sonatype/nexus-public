@@ -730,6 +730,15 @@ public abstract class BaseBlobStoreManager
               : newBlobStoreTypeData.get(sensitiveAttrKey, String.class);
 
       if (value != null) {
+        // Check if the value is already a secret ID (from configuration import)
+        // Secret IDs start with underscore (e.g., "_1", "_2")
+        if (value.startsWith("_") && value.length() > 1 && Character.isDigit(value.charAt(1))) {
+          log.debug("Skipping re-encryption for {}, already a secret ID: {}", sensitiveAttrKey, value);
+          // Value is already a secret ID, don't re-encrypt it but track it for cleanup
+          secrets.add(secretService.from(value));
+          continue;
+        }
+
         Secret newSecret =
             Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))
                 ? secretService.encryptMaven(BLOBSTORE_CONFIG, secretService.from(value).decrypt(), UserIdHelper.get())

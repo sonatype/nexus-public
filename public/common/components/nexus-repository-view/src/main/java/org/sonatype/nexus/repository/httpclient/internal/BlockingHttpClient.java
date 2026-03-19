@@ -36,6 +36,7 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.impl.EnglishReasonPhraseCatalog;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -173,12 +174,17 @@ public class BlockingHttpClient
       return;
     }
     try {
-      Object formatAttr = filterable.getContext().getAttribute(OutboundRequestMetricRecorder.CONTEXT_FORMAT);
-      String format = formatAttr instanceof String ? (String) formatAttr : "unknown";
+      HttpContext context = filterable.getContext();
+      String format = "unknown";
+      String repositoryType = "unknown";
 
-      Object repositoryTypeAttr =
-          filterable.getContext().getAttribute(OutboundRequestMetricRecorder.CONTEXT_REPOSITORY_TYPE);
-      String repositoryType = repositoryTypeAttr instanceof String ? (String) repositoryTypeAttr : "unknown";
+      if (context != null) {
+        Object formatAttr = context.getAttribute(OutboundRequestMetricRecorder.CONTEXT_FORMAT);
+        format = formatAttr instanceof String ? (String) formatAttr : "unknown";
+
+        Object repositoryTypeAttr = context.getAttribute(OutboundRequestMetricRecorder.CONTEXT_REPOSITORY_TYPE);
+        repositoryType = repositoryTypeAttr instanceof String ? (String) repositoryTypeAttr : "unknown";
+      }
 
       String httpMethod = filterable.getRequest().getRequestLine().getMethod();
 

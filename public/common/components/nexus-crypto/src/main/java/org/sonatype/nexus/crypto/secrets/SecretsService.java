@@ -81,4 +81,23 @@ public interface SecretsService
    * @throws CipherException if the import fails
    */
   Secret importEncrypted(String purpose, String encryptedValue, String userId) throws CipherException;
+
+  /**
+   * Imports an encrypted secret value into the secrets store, using an optional migration cipher password
+   * for decryption.
+   * This is used during configuration import to create a new secret entry with an existing encrypted value
+   * that was encrypted with a different key.
+   *
+   * @param purpose the purpose of the secret (e.g., "email", "ldap")
+   * @param encryptedValue the encrypted secret string (PHC format or legacy encrypted string)
+   * @param userId the user performing the import, may be null
+   * @param decryptionCipherPassword optional password to use for decrypting the imported secret, may be null
+   * @return a Secret instance with the new ID
+   * @throws CipherException if the import fails
+   */
+  Secret importEncrypted(
+      String purpose,
+      String encryptedValue,
+      String userId,
+      @Nullable String decryptionCipherPassword) throws CipherException;
 }
