@@ -27,6 +27,8 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
 
 import com.google.common.collect.Iterables;
 
+import static org.sonatype.nexus.repository.search.sql.index.SearchTokenizer.stripLeadingSeparators;
+
 /**
  * H2 implementation of fulltext search using LIKE queries instead of PostgreSQL's TSVECTOR.
  *
@@ -105,6 +107,17 @@ public class H2FulltextSearchConditionBuilder
         return Optional.empty();
     }
 
+    // NEXUS-50246: For columns that support exact matching with a single wildcard term,
+    // use prefix matching (starts-with) instead of contains matching
+    if (column.supportsExact() && terms.size() == 1
+        && Iterables.getOnlyElement(terms) instanceof WildcardTerm term) {
+      String value = stripLeadingSeparators(term.get());
+      if (value.isBlank()) {
+        return Optional.empty();
+      }
+      return createPrefixLikeExpression(column, value);
+    }
+
     String query = terms.stream()
         .map(term -> createLikeExpression(column, term))
         .filter(Optional::isPresent)
@@ -113,6 +126,22 @@ public class H2FulltextSearchConditionBuilder
         .collect(Collectors.joining(operator, BRACKET_OPEN, BRACKET_CLOSE));
 
     return Optional.of(query);
+  }
+
+  /**
+   * Creates a LIKE expression for prefix matching (starts-with).
+   * Used for wildcard searches on columns that support exact matching.
+   */
+  private Optional<CharSequence> createPrefixLikeExpression(final H2SearchColumn column, final String value) {
+    String param = param(column.columnName());
+    // Remove trailing * and use % only at end for prefix matching
+    String cleanValue = value.replaceFirst("\\*$", "");
+    String likePattern = escapeLike(cleanValue) + "%";
+
+    parameters.put(param, likePattern);
+
+    // Use LOWER() for case-insensitive prefix search
+    return Optional.of("LOWER(" + column.columnName() + ") LIKE LOWER(" + placeholder(param) + ")");
   }
 
   /**

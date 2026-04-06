@@ -288,6 +288,189 @@ public class SecurityConfigurationManagerImplTest
     manager.createRole(role);
   }
 
+  @Test
+  public void testUpdateRole_removesOrphanedPrivileges() {
+    // Setup: role exists with a valid privilege and an orphaned privilege
+    CRole role = manager.newRole();
+    role.setId("test-role");
+    role.setName("test-role");
+    role.addPrivilege("valid-priv");
+    role.addPrivilege("orphaned-priv");
+
+    when(memorySecurityConfiguration.getRole("test-role")).thenReturn(role);
+    when(memorySecurityConfiguration.getPrivilege("valid-priv")).thenReturn(mock(CPrivilege.class));
+    // orphaned-priv doesn't exist
+    when(memorySecurityConfiguration.getPrivilege("orphaned-priv")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("orphaned-priv")).thenReturn(null);
+
+    // Update should succeed (not throw NoSuchPrivilegeException)
+    manager.updateRole(role);
+
+    // Verify orphaned privilege was removed
+    assertThat(role.getPrivileges(), hasSize(1));
+    assertThat(role.getPrivileges().contains("valid-priv"), is(true));
+    assertThat(role.getPrivileges().contains("orphaned-priv"), is(false));
+  }
+
+  @Test
+  public void testUpdateRole_removesAllOrphanedPrivileges_whenAllAreOrphaned() {
+    // Setup: role exists with only orphaned privileges
+    CRole role = manager.newRole();
+    role.setId("test-role");
+    role.setName("test-role");
+    role.addPrivilege("orphaned-priv-1");
+    role.addPrivilege("orphaned-priv-2");
+
+    when(memorySecurityConfiguration.getRole("test-role")).thenReturn(role);
+    // Both privileges don't exist
+    when(memorySecurityConfiguration.getPrivilege("orphaned-priv-1")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("orphaned-priv-1")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilege("orphaned-priv-2")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("orphaned-priv-2")).thenReturn(null);
+
+    // Update should succeed
+    manager.updateRole(role);
+
+    // Verify all orphaned privileges were removed
+    assertThat(role.getPrivileges(), hasSize(0));
+  }
+
+  @Test
+  public void testUpdateRole_succeeds_withNoPrivileges() {
+    // Setup: role exists with no privileges
+    CRole role = manager.newRole();
+    role.setId("test-role");
+    role.setName("test-role");
+
+    when(memorySecurityConfiguration.getRole("test-role")).thenReturn(role);
+
+    // Update should succeed
+    manager.updateRole(role);
+
+    // Verify privileges remain empty
+    assertThat(role.getPrivileges(), hasSize(0));
+  }
+
+  @Test
+  public void testUpdateRole_keepsAllPrivileges_whenNoneAreOrphaned() {
+    // Setup: role exists with all valid privileges
+    CRole role = manager.newRole();
+    role.setId("test-role");
+    role.setName("test-role");
+    role.addPrivilege("valid-priv-1");
+    role.addPrivilege("valid-priv-2");
+    role.addPrivilege("valid-priv-3");
+
+    when(memorySecurityConfiguration.getRole("test-role")).thenReturn(role);
+    when(memorySecurityConfiguration.getPrivilege("valid-priv-1")).thenReturn(mock(CPrivilege.class));
+    when(memorySecurityConfiguration.getPrivilege("valid-priv-2")).thenReturn(mock(CPrivilege.class));
+    when(memorySecurityConfiguration.getPrivilege("valid-priv-3")).thenReturn(mock(CPrivilege.class));
+
+    // Update should succeed
+    manager.updateRole(role);
+
+    // Verify all privileges are kept
+    assertThat(role.getPrivileges(), hasSize(3));
+    assertThat(role.getPrivileges().contains("valid-priv-1"), is(true));
+    assertThat(role.getPrivileges().contains("valid-priv-2"), is(true));
+    assertThat(role.getPrivileges().contains("valid-priv-3"), is(true));
+  }
+
+  @Test
+  public void testUpdateRole_removesMultipleOrphanedPrivileges() {
+    // Setup: role exists with mix of valid and multiple orphaned privileges
+    CRole role = manager.newRole();
+    role.setId("test-role");
+    role.setName("test-role");
+    role.addPrivilege("valid-priv");
+    role.addPrivilege("orphaned-priv-1");
+    role.addPrivilege("orphaned-priv-2");
+    role.addPrivilege("orphaned-priv-3");
+
+    when(memorySecurityConfiguration.getRole("test-role")).thenReturn(role);
+    when(memorySecurityConfiguration.getPrivilege("valid-priv")).thenReturn(mock(CPrivilege.class));
+    // Multiple orphaned privileges
+    when(memorySecurityConfiguration.getPrivilege("orphaned-priv-1")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("orphaned-priv-1")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilege("orphaned-priv-2")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("orphaned-priv-2")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilege("orphaned-priv-3")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("orphaned-priv-3")).thenReturn(null);
+
+    // Update should succeed
+    manager.updateRole(role);
+
+    // Verify all orphaned privileges were removed, valid one kept
+    assertThat(role.getPrivileges(), hasSize(1));
+    assertThat(role.getPrivileges().contains("valid-priv"), is(true));
+  }
+
+  @Test
+  public void testUpdateRole_keepsPrivilege_whenFoundByName() {
+    // Setup: privilege exists by name but not by ID (edge case in existing code)
+    CRole role = manager.newRole();
+    role.setId("test-role");
+    role.setName("test-role");
+    role.addPrivilege("priv-by-name");
+
+    when(memorySecurityConfiguration.getRole("test-role")).thenReturn(role);
+    // Privilege not found by ID, but found by name
+    when(memorySecurityConfiguration.getPrivilege("priv-by-name")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("priv-by-name")).thenReturn(mock(CPrivilege.class));
+
+    // Update should succeed
+    manager.updateRole(role);
+
+    // Verify privilege is kept (found by name)
+    assertThat(role.getPrivileges(), hasSize(1));
+    assertThat(role.getPrivileges().contains("priv-by-name"), is(true));
+  }
+
+  @Test(expected = NoSuchRoleException.class)
+  public void testUpdateRole_failsForOrphanedNestedRole() {
+    // Setup: role contains a nested role that doesn't exist
+    // Nested roles should still be strictly validated (not auto-cleaned)
+    CRole role = manager.newRole();
+    role.setId("test-role");
+    role.setName("test-role");
+    role.addRole("orphaned-nested-role");
+
+    when(memorySecurityConfiguration.getRole("test-role")).thenReturn(role);
+    // Nested role doesn't exist
+    when(memorySecurityConfiguration.getRole("orphaned-nested-role")).thenReturn(null);
+
+    // Update should fail with NoSuchRoleException
+    manager.updateRole(role);
+  }
+
+  @Test
+  public void testUpdateRole_handlesValidRolesAndOrphanedPrivileges() {
+    // Setup: role has valid nested role but orphaned privilege
+    CRole role = manager.newRole();
+    role.setId("test-role");
+    role.setName("test-role");
+    role.addRole("valid-nested-role");
+    role.addPrivilege("orphaned-priv");
+
+    CRole nestedRole = manager.newRole();
+    nestedRole.setId("valid-nested-role");
+    nestedRole.setName("valid-nested-role");
+
+    when(memorySecurityConfiguration.getRole("test-role")).thenReturn(role);
+    when(memorySecurityConfiguration.getRole("valid-nested-role")).thenReturn(nestedRole);
+    // Privilege doesn't exist
+    when(memorySecurityConfiguration.getPrivilege("orphaned-priv")).thenReturn(null);
+    when(memorySecurityConfiguration.getPrivilegeByName("orphaned-priv")).thenReturn(null);
+
+    // Update should succeed
+    manager.updateRole(role);
+
+    // Verify nested role is kept, orphaned privilege removed
+    assertThat(role.getRoles(), hasSize(1));
+    assertThat(role.getRoles().contains("valid-nested-role"), is(true));
+    assertThat(role.getPrivileges(), hasSize(0));
+  }
+
   private void addSimpleRoleContributor(final String roleName) {
     manager.addContributor(() -> {
       SecurityConfiguration config = new MemorySecurityConfiguration();

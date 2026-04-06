@@ -15,6 +15,7 @@ package org.sonatype.nexus.security.authc;
 import java.util.Collections;
 import java.util.Set;
 
+import org.sonatype.nexus.datastore.api.DataAccessException;
 import org.sonatype.nexus.security.realm.MockRealmA;
 import org.sonatype.nexus.security.realm.MockRealmB;
 
@@ -36,6 +37,8 @@ import org.mockito.MockedStatic;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -176,6 +179,37 @@ public class FirstSuccessfulModularRealAuthenticatorTest
           .doMultiRealmAuthentication(Lists.newArrayList(realmOne, realmTwo), usernameRealmB);
       Set<String> realmNames = authenticationInfo.getPrincipals().getRealmNames();
       assertThat(realmNames, contains("MockRealmB"));
+    }
+  }
+
+  @Test
+  public void testDataAccessExceptionPropagates() {
+    UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken("username", "password");
+
+    Realm realm = mock(Realm.class);
+    when(realm.supports(usernamePasswordToken)).thenReturn(true);
+
+    // Mock realm to throw DataAccessException
+    DataAccessException dataAccessException = new DataAccessException("Database unavailable");
+    when(realm.getAuthenticationInfo(usernamePasswordToken)).thenThrow(dataAccessException);
+
+    PrincipalCollection principals = mock(PrincipalCollection.class);
+    when(principals.getRealmNames()).thenReturn(Collections.emptySet());
+    Subject subject = mock(Subject.class);
+    when(subject.getPrincipals()).thenReturn(principals);
+
+    try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+      securityUtils.when(SecurityUtils::getSubject).thenReturn(subject);
+
+      try {
+        firstSuccessfulModularRealmAuthenticator
+            .doMultiRealmAuthentication(Lists.newArrayList(realm), usernamePasswordToken);
+        fail("Expected DataAccessException to be thrown");
+      }
+      catch (DataAccessException e) {
+        // Verify the exception message
+        assertThat(e.getMessage(), containsString("Database unavailable"));
+      }
     }
   }
 }

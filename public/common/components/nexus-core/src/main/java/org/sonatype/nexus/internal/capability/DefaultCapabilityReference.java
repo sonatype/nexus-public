@@ -109,7 +109,7 @@ public class DefaultCapabilityReference
     activationHandler = checkNotNull(activationListenerFactory).create(this);
     validityHandler = checkNotNull(validityConditionHandlerFactory).create(this);
 
-    capability.init((CapabilityContext) this, secretsService, secretsStore);
+    capability.init(this, secretsService, secretsStore);
   }
 
   @Override
@@ -149,13 +149,7 @@ public class DefaultCapabilityReference
 
   @Override
   public boolean isEnabled() {
-    try {
-      stateLock.readLock().lock();
-      return state.isEnabled();
-    }
-    finally {
-      stateLock.readLock().unlock();
-    }
+    return state.isEnabled();
   }
 
   /**
@@ -186,13 +180,7 @@ public class DefaultCapabilityReference
 
   @Override
   public boolean isActive() {
-    try {
-      stateLock.readLock().lock();
-      return state.isActive();
-    }
-    finally {
-      stateLock.readLock().unlock();
-    }
+    return state.isActive();
   }
 
   @Override

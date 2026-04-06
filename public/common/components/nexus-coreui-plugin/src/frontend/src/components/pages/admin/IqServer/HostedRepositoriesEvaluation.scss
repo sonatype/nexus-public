@@ -1,0 +1,109 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.sonatype-lifecycle-header {
+  .nx-breadcrumb {
+    .nx-breadcrumb__link {
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .nx-breadcrumb__list-item:last-child {
+      .nx-breadcrumb__link {
+        pointer-events: none;
+        cursor: default;
+
+        &:hover {
+          text-decoration: none;
+        }
+      }
+    }
+  }
+}
+
+.hosted-repositories-stepper {
+  .stepper-progress-container {
+    margin-bottom: var(--nx-spacing-8x);
+    width: 100%;
+  }
+
+  .progress-segments {
+    position: relative;
+    width: 100%;
+    height: 25px;
+    background-color: var(--nx-color-border);
+    border-radius: 12.5px;
+    overflow: hidden;
+    margin-bottom: var(--nx-spacing-2x);
+  }
+
+  .progress-segment {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background-color: var(--nx-color-primary);
+    transition: all 0.3s ease;
+
+    &.left {
+      left: 0;
+      width: 50%;
+      border-radius: 12.5px 0 0 12.5px;
+      display: none;
+
+      &.active {
+        display: block;
+      }
+    }
+
+    &.right {
+      left: 50%;
+      width: 50%;
+      border-radius: 0 12.5px 12.5px 0;
+      display: none;
+
+      &.active {
+        display: block;
+      }
+    }
+  }
+
+  .stepper-labels {
+    display: flex;
+    width: 100%;
+    margin-top: var(--nx-spacing-2x);
+  }
+
+  .step-label {
+    cursor: pointer;
+    padding: var(--nx-spacing-2x);
+    transition: all 0.2s;
+    flex: 1;
+    text-align: center;
+
+    &:hover {
+      color: var(--nx-color-text-stark);
+    }
+
+    &.active {
+      font-weight: bold;
+      color: var(--nx-color-text-stark);
+    }
+  }
+
+  .stepper-content {
+    margin-top: var(--nx-spacing-6x);
+  }
+}

@@ -17,6 +17,7 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import org.sonatype.nexus.repository.apt.AptFormat;
+import org.sonatype.nexus.repository.apt.api.AptSigningRepositoriesAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
@@ -42,6 +43,9 @@ public class AptProxyRepositoryApiRequest
   @Valid
   protected final AptProxyRepositoriesAttributes apt;
 
+  @Valid
+  protected final AptSigningRepositoriesAttributes aptSigning;
+
   @SuppressWarnings("squid:S00107") // suppress constructor parameter count
   @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
   public AptProxyRepositoryApiRequest(
@@ -50,6 +54,7 @@ public class AptProxyRepositoryApiRequest
       @JsonProperty("storage") final StorageAttributes storage,
       @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
       @JsonProperty("apt") final AptProxyRepositoriesAttributes apt,
+      @JsonProperty("aptSigning") final AptSigningRepositoriesAttributes aptSigning,
       @JsonProperty("proxy") final ProxyAttributes proxy,
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributes httpClient,
@@ -59,9 +64,14 @@ public class AptProxyRepositoryApiRequest
   {
     super(name, AptFormat.NAME, online, storage, cleanup, proxy, negativeCache, httpClient, routingRule, replication);
     this.apt = apt;
+    this.aptSigning = aptSigning;
   }
 
   public AptProxyRepositoriesAttributes getApt() {
     return apt;
+  }
+
+  public AptSigningRepositoriesAttributes getAptSigning() {
+    return aptSigning;
   }
 }

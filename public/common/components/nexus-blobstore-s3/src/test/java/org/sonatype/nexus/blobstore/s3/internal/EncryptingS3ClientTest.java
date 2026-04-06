@@ -31,7 +31,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.identity.spi.IdentityProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
@@ -498,7 +497,7 @@ public class EncryptingS3ClientTest
   }
 
   @Test
-  void generatePresignedUrl_setsCredentialsWhenAvailable() throws Exception {
+  void generatePresignedUrl_usesDefaultCredentialsProvider() throws Exception {
     final URL expected =
         new URL(
             "https://example.com/file.bin?response-content-disposition=attachment&response-content-type=application%2Foctet-stream");
@@ -511,15 +510,11 @@ public class EncryptingS3ClientTest
       final PresignedGetObjectRequest presigned = mock(PresignedGetObjectRequest.class);
       final S3ServiceClientConfiguration config = mock(S3ServiceClientConfiguration.class);
       final S3Presigner.Builder presignerBuildMock = mock(S3Presigner.Builder.class);
-      final IdentityProvider credentialsProvider = mock(IdentityProvider.class);
 
       presignerMockStatic.when(S3Presigner::builder).thenReturn(presignerBuildMock);
       when(presignerBuildMock.build()).thenReturn(presigner);
       when(presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presigned);
       when(presigned.url()).thenReturn(expected);
-
-      // enabled credentials
-      when(config.credentialsProvider()).thenReturn(credentialsProvider);
       when(delegate.serviceClientConfiguration()).thenReturn(config);
 
       clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration);
@@ -540,7 +535,8 @@ public class EncryptingS3ClientTest
       assertSame(key, objectPresignRequestBuilt.getObjectRequest().key());
       assertSame(expected, result);
 
-      verify(presignerBuildMock).credentialsProvider(credentialsProvider);
+      // Verify that a credentials provider was set (DefaultCredentialsProvider)
+      verify(presignerBuildMock).credentialsProvider(any());
     }
   }
 
@@ -753,16 +749,16 @@ public class EncryptingS3ClientTest
 
   @Test
   void uploadWithTransferManger_createsAsyncClientAndUploads() throws Exception {
+    // The async client now uses DefaultCredentialsProvider.create() instead of
+    // sharing the delegate's credentials provider to avoid STS client shutdown issues with IRSA
     final String bucket = "test-bucket";
     final String key = "test-key";
     final InputStream contents = new ByteArrayInputStream("test content".getBytes());
 
-    final IdentityProvider credentialsProvider = mock(IdentityProvider.class);
     final Region region = Region.US_EAST_1;
     final S3ServiceClientConfiguration config = mock(S3ServiceClientConfiguration.class);
 
     when(delegate.serviceClientConfiguration()).thenReturn(config);
-    when(config.credentialsProvider()).thenReturn(credentialsProvider);
     when(config.region()).thenReturn(region);
 
     try (final MockedStatic<S3AsyncClient> asyncClientMock = mockStatic(S3AsyncClient.class);
@@ -777,7 +773,8 @@ public class EncryptingS3ClientTest
       final CompletableFuture<CompletedUpload> future = CompletableFuture.completedFuture(completedUpload);
 
       asyncClientMock.when(S3AsyncClient::builder).thenReturn(asyncClientBuilder);
-      when(asyncClientBuilder.credentialsProvider(any(IdentityProvider.class))).thenReturn(asyncClientBuilder);
+      // Accept any credentials provider (will be DefaultCredentialsProvider)
+      when(asyncClientBuilder.credentialsProvider(any())).thenReturn(asyncClientBuilder);
 
       when(asyncClientBuilder.region(region)).thenReturn(asyncClientBuilder);
       when(asyncClientBuilder.build()).thenReturn(asyncClient);
@@ -793,6 +790,8 @@ public class EncryptingS3ClientTest
 
       assertSame(completedUpload, result);
       verify(transferManager).upload(any(UploadRequest.class));
+      // Verify async client was properly closed (try-with-resources)
+      verify(asyncClient).close();
     }
   }
 }

@@ -95,8 +95,6 @@ public class DataStoreManagerImpl
 
   private final EventManager eventManager;
 
-  private volatile boolean frozen;
-
   private ApplicationContext applicationContext;
 
   @Inject
@@ -197,17 +195,11 @@ public class DataStoreManagerImpl
 
     register(applicationContext, store);
 
-    synchronized (dataStores) {
-      if (frozen) {
-        store.freeze(); // mark as frozen before making store visible to other components
-      }
-
-      // check someone hasn't just created the same store; if our store is a duplicate then stop it
-      if (dataStores.putIfAbsent(lower(storeName), store) != null) {
-        log.debug("Stopping duplicate {}", store);
-        store.stop();
-        throw new IllegalStateException("Duplicate request to create " + storeName + " data store");
-      }
+    // check someone hasn't just created the same store; if our store is a duplicate then stop it
+    if (dataStores.putIfAbsent(lower(storeName), store) != null) {
+      log.debug("Stopping duplicate {}", store);
+      store.stop();
+      throw new IllegalStateException("Duplicate request to create " + storeName + " data store");
     }
 
     log.debug("Started {}", store);
@@ -313,23 +305,17 @@ public class DataStoreManagerImpl
 
   @Override
   public void freeze() {
-    synchronized (dataStores) {
-      frozen = true;
-      browse().forEach(DataStore::freeze);
-    }
+    // no-op: freeze mechanism removed
   }
 
   @Override
   public void unfreeze() {
-    synchronized (dataStores) {
-      frozen = false;
-      browse().forEach(DataStore::unfreeze);
-    }
+    // no-op: freeze mechanism removed
   }
 
   @Override
   public boolean isFrozen() {
-    return frozen;
+    return false;
   }
 
   /**

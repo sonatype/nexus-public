@@ -28,6 +28,8 @@ import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.mybatis.MyBatisDataStore;
 import org.sonatype.nexus.transaction.TransactionIsolation;
 
+import org.assertj.db.type.Table;
+
 public class TestDataSessionSupplier
     implements DataSessionSupplier
 {
@@ -100,6 +102,10 @@ public class TestDataSessionSupplier
       callback.accept(session.access(clazz));
       session.getTransaction().commit();
     }
+  }
+
+  public Table table(final String name) {
+    return new Table(getDataSource().get(), name);
   }
 
   private void checkName(final String suppliedName) {

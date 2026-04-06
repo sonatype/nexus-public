@@ -285,6 +285,67 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
         repositoryNameItem.setValue(Ext.Array.map(newSelectedRepositories, function(record) { return record.get("name"); }));
       })
     }
+  },
+
+  /**
+   * Updates visibility of APT rebuild task checkboxes based on selected repository type.
+   * Shows "Full rebuild (hosted only)" for hosted repos, "Reset proxy metadata" for proxy repos.
+   * Shows both when "All repositories" (*) is selected.
+   * Called on both 'select' (user selection) and 'afterrender' (loading existing task).
+   * @param combo The repository combobox
+   * @param record The selected repository record (may be undefined on afterrender)
+   */
+  updateAptRebuildCheckboxVisibility: function(combo, record) {
+    const fieldSet = combo.up('nx-coreui-formfield-settingsfieldset');
+    if (!fieldSet) {
+      return;
+    }
+
+    const fullRebuildCheckbox = fieldSet.down('[name=property_rebuildAptMetadataFullRebuild]');
+    const resetProxyCheckbox = fieldSet.down('[name=property_resetProxyMetadata]');
+
+    if (!fullRebuildCheckbox || !resetProxyCheckbox) {
+      return;
+    }
+
+    const selectedValue = combo.getValue();
+
+    // No value selected yet
+    if (!selectedValue) {
+      fullRebuildCheckbox.setVisible(true);
+      resetProxyCheckbox.setVisible(true);
+      return;
+    }
+
+    // If "All repositories" is selected, show both checkboxes
+    if (selectedValue === '*') {
+      fullRebuildCheckbox.setVisible(true);
+      resetProxyCheckbox.setVisible(true);
+      return;
+    }
+
+    // Get repository type - from record if available, otherwise look up in store
+    var repoType = record && record.get ? record.get('type') : null;
+
+    if (!repoType && combo.getStore()) {
+      var storeRecord = combo.getStore().findRecord('id', selectedValue) ||
+                        combo.getStore().findRecord('name', selectedValue);
+      if (storeRecord) {
+        repoType = storeRecord.get('type');
+      }
+    }
+
+    if (repoType === 'hosted') {
+      fullRebuildCheckbox.setVisible(true);
+      resetProxyCheckbox.setVisible(false);
+    } else if (repoType === 'proxy') {
+      fullRebuildCheckbox.setVisible(false);
+      resetProxyCheckbox.setVisible(true);
+    } else {
+      // Unknown type or group - show both as fallback
+      fullRebuildCheckbox.setVisible(true);
+      resetProxyCheckbox.setVisible(true);
+    }
   }
 
 });

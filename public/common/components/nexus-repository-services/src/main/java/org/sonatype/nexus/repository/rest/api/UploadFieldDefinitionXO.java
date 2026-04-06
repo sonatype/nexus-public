@@ -32,6 +32,8 @@ public class UploadFieldDefinitionXO
 
   private String group;
 
+  private String groupHelpText;
+
   private Map<String, String> options;
 
   public String getName() {
@@ -74,6 +76,14 @@ public class UploadFieldDefinitionXO
     this.group = group;
   }
 
+  public String getGroupHelpText() {
+    return groupHelpText;
+  }
+
+  public void setGroupHelpText(String groupHelpText) {
+    this.groupHelpText = groupHelpText;
+  }
+
   public Map<String, String> getOptions() {
     return options;
   }
@@ -89,6 +99,7 @@ public class UploadFieldDefinitionXO
         .description(uploadFieldDefinition.getHelpText())
         .optional(uploadFieldDefinition.isOptional())
         .group(uploadFieldDefinition.getGroup())
+        .groupHelpText(uploadFieldDefinition.getGroupHelpText())
         .options(uploadFieldDefinition.getOptions())
         .build();
   }
@@ -118,6 +129,7 @@ public class UploadFieldDefinitionXO
         ", description='" + description + '\'' +
         ", optional=" + optional +
         ", group='" + group + '\'' +
+        ", groupHelpText='" + groupHelpText + '\'' +
         ", options=" + options +
         '}';
   }
@@ -137,6 +149,8 @@ public class UploadFieldDefinitionXO
     private boolean optional;
 
     private String group;
+
+    private String groupHelpText;
 
     private Map<String, String> options;
 
@@ -165,6 +179,11 @@ public class UploadFieldDefinitionXO
       return this;
     }
 
+    public UploadFieldDefinitionXOBuilder groupHelpText(String groupHelpText) {
+      this.groupHelpText = groupHelpText;
+      return this;
+    }
+
     public UploadFieldDefinitionXOBuilder options(Map<String, String> options) {
       this.options = options;
       return this;
@@ -177,6 +196,7 @@ public class UploadFieldDefinitionXO
       uploadFieldDefinitionXO.setDescription(description);
       uploadFieldDefinitionXO.setOptional(optional);
       uploadFieldDefinitionXO.setGroup(group);
+      uploadFieldDefinitionXO.setGroupHelpText(groupHelpText);
       uploadFieldDefinitionXO.setOptions(options);
       return uploadFieldDefinitionXO;
     }

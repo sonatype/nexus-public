@@ -43,6 +43,22 @@ Ext.define('NX.coreui.view.repository.facet.PyPiProxyFacet', {
         title: NX.I18n.get('Repository_Facet_Pypi_Title'),
         items: [
           {
+            xtype: 'textfield',
+            name: 'attributes.pypi.indexPath',
+            itemId: 'pypiIndexPath',
+            fieldLabel: NX.I18n.get('Repository_Facet_Pypi_IndexPath_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_Pypi_IndexPath_HelpText'),
+            allowBlank: true,
+            value: '/simple',
+            validator: function(value) {
+              // Only allow '/simple' (standard) or empty string (root path)
+              if (value === '/simple' || value === '') {
+                return true;
+              }
+              return 'Index path must be "/simple" (standard) or empty (root path). Custom paths are not supported.';
+            }
+          },
+          {
             xtype: 'checkbox',
             name: 'attributes.pypi.removeQuarantinedVersions',
             value: false,

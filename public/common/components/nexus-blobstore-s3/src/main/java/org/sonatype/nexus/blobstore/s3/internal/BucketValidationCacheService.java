@@ -15,17 +15,16 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.goodies.common.ComponentSupport;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.springframework.context.annotation.Scope;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
@@ -38,11 +37,15 @@ import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SING
 public class BucketValidationCacheService
     extends ComponentSupport
 {
-  private final LoadingCache<String, BucketValidationResult> cache;
+  /**
+   * ThreadLocal so that we can use the bucket's client during a cache miss. We do not include this in BucketReference
+   * as we do not want to hold references to the S3Client which should be disposed.
+   */
+  private final ThreadLocal<EncryptingS3Client> s3Holder = new ThreadLocal<>();
+
+  private final LoadingCache<BucketReference, BucketValidationResult> cache;
 
   private final BucketOwnershipCheckFeatureFlag ownershipCheckFeatureFlag;
-
-  private EncryptingS3Client s3;
 
   @Inject
   public BucketValidationCacheService(
@@ -58,27 +61,34 @@ public class BucketValidationCacheService
         .build(CacheLoader.from(this::performS3Validation));
   }
 
-  public void setS3Client(final EncryptingS3Client s3) {
-    this.s3 = checkNotNull(s3);
+  public BucketValidationResult validate(
+      final EncryptingS3Client s3,
+      final String endpoint,
+      final String bucket) throws ExecutionException
+  {
+    try {
+      s3Holder.set(checkNotNull(s3));
+      return cache.get(new BucketReference(endpoint, bucket));
+    }
+    finally {
+      s3Holder.set(null);
+    }
   }
 
-  public BucketValidationResult validate(final String bucket) throws ExecutionException {
-    return cache.get(bucket);
+  public void invalidate(final String endpoint, final String bucket) {
+    log.debug("Invalidating cache for endpoint {} bucket: {}", endpoint, bucket);
+    cache.invalidate(new BucketReference(endpoint, bucket));
   }
 
-  public void invalidate(final String bucket) {
-    log.debug("Invalidating cache for bucket: {}", bucket);
-    cache.invalidate(bucket);
-  }
+  private BucketValidationResult performS3Validation(final BucketReference reference) {
+    log.debug("Performing S3 validation for: {}", reference);
 
-  private BucketValidationResult performS3Validation(final String bucket) {
-    log.debug("Performing S3 validation for bucket: {}", bucket);
-
-    boolean exists = s3.doesBucketExist(bucket);
+    EncryptingS3Client s3 = s3Holder.get();
+    boolean exists = s3.doesBucketExist(reference.bucketName());
     boolean ownershipValid = false;
 
     if (exists && !ownershipCheckFeatureFlag.isDisabled()) {
-      ownershipValid = validateOwnership(bucket);
+      ownershipValid = validateOwnership(reference.bucketName());
     }
     else if (exists) {
       // Feature flag disabled - assume ownership is valid since the check is explicitly skipped
@@ -90,7 +100,7 @@ public class BucketValidationCacheService
 
   private boolean validateOwnership(final String bucket) {
     try {
-      s3.getBucketPolicy(bucket);
+      s3Holder.get().getBucketPolicy(bucket);
       return true;
     }
     catch (S3Exception e) {
@@ -117,6 +127,10 @@ public class BucketValidationCacheService
   }
 
   public record BucketValidationResult(boolean exists, boolean ownershipValid)
+  {
+  }
+
+  private static record BucketReference(String endpoint, String bucketName)
   {
   }
 }

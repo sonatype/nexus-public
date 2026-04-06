@@ -51,6 +51,25 @@ public class SearchRecordData
   private static final int MAX_TSVECTOR_WORD_BYTES = 2046;
 
   /**
+   * Maximum total number of search parameters across all collections.
+   * This limit prevents hitting PostgreSQL's PreparedStatement parameter limit (65,535).
+   * Set to 60,000 to stay safely under the limit while allowing maximum data retention.
+   *
+   * With the to_tsvector(string_agg(...)) approach, we avoid PostgreSQL stack depth issues
+   * that occurred with || concatenation. The VALUES clause provides parameters without
+   * creating deeply nested expression trees, allowing us to use the full 60,000 param capacity.
+   *
+   * See NEXUS-50251 for details.
+   */
+  protected static final int MAX_TOTAL_SEARCH_PARAMS = 60000;
+
+  /**
+   * Flag to track if we've already logged a warning about hitting the parameter limit.
+   * Prevents log spam when the limit is exceeded.
+   */
+  private boolean paramLimitWarningLogged = false;
+
+  /**
    * The repository ID from the repository record, it is part of the primary identifier of the record (PK).
    */
   private Integer repositoryId;
@@ -343,28 +362,28 @@ public class SearchRecordData
 
   @Override
   public void addMd5(final String md5) {
-    if (isNotBlank(md5)) {
+    if (isNotBlank(md5) && canAddSearchParam()) {
       this.md5.add(md5);
     }
   }
 
   @Override
   public void addSha1(final String sha1) {
-    if (isNotBlank(sha1)) {
+    if (isNotBlank(sha1) && canAddSearchParam()) {
       this.sha1.add(sha1);
     }
   }
 
   @Override
   public void addSha256(final String sha256) {
-    if (isNotBlank(sha256)) {
+    if (isNotBlank(sha256) && canAddSearchParam()) {
       this.sha256.add(sha256);
     }
   }
 
   @Override
   public void addSha512(final String sha512) {
-    if (isNotBlank(sha512)) {
+    if (isNotBlank(sha512) && canAddSearchParam()) {
       this.sha512.add(sha512);
     }
   }
@@ -507,7 +526,7 @@ public class SearchRecordData
 
   @Override
   public void addPath(final String path) {
-    if (isNotBlank(path)) {
+    if (isNotBlank(path) && canAddSearchParam()) {
       String pathValue = usePostgreSQLFormat ? tsEscape(path) : path.toLowerCase();
       this.paths.add(pathValue);
     }
@@ -541,7 +560,14 @@ public class SearchRecordData
   @Override
   public void setTags(final Collection<String> values) {
     if (!values.isEmpty()) {
-      tags.addAll(values);
+      for (String tag : values) {
+        if (canAddSearchParam()) {
+          tags.add(tag);
+        }
+        else {
+          break;
+        }
+      }
     }
   }
 
@@ -654,7 +680,7 @@ public class SearchRecordData
     // For H2, store plain values without PostgreSQL's tsEscape formatting
     if (usePostgreSQLFormat) {
       String escapedPhrase = tsEscape(phrase);
-      if (getUtf8ByteLength(escapedPhrase) <= MAX_TSVECTOR_WORD_BYTES) {
+      if (getUtf8ByteLength(escapedPhrase) <= MAX_TSVECTOR_WORD_BYTES && canAddSearchParam()) {
         collection.add(escapedPhrase);
       }
       else if (log.isDebugEnabled()) {
@@ -681,8 +707,8 @@ public class SearchRecordData
           }
         }
 
-        // Only add if there is more than one token
-        if (i > 1) {
+        // Only add if there is more than one token and we haven't hit the limit
+        if (i > 1 && canAddSearchParam()) {
           sb.deleteCharAt(sb.length() - 1);
 
           collection.add(sb.toString());
@@ -691,8 +717,63 @@ public class SearchRecordData
     }
     else {
       // H2 format - store plain value only, no tokenization
-      collection.add(phrase.toLowerCase());
+      if (canAddSearchParam()) {
+        collection.add(phrase.toLowerCase());
+      }
     }
+  }
+
+  /**
+   * Checks if we can add another search parameter without exceeding the limit.
+   * Logs a warning once when the limit is reached.
+   *
+   * Note: This calculates the actual SQL parameter count, not just the Java collection size.
+   * MyBatis uses some collections multiple times in the SQL query (e.g., paths is used twice),
+   * so we must account for that multiplier effect to stay under PostgreSQL's 65,535 limit.
+   *
+   * @return true if we can add another parameter, false otherwise
+   */
+  private boolean canAddSearchParam() {
+    // Calculate actual SQL parameter count based on MyBatis XML mapping.
+    // The SQL uses INSERT...ON CONFLICT...DO UPDATE, so PostgreSQL prepares parameters
+    // for BOTH the INSERT and UPDATE clauses, doubling the parameter count.
+    //
+    // Per-clause usage (then multiply by 2 for INSERT + UPDATE):
+    // - paths: 2× per clause (join + toQuotedTsVector) = 4× total
+    // - All other collections: 1× per clause (toTsVector) = 2× total
+    int insertUpdateParamCount = (paths.size() * 2) + // join + toQuotedTsVector
+        uploaders.size() +
+        uploaderIps.size() +
+        keywords.size() +
+        md5.size() +
+        sha1.size() +
+        sha256.size() +
+        sha512.size() +
+        namespaceNames.size() +
+        versionNames.size() +
+        aliasComponentNames.size() +
+        formatFieldValues1.size() +
+        formatFieldValues2.size() +
+        formatFieldValues3.size() +
+        formatFieldValues4.size() +
+        formatFieldValues5.size() +
+        formatFieldValues6.size() +
+        formatFieldValues7.size() +
+        tags.size();
+
+    // Double for INSERT + UPDATE clauses
+    int actualSqlParamCount = insertUpdateParamCount * 2;
+
+    if (actualSqlParamCount < MAX_TOTAL_SEARCH_PARAMS) {
+      return true;
+    }
+    if (!paramLimitWarningLogged) {
+      log.warn(
+          "Component {} has reached maximum search parameter limit of {} (actual SQL params: {}), additional items will not be indexed",
+          componentId, MAX_TOTAL_SEARCH_PARAMS, actualSqlParamCount);
+      paramLimitWarningLogged = true;
+    }
+    return false;
   }
 
   private static int getUtf8ByteLength(final String text) {

@@ -198,6 +198,7 @@ public class TaskComponent
     taskUtils.validateTaskCreationForUI(taskName, taskType, taskProperties, schedule);
 
     taskXO.getProperties().forEach(taskConfiguration::setString);
+    taskConfiguration.setTypeId(taskXO.getTypeId());
     taskConfiguration.setAlertEmail(taskXO.getAlertEmail());
     taskConfiguration.setNotificationCondition(taskXO.getNotificationCondition());
     taskConfiguration.setName(taskXO.getName());
@@ -229,7 +230,7 @@ public class TaskComponent
     }
 
     final Schedule schedule = asSchedule(taskXO, task);
-    final TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(taskXO.getTypeId());
+    final TaskConfiguration taskConfiguration = taskScheduler.createTaskConfigurationInstance(task.getTypeId());
     taskConfiguration.setRunPreviousPlan(taskXO.isRunPreviousPlan());
     taskConfiguration.apply(task.getConfiguration());
     taskConfiguration.setEnabled(taskXO.getEnabled());
@@ -237,6 +238,7 @@ public class TaskComponent
     taskConfiguration.setAlertEmail(taskXO.getAlertEmail());
     taskConfiguration.setNotificationCondition(taskXO.getNotificationCondition());
     taskXO.getProperties().forEach(taskConfiguration::setString);
+    taskConfiguration.setTypeId(task.getTypeId());
 
     task = scheduleTask(() -> taskScheduler.scheduleTask(taskConfiguration, schedule));
 

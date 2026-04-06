@@ -21,6 +21,8 @@ import java.util.concurrent.ExecutorService;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
@@ -41,11 +43,14 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.test.util.Whitebox;
 
+import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -355,5 +360,323 @@ public class MaintenanceServiceImplTest
     assertEquals(true, result);
     // Verify that all + were replaced with spaces
     verify(variableResolverAdapter).fromPath("/My Test Folder", "raw");
+  }
+
+  @Test(expected = AuthorizationException.class)
+  public void testDeleteAsset_ThrowsAuthorizationExceptionWhenNotPermitted() {
+    Asset asset = mock(Asset.class);
+    Format format = mock(Format.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("raw");
+    when(variableResolverAdapterManager.get("raw")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromPath(anyString(), anyString())).thenReturn(mock(VariableSource.class));
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(), any())).thenReturn(false);
+    when(asset.path()).thenReturn("/some/asset");
+
+    underTest.deleteAsset(repository, asset);
+  }
+
+  @Test(expected = AuthorizationException.class)
+  public void testDeleteComponent_ThrowsAuthorizationExceptionWhenNotPermitted() {
+    Component component = mock(Component.class);
+    Format format = mock(Format.class);
+    ContentFacet contentFacet = mock(ContentFacet.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    FluentAsset fluentAsset = mock(FluentAsset.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("raw");
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.with(component)).thenReturn(fluentComponent);
+    when(fluentComponent.assets()).thenReturn(Set.of(fluentAsset));
+    when(fluentAsset.path()).thenReturn("/some/asset");
+    when(variableResolverAdapterManager.get("raw")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromPath(anyString(), anyString())).thenReturn(mock(VariableSource.class));
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(), any())).thenReturn(false);
+
+    underTest.deleteComponent(repository, component);
+  }
+
+  @Test(expected = AuthorizationException.class)
+  public void testDeleteFolder_ThrowsAuthorizationExceptionWhenNotPermitted() {
+    when(repositoryPermissionChecker.userCanDeleteInRepository(repository)).thenReturn(false);
+
+    underTest.deleteFolder(repository, "/some/folder");
+  }
+
+  @Test
+  public void testDeleteFolder_SubmitsToExecutorService() {
+    // Replace the internal executorService with our mock to avoid Shiro SecurityManager requirement
+    Whitebox.setInternalState(underTest, "executorService", executorService);
+
+    Format format = mock(Format.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+    VariableSource variableSource = mock(VariableSource.class);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("raw");
+    when(repositoryPermissionChecker.userCanDeleteInRepository(repository)).thenReturn(true);
+    when(variableResolverAdapterManager.get("raw")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromPath(anyString(), anyString())).thenReturn(variableSource);
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(), any())).thenReturn(true);
+
+    underTest.deleteFolder(repository, "/some/folder");
+
+    verify(executorService).submit(any(Runnable.class));
+  }
+
+  @Test(expected = IllegalOperationException.class)
+  public void testDeleteAsset_ThrowsIllegalOperationWhenMissingMaintenanceFacet() {
+    Asset asset = mock(Asset.class);
+    Format format = mock(Format.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+    VariableSource variableSource = mock(VariableSource.class);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("raw");
+    when(variableResolverAdapterManager.get("raw")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromPath(anyString(), anyString())).thenReturn(variableSource);
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(), any())).thenReturn(true);
+    when(asset.path()).thenReturn("/some/asset");
+    when(databaseCheck.isPostgresql()).thenReturn(false);
+
+    // Create exception outside of when() to avoid UnfinishedStubbingException
+    MissingFacetException exception = new MissingFacetException(repository, ContentMaintenanceFacet.class);
+    when(repository.facet(ContentMaintenanceFacet.class)).thenThrow(exception);
+
+    underTest.deleteAsset(repository, asset);
+  }
+
+  @Test
+  public void testCanDeleteComponent_ReturnsFalseWhenAnyAssetNotPermitted() {
+    Component component = mock(Component.class);
+    Format format = mock(Format.class);
+    ContentFacet contentFacet = mock(ContentFacet.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    FluentAsset permittedAsset = mock(FluentAsset.class);
+    FluentAsset deniedAsset = mock(FluentAsset.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+    VariableSource permittedSource = mock(VariableSource.class);
+    VariableSource deniedSource = mock(VariableSource.class);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("raw");
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.with(component)).thenReturn(fluentComponent);
+    when(fluentComponent.assets()).thenReturn(List.of(permittedAsset, deniedAsset));
+    when(permittedAsset.path()).thenReturn("/allowed/asset");
+    when(deniedAsset.path()).thenReturn("/denied/asset");
+    when(variableResolverAdapterManager.get("raw")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromPath("/allowed/asset", "raw")).thenReturn(permittedSource);
+    when(variableResolverAdapter.fromPath("/denied/asset", "raw")).thenReturn(deniedSource);
+    when(contentPermissionChecker.isPermitted("my-repo", "raw", DELETE, permittedSource)).thenReturn(true);
+    when(contentPermissionChecker.isPermitted("my-repo", "raw", DELETE, deniedSource)).thenReturn(false);
+
+    boolean result = underTest.canDeleteComponent(repository, component);
+
+    assertFalse(result);
+  }
+
+  @Test
+  public void testCanDeleteComponent_ReturnsTrueWhenAllAssetsPermitted() {
+    Component component = mock(Component.class);
+    Format format = mock(Format.class);
+    ContentFacet contentFacet = mock(ContentFacet.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    FluentAsset asset1 = mock(FluentAsset.class);
+    FluentAsset asset2 = mock(FluentAsset.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("raw");
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.with(component)).thenReturn(fluentComponent);
+    when(fluentComponent.assets()).thenReturn(List.of(asset1, asset2));
+    when(asset1.path()).thenReturn("/asset1");
+    when(asset2.path()).thenReturn("/asset2");
+    when(variableResolverAdapterManager.get("raw")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromPath(anyString(), anyString())).thenReturn(mock(VariableSource.class));
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(), any())).thenReturn(true);
+
+    boolean result = underTest.canDeleteComponent(repository, component);
+
+    assertTrue(result);
+  }
+
+  @Test
+  public void testDeleteAsset_NonNpmOnPostgres_DeletesBrowseNode() {
+    Format format = mock(Format.class);
+
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(42);
+    assetData.setPath("/some/path");
+    assetData.setKind("FILE");
+    assetData.setRepositoryId(1);
+
+    when(repository.getFormat()).thenReturn(format);
+    when(repository.getName()).thenReturn("raw-repo");
+    when(format.getValue()).thenReturn("raw");
+    when(databaseCheck.isPostgresql()).thenReturn(true);
+    when(repository.facet(ContentMaintenanceFacet.class)).thenReturn(contentMaintenanceFacet);
+    when(contentMaintenanceFacet.deleteAsset(assetData)).thenReturn(Set.of("/some/path"));
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), eq(DELETE), any())).thenReturn(true);
+    when(variableResolverAdapterManager.get("raw")).thenReturn(mock(VariableResolverAdapter.class));
+    when(variableResolverAdapterManager.get("raw").fromPath(anyString(), anyString()))
+        .thenReturn(mock(VariableSource.class));
+    when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
+
+    underTest.deleteAsset(repository, assetData);
+
+    verify(browseFacet).deleteByAssetIdAndPath(eq(42), eq("/some/path"));
+  }
+
+  @Test
+  public void testDeleteAsset_NpmTarball_DeletesBrowseNode() {
+    Format format = mock(Format.class);
+
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(99);
+    assetData.setPath("/test/-/test-1.0.tgz");
+    assetData.setKind("TARBALL");
+    assetData.setRepositoryId(1);
+
+    when(repository.getFormat()).thenReturn(format);
+    when(repository.getName()).thenReturn("npm-repo");
+    when(format.getValue()).thenReturn("npm");
+    when(databaseCheck.isPostgresql()).thenReturn(true);
+    when(repository.facet(ContentMaintenanceFacet.class)).thenReturn(contentMaintenanceFacet);
+    when(contentMaintenanceFacet.deleteAsset(assetData)).thenReturn(Set.of("/test/-/test-1.0.tgz"));
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), eq(DELETE), any())).thenReturn(true);
+    when(variableResolverAdapterManager.get("npm")).thenReturn(mock(VariableResolverAdapter.class));
+    when(variableResolverAdapterManager.get("npm").fromPath(anyString(), anyString()))
+        .thenReturn(mock(VariableSource.class));
+    when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
+
+    // NPM TARBALL kind should NOT be preserved (only PACKAGE_ROOT is preserved)
+    underTest.deleteAsset(repository, assetData);
+
+    verify(browseFacet).deleteByAssetIdAndPath(eq(99), eq("/test/-/test-1.0.tgz"));
+  }
+
+  @Test
+  public void testDeleteBrowseNode_NotPostgresql_NoBrowseNodeDeletion() {
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(10);
+    assetData.setPath("/some/file");
+    assetData.setRepositoryId(1);
+
+    when(databaseCheck.isPostgresql()).thenReturn(false);
+
+    underTest.deleteBrowseNode(repository, assetData);
+
+    verify(repository, never()).optionalFacet(BrowseFacet.class);
+  }
+
+  @Test
+  public void testDeleteBrowseNode_NoBrowseFacet() {
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(10);
+    assetData.setPath("/some/file");
+    assetData.setKind("FILE");
+    assetData.setRepositoryId(1);
+    Format format = mock(Format.class);
+
+    when(databaseCheck.isPostgresql()).thenReturn(true);
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("raw");
+    when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.empty());
+
+    // Should not throw even when BrowseFacet is absent
+    underTest.deleteBrowseNode(repository, assetData);
+
+    verify(browseFacet, never()).deleteByAssetIdAndPath(any(), anyString());
+  }
+
+  @Test
+  public void testDeleteAssets_SkipsMissingAssets() {
+    underTest = spy(underTest);
+    doReturn(Set.of("found-asset")).when(underTest).deleteAsset(any(), any());
+
+    AssetData asset1 = mock(AssetData.class);
+
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacetSupport);
+    when(contentFacetSupport.stores()).thenReturn(contentFacetStores);
+    Whitebox.setInternalState(contentFacetStores, "assetStore", assetStore);
+
+    // First asset found, second asset not found
+    when(assetStore.readAsset(1)).thenReturn(Optional.of(asset1));
+    when(assetStore.readAsset(2)).thenReturn(Optional.empty());
+
+    Set<String> result = underTest.deleteAssets(repository, List.of(1, 2));
+
+    assertEquals(1, result.size());
+    assertTrue(result.contains("found-asset"));
+    // deleteAsset should only be called once for the found asset
+    verify(underTest).deleteAsset(repository, asset1);
+  }
+
+  @Test(expected = MissingFacetException.class)
+  public void testContentFacetSupport_ThrowsMissingFacetExceptionOnCastFailure() {
+    // When ContentFacet is not a ContentFacetSupport, should throw
+    ContentFacet nonSupportFacet = mock(ContentFacet.class);
+    when(repository.facet(ContentFacet.class)).thenThrow(new RuntimeException("not ContentFacetSupport"));
+
+    underTest.contentFacetSupport(repository);
+  }
+
+  @Test
+  public void testCanDeleteAsset_DelegatesPermissionCheck() {
+    Asset asset = mock(Asset.class);
+    Format format = mock(Format.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+    VariableSource variableSource = mock(VariableSource.class);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("maven2");
+    when(asset.path()).thenReturn("/org/example/artifact-1.0.jar");
+    when(variableResolverAdapterManager.get("maven2")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromPath("/org/example/artifact-1.0.jar", "maven2")).thenReturn(variableSource);
+    when(contentPermissionChecker.isPermitted("my-repo", "maven2", DELETE, variableSource)).thenReturn(true);
+
+    boolean result = underTest.canDeleteAsset(repository, asset);
+
+    assertTrue(result);
+    verify(contentPermissionChecker).isPermitted("my-repo", "maven2", DELETE, variableSource);
+  }
+
+  @Test
+  public void testCanDeleteAsset_ReturnsFalseWhenNotPermitted() {
+    Asset asset = mock(Asset.class);
+    Format format = mock(Format.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+    VariableSource variableSource = mock(VariableSource.class);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("maven2");
+    when(asset.path()).thenReturn("/org/example/artifact-1.0.jar");
+    when(variableResolverAdapterManager.get("maven2")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapter.fromPath("/org/example/artifact-1.0.jar", "maven2")).thenReturn(variableSource);
+    when(contentPermissionChecker.isPermitted("my-repo", "maven2", DELETE, variableSource)).thenReturn(false);
+
+    boolean result = underTest.canDeleteAsset(repository, asset);
+
+    assertFalse(result);
   }
 }

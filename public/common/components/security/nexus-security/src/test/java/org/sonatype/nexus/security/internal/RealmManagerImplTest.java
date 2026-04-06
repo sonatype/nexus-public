@@ -14,33 +14,28 @@ package org.sonatype.nexus.security.internal;
 
 import java.util.List;
 
-import jakarta.inject.Provider;
-
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
-import org.sonatype.nexus.security.realm.RealmConfigurationChangedEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 import org.sonatype.nexus.security.realm.TestRealmConfiguration;
 
-import com.google.common.collect.ImmutableList;
+import jakarta.inject.Provider;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-public class RealmManagerImplTest
-    extends TestSupport
+class RealmManagerImplTest
+    extends Test5Support
 {
   @Mock
   private Provider<RealmConfiguration> initialRealmConfigurationProvider;
@@ -54,10 +49,10 @@ public class RealmManagerImplTest
   @Mock
   private RealmSecurityManager securityManager;
 
-  @Mock
+  @Mock(name = "A")
   private Realm realmA;
 
-  @Mock
+  @Mock(name = "B")
   private Realm realmB;
 
   @Mock
@@ -71,43 +66,38 @@ public class RealmManagerImplTest
 
   private RealmManagerImpl manager;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     List<Realm> realms = List.of(realmA, realmB);
     RealmConfiguration defaultConfig = new TestRealmConfiguration();
     defaultConfig.setRealmNames(List.of("A"));
-    when(initialRealmConfigurationProvider.get()).thenReturn(defaultConfig);
+    lenient().when(initialRealmConfigurationProvider.get()).thenReturn(defaultConfig);
     manager = new RealmManagerImpl(eventManager, configStore, initialRealmConfigurationProvider, securityManager,
         realms, false);
   }
 
   @Test
-  public void testOnStoreChanged_LocalEvent() {
+  void testOnStoreChanged_LocalEvent() {
     when(configEvent.isLocal()).thenReturn(true);
     manager.on(configEvent);
     verifyNoInteractions(eventManager, configStore);
   }
 
   @Test
-  public void testOnStoreChanged_RemoteEvent() {
-    RealmConfiguration eventConfig = new TestRealmConfiguration();
-    eventConfig.setRealmNames(ImmutableList.of("B"));
+  void testOnStoreChanged_RemoteEvent() {
+    RealmConfiguration reloadedConfig = new TestRealmConfiguration();
+    reloadedConfig.setRealmNames(List.of("B"));
     when(configEvent.isLocal()).thenReturn(false);
-    when(configEvent.getConfiguration()).thenReturn(eventConfig);
+    when(configStore.load()).thenReturn(reloadedConfig);
 
     manager.on(configEvent);
 
-    ArgumentCaptor<RealmConfigurationChangedEvent> eventCaptor =
-        ArgumentCaptor.forClass(RealmConfigurationChangedEvent.class);
-
-    verify(eventManager).post(eventCaptor.capture());
-
-    RealmConfiguration storeConfig = eventCaptor.getValue().getConfiguration();
-    assertThat(storeConfig.getRealmNames(), is(eventConfig.getRealmNames()));
+    verify(configStore).load();
+    verify(securityManager).setRealms(List.of(realmB));
   }
 
   @Test
-  public void testOnUserPasswordChanged() {
+  void testOnUserPasswordChanged() {
     when(passwordChangedEvent.isLocal()).thenReturn(false);
     when(passwordChangedEvent.isClearCache()).thenReturn(true);
     when(passwordChangedEvent.getUserId()).thenReturn("testuser");
@@ -119,7 +109,7 @@ public class RealmManagerImplTest
   }
 
   @Test
-  public void testOnUserPasswordChanged_LocalEvent() {
+  void testOnUserPasswordChanged_LocalEvent() {
     when(passwordChangedEvent.isLocal()).thenReturn(true);
 
     manager.on(passwordChangedEvent);
@@ -128,7 +118,7 @@ public class RealmManagerImplTest
   }
 
   @Test
-  public void testOnUserPasswordChanged_ClearCache() {
+  void testOnUserPasswordChanged_ClearCache() {
     when(passwordChangedEvent.isLocal()).thenReturn(false);
     when(passwordChangedEvent.isClearCache()).thenReturn(false);
 

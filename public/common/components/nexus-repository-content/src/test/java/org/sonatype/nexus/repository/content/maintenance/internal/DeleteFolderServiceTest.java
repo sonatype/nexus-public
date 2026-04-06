@@ -391,4 +391,242 @@ public class DeleteFolderServiceTest
     // By checking component FIRST, if it fails, we never delete the asset,
     // maintaining data consistency
   }
+
+  @Test
+  public void testCheckDeleteComponentWithAssets_DeletesComponent_WhenNoAssetsRemain() {
+    // Test for NEXUS-43238: Go repos have browse nodes with both assetId and componentId
+    // After deleting an asset, if no assets remain, the component should be deleted
+    BrowseNodeData node = mock(BrowseNodeData.class);
+    FluentComponent component = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    EntityId componentId = mock(EntityId.class);
+    OffsetDateTime timestamp = OffsetDateTime.now();
+    OffsetDateTime lastUpdated = timestamp.minusDays(1);
+
+    when(node.getComponentId()).thenReturn(componentId);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.find(componentId)).thenReturn(Optional.of(component));
+    when(component.lastUpdated()).thenReturn(lastUpdated);
+    when(component.assets()).thenReturn(Collections.emptyList());
+
+    boolean result = deleteFolderService.checkDeleteComponentWithAssets(
+        timestamp, contentFacet, contentMaintenance, node);
+
+    assertTrue(result);
+    verify(contentMaintenance, times(1)).deleteComponent(component);
+  }
+
+  @Test
+  public void testCheckDeleteComponentWithAssets_DoesNotDeleteComponent_WhenAssetsRemain() {
+    // Test for NEXUS-43238: If a component still has assets, don't delete it yet
+    BrowseNodeData node = mock(BrowseNodeData.class);
+    FluentComponent component = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    EntityId componentId = mock(EntityId.class);
+    OffsetDateTime timestamp = OffsetDateTime.now();
+
+    when(node.getComponentId()).thenReturn(componentId);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.find(componentId)).thenReturn(Optional.of(component));
+    when(component.assets())
+        .thenReturn(Arrays.asList(mock(org.sonatype.nexus.repository.content.fluent.FluentAsset.class)));
+
+    boolean result = deleteFolderService.checkDeleteComponentWithAssets(
+        timestamp, contentFacet, contentMaintenance, node);
+
+    assertTrue(result); // Should return true to allow browse node deletion
+    verify(contentMaintenance, never()).deleteComponent(component);
+  }
+
+  @Test
+  public void testCheckDeleteComponentWithAssets_ReturnsTrue_WhenComponentNotFound() {
+    // Test for NEXUS-43238: If component already deleted, return true
+    BrowseNodeData node = mock(BrowseNodeData.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    EntityId componentId = mock(EntityId.class);
+    OffsetDateTime timestamp = OffsetDateTime.now();
+
+    when(node.getComponentId()).thenReturn(componentId);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.find(componentId)).thenReturn(Optional.empty());
+
+    boolean result = deleteFolderService.checkDeleteComponentWithAssets(
+        timestamp, contentFacet, contentMaintenance, node);
+
+    assertTrue(result);
+    verify(contentMaintenance, never()).deleteComponent(any());
+  }
+
+  @Test
+  public void testCheckDeleteComponentWithAssets_ReturnsFalse_WhenDeletionFails() {
+    // Test for NEXUS-43238: If component deletion fails, return false
+    BrowseNodeData node = mock(BrowseNodeData.class);
+    FluentComponent component = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    EntityId componentId = mock(EntityId.class);
+    OffsetDateTime timestamp = OffsetDateTime.now();
+    OffsetDateTime lastUpdated = timestamp.minusDays(1);
+
+    when(node.getComponentId()).thenReturn(componentId);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.find(componentId)).thenReturn(Optional.of(component));
+    when(component.lastUpdated()).thenReturn(lastUpdated);
+    when(component.assets()).thenReturn(Collections.emptyList());
+    doThrow(new RuntimeException("Component deletion failed")).when(contentMaintenance).deleteComponent(component);
+
+    boolean result = deleteFolderService.checkDeleteComponentWithAssets(
+        timestamp, contentFacet, contentMaintenance, node);
+
+    assertFalse(result);
+  }
+
+  @Test
+  public void testProcessLeafDeletion_WithCombinedNodePath() {
+    // Test for NEXUS-43238: Test the new combined-node path (both assetId and componentId present)
+    BrowseNodeData node = mock(BrowseNodeData.class);
+    FluentComponent component = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    EntityId componentId = mock(EntityId.class);
+    EntityId assetId = mock(EntityId.class);
+    OffsetDateTime timestamp = OffsetDateTime.now();
+    OffsetDateTime lastUpdated = timestamp.minusDays(1);
+
+    // Set up node with both assetId and componentId (like Go repos)
+    when(node.getNodeId()).thenReturn(1L);
+    when(node.getAssetId()).thenReturn(assetId);
+    when(node.getComponentId()).thenReturn(componentId);
+    when(node.isLeaf()).thenReturn(true);
+    when(node.getPath()).thenReturn("/test/path");
+
+    // Set up asset deletion
+    when(contentFacet.assets()).thenReturn(fluentAssets);
+    when(fluentAssets.find(assetId))
+        .thenReturn(Optional.of(mock(org.sonatype.nexus.repository.content.fluent.FluentAsset.class)));
+    doReturn(true).when(deleteFolderService).checkDeleteAsset(any(), any(), any(), any(), any());
+
+    // Set up component with no remaining assets
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.find(componentId)).thenReturn(Optional.of(component));
+    when(component.lastUpdated()).thenReturn(lastUpdated);
+    when(component.assets()).thenReturn(Collections.emptyList());
+
+    // Execute
+    deleteFolderService.processLeafDeletion(browseFacet, timestamp, contentFacet, contentMaintenance, true, repository,
+        node);
+
+    // Verify asset deleted first
+    verify(deleteFolderService, times(1)).checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance,
+        node);
+    // Verify component check happened after asset deletion
+    verify(deleteFolderService, times(1)).checkDeleteComponentWithAssets(timestamp, contentFacet, contentMaintenance,
+        node);
+    // Verify browse node deleted
+    verify(browseFacet, times(1)).deleteByNodeId(1L);
+  }
+
+  @Test
+  public void testProcessLeafDeletion_CombinedNode_CanDeleteComponentFalse() {
+    // Test for NEXUS-43238: When canDeleteComponent is false, component check should be skipped
+    BrowseNodeData node = mock(BrowseNodeData.class);
+    EntityId componentId = mock(EntityId.class);
+    EntityId assetId = mock(EntityId.class);
+    OffsetDateTime timestamp = OffsetDateTime.now();
+
+    // Set up node with both assetId and componentId
+    when(node.getNodeId()).thenReturn(1L);
+    when(node.getAssetId()).thenReturn(assetId);
+    when(node.getComponentId()).thenReturn(componentId);
+    when(node.isLeaf()).thenReturn(true);
+    when(node.getPath()).thenReturn("/test/path");
+
+    // Set up successful asset deletion
+    doReturn(true).when(deleteFolderService).checkDeleteAsset(any(), any(), any(), any(), any());
+
+    // Execute with canDeleteComponent=false
+    deleteFolderService.processLeafDeletion(browseFacet, timestamp, contentFacet, contentMaintenance, false, repository,
+        node);
+
+    // Verify asset deleted
+    verify(deleteFolderService, times(1)).checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance,
+        node);
+    // Verify component check was NOT called
+    verify(deleteFolderService, never()).checkDeleteComponentWithAssets(any(), any(), any(), any());
+    // Verify browse node deleted
+    verify(browseFacet, times(1)).deleteByNodeId(1L);
+  }
+
+  @Test
+  public void testProcessLeafDeletion_CombinedNode_AssetDeletionFails() {
+    // Test for NEXUS-43238: When asset deletion fails, component check should be skipped
+    BrowseNodeData node = mock(BrowseNodeData.class);
+    EntityId componentId = mock(EntityId.class);
+    EntityId assetId = mock(EntityId.class);
+    OffsetDateTime timestamp = OffsetDateTime.now();
+
+    // Set up node with both assetId and componentId
+    when(node.getNodeId()).thenReturn(1L);
+    when(node.getAssetId()).thenReturn(assetId);
+    when(node.getComponentId()).thenReturn(componentId);
+    when(node.isLeaf()).thenReturn(true);
+    when(node.getPath()).thenReturn("/test/path");
+
+    // Set up failed asset deletion
+    doReturn(false).when(deleteFolderService).checkDeleteAsset(any(), any(), any(), any(), any());
+
+    // Execute
+    deleteFolderService.processLeafDeletion(browseFacet, timestamp, contentFacet, contentMaintenance, true, repository,
+        node);
+
+    // Verify asset deletion was attempted
+    verify(deleteFolderService, times(1)).checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance,
+        node);
+    // Verify component check was NOT called (because asset deletion failed)
+    verify(deleteFolderService, never()).checkDeleteComponentWithAssets(any(), any(), any(), any());
+    // Verify browse node was NOT deleted
+    verify(browseFacet, never()).deleteByNodeId(any());
+  }
+
+  @Test
+  public void testProcessLeafDeletion_CombinedNode_DeletionOrderVerification() {
+    // Test for NEXUS-43238: Verify asset is deleted before component check (reversed order)
+    BrowseNodeData node = mock(BrowseNodeData.class);
+    FluentComponent component = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    EntityId componentId = mock(EntityId.class);
+    EntityId assetId = mock(EntityId.class);
+    OffsetDateTime timestamp = OffsetDateTime.now();
+    OffsetDateTime lastUpdated = timestamp.minusDays(1);
+
+    // Set up node with both assetId and componentId
+    when(node.getNodeId()).thenReturn(1L);
+    when(node.getAssetId()).thenReturn(assetId);
+    when(node.getComponentId()).thenReturn(componentId);
+    when(node.isLeaf()).thenReturn(true);
+    when(node.getPath()).thenReturn("/test/path");
+
+    // Set up asset deletion
+    when(contentFacet.assets()).thenReturn(fluentAssets);
+    when(fluentAssets.find(assetId))
+        .thenReturn(Optional.of(mock(org.sonatype.nexus.repository.content.fluent.FluentAsset.class)));
+    doReturn(true).when(deleteFolderService).checkDeleteAsset(any(), any(), any(), any(), any());
+
+    // Set up component with no remaining assets
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(fluentComponents.find(componentId)).thenReturn(Optional.of(component));
+    when(component.lastUpdated()).thenReturn(lastUpdated);
+    when(component.assets()).thenReturn(Collections.emptyList());
+
+    // Execute
+    deleteFolderService.processLeafDeletion(browseFacet, timestamp, contentFacet, contentMaintenance, true, repository,
+        node);
+
+    // Verify ordering using InOrder
+    org.mockito.InOrder inOrder = org.mockito.Mockito.inOrder(deleteFolderService, browseFacet);
+    inOrder.verify(deleteFolderService).checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
+    inOrder.verify(deleteFolderService)
+        .checkDeleteComponentWithAssets(timestamp, contentFacet, contentMaintenance, node);
+    inOrder.verify(browseFacet).deleteByNodeId(1L);
+  }
 }

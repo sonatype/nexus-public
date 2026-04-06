@@ -48,6 +48,12 @@ public class RaptureSettings
   @Min(0)
   private int statusIntervalAnonymous = DEFAULT_STATUS_INTERVAL_ANONYMOUS;
 
+  /**
+   * Session timeout in minutes. Set to 0 for sessions that never expire.
+   * Note: This UI setting can be overridden by nexus.jwt.expiry (for JWT mode)
+   * or shiro.globalSessionTimeout (for session mode) properties if explicitly set.
+   * Warning: Zero timeout (no expiration) may be a security risk.
+   */
   @Min(0)
   private int sessionTimeout = DEFAULT_SESSION_TIMEOUT;
 

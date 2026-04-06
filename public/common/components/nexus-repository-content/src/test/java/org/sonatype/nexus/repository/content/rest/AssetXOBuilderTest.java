@@ -31,6 +31,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
@@ -57,7 +58,9 @@ public class AssetXOBuilderTest
 
     when(repository.getName()).thenReturn("maven-releases");
     when(repository.getUrl()).thenReturn("http://localhost:8081/repository/maven-releases");
-    when(repository.getFormat()).thenReturn(new Format("maven2") { });
+    when(repository.getFormat()).thenReturn(new Format("maven2")
+    {
+    });
   }
 
   @Test
@@ -159,6 +162,91 @@ public class AssetXOBuilderTest
     AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
 
     assertThat(assetXO.getBlobStoreName(), is("test-blob"));
+  }
+
+  @Test
+  public void fromAsset_blobUpdatedPopulated() {
+    OffsetDateTime assetCreated = OffsetDateTime.now().minusHours(2);
+    OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
+
+    Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+
+    assertThat(assetXO.getBlobUpdated(), notNullValue());
+    assertThat(assetXO.getBlobUpdated().toInstant().toEpochMilli(),
+        is(blobCreated.toInstant().toEpochMilli()));
+  }
+
+  @Test
+  public void fromEagerAsset_blobUpdatedPopulated() {
+    OffsetDateTime assetCreated = OffsetDateTime.now().minusHours(2);
+    OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
+
+    Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+
+    assertThat(assetXO.getBlobUpdated(), notNullValue());
+    assertThat(assetXO.getBlobUpdated().toInstant().toEpochMilli(),
+        is(blobCreated.toInstant().toEpochMilli()));
+  }
+
+  @Test
+  public void fromAsset_blobRefPopulated() {
+    OffsetDateTime assetCreated = OffsetDateTime.now();
+    OffsetDateTime blobCreated = OffsetDateTime.now();
+    String blobRefString = "test-blob@14c05db1-4329-4733-a5de-2ee6fa5c46c2@2025-11-17T07:55";
+
+    Asset asset = anAssetWithTimestamps(assetCreated, blobCreated, blobRefString);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+
+    assertThat(assetXO.getBlobRef(), is(blobRefString));
+  }
+
+  @Test
+  public void fromEagerAsset_blobRefPopulated() {
+    OffsetDateTime assetCreated = OffsetDateTime.now();
+    OffsetDateTime blobCreated = OffsetDateTime.now();
+    String blobRefString = "test-blob@14c05db1-4329-4733-a5de-2ee6fa5c46c2@2025-11-17T07:55";
+
+    Asset asset = anAssetWithTimestamps(assetCreated, blobCreated, blobRefString);
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+
+    assertThat(assetXO.getBlobRef(), is(blobRefString));
+  }
+
+  @Test
+  public void fromAsset_lastVerifiedExtractedFromCache() {
+    OffsetDateTime assetCreated = OffsetDateTime.now();
+    OffsetDateTime blobCreated = OffsetDateTime.now();
+    long lastVerifiedTimestamp = System.currentTimeMillis();
+
+    AssetData asset = new AssetData();
+    asset.setAssetId(AN_ASSET_ID);
+    asset.setPath(ASSET_PATH);
+    asset.setCreated(assetCreated);
+
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setAssetBlobId(1);
+    assetBlob.setBlobCreated(blobCreated);
+    asset.setAssetBlob(assetBlob);
+
+    // Add cache attributes with last_verified
+    asset.attributes("cache").set("last_verified", lastVerifiedTimestamp);
+
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+
+    assertThat(assetXO.getLastVerified(), notNullValue());
+    assertThat(assetXO.getLastVerified().getTime(), is(lastVerifiedTimestamp));
+  }
+
+  @Test
+  public void fromAsset_lastVerifiedNullWhenNotPresent() {
+    Asset asset = anAsset();
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+
+    // Should not throw exception when cache.last_verified is not present
+    // This is normal for hosted repos
+    assertThat(assetXO.getLastVerified(), is(nullValue()));
   }
 
   private Asset anAsset() {

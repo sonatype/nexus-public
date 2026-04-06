@@ -121,7 +121,7 @@
     <result property="lastUpdated" column="last_updated"/>
     <result property="fromEagerQuery" column="from_eager_query"/>
     <association property="component" resultMap="ComponentDataResult" notNullColumn="component_id"/>
-    <association property="assetBlob" resultMap="AssetBlobResult"/>
+    <association property="assetBlob" resultMap="AssetBlobResult" notNullColumn="asset_blob_id"/>
   </resultMap>
 
   <resultMap id="ComponentDataResult" type="ComponentData">
@@ -296,7 +296,14 @@
   <select id="findByComponentIds" resultMap="eagerAssetResult" parameterType="java.util.Set">
     SELECT *
     FROM ${format}_asset A
-    INNER JOIN ${format}_asset_blob USING (asset_blob_id)
+    <choose>
+      <when test="includeNullBlobs">
+        LEFT JOIN ${format}_asset_blob USING (asset_blob_id)
+      </when>
+      <otherwise>
+        INNER JOIN ${format}_asset_blob USING (asset_blob_id)
+      </otherwise>
+    </choose>
     <if test="assetFilter != null">
       INNER JOIN (
       SELECT

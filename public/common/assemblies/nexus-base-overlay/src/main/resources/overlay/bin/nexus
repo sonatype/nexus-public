@@ -305,24 +305,129 @@ setupDebugOptions() {
     fi
 }
 
+validate_memory_value() {
+    local flag="$1"
+    local flag_name="$2"
+    
+    # Extract numeric value
+    local value=$(echo "${flag}" | grep -oE '[0-9]+')
+    
+    # Check if value was extracted
+    if [ "x${value}" = "x" ]; then
+        return 0
+    fi
+    
+    # Reject zero
+    if [ "${value}" -eq 0 ]; then
+        die "Invalid memory value: ${flag}. Memory cannot be zero."
+    fi
+    
+    # Reject values less than 256m (too small for Nexus)
+    local unit=$(echo "${flag}" | grep -oE '[kmgKMG]$' | tr '[:upper:]' '[:lower:]')
+    local value_in_mb=0
+    
+    case "${unit}" in
+        k) value_in_mb=$((value / 1024)) ;;
+        m) value_in_mb=${value} ;;
+        g) value_in_mb=$((value * 1024)) ;;
+        *) value_in_mb=${value} ;;  # No unit, assume MB
+    esac
+    
+    if [ "${value_in_mb}" -lt 256 ]; then
+        die "Invalid memory value: ${flag}. ${flag_name} must be at least 256m."
+    fi
+}
+
+convert_to_mb() {
+    local value=$(echo "$1" | grep -oE '[0-9]+')
+    local unit=$(echo "$1" | grep -oE '[kmgKMG]$' | tr '[:upper:]' '[:lower:]')
+    case "${unit}" in
+        k) echo $((value / 1024)) ;;
+        m) echo ${value} ;;
+        g) echo $((value * 1024)) ;;
+        *) echo ${value} ;;
+    esac
+}
+
 setupDefaults() {
     #
     # Set up some easily accessible MIN/MAX params for JVM mem usage
     #
     if [ "x${JAVA_MIN_MEM}" = "x" ]; then
-        JAVA_MIN_MEM=2703m
-        export JAVA_MIN_MEM
+        # Only set default if -Xms is not already in INSTALL4J_ADD_VM_PARAMS
+        if ! echo "${INSTALL4J_ADD_VM_PARAMS}" | grep -qE '(^|\s)-Xms[0-9]+[kmgKMG]?(\s|$)'; then
+            JAVA_MIN_MEM=2703m
+            export JAVA_MIN_MEM
+        fi
     fi
     if [ "x${JAVA_MAX_MEM}" = "x" ]; then
-        JAVA_MAX_MEM=2703m
-        export JAVA_MAX_MEM
+        # Only set default if -Xmx is not already in INSTALL4J_ADD_VM_PARAMS
+        if ! echo "${INSTALL4J_ADD_VM_PARAMS}" | grep -qE '(^|\s)-Xmx[0-9]+[kmgKMG]?(\s|$)'; then
+            JAVA_MAX_MEM=2703m
+            export JAVA_MAX_MEM
+        fi
     fi
-    if [ "x$DIRECT_MAX_MEM" = "x" ]; then
-        DIRECT_MAX_MEM=2703m
-        export DIRECT_MAX_MEM
+    if [ "x${DIRECT_MAX_MEM}" = "x" ]; then
+        # Only set default if -XX:MaxDirectMemorySize is not already in INSTALL4J_ADD_VM_PARAMS
+        if ! echo "${INSTALL4J_ADD_VM_PARAMS}" | grep -qE '(^|\s)-XX:MaxDirectMemorySize=[0-9]+[kmgKMG]?(\s|$)'; then
+            DIRECT_MAX_MEM=2703m
+            export DIRECT_MAX_MEM
+        fi
     fi
 
-    DEFAULT_JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} -XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile="${KARAF_LOG}/jvm.log" -XX:-OmitStackTraceInFastThrow "
+    # Validate memory consistency to avoid JVM startup failures
+    if [ "x${INSTALL4J_ADD_VM_PARAMS}" != "x" ]; then
+        XMS_VAL=$(echo "${INSTALL4J_ADD_VM_PARAMS}" | grep -oE '(^|\s)-Xms[0-9]+[kmgKMG]?(\s|$)' | head -1 | xargs)
+        XMX_VAL=$(echo "${INSTALL4J_ADD_VM_PARAMS}" | grep -oE '(^|\s)-Xmx[0-9]+[kmgKMG]?(\s|$)' | head -1 | xargs)
+        DIRECT_VAL=$(echo "${INSTALL4J_ADD_VM_PARAMS}" | grep -oE '(^|\s)-XX:MaxDirectMemorySize=[0-9]+[kmgKMG]?(\s|$)' | head -1 | xargs)
+
+        # Validate individual memory values
+        if [ "x${XMS_VAL}" != "x" ]; then
+            validate_memory_value "${XMS_VAL}" "-Xms"
+        fi
+        if [ "x${XMX_VAL}" != "x" ]; then
+            validate_memory_value "${XMX_VAL}" "-Xmx"
+        fi
+        if [ "x${DIRECT_VAL}" != "x" ]; then
+            validate_memory_value "${DIRECT_VAL}" "-XX:MaxDirectMemorySize"
+        fi
+
+        if [ "x${XMS_VAL}" != "x" ] && [ "x${XMX_VAL}" != "x" ]; then
+            XMS_MB=$(convert_to_mb "${XMS_VAL}")
+            XMX_MB=$(convert_to_mb "${XMX_VAL}")
+            if [ "${XMS_MB}" -gt "${XMX_MB}" ]; then
+                die "Invalid memory configuration: -Xms (${XMS_VAL} = ${XMS_MB}MB) exceeds -Xmx (${XMX_VAL} = ${XMX_MB}MB). JVM will fail to start."
+            fi
+            warn "Custom memory flags detected: ${XMS_VAL} and ${XMX_VAL}"
+        elif [ "x${XMS_VAL}" != "x" ] && [ "x${JAVA_MAX_MEM}" != "x" ]; then
+            XMS_MB=$(convert_to_mb "${XMS_VAL}")
+            XMX_MB=$(convert_to_mb "-Xmx${JAVA_MAX_MEM}")
+            if [ "${XMS_MB}" -gt "${XMX_MB}" ]; then
+                die "Invalid memory configuration: Custom -Xms (${XMS_VAL} = ${XMS_MB}MB) exceeds default -Xmx (${JAVA_MAX_MEM} = ${XMX_MB}MB). JVM will fail to start."
+            fi
+            warn "Custom -Xms detected (${XMS_VAL}) will be combined with default -Xmx (${JAVA_MAX_MEM})"
+        elif [ "x${XMX_VAL}" != "x" ] && [ "x${JAVA_MIN_MEM}" != "x" ]; then
+            XMS_MB=$(convert_to_mb "-Xms${JAVA_MIN_MEM}")
+            XMX_MB=$(convert_to_mb "${XMX_VAL}")
+            if [ "${XMS_MB}" -gt "${XMX_MB}" ]; then
+                die "Invalid memory configuration: Default -Xms (${JAVA_MIN_MEM} = ${XMS_MB}MB) exceeds custom -Xmx (${XMX_VAL} = ${XMX_MB}MB). JVM will fail to start."
+            fi
+            warn "Custom -Xmx detected (${XMX_VAL}) will be combined with default -Xms (${JAVA_MIN_MEM})"
+        fi
+    fi
+
+    # Build DEFAULT_JAVA_OPTS with only the memory flags that were set
+    DEFAULT_JAVA_OPTS=""
+    if [ "x${JAVA_MIN_MEM}" != "x" ]; then
+        DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS}-Xms${JAVA_MIN_MEM} "
+    fi
+    if [ "x${JAVA_MAX_MEM}" != "x" ]; then
+        DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS}-Xmx${JAVA_MAX_MEM} "
+    fi
+    if [ "x${DIRECT_MAX_MEM}" != "x" ]; then
+        DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS}-XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} "
+    fi
+    DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS}-XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile="${KARAF_LOG}/jvm.log" -XX:-OmitStackTraceInFastThrow "
     #Set the JVM_VENDOR specific JVM flags
     if [ "${JVM_VENDOR}" = "SUN" ]; then
         if [ "${darwin}" = "true" ] && [ "`ulimit -n`" -gt 10240 ]; then

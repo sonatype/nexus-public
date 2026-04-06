@@ -75,7 +75,7 @@ public class GlobalWebhookCapability
     @DefaultMessage("Event Types")
     String namesLabel();
 
-    @DefaultMessage("Event types which trigger this Webhook")
+    @DefaultMessage("Event types which trigger this Webhook.\n\nNote: The 'firewall_quarantine' event requires IQ Server and Repository Firewall to be configured.")
     String namesHelp();
 
     @DefaultMessage("URL")
@@ -113,7 +113,16 @@ public class GlobalWebhookCapability
 
   @Override
   public Condition activationCondition() {
-    return conditions().capabilities().passivateCapabilityDuringUpdate();
+    Condition baseCondition = conditions().capabilities().passivateCapabilityDuringUpdate();
+
+    // If firewall_quarantine webhook is selected, add condition to require Firewall capability
+    if (getConfig() != null && getConfig().names.contains("firewall_quarantine")) {
+      CapabilityType firewallType = capabilityType("firewall.audit");
+      Condition firewallCondition = conditions().capabilities().capabilityOfTypeActive(firewallType);
+      return conditions().logical().and(baseCondition, firewallCondition);
+    }
+
+    return baseCondition;
   }
 
   @Override

@@ -19,8 +19,9 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskState;
 
+import org.sonatype.nexus.testdb.DatabaseTest;
+
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -42,7 +43,7 @@ class UpdatingTasksTest
   /**
    * Updating a non cancelable task that is not running.
    */
-  @Test
+  @DatabaseTest
   void updateNonRunningNonCancelableTask() {
     TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID, taskScheduler.getScheduleFactory().manual());
     TaskConfiguration taskConfiguration = taskInfo.getConfiguration();
@@ -77,7 +78,7 @@ class UpdatingTasksTest
   /**
    * Updating a non cancelable task that is running.
    */
-  @Test
+  @DatabaseTest
   void updateRunningNonCancelableTask() throws Exception {
     TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID, taskScheduler.getScheduleFactory().manual());
     TaskConfiguration taskConfiguration = taskInfo.getConfiguration();
@@ -129,7 +130,7 @@ class UpdatingTasksTest
     assertRunningTaskCount(0);
   }
 
-  @Test
+  @DatabaseTest
   void taskDisableEnableResumesTask() throws Exception {
     // create the task
     final TaskConfiguration taskConfiguration =

@@ -17,6 +17,7 @@
 import HistoricalUsageStrings from "./HistoricalUsageStrings";
 import CleanupPoliciesStrings from "./admin/CleanupPoliciesStrings";
 import CapabilitiesStrings from "./admin/CapabilitiesStrings";
+import TasksStrings from "./admin/TasksStrings";
 import LoginPageStrings from "./LoginPageStrings";
 
 /**
@@ -24,8 +25,10 @@ import LoginPageStrings from "./LoginPageStrings";
  */
 export default {
   SETTINGS: {
+    BACK_BUTTON_LABEL: 'Back',
     CANCEL_BUTTON_LABEL: 'Cancel',
     DISCARD_BUTTON_LABEL: 'Discard',
+    NEXT_BUTTON_LABEL: 'Next',
     SAVE_BUTTON_LABEL: 'Save',
     DELETE_BUTTON_LABEL: 'Delete',
 
@@ -119,5 +122,6 @@ export default {
   ...HistoricalUsageStrings,
   ...CleanupPoliciesStrings,
   ...CapabilitiesStrings,
+  ...TasksStrings,
   ...LoginPageStrings
 };

@@ -35,7 +35,7 @@ public abstract class SingleMetadataMergingGroupHandlerSupport
       final Map<Repository, Response> successfulResponses,
       final Optional<String> optEtag) throws IOException
   {
-    Optional<Content> result = merge(successfulResponses.values()).map(Content::new);
+    Optional<Content> result = merge(context, successfulResponses.values()).map(Content::new);
 
     if (result.isPresent() && optEtag.isPresent()) {
       result.map(Content::getAttributes)
@@ -53,10 +53,23 @@ public abstract class SingleMetadataMergingGroupHandlerSupport
   /**
    * Consume & merge the responses provided to generate the merged metadata.
    *
+   * @param context the context of the request
    * @param successfulResponses a list of successful responses to be merged
    * @return a constructed payload, implementors should not persist the value
    */
-  protected abstract Optional<Payload> merge(Collection<Response> successfulResponses);
+  protected Optional<Payload> merge(final Context context, final Collection<Response> successfulResponses) {
+    return merge(successfulResponses);
+  }
+
+  /**
+   * Consume & merge the responses provided to generate the merged metadata.
+   *
+   * @param successfulResponses a list of successful responses to be merged
+   * @return a constructed payload, implementors should not persist the value
+   */
+  protected Optional<Payload> merge(final Collection<Response> successfulResponses) {
+    return Optional.empty();
+  }
 
   /**
    * Persist the content merged for the context

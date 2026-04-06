@@ -98,9 +98,9 @@ public class ContentSelectorsApiResource
   @RequiresPermissions("nexus:selectors:create")
   public void createContentSelector(@Valid final ContentSelectorApiCreateRequest request) {
     selectorFactory.validateSelector(CselSelector.TYPE, request.getExpression());
-    selectorManager.create(request.getName(), CselSelector.TYPE, request.getDescription(),
-        singletonMap(EXPRESSION, request.getExpression()));
-    SelectorConfiguration configuration = findConfigurationByNameOrThrowNotFound(request.getName());
+    SelectorConfiguration configuration =
+        selectorManager.create(request.getName(), CselSelector.TYPE, request.getDescription(),
+            singletonMap(EXPRESSION, request.getExpression()));
     eventManager.post(new ContentSelectorCreatedEvent(configuration));
 
   }

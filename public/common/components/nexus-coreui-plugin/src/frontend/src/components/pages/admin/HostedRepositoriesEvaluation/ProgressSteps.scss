@@ -1,0 +1,63 @@
+.nxrm-progress-steps {
+  margin-bottom: 24px;
+
+  .progress-bar-container {
+    position: relative;
+    margin-bottom: 8px;
+  }
+
+  .progress-segments {
+    display: flex;
+    gap: 0;
+    height: 20px;
+  }
+
+  .progress-segment {
+    flex: 1;
+    height: 100%;
+    background-color: var(--nx-color-border);
+    border-radius: 0;
+    transition: background-color 0.3s ease;
+
+    &:first-child {
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
+    }
+
+    &:last-child {
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+
+    &.active {
+      background-color: var(--nx-color-progress-fill);
+    }
+  }
+
+  .progress-steps-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  .progress-step {
+    flex: 1;
+    text-align: center;
+    cursor: default;
+    padding: 4px 0;
+    position: relative;
+
+    .step-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #666;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    &.active .step-label,
+    &.completed .step-label {
+      color: #0091da;
+    }
+  }
+}

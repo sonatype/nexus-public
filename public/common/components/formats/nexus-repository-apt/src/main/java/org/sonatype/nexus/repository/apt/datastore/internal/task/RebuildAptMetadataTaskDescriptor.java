@@ -19,6 +19,7 @@ import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
@@ -36,6 +37,8 @@ public class RebuildAptMetadataTaskDescriptor
 
   public static final String APT_METADATA_FULL_REBUILD = "rebuildAptMetadataFullRebuild";
 
+  public static final String APT_PROXY_RESET_METADATA = "resetProxyMetadata";
+
   public RebuildAptMetadataTaskDescriptor() {
     super(TYPE_ID,
         RebuildAptMetadataTask.class,
@@ -45,14 +48,21 @@ public class RebuildAptMetadataTaskDescriptor
         new RepositoryCombobox(
             REPOSITORY_NAME_FIELD_ID,
             "Repository",
-            "Select the Apt repository to populate table",
+            "Select the Apt repository to rebuild metadata",
             true).includingAnyOfFormats(AptFormat.NAME)
-                .includingAnyOfTypes(HostedType.NAME)
-                .includeAnEntryForAllRepositories(),
+                .includingAnyOfTypes(HostedType.NAME, ProxyType.NAME)
+                .includeAnEntryForAllRepositories()
+                .withListener("select", "updateAptRebuildCheckboxVisibility")
+                .withListener("afterrender", "updateAptRebuildCheckboxVisibility"),
         new CheckboxFormField(
             APT_METADATA_FULL_REBUILD,
-            "Full rebuild",
-            "Repopulate apt_key_value table and execute full rebuild of metadata",
+            "Full rebuild (hosted only)",
+            "Repopulate apt_key_value table and execute full rebuild of metadata. Only applies to hosted repositories.",
+            OPTIONAL),
+        new CheckboxFormField(
+            APT_PROXY_RESET_METADATA,
+            "Reset proxy metadata",
+            "Clear all generated metadata before rebuild. Use this after changing the upstream URL. Only applies to proxy repositories.",
             OPTIONAL));
   }
 }

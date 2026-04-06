@@ -122,9 +122,9 @@ public interface AssetBlobDAO
    * Deletes batch of asset blobs from the content data store.
    *
    * @param blobRefIds the array of String with blobRefs
-   * @return {@code true} if the asset blob was deleted
+   * @return number of asset blobs deleted from database
    */
-  boolean deleteAssetBlobBatch(@Param("blobRefIds") String[] blobRefIds);
+  int deleteAssetBlobBatch(@Param("blobRefIds") String[] blobRefIds);
 
   /**
    * Deletes an asset blob along with asset.

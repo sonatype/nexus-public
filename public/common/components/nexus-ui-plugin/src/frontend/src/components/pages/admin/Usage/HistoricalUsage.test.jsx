@@ -22,10 +22,6 @@ jest.mock('./UsageInsightsChart', () => ({
   UsageInsightsChart: () => <div data-testid="usage-insights-chart">Usage Insights Chart</div>
 }));
 
-jest.mock('axios', () => ({
-  get: jest.fn()
-}));
-
 describe('Licensing Historical Usage', () => {
   const requiredColumns = [
     historicalUsageColumns.metricDateMonth,
@@ -37,14 +33,25 @@ describe('Licensing Historical Usage', () => {
     historicalUsageColumns.peakStorage
   ];
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    Axios.get.mockResolvedValue({ data: [] });
-  });
-
   async function renderView() {
     return render(<HistoricalUsage columns={requiredColumns} />);
   }
+
+  it('renders the alert about data update frequency', async () => {
+    jest.spyOn(ExtJS, 'useState').mockReturnValue(true);
+
+    await renderView();
+
+    expect(screen.getByText('Storage usage metrics may take up to 72 hours to update. Recent repository activity, such as publishing, downloading, or deleting components, may not appear immediately.')).toBeInTheDocument();
+  });
+
+  it('does not render the alert about data update frequency when state is false', async () => {
+    jest.spyOn(ExtJS, 'useState').mockReturnValue(false);
+
+    await renderView();
+
+    expect(screen.queryByText('Storage usage metrics may take up to 72 hours to update. Recent repository activity, such as publishing, downloading, or deleting components, may not appear immediately.')).not.toBeInTheDocument();
+  });
 
   it('renders the title and description', async () => {
     await renderView();
@@ -65,10 +72,7 @@ describe('Licensing Historical Usage', () => {
     expect(screen.getByText('Total Egress')).toBeInTheDocument();
   });
 
-  // TODO: NEXUS-48660 - This test has a pre-existing issue with XState machine mocking
-  // The mock data doesn't properly flow through the state machine to render in the component
-  // This is unrelated to the Tasks migration work
-  it.skip('renders data rows correctly', async () => {
+  it('renders data rows correctly', async () => {
     const mockData = [
       {
         metricDate: '2024-11-01T00:00:00.000',
@@ -81,7 +85,7 @@ describe('Licensing Historical Usage', () => {
       }
     ];
 
-    Axios.get.mockResolvedValue({ data: mockData });
+    jest.spyOn(Axios, 'get').mockResolvedValue({ data: mockData });
 
     await renderView();
 
@@ -109,7 +113,7 @@ describe('Licensing Historical Usage', () => {
       }
     ];
 
-    Axios.get.mockResolvedValue({ data: mockData });
+    jest.spyOn(Axios, 'get').mockResolvedValue({ data: mockData });
 
     const { container } = await renderView();
 
@@ -131,7 +135,7 @@ describe('Licensing Historical Usage', () => {
       }
     ];
 
-    Axios.get.mockResolvedValue({ data: mockData });
+    jest.spyOn(Axios, 'get').mockResolvedValue({ data: mockData });
 
     await renderView();
     await waitFor(() => {

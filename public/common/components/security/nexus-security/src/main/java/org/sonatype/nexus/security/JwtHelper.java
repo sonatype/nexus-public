@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.http.Cookie;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -69,7 +70,7 @@ public class JwtHelper
 
   public static final String ID_TOKEN = "id_token";
 
-  private final int expirySeconds;
+  private final AtomicInteger expirySeconds;
 
   private final String contextPath;
 
@@ -91,7 +92,7 @@ public class JwtHelper
       @Value(NXSESSIONID_SECURE_COOKIE_NAMED_VALUE) final boolean cookieSecure)
   {
     checkState(expirySeconds >= 0, "JWT expiration period should be positive");
-    this.expirySeconds = expirySeconds;
+    this.expirySeconds = new AtomicInteger(expirySeconds);
     this.contextPath = checkNotNull(contextPath);
     this.secretStoreProvider = checkNotNull(secretStoreProvider);
     this.cookieSecure = cookieSecure;
@@ -162,7 +163,22 @@ public class JwtHelper
    * Gets expiry in seconds
    */
   public int getExpirySeconds() {
-    return expirySeconds;
+    return expirySeconds.get();
+  }
+
+  /**
+   * Updates the JWT expiry duration dynamically.
+   * Thread-safe for concurrent access.
+   *
+   * Note: Zero is not allowed for JWT tokens (they must have an expiry).
+   * Use a very large value (e.g., 1 year) to simulate "never expires".
+   *
+   * @param expirySeconds the new expiry duration in seconds (must be positive)
+   */
+  public synchronized void setExpirySeconds(final int expirySeconds) {
+    checkState(expirySeconds > 0, "JWT expiration period must be positive (zero not allowed for JWT tokens)");
+    log.info("Updating JWT expiry from {} to {} seconds", this.expirySeconds.get(), expirySeconds);
+    this.expirySeconds.set(expirySeconds);
   }
 
   /**
@@ -199,7 +215,7 @@ public class JwtHelper
 
   private Cookie createCookie(final String jwt, final boolean secureRequest) {
     Cookie cookie = new Cookie(JWT_COOKIE_NAME, jwt);
-    cookie.setMaxAge(this.expirySeconds);
+    cookie.setMaxAge(this.expirySeconds.get());
     cookie.setPath(contextPath);
     cookie.setHttpOnly(true);
     cookie.setSecure(cookieSecure && secureRequest);
@@ -208,7 +224,7 @@ public class JwtHelper
   }
 
   private Date getExpiresAt(final Date issuedAt) {
-    return new Date(issuedAt.getTime() + TimeUnit.SECONDS.toMillis(this.expirySeconds));
+    return new Date(issuedAt.getTime() + TimeUnit.SECONDS.toMillis(this.expirySeconds.get()));
   }
 
   private String loadSecret() {

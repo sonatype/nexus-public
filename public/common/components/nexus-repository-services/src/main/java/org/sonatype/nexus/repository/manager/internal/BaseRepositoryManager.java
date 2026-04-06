@@ -27,7 +27,6 @@ import javax.validation.ConstraintViolation;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.QualifierUtil;
-import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -88,8 +87,6 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
   public static final String CLEANUP_NAME_KEY = "policyName";
 
-  protected final FreezeService freezeService;
-
   protected final EventManager eventManager;
 
   protected final ConfigurationStore store;
@@ -124,7 +121,6 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
       final List<Recipe> recipesList,
       final RepositoryAdminSecurityContributor securityContributor,
       final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
-      final FreezeService freezeService,
       final boolean skipDefaultRepositories,
       final BSM blobStoreManager,
       final GroupMemberMappingCache groupMemberMappingCache,
@@ -138,7 +134,6 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     this.recipes = QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesList));
     this.securityContributor = checkNotNull(securityContributor);
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
-    this.freezeService = checkNotNull(freezeService);
     this.skipDefaultRepositories = skipDefaultRepositories;
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.groupMemberMappingCache = checkNotNull(groupMemberMappingCache);
@@ -482,7 +477,6 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
-    freezeService.checkWritable("Unable to delete repository when database is frozen.");
 
     log.info("Deleting repository: {}", name);
 

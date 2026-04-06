@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.internal.web;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -26,7 +27,11 @@ import org.sonatype.nexus.internal.webresources.WebResourceServiceImpl;
 import org.sonatype.nexus.internal.webresources.WebResourceServlet;
 import org.sonatype.nexus.mime.internal.DefaultMimeSupport;
 import org.sonatype.nexus.servlet.XFrameOptions;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension.CaptureLogsFor;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension.TestLogAccessor;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -36,30 +41,39 @@ import org.apache.velocity.app.VelocityEngine;
 import org.eclipse.jetty.ee8.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
+import org.eclipse.jetty.io.EofException;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.event.Level;
 
 import static org.eclipse.jetty.ee8.servlet.ErrorPageErrorHandler.GLOBAL_ERROR_PAGE;
 import static org.eclipse.jetty.http.HttpStatus.Code.NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link ErrorPageServlet}
  *
  */
-public class ErrorPageServletTest
-    extends TestSupport
+@ExtendWith(LoggingExtension.class)
+class ErrorPageServletTest
+    extends Test5Support
 {
-  Server server;
+  @CaptureLogsFor(value = ErrorPageServlet.class, level = Level.TRACE)
+  TestLogAccessor log;
 
-  int port;
+  static Server server;
 
-  @Before
-  public void setUp() throws Exception {
+  static int port;
+
+  @BeforeAll
+  static void setUp() throws Exception {
     TemplateHelper templateHelper = new TemplateHelperImpl(new ApplicationVersionSupport()
     {
       @Override
@@ -91,8 +105,8 @@ public class ErrorPageServletTest
     port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterAll
+  static void tearDown() throws Exception {
     if (server != null) {
       server.stop();
       server = null;
@@ -100,8 +114,8 @@ public class ErrorPageServletTest
   }
 
   @Test
-  public void errorCodeIsMaintained() throws Exception {
-    String request = "http://127.0.0.1:" + port + "/bad/403/You%20can%27t%20see%20this";
+  void errorCodeIsMaintained() throws Exception {
+    String request = resolve("/bad/403/You%20can%27t%20see%20this");
 
     try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
       try (CloseableHttpResponse response = client.execute(new HttpGet(request))) {
@@ -110,5 +124,28 @@ public class ErrorPageServletTest
         assertThat(statusLine.getStatusCode(), is(NOT_FOUND.getCode()));
       }
     }
+  }
+
+  @Test
+  void testAttachCause() throws Exception {
+    ErrorPageServlet.attachCause(mock(), new EofException());
+    ErrorPageServlet.attachCause(mock(), new IllegalStateException(new EofException()));
+
+    Exception exceptionToThrow = new IOException();
+    exceptionToThrow.addSuppressed(new EofException());
+    ErrorPageServlet.attachCause(mock(), exceptionToThrow);
+
+    List<String> logs = log.logs()
+        .stream()
+        .filter(log -> log.getLevel() == ch.qos.logback.classic.Level.TRACE)
+        .map(ILoggingEvent::getMessage)
+        .toList();
+
+    assertThat(logs,
+        contains("Client terminated connection", "Client terminated connection", "Client terminated connection"));
+  }
+
+  private String resolve(final String path) {
+    return "http://127.0.0.1:" + port + path;
   }
 }

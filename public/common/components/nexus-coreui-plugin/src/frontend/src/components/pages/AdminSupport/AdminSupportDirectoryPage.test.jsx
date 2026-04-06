@@ -12,7 +12,7 @@
  */
 
 
-import { runLinkNotVisibleTest, runLinkVisiblityTest } from '../../../testUtils/directoryPageTestUtils';
+import { runLinkNotVisibleTest, runLinkVisiblityTest, runDirectoryPage404Test } from '../../../testUtils/directoryPageTestUtils';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 import UIStrings from '../../../constants/UIStrings';
 import givenUserLoggedIn from '../../../testUtils/givenUserLoggedIn';
@@ -32,6 +32,12 @@ describe('AdminSupportDirectoryPage', () => {
     givenExtJSState(defaultExtState());
   });
 
+  it('redirects to 404 when user has no permissions for any child routes', async () => {
+    givenPermissions({});
+
+    await runDirectoryPage404Test(ROUTE_NAMES.ADMIN.SUPPORT.DIRECTORY);
+  });
+
   describe('Loging Link', () => {
     it('shows given permissions', async () => {
       givenPermissions({ [Permissions.LOGGING.READ]: true });
@@ -39,7 +45,10 @@ describe('AdminSupportDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.LOGGING.READ]: false });
+      givenPermissions({
+        [Permissions.LOGGING.READ]: false,
+        [Permissions.ATLAS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSupportPage(UIStrings.LOGGING.MENU);
     });
   });
@@ -52,7 +61,10 @@ describe('AdminSupportDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.LOGGING.READ]: false });
+      givenPermissions({
+        [Permissions.LOGGING.READ]: false,
+        [Permissions.ATLAS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSupportPage(UIStrings.LOGS.MENU);
     });
   });
@@ -64,7 +76,10 @@ describe('AdminSupportDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.METRICS.READ]: false });
+      givenPermissions({
+        [Permissions.METRICS.READ]: false,
+        [Permissions.ATLAS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSupportPage(UIStrings.METRIC_HEALTH.MENU);
     });
   });
@@ -80,7 +95,10 @@ describe('AdminSupportDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.ATLAS.CREATE]: false });
+      givenPermissions({
+        [Permissions.ATLAS.CREATE]: false,
+        [Permissions.ATLAS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSupportPage(UIStrings.SUPPORT_REQUEST.MENU);
     });
   });
@@ -92,7 +110,10 @@ describe('AdminSupportDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.ATLAS.READ]:  false })
+      givenPermissions({
+        [Permissions.ATLAS.READ]:  false,
+        [Permissions.LOGGING.READ]: true  // Grant at least one permission so page renders
+      })
       await runLinkNotVisibleTestForSupportPage(UIStrings.SUPPORT_ZIP.MENU);
     });
   });
@@ -104,7 +125,10 @@ describe('AdminSupportDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.ATLAS.READ]:  false });
+      givenPermissions({
+        [Permissions.ATLAS.READ]:  false,
+        [Permissions.LOGGING.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSupportPage(UIStrings.SYSTEM_INFORMATION.MENU);
     });
   });

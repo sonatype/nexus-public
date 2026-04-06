@@ -33,6 +33,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.common.time.DateHelper;
+import org.sonatype.nexus.repository.cache.CacheAttributeUtils;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.security.AssetPermissionChecker;
 import org.sonatype.nexus.repository.content.store.AssetStore;
@@ -198,12 +199,20 @@ public class SqlSearchService
       long startTime = System.currentTimeMillis();
       long endTime = startTime + CALM_TIMEOUT_MS;
 
+      // Minimum wait time: at least one flush interval to ensure the periodic flush runs
+      // This prevents returning immediately when pendingRequests is empty before events are queued
+      long minEndTime = startTime + sqlSearchEventHandler.getMinimumWaitTimeMs();
+
       while (System.currentTimeMillis() < endTime) {
-        if (sqlSearchEventHandler.isCalmPeriod()) {
+        boolean isCalm = sqlSearchEventHandler.isCalmPeriod();
+        boolean minWaitComplete = System.currentTimeMillis() >= minEndTime;
+
+        if (isCalm && minWaitComplete) {
           long elapsed = System.currentTimeMillis() - startTime;
           log.debug("Search indexing completed after {}ms", elapsed);
           return;
         }
+
         Thread.sleep(CALM_POLL_INTERVAL_MS);
       }
 
@@ -341,6 +350,15 @@ public class SqlSearchService
       sortDirection = sqlSearchSortUtil.getSortDirection(sortField).orElse(null);
     }
 
+    if (searchRequest.isDistinctNameAndNamespace()) {
+      String column = sortColumnName.orElse(null);
+      if ("cs.namespace".equals(column) || "cs.search_component_name".equals(column)) {
+        // Ordering is already applied via DISTINCT ON columns, no need to duplicate in ORDER BY.
+        // isDistinctNameAndNamespace is only used on npm search which not accept custom sortDirection
+        return new OrderBy(null, null);
+      }
+    }
+
     return new OrderBy(sortColumnName.orElse(null), sortDirection);
   }
 
@@ -388,9 +406,11 @@ public class SqlSearchService
       Set<Integer> componentIds = new HashSet<>(formatComponentIds.getValue());
       final Optional<SqlSearchQueryCondition> assetCondition = Optional.ofNullable(queryCondition)
           .flatMap(SqlSearchQueryConditionGroup::getAssetCondition);
+
       componentIdToAsset.putAll(assetStore.findByComponentIds(componentIds,
           assetCondition.map(SqlSearchQueryCondition::getSqlFilter).orElse(null),
-          assetCondition.map(SqlSearchQueryCondition::getParameters).orElse(null))
+          assetCondition.map(SqlSearchQueryCondition::getParameters).orElse(null),
+          shouldIncludeNullBlobs(formatComponentIds.getKey()))
           .stream()
           .collect(
               groupingBy(asset -> getFormatComponentKey(formatComponentIds.getKey(),
@@ -398,6 +418,14 @@ public class SqlSearchService
     }
 
     return componentIdToAsset;
+  }
+
+  /**
+   * Auto-enable includeNullBlobs for NuGet format to handle V2 metadata-only assets
+   * NuGet V2 proxy creates asset records without associated blobs when caching metadata from remote feeds
+   */
+  private boolean shouldIncludeNullBlobs(String format) {
+    return "nuget".equalsIgnoreCase(format);
   }
 
   private ComponentSearchResult buildComponentSearchResult(final SearchResult searchResult) {
@@ -435,12 +463,20 @@ public class SqlSearchService
       searchResult.setContentType(blob.contentType());
       searchResult.setChecksum(blob.checksums());
       searchResult.setFileSize(blob.blobSize());
+      searchResult.setBlobUpdated(DateHelper.toDate(blob.blobCreated()));
+      if (blob.blobRef() != null) {
+        searchResult.setBlobRef(blob.blobRef().toString());
+      }
       blob.createdBy().ifPresent(searchResult::setUploader);
       blob.createdByIp().ifPresent(searchResult::setUploaderIp);
     });
     asset.lastDownloaded()
         .map(DateHelper::toDate)
         .ifPresent(searchResult::setLastDownloaded);
+
+    // Extract lastVerified from cache attributes (only for proxy/group repos)
+    CacheAttributeUtils.extractLastVerifiedAsOptional(asset.attributes().backing())
+        .ifPresent(searchResult::setLastVerified);
 
     return searchResult;
   }

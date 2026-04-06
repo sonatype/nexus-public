@@ -38,7 +38,6 @@ import IqServerStrings from './pages/admin/IqServerStrings';
 import ApiStrings from './pages/admin/system/ApiStrings';
 import ProprietaryRepositoriesStrings from './pages/admin/repository/ProprietaryRepositoriesStrings';
 import HttpStrings from './pages/admin/system/HttpStrings';
-import TasksStrings from './pages/admin/system/TasksStrings';
 import AtlassianCrowdStrings from './pages/admin/security/AtlassianCrowdStrings';
 import SamlStrings from './pages/admin/security/SamlStrings';
 import DataStoreStrings from './pages/admin/repository/DataStoreStrings';
@@ -114,7 +113,6 @@ export default {
   ...ApiStrings,
   ...EmailServerStrings,
   ...HttpStrings,
-  ...TasksStrings,
   ...LicensingStrings,
   ...NodesStrings,
   ...SystemInformationStrings,

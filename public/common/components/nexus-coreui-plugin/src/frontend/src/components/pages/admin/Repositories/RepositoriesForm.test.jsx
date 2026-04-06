@@ -1129,6 +1129,10 @@ describe('RepositoriesForm', () => {
           distribution: 'bionic',
           flat: true,
           enforceDistribution: false
+        },
+        aptSigning: {
+          keypair: null,
+          passphrase: null
         }
       };
 

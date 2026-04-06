@@ -16,8 +16,6 @@ import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.plugin.Invocation;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * MyBatis {@link Interceptor} that wraps any new {@link Executor} with {@link EntityExecutor}.
  *
@@ -26,16 +24,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 final class EntityInterceptor
     implements Interceptor
 {
-  private final FrozenChecker frozenChecker;
-
-  public EntityInterceptor(final FrozenChecker frozenChecker) {
-    this.frozenChecker = checkNotNull(frozenChecker);
-  }
-
   @Override
   public Object plugin(final Object delegate) {
     if (delegate instanceof Executor) {
-      return new EntityExecutor((Executor) delegate, frozenChecker);
+      return new EntityExecutor((Executor) delegate);
     }
     return delegate;
   }

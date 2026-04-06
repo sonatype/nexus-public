@@ -13,23 +13,15 @@
 package org.sonatype.nexus.internal.metrics;
 
 import java.util.Map;
-import java.util.Optional;
-
-import jakarta.inject.Provider;
-
-import org.sonatype.nexus.common.app.FreezeRequest;
-import org.sonatype.nexus.common.app.FreezeService;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricSet;
 import com.google.common.collect.ImmutableMap;
-import org.joda.time.DateTime;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * {@link Metric} providing information about the database readonly (frozen) status.
+ * Since freeze functionality has been removed, these metrics always return default values.
  *
  * @since 3.6
  */
@@ -38,42 +30,15 @@ public class ReadOnlyMetricSet
 {
   private final Map<String, Metric> metrics;
 
-  public ReadOnlyMetricSet(final Provider<FreezeService> freezeServiceProvider) {
-    checkNotNull(freezeServiceProvider);
+  public ReadOnlyMetricSet() {
     this.metrics = ImmutableMap.of(
-        "enabled", enabled(freezeServiceProvider),
-        "pending", pending(freezeServiceProvider),
-        "freezeTime", freezeTime(freezeServiceProvider));
+        "enabled", (Gauge<Boolean>) () -> false,
+        "pending", (Gauge<Integer>) () -> 0,
+        "freezeTime", (Gauge<Long>) () -> 0L);
   }
 
   @Override
   public Map<String, Metric> getMetrics() {
     return metrics;
-  }
-
-  private Metric enabled(final Provider<FreezeService> freezeServiceProvider) {
-    return (Gauge<Boolean>) () -> Optional.ofNullable(freezeServiceProvider.get())
-        .map(FreezeService::isFrozen)
-        .orElse(false);
-  }
-
-  private Metric pending(final Provider<FreezeService> freezeServiceProvider) {
-    return (Gauge<Integer>) () -> Optional.ofNullable(freezeServiceProvider.get())
-        .map(freezeService -> freezeService.currentFreezeRequests().size())
-        .orElse(0);
-  }
-
-  private Metric freezeTime(final Provider<FreezeService> freezeServiceProvider) {
-    return (Gauge<Long>) () -> Optional.ofNullable(freezeServiceProvider.get())
-        .map(freezeService -> {
-          Long val = freezeService.currentFreezeRequests()
-              .stream()
-              .map(FreezeRequest::frozenAt)
-              .min(DateTime::compareTo)
-              .map(DateTime::getMillis)
-              .orElse(0L);
-          return val;
-        })
-        .orElse(0L);
   }
 }

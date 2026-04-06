@@ -15,6 +15,7 @@ package org.sonatype.nexus.rapture.internal.security;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.Optional;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -52,6 +53,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.NXSESSIONID_SECURE_COOK
 import static org.sonatype.nexus.rapture.internal.security.SessionServlet.SESSION_MP;
 import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 import static org.sonatype.nexus.security.JwtHelper.REALM;
+import static org.sonatype.nexus.security.JwtHelper.USER;
 import static org.sonatype.nexus.security.JwtHelper.USER_SESSION_ID;
 import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 
@@ -128,7 +130,15 @@ public class JwtServlet
       final HttpServletResponse response) throws ServletException, IOException
   {
     Subject subject = SecurityUtils.getSubject();
-    String username = subject.getPrincipal().toString();
+    Object principal = subject.getPrincipal();
+
+    if (principal == null) {
+      log.warn("Subject principal is null during logout (likely OIDC flow), attempting JWT-based cleanup");
+      handleNullPrincipalLogout(request, response);
+      return;
+    }
+
+    String username = principal.toString();
     log.debug("Deleting token for user: {}", username);
 
     // Extract and revoke the JWT session before logging out
@@ -142,7 +152,7 @@ public class JwtServlet
     checkState(!subject.isAuthenticated());
     checkState(!subject.isRemembered());
 
-    Cookie cookie = new Cookie(JWT_COOKIE_NAME, "null");
+    Cookie cookie = new Cookie(JWT_COOKIE_NAME, "");
     cookie.setPath(contextPath);
     cookie.setMaxAge(0);
     // see JwtHelper#createCookie
@@ -184,8 +194,13 @@ public class JwtServlet
         if (!userSessionIdClaim.isNull() && !realmClaim.isNull()) {
           String userSessionId = userSessionIdClaim.asString();
           String userSource = realmClaim.asString();
+          Date expiresAtDate = decodedJwt.getExpiresAt();
+          if (expiresAtDate == null) {
+            log.warn("JWT token for user {} does not have an expiration claim", username);
+            return;
+          }
           OffsetDateTime expiresAt = OffsetDateTime.ofInstant(
-              decodedJwt.getExpiresAt().toInstant(),
+              expiresAtDate.toInstant(),
               ZoneId.systemDefault());
 
           jwtSessionRevocationService.revokeSession(userSessionId, username, userSource, expiresAt);
@@ -205,6 +220,89 @@ public class JwtServlet
     }
     else {
       log.debug("No JWT cookie found during logout for user {}", username);
+    }
+  }
+
+  /**
+   * Handle logout when Shiro principal is null (e.g., after OIDC logout filter).
+   * Extracts user information from JWT cookie and performs cleanup.
+   */
+  private void handleNullPrincipalLogout(
+      final HttpServletRequest request,
+      final HttpServletResponse response)
+  {
+    // Attempt to logout Shiro session if it exists (may already be logged out by OIDC filter)
+    try {
+      Subject subject = SecurityUtils.getSubject();
+      if (subject != null) {
+        subject.logout();
+      }
+    }
+    catch (Exception e) {
+      log.debug("Could not logout Shiro subject (likely already logged out by OIDC filter): {}", e.getMessage());
+    }
+    // Still revoke the JWT session using data from the cookie itself
+    revokeJwtSessionFromCookie(request);
+
+    // Still clear the cookie on the client
+    Cookie cookie = new Cookie(JWT_COOKIE_NAME, "");
+    cookie.setPath(contextPath);
+    cookie.setMaxAge(0);
+    cookie.setSecure(request.isSecure() && cookieSecure);
+    response.addCookie(cookie);
+
+    response.setStatus(SC_NO_CONTENT);
+    response.setHeader(X_FRAME_OPTIONS, DENY);
+  }
+
+  /**
+   * Revoke JWT session using data from the JWT cookie itself.
+   * This is used when the Shiro principal is null (e.g., after OIDC logout).
+   */
+  private void revokeJwtSessionFromCookie(final HttpServletRequest request) {
+    if (jwtHelper == null || jwtSessionRevocationService == null) {
+      return;
+    }
+
+    Cookie[] cookies = request.getCookies();
+    if (cookies == null) {
+      return;
+    }
+
+    Optional<String> jwtToken = stream(cookies)
+        .filter(cookie -> cookie.getName().equals(JWT_COOKIE_NAME))
+        .map(Cookie::getValue)
+        .filter(value -> !Strings2.isEmpty(value))
+        .findFirst();
+
+    if (jwtToken.isPresent()) {
+      try {
+        DecodedJWT decodedJwt = jwtHelper.verifyJwt(jwtToken.get());
+        Claim userSessionIdClaim = decodedJwt.getClaim(USER_SESSION_ID);
+        Claim realmClaim = decodedJwt.getClaim(REALM);
+        Claim userClaim = decodedJwt.getClaim(USER);
+
+        if (!userSessionIdClaim.isNull() && !realmClaim.isNull() && !userClaim.isNull()) {
+          String userSessionId = userSessionIdClaim.asString();
+          String username = userClaim.asString();
+          String userSource = realmClaim.asString();
+          Date expiresAtDate = decodedJwt.getExpiresAt();
+          if (expiresAtDate == null) {
+            log.warn("JWT token does not have an expiration claim, skipping revocation during null-principal logout");
+            return;
+          }
+          OffsetDateTime expiresAt = OffsetDateTime.ofInstant(
+              expiresAtDate.toInstant(), ZoneId.systemDefault());
+
+          jwtSessionRevocationService.revokeSession(userSessionId, username, userSource, expiresAt);
+          log.debug("JWT session revoked during null-principal logout: username={}, sessionId={}",
+              username, userSessionId);
+        }
+      }
+      catch (Exception e) {
+        log.warn("Could not verify JWT during null-principal logout: {}. Cookie will still be cleared.",
+            e.getMessage());
+      }
     }
   }
 }

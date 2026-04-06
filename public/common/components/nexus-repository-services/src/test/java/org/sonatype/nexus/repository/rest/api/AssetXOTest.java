@@ -40,6 +40,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
 
 class AssetXOTest
@@ -109,6 +111,77 @@ class AssetXOTest
     AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
 
     assertThat(assetXO.getBlobCreated(), is(blobCreatedDate));
+  }
+
+  @Test
+  void testFromIncludesBlobUpdated() throws Exception {
+    Repository repository = createRepository(new HostedType(), "hosted");
+    AssetSearchResult assetSearchResult = Mockito.mock(AssetSearchResult.class);
+    when(assetSearchResult.getRepository()).thenReturn("hosted");
+    when(assetSearchResult.getPath()).thenReturn("/path/to/resource");
+    when(assetSearchResult.getId()).thenReturn("resource-id");
+    when(assetSearchResult.getFormat()).thenReturn("test-format");
+    java.util.Date blobUpdatedDate = new java.util.Date();
+    when(assetSearchResult.getBlobUpdated()).thenReturn(blobUpdatedDate);
+
+    AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
+
+    assertThat(assetXO.getBlobUpdated(), is(blobUpdatedDate));
+  }
+
+  @Test
+  void testFromIncludesBlobRef() throws Exception {
+    Repository repository = createRepository(new HostedType(), "hosted");
+    AssetSearchResult assetSearchResult = Mockito.mock(AssetSearchResult.class);
+    when(assetSearchResult.getRepository()).thenReturn("hosted");
+    when(assetSearchResult.getPath()).thenReturn("/path/to/resource");
+    when(assetSearchResult.getId()).thenReturn("resource-id");
+    when(assetSearchResult.getFormat()).thenReturn("test-format");
+    String blobRefString = "default@051ae249-9d2d-4807-85d0-9c920198b3b7@2025-11-13T09:31";
+    when(assetSearchResult.getBlobRef()).thenReturn(blobRefString);
+
+    AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
+
+    assertThat(assetXO.getBlobRef(), is(blobRefString));
+  }
+
+  @Test
+  void testFromExtractsLastVerified() throws Exception {
+    Repository repository = createRepository(new HostedType(), "hosted");
+    AssetSearchResult assetSearchResult = Mockito.mock(AssetSearchResult.class);
+    when(assetSearchResult.getRepository()).thenReturn("hosted");
+    when(assetSearchResult.getPath()).thenReturn("/path/to/resource");
+    when(assetSearchResult.getId()).thenReturn("resource-id");
+    when(assetSearchResult.getFormat()).thenReturn("test-format");
+
+    // Set up attributes with cache.last_verified
+    Map<String, Object> attributes = new HashMap<>();
+    Map<String, Object> cacheAttributes = new HashMap<>();
+    long lastVerifiedTimestamp = System.currentTimeMillis();
+    cacheAttributes.put("last_verified", lastVerifiedTimestamp);
+    attributes.put("cache", cacheAttributes);
+    when(assetSearchResult.getAttributes()).thenReturn(attributes);
+
+    AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
+
+    assertThat(assetXO.getLastVerified(), is(notNullValue()));
+    assertThat(assetXO.getLastVerified().getTime(), is(lastVerifiedTimestamp));
+  }
+
+  @Test
+  void testFromHandlesMissingLastVerified() throws Exception {
+    Repository repository = createRepository(new HostedType(), "hosted");
+    AssetSearchResult assetSearchResult = Mockito.mock(AssetSearchResult.class);
+    when(assetSearchResult.getRepository()).thenReturn("hosted");
+    when(assetSearchResult.getPath()).thenReturn("/path/to/resource");
+    when(assetSearchResult.getId()).thenReturn("resource-id");
+    when(assetSearchResult.getFormat()).thenReturn("test-format");
+    when(assetSearchResult.getAttributes()).thenReturn(new HashMap<>());
+
+    AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
+
+    // Should not throw exception, lastVerified should be null
+    assertThat(assetXO.getLastVerified(), is(nullValue()));
   }
 
   @Test

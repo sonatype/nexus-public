@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -59,7 +59,7 @@ class AssetBlobDAOTest
 
   private static final String BLOB_ID = "a8f3f56f-e895-4b6e-984a-1cf1f5107d36";
 
-  @Test
+  @DatabaseTest
   void testCrudOperations() {
 
     AssetBlobData assetBlob1 = generateAssetBlob();
@@ -145,7 +145,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testBrowseAll() {
     AssetBlobData assetBlob1 = generateAssetBlob();
     AssetBlobData assetBlob2 = generateAssetBlob();
@@ -169,7 +169,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testBrowseWithinDuration() {
     OffsetDateTime now = UTC.now();
     OffsetDateTime blobCreated1 = now.minusDays(10);
@@ -188,7 +188,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testBlob() {
     AssetBlobData assetBlob1 = generateAssetBlob();
     BlobRef blobRef1 = assetBlob1.blobRef();
@@ -205,7 +205,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testExistsLegacyAssetBlobs() throws Exception {
     final int TOTAL_ASSETS = 20;
     final int LEGACY_ASSETS = 15;
@@ -219,7 +219,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testBrowseLegacyAssetBlobs() throws Exception {
     final int TOTAL_ASSETS = 20;
     final int LEGACY_ASSETS = 15;
@@ -233,7 +233,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testBrowseLegacyAssetBlobsPaging() throws Exception {
     final int TOTAL_ASSETS = 20;
     final int PAGE_SIZE = 5;
@@ -259,7 +259,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testUpdateLegacyBlobRefs() throws Exception {
     final int TOTAL_ASSETS = 20;
     final int LEGACY_ASSETS = 15;
@@ -277,7 +277,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testUpdateSingleLegacyBlob() throws Exception {
     final int TOTAL_ASSETS = 2;
     final int LEGACY_ASSETS = 1;
@@ -294,7 +294,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testGetRepositoryName() {
     generateConfiguration();
     ConfigurationData configurationData = generatedConfigurations().get(0);
@@ -312,7 +312,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testGetPath() {
     generateConfiguration();
     ConfigurationData configurationData = generatedConfigurations().get(0);
@@ -331,7 +331,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testSetExternalMetadata() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
@@ -360,7 +360,7 @@ class AssetBlobDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testBrowseAssetBlobsByBlobStore() {
     Continuation<AssetBlob> result =
         sessionRule.withDAO(TestAssetBlobDAO.class, dao -> dao.browseAssetBlobsByBlobStore(1, "test-store", null));

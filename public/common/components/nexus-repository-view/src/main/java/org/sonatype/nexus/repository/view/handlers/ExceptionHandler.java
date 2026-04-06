@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.view.handlers;
 import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -48,14 +47,16 @@ public class ExceptionHandler
       return context.proceed();
     }
     catch (IllegalOperationException e) {
-      log.warn("Illegal operation: {} {}: {}",
+      log.warn("Illegal operation in repository '{}': {} {}: {}",
+          context.getRepository() != null ? context.getRepository().getName() : "unknown",
           context.getRequest().getAction(),
           context.getRequest().getPath(),
           e.toString());
       return HttpResponses.badRequest(e.getMessage());
     }
     catch (InvalidContentException e) {
-      log.warn("Invalid content: {} {}: {}",
+      log.warn("Invalid content in repository '{}': {} {}: {}",
+          context.getRepository() != null ? context.getRepository().getName() : "unknown",
           context.getRequest().getAction(),
           context.getRequest().getPath(),
           e.toString());
@@ -64,13 +65,7 @@ public class ExceptionHandler
       }
       return HttpResponses.notFound(e.getMessage());
     }
-    catch (FrozenException e) {
-      return readOnly(context, e);
-    }
     catch (Exception e) {
-      if (e.getCause() instanceof FrozenException) {
-        return readOnly(context, e);
-      }
       String exceptionName = e.getClass().getSimpleName();
       if (exceptionName.contains("OModificationOperationProhibitedException")
           || exceptionName.contains("OWriteOperationNotPermittedException")) {
@@ -81,7 +76,8 @@ public class ExceptionHandler
   }
 
   private Response readOnly(final Context context, Exception e) {
-    log.warn("Nexus Repository Manager is in read-only mode: {} {}: {}",
+    log.warn("Nexus Repository Manager is in read-only mode for repository '{}': {} {}: {}",
+        context.getRepository() != null ? context.getRepository().getName() : "unknown",
         context.getRequest().getAction(),
         context.getRequest().getPath(),
         e.toString());

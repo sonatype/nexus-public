@@ -40,7 +40,6 @@ import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificate;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateDataEvent;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateStore;
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -85,8 +84,6 @@ public class TrustStoreImpl
 
   public static final SecureRandom DEFAULT_RANDOM = null;
 
-  private final FreezeService freezeService;
-
   private final EventManager eventManager;
 
   private final KeyManager[] keyManagers;
@@ -112,7 +109,6 @@ public class TrustStoreImpl
   @Inject
   public TrustStoreImpl(
       final EventManager eventManager,
-      final FreezeService freezeService,
       @Lazy @Qualifier("ssl") final KeyStoreManager keyStoreManager,
       final TrustedSSLCertificateStore trustedSSLCertificateStore,
       final TrustedKeyStoreManager trustedKeyStoreManager,
@@ -122,7 +118,6 @@ public class TrustStoreImpl
   {
     this.eventManager = checkNotNull(eventManager);
     this.keyStoreManager = checkNotNull(keyStoreManager);
-    this.freezeService = checkNotNull(freezeService);
     this.trustedSSLCertificateStore = checkNotNull(trustedSSLCertificateStore);
     this.trustedKeyStoreManager = checkNotNull(trustedKeyStoreManager);
     this.databaseCheck = checkNotNull(databaseCheck);
@@ -155,8 +150,6 @@ public class TrustStoreImpl
       final Certificate certificate,
       final String alias) throws KeystoreException
   {
-    freezeService.checkWritable("Unable to import a certificate while database is frozen.");
-
     trustedKeyStoreManager.validateCertificateIntoKeyStore(alias, certificate);
 
     try {
@@ -258,8 +251,6 @@ public class TrustStoreImpl
 
   @Override
   public void removeTrustCertificate(final String alias) throws KeystoreException {
-    freezeService.checkWritable("Unable to remove a certificate while database is frozen.");
-
     Certificate certificate = getTrustedCertificate(alias);
 
     if (isMigrationComplete()) {

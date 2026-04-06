@@ -22,7 +22,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import org.apache.shiro.authz.AuthorizationException;
-import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.model.Response;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -76,10 +75,6 @@ public class ExtDirectExceptionHandler
       if (violations != null && !violations.isEmpty()) {
         return invalid(cause);
       }
-    }
-
-    if (e instanceof FrozenException || e.getCause() instanceof FrozenException) {
-      return error(new Exception("Nexus Repository Manager is in read-only mode"));
     }
 
     // exception logging for all non-suppressed exceptions

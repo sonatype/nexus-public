@@ -21,6 +21,7 @@ import java.util.Optional;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.proxy.metadata.AptProxyMetadataFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
@@ -28,6 +29,7 @@ import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyServiceException;
@@ -77,14 +79,27 @@ public class AptProxyFacet
 
   @Override
   protected Content store(final Context context, final Content content) throws IOException {
-    if (assetPath(context).endsWith(RELEASE)) {
+    String path = assetPath(context);
+    if (path.endsWith(RELEASE)) {
       // Whenever we fetch a new release file, make sure we get the signature
       // and package files that go along with it.
       cacheControllerHolder.getMetadataCacheController().invalidateCache();
       postCacheTokenEvent(getRepository(),
           cacheControllerHolder.getMetadataCacheController().current().getCacheToken());
     }
-    return facet(AptContentFacet.class).put(assetPath(context), content).markAsCached(content).download();
+
+    FluentAsset asset = facet(AptContentFacet.class).put(path, content).markAsCached(content);
+
+    // Store package metadata in KV store for .deb packages (enables O(1) metadata rebuilds)
+    if (isDebPackageContentType(path)) {
+      metadata().addPackageMetadata(asset);
+    }
+
+    return asset.download();
+  }
+
+  private AptProxyMetadataFacet metadata() {
+    return facet(AptProxyMetadataFacet.class);
   }
 
   @Override
@@ -93,10 +108,17 @@ public class AptProxyFacet
   }
 
   @Override
-  protected CacheController getCacheController(final Context context) {
+  public CacheController getCacheController(final Context context) {
     if (isDebPackageContentType(assetPath(context))) {
       return cacheControllerHolder.getContentCacheController();
     }
+    return cacheControllerHolder.getMetadataCacheController();
+  }
+
+  /**
+   * Gets the metadata cache controller directly (for generated metadata staleness checks).
+   */
+  public CacheController getMetadataCacheController() {
     return cacheControllerHolder.getMetadataCacheController();
   }
 

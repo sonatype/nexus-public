@@ -88,7 +88,7 @@ public interface SelectorManager
   /**
    * @since 3.20
    */
-  void create(String name, String type, String description, Map<String, String> attributes);
+  SelectorConfiguration create(String name, String type, String description, Map<String, String> attributes);
 
   /**
    * Persist an existing selector configuration.

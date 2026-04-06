@@ -30,6 +30,7 @@ import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonatype.nexus.datastore.api.DataAccessException;
 
 /**
  * This Authenticator will only try to authenticate with each realm.
@@ -95,6 +96,10 @@ public class FirstSuccessfulModularRealmAuthenticator
         catch (AuthenticationException e) {
           logExceptionForRealm(e, realm);
           authenticationFailureReasons.add(AuthenticationFailureReason.UNKNOWN);
+        }
+        catch (DataAccessException e) {
+          log.warn("Infrastructure failure during authentication in realm [{}]: database unavailable", realm, e);
+          throw e;
         }
         catch (Throwable t) {
           logExceptionForRealm(t, realm);

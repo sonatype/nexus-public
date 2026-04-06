@@ -105,7 +105,7 @@ export default function UploadDetails() {
         },
         devTools: true
       }),
-      { multipleUpload, repoSettings, componentFieldsByGroup, assetFields, data, hasPomExtension } = state.context,
+      { multipleUpload, repoSettings, componentFieldsByGroup, assetFields, data, hasPomExtension, groupHelpText } = state.context,
       assetStateKeys = filter(test(ASSET_NUM_MATCHER), keys(data));
 
   const mkField = field => <Field key={field.name} { ...field } machineState={state} send={send} />,
@@ -195,12 +195,14 @@ export default function UploadDetails() {
                   const sectionId = `upload-details-group-${group.toLowerCase().replace(' ', '-')}`,
                       isMavenComponentCoords =
                           repoSettings.format === MAVEN_FORMAT && group === MAVEN_COMPONENT_COORDS_GROUP,
-                      disabled = isMavenComponentCoords && hasPomExtension;
+                      disabled = isMavenComponentCoords && hasPomExtension,
+                      groupHelp = groupHelpText && groupHelpText[group];
 
                   return (
                     <NxTile.Subsection aria-labelledby={sectionId} key={group}>
                       <NxTile.SubsectionHeader>
                         <NxH2 id={sectionId}>{group}</NxH2>
+                        {groupHelp && <p className="nx-sub-label">{groupHelp}</p>}
                       </NxTile.SubsectionHeader>
                       { disabled &&
                         <NxInfoAlert>{UploadStrings.UPLOAD.DETAILS.COORDINATES_EXTRACTED_FROM_POM_MESSAGE}</NxInfoAlert>

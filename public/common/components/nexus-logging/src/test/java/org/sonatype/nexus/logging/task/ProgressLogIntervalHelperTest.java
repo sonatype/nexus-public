@@ -12,20 +12,33 @@
  */
 package org.sonatype.nexus.logging.task;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.sonatype.nexus.test.util.Whitebox;
 
 import com.google.common.base.Stopwatch;
-import java.time.Duration;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
@@ -33,10 +46,15 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 @RunWith(JUnitParamsRunner.class)
 public class ProgressLogIntervalHelperTest
 {
+  Logger logger;
+
+  @Before
+  public void setUp() {
+    logger = mock(Logger.class);
+  }
 
   @Test
   public void intervalElapsed() throws InterruptedException {
-    Logger logger = mock(Logger.class);
     String arg = "arg";
     Object[] argArray = {arg};
 
@@ -68,12 +86,74 @@ public class ProgressLogIntervalHelperTest
       "2161045, 25d 0h 17m 25s",
   })
   public void getElapsedTest(long seconds, String expected) {
-    Logger logger = mock(Logger.class);
     Stopwatch elapsedStopwatch = mock(Stopwatch.class);
     when(elapsedStopwatch.elapsed()).thenReturn(Duration.ofSeconds(seconds));
 
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(logger, 1);
     Whitebox.setInternalState(progressLogger, "elapsed", elapsedStopwatch);
     assertEquals(expected, progressLogger.getElapsed());
+  }
+
+  /**
+   * Test that hasIntervalElapsed is thread-safe when called concurrently. This test verifies the fix for NEXUS-51191
+   * where concurrent calls to hasIntervalElapsed could cause "This stopwatch is already running" exception.
+   */
+  @Test
+  public void hasIntervalElapsed_isThreadSafe() throws Exception {
+    Stopwatch progressStopwatch = spy(Stopwatch.createStarted());
+
+    ProgressLogIntervalHelper underTest = new ProgressLogIntervalHelper(logger, 1);
+    Whitebox.setInternalState(underTest, "progress", progressStopwatch);
+
+    doReturn(100L).when(progressStopwatch).elapsed(TimeUnit.SECONDS);
+
+    int threadCount = 10;
+    int iterationsPerThread = 1000;
+    ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+    try {
+      CountDownLatch startLatch = new CountDownLatch(1);
+      AtomicInteger successCount = new AtomicInteger(0);
+      AtomicInteger errorCount = new AtomicInteger(0);
+      List<Future<?>> futures = new ArrayList<>();
+
+      // Submit tasks that will all start at the same time
+      for (int i = 0; i < threadCount; i++) {
+        futures.add(executor.submit(() -> {
+          try {
+            startLatch.await(); // Wait for all threads to be ready
+            for (int j = 0; j < iterationsPerThread; j++) {
+              underTest.info("message");
+              successCount.incrementAndGet();
+            }
+          }
+          catch (IllegalStateException e) {
+            // This is the error we're testing for - "This stopwatch is already running"
+            errorCount.incrementAndGet();
+          }
+          catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+        }));
+      }
+
+      // Start all threads simultaneously
+      startLatch.countDown();
+
+      // Wait for all tasks to complete
+      for (Future<?> future : futures) {
+        future.get(30, TimeUnit.SECONDS);
+      }
+
+      executor.shutdown();
+      assertTrue("Executor should terminate", executor.awaitTermination(10, TimeUnit.SECONDS));
+
+      // Verify no errors occurred
+      assertEquals("Should have no IllegalStateException errors", 0, errorCount.get());
+      assertEquals("All iterations should complete successfully",
+          threadCount * iterationsPerThread, successCount.get());
+    }
+    finally {
+      executor.shutdownNow();
+    }
   }
 }

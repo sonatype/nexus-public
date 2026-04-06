@@ -26,6 +26,8 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
@@ -155,9 +157,25 @@ public class QuartzJobKeyUnificationTask
     int failedToRemove = 0;
 
     for (QuartzTaskInfo taskInfo : toBeMigrated) {
+      TaskConfiguration config = taskInfo.getConfiguration();
+
       log.debug("Migrating task '{}' - job key : {} - task configuration id : {}", taskInfo.getName(),
           taskInfo.getJobKey(),
-          taskInfo.getConfiguration().getId());
+          config.getId());
+
+      // Check if the task descriptor still exists (NEXUS-50585)
+      // Tasks with removed/deprecated type IDs (e.g., "db.backup" after OrientDB removal) should be skipped
+      TaskDescriptor descriptor = taskScheduler.getTaskFactory().findDescriptor(config.getTypeId());
+      if (descriptor == null) {
+        log.warn("Skipping migration of task '{}' with type '{}' - descriptor not found (likely removed/deprecated). "
+            + "Removing task from database.", taskInfo.getName(), config.getTypeId());
+        if (!taskInfo.remove()) {
+          log.warn("Unable to remove orphaned task '{}' with missing descriptor type '{}'",
+              taskInfo.getName(), config.getTypeId());
+          failedToRemove++;
+        }
+        continue;
+      }
 
       // cleans up memory and DB references, also emits JobDeletedEvent so other nodes update their caches
       if (!taskInfo.remove()) {
@@ -168,7 +186,7 @@ public class QuartzJobKeyUnificationTask
       }
       // recreate the task, which will create it with unified job key and emits JobCreatedEvent so other nodes update
       // their caches
-      TaskInfo migrated = taskScheduler.scheduleTask(taskInfo.getConfiguration(), taskInfo.getSchedule());
+      TaskInfo migrated = taskScheduler.scheduleTask(config, taskInfo.getSchedule());
       log.debug("Migrated task '{}' to unified id {}", taskInfo.getName(), migrated.getId());
     }
 

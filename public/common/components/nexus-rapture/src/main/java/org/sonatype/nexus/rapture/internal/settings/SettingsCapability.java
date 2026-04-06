@@ -39,9 +39,15 @@ public class SettingsCapability
 
   private final UiSettingsManager rapture;
 
+  private final SessionTimeoutManager sessionTimeoutManager;
+
   @Inject
-  public SettingsCapability(final UiSettingsManager rapture) {
+  public SettingsCapability(
+      final UiSettingsManager rapture,
+      final SessionTimeoutManager sessionTimeoutManager)
+  {
     this.rapture = checkNotNull(rapture);
+    this.sessionTimeoutManager = checkNotNull(sessionTimeoutManager);
   }
 
   @Override
@@ -52,6 +58,13 @@ public class SettingsCapability
   @Override
   protected void onActivate(final SettingsCapabilityConfiguration config) throws Exception {
     rapture.setSettings(config);
+    sessionTimeoutManager.updateTimeout(config.getSessionTimeout());
+  }
+
+  @Override
+  protected void onUpdate(final SettingsCapabilityConfiguration config) throws Exception {
+    super.onUpdate(config);
+    sessionTimeoutManager.updateTimeout(config.getSessionTimeout());
   }
 
   @Override

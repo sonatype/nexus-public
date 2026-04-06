@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 /**
  * Test {@link ComponentDAO} with no entity versioning
@@ -27,79 +27,79 @@ class UnversionedComponentDAOTest
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testCrudOperations() throws InterruptedException {
     super.testCrudOperations();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testBrowseComponentCoordinates() {
     super.testBrowseComponentCoordinates();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testContinuationBrowsing() {
     super.testContinuationBrowsing();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testDeleteAllComponents() {
     super.testDeleteAllComponents();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testPurgeOperation() {
     super.testPurgeOperation();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testRoundTrip() {
     super.testRoundTrip();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testBrowseComponentsInRepositories() {
     super.testBrowseComponentsInRepositories();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testFilterClauseIsolation() {
     super.testFilterClauseIsolation();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testContinuationSetBrowsing() {
     super.testContinuationSetBrowsing();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testNormalizationMethods() {
     super.testNormalizationMethods();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testBrowseComponentsEager() {
     super.testBrowseComponentsEager();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testBrowseVersionsByRepoIds() {
     super.testBrowseVersionsByRepoIds();
   }
 
   @Override
-  @Test
+  @DatabaseTest
   protected void testReadCoordinateInRepoIds() {
     super.testReadCoordinateInRepoIds();
   }

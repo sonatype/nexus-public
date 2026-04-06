@@ -15,7 +15,6 @@ package org.sonatype.nexus.datastore.mybatis;
 import java.sql.SQLException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.datastore.api.SerializedAccessException;
 
@@ -28,7 +27,6 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,14 +36,11 @@ public class EntityExecutorTest
   @Mock
   private Executor delegate;
 
-  @Mock
-  private FrozenChecker frozenChecker;
-
   private EntityExecutor underTest;
 
   @Before
   public void setup() {
-    underTest = new EntityExecutor(delegate, frozenChecker);
+    underTest = new EntityExecutor(delegate);
   }
 
   @Test
@@ -130,15 +125,6 @@ public class EntityExecutorTest
     assertThrows(DuplicateKeyException.class, () -> underTest.update(ms, null));
     assertThrows(SerializedAccessException.class, () -> underTest.update(ms, null));
     assertThrows(SQLException.class, () -> underTest.update(ms, null));
-  }
-
-  @Test
-  public void testUpdate_frozen() throws SQLException {
-    MappedStatement ms = mock(MappedStatement.class);
-    doThrow(new FrozenException("Frozen")).when(frozenChecker).checkFrozen(ms);
-
-    assertThrows(FrozenException.class, () -> underTest.update(ms, null));
-    verify(delegate, never()).update(ms, null);
   }
 
   private static SQLException duplicateKeyException() {

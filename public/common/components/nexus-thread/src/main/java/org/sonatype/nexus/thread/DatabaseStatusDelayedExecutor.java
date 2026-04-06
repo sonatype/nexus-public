@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -25,9 +24,7 @@ import java.util.concurrent.TimeoutException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.app.NotWritableException;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
@@ -45,9 +42,9 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import org.springframework.stereotype.Component;
 
 /**
- * An {@link ExecutorService} that tries to delay all submitted tasks until the database is writable.
- * It doesn't retry if the database goes read-only after a task has been started.
- * If the database doesn't become writable within the time limit, then the task is run anyway.
+ * An {@link ExecutorService} wrapper that executes tasks using a fixed thread pool.
+ * This previously delayed tasks when the database was frozen, but that functionality
+ * has been removed. Now it simply delegates to the underlying executor.
  *
  * @since 3.16
  */
@@ -58,65 +55,26 @@ public class DatabaseStatusDelayedExecutor
     extends StateGuardLifecycleSupport
     implements ExecutorService
 {
-  private final FreezeService freezeService;
-
   private final int delayedExecutorThreadPoolSize;
-
-  private final int sleepInterval;
-
-  private final int maxRetries;
 
   private ExecutorService executor;
 
   @Inject
   public DatabaseStatusDelayedExecutor(
-      final FreezeService freezeService,
-      @Value("${nexus.delayedExecutor.threadPoolSize:1}") final int delayedExecutorThreadPoolSize,
-      @Value("${nexus.delayedExecutor.sleepIntervalMs:5000}") final int sleepInterval,
-      @Value("${nexus.delayedExecutor.maxRetries:8640}") final int maxRetries)
+      @Value("${nexus.delayedExecutor.threadPoolSize:1}") final int delayedExecutorThreadPoolSize)
   {
-    this.freezeService = checkNotNull(freezeService);
     checkArgument(delayedExecutorThreadPoolSize > 0, delayedExecutorThreadPoolSize);
     this.delayedExecutorThreadPoolSize = delayedExecutorThreadPoolSize;
-    checkArgument(sleepInterval > 0, sleepInterval);
-    this.sleepInterval = sleepInterval;
-    checkArgument(maxRetries > 0, maxRetries);
-    this.maxRetries = maxRetries;
   }
 
   private Runnable wrap(final Runnable runnable) {
-    Callable<?> callable = wrap(Executors.callable(runnable));
-    return () -> {
-      try {
-        callable.call();
-      }
-      catch (Exception e) {
-        log.warn("Unexpected exception running task.", e);
-      }
-    };
+    // No longer need to check freeze status - just return the runnable as-is
+    return runnable;
   }
 
   private <T> Callable<T> wrap(final Callable<T> callable) {
-    return () -> {
-      try {
-        for (int attempt = 0; attempt < maxRetries; attempt++) {
-          try {
-            freezeService.checkWritable("Task needs writable database");
-            return callable.call();
-          }
-          catch (NotWritableException e) {
-            log.debug("Waiting for database to become writable.", e);
-            Thread.sleep(sleepInterval);
-          }
-        }
-        log.warn("Hit retry limit waiting for a writable database.");
-        return callable.call();
-      }
-      catch (InterruptedException e) {
-        log.warn("Interrupted while waiting to call task.", e);
-        return null;
-      }
-    };
+    // No longer need to check freeze status - just return the callable as-is
+    return callable;
   }
 
   @Override

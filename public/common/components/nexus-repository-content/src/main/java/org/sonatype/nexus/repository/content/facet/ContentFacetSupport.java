@@ -313,8 +313,15 @@ public abstract class ContentFacetSupport
         throwNotAllowed(asset, " is read-only");
       }
     }
-    else if (!writePolicy(asset).checkUpdateAllowed()) {
-      throwNotAllowed(asset, " cannot be updated");
+    else {
+      WritePolicy policy = writePolicy(asset);
+      if (!policy.checkUpdateAllowed()) {
+        // Enhance error message when ALLOW_ONCE prevents update
+        String reason = (policy == WritePolicy.ALLOW_ONCE)
+            ? " cannot be updated as asset already exists and redeploy is not allowed"
+            : " cannot be updated";
+        throwNotAllowed(asset, reason);
+      }
     }
   }
 

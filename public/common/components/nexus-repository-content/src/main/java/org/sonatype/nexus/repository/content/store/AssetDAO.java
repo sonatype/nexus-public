@@ -230,12 +230,14 @@ public interface AssetDAO
    * @param componentIds a set of component ids.
    * @param assetFilter optional filter to apply.
    * @param assetFilterParams parameter map for the optional filter.
+   * @param includeNullBlobs whether to include assets without associated blobs (uses LEFT JOIN instead of INNER JOIN)
    * @return collection of {@link AssetInfo}
    */
   Collection<Asset> findByComponentIds(
       @Param("componentIds") Set<Integer> componentIds,
       @Param("assetFilter") final String assetFilter,
-      @Param("assetFilterParams") final Map<String, Object> assetFilterParams);
+      @Param("assetFilterParams") final Map<String, Object> assetFilterParams,
+      @Param("includeNullBlobs") boolean includeNullBlobs);
 
   /**
    * Updates the kind of the given asset in the content data store.

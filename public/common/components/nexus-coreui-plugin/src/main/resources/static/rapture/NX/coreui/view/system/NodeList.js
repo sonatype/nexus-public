@@ -67,21 +67,6 @@ Ext.define('NX.coreui.view.system.NodeList', {
     }
   ],
 
-  // Add a white background behind the filter, to make it look like part of the header
-  dockedItems: [
-    {
-      xtype: 'nx-actions',
-      items: [
-        {
-          xtype: 'button',
-          text: 'Enable read-only mode',
-          iconCls: 'x-fa fa-binoculars',
-          action: 'freeze'
-        }
-      ]
-    }
-  ],
-
   plugins: [
     {ptype: 'gridfilterbox', emptyText: 'No nodes matched "$filter"'}
   ]

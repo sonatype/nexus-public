@@ -102,7 +102,7 @@ Ext.define('NX.coreui.controller.Tasks', {
       },
       visible: function() {
         return NX.Permissions.check('nexus:tasks:read') &&
-            !NX.State.getValue('nexus.react.tasks.enabled', false);
+            !NX.State.getValue('nexus.react.tasks', false);
       },
     };
 

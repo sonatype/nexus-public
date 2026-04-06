@@ -15,6 +15,8 @@ package org.sonatype.nexus.security.authc;
 import java.io.IOException;
 
 import jakarta.inject.Singleton;
+
+import org.sonatype.nexus.datastore.api.DataAccessException;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -22,6 +24,7 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.subject.Subject;
@@ -131,6 +134,43 @@ public class NexusBasicHttpAuthenticationFilter
     }
 
     super.cleanup(request, response, failure);
+  }
+
+  /**
+   * Override to catch infrastructure exceptions wrapped by Shiro's AbstractAuthenticator.
+   */
+  @Override
+  protected boolean onLoginFailure(
+      final AuthenticationToken token,
+      final AuthenticationException e,
+      final ServletRequest request,
+      final ServletResponse response)
+  {
+    // Check if the cause chain contains DataAccessException
+    // Limit depth to prevent infinite loops from circular cause chains
+    Throwable cause = e;
+    int depth = 0;
+    final int maxDepth = 20;
+    while (cause != null && depth < maxDepth) {
+      if (cause instanceof DataAccessException) {
+        log.warn("Infrastructure failure during authentication", cause);
+        try {
+          HttpServletResponse httpResponse = WebUtils.toHttp(response);
+          httpResponse.setHeader("Retry-After", "60");
+          httpResponse.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+              "Service temporarily unavailable");
+          return false;
+        }
+        catch (IOException ex) {
+          log.error("Failed to send 503 response, falling back to normal authentication failure handling", ex);
+          return super.onLoginFailure(token, e, request, response);
+        }
+      }
+      cause = cause.getCause();
+      depth++;
+    }
+
+    return super.onLoginFailure(token, e, request, response);
   }
 
   @Override

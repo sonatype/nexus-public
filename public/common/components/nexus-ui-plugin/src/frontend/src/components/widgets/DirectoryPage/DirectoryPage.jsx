@@ -11,13 +11,32 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
-import { UIView, useCurrentStateAndParams } from '@uirouter/react';
+import React, { useEffect } from 'react';
+import { UIView, useCurrentStateAndParams, useRouter } from '@uirouter/react';
 import { Page } from '../../layout';
 import { NxH1, NxP, NxTile } from '@sonatype/react-shared-components';
+import { RouteNames } from '../../../constants/RouteNames';
+import { isVisible } from '../../../interface/NavigationUtils';
 
 export function DirectoryPage({ routeName, text, description, children, ...attr }) {
   const { state } = useCurrentStateAndParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.name === routeName) {
+      const allStates = router.stateRegistry.get();
+      const visibleChildRoutes = allStates.filter(
+        (childState) =>
+          childState.name.startsWith(`${routeName}.`) &&
+          !childState?.data?.visibilityRequirements?.ignoreForMenuVisibilityCheck &&
+          isVisible(childState.data?.visibilityRequirements)
+      );
+
+      if (visibleChildRoutes.length === 0) {
+        router.stateService.go(RouteNames.MISSING_ROUTE);
+      }
+    }
+  }, [state.name, routeName, router]);
 
   if (state.name !== routeName) {
     return <UIView />;

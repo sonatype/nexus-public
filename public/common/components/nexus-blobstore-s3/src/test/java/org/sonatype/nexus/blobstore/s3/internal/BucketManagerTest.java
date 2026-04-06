@@ -35,6 +35,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -66,7 +67,7 @@ class BucketManagerTest
 
   @BeforeEach
   void setup() throws Exception {
-    lenient().when(cacheService.validate(anyString()))
+    lenient().when(cacheService.validate(any(), any(), anyString()))
         .thenReturn(
             new BucketValidationResult(true, true));
     underTest = new BucketManager(cacheService, List.of(bucketOperations));
@@ -131,7 +132,7 @@ class BucketManagerTest
         AwsErrorDetails.builder()
             .errorCode(ACCESS_DENIED_CODE)
             .build());
-    when(cacheService.validate(anyString())).thenReturn(
+    when(cacheService.validate(any(), any(), anyString())).thenReturn(
         new BucketValidationResult(false, true));
     when(s3.createBucket(anyString())).thenThrow(s3Exception);
 
@@ -153,7 +154,7 @@ class BucketManagerTest
         AwsErrorDetails.builder()
             .errorCode("Some_Unexpected_Code")
             .build());
-    when(cacheService.validate(anyString())).thenReturn(
+    when(cacheService.validate(any(), any(), anyString())).thenReturn(
         new BucketValidationResult(false, true));
     when(s3.createBucket(anyString())).thenThrow(s3Exception);
 
@@ -173,7 +174,7 @@ class BucketManagerTest
     S3Exception s3Exception = mock(S3Exception.class);
 
     ExecutionException executionException = new ExecutionException(s3Exception);
-    when(cacheService.validate(anyString())).thenThrow(executionException);
+    when(cacheService.validate(any(), any(), anyString())).thenThrow(executionException);
 
     Map<String, Map<String, Object>> cfgAttributes = ImmutableMap.of(CONFIG_KEY,
         ImmutableMap.of(BUCKET_KEY, bucketName));
@@ -195,7 +196,7 @@ class BucketManagerTest
     cfg.setAttributes(cfgAttributes);
     underTest.setS3(s3);
 
-    when(cacheService.validate(anyString())).thenReturn(
+    when(cacheService.validate(any(), any(), anyString())).thenReturn(
         new BucketValidationResult(true, false));
 
     Exception ex = assertThrows(S3BlobStoreException.class, () -> underTest.prepareStorageLocation(cfg));

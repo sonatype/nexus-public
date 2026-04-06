@@ -678,7 +678,8 @@ public class MavenUploadHandlerTest
   public void testHandle_snapshot_asset() throws IOException {
     when(versionPolicyValidator.validArtifactPath(any(), any())).thenReturn(false);
     File file = temporaryFolder.newFile("artifact-1.0-20201124.222716-1.jar");
-    Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/artifact-1.0-20201124.222716-1.jar");
+    Content result =
+        underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/artifact-1.0-20201124.222716-1.jar");
 
     assertNull(result);
   }
@@ -887,17 +888,17 @@ public class MavenUploadHandlerTest
   public void testHandleStreamConfiguration_validationFailure() throws IOException {
     // Setup validation failure
     when(versionPolicyValidator.validArtifactPath(any(), any())).thenReturn(false);
-    
+
     // Setup test data
     byte[] jarContent = "fake jar content".getBytes();
     InputStream inputStream = new ByteArrayInputStream(jarContent);
     String assetName = "/org/apache/maven/tomcat/5.0.28-SNAPSHOT/tomcat-5.0.28-SNAPSHOT.jar";
-    
+
     ImportStreamConfiguration configuration = new ImportStreamConfiguration(repository, inputStream, assetName);
-    
+
     // Execute
     Content result = underTest.handle(configuration);
-    
+
     // Verify validation failure results in null
     assertNull(result);
   }
@@ -959,6 +960,93 @@ public class MavenUploadHandlerTest
     assertThat(checksumPath.getPath(), is("com/example/my-artifact/1.2.3/my-artifact-1.2.3-sources.jar.sha1"));
 
     assertNotNull(result);
+  }
+
+  @Test
+  public void testDoPut_doesNotCreateChecksumForHashFiles() throws IOException {
+    // Setup: Create a MavenPath for a hash file (.sha1)
+    Maven2MavenPathParser parser = new Maven2MavenPathParser();
+    MavenPath sha1Path = parser.parsePath("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar.sha1");
+
+    // Mock the content that would be returned
+    Content content = mock(Content.class);
+    AttributesMap attributesMap = mock(AttributesMap.class);
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(mavenFacet.put(eq(sha1Path), any(Payload.class))).thenReturn(content);
+
+    // Execute: Upload a hash file
+    Payload payload = mock(Payload.class);
+    Content result = underTest.doPut(repository, sha1Path, payload);
+
+    // Verify: Only one put call should occur (for the hash file itself),
+    // no additional checksum files should be created for a hash file
+    verify(mavenFacet, times(1)).put(eq(sha1Path), any(Payload.class));
+    assertNotNull(result);
+  }
+
+  @Test
+  public void testDoPut_createsChecksumForNonHashFiles() throws IOException {
+    // Setup: Create a MavenPath for a regular JAR file (not a hash)
+    Maven2MavenPathParser parser = new Maven2MavenPathParser();
+    MavenPath jarPath = parser.parsePath("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar");
+
+    // Mock the content that would be returned with checksum information
+    Content content = mock(Content.class);
+    AttributesMap attributesMap = mock(AttributesMap.class);
+    Asset asset = mock(Asset.class);
+    AssetBlob blob = mock(AssetBlob.class);
+    Map<String, String> checksums = Collections.singletonMap(
+        HashAlgorithm.SHA1.name(),
+        "da39a3ee5e6b4b0d3255bfef95601890afd80709");
+
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(attributesMap.get(Asset.class)).thenReturn(asset);
+    when(attributesMap.require(eq(Content.CONTENT_LAST_MODIFIED), eq(DateTime.class))).thenReturn(DateTime.now());
+    when(asset.blob()).thenReturn(Optional.of(blob));
+    when(blob.checksums()).thenReturn(checksums);
+    when(mavenFacet.put(any(MavenPath.class), any(Payload.class))).thenReturn(content);
+
+    // Execute: Upload a JAR file
+    Payload payload = mock(Payload.class);
+    Content result = underTest.doPut(repository, jarPath, payload);
+
+    // Verify: Two put calls should occur - one for the JAR and one for the checksum
+    ArgumentCaptor<MavenPath> pathCaptor = ArgumentCaptor.forClass(MavenPath.class);
+    verify(mavenFacet, times(2)).put(pathCaptor.capture(), any(Payload.class));
+
+    List<MavenPath> paths = pathCaptor.getAllValues();
+    assertThat(paths.get(0).getPath(), is("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar"));
+    assertThat(paths.get(1).getPath(), is("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar.sha1"));
+    assertNotNull(result);
+  }
+
+  @Test
+  public void testDoPut_handlesMultipleHashTypes() throws IOException {
+    // Setup: Create a MavenPath for different hash file types
+    Maven2MavenPathParser parser = new Maven2MavenPathParser();
+
+    // Test MD5 hash file
+    MavenPath md5Path = parser.parsePath("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar.md5");
+    Content content = mock(Content.class);
+    AttributesMap attributesMap = mock(AttributesMap.class);
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(mavenFacet.put(eq(md5Path), any(Payload.class))).thenReturn(content);
+
+    Payload payload = mock(Payload.class);
+    underTest.doPut(repository, md5Path, payload);
+
+    // Verify: Only one put call for MD5 hash file
+    verify(mavenFacet, times(1)).put(eq(md5Path), any(Payload.class));
+
+    // Reset mocks for SHA256 test
+    when(mavenFacet.put(any(MavenPath.class), any(Payload.class))).thenReturn(content);
+
+    // Test SHA256 hash file
+    MavenPath sha256Path = parser.parsePath("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar.sha256");
+    underTest.doPut(repository, sha256Path, payload);
+
+    // Verify: Only one additional put call for SHA256 hash file
+    verify(mavenFacet, times(2)).put(any(MavenPath.class), any(Payload.class));
   }
 
   private static void assertVariableSource(

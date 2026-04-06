@@ -74,8 +74,8 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
     HttpClientAttributes httpClient = request.getHttpClient();
     if (nonNull(httpClient)) {
       NestedAttributesMap httpClientConfiguration = configuration.attributes("httpclient");
-      httpClientConfiguration.set("blocked", httpClient.getBlocked());
-      httpClientConfiguration.set("autoBlock", httpClient.getAutoBlock());
+      httpClientConfiguration.set("blocked", httpClient.getBlocked() != null ? httpClient.getBlocked() : false);
+      httpClientConfiguration.set("autoBlock", httpClient.getAutoBlock() != null ? httpClient.getAutoBlock() : true);
       HttpClientConnectionAttributes connection = httpClient.getConnection();
       NestedAttributesMap connectionConfiguration = httpClientConfiguration.child("connection");
       convertConnection(connection, connectionConfiguration, request.getProxy().getRemoteUrl().startsWith(HTTPS));

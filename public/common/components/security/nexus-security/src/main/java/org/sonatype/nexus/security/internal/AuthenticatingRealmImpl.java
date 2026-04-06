@@ -20,6 +20,7 @@ import jakarta.inject.Singleton;
 import org.sonatype.nexus.common.Description;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
+import org.sonatype.nexus.datastore.api.DataAccessException;
 import org.sonatype.nexus.security.NexusSimpleAuthenticationInfo;
 import org.sonatype.nexus.security.RealmCaseMapping;
 import org.sonatype.nexus.security.authc.NexusAuthenticationException;
@@ -109,6 +110,10 @@ public class AuthenticatingRealmImpl
     }
     catch (UserNotFoundException e) {
       throw new UnknownAccountException("User '" + upToken.getUsername() + "' cannot be retrieved.", e);
+    }
+    catch (DataAccessException e) {
+      logger.warn("Infrastructure failure when reading user '{}': database unavailable", upToken.getUsername(), e);
+      throw e;
     }
 
     if (user.getPassword() == null) {

@@ -84,21 +84,6 @@ public class DataStoreSupportTest
     }
 
     @Override
-    public void freeze() {
-      // do nothing
-    }
-
-    @Override
-    public void unfreeze() {
-      // do nothing
-    }
-
-    @Override
-    public boolean isFrozen() {
-      return false;
-    }
-
-    @Override
     public void backup(final String location) throws SQLException {
       // do nothing
     }

@@ -437,7 +437,24 @@ public abstract class SearchEventHandler
 
   @VisibleForTesting
   public boolean isCalmPeriod() {
-    return threadPoolExecutor.getQueue().isEmpty() && threadPoolExecutor.getActiveCount() == 0;
+    return threadPoolExecutor.getQueue().isEmpty()
+        && threadPoolExecutor.getActiveCount() == 0
+        && pendingRequests.isEmpty();
+  }
+
+  /**
+   * Returns the flush interval in seconds.
+   */
+  public int getFlushOnSeconds() {
+    return flushOnSeconds;
+  }
+
+  /**
+   * Returns the minimum wait time in milliseconds for search indexing to complete.
+   * This is based on the flush interval to ensure at least one periodic flush can run.
+   */
+  public long getMinimumWaitTimeMs() {
+    return flushOnSeconds * 1000L;
   }
 
   /**

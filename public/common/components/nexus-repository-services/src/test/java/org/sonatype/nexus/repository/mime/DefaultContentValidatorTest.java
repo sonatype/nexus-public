@@ -300,4 +300,27 @@ public class DefaultContentValidatorTest
     // Should not throw InvalidContentException and should return first expected type
     assertThat(type, equalTo("application/x-executable"));
   }
+
+  @Test
+  public void machoExecutableStrictWithMachO() throws IOException {
+    // Mach-O header for 64-bit ARM little-endian macOS executable (detected as application/x-mach-o-executable)
+    byte[] machoExecutable = {
+        (byte) 0xCF, (byte) 0xFA, (byte) 0xED, (byte) 0xFE, // magic: MH_CIGAM_64 (64-bit LE)
+        (byte) 0x0C, 0x00, 0x00, 0x01, // cputype: ARM64
+        0x00, 0x00, 0x00, 0x00, // cpusubtype
+        0x02, 0x00, 0x00, 0x00, // filetype: MH_EXECUTE
+        0x00, 0x00, 0x00, 0x00, // ncmds
+        0x00, 0x00, 0x00, 0x00 // sizeofcmds
+    };
+
+    // Test that macOS Mach-O ARM64 executables are allowed with .exe extension (NEXUS-51407)
+    String type = testSubject.determineContentType(
+        true,
+        supplier(machoExecutable),
+        MimeRulesSource.NOOP,
+        "protoc-4.33.5-osx-aarch_64.exe",
+        null);
+    // Should not throw InvalidContentException and should return first expected type
+    assertThat(type, equalTo("application/x-executable"));
+  }
 }

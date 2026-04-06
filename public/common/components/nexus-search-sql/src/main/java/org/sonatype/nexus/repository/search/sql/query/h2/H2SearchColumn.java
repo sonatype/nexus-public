@@ -90,6 +90,14 @@ record H2SearchColumn(String columnName, Optional<String> sortColumnName, boolea
   }
 
   /**
+   * @return whether this column supports exact matching (prefix search for wildcards).
+   *         Non-tokenized, non-JSON columns support exact matching.
+   */
+  boolean supportsExact() {
+    return !tokenized && !isJsonColumn();
+  }
+
+  /**
    * @return whether this column contains json data that always requires special handling for exact match queries
    */
   boolean isJsonColumn() {

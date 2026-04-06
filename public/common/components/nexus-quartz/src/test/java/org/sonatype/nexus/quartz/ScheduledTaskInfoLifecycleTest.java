@@ -21,8 +21,9 @@ import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.LastRunState;
 import org.sonatype.nexus.scheduling.TaskState;
 
+import org.sonatype.nexus.testdb.DatabaseTest;
+
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -46,7 +47,7 @@ class ScheduledTaskInfoLifecycleTest
   /**
    * "one shot", aka "runNow", aka "bg jobs" tasks are getting into DONE state once run.
    */
-  @Test
+  @DatabaseTest
   void taskLifecycleRunNow() throws Exception {
 
     // create the task
@@ -92,7 +93,7 @@ class ScheduledTaskInfoLifecycleTest
   /**
    * Repeatedly run tasks are bouncing between "running" and "waiting".
    */
-  @Test
+  @DatabaseTest
   void taskLifecycleRunRepeatedly() throws Exception {
     // create the task
     final TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID);

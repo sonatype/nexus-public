@@ -113,6 +113,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
+import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
@@ -307,6 +308,25 @@ public class FileBlobStore
       metricsService.stop();
       blobStoreQuotaUsageChecker.stop();
     }
+  }
+
+  @Nullable
+  @Override
+  @Guarded(by = STARTED)
+  @Timed
+  @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
+  public Blob get(final BlobId blobId, final boolean includeDeleted) {
+    checkNotNull(blobId);
+
+    Path blobPath = contentPath(blobId);
+    if (!Files.exists(blobPath)) {
+      log.debug("Blob {} not found in file blob store {}, returning null for fallback",
+          blobId, getBlobStoreConfiguration().getName());
+      return null;
+    }
+
+    // File exists, proceed with normal flow
+    return super.get(blobId, includeDeleted);
   }
 
   /**
@@ -549,7 +569,7 @@ public class FileBlobStore
       }
       else if (blobAttributes.isDeleted()) {
         log.debug("Attempt to delete already-deleted blob {}", blobId);
-        return false;
+        return true;
       }
 
       BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());

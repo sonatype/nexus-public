@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +46,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.sonatype.nexus.common.QualifierUtil;
-import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
@@ -98,8 +99,6 @@ public abstract class BaseBlobStoreManager
 
   private final Map<String, Provider<BlobStore>> blobStorePrototypes;
 
-  private final FreezeService freezeService;
-
   private final BooleanSupplier provisionDefaults;
 
   private final Provider<RepositoryManager> repositoryManagerProvider;
@@ -119,7 +118,6 @@ public abstract class BaseBlobStoreManager
       final BlobStoreConfigurationStore store,
       final List<BlobStoreDescriptor> blobStoreDescriptorsList,
       final List<Provider<BlobStore>> blobStorePrototypesList,
-      final FreezeService freezeService,
       final Provider<RepositoryManager> repositoryManagerProvider,
       final NodeAccess nodeAccess,
       @Nullable final Boolean provisionDefaults,
@@ -133,7 +131,6 @@ public abstract class BaseBlobStoreManager
     this.store = checkNotNull(store);
     this.blobStoreDescriptors = QualifierUtil.buildQualifierBeanMap(checkNotNull(blobStoreDescriptorsList));
     this.blobStorePrototypes = QualifierUtil.buildQualifierBeanMap(checkNotNull(blobStorePrototypesList));
-    this.freezeService = checkNotNull(freezeService);
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
     this.blobStoreTaskService = checkNotNull(blobStoreTaskService);
     this.blobStoreOverrideProvider = blobStoreOverrideProvider;
@@ -455,7 +452,6 @@ public abstract class BaseBlobStoreManager
   @Guarded(by = STARTED)
   public void forceDelete(final String name) throws Exception {
     checkNotNull(name);
-    freezeService.checkWritable("Unable to delete a BlobStore while database is frozen.");
     log.debug("Deleting BlobStore: {}", name);
     BlobStore blobStore = doForceDelete(name);
 
@@ -614,6 +610,8 @@ public abstract class BaseBlobStoreManager
     return blobStore.bytesExists(blobId);
   }
 
+  private static final int MAX_MOVE_RETRIES = 3;
+
   @Override
   public Blob moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
     checkNotNull(srcBlobStore);
@@ -629,8 +627,7 @@ public abstract class BaseBlobStoreManager
       newBlob = srcBlobStore.moveInternal(destBlobStore, blobId, headers);
     }
     else {
-      InputStream srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
-      newBlob = destBlobStore.create(srcInputStream, headers, blobId);
+      newBlob = createBlobWithRetry(blobId, srcBlobStore, destBlobStore, headers);
     }
     destBlobStore.setBlobAttributes(newBlob.getId(), srcBlobAttributes);
 
@@ -699,6 +696,58 @@ public abstract class BaseBlobStoreManager
     }
   }
 
+  /**
+   * Creates a blob with retry logic to handle race condition with temp file cleanup task.
+   * Each retry gets a fresh input stream from the source blob store.
+   */
+  private Blob createBlobWithRetry(
+      final BlobId blobId,
+      final BlobStore srcBlobStore,
+      final BlobStore destBlobStore,
+      final Map<String, String> headers)
+  {
+    InputStream srcInputStream = null;
+    for (int attempt = 1; attempt <= MAX_MOVE_RETRIES; attempt++) {
+      try {
+        srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
+        return destBlobStore.create(srcInputStream, headers, blobId);
+      }
+      catch (BlobStoreException e) {
+        closeQuietly(srcInputStream);
+        if (isRetryableTempFileException(e) && attempt < MAX_MOVE_RETRIES) {
+          log.warn("Temp file deleted during blob move (race condition with cleanup task), retrying ({}/{})",
+              attempt, MAX_MOVE_RETRIES);
+          continue;
+        }
+        throw e;
+      }
+    }
+    throw new BlobStoreException("Failed to create blob after " + MAX_MOVE_RETRIES + " attempts", blobId);
+  }
+
+  /**
+   * Checks if the exception is a retryable NoSuchFileException for a temp file.
+   */
+  private boolean isRetryableTempFileException(final BlobStoreException e) {
+    if (e.getCause() instanceof NoSuchFileException) {
+      String file = ((NoSuchFileException) e.getCause()).getFile();
+      // Check for both Unix (/tmp/) and Windows (\tmp\) path separators
+      return file != null && (file.contains("/tmp/") || file.contains("\\tmp\\"));
+    }
+    return false;
+  }
+
+  private void closeQuietly(final InputStream inputStream) {
+    if (inputStream != null) {
+      try {
+        inputStream.close();
+      }
+      catch (IOException e) {
+        log.debug("Failed to close input stream", e);
+      }
+    }
+  }
+
   private InputStream inputStreamOfBlob(final BlobStore blobStore, final BlobId blobId) {
     try {
       return Optional.of(blobId)
@@ -730,6 +779,15 @@ public abstract class BaseBlobStoreManager
               : newBlobStoreTypeData.get(sensitiveAttrKey, String.class);
 
       if (value != null) {
+        // Check if the value is already a secret ID (from configuration import)
+        // Secret IDs start with underscore (e.g., "_1", "_2")
+        if (value.startsWith("_") && value.length() > 1 && Character.isDigit(value.charAt(1))) {
+          log.debug("Skipping re-encryption for {}, already a secret ID: {}", sensitiveAttrKey, value);
+          // Value is already a secret ID, don't re-encrypt it but track it for cleanup
+          secrets.add(secretService.from(value));
+          continue;
+        }
+
         Secret newSecret =
             Objects.equals(newBlobStoreTypeData.get(sensitiveAttrKey), oldBlobStoreTypeData.get(sensitiveAttrKey))
                 ? secretService.encryptMaven(BLOBSTORE_CONFIG, secretService.from(value).decrypt(), UserIdHelper.get())

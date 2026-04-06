@@ -188,7 +188,8 @@ public class SelectorManagerImpl
   }
 
   @Override
-  public void create(
+  @Guarded(by = STARTED)
+  public SelectorConfiguration create(
       final String name,
       final String type,
       final String description,
@@ -205,6 +206,7 @@ public class SelectorManagerImpl
     catch (DuplicateKeyException e) {
       throw new ValidationErrorsException("name", "A selector with the same name already exists. Name must be unique.");
     }
+    return selectorConfiguration;
   }
 
   @Override

@@ -28,6 +28,7 @@ import ExtJS from "./ExtJS";
  *   permissions : string []
  *   requiresAnyPermission: string []
  *   permissionPrefix: string
+ *   permissionPrefixes: string []
  *   editions: string []
  *   requiresUser: boolean
  *
@@ -46,6 +47,7 @@ export function isVisible(visibilityRequirements) {
     permissions,
     requiresAnyPermission,
     permissionPrefix,
+    permissionPrefixes,
     capability,
     editions,
     requiresUser,
@@ -101,6 +103,12 @@ export function isVisible(visibilityRequirements) {
 
   if (permissionPrefix && !hasAnyPermissionWithPrefix(permissionPrefix)) {
     console.debug('permissionPrefix=false', permissionPrefix);
+    return false;
+  }
+
+  // check that user has ANY permission matching at least one of the prefixes
+  if (permissionPrefixes && !hasAnyPermissionWithAnyPrefix(permissionPrefixes)) {
+    console.debug('permissionPrefixes=false', permissionPrefixes);
     return false;
   }
 
@@ -213,6 +221,37 @@ function hasAnyPermissionWithPrefix(prefix) {
   }
 
   console.debug(`No permissions found with prefix: ${prefix}`);
+  return false;
+}
+
+/**
+ * Check if user has ANY permission starting with ANY of the given prefixes.
+ * This is useful for routes that should be visible with multiple types of permissions,
+ * such as Browse which should be visible for both repository-view and repository-content-selector permissions.
+ *
+ * @param {string[]} prefixes - Array of permission prefixes to check
+ * @returns {boolean} True if user has any permission starting with any of the prefixes
+ */
+function hasAnyPermissionWithAnyPrefix(prefixes) {
+  if (!prefixes || prefixes.length === 0) {
+    console.debug('No prefixes provided');
+    return false;
+  }
+
+  if (!NX.Permissions || !NX.Permissions.permissions) {
+    console.debug('NX.Permissions or NX.Permissions.permissions not available');
+    return false;
+  }
+
+  // Check if any permission matches any of the prefixes
+  for (const prefix of prefixes) {
+    if (hasAnyPermissionWithPrefix(prefix)) {
+      console.debug(`Found permission matching one of the prefixes: ${prefix}`);
+      return true;
+    }
+  }
+
+  console.debug('No permissions found with any of the prefixes:', prefixes);
   return false;
 }
 

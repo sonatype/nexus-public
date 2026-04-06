@@ -225,6 +225,27 @@ public class CompactBlobStoreTaskTest
     assertThat("No blob stores should be processed when recovery mode is active", underTest.result(), is(0));
   }
 
+  @Test
+  public void testCheckForConflicts_withNullRecoveryModeService() {
+    // Create task with null RecoveryModeService (CORE edition scenario)
+    CompactBlobStoreTask taskWithNullRecoveryMode =
+        new CompactBlobStoreTask(changeBlobstoreStore, blobStoreUsageChecker, taskUtils, null, 5, 20);
+    taskWithNullRecoveryMode.install(blobStoreManager);
+    taskWithNullRecoveryMode.configure(configuration);
+
+    doNothing()
+        .when(taskUtils)
+        .checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+    when(changeBlobstoreStore.findByBlobStoreName(anyString())).thenReturn(Collections.emptyList());
+
+    // checkForConflicts should complete without throwing NullPointerException
+    taskWithNullRecoveryMode.checkForConflicts(BLOBSTORE_NAME);
+
+    // Verify that taskUtils.checkForConflictingTasks was still called
+    verify(taskUtils, times(1)).checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+    verify(changeBlobstoreStore, times(1)).findByBlobStoreName(eq(BLOBSTORE_NAME));
+  }
+
   private List<BlobStore> runCompact(final String... names) throws Exception {
     List<BlobStore> blobStores = mockBlobStores(names);
 

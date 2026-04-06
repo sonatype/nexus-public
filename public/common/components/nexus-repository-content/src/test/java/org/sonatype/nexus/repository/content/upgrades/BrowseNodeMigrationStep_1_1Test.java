@@ -30,11 +30,9 @@ import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
 import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
-import org.sonatype.nexus.testdb.TestTable;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
-import org.assertj.db.type.Table;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 import static org.assertj.db.api.Assertions.assertThat;
@@ -55,9 +53,6 @@ class BrowseNodeMigrationStep_1_1Test
   @Mock
   private RebuildBrowseNodesManager rebuildBrowseNodesManager;
 
-  @TestTable(table = "test_browse_node")
-  Table testBrowseNodeTable;
-
   private BrowseNodeMigrationStep_1_1 upgradeStep;
 
   private DataStore<?> store;
@@ -70,7 +65,7 @@ class BrowseNodeMigrationStep_1_1Test
     store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME);
   }
 
-  @Test
+  @DatabaseTest
   void testUnknownFormat() throws Exception {
     when(fakeFormat.getValue()).thenReturn("foo");
     BrowseNodeMigrationStep_1_1 upgradeStep =
@@ -79,10 +74,9 @@ class BrowseNodeMigrationStep_1_1Test
     try (Connection conn = store.openConnection()) {
       upgradeStep.migrate(conn);
     }
-    // no assertions, not blowing up is the expectation
   }
 
-  @Test
+  @DatabaseTest
   void testMigration() throws Exception {
     generatePaths(10);
     generateNamespaces(10);
@@ -96,7 +90,7 @@ class BrowseNodeMigrationStep_1_1Test
       upgradeStep.migrate(conn);
     }
 
-    assertThat(testBrowseNodeTable).isEmpty();
+    assertThat(sessionRule.table("test_browse_node")).isEmpty();
 
     verify(rebuildBrowseNodesManager).setRebuildOnSart(true);
   }

@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -52,7 +52,7 @@ public class AssetDataContinuationTokenIntegrationTest
     repositoryId = generatedRepositories().get(0).repositoryId;
   }
 
-  @Test
+  @DatabaseTest
   public void testBrowseEagerAssets_producesCompositeTokens() throws InterruptedException {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
@@ -97,7 +97,7 @@ public class AssetDataContinuationTokenIntegrationTest
     }
   }
 
-  @Test
+  @DatabaseTest
   public void testBrowseRegularAssets_producesSimpleTokens() throws InterruptedException {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       AssetDAO assetDao = session.access(TestAssetDAO.class);
@@ -139,7 +139,7 @@ public class AssetDataContinuationTokenIntegrationTest
     }
   }
 
-  @Test
+  @DatabaseTest
   public void testEagerQuery_continuationTokensAreUnique() throws InterruptedException {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
@@ -173,7 +173,7 @@ public class AssetDataContinuationTokenIntegrationTest
     }
   }
 
-  @Test
+  @DatabaseTest
   public void testEagerQuery_sameTimestamp_producesUniqueTokens() throws InterruptedException {
     OffsetDateTime sameTime = OffsetDateTime.now(ZoneOffset.UTC);
 
@@ -218,7 +218,7 @@ public class AssetDataContinuationTokenIntegrationTest
     }
   }
 
-  @Test
+  @DatabaseTest
   public void testEagerQuery_pagination_maintainsCorrectTokenFormat() throws InterruptedException {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
@@ -278,7 +278,7 @@ public class AssetDataContinuationTokenIntegrationTest
     }
   }
 
-  @Test
+  @DatabaseTest
   public void testMixedQueries_produceCorrectTokenFormats() throws InterruptedException {
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 

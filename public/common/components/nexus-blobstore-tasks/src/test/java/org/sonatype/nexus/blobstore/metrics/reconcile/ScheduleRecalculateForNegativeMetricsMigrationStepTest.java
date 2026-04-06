@@ -20,11 +20,9 @@ import org.sonatype.nexus.repository.content.blobstore.metrics.BlobStoreMetricsD
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -36,7 +34,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-@ExtendWith(DatabaseExtension.class)
 class ScheduleRecalculateForNegativeMetricsMigrationStepTest
     extends Test5Support
 {
@@ -49,7 +46,7 @@ class ScheduleRecalculateForNegativeMetricsMigrationStepTest
   @InjectMocks
   private ScheduleRecalculateForNegativeMetricsMigrationStep underTest;
 
-  @Test
+  @DatabaseTest
   void testMigrate_withMultipleNegativeMetrics() throws Exception {
     createTable();
     createMetricsRecord("blob-store-1", -1000L, 100L);
@@ -77,7 +74,7 @@ class ScheduleRecalculateForNegativeMetricsMigrationStepTest
     verify(upgradeTaskScheduler).schedule(taskConfiguration3);
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_noTable() throws Exception {
     try (Connection connection = dataSessionSupplier.openConnection(DEFAULT_DATASTORE_NAME)) {
       underTest.migrate(connection);
@@ -85,7 +82,7 @@ class ScheduleRecalculateForNegativeMetricsMigrationStepTest
     verifyNoInteractions(upgradeTaskScheduler);
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_emptyTable() throws Exception {
     createTable();
 

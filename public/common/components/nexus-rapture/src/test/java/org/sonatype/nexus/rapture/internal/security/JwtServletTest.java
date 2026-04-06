@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
+import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -44,6 +45,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
+import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 
 public class JwtServletTest
     extends TestSupport
@@ -99,7 +101,7 @@ public class JwtServletTest
 
     underTest.doDelete(httpServletRequest, httpServletResponse);
 
-    Cookie cookie = new Cookie(JWT_COOKIE_NAME, "null");
+    Cookie cookie = new Cookie(JWT_COOKIE_NAME, "");
     cookie.setPath("/");
     cookie.setMaxAge(0);
 
@@ -137,8 +139,7 @@ public class JwtServletTest
         eq(userSessionId),
         eq("someuser"),
         eq("realm"),
-        any(OffsetDateTime.class)
-    );
+        any(OffsetDateTime.class));
     verify(httpServletResponse).addCookie(any(Cookie.class));
   }
 
@@ -322,8 +323,190 @@ public class JwtServletTest
         eq(userSessionId),
         eq("someuser"),
         eq("realm"),
-        any(OffsetDateTime.class)
-    );
+        any(OffsetDateTime.class));
+    verify(httpServletResponse).addCookie(any(Cookie.class));
+  }
+
+  @Test
+  public void testDoDeleteWithNullPrincipalStillRevokesJwtSession() throws Exception {
+    // Given: subject with null principal (OIDC logout scenario)
+    when(subject.getPrincipal()).thenReturn(null);
+    when(httpServletRequest.isSecure()).thenReturn(true);
+
+    // Create a valid JWT token with all required claims
+    String userSessionId = "test-session-id";
+    Date expiresAt = new Date(System.currentTimeMillis() + 1800000);
+    String jwtToken = JWT.create()
+        .withIssuer("sonatype")
+        .withClaim("user", "oidcuser")
+        .withClaim("realm", "OAuth2Realm")
+        .withClaim("userSessionId", userSessionId)
+        .withExpiresAt(expiresAt)
+        .sign(Algorithm.HMAC256("test-secret"));
+
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    com.auth0.jwt.interfaces.DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+
+    // When: doDelete is called
+    underTest.doDelete(httpServletRequest, httpServletResponse);
+
+    // Then: should return NO_CONTENT without throwing exception
+    verify(httpServletResponse).setStatus(SC_NO_CONTENT);
+    verify(httpServletResponse).setHeader(X_FRAME_OPTIONS, DENY);
+
+    // And: should still revoke session using data from JWT cookie
+    verify(jwtSessionRevocationService).revokeSession(
+        eq(userSessionId),
+        eq("oidcuser"),
+        eq("OAuth2Realm"),
+        any(OffsetDateTime.class));
+
+    // And: should still clear the cookie
+    verify(httpServletResponse).addCookie(any(Cookie.class));
+  }
+
+  @Test
+  public void testDoDeleteWithNullPrincipalAndNoCookieReturnsNoContent() throws Exception {
+    // Given: subject with null principal and no cookies
+    when(subject.getPrincipal()).thenReturn(null);
+    when(httpServletRequest.isSecure()).thenReturn(true);
+    when(httpServletRequest.getCookies()).thenReturn(null);
+
+    // When: doDelete is called
+    underTest.doDelete(httpServletRequest, httpServletResponse);
+
+    // Then: should return NO_CONTENT gracefully
+    verify(httpServletResponse).setStatus(SC_NO_CONTENT);
+    verify(httpServletResponse).setHeader(X_FRAME_OPTIONS, DENY);
+
+    // And: should not attempt to revoke session
+    verify(jwtSessionRevocationService, never()).revokeSession(anyString(), anyString(), anyString(), any());
+
+    // But: should still clear the cookie
+    verify(httpServletResponse).addCookie(any(Cookie.class));
+  }
+
+  @Test
+  public void testDoDeleteWithNullPrincipalAndInvalidJwtStillClearsCookie() throws Exception {
+    // Given: subject with null principal and invalid JWT
+    when(subject.getPrincipal()).thenReturn(null);
+    when(httpServletRequest.isSecure()).thenReturn(true);
+
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, "invalid-jwt-token");
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    // Mock JWT helper to throw exception
+    when(jwtHelper.verifyJwt(anyString())).thenThrow(new RuntimeException("Invalid JWT"));
+
+    // When: doDelete is called
+    underTest.doDelete(httpServletRequest, httpServletResponse);
+
+    // Then: should return NO_CONTENT gracefully
+    verify(httpServletResponse).setStatus(SC_NO_CONTENT);
+    verify(httpServletResponse).setHeader(X_FRAME_OPTIONS, DENY);
+
+    // And: should not revoke session due to invalid JWT
+    verify(jwtSessionRevocationService, never()).revokeSession(anyString(), anyString(), anyString(), any());
+
+    // But: should still clear the cookie (most important part!)
+    verify(httpServletResponse).addCookie(any(Cookie.class));
+  }
+
+  @Test
+  public void testDoDeleteWithNullPrincipalAndNullExpiresAtDoesNotRevoke() throws Exception {
+    // Given: subject with null principal and JWT without expiresAt
+    when(subject.getPrincipal()).thenReturn(null);
+    when(httpServletRequest.isSecure()).thenReturn(true);
+
+    // Create JWT without expiresAt claim
+    String jwtToken = JWT.create()
+        .withIssuer("sonatype")
+        .withClaim("user", "oidcuser")
+        .withClaim("realm", "OAuth2Realm")
+        .withClaim("userSessionId", "test-session-id")
+        .sign(Algorithm.HMAC256("test-secret"));
+
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    com.auth0.jwt.interfaces.DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+
+    // When: doDelete is called
+    underTest.doDelete(httpServletRequest, httpServletResponse);
+
+    // Then: should return NO_CONTENT
+    verify(httpServletResponse).setStatus(SC_NO_CONTENT);
+    verify(httpServletResponse).setHeader(X_FRAME_OPTIONS, DENY);
+
+    // And: should not revoke session due to null expiresAt
+    verify(jwtSessionRevocationService, never()).revokeSession(anyString(), anyString(), anyString(), any());
+
+    // But: should still clear the cookie
+    verify(httpServletResponse).addCookie(any(Cookie.class));
+  }
+
+  @Test
+  public void testDoDeleteWithNullPrincipalAndMissingUserClaimDoesNotRevoke() throws Exception {
+    // Given: subject with null principal and JWT without user claim
+    when(subject.getPrincipal()).thenReturn(null);
+    when(httpServletRequest.isSecure()).thenReturn(true);
+
+    // Create JWT without user claim
+    Date expiresAt = new Date(System.currentTimeMillis() + 1800000);
+    String jwtToken = JWT.create()
+        .withIssuer("sonatype")
+        .withClaim("realm", "OAuth2Realm")
+        .withClaim("userSessionId", "test-session-id")
+        .withExpiresAt(expiresAt)
+        .sign(Algorithm.HMAC256("test-secret"));
+
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    com.auth0.jwt.interfaces.DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+
+    // When: doDelete is called
+    underTest.doDelete(httpServletRequest, httpServletResponse);
+
+    // Then: should return NO_CONTENT
+    verify(httpServletResponse).setStatus(SC_NO_CONTENT);
+    verify(httpServletResponse).setHeader(X_FRAME_OPTIONS, DENY);
+
+    // And: should not revoke session due to missing user claim
+    verify(jwtSessionRevocationService, never()).revokeSession(anyString(), anyString(), anyString(), any());
+
+    // But: should still clear the cookie
+    verify(httpServletResponse).addCookie(any(Cookie.class));
+  }
+
+  @Test
+  public void testDoDeleteWithNullExpiresAtDoesNotRevoke() throws Exception {
+    when(subject.isAuthenticated()).thenReturn(false);
+    when(subject.isRemembered()).thenReturn(false);
+
+    // Create JWT without expiresAt claim (will return null)
+    String jwtToken = JWT.create()
+        .withIssuer("sonatype")
+        .withClaim("user", "someuser")
+        .withClaim("realm", "realm")
+        .withClaim("userSessionId", "test-session-id")
+        .sign(Algorithm.HMAC256("test-secret"));
+
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    com.auth0.jwt.interfaces.DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+
+    underTest.doDelete(httpServletRequest, httpServletResponse);
+
+    // Verify that revocation was not attempted due to null expiresAt
+    verify(jwtSessionRevocationService, never()).revokeSession(anyString(), anyString(), anyString(), any());
     verify(httpServletResponse).addCookie(any(Cookie.class));
   }
 }

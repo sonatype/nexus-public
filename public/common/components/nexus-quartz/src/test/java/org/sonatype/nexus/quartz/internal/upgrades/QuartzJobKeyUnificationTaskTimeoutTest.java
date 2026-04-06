@@ -18,8 +18,8 @@ import org.sonatype.nexus.quartz.SleeperTask;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskState;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class QuartzJobKeyUnificationTaskTimeoutTest
     extends QuartzJobKeyUnificationTaskTestSupport
 {
-  @Test
+  @DatabaseTest
   void shouldTimeoutWhenRunningTaskBlocksMigration() throws Exception {
     try {
       // Create a legacy task

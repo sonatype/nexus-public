@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.rest.api.model;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,13 +26,11 @@ import io.swagger.annotations.ApiModelProperty;
 public class HttpClientAttributes
 {
   @ApiModelProperty(value = "Whether to block outbound connections on the repository", example = "false")
-  @NotNull
   protected final Boolean blocked;
 
   @ApiModelProperty(
       value = "Whether to auto-block outbound connections if remote peer is detected as unreachable/unresponsive",
       example = "true")
-  @NotNull
   protected final Boolean autoBlock;
 
   @Valid

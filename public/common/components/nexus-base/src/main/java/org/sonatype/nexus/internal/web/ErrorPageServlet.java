@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.web;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -23,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.internal.web.ErrorPageService.ErrorInfo;
 
+import com.google.common.base.Throwables;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.eclipse.jetty.io.EofException;
@@ -138,6 +140,10 @@ public class ErrorPageServlet
    * @see EofException
    */
   private static boolean isEofException(final Throwable e) {
-    return e instanceof EofException;
+    if (e instanceof EofException || Throwables.getRootCause(e) instanceof EofException) {
+      return true;
+    }
+    return Stream.of(e.getSuppressed())
+        .anyMatch(t -> t instanceof EofException);
   }
 }

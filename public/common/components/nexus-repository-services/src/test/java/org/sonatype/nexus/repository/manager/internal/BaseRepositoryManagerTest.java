@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.QualifierUtil;
-import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
@@ -104,9 +103,6 @@ public class BaseRepositoryManagerTest
 
   @Mock
   private ConfigurationStore configurationStore;
-
-  @Mock
-  private FreezeService freezeService;
 
   @Mock
   private RepositoryFactory repositoryFactory;
@@ -315,7 +311,7 @@ public class BaseRepositoryManagerTest
     when(QualifierUtil.buildQualifierBeanMap(any())).thenReturn(Map.of(recipeName, recipe));
     repositoryManager = new BaseRepositoryManager<>(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, List.of(), securityContributor,
-        defaultRepositoriesContributorList, freezeService, skipDefaultRepositories, blobStoreManager,
+        defaultRepositoriesContributorList, skipDefaultRepositories, blobStoreManager,
         groupMemberMappingCache, List.of(), httpAuthenticationSecretEncoder)
     {
     };
@@ -426,10 +422,9 @@ public class BaseRepositoryManagerTest
   }
 
   @Test
-  public void testDelete_checksUnfrozen() throws Exception {
+  public void testDelete_successfulDeleteRepository() throws Exception {
     repositoryManager = buildRepositoryManagerImpl(true);
     repositoryManager.delete("maven-central");
-    verify(freezeService).checkWritable("Unable to delete repository when database is frozen.");
   }
 
   @Test

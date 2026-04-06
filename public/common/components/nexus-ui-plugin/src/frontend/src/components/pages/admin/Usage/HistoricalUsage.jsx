@@ -23,7 +23,8 @@ import {
   NxTableCell,
   NxTableBody,
   NxTooltip,
-  NxH2, NxP
+  NxH2, NxP,
+  NxInfoAlert
 } from '@sonatype/react-shared-components';
 
 import HistoricalUsageMachine from './HistoricalUsageMachine';
@@ -40,6 +41,7 @@ export default function HistoricalUsage({columns}) {
 
   return (<>
         <NxH2>{UIStrings.HISTORICAL_USAGE.TITLE}</NxH2>
+        {isCloud && <NxInfoAlert>{UIStrings.HISTORICAL_USAGE.USAGE_DATA_UPDATE_FREQUENCY}</NxInfoAlert>}
         <NxP>{UIStrings.HISTORICAL_USAGE.DESCRIPTION}</NxP>
         {isCloud && <UsageInsightsChart />}
 

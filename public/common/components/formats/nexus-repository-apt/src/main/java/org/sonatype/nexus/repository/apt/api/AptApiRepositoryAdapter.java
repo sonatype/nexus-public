@@ -60,9 +60,10 @@ public class AptApiRepositoryAdapter
             getComponentAttributes(repository));
       case ProxyType.NAME:
         return new AptProxyApiRepository(name, url, online,
-            getHostedStorageAttributes(repository),
+            getStorageAttributes(repository),
             getCleanupPolicyAttributes(repository),
             createAptProxyRepositoriesAttributes(repository),
+            createAptSigningRepositoriesAttributes(repository),
             getProxyAttributes(repository),
             getNegativeCacheAttributes(repository),
             getHttpClientAttributes(repository),
@@ -80,8 +81,7 @@ public class AptApiRepositoryAdapter
   private AptSigningRepositoriesAttributes createAptSigningRepositoriesAttributes(final Repository repository) {
     NestedAttributesMap aptAttributes = repository.getConfiguration().attributes("aptSigning");
     String keypair = aptAttributes.get("keypair", String.class);
-    String passphrase = aptAttributes.get("passphrase", String.class);
-    if (!Strings2.isBlank(passphrase)) {
+    if (!Strings2.isBlank(keypair)) {
       return new AptSigningRepositoriesAttributes(keypair, null);
     }
     return null;

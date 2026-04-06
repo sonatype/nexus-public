@@ -18,28 +18,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
-import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.authc.UserPasswordChanged;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
-import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
-import org.sonatype.nexus.security.realm.RealmConfigurationChangedEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.realm.SecurityRealm;
 
 import com.google.common.collect.Lists;
+import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.cache.Cache;
@@ -79,8 +77,6 @@ public class RealmManagerImpl
   private final RealmSecurityManager realmSecurityManager;
 
   private final Map<String, Realm> availableRealms;
-
-  private final Mutex lock = new Mutex();
 
   private RealmConfiguration configuration;
 
@@ -128,11 +124,11 @@ public class RealmManagerImpl
     Collection<Realm> realms = realmSecurityManager.getRealms();
     if (realms != null) {
       for (Realm realm : realms) {
-        if (realm instanceof AuthenticatingRealm) {
-          ((AuthenticatingRealm) realm).setAuthenticationCache(null);
+        if (realm instanceof AuthenticatingRealm authenticatingRealm) {
+          authenticatingRealm.setAuthenticationCache(null);
         }
-        if (realm instanceof AuthorizingRealm) {
-          ((AuthorizingRealm) realm).setAuthorizationCache(null);
+        if (realm instanceof AuthorizingRealm authorizingRealm) {
+          authorizingRealm.setAuthorizationCache(null);
         }
       }
     }
@@ -141,10 +137,6 @@ public class RealmManagerImpl
   //
   // Configuration
   //
-
-  private RealmConfiguration newEntity() {
-    return store.newEntity();
-  }
 
   /**
    * Load configuration from store, or use defaults.
@@ -174,12 +166,10 @@ public class RealmManagerImpl
    * The result model should be considered _immutable_ unless copied.
    */
   private RealmConfiguration getConfigurationInternal() {
-    synchronized (lock) {
-      if (configuration == null) {
-        configuration = loadConfiguration();
-      }
-      return configuration;
+    if (configuration == null) {
+      configuration = loadConfiguration();
     }
+    return configuration;
   }
 
   /**
@@ -194,22 +184,14 @@ public class RealmManagerImpl
 
     maybeAddAuthorizingRealm(configuration.getRealmNames());
 
-    changeConfiguration(configuration, true);
+    store.save(configuration);
+    reloadConfiguration();
   }
 
-  private void changeConfiguration(final RealmConfiguration configuration, final boolean save) {
-    RealmConfiguration model = configuration.copy();
-    log.info("Changing configuration: {}", model);
-    synchronized (lock) {
-      if (save) {
-        store.save(model);
-      }
-      this.configuration = model;
-    }
-
+  private synchronized void reloadConfiguration() {
+    configuration = store.load();
+    log.info("Changing configuration: {}", configuration);
     installRealms();
-
-    eventManager.post(new RealmConfigurationChangedEvent(model));
   }
 
   //
@@ -336,10 +318,11 @@ public class RealmManagerImpl
   // Event handling
   //
 
+  @AllowConcurrentEvents
   @Subscribe
   public void on(final RealmConfigurationEvent event) {
     if (!event.isLocal()) {
-      changeConfiguration(event.getConfiguration(), false);
+      reloadConfiguration();
     }
   }
 

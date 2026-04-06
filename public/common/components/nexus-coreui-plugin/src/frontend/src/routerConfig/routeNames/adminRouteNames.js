@@ -17,7 +17,16 @@
 export default {
   IQ: {
     ROOT: 'admin.iq',
+    CONNECTED: 'admin.iqconnected',
     TITLE: 'IQ Server',
+    SONATYPE_LIFECYCLE: {
+      ROOT: 'admin.sonatypelifecycle',
+      TITLE: 'Sonatype Lifecycle',
+    },
+    HOSTED_REPOS_EVAL: {
+      ROOT: 'admin.hostedreposeval',
+      TITLE: 'Hosted Repositories Evaluation',
+    },
   },
   DIRECTORY: 'admin',
   REPOSITORY: {

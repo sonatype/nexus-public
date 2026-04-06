@@ -17,14 +17,17 @@ import java.util.concurrent.TimeUnit;
 
 import org.sonatype.nexus.quartz.SleeperTask;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskState;
 
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Integration tests for {@link QuartzJobKeyUnificationTask}.
@@ -36,7 +39,7 @@ import static org.hamcrest.Matchers.hasSize;
 class QuartzJobKeyUnificationTaskTest
     extends QuartzJobKeyUnificationTaskTestSupport
 {
-  @Test
+  @DatabaseTest
   void shouldMigrateNonRunningTasks() {
     // Create legacy tasks with mismatched job_name and config_id
     QuartzTaskInfo task1 = createLegacyTask("Legacy Task 1");
@@ -64,7 +67,7 @@ class QuartzJobKeyUnificationTaskTest
     assertTaskUnified(migratedTask3);
   }
 
-  @Test
+  @DatabaseTest
   void shouldSkipRunningTaskAndMigrateAfterCompletion() throws Exception {
     // Create a legacy task
     QuartzTaskInfo legacyTask = createLegacyTask("Running Legacy Task");
@@ -95,7 +98,7 @@ class QuartzJobKeyUnificationTaskTest
     assertTaskUnified(migratedTask);
   }
 
-  @Test
+  @DatabaseTest
   void shouldSkipAlreadyMigratedTasks() {
     // Create tasks WITHOUT the mock - they get unified IDs by default
     QuartzTaskInfo task1 = createNamedTask("Already Unified Task 1");
@@ -117,5 +120,59 @@ class QuartzJobKeyUnificationTaskTest
 
     assertThat(tasks, hasSize(2));
     tasks.forEach(this::assertTaskUnified);
+  }
+
+  @DatabaseTest
+  void shouldRemoveOrphanedTaskWithMissingDescriptorAndMigrateValidTasks() throws Exception {
+    // Create two legacy tasks with mismatched job_name and config_id
+    QuartzTaskInfo orphanedTask = createLegacyTask("Orphaned Task");
+    QuartzTaskInfo validTask = createLegacyTask("Valid Task");
+
+    // Corrupt the first task's type ID to simulate a removed descriptor (e.g., "db.backup" after OrientDB removal)
+    corruptTaskTypeId(orphanedTask, "db.backup");
+
+    // Verify both tasks are legacy (mismatched IDs)
+    assertTaskLegacy(orphanedTask);
+    assertTaskLegacy(validTask);
+
+    // Verify the orphaned task's descriptor is not found
+    assertNull(
+        taskScheduler.getTaskFactory().findDescriptor("db.backup"),
+        "Descriptor should not exist for removed type ID");
+
+    // Count tasks before migration
+    int taskCountBefore = taskScheduler.listsTasks().size();
+
+    // Run the migration task
+    TaskInfo migrationTask = runMigrationTask();
+
+    // Wait for migration to complete successfully
+    assertTaskState(WAIT_TIMEOUT, migrationTask, TaskState.OK);
+
+    // Verify the orphaned task was removed
+    List<QuartzTaskInfo> tasksAfter = taskScheduler.listsTasks()
+        .stream()
+        .map(QuartzTaskInfo.class::cast)
+        .toList();
+
+    assertThat("Orphaned task should have been removed", tasksAfter, hasSize(taskCountBefore - 1));
+
+    // Verify the orphaned task is no longer listed
+    boolean orphanedTaskExists = tasksAfter.stream()
+        .anyMatch(t -> "Orphaned Task".equals(t.getName()));
+    assertFalse(orphanedTaskExists, "Orphaned task should not exist after migration");
+
+    // Verify the valid task was migrated successfully and is still present
+    QuartzTaskInfo migratedValidTask = findTaskByName("Valid Task");
+    assertTaskUnified(migratedValidTask);
+  }
+
+  /**
+   * Corrupts a task's type ID to simulate a removed/deprecated task type.
+   * This makes the task's descriptor lookup return null, triggering the orphaned task handling.
+   */
+  private void corruptTaskTypeId(QuartzTaskInfo task, String invalidTypeId) {
+    TaskConfiguration config = task.getConfiguration();
+    config.setTypeId(invalidTypeId);
   }
 }

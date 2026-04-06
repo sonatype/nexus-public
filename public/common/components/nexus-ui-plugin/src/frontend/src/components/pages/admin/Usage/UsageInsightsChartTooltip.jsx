@@ -18,7 +18,8 @@ import UIStrings from './../../../../constants/HistoricalUsageStrings';
 export function UsageInsightsChartTooltip({data}) {
   const entry = data;
   const date = entry?.metricDate;
-  const {egress, storage} = entry || {egress: 0, storage: 0};
+  const egress = entry?.[UIStrings.HISTORICAL_USAGE.CHART.LEGEND_EGRESS] || 0;
+  const storage = entry?.[UIStrings.HISTORICAL_USAGE.CHART.LEGEND_STORAGE] || 0;
 
   return (
       <div className="usage-insights-chart-tooltip">

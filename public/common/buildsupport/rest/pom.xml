@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.90.0-21</version>
+    <version>3.91.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-rest</artifactId>
@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.20.1</jackson2.version>
+    <jackson2.version>2.21.1</jackson2.version>
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.15.6.Final</resteasy.version>
     <swagger.version>1.6.11</swagger.version>

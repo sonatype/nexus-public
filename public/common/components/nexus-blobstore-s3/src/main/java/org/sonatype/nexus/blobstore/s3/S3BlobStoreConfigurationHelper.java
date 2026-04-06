@@ -22,14 +22,15 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
-import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
 
 /**
@@ -73,6 +74,14 @@ public class S3BlobStoreConfigurationHelper
    */
   public static String getConfiguredRegion(final BlobStoreConfiguration blobStoreConfiguration) {
     return Iterables.getOnlyElement(getBucketConfiguration(blobStoreConfiguration).keySet());
+  }
+
+  /**
+   * Returns the configured endpoint for the configuration.
+   */
+  @Nullable
+  public static String getConfiguredEndpoint(final BlobStoreConfiguration blobStoreConfiguration) {
+    return blobStoreConfiguration.attributes(CONFIG_KEY).get(ENDPOINT_KEY, String.class);
   }
 
   private static Map<String, String> getBucketConfiguration(final BlobStoreConfiguration blobStoreConfiguration) {

@@ -41,6 +41,12 @@ public class AssetSearchResult
 
   private Date blobCreated;
 
+  private Date blobUpdated;
+
+  private String blobRef;
+
+  private Date lastVerified;
+
   private Long fileSize;
 
   private String uploader;
@@ -129,6 +135,30 @@ public class AssetSearchResult
     this.blobCreated = blobCreated;
   }
 
+  public Date getBlobUpdated() {
+    return blobUpdated;
+  }
+
+  public void setBlobUpdated(final Date blobUpdated) {
+    this.blobUpdated = blobUpdated;
+  }
+
+  public String getBlobRef() {
+    return blobRef;
+  }
+
+  public void setBlobRef(final String blobRef) {
+    this.blobRef = blobRef;
+  }
+
+  public Date getLastVerified() {
+    return lastVerified;
+  }
+
+  public void setLastVerified(final Date lastVerified) {
+    this.lastVerified = lastVerified;
+  }
+
   public String getUploader() {
     return uploader;
   }
@@ -157,7 +187,8 @@ public class AssetSearchResult
   public String toString() {
     return "AssetSearchResult [path=" + path + ", id=" + id + ", repository=" + repository + ", format=" + format
         + ", checksum=" + checksum + ", contentType=" + contentType + ", lastModified=" + lastModified
-        + ", lastDownloaded=" + lastDownloaded + ", fileSize=" + fileSize + ", attributes="
+        + ", lastDownloaded=" + lastDownloaded + ", blobCreated=" + blobCreated + ", blobUpdated=" + blobUpdated
+        + ", blobRef=" + blobRef + ", lastVerified=" + lastVerified + ", fileSize=" + fileSize + ", attributes="
         + attributes + "]";
   }
 }

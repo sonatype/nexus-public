@@ -45,8 +45,8 @@ jest.mock('./UsageInsightsChart.scss', () => ({}));
 jest.mock('@nivo/bar', () => ({
   ResponsiveBar: ({data, tooltip, colors, axisLeft, axisBottom}) => {
     // Test the colors function if provided
-    const storageColor = colors ? colors({id: 'storage'}) : null;
-    const egressColor = colors ? colors({id: 'egress'}) : null;
+    const storageColor = colors ? colors({id: 'Peak Storage'}) : null;
+    const egressColor = colors ? colors({id: 'Total Egress'}) : null;
 
     // Test axis format functions if provided
     const leftAxisFormatted = axisLeft?.format ? axisLeft.format(1000) : null;
@@ -57,7 +57,7 @@ jest.mock('@nivo/bar', () => ({
         <div data-testid="chart-data">{JSON.stringify(data)}</div>
         {tooltip && (
             <div data-testid="tooltip-function">
-              {tooltip({data: {metricDate: '2024-01-15', egress: 1000, storage: 2000}})}
+              {tooltip({data: {metricDate: '2024-01-15', 'Total Egress': 1000, 'Peak Storage': 2000}})}
             </div>
         )}
         {colors && (
@@ -177,7 +177,11 @@ describe('UsageInsightsChart', () => {
 
     const data = JSON.parse(chartData.textContent);
     expect(data).toHaveLength(3);
-    expect(data[0]).toEqual({metricDate: '2024-01-01', egress: 1000, storage: 500});
+    expect(data[0]).toEqual({
+      metricDate: '2024-01-01',
+      'Total Egress': 1000,
+      'Peak Storage': 500
+    });
   });
 
   it('initializes with useMachine without initial context', () => {

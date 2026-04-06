@@ -32,7 +32,8 @@ public interface ScriptPrivilegeApiResourceDoc
 {
   @ApiOperation("Create a script type privilege.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
+      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
   Response createPrivilege(
       @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeScriptRequest privilege);
 

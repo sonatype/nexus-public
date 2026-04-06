@@ -30,7 +30,9 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -85,6 +87,43 @@ public class SessionServletTest
 
     underTest.doDelete(httpServletRequest, httpServletResponse);
 
+    verify(httpServletResponse).setHeader(X_FRAME_OPTIONS, "DENY");
+  }
+
+  /**
+   * NEXUS-50529: Test that doDelete handles expired/anonymous sessions gracefully
+   * without throwing NullPointerException when getPrincipal() returns null.
+   */
+  @Test
+  public void testDoDeleteWithExpiredSessionHandledGracefully() throws Exception {
+    // Simulate an expired session - principal is null
+    when(subject.getPrincipal()).thenReturn(null);
+
+    underTest.doDelete(httpServletRequest, httpServletResponse);
+
+    // Verify response is still successful
+    verify(httpServletResponse).setStatus(204); // SC_NO_CONTENT
+    verify(httpServletResponse).setHeader(X_FRAME_OPTIONS, "DENY");
+
+    // Verify that logout was not called (user already logged out)
+    verify(subject, never()).logout();
+    verify(eventManager, never()).post(any());
+  }
+
+  /**
+   * NEXUS-50529: Test that doDelete handles the case where subject has null principals
+   * (another way session timeout can manifest).
+   */
+  @Test
+  public void testDoDeleteWithNullPrincipalsHandledGracefully() throws Exception {
+    // Simulate null principals
+    when(subject.getPrincipal()).thenReturn(null);
+    when(subject.getPrincipals()).thenReturn(null);
+
+    underTest.doDelete(httpServletRequest, httpServletResponse);
+
+    // Should complete without NPE
+    verify(httpServletResponse).setStatus(204);
     verify(httpServletResponse).setHeader(X_FRAME_OPTIONS, "DENY");
   }
 }

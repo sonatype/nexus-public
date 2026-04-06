@@ -192,4 +192,32 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     assertThat(httpClientConfig.get("blocked"), is(false));
     assertThat(httpClientConfig.get("autoBlock"), is(true));
   }
+
+  @Test
+  public void testConvert_withNullBlockedAndAutoBlock() {
+    // Arrange
+    String expectedRemoteUrl = "https://registry.npmjs.org";
+
+    StorageAttributes storage = new StorageAttributes("default", true);
+    when(request.getStorage()).thenReturn(storage);
+
+    ProxyAttributes proxy = new ProxyAttributes(expectedRemoteUrl, 1440, 1440, null);
+    when(request.getProxy()).thenReturn(proxy);
+
+    // Create HttpClientAttributes with null blocked and autoBlock
+    HttpClientAttributes httpClient = new HttpClientAttributes(null, null, null, null);
+    when(request.getHttpClient()).thenReturn(httpClient);
+
+    // Act
+    Configuration configuration = underTest.convert(request);
+
+    // Assert
+    assertThat(configuration, is(notNullValue()));
+
+    NestedAttributesMap httpClientConfig = configuration.attributes("httpclient");
+    assertThat(httpClientConfig, is(notNullValue()));
+    // Verify defaults: blocked should default to false, autoBlock should default to true
+    assertThat(httpClientConfig.get("blocked"), is(false));
+    assertThat(httpClientConfig.get("autoBlock"), is(true));
+  }
 }

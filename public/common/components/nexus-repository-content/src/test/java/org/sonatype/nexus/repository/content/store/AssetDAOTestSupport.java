@@ -1207,7 +1207,7 @@ public abstract class AssetDAOTestSupport
 
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
-      Collection<Asset> assets = dao.findByComponentIds(Set.of(1), null, Map.of());
+      Collection<Asset> assets = dao.findByComponentIds(Set.of(1), null, Map.of(), false);
 
       Optional<Asset> assetOpt = assets.stream().findFirst();
       assertThat(assetOpt.isPresent(), is(true));

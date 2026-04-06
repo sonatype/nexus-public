@@ -20,6 +20,5 @@ export default {
 
   DATASTORE_CLUSTERED_ENABLED: 'nexus.datastore.clustered.enabled',
   MALWARE_RISK_ENABLED: 'nexus.malware.risk.enabled',
-  MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED: 'nexus.malware.risk.on.disk.nonadmin.override.enabled',
-  REACT_TASKS_ENABLED: 'nexus.react.tasks.enabled'
+  MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED: 'nexus.malware.risk.on.disk.nonadmin.override.enabled'
 };

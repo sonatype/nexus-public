@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.90.0-21</version>
+    <version>3.91.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -301,10 +301,22 @@
         <version>1.1</version>
       </dependency>
 
+      <!--
+        Fix NEXUS-50083: Upgrade netty-bom from 4.2.9.Final to 4.2.10.Final
+        to resolve license policy violation with netty-tcnative-boringssl-static.
+
+        Version 4.2.9.Final includes netty-tcnative-boringssl-static 2.0.74.Final which has
+        improper license declaration ("No Sources/Not Declared" policy violation).
+        Version 4.2.10.Final includes netty-tcnative-boringssl-static 2.0.75.Final which
+        properly declares Apache 2.0 license.
+
+        This approach is preferred over explicit version overrides as it allows natural
+        dependency evolution and avoids blocking future security updates.
+      -->
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
-        <version>4.2.9.Final</version>
+        <version>4.2.10.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

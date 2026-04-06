@@ -51,8 +51,7 @@ Ext.define('NX.coreui.controller.Nodes', {
     {ref: 'feature', selector: 'nx-coreui-system-nodes'},
     {ref: 'list', selector: 'nx-coreui-system-nodelist'},
     {ref: 'info', selector: 'nx-coreui-system-nodes nx-coreui-system-node-settings'},
-    {ref: 'content', selector: 'nx-feature-content'},
-    {ref: 'toggleFreezeButton', selector: 'button[action=freeze]'}
+    {ref: 'content', selector: 'nx-feature-content'}
   ],
 
   features: {
@@ -98,10 +97,6 @@ Ext.define('NX.coreui.controller.Nodes', {
         }
       },
       component: {
-        'button[action=freeze]': {
-          click: me.toggleFreeze,
-          beforerender: me.load
-        },
         'nx-coreui-system-node-settings-form': {
           submitted: me.loadStores
         }
@@ -114,73 +109,6 @@ Ext.define('NX.coreui.controller.Nodes', {
    */
   getDescription: function (model) {
     return model.get('friendlyName') || model.get('nodeIdentity');
-  },
-
-  nxFrozen: false,
-
-  load: function() {
-    var me = this;
-    me.updateFreezeStatus(NX.State.getValue('frozen'));
-  },
-
-  updateFreezeStatus: function(status) {
-    var me = this;
-    me.nxFrozen = status;
-
-    me.getToggleFreezeButton().setText(
-        me.nxFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') : NX.I18n.get('Nodes_Enable_read_only_mode'));
-
-    if (NX.State.getValue('frozen') !== me.nxFrozen) {
-      NX.State.setValue('frozen', me.nxFrozen);
-    }
-  },
-
-  toggleFreeze: function() {
-    var me = this, dialogTitle, dialogDescription, yesButtonText;
-
-    var frozenManually = NX.State.getValue('frozenManually');
-
-    if (!frozenManually && me.nxFrozen) {
-      dialogTitle = NX.I18n.get('Nodes_force_release_dialog');
-      dialogDescription = NX.I18n.get('Nodes_force_release_warning')
-          + ' ' + NX.I18n.get('Nodes_force_release_confirmation');
-      yesButtonText = NX.I18n.get('Nodes_force_release');
-    } else {
-      dialogTitle = me.nxFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode_dialog') :
-          NX.I18n.get('Nodes_Enable_read_only_mode_dialog');
-      dialogDescription = me.nxFrozen ? NX.I18n.get('Nodes_disable_read_only_mode_dialog_description') :
-          NX.I18n.get('Nodes_enable_read_only_mode_dialog_description');
-      yesButtonText = me.nxFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') :
-          NX.I18n.get('Nodes_Enable_read_only_mode');
-    }
-
-    NX.Dialogs.askConfirmation(dialogTitle, dialogDescription, function() {
-      var settings = {frozen: !me.nxFrozen};
-
-      me.getContent().getEl().mask(NX.I18n.get('Nodes_Toggling_read_only_mode'));
-      if (!frozenManually && me.nxFrozen) {
-        NX.direct.coreui_Freeze.forceRelease(function(response) {
-          me.getContent().getEl().unmask();
-          if (Ext.isObject(response) && response.success) {
-            me.updateFreezeStatus(response.data.frozen);
-          }
-        });
-      } else {
-        NX.direct.coreui_Freeze.update(settings, function(response) {
-          me.getContent().getEl().unmask();
-          if (Ext.isObject(response) && response.success) {
-            me.updateFreezeStatus(response.data.frozen);
-          }
-        });
-      }
-
-    }, {
-      scope: me,
-      buttonText: {
-        yes: yesButtonText,
-        no: 'Cancel'
-      }
-    });
   },
 
   onSelection: function(list, model) {

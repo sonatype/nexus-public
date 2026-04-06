@@ -745,9 +745,14 @@ public class FileBlobStoreTest
   }
 
   @Test
-  public void testGet_RetriesForSoftDeletedBlobWhenIncludeDeletedIsTrue() {
+  public void testGet_RetriesForSoftDeletedBlobWhenIncludeDeletedIsTrue() throws Exception {
     // Given
     BlobId blobId = new BlobId("soft-deleted-blob");
+
+    // Create dummy file for this blob ID so Files.exists() check passes
+    Path blobPath = fullPath.resolve(blobId.asUniqueString() + ".bytes");
+    Files.createDirectories(blobPath.getParent());
+    Files.write(blobPath, "dummy content".getBytes());
 
     // Mock a stale blob that fails refresh on first attempt, then succeeds
     FileBlobStore.FileBlob staleBlob = mock(FileBlobStore.FileBlob.class);
@@ -781,10 +786,15 @@ public class FileBlobStoreTest
   }
 
   @Test
-  public void testGet_ExhaustsAllRetries() {
+  public void testGet_ExhaustsAllRetries() throws Exception {
     // Given
     underTest.setRetryConfiguration(3, 25);
     BlobId blobId = new BlobId("exhausted-retry-blob");
+
+    // Create dummy file for this blob ID so Files.exists() check passes
+    Path blobPath = fullPath.resolve(blobId.asUniqueString() + ".bytes");
+    Files.createDirectories(blobPath.getParent());
+    Files.write(blobPath, "dummy content".getBytes());
 
     // Mock a stale blob that consistently fails to refresh
     FileBlobStore.FileBlob staleBlob = mock(FileBlobStore.FileBlob.class);
@@ -808,9 +818,14 @@ public class FileBlobStoreTest
   }
 
   @Test
-  public void testGet_IOExceptionDuringBlobAttributesLoad() {
+  public void testGet_IOExceptionDuringBlobAttributesLoad() throws Exception {
     // Given
     BlobId blobId = new BlobId("io-exception-blob");
+
+    // Create dummy file for this blob ID so Files.exists() check passes
+    Path blobPath = fullPath.resolve(blobId.asUniqueString() + ".bytes");
+    Files.createDirectories(blobPath.getParent());
+    Files.write(blobPath, "dummy content".getBytes());
 
     // Mock a stale blob that fails refresh on first attempt, then succeeds
     FileBlobStore.FileBlob staleBlob = mock(FileBlobStore.FileBlob.class);
@@ -844,9 +859,14 @@ public class FileBlobStoreTest
   }
 
   @Test
-  public void testGet_FirstAttemptSucceedsNoRetries() {
+  public void testGet_FirstAttemptSucceedsNoRetries() throws Exception {
     // Given
     BlobId blobId = new BlobId("first-success-blob");
+
+    // Create dummy file for this blob ID so Files.exists() check passes
+    Path blobPath = fullPath.resolve(blobId.asUniqueString() + ".bytes");
+    Files.createDirectories(blobPath.getParent());
+    Files.write(blobPath, "dummy content".getBytes());
 
     // Mock a non-stale blob that will succeed immediately
     FileBlobStore.FileBlob fileBlob = mock(FileBlobStore.FileBlob.class);
@@ -1462,5 +1482,39 @@ public class FileBlobStoreTest
     OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
     assertThat(blob.getId().getBlobCreatedRef().isAfter(now.minusMinutes(1)), is(true));
     assertThat(blob.getId().getBlobCreatedRef().isBefore(now.plusSeconds(5)), is(true));
+  }
+
+  @Test
+  public void testGet_blobNotInFileStore_returnsNull() throws Exception {
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+
+    Blob result = underTest.get(blobId, false);
+
+    // Verify null is returned (triggers fallback in FluentAssetImpl)
+    assertThat(result, is(nullValue()));
+  }
+
+  /**
+   * Test that get() works normally when blob exists in file blob store.
+   */
+  @Test
+  public void testGet_blobExistsInFileStore_returnsBlob() throws Exception {
+    // Create a real blob
+    byte[] content = "test content".getBytes(UTF_8);
+    Map<String, String> headers = ImmutableMap.of(
+        BLOB_NAME_HEADER, "test",
+        CREATED_BY_HEADER, "test");
+
+    Blob createdBlob = underTest.create(new ByteArrayInputStream(content), headers);
+    BlobId blobId = createdBlob.getId();
+
+    Blob result = underTest.get(blobId, false);
+
+    // Verify blob is returned (not null)
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getId(), is(blobId));
+    assertThat(result.getInputStream(), is(notNullValue()));
+    assertThat(result.getMetrics(), is(notNullValue()));
+    assertThat(result.getMetrics().getContentSize(), is((long) content.length));
   }
 }

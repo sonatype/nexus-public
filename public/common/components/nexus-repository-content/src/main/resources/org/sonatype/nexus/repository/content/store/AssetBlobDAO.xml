@@ -115,6 +115,7 @@
             AND B.blob_created &lt;= DATEADD(MINUTE, 0-#{blobCreatedDelayMinute}, NOW())
           </otherwise>
         </choose>
+        ORDER BY B.asset_blob_id
         LIMIT #{limit};
   </select>
 

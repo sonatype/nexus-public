@@ -15,7 +15,7 @@ import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 import UIStrings from '../../../constants/UIStrings';
 import { Permissions } from '@sonatype/nexus-ui-plugin';
 import givenExtJSState from '../../../testUtils/givenExtJSState';
-import { runLinkNotVisibleTest, runLinkVisiblityTest } from '../../../testUtils/directoryPageTestUtils';
+import { runLinkNotVisibleTest, runLinkVisiblityTest, runDirectoryPage404Test } from '../../../testUtils/directoryPageTestUtils';
 import givenBundleActiveStates from '../../../testUtils/givenBundleActiveStates';
 import givenPermissions from '../../../testUtils/givenPermissions';
 import givenUserLoggedIn from '../../../testUtils/givenUserLoggedIn';
@@ -34,6 +34,12 @@ describe('AdminRepositoriesDirectoryPage', () => {
     });
   });
 
+  it('redirects to 404 when user has no permissions for any child routes', async () => {
+    givenPermissions({});
+
+    await runDirectoryPage404Test(ROUTE_NAMES.ADMIN.REPOSITORY.DIRECTORY);
+  });
+
   describe('Repositories Link', () => {
     it('shows given permissions', async () => {
       givenPermissions({ 'nexus:repository-admin:*:*:read': true });
@@ -42,7 +48,10 @@ describe('AdminRepositoriesDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ 'nexus:repository-admin:*:*:read': false });
+      givenPermissions({
+        'nexus:repository-admin:*:*:read': false,
+        [Permissions.BLOB_STORES.READ]: true  // Grant at least one permission so page renders
+      });
 
       await runLinkNotVisibleTestForRepositoriesPage( UIStrings.REPOSITORIES.MENU);
     });
@@ -56,7 +65,10 @@ describe('AdminRepositoriesDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.BLOB_STORES.READ]: false });
+      givenPermissions({
+        [Permissions.BLOB_STORES.READ]: false,
+        'nexus:repository-admin:*:*:read': true  // Grant at least one permission so page renders
+      });
 
       await runLinkNotVisibleTestForRepositoriesPage(UIStrings.BLOB_STORES.MENU);
     });
@@ -69,7 +81,10 @@ describe('AdminRepositoriesDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ 'nexus:*': false});
+      givenPermissions({
+        'nexus:*': false,
+        [Permissions.BLOB_STORES.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForRepositoriesPage(UIStrings.DATASTORE_CONFIGURATION.MENU);
     });
   });
@@ -82,7 +97,10 @@ describe('AdminRepositoriesDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.SETTINGS.READ]: false });
+      givenPermissions({
+        [Permissions.SETTINGS.READ]: false,
+        [Permissions.BLOB_STORES.READ]: true  // Grant at least one permission so page renders
+      });
 
       await runLinkNotVisibleTestForRepositoriesPage(UIStrings.PROPRIETARY_REPOSITORIES.MENU);
     });
@@ -96,7 +114,10 @@ describe('AdminRepositoriesDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.SELECTORS.READ]: false });
+      givenPermissions({
+        [Permissions.SELECTORS.READ]: false,
+        [Permissions.BLOB_STORES.READ]: true  // Grant at least one permission so page renders
+      });
 
       await runLinkNotVisibleTestForRepositoriesPage(UIStrings.CONTENT_SELECTORS.MENU);
     });
@@ -110,7 +131,10 @@ describe('AdminRepositoriesDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.ADMIN]: false });
+      givenPermissions({
+        [Permissions.ADMIN]: false,
+        [Permissions.BLOB_STORES.READ]: true  // Grant at least one permission so page renders
+      });
 
       await runLinkNotVisibleTestForRepositoriesPage(UIStrings.CLEANUP_POLICIES.MENU);
     });
@@ -124,7 +148,10 @@ describe('AdminRepositoriesDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.ADMIN]: false });
+      givenPermissions({
+        [Permissions.ADMIN]: false,
+        [Permissions.BLOB_STORES.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForRepositoriesPage(UIStrings.ROUTING_RULES.MENU);
     });
   });

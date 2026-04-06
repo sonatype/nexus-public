@@ -14,64 +14,29 @@ package org.sonatype.nexus.api.rest.common.status;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.sonatype.nexus.common.app.FreezeService;
-import org.sonatype.nexus.common.app.NotReadableException;
-import org.sonatype.nexus.common.app.NotWritableException;
 
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
 
 public class StatusResourceTest
 {
-
-  @Mock
-  private FreezeService freezeService;
-
   private StatusResource statusResource;
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
-    statusResource = new StatusResource(freezeService);
+    statusResource = new StatusResource();
   }
 
   @Test
-  public void isAvailableIfServerCanExecuteReadCheck() {
+  public void isAvailableAlwaysReturnsOk() {
     Response response = statusResource.isAvailable();
-    verify(freezeService, times(1)).checkReadable(any());
     assertEquals(200, response.getStatus());
   }
 
   @Test
-  public void isNotAvailableIfServerCannotExecuteReadCheck() {
-    doThrow(new NotReadableException("mock test error")).when(freezeService).checkReadable(any());
-    Response response = statusResource.isAvailable();
-    assertEquals(503, response.getStatus());
-  }
-
-  @Test
-  public void isWritableIfServerCanExecuteWriteCheck() {
+  public void isWritableAlwaysReturnsOk() {
     Response response = statusResource.isWritable();
-    verify(freezeService, times(1)).checkWritable(any());
     assertEquals(200, response.getStatus());
-  }
-
-  @Test
-  public void isNotWritableIfServerCannotExecuteWriteCheck() {
-    doThrow(new NotWritableException("mock test error")).when(freezeService).checkWritable(any());
-    Response response = statusResource.isWritable();
-    assertEquals(503, response.getStatus());
-  }
-
-  @Test
-  public void isNotWritableAndNoWriteCheckIsMadeIfDatabaseIsFrozen() {
-    when(freezeService.isFrozen()).thenReturn(true);
-    Response response = statusResource.isWritable();
-    verify(freezeService, never()).checkWritable(any());
-    assertEquals(503, response.getStatus());
   }
 }

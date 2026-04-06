@@ -39,6 +39,8 @@ public class AptProxyApiRepository
   @NotNull
   protected final AptProxyRepositoriesAttributes apt;
 
+  protected final AptSigningRepositoriesAttributes aptSigning;
+
   @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
   public AptProxyApiRepository(
       @JsonProperty("name") final String name,
@@ -47,6 +49,7 @@ public class AptProxyApiRepository
       @JsonProperty("storage") final StorageAttributes storage,
       @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
       @JsonProperty("apt") final AptProxyRepositoriesAttributes apt,
+      @JsonProperty("aptSigning") final AptSigningRepositoriesAttributes aptSigning,
       @JsonProperty("proxy") final ProxyAttributes proxy,
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributes httpClient,
@@ -57,9 +60,14 @@ public class AptProxyApiRepository
     super(name, AptFormat.NAME, url, online, storage, cleanup, proxy, negativeCache, httpClient, routingRuleName,
         replication);
     this.apt = apt;
+    this.aptSigning = aptSigning;
   }
 
   public AptProxyRepositoriesAttributes getApt() {
     return apt;
+  }
+
+  public AptSigningRepositoriesAttributes getAptSigning() {
+    return aptSigning;
   }
 }

@@ -19,7 +19,11 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.data.AptKeyValueFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.metadata.AptMetadataRebuildSchedulerFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.proxy.metadata.AptProxyMetadataFacet;
 import org.sonatype.nexus.repository.apt.internal.AptSecurityFacet;
+import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
@@ -101,6 +105,20 @@ public class AptProxyRecipe
   @Inject
   Provider<BrowseFacet> browseFacet;
 
+  @Qualifier(AptFormat.NAME)
+  @Inject
+  Provider<AptKeyValueFacet> keyValueFacet;
+
+  @Qualifier(AptFormat.NAME + "-proxy")
+  @Inject
+  Provider<AptProxyMetadataFacet> proxyMetadataFacet;
+
+  @Inject
+  Provider<AptSigningFacet> signingFacet;
+
+  @Inject
+  Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet;
+
   @Inject
   ExceptionHandler exceptionHandler;
 
@@ -132,6 +150,9 @@ public class AptProxyRecipe
   AptDistributionValidationHandler distributionValidationHandler;
 
   @Inject
+  AptProxyMetadataHandler proxyMetadataHandler;
+
+  @Inject
   LastDownloadedHandler lastDownloadedHandler;
 
   @Inject
@@ -158,6 +179,10 @@ public class AptProxyRecipe
     repository.attach(lastAssetMaintenanceFacet.get());
     repository.attach(purgeUnusedFacet.get());
     repository.attach(searchFacet.get());
+    repository.attach(keyValueFacet.get());
+    repository.attach(signingFacet.get());
+    repository.attach(proxyMetadataFacet.get());
+    repository.attach(aptMetadataRebuildSchedulerFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {
@@ -176,6 +201,7 @@ public class AptProxyRecipe
         .handler(contentHeadersHandler)
         .handler(snapshotHandler)
         .handler(lastDownloadedHandler)
+        .handler(proxyMetadataHandler)
         .handler(proxyHandler)
         .create());
 

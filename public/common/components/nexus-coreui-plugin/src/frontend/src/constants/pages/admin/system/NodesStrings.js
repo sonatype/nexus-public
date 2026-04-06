@@ -23,27 +23,6 @@ export default {
       description: 'See your available nodes',
       icon: faArchive
     },
-    READ_ONLY: {
-      ENABLE: {
-        TITLE: 'Enable read-only mode?',
-        MESSAGE: 'Are you sure you want to reject additions of new components and changes to configuration?',
-        BUTTON: 'Enable Read-only Mode',
-        ERROR: 'An error occurred while enabling read-only mode. ',
-        LOADING: 'Enabling...'
-      },
-      DISABLE: {
-        FORCIBLY: {
-          TITLE: 'Forcibly disable read-only mode?',
-          MESSAGE: 'Warning: read-only mode has been enabled by system tasks. Releasing read-only mode before those tasks are complete may cause them to fail and/or cause data loss. Are you sure you want to forcibly release read-only mode?',
-          BUTTON: 'Force Disable Read-only Mode',
-        },
-        TITLE: 'Disable read-only mode?',
-        MESSAGE: 'Are you sure you want to stop rejecting additions of new components and changes to configuration?',
-        BUTTON: 'Disable Read-only Mode',
-        ERROR: 'An error occurred while disabling read-only mode. ',
-        LOADING: 'Disabling...'
-      }
-    },
     HELP: {
       TITLE: 'What are Nodes?',
       TEXT: 'When clustering is enabled, redundant Nexus Repository instances (i.e., nodes) run in active/active mode (i.e., both actively running Nexus Repository simultaneously) within a single cloud region or on-premises data center. This allows you to maintain Nexus Repository availability even if one node becomes unavailable. Only active Nodes will appear here.'

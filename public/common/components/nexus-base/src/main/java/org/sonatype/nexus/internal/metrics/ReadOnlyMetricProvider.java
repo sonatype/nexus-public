@@ -12,18 +12,12 @@
  */
 package org.sonatype.nexus.internal.metrics;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-
-import org.sonatype.nexus.common.app.FreezeService;
 
 import com.codahale.metrics.Metric;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * {@link Metric} provider for the database readonly (frozen) status.
@@ -36,15 +30,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ReadOnlyMetricProvider
     implements FactoryBean<Metric>
 {
-  private final Provider<FreezeService> freezeServiceProvider;
-
-  @Inject
-  public ReadOnlyMetricProvider(final Provider<FreezeService> freezeServiceProvider) {
-    this.freezeServiceProvider = checkNotNull(freezeServiceProvider);
-  }
-
   public Metric getObject() {
-    return new ReadOnlyMetricSet(freezeServiceProvider);
+    return new ReadOnlyMetricSet();
   }
 
   @Override

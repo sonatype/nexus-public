@@ -272,6 +272,20 @@ public class S3BlobStore
       executorService.shutdown();
       executorService = null;
     }
+    // Properly close S3Client to prevent resource leaks
+    // The S3Client (and its internal EncryptingS3Client wrapper) must be closed to:
+    // 1. Release HTTP connection pools
+    // 2. Close any internal credentials providers and their STS clients
+    // 3. Prevent "Connection pool shut down" errors on subsequent uses
+    // Note: We don't null out s3 here because remove() may still need it after stop()
+    if (s3 != null) {
+      try {
+        s3.close();
+      }
+      catch (Exception e) {
+        log.warn("Error closing S3 client during blob store shutdown", e);
+      }
+    }
     metricsService.stop();
     blobStoreQuotaUsageChecker.stop();
   }
@@ -473,7 +487,7 @@ public class S3BlobStore
       }
       else if (blobAttributes.isDeleted()) {
         log.debug("Attempt to delete already-deleted blob {}", blobId);
-        return false;
+        return true;
       }
 
       BlobId propRef = new BlobId(blobId.asUniqueString(), UTC.now());

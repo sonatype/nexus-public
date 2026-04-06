@@ -394,7 +394,7 @@ public class SecurityConfigurationManagerImpl
       throw new NoSuchRoleException(role.getId());
     }
 
-    validateContainedRolesAndPrivileges(role);
+    validateAndCleanOrphanedPrivileges(role);
 
     validateRoleDoesntContainItself(role);
 
@@ -605,12 +605,35 @@ public class SecurityConfigurationManagerImpl
   }
 
   /**
-   * Simply validates the existence of each role/privilege assigned (readRole/readPrivilege throw
-   * NoSuch(Role/Privilege)Exception if not found)
+   * Strictly validates the existence of each role/privilege assigned (readRole/readPrivilege throw
+   * NoSuch(Role/Privilege)Exception if not found). Used for role creation where all references must be valid.
    */
   private void validateContainedRolesAndPrivileges(final CRole role) {
     role.getRoles().forEach(this::readRole);
     role.getPrivileges().forEach(this::readPrivilege);
+  }
+
+  /**
+   * Validates the existence of each role/privilege assigned for role updates. Roles must exist (throws
+   * NoSuchRoleException if not found). For privileges, orphaned references are automatically removed with a warning
+   * log instead of failing the operation. This graceful handling prevents issues when privileges are removed
+   * (e.g., during upgrades) without cleaning up role references.
+   */
+  private void validateAndCleanOrphanedPrivileges(final CRole role) {
+    role.getRoles().forEach(this::readRole);
+
+    Set<String> validPrivileges = new HashSet<>();
+    for (String privilegeId : role.getPrivileges()) {
+      try {
+        readPrivilege(privilegeId);
+        validPrivileges.add(privilegeId);
+      }
+      catch (NoSuchPrivilegeException e) {
+        log.warn("Removing orphaned privilege '{}' from role '{}' - privilege no longer exists",
+            privilegeId, role.getId());
+      }
+    }
+    role.setPrivileges(validPrivileges);
   }
 
   /**

@@ -29,10 +29,11 @@ import org.sonatype.nexus.scheduling.events.TaskEventStoppedFailed;
 import org.sonatype.nexus.scheduling.events.TaskScheduledEvent;
 import org.sonatype.nexus.scheduling.events.TaskStartedRunningEvent;
 
+import org.sonatype.nexus.testdb.DatabaseTest;
+
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import static org.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -60,7 +61,7 @@ class ScheduledTaskEventsTest
     assertExecutedTaskCount(0);
   }
 
-  @Test
+  @DatabaseTest
   void goodRun() throws Exception {
     // create the task
     final TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID);
@@ -86,7 +87,7 @@ class ScheduledTaskEventsTest
     assertThat(listener.arrivedEvents.get(3), instanceOf(TaskEventStoppedDone.class));
   }
 
-  @Test
+  @DatabaseTest
   void goodRunAfterBlocking() throws Exception {
     // create task to block the next one
     createTask(SleeperTaskDescriptor.TYPE_ID);
@@ -120,7 +121,7 @@ class ScheduledTaskEventsTest
         TaskStartedRunningEvent.class, TaskEventStoppedDone.class));
   }
 
-  @Test
+  @DatabaseTest
   void failedRunCheckedException() throws Exception {
     SleeperTask.exception = new IOException("foo");
 
@@ -150,7 +151,7 @@ class ScheduledTaskEventsTest
         instanceOf(IOException.class));
   }
 
-  @Test
+  @DatabaseTest
   void failedRunRuntimeException() throws Exception {
     SleeperTask.exception = new IllegalArgumentException("foo");
 
@@ -180,7 +181,7 @@ class ScheduledTaskEventsTest
         instanceOf(IllegalArgumentException.class));
   }
 
-  @Test
+  @DatabaseTest
   void canceledRunWithNonCancelableTaskWithoutInterruption() throws Exception {
     // create the task
     final TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID);
@@ -212,7 +213,7 @@ class ScheduledTaskEventsTest
     assertThat(listener.arrivedEvents.get(3), instanceOf(TaskEventStoppedDone.class));
   }
 
-  @Test
+  @DatabaseTest
   void prematureCanceledRunWithNonCancelableTask() throws Exception {
     final TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID, taskScheduler.getScheduleFactory().now());
     taskInfo.getCurrentState().getFuture().cancel(false);
@@ -234,26 +235,26 @@ class ScheduledTaskEventsTest
     assertThat(listener.arrivedEvents.get(2), instanceOf(TaskEventStoppedCanceled.class));
   }
 
-  @Test
+  @DatabaseTest
   void canceledRunWithNonCancelableTaskWithInterruption() throws Exception {
     final TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID);
     cancelledRun(taskInfo, true);
   }
 
-  @Test
+  @DatabaseTest
   void canceledRunWithCancelableTask() throws Exception {
     final TaskInfo taskInfo = createTask(SleeperCancelableTaskDescriptor.TYPE_ID);
     cancelledRun(taskInfo, true);
   }
 
-  @Test
+  @DatabaseTest
   void canceledRunByThrowingTaskInterruptedEx() throws Exception {
     SleeperTask.exception = new TaskInterruptedException("foo", true);
     final TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID);
     cancelledRun(taskInfo, false);
   }
 
-  @Test
+  @DatabaseTest
   void canceledRunByThrowingInterruptedEx() throws Exception {
     SleeperTask.exception = new InterruptedException("foo");
     final TaskInfo taskInfo = createTask(SleeperTaskDescriptor.TYPE_ID);

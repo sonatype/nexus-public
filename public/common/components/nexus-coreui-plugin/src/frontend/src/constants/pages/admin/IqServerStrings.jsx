@@ -12,6 +12,7 @@
  */
 import React from 'react';
 import { faShieldAlt } from '@fortawesome/free-solid-svg-icons';
+import HostedRepositoriesEvaluationStrings from './HostedRepositoriesEvaluationStrings';
 
 export default {
   IQ_SERVER: {
@@ -80,6 +81,62 @@ export default {
     VERIFY_CONNECTION_ERROR: (msg) => `Connection Failed: ${msg}`,
     FORM_NOTES: 'can evaluate application and organizing policies',
     HELP_TEXT: 'To enable this feature configure the IQ Server URL, username and password',
-    PASSWORD_ERROR: 'Reenter your password to validate and save your changes.'
+    PASSWORD_ERROR: 'Reenter your password to validate and save your changes.',
+
+    CONNECTED: {
+      TITLE: 'IQ Server',
+      STATUS: 'IQ Server is connected',
+      CONNECTION_ERROR: 'IQ Server is not connected',
+      CONNECTION_SETTINGS_BUTTON: 'Connection Settings',
+      SUBTITLE: 'Manage Sonatype Repository Firewall and Sonatype Lifecycle Configuration',
+
+      LIFECYCLE: {
+        TITLE: 'Sonatype Lifecycle',
+        DESCRIPTION: 'Identify and remediate policy violations',
+        ENABLED: 'Enabled',
+        NOT_AVAILABLE: 'Not Available',
+        EXPLORE_LINK: 'Explore Sonatype Lifecycle'
+      },
+
+      FIREWALL: {
+        TITLE: 'Sonatype Repository Firewall',
+        DESCRIPTION: 'Intercept malicious open source at the door',
+        ENABLED: 'Enabled',
+        NOT_AVAILABLE: 'Not Available',
+        EXPLORE_LINK: 'Explore Repository Firewall'
+      }
+    }
+  },
+
+SONATYPE_LIFECYCLE: {
+    MENU: {
+      text: 'Sonatype Lifecycle',
+    },
+    HOSTED_REPOSITORIES_EVALUATION: {
+      ...HostedRepositoriesEvaluationStrings.HOSTED_REPOSITORIES_EVALUATION,
+      title: 'Hosted Repositories Evaluation',
+      breadcrumb: 'Hosted Repositories Evaluation Group',
+      description: 'Configure global evaluation settings to provide policy coverage for your hosted repositories.',
+      tabs: {
+        settings: 'Settings',
+        repositories: 'Repositories'
+      },
+      INCOMPLETE_MODAL: {
+        TITLE: 'Incomplete Configuration',
+        MESSAGE: 'Some steps are incomplete. Continuing will discard unsaved changes.',
+        CANCEL: 'Cancel',
+        CONTINUE: 'Continue'
+      },
+      UNSAVED_CHANGES_MODAL: {
+        TITLE: 'Unsaved Changes',
+        MESSAGE: 'You have unsaved changes. Are you sure you want to leave? All changes will be lost.',
+        CANCEL: 'Cancel',
+        CONTINUE: 'Continue'
+      }
+    },
+    GLOBAL_EVALUATION_SETTINGS: {
+      title: 'Global Evaluation Settings',
+      description: 'No global evaluation settings configured for the hosted repositories.'
+    }
   }
 };

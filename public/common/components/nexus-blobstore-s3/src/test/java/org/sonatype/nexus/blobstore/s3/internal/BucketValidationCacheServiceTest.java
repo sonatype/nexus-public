@@ -17,10 +17,10 @@ import java.util.concurrent.ExecutionException;
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.s3.internal.BucketValidationCacheService.BucketValidationResult;
 
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.services.s3.model.GetBucketPolicyResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -58,7 +58,6 @@ class BucketValidationCacheServiceTest
   void setup() {
     lenient().when(featureFlag.isDisabled()).thenReturn(false);
     underTest = new BucketValidationCacheService(5, 100, featureFlag);
-    underTest.setS3Client(s3);
   }
 
   @Test
@@ -66,7 +65,7 @@ class BucketValidationCacheServiceTest
     when(s3.doesBucketExist("my-bucket")).thenReturn(true);
     when(s3.getBucketPolicy("my-bucket")).thenReturn(mock(GetBucketPolicyResponse.class));
 
-    BucketValidationResult result = underTest.validate("my-bucket");
+    BucketValidationResult result = underTest.validate(s3, null, "my-bucket");
 
     assertThat(result.exists(), is(true));
     assertThat(result.ownershipValid(), is(true));
@@ -76,7 +75,7 @@ class BucketValidationCacheServiceTest
   void testBucketDoesNotExist() throws ExecutionException {
     when(s3.doesBucketExist("non-existent-bucket")).thenReturn(false);
 
-    BucketValidationResult result = underTest.validate("non-existent-bucket");
+    BucketValidationResult result = underTest.validate(s3, null, "non-existent-bucket");
 
     assertThat(result.exists(), is(false));
     assertThat(result.ownershipValid(), is(false));
@@ -93,7 +92,7 @@ class BucketValidationCacheServiceTest
     when(exception.awsErrorDetails()).thenReturn(details);
     when(s3.getBucketPolicy("my-bucket")).thenThrow(exception);
 
-    BucketValidationResult result = underTest.validate("my-bucket");
+    BucketValidationResult result = underTest.validate(s3, null, "my-bucket");
 
     assertThat(result.exists(), is(true));
     assertThat(result.ownershipValid(), is(true));
@@ -109,7 +108,7 @@ class BucketValidationCacheServiceTest
     when(exception.awsErrorDetails()).thenReturn(details);
     when(s3.getBucketPolicy("my-bucket")).thenThrow(exception);
 
-    BucketValidationResult result = underTest.validate("my-bucket");
+    BucketValidationResult result = underTest.validate(s3, null, "my-bucket");
 
     assertThat(result.exists(), is(true));
     assertThat(result.ownershipValid(), is(false));
@@ -125,7 +124,7 @@ class BucketValidationCacheServiceTest
     when(exception.awsErrorDetails()).thenReturn(details);
     when(s3.getBucketPolicy("my-bucket")).thenThrow(exception);
 
-    BucketValidationResult result = underTest.validate("my-bucket");
+    BucketValidationResult result = underTest.validate(s3, null, "my-bucket");
 
     assertThat(result.exists(), is(true));
     assertThat(result.ownershipValid(), is(false));
@@ -142,7 +141,7 @@ class BucketValidationCacheServiceTest
     when(s3.getBucketPolicy("my-bucket")).thenThrow(exception);
 
     UncheckedExecutionException thrown = assertThrows(UncheckedExecutionException.class,
-        () -> underTest.validate("my-bucket"));
+        () -> underTest.validate(s3, null, "my-bucket"));
     assertThat(thrown.getCause(), is(instanceOf(S3Exception.class)));
   }
 
@@ -150,11 +149,10 @@ class BucketValidationCacheServiceTest
   void testOwnershipCheckDisabledByFeatureFlag() throws ExecutionException {
     when(featureFlag.isDisabled()).thenReturn(true);
     underTest = new BucketValidationCacheService(5, 100, featureFlag);
-    underTest.setS3Client(s3);
 
     when(s3.doesBucketExist("my-bucket")).thenReturn(true);
 
-    BucketValidationResult result = underTest.validate("my-bucket");
+    BucketValidationResult result = underTest.validate(s3, null, "my-bucket");
 
     assertThat(result.exists(), is(true));
     assertThat(result.ownershipValid(), is(true));
@@ -166,8 +164,8 @@ class BucketValidationCacheServiceTest
     when(s3.doesBucketExist("my-bucket")).thenReturn(true);
     when(s3.getBucketPolicy("my-bucket")).thenReturn(mock(GetBucketPolicyResponse.class));
 
-    underTest.validate("my-bucket");
-    underTest.validate("my-bucket");
+    underTest.validate(s3, null, "my-bucket");
+    underTest.validate(s3, null, "my-bucket");
 
     verify(s3, times(1)).doesBucketExist("my-bucket");
     verify(s3, times(1)).getBucketPolicy("my-bucket");
@@ -178,11 +176,29 @@ class BucketValidationCacheServiceTest
     when(s3.doesBucketExist("my-bucket")).thenReturn(true);
     when(s3.getBucketPolicy("my-bucket")).thenReturn(mock(GetBucketPolicyResponse.class));
 
-    underTest.validate("my-bucket");
-    underTest.invalidate("my-bucket");
-    underTest.validate("my-bucket");
+    underTest.validate(s3, null, "my-bucket");
+    underTest.invalidate(null, "my-bucket");
+    underTest.validate(s3, null, "my-bucket");
 
     verify(s3, times(2)).doesBucketExist("my-bucket");
     verify(s3, times(2)).getBucketPolicy("my-bucket");
+  }
+
+  @Test
+  void testDifferentEndpoints() throws ExecutionException {
+    when(s3.doesBucketExist("my-bucket")).thenReturn(true);
+    when(s3.getBucketPolicy("my-bucket")).thenReturn(mock(GetBucketPolicyResponse.class));
+    EncryptingS3Client other = mock();
+    when(other.doesBucketExist("my-bucket")).thenReturn(true);
+    when(other.getBucketPolicy("my-bucket")).thenReturn(mock(GetBucketPolicyResponse.class));
+
+    underTest.validate(s3, "http://foo.minio.dev", "my-bucket");
+    underTest.validate(other, "http://bar.minio.dev", "my-bucket");
+
+    verify(s3).doesBucketExist("my-bucket");
+    verify(s3).getBucketPolicy("my-bucket");
+
+    verify(other).doesBucketExist("my-bucket");
+    verify(other).getBucketPolicy("my-bucket");
   }
 }

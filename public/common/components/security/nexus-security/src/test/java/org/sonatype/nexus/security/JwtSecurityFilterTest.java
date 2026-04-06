@@ -318,6 +318,64 @@ public class JwtSecurityFilterTest
     verify(jwtSessionRevocationService, never()).isRevoked(anyString());
   }
 
+  @Test
+  public void testCreateSubject_withNullUserClaim() throws Exception {
+    String jwtToken = createJwtWithUserSessionId("testuser", "default", "test-session");
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    DecodedJWT decodedJWT = mock(DecodedJWT.class);
+    Claim userSessionIdClaim = mock(Claim.class);
+    Claim nullUserClaim = mock(Claim.class);
+    Claim realmClaim = mock(Claim.class);
+
+    when(userSessionIdClaim.isNull()).thenReturn(false);
+    when(userSessionIdClaim.asString()).thenReturn("test-session");
+    when(nullUserClaim.asString()).thenReturn(null); // Null user
+    when(realmClaim.asString()).thenReturn("default");
+
+    when(decodedJWT.getClaim("userSessionId")).thenReturn(userSessionIdClaim);
+    when(decodedJWT.getClaim("user")).thenReturn(nullUserClaim);
+    when(decodedJWT.getClaim("realm")).thenReturn(realmClaim);
+
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+
+    WebSubject subject = underTest.createSubject(request, response);
+
+    // Should fall back to unauthenticated subject when user is null
+    assertThat(subject, notNullValue());
+    verify(jwtHelper).verifyJwt(jwtToken);
+  }
+
+  @Test
+  public void testCreateSubject_withNullRealmClaim() throws Exception {
+    String jwtToken = createJwtWithUserSessionId("testuser", "default", "test-session");
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    DecodedJWT decodedJWT = mock(DecodedJWT.class);
+    Claim userSessionIdClaim = mock(Claim.class);
+    Claim userClaim = mock(Claim.class);
+    Claim nullRealmClaim = mock(Claim.class);
+
+    when(userSessionIdClaim.isNull()).thenReturn(false);
+    when(userSessionIdClaim.asString()).thenReturn("test-session");
+    when(userClaim.asString()).thenReturn("testuser");
+    when(nullRealmClaim.asString()).thenReturn(null); // Null realm
+
+    when(decodedJWT.getClaim("userSessionId")).thenReturn(userSessionIdClaim);
+    when(decodedJWT.getClaim("user")).thenReturn(userClaim);
+    when(decodedJWT.getClaim("realm")).thenReturn(nullRealmClaim);
+
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+
+    WebSubject subject = underTest.createSubject(request, response);
+
+    // Should fall back to unauthenticated subject when realm is null
+    assertThat(subject, notNullValue());
+    verify(jwtHelper).verifyJwt(jwtToken);
+  }
+
   /**
    * Helper to create a JWT without userSessionId claim.
    */

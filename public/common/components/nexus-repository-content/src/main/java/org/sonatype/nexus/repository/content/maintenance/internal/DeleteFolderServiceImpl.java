@@ -137,10 +137,24 @@ public class DeleteFolderServiceImpl
           pathQueue.offer(nodePath + "/" + node.getName());
         }
         else {
-          checkDeleteComponent(timestamp, contentFacet, contentMaintenance, canDeleteComponent, node);
+          // For nodes with both asset and component (e.g., Go repos using AssetPathBrowseNodeGenerator)
+          // Delete asset first, then check if component should be deleted.
+          // Note: This order differs from the separated node logic below because we need to
+          // verify no assets remain before deleting the component to prevent orphans.
+          if (node.getAssetId() != null && node.getComponentId() != null) {
+            boolean assetDeleted = checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
+            // After deleting the asset, check if the component has any remaining assets
+            // If not, delete the component to prevent orphaned components
+            if (assetDeleted && canDeleteComponent) {
+              checkDeleteComponentWithAssets(timestamp, contentFacet, contentMaintenance, node);
+            }
+          }
+          else {
+            // For nodes with only component or only asset, use the original logic
+            checkDeleteComponent(timestamp, contentFacet, contentMaintenance, canDeleteComponent, node);
+            checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
+          }
         }
-
-        checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
       }
     }
   }
@@ -264,6 +278,47 @@ public class DeleteFolderServiceImpl
     return true; // No component associated with this node or cannot delete
   }
 
+  /**
+   * Check and delete a component if it has no remaining assets.
+   * This is used for formats like Go, NPM, Raw, Composer, Cargo, Terraform, and Yum
+   * where browse nodes contain both asset and component references via AssetPathBrowseNodeGenerator.
+   *
+   * @param timestamp the timestamp to check against
+   * @param contentFacet the content facet
+   * @param contentMaintenance the maintenance facet
+   * @param node the browse node
+   * @return true if safe to proceed with browse node deletion (component deleted, not found, or still has assets),
+   *         false only if component deletion was attempted and failed
+   */
+  boolean checkDeleteComponentWithAssets(
+      final OffsetDateTime timestamp,
+      final ContentFacet contentFacet,
+      final ContentMaintenanceFacet contentMaintenance,
+      final BrowseNode node)
+  {
+    if (node.getComponentId() != null) {
+      return contentFacet.components()
+          .find(node.getComponentId())
+          .map(component -> {
+            // Check if component has any remaining assets
+            boolean hasAssets = component.assets().stream().findAny().isPresent();
+            if (!hasAssets) {
+              // No assets left, delete the component
+              return deleteComponent(component, timestamp, contentMaintenance);
+            }
+            else {
+              // Component still has assets, don't delete it yet
+              if (log.isTraceEnabled()) {
+                log.trace("Component {} still has assets, not deleting yet", node.getComponentId());
+              }
+              return true; // Return true to not block browse node deletion
+            }
+          })
+          .orElse(true); // If component not found, consider it already deleted
+    }
+    return true; // No component associated with this node
+  }
+
   boolean checkDeleteAsset(
       final Repository repository,
       final OffsetDateTime timestamp,
@@ -350,7 +405,8 @@ public class DeleteFolderServiceImpl
     return securityHelper.isPermitted(new RepositoryViewPermission(repository, DELETE))[0];
   }
 
-  private void processLeafDeletion(
+  @VisibleForTesting
+  void processLeafDeletion(
       BrowseFacet browseFacet,
       OffsetDateTime timestamp,
       ContentFacet contentFacet,
@@ -364,10 +420,27 @@ public class DeleteFolderServiceImpl
       log.trace("Processing leaf: '{}'", nodeData.getPath());
     }
 
-    // Check component first to prevent orphaned components if asset deletion succeeds but component deletion fails
-    boolean componentDeleted =
-        checkDeleteComponent(timestamp, contentFacet, contentMaintenance, canDeleteComponent, node);
-    boolean assetDeleted = checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
+    boolean componentDeleted = true;
+    boolean assetDeleted = true;
+
+    // For nodes with both asset and component (e.g., Go repos using AssetPathBrowseNodeGenerator)
+    // Delete asset first, then check if component should be deleted.
+    // Note: This order differs from the separated node logic below because we need to
+    // verify no assets remain before deleting the component to prevent orphans.
+    if (node.getAssetId() != null && node.getComponentId() != null) {
+      assetDeleted = checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
+
+      // After deleting the asset, check if the component has any remaining assets
+      // If not, delete the component to prevent orphaned components
+      if (assetDeleted && canDeleteComponent) {
+        componentDeleted = checkDeleteComponentWithAssets(timestamp, contentFacet, contentMaintenance, node);
+      }
+    }
+    else {
+      // For nodes with only component or only asset, use the original logic
+      componentDeleted = checkDeleteComponent(timestamp, contentFacet, contentMaintenance, canDeleteComponent, node);
+      assetDeleted = checkDeleteAsset(repository, timestamp, contentFacet, contentMaintenance, node);
+    }
 
     // Only delete browse node if both component and asset were successfully deleted (if they exist)
     if (componentDeleted && assetDeleted) {

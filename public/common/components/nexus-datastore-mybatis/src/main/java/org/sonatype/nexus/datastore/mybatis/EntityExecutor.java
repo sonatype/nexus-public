@@ -51,21 +51,16 @@ final class EntityExecutor
 {
   private final Executor delegate;
 
-  private final FrozenChecker frozenChecker;
-
   @Nullable
   private List<HasEntityId> generatedEntityIds;
 
-  public EntityExecutor(final Executor delegate, final FrozenChecker frozenChecker) {
+  public EntityExecutor(final Executor delegate) {
     this.delegate = checkNotNull(delegate);
-    this.frozenChecker = checkNotNull(frozenChecker);
   }
 
   @Override
   public int update(final MappedStatement ms, final Object parameter) throws SQLException {
     SqlCommandType commandType = ms.getSqlCommandType();
-
-    frozenChecker.checkFrozen(ms);
 
     if (commandType == INSERT && parameter instanceof HasEntityId) {
       generateEntityId((HasEntityId) parameter);

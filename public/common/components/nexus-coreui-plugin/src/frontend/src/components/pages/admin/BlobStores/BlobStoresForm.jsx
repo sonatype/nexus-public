@@ -46,6 +46,7 @@ import BlobStoreWarning from './BlobStoreWarning';
 import BlobStoresConvertModal from './BlobStoresConvertModal';
 import {useCurrentStateAndParams, useRouter} from "@uirouter/react";
 import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
+import './BlobStores.scss';
 
 const {BLOB_STORES: {FORM}} = UIStrings;
 

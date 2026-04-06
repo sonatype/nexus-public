@@ -256,4 +256,26 @@ public class RepositoryCombobox
                 .collect(joining(","));
   }
 
+  private static final String ATTRIBUTE_LISTENERS = "listeners";
+
+  /**
+   * Configure a listener that will be bound to an event during component initialization.
+   * The listener function must be declared in NX.coreui.view.formfield.SettingsFieldSet
+   *
+   * @param eventName Any event name from Ext.form.field.ComboBox (e.g., 'select', 'change')
+   * @param listenerName Name of the property that contains the handler method. Must be defined in
+   *          NX.coreui.view.formfield.SettingsFieldSet
+   * @return This instance
+   */
+  @SuppressWarnings("unchecked")
+  public RepositoryCombobox withListener(final String eventName, final String listenerName) {
+    Map<String, String> declaredListeners = getAttributes().containsKey(ATTRIBUTE_LISTENERS)
+        ? (Map<String, String>) getAttributes().get(ATTRIBUTE_LISTENERS)
+        : Maps.newHashMap();
+
+    declaredListeners.put(eventName, listenerName);
+    getAttributes().put(ATTRIBUTE_LISTENERS, declaredListeners);
+
+    return this;
+  }
 }

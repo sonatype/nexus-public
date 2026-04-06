@@ -39,4 +39,6 @@ public class ContentTypes
   public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
 
   public static final String APPLICATION_TAR = "application/x-tar";
+
+  public static final String APPLICATION_ZSTD = "application/zstd";
 }

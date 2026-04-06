@@ -51,8 +51,7 @@ import org.springframework.stereotype.Component;
 public class AptSigningFacet
     extends FacetSupport
 {
-  @VisibleForTesting
-  static final String CONFIG_KEY = "aptSigning";
+  public static final String CONFIG_KEY = "aptSigning";
 
   @VisibleForTesting
   static class Config
@@ -83,6 +82,15 @@ public class AptSigningFacet
   @Override
   protected void doDestroy() throws Exception {
     config = null;
+  }
+
+  /**
+   * Checks if signing is configured for this repository.
+   *
+   * @return true if a keypair is configured
+   */
+  public boolean isConfigured() {
+    return config != null && config.keypair != null && !config.keypair.isBlank();
   }
 
   public Content getPublicKey() throws IOException {

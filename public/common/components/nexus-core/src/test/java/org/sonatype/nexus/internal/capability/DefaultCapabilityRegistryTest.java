@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 import javax.validation.ValidationException;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.crypto.secrets.Secret;
+import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.formfields.Encrypted;
@@ -60,7 +62,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -75,15 +76,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.capability.CapabilityIdentity.capabilityIdentity;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
 
@@ -151,14 +144,7 @@ public class DefaultCapabilityRegistryTest
         .thenAnswer(invocation -> secrets.get(Integer.valueOf(invocation.getArgument(0, String.class))));
 
     factory = mock(CapabilityFactory.class);
-    when(factory.create()).thenAnswer(new Answer<Capability>()
-    {
-      @Override
-      public Capability answer(final InvocationOnMock invocation) throws Throwable {
-        return mock(Capability.class);
-      }
-
-    });
+    when(factory.create()).thenAnswer((Answer<Capability>) invocation -> mock(Capability.class));
 
     final CapabilityFactoryRegistry capabilityFactoryRegistry = mock(CapabilityFactoryRegistry.class);
     when(capabilityFactoryRegistry.get(CAPABILITY_TYPE)).thenReturn(factory);
@@ -173,13 +159,7 @@ public class DefaultCapabilityRegistryTest
         mock(ValidityConditionHandler.class));
 
     when(capabilityStorage.add(Mockito.<CapabilityStorageItem>any())).thenAnswer(
-        new Answer<CapabilityIdentity>()
-        {
-          @Override
-          public CapabilityIdentity answer(final InvocationOnMock invocationOnMock) throws Throwable {
-            return capabilityIdentity(String.valueOf(random.nextLong()));
-          }
-        });
+        (Answer<CapabilityIdentity>) invocationOnMock -> capabilityIdentity(String.valueOf(random.nextLong())));
 
     when(capabilityStorage.newStorageItem(anyInt(), any(), anyBoolean(), any(), any()))
         .thenAnswer(i -> {
@@ -679,6 +659,79 @@ public class DefaultCapabilityRegistryTest
     properties.put("foo", secretValue);
 
     return underTest.add(CAPABILITY_TYPE, true, null, properties);
+  }
+
+  @Test
+  public void addWithPreExistingSecretId_doesNotReEncrypt() throws Exception {
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
+
+    when(secretsStore.read(123)).thenReturn(Optional.of(mock(SecretData.class)));
+
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put("foo", "_123");
+
+    underTest.add(CAPABILITY_TYPE, true, null, properties);
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+    verify(capabilityStorage).add(csiRec.capture());
+    assertThat(csiRec.getValue().getProperties().get("foo"), is("_123"));
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+  }
+
+  @Test
+  public void addWithPreExistingSecretId_secretNotInStore_stillEncrypts() throws Exception {
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
+
+    when(secretsStore.read(123)).thenReturn(Optional.empty());
+
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put("foo", "_123");
+
+    underTest.add(CAPABILITY_TYPE, true, null, properties);
+
+    verify(secretsService).encryptMaven("capabilities", "_123".toCharArray(), "testuser");
+  }
+
+  @Test
+  public void addWithPlaintextPassword_stillEncrypts() throws Exception {
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
+
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put("foo", "mypassword");
+
+    underTest.add(CAPABILITY_TYPE, true, null, properties);
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+    verify(capabilityStorage).add(csiRec.capture());
+    assertThat(csiRec.getValue().getProperties().get("foo"), is("0"));
+    verify(secretsService).encryptMaven("capabilities", "mypassword".toCharArray(), "testuser");
+  }
+
+  @Test
+  public void addWithNonSecretUnderscorePrefixedValue_stillEncrypts() throws Exception {
+    final CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.formFields()).thenReturn(Collections.singletonList(
+        new PasswordFormField("foo", "foo", "?", FormField.OPTIONAL)));
+
+    Map<String, String> properties = Maps.newHashMap();
+    properties.put("foo", "_notanumber");
+
+    underTest.add(CAPABILITY_TYPE, true, null, properties);
+
+    ArgumentCaptor<CapabilityStorageItem> csiRec = ArgumentCaptor.forClass(CapabilityStorageItem.class);
+    verify(capabilityStorage).add(csiRec.capture());
+    assertThat(csiRec.getValue().getProperties().get("foo"), is(not("_notanumber")));
+    verify(secretsService).encryptMaven("capabilities", "_notanumber".toCharArray(), "testuser");
   }
 
   /**

@@ -12,28 +12,18 @@
  */
 import React from 'react';
 
-import {Detail, Master, MasterDetail, ExtJS, TasksList} from '@sonatype/nexus-ui-plugin';
+import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
+import TasksList from './TasksList';
 import TasksDetails from './TasksDetails';
-import TasksExtJSWrapper from './TasksExtJSWrapper';
-
-import './Tasks.scss'
-import FeatureFlags from '../../../../constants/FeatureFlags';
 
 export default function Tasks() {
-    const isReactEnabled = ExtJS.state().getValue(FeatureFlags.REACT_TASKS_ENABLED, false);
-
-    if (!isReactEnabled) {
-        return <TasksExtJSWrapper />;
-    }
-  return (
-      <MasterDetail path="admin/system/tasks">
-        <Master>
-          <TasksList/>
-        </Master>
-        <Detail>
-          <TasksDetails/>
-        </Detail>
-      </MasterDetail>
-  );
+  return <MasterDetail path="admin/system/tasks">
+    <Master>
+      <TasksList/>
+    </Master>
+    <Detail>
+      <TasksDetails/>
+    </Detail>
+  </MasterDetail>;
 };

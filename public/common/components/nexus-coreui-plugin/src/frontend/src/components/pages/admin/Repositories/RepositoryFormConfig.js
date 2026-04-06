@@ -103,13 +103,17 @@ const repositoryFormats = {
     })
   },
   apt_proxy: {
-    facets: [AptEnforceDistributionConfiguration, AptDistributionConfiguration, AptFlatConfiguration, ...genericFacets.proxy],
+    facets: [AptEnforceDistributionConfiguration, AptDistributionConfiguration, AptFlatConfiguration, AptSigningConfiguration, ...genericFacets.proxy],
     defaultValues: {
       ...genericDefaultValues.proxy,
       apt: {
         distribution: null,
         flat: false,
         enforceDistribution: false
+      },
+      aptSigning: {
+        keypair: null,
+        passphrase: null
       }
     },
     validators: (data) => ({
@@ -118,6 +122,9 @@ const repositoryFormats = {
         distribution: data.apt?.enforceDistribution
           ? ValidationUtils.validateNotBlank(data.apt?.distribution)
           : null
+      },
+      aptSigning: {
+        keypair: ValidationUtils.isBlank(data.aptSigning?.keypair) ? null : ValidationUtils.validateNotBlank(data.aptSigning?.keypair)
       }
     })
   },
@@ -241,6 +248,15 @@ const repositoryFormats = {
     },
     validators: (data) => ({
       ...genericValidators.proxy(data)
+    })
+  },
+  conda_group: {
+    facets: [...genericFacets.group],
+    defaultValues: {
+      ...genericDefaultValues.group
+    },
+    validators: (data) => ({
+      ...genericValidators.group(data)
     })
   },
   docker_proxy: {
@@ -388,7 +404,18 @@ const repositoryFormats = {
         validators: (data) => ({
             ...genericValidators.group(data)
         })
-    }
+    },
+  conda_hosted: {
+    facets: [...genericFacets.hosted],
+    defaultValues: {
+      ...mergeDeepRight(genericDefaultValues.hosted, {
+        storage: {writePolicy: 'ALLOW'}
+      })
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  }
 };
 
 export const getFacets = (format, type) =>

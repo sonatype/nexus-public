@@ -58,4 +58,10 @@ public class ApiDocConstants
   public static final String BAD_REQUEST = "Bad request";
 
   public static final String DISABLED_IN_HIGH_AVAILABILITY = "Feature is disabled in High Availability";
+
+  public static final String API_HOSTED_REPOSITORY_EVALUATION = "Hosted Repository Evaluation";
+
+  public static final String MONITORING_ENABLED = "Monitoring enabled successfully";
+
+  public static final String INVALID_REPOSITORY_IDS = "Invalid request (empty list, invalid UUID format)";
 }

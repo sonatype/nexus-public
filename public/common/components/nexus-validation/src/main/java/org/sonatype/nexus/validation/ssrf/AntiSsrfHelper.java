@@ -144,8 +144,9 @@ public class AntiSsrfHelper
     }
 
     if (!rejectedAddresses.isEmpty()) {
-      return SsrfValidationResult.failure(
-          "Host resolves to private/local IP address(es): " + String.join(", ", rejectedAddresses));
+      String errorMessage = "Host resolves to private/local IP address(es): " + String.join(", ", rejectedAddresses);
+      log.debug("Blocked access to private/local network host: {} - {}", host, errorMessage);
+      return SsrfValidationResult.failure(errorMessage);
     }
 
     return SsrfValidationResult.success();

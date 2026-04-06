@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.apt.api;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotEmpty;
 
 /**
  * REST API model for apt repository signing.
@@ -26,7 +25,7 @@ public class AptSigningRepositoriesAttributes
 {
   @ApiModelProperty(value = "PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor)",
       example = "")
-  @NotEmpty
+
   protected final String keypair;
 
   @ApiModelProperty(value = "Passphrase to access PGP signing key", example = "")

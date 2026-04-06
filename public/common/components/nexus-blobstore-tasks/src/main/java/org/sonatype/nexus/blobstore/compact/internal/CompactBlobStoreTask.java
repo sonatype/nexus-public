@@ -76,7 +76,7 @@ public class CompactBlobStoreTask
       @Nullable final ChangeRepositoryBlobStoreStore changeBlobstoreStore,
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final TaskUtils taskUtils,
-      final RecoveryModeService recoveryModeService,
+      @Nullable final RecoveryModeService recoveryModeService,
       @Value("${nexus.compact.blobstore.concurrencyLimit:5}") final int concurrencyLimit,
       @Value("${nexus.compact.blobstore.queueCapacity:5}") final int queueCapacity)
   {
@@ -84,12 +84,14 @@ public class CompactBlobStoreTask
     this.changeBlobstoreStore = Optional.ofNullable(changeBlobstoreStore);
     this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
     this.taskUtils = checkNotNull(taskUtils);
-    this.recoveryModeService = checkNotNull(recoveryModeService);
+    this.recoveryModeService = recoveryModeService;
   }
 
   @VisibleForTesting
   void checkForConflicts(final String blobStoreName) {
-    recoveryModeService.ensureNotInRecoveryMode(getName());
+    if (recoveryModeService != null) {
+      recoveryModeService.ensureNotInRecoveryMode(getName());
+    }
     taskUtils.checkForConflictingTasks(getId(), getName(), asList("repository.move"), ImmutableMap
         .of("moveInitialBlobstore", asList(blobStoreName), "moveTargetBlobstore", asList(blobStoreName)));
 

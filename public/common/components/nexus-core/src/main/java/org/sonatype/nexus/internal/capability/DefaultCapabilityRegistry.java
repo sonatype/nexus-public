@@ -18,11 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 import javax.validation.ValidationException;
@@ -62,8 +63,6 @@ import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Inject;
@@ -74,7 +73,6 @@ import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static java.util.Collections.unmodifiableCollection;
 import static java.util.UUID.fromString;
 import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE;
 import static org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode.CREATE_NON_EXPOSED;
@@ -110,7 +108,7 @@ public class DefaultCapabilityRegistry
   @VisibleForTesting
   final Map<CapabilityIdentity, DefaultCapabilityReference> references;
 
-  private final ReentrantReadWriteLock lock;
+  private final ReentrantLock lock;
 
   private final SecretsService secretsService;
 
@@ -146,7 +144,7 @@ public class DefaultCapabilityRegistry
     this.validatorProvider = checkNotNull(validatorProvider);
 
     references = new ConcurrentHashMap<>();
-    lock = new ReentrantReadWriteLock();
+    lock = new ReentrantLock();
   }
 
   @Override
@@ -209,7 +207,7 @@ public class DefaultCapabilityRegistry
     checkNotNull(type);
 
     try {
-      lock.writeLock().lock();
+      lock.lock();
 
       final Map<String, String> props = properties == null ? Maps.<String, String>newHashMap() : properties;
 
@@ -236,7 +234,7 @@ public class DefaultCapabilityRegistry
       return doAdd(generatedId, type, descriptor, item, props);
     }
     finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -303,13 +301,11 @@ public class DefaultCapabilityRegistry
     final DefaultCapabilityReference reference;
     final Map<String, String> encryptedProps;
     try {
-      lock.writeLock().lock();
+      lock.lock();
 
       final Map<String, String> props = properties == null ? Maps.<String, String>newHashMap() : properties;
 
-      validateId(id);
-
-      reference = get(id);
+      reference = require(id);
 
       reference.descriptor().validate(id, props, ValidationMode.UPDATE);
 
@@ -330,7 +326,7 @@ public class DefaultCapabilityRegistry
       return doUpdate(reference, item, props);
     }
     finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -376,11 +372,9 @@ public class DefaultCapabilityRegistry
   @Override
   public CapabilityReference remove(final CapabilityIdentity id) {
     try {
-      lock.writeLock().lock();
+      lock.lock();
 
-      validateId(id);
-
-      DefaultCapabilityReference reference = get(id);
+      DefaultCapabilityReference reference = require(id);
 
       capabilityStorage.remove(id);
 
@@ -389,18 +383,16 @@ public class DefaultCapabilityRegistry
       return doRemove(id);
     }
     finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
   @Override
   public CapabilityReference removeNonExposed(final CapabilityIdentity id) {
     try {
-      lock.writeLock().lock();
+      lock.lock();
 
-      validateId(id);
-
-      DefaultCapabilityReference reference = get(id);
+      DefaultCapabilityReference reference = require(id);
 
       final Map<String, String> props = reference.properties();
 
@@ -415,7 +407,7 @@ public class DefaultCapabilityRegistry
       return doRemove(id);
     }
     finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -448,61 +440,31 @@ public class DefaultCapabilityRegistry
 
   @Override
   public CapabilityReference enable(final CapabilityIdentity id) {
-    try {
-      lock.writeLock().lock();
-
-      validateId(id);
-
-      final DefaultCapabilityReference reference = get(id);
-      return update(reference.context().id(), true, reference.notes(), reference.properties());
-    }
-    finally {
-      lock.writeLock().unlock();
-    }
+    final DefaultCapabilityReference reference = require(id);
+    return update(reference.context().id(), true, reference.notes(), reference.properties());
   }
 
   @Override
   public CapabilityReference disable(final CapabilityIdentity id) {
-    try {
-      lock.writeLock().lock();
-
-      validateId(id);
-
-      final DefaultCapabilityReference reference = get(id);
-      return update(reference.context().id(), false, reference.notes(), reference.properties());
-    }
-    finally {
-      lock.writeLock().unlock();
-    }
+    final DefaultCapabilityReference reference = require(id);
+    return update(reference.context().id(), false, reference.notes(), reference.properties());
   }
 
   @Override
   public DefaultCapabilityReference get(final CapabilityIdentity id) {
-    try {
-      lock.readLock().lock();
-
-      return references.get(id);
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+    return references.get(id);
   }
 
   @Override
   public Collection<DefaultCapabilityReference> get(final Predicate<CapabilityReference> filter) {
-    return unmodifiableCollection(Collections2.filter(getAll(), filter));
+    return getAll().stream()
+        .filter(filter)
+        .toList();
   }
 
   @Override
   public Collection<DefaultCapabilityReference> getAll() {
-    try {
-      lock.readLock().lock();
-
-      return ImmutableSet.copyOf(references.values());
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+    return Set.copyOf(references.values());
   }
 
   public void load() {
@@ -599,7 +561,6 @@ public class DefaultCapabilityRegistry
                                                                                                                         // be
                                                                                                                         // null
             .ifPresent(value -> {
-              DefaultCapabilityReference reference = get(capabilityIdentity);
               // Do NOT decrypt secrets automatically - capabilities must decrypt on-demand
               doUpdate(capabilityReference, value, value.getProperties());
             }));
@@ -607,10 +568,10 @@ public class DefaultCapabilityRegistry
 
   @Override
   public void migrateSecrets(final CapabilityReference capabilityReference, final Predicate<Secret> shouldMigrate) {
-    try {
-      lock.writeLock().lock();
+    DefaultCapabilityReference reference = (DefaultCapabilityReference) capabilityReference;
 
-      DefaultCapabilityReference reference = (DefaultCapabilityReference) capabilityReference;
+    try {
+      lock.lock();
 
       Map<String, String> reEncryptedProps =
           migrateValues(reference.descriptor(), reference.encryptedProperties(), shouldMigrate);
@@ -634,7 +595,7 @@ public class DefaultCapabilityRegistry
       pruneSecretsIfNeeded(reference.descriptor(), reEncryptedProps, reference.encryptedProperties());
     }
     finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -677,10 +638,8 @@ public class DefaultCapabilityRegistry
         secretsStore);
   }
 
-  private void validateId(final CapabilityIdentity id) {
-    if (get(id) == null) {
-      throw new CapabilityNotFoundException(id);
-    }
+  private DefaultCapabilityReference require(final CapabilityIdentity id) {
+    return Optional.ofNullable(get(id)).orElseThrow(() -> new CapabilityNotFoundException(id));
   }
 
   /**
@@ -689,7 +648,7 @@ public class DefaultCapabilityRegistry
    * Uses blocking lock since we're in a dedicated thread.
    */
   private void processRemoteCapabilityEvent(final CapabilityIdentity id) {
-    lock.writeLock().lock();
+    lock.lock();
     try {
       CapabilityStorageItem item = capabilityStorage.read(entityId(id)).orElse(null);
 
@@ -719,7 +678,7 @@ public class DefaultCapabilityRegistry
       syncCapabilityReference(id, item, descriptor, type);
     }
     finally {
-      lock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
@@ -782,10 +741,12 @@ public class DefaultCapabilityRegistry
     return encrypted;
   }
 
+  private boolean isExistingSecretId(final String value) {
+    return value.matches("_\\d+") && secretsStore.read(Integer.parseInt(value.substring(1))).isPresent();
+  }
+
   /**
    * Encrypts value of properties marked to be stored encrypted.
-   *
-   * @since 2.7
    */
   private Map<String, String> encryptValuesIfNeeded(
       final CapabilityDescriptor descriptor,
@@ -811,6 +772,11 @@ public class DefaultCapabilityRegistry
               log.debug("Reusing existing secret for field {}", formField.getId());
               // existing secret matches
               encrypted.put(formField.getId(), oldSecretId);
+            }
+            else if (isExistingSecretId(value)) {
+              log.debug("Value for field {} is already a Secret ID, skipping re-encryption",
+                  formField.getId());
+              encrypted.put(formField.getId(), value);
             }
             else {
               log.debug("Encrypting new value for field {}", formField.getId());
@@ -853,26 +819,6 @@ public class DefaultCapabilityRegistry
           }
         }
       }
-    }
-  }
-
-  private String safelyLoadSecret(@Nullable final String secretId) {
-    try {
-      if (secretId == null || secretId.isEmpty()) {
-        return secretId;
-      }
-
-      // Decrypt using the secret ID directly - secretsService.from() expects the secret ID string
-      return String.valueOf(secretsService.from(secretId).decrypt());
-    }
-    catch (NumberFormatException e) {
-      // If not a valid secret ID, return the value as-is (for backwards compatibility)
-      log.debug("Secret ID is not a valid integer format, returning as-is: {}", secretId);
-      return secretId;
-    }
-    catch (Exception e) {
-      log.error("Error decrypting secret ID: {}", secretId, e);
-      return null;
     }
   }
 

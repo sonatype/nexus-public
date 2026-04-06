@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.90.0-21</version>
+    <version>3.91.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-testing</artifactId>
@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <testcontainers.version>1.19.1</testcontainers.version>
+    <testcontainers.version>2.0.2</testcontainers.version>
     <iq.version>1.168.0</iq.version>
 
     <jupiter.version>5.11.4</jupiter.version>
@@ -261,13 +261,13 @@
 
       <dependency>
         <groupId>org.testcontainers</groupId>
-        <artifactId>junit-jupiter</artifactId>
+        <artifactId>testcontainers-junit-jupiter</artifactId>
         <version>${testcontainers.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.testcontainers</groupId>
-        <artifactId>postgresql</artifactId>
+        <artifactId>testcontainers-postgresql</artifactId>
         <version>${testcontainers.version}</version>
       </dependency>
 

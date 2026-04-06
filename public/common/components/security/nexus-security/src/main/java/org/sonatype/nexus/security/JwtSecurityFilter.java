@@ -141,9 +141,20 @@ public class JwtSecurityFilter
           Claim user = decodedJwt.getClaim(USER);
           Claim realm = decodedJwt.getClaim(REALM);
 
-          PrincipalCollection principals = new SimplePrincipalCollection(
-              user.asString(),
-              realm.asString());
+          // Handle case where user or realm claims are missing/null
+          // Check both if claim is null and if asString() returns null
+          String username = user != null && !user.isNull() ? user.asString() : null;
+          String realmName = realm != null && !realm.isNull() ? realm.asString() : null;
+
+          if (username == null || realmName == null) {
+            log.debug("Invalid JWT token: missing user or realm claim");
+            cookie.setValue("");
+            cookie.setMaxAge(0);
+            WebUtils.toHttp(response).addCookie(cookie);
+            return super.createSubject(request, response);
+          }
+
+          PrincipalCollection principals = new SimplePrincipalCollection(username, realmName);
 
           session.setTimeout(TimeUnit.SECONDS.toMillis(jwtHelper.getExpirySeconds()));
           session.setAttribute(JWT_COOKIE_NAME, jwt);

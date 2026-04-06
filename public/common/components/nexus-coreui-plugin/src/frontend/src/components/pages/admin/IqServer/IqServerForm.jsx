@@ -10,9 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {useMachine} from '@xstate/react';
+import {useRouter} from '@uirouter/react';
 import {
+  ExtJS,
   FormUtils,
   ValidationUtils,
   UseNexusTruststore
@@ -32,6 +34,7 @@ import {
 } from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../constants/UIStrings';
+import {ROUTE_NAMES} from '../../../../routerConfig/routeNames/routeNames';
 
 import Machine from './IqServerMachine';
 
@@ -39,9 +42,35 @@ import './IqServer.scss';
 
 export default function IqServerForm() {
   const [state, send] = useMachine(Machine, {devTools: true});
+  const router = useRouter();
+  const previousStateRef = useRef();
+  const hasSavedRef = useRef(false);
   const {data, pristineData, isPristine, validationErrors, verifyConnectionError, verifyConnectionSuccessMessage} = state.context;
   const isInvalid = FormUtils.isInvalid(validationErrors);
   const canOpenIqServerDashboard = pristineData.enabled && ValidationUtils.isUrl(pristineData.url);
+
+  // Navigate to Connected page after successful save if IQ Server is enabled
+  useEffect(() => {
+    if (state.matches('saving')) {
+      hasSavedRef.current = true;
+    }
+
+    const previousState = previousStateRef.current;
+
+    if (previousState) {
+      const wasLoading = previousState.matches('loading');
+      const isNowLoaded = state.matches('loaded');
+      const featureFlagValue = ExtJS.state()?.getValue('nexus.hosted.repository.evaluation.enabled');
+      const isFeatureEnabled = featureFlagValue !== undefined ? featureFlagValue : false;
+
+      if (hasSavedRef.current && wasLoading && isNowLoaded && pristineData.enabled && isFeatureEnabled) {
+        hasSavedRef.current = false;
+        router.stateService.go(ROUTE_NAMES.ADMIN.IQ.CONNECTED);
+      }
+    }
+
+    previousStateRef.current = state;
+  }, [state, pristineData.enabled]);
 
   function verifyConnection() {
     send({type: 'VERIFY_CONNECTION'});

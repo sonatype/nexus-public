@@ -29,9 +29,12 @@ import org.springframework.stereotype.Component;
 public class LogViewerStateContributor
     implements StateContributor
 {
+  private final boolean enabled;
+
   @Inject
-  @Value("${nexus.datastore.clustered.enabled:false}")
-  private boolean enabled;
+  public LogViewerStateContributor(@Value("${nexus.datastore.clustered.enabled:false}") final boolean enabled) {
+    this.enabled = enabled;
+  }
 
   @Override
   @Nullable

@@ -43,6 +43,8 @@ public class UploadFieldDefinition
 
   private String group;
 
+  private String groupHelpText;
+
   private Map<String, String> options;
 
   public UploadFieldDefinition(final String name, final boolean optional, final Type type) {
@@ -87,12 +89,26 @@ public class UploadFieldDefinition
       final String group,
       final Map<String, String> options)
   {
+    this(name, displayName, helpText, optional, type, group, null, options);
+  }
+
+  public UploadFieldDefinition(
+      final String name,
+      final String displayName,
+      final String helpText,
+      final boolean optional,
+      final Type type,
+      final String group,
+      final String groupHelpText,
+      final Map<String, String> options)
+  {
     this.name = name;
     this.displayName = displayName;
     this.helpText = helpText;
     this.optional = optional;
     this.type = type;
     this.group = group;
+    this.groupHelpText = groupHelpText;
     this.options = options;
   }
 
@@ -139,6 +155,17 @@ public class UploadFieldDefinition
   }
 
   /**
+   * The help text for the group this field belongs to
+   */
+  public String getGroupHelpText() {
+    return this.groupHelpText;
+  }
+
+  public void setGroupHelpText(final String groupHelpText) {
+    this.groupHelpText = groupHelpText;
+  }
+
+  /**
    * The options available for SELECT type fields
    */
   public Map<String, String> getOptions() {
@@ -147,7 +174,7 @@ public class UploadFieldDefinition
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, displayName, helpText, type, group, optional, options);
+    return Objects.hash(name, displayName, helpText, type, group, groupHelpText, optional, options);
   }
 
   @Override
@@ -179,6 +206,10 @@ public class UploadFieldDefinition
     }
 
     if (!Objects.equals(group, other.group)) {
+      return false;
+    }
+
+    if (!Objects.equals(groupHelpText, other.groupHelpText)) {
       return false;
     }
 

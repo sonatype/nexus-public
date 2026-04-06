@@ -22,7 +22,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheAttributeUtils;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
@@ -100,6 +102,18 @@ public class AssetXOBuilder
         .map(Date::from)
         .orElseGet(() -> Date.from(asset.created().toInstant()));
 
+    // Extract new fields
+    Date blobUpdated = assetBlob.map(AssetBlob::blobCreated)
+        .map(OffsetDateTime::toInstant)
+        .map(Date::from)
+        .orElse(null);
+
+    String blobRef = assetBlob.map(AssetBlob::blobRef)
+        .map(BlobRef::toString)
+        .orElse(null);
+
+    Date lastVerified = CacheAttributeUtils.extractLastVerified(asset.attributes().backing());
+
     return AssetXO.builder()
         .path(asset.path())
         .downloadUrl(repository.getUrl() + asset.path())
@@ -114,7 +128,10 @@ public class AssetXOBuilder
         .uploader(uploader)
         .uploaderIp(uploaderIp)
         .fileSize(fileSize)
-        .blobStoreName(blobStoreName);
+        .blobStoreName(blobStoreName)
+        .blobUpdated(blobUpdated)
+        .blobRef(blobRef)
+        .lastVerified(lastVerified);
   }
 
   @Nullable
@@ -141,4 +158,5 @@ public class AssetXOBuilder
 
     return Collections.singletonMap(format, exposedAttributes);
   }
+
 }

@@ -27,6 +27,7 @@ import org.joda.time.DateTime;
 import org.slf4j.event.Level;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.testcommon.extensions.LoggingExtension.convert;
 
 public class NexusMatchers
@@ -85,6 +86,10 @@ public class NexusMatchers
         return convert(level).equals(item.getLevel());
       }
     };
+  }
+
+  public static Matcher<ILoggingEvent> logMessage(final String message) {
+    return logMessage(is(message));
   }
 
   /**

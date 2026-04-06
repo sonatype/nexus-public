@@ -31,6 +31,8 @@
   .blob-store-name, .blob-store-new-name {
     .nx-field-validation-message {
       white-space: nowrap;
+      min-width: 400px;
+      max-width: 600px;
     }
   }
 

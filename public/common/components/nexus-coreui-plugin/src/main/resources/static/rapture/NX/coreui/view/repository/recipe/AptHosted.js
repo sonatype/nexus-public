@@ -38,7 +38,7 @@ Ext.define('NX.coreui.view.repository.recipe.AptHosted', {
 
     me.items = [
       {xtype: 'nx-aptui-repository-apthosted-facet'},
-      {xtype: 'nx-aptui-repository-aptsigning-facet'},
+      {xtype: 'nx-aptui-repository-aptsigning-facet', allowBlank: false},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-storage-hosted-facet'},
       {xtype: 'nx-coreui-repository-cleanup-policy-facet'}

@@ -101,7 +101,7 @@ public class ProgressLogIntervalHelper
     TaskLoggerHelper.flush();
   }
 
-  private boolean hasIntervalElapsed() {
+  private synchronized boolean hasIntervalElapsed() {
     boolean logProgress = progress.elapsed(TimeUnit.SECONDS) >= internal;
     if (logProgress) {
       progress.reset().start();

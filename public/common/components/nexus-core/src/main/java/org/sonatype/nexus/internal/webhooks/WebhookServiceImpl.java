@@ -162,6 +162,10 @@ public class WebhookServiceImpl
       try {
         send(request);
       }
+      catch (HttpResponseException e) {
+        log.warn("Webhook endpoint returned error status for request: {} - {}",
+            request, e.getMessage());
+      }
       catch (Exception e) {
         log.error("Failed to send webhook request:{}", request, e);
       }

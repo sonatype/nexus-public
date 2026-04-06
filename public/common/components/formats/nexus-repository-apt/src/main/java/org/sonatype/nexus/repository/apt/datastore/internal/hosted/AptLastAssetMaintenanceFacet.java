@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.apt.datastore.internal.hosted;
 import java.util.Set;
 
 import org.sonatype.nexus.repository.apt.AptFormat;
-import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptHostedMetadataFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.metadata.AptMetadataFacetSupport;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -57,7 +57,7 @@ public class AptLastAssetMaintenanceFacet
     metadata().removePackageMetadata(fluentAsset);
   }
 
-  private AptHostedMetadataFacet metadata() {
-    return facet(AptHostedMetadataFacet.class);
+  private AptMetadataFacetSupport metadata() {
+    return facet(AptMetadataFacetSupport.class);
   }
 }

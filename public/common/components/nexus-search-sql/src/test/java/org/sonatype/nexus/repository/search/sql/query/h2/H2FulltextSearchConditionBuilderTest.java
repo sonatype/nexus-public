@@ -240,7 +240,100 @@ class H2FulltextSearchConditionBuilderTest
     assertThat(result.getSqlFilter(), containsString("cs.keywords"));
     assertThat(result.getSqlFilter(), containsString("cs.search_component_name"));
     assertThat(result.getParameters().get("cs_keywords0"), is("%java%"));
-    assertThat(result.getParameters().get("cs_search_component_name1"), is("%spring%%"));
+    // NEXUS-50246: NAME column uses prefix matching for wildcards
+    assertThat(result.getParameters().get("cs_search_component_name1"), is("spring%"));
+  }
+
+  // NEXUS-50246: Tests for wildcard prefix matching on exact-supporting columns
+  @Test
+  void testWildcardVersionSearchUsesPrefixMatching() {
+    // VERSION column should use prefix matching for wildcards (not contains)
+    Expression expression = new SqlPredicate(Operand.EQ, SearchField.VERSION, new WildcardTerm("4.1*"));
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is("LOWER(cs.version) LIKE LOWER(#{filterParams.cs_version0})"));
+    // Should NOT have leading % - this is prefix matching, not contains
+    assertThat(result.getParameters().get("cs_version0"), is("4.1%"));
+  }
+
+  @Test
+  void testWildcardVersionSearchWithDotsUsesPrefixMatching() {
+    // VERSION column with more dots should also use prefix matching
+    Expression expression = new SqlPredicate(Operand.EQ, SearchField.VERSION, new WildcardTerm("4.1.0*"));
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is("LOWER(cs.version) LIKE LOWER(#{filterParams.cs_version0})"));
+    // Should NOT have leading % - this is prefix matching
+    assertThat(result.getParameters().get("cs_version0"), is("4.1.0%"));
+  }
+
+  @Test
+  void testWildcardNamespaceSearchUsesPrefixMatching() {
+    // NAMESPACE column should use prefix matching for wildcards
+    Expression expression = new SqlPredicate(Operand.EQ, SearchField.NAMESPACE, new WildcardTerm("org.apache*"));
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is("LOWER(cs.namespace) LIKE LOWER(#{filterParams.cs_namespace0})"));
+    // Should NOT have leading % - this is prefix matching
+    assertThat(result.getParameters().get("cs_namespace0"), is("org.apache%"));
+  }
+
+  @Test
+  void testWildcardNameSearchUsesPrefixMatching() {
+    // NAME column should use prefix matching for wildcards
+    Expression expression = new SqlPredicate(Operand.EQ, SearchField.NAME, new WildcardTerm("spring-boot*"));
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(),
+        is("LOWER(cs.search_component_name) LIKE LOWER(#{filterParams.cs_search_component_name0})"));
+    // Should NOT have leading % - this is prefix matching
+    assertThat(result.getParameters().get("cs_search_component_name0"), is("spring-boot%"));
+  }
+
+  @Test
+  void testWildcardOnTokenizedColumnUsesContainsMatching() {
+    // KEYWORDS is tokenized, so it should still use contains matching (with leading %)
+    Expression expression = new SqlPredicate(Operand.EQ, SearchField.KEYWORDS, new WildcardTerm("spring*"));
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is("(LOWER(cs.keywords) LIKE LOWER(#{filterParams.cs_keywords0}))"));
+    // Tokenized columns should still have leading % for contains matching
+    assertThat(result.getParameters().get("cs_keywords0"), is("%spring%%"));
+  }
+
+  @Test
+  void testWildcardOnJsonColumnUsesContainsMatching() {
+    // TAGS is a JSON column, so it should still use contains matching
+    Expression expression = new SqlPredicate(Operand.EQ, SearchField.TAGS, new WildcardTerm("release*"));
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is("(LOWER(cs.tags) LIKE LOWER(#{filterParams.cs_tags0}))"));
+    // JSON columns should still have leading % for contains matching with JSON quotes
+    assertThat(result.getParameters().get("cs_tags0"), is("%\"release%%"));
+  }
+
+  @Test
+  void testWildcardVersionWithLeadingSeparatorStripped() {
+    // Leading separators should be stripped from wildcard search terms
+    Expression expression = new SqlPredicate(Operand.EQ, SearchField.VERSION, new WildcardTerm(".4.1*"));
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    assertThat(result.getSqlFilter(), is("LOWER(cs.version) LIKE LOWER(#{filterParams.cs_version0})"));
+    // Leading dot should be stripped
+    assertThat(result.getParameters().get("cs_version0"), is("4.1%"));
+  }
+
+  @Test
+  void testMultipleWildcardTermsUseContainsMatching() {
+    // Multiple terms should still use contains matching (only single wildcards get prefix matching)
+    Expression expression = new SqlPredicate(Operand.EQ, SearchField.VERSION,
+        TermCollection.create(new WildcardTerm("4.1*"), new WildcardTerm("5.0*")));
+    SqlSearchQueryCondition result = underTest().build(expression);
+
+    // Multiple terms use contains matching
+    assertThat(result.getSqlFilter(), containsString("LIKE"));
+    assertThat(result.getParameters().get("cs_version0"), is("%4.1%%"));
+    assertThat(result.getParameters().get("cs_version1"), is("%5.0%%"));
   }
 
   private static H2FulltextSearchConditionBuilder underTest() {

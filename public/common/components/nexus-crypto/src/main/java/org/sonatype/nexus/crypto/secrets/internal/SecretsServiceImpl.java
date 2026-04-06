@@ -55,9 +55,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("default")
+@Primary
 @Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class SecretsServiceImpl
@@ -274,6 +276,16 @@ public class SecretsServiceImpl
       final String encryptedValue,
       final String userId) throws CipherException
   {
+    return importEncrypted(purpose, encryptedValue, userId, null);
+  }
+
+  @Override
+  public Secret importEncrypted(
+      final String purpose,
+      final String encryptedValue,
+      final String userId,
+      final String decryptionCipherPassword) throws CipherException
+  {
     if (encryptedValue == null) {
       return null;
     }
@@ -290,7 +302,15 @@ public class SecretsServiceImpl
     // 1) No security concerns when copying secrets between instances
     // 2) Secrets are properly migrated when instances use different encryption keys
     try {
-      return encrypt(purpose, toChars(cipherFactory.create(defaultKey, encryptedValue).decrypt()), null, userId);
+      SecretEncryptionKey decryptionKey = defaultKey;
+
+      // Use the migration cipher password if provided, otherwise use default key
+      if (decryptionCipherPassword != null && !decryptionCipherPassword.isEmpty()) {
+        log.debug("Using migration cipher password for secret import");
+        decryptionKey = new SecretEncryptionKey(null, decryptionCipherPassword);
+      }
+
+      return encrypt(purpose, toChars(cipherFactory.create(decryptionKey, encryptedValue).decrypt()), null, userId);
     }
     catch (Exception e) {
       throw new CipherException("Failed to import encrypted secret", e);

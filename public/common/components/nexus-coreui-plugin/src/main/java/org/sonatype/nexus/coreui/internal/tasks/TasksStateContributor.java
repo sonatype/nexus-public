@@ -23,7 +23,6 @@ import org.sonatype.nexus.rapture.StateContributor;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.sonatype.nexus.common.app.FeatureFlags;
 
 @Component
 @Singleton
@@ -35,9 +34,9 @@ public class TasksStateContributor
 
   @Inject
   public TasksStateContributor(
-      @Value(FeatureFlags.REACT_TASKS_ENABLED_NAMED_VALUE) final Boolean featureFlag)
+      @Value("${nexus.react.tasks:false}") final Boolean featureFlag)
   {
-    state = ImmutableMap.of(FeatureFlags.REACT_TASKS_ENABLED, featureFlag);
+    state = ImmutableMap.of("nexus.react.tasks", featureFlag);
   }
 
   @Override

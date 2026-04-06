@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheAttributeUtils;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 
@@ -62,6 +63,12 @@ public class AssetXO
   private Date blobCreated;
 
   private String blobStoreName;
+
+  private Date blobUpdated;
+
+  private String blobRef;
+
+  private Date lastVerified;
 
   @JsonIgnore
   private Map<String, Object> attributes;
@@ -182,6 +189,30 @@ public class AssetXO
     this.blobStoreName = blobStoreName;
   }
 
+  public Date getBlobUpdated() {
+    return blobUpdated;
+  }
+
+  public void setBlobUpdated(final Date blobUpdated) {
+    this.blobUpdated = blobUpdated;
+  }
+
+  public String getBlobRef() {
+    return blobRef;
+  }
+
+  public void setBlobRef(final String blobRef) {
+    this.blobRef = blobRef;
+  }
+
+  public Date getLastVerified() {
+    return lastVerified;
+  }
+
+  public void setLastVerified(final Date lastVerified) {
+    this.lastVerified = lastVerified;
+  }
+
   public void setAttributes(final Map<String, Object> attributes) {
     this.attributes = attributes;
   }
@@ -223,7 +254,10 @@ public class AssetXO
         .lastDownloaded(asset.getLastDownloaded())
         .fileSize(asset.getFileSize())
         .blobCreated(asset.getBlobCreated())
+        .blobUpdated(asset.getBlobUpdated())
         .blobStoreName(blobStoreName)
+        .blobRef(asset.getBlobRef())
+        .lastVerified(CacheAttributeUtils.extractLastVerified(asset.getAttributes()))
         .uploader(asset.getUploader())
         .uploaderIp(asset.getUploaderIp())
         .build();
@@ -293,7 +327,10 @@ public class AssetXO
         ", uploaderIp='" + uploaderIp + '\'' +
         ", fileSize=" + fileSize +
         ", blobCreated=" + blobCreated +
+        ", blobUpdated=" + blobUpdated +
         ", blobStoreName='" + blobStoreName + '\'' +
+        ", blobRef='" + blobRef + '\'' +
+        ", lastVerified=" + lastVerified +
         ", attributes=" + attributes +
         '}';
   }
@@ -328,6 +365,12 @@ public class AssetXO
     private Date blobCreated;
 
     private String blobStoreName;
+
+    private Date blobUpdated;
+
+    private String blobRef;
+
+    private Date lastVerified;
 
     private Map<String, Object> attributes;
 
@@ -401,6 +444,21 @@ public class AssetXO
       return this;
     }
 
+    public AssetXOBuilder blobUpdated(Date blobUpdated) {
+      this.blobUpdated = blobUpdated;
+      return this;
+    }
+
+    public AssetXOBuilder blobRef(String blobRef) {
+      this.blobRef = blobRef;
+      return this;
+    }
+
+    public AssetXOBuilder lastVerified(Date lastVerified) {
+      this.lastVerified = lastVerified;
+      return this;
+    }
+
     public AssetXOBuilder attributes(Map<String, Object> attributes) {
       this.attributes = attributes;
       return this;
@@ -421,7 +479,10 @@ public class AssetXO
       assetXO.setUploaderIp(this.uploaderIp);
       assetXO.setFileSize(this.fileSize);
       assetXO.setBlobCreated(this.blobCreated);
+      assetXO.setBlobUpdated(this.blobUpdated);
       assetXO.setBlobStoreName(this.blobStoreName);
+      assetXO.setBlobRef(this.blobRef);
+      assetXO.setLastVerified(this.lastVerified);
       assetXO.setAttributes(this.attributes);
       return assetXO;
     }

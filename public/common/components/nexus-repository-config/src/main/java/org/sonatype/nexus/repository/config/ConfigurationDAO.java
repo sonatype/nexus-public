@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.config;
 import java.util.Collection;
 import java.util.Set;
 
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.IterableDataAccess;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 
@@ -27,6 +28,8 @@ public interface ConfigurationDAO
     extends IterableDataAccess.WithName<ConfigurationData>
 {
   Collection<Configuration> readByNames(Set<String> repositoryNames);
+
+  Collection<ConfigurationData> readByIds(Collection<EntityId> repositoryIds);
 
   Collection<Configuration> readByRecipe(String recipeName);
 }

@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.sonatype.nexus.configuration.model.ApplyStatusXO;
 import org.sonatype.nexus.configuration.model.InstanceConfigurationXO;
+import org.sonatype.nexus.configuration.validation.MissingBlobStoreException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,13 @@ public abstract class AbstractConfigurationSource
   public final List<ApplyStatusXO> applyToInstance(final InstanceConfigurationXO instanceConfigurationXO) {
     try {
       return doApplyToInstance(instanceConfigurationXO);
+    }
+    catch (MissingBlobStoreException e) {
+      throw e;
+    }
+    catch (RuntimeException e) {
+      LOG.error("Failed to apply configuration for type: {}", getConfigurationTypeId(), e);
+      return List.of(getFailedStatus(" " + e.getMessage()));
     }
     catch (Exception e) {
       LOG.error("Failed to apply configuration for type: {}", getConfigurationTypeId(), e);

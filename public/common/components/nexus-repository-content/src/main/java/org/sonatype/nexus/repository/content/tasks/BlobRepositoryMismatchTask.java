@@ -45,6 +45,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Stream.empty;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
@@ -63,13 +64,17 @@ public class BlobRepositoryMismatchTask
 
   private final AtomicLong fixedBlobsCount = new AtomicLong();
 
+  private final boolean skipProcessing;
+
   @Autowired
   public BlobRepositoryMismatchTask(
       final BlobStoreManager blobStoreManager,
-      @Value("${blob.repository.name.mismatch.concurrencyLimit:5}") final int concurrencyLimit)
+      @Value("${blob.repository.name.mismatch.concurrencyLimit:5}") final int concurrencyLimit,
+      @Value("${blob.repository.name.mismatch.skipProcessing:false}") final boolean skipProcessing)
   {
     super(concurrencyLimit, 1);
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.skipProcessing = skipProcessing;
   }
 
   @Override
@@ -78,8 +83,20 @@ public class BlobRepositoryMismatchTask
   }
 
   @Override
+  protected Stream<Runnable> jobStream(final ProgressLogIntervalHelper progress) {
+    log.info("Starting blob repository mismatch check");
+    return super.jobStream(progress);
+  }
+
+  @Override
   protected Stream<Runnable> jobStream(final ProgressLogIntervalHelper progress, final Repository repository) {
-    log.info("Processing {}", repository.getName());
+    if (skipProcessing) {
+      log.debug("Skip processing is enabled, skipping blob mismatch processing for repository: {}",
+          repository.getName());
+      return empty();
+    }
+
+    log.info("Processing repository: {}", repository.getName());
 
     BlobStore blobstore = getBlobStore(repository).orElse(null);
     if (blobstore == null) {

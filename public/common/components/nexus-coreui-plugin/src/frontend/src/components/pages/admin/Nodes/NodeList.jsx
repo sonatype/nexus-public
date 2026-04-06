@@ -26,7 +26,6 @@ import {HelpTile} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import NodeListMachine from './NodeListMachine';
-import FreezeAction from './FreezeAction/FreezeAction';
 import './NodeList.scss';
 
 const {
@@ -48,9 +47,6 @@ export default function NodeList() {
     <Page className="nxrm-nodes">
       <PageHeader>
         <PageTitle icon={faArchive} {...MENU} />
-        <PageActions>
-          <FreezeAction />
-        </PageActions>
       </PageHeader>
 
       <ContentBody>

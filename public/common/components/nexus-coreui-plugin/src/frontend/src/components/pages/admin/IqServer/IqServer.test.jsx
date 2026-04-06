@@ -23,6 +23,16 @@ import UIStrings from '../../../../constants/UIStrings';
 
 const {IQ_SERVER, SETTINGS} = UIStrings;
 
+const mockRouter = {
+  stateService: {
+    go: jest.fn()
+  }
+};
+
+jest.mock('@uirouter/react', () => ({
+  useRouter: () => mockRouter
+}));
+
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -32,6 +42,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
       setDirtyStatus: jest.requireActual('@sonatype/nexus-ui-plugin').ExtJS.setDirtyStatus,
       checkPermission: jest.fn().mockReturnValue(true),
       useUser: jest.fn(() => ({ name: 'test-user' })),
+      state: jest.fn(() => ({
+        getValue: jest.fn()
+      }))
     }
   }
 });

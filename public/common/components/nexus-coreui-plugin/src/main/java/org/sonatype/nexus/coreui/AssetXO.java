@@ -51,6 +51,8 @@ public class AssetXO
 
   private Date lastDownloaded;
 
+  private Date lastVerified;
+
   @NotEmpty
   private String blobRef;
 
@@ -143,6 +145,14 @@ public class AssetXO
     this.lastDownloaded = lastDownloaded;
   }
 
+  public Date getLastVerified() {
+    return lastVerified;
+  }
+
+  public void setLastVerified(Date lastVerified) {
+    this.lastVerified = lastVerified;
+  }
+
   public String getBlobRef() {
     return blobRef;
   }
@@ -213,6 +223,7 @@ public class AssetXO
         ", blobCreated=" + blobCreated +
         ", blobUpdated=" + blobUpdated +
         ", lastDownloaded=" + lastDownloaded +
+        ", lastVerified=" + lastVerified +
         ", blobRef='" + blobRef + '\'' +
         ", componentId='" + componentId + '\'' +
         ", createdBy='" + createdBy + '\'' +

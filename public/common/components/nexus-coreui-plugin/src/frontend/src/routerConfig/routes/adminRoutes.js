@@ -21,6 +21,10 @@ import { lazyLoad } from './lazyLoad';
 
 // Lazy load all route components for better code splitting
 const IqServer = lazyLoad(() => import('../../components/pages/admin/IqServer/IqServer'));
+const IqServerConnected = lazyLoad(() => import('../../components/pages/admin/IqServer/IqServerConnected'));
+const SonatypeLifecycle = lazyLoad(() => import('../../components/pages/admin/IqServer/SonatypeLifecycle'));
+const HostedRepositoriesEvaluation = lazyLoad(() => import('../../components/pages/admin/HostedRepositoriesEvaluation/HostedRepositoriesEvaluation'));
+const HostedRepositoryEvaluationGroup = lazyLoad(() => import('../../components/pages/admin/IqServer/HostedRepositoriesEvaluation'));
 const RepositoriesExt = lazyLoad(() => import('../../components/pages/admin/Repositories/RepositoriesExt'));
 const DataStoreConfiguration = lazyLoad(() => import('../../components/pages/admin/DataStoreConfiguration/DataStoreConfiguration'));
 const ProprietaryRepositories = lazyLoad(() => import('../../components/pages/admin/ProprietaryRepositories/ProprietaryRepositories'));
@@ -46,7 +50,7 @@ const HTTP = lazyLoad(() => import('../../components/pages/admin/Http/Http'));
 const Licensing = lazyLoad(() => import('../../components/pages/admin/Licensing/Licensing'));
 const Upgrade = lazyLoad(() => import('../../components/pages/admin/Upgrade/Upgrade'));
 const NodesExt = lazyLoad(() => import('../../components/pages/admin/Nodes/NodesExt'));
-const Tasks = lazyLoad(() => import('../../components/pages/admin/Tasks/Tasks'));
+const TasksExtJSWrapper = lazyLoad(() => import('../../components/pages/admin/Tasks/TasksExtJSWrapper'));
 const Capabilities = lazyLoad(() => import('../../components/pages/admin/Capabilities/Capabilities'));
 const BlobStoresList = lazyLoad(() => import('../../components/pages/admin/BlobStores/BlobStoresList'));
 const BlobStoresForm = lazyLoad(() => import('../../components/pages/admin/BlobStores/BlobStoresForm'));
@@ -707,7 +711,7 @@ export const adminRoutes = [
   {
     name: ADMIN.SYSTEM.TASKS.ROOT,
     url: '/tasks:taskId',
-    component: Tasks,
+    component: TasksExtJSWrapper,
     params: {
       taskId: {
         value: null,
@@ -855,6 +859,60 @@ export const adminRoutes = [
         permissions: [Permissions.SETTINGS.READ],
       },
       title: ADMIN.IQ.TITLE,
+    },
+  },
+
+  {
+    name: ADMIN.IQ.CONNECTED,
+    url: '/iq/connected',
+    component: IqServerConnected,
+    data: {
+      visibilityRequirements: {
+        permissions: [Permissions.SETTINGS.READ],
+        statesEnabled: [
+          {
+            key: 'nexus.hosted.repository.evaluation.enabled',
+            defaultValue: false,
+          },
+        ],
+      },
+      title: ADMIN.IQ.TITLE,
+    },
+  },
+
+  {
+    name: ADMIN.IQ.SONATYPE_LIFECYCLE.ROOT,
+    url: '/iq/sonatype-lifecycle',
+    component: SonatypeLifecycle,
+    data: {
+      visibilityRequirements: {
+        permissions: [Permissions.SETTINGS.READ],
+        statesEnabled: [
+          {
+            key: 'nexus.hosted.repository.evaluation.enabled',
+            defaultValue: true,
+          },
+        ],
+      },
+      title: ADMIN.IQ.SONATYPE_LIFECYCLE.TITLE,
+    },
+  },
+
+  {
+    name: ADMIN.IQ.HOSTED_REPOS_EVAL.ROOT,
+    url: '/iq/sonatype-lifecycle/hosted-repos-eval',
+    component: HostedRepositoryEvaluationGroup,
+    data: {
+      visibilityRequirements: {
+        permissions: [Permissions.SETTINGS.READ],
+        statesEnabled: [
+          {
+            key: 'nexus.hosted.repository.evaluation.enabled',
+            defaultValue: false,
+          },
+        ],
+      },
+      title: ADMIN.IQ.HOSTED_REPOS_EVAL.TITLE,
     },
   },
 ];

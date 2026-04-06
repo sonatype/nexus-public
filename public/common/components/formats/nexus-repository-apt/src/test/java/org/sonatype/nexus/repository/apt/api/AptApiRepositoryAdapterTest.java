@@ -62,13 +62,27 @@ public class AptApiRepositoryAdapterTest
     AptHostedApiRepository hostedRepository = (AptHostedApiRepository) underTest.adapt(repository);
     assertRepository(hostedRepository, "hosted", true);
     assertThat(hostedRepository.getApt().getDistribution(), is("bionic"));
-    assertThat(hostedRepository.getAptSigning(), nullValue());
+    assertThat(hostedRepository.getAptSigning(), org.hamcrest.Matchers.not(nullValue()));
+    assertThat(hostedRepository.getAptSigning().getKeypair(), is("asdf"));
+    assertThat(hostedRepository.getAptSigning().getPassphrase(), nullValue());
 
-    // only include public key if it is encrypted
     repository.getConfiguration().attributes("aptSigning").set("passphrase", "mypass");
     hostedRepository = (AptHostedApiRepository) underTest.adapt(repository);
     assertThat(hostedRepository.getAptSigning().getKeypair(), is("asdf"));
     assertThat(hostedRepository.getAptSigning().getPassphrase(), nullValue());
+
+    repository.getConfiguration().attributes("aptSigning").set("keypair", "");
+    hostedRepository = (AptHostedApiRepository) underTest.adapt(repository);
+    assertThat(hostedRepository.getAptSigning(), nullValue());
+  }
+
+  @Test
+  public void testAdapt_hostedRepository_passphraseOnly() throws Exception {
+    Repository repository = createRepository(new HostedType(), "bionic", null, "mypass", null);
+
+    AptHostedApiRepository hostedRepository = (AptHostedApiRepository) underTest.adapt(repository);
+    // aptSigning should be null because keypair is not set
+    assertThat(hostedRepository.getAptSigning(), nullValue());
   }
 
   @Test
@@ -79,6 +93,27 @@ public class AptApiRepositoryAdapterTest
     assertRepository(proxyRepository, "proxy", true);
     assertThat(proxyRepository.getApt().getDistribution(), is("bionic"));
     assertThat(proxyRepository.getApt().getFlat(), is(true));
+    assertThat(proxyRepository.getAptSigning(), nullValue());
+  }
+
+  @Test
+  public void testAdapt_proxyRepository_withKeypair() throws Exception {
+    Repository repository = createRepository(new ProxyType(), "bionic", "proxy-keypair", null, true);
+
+    AptProxyApiRepository proxyRepository = (AptProxyApiRepository) underTest.adapt(repository);
+    assertRepository(proxyRepository, "proxy", true);
+    assertThat(proxyRepository.getApt().getDistribution(), is("bionic"));
+    assertThat(proxyRepository.getAptSigning(), org.hamcrest.Matchers.not(nullValue()));
+    assertThat(proxyRepository.getAptSigning().getKeypair(), is("proxy-keypair"));
+    assertThat(proxyRepository.getAptSigning().getPassphrase(), nullValue());
+
+    repository.getConfiguration().attributes("aptSigning").set("passphrase", "pass");
+    assertThat(proxyRepository.getAptSigning().getKeypair(), is("proxy-keypair"));
+    assertThat(proxyRepository.getAptSigning().getPassphrase(), nullValue());
+
+    repository.getConfiguration().attributes("aptSigning").set("keypair", "");
+    proxyRepository = (AptProxyApiRepository) underTest.adapt(repository);
+    assertThat(proxyRepository.getAptSigning(), nullValue());
   }
 
   private static void assertRepository(
@@ -97,7 +132,8 @@ public class AptApiRepositoryAdapterTest
     Configuration configuration = mock(Configuration.class);
     when(configuration.isOnline()).thenReturn(true);
     when(configuration.getRepositoryName()).thenReturn(repositoryName);
-    when(configuration.attributes(not(startsWith("apt")))).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
+    when(configuration.attributes(not(startsWith("apt"))))
+        .thenReturn(new NestedAttributesMap("dummy", newHashMap()));
     return configuration;
   }
 

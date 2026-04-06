@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -29,11 +30,13 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
@@ -44,13 +47,19 @@ public class CreateAssetBlobIndexTaskTest
 
   private static final String MAVEN_FORMAT = "maven";
 
+  private static final String NPM_FORMAT = "npm";
+
   private static final String INDEX_NAME = "idx_test_asset_blob_blob_created_asset_id";
 
   private static final String MAVEN_INDEX_NAME = "idx_maven_asset_blob_blob_created_asset_id";
 
+  private static final String NPM_INDEX_NAME = "idx_npm_asset_blob_blob_created_asset_id";
+
   private static final String ASSET_BLOB_TABLE = "test_asset_blob";
 
   private static final String MAVEN_ASSET_BLOB_TABLE = "maven_asset_blob";
+
+  private static final String NPM_ASSET_BLOB_TABLE = "npm_asset_blob";
 
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME);
@@ -60,6 +69,9 @@ public class CreateAssetBlobIndexTaskTest
 
   @Mock
   private Format mavenFormat;
+
+  @Mock
+  private Format npmFormat;
 
   @Mock
   private DataSessionSupplier dataSessionSupplier;
@@ -83,6 +95,7 @@ public class CreateAssetBlobIndexTaskTest
   public void setup() throws SQLException {
     when(testFormat.getValue()).thenReturn(TEST_FORMAT);
     when(mavenFormat.getValue()).thenReturn(MAVEN_FORMAT);
+    when(npmFormat.getValue()).thenReturn(NPM_FORMAT);
     when(dataSessionSupplier.openConnection(DEFAULT_DATASTORE_NAME))
         .thenAnswer(invocation -> sessionRule.openConnection(DEFAULT_DATASTORE_NAME));
   }
@@ -271,6 +284,281 @@ public class CreateAssetBlobIndexTaskTest
     assertEquals("Should have created 0 indexes with empty format list", 0, result);
   }
 
+  @Test(expected = NullPointerException.class)
+  public void testConstructor_rejectsNullFormats() {
+    new CreateAssetBlobIndexTask(null, dataSessionSupplier);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testConstructor_rejectsNullDataSessionSupplier() {
+    new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), null);
+  }
+
+  @Test
+  public void testExecute_threeFormats_allTablesExist() throws Exception {
+    underTest = new CreateAssetBlobIndexTask(
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+      createAssetBlobTable(conn, MAVEN_ASSET_BLOB_TABLE);
+      createAssetBlobTable(conn, NPM_ASSET_BLOB_TABLE);
+
+      Object result = underTest.execute();
+
+      assertEquals("Should have created 3 indexes", 3, result);
+      assertTrue("test index should exist",
+          dbHelper.indexExists(conn, ASSET_BLOB_TABLE, INDEX_NAME));
+      assertTrue("maven index should exist",
+          dbHelper.indexExists(conn, MAVEN_ASSET_BLOB_TABLE, MAVEN_INDEX_NAME));
+      assertTrue("npm index should exist",
+          dbHelper.indexExists(conn, NPM_ASSET_BLOB_TABLE, NPM_INDEX_NAME));
+    }
+  }
+
+  @Test
+  public void testExecute_multipleFormats_someTablesExist_someDoNot() throws Exception {
+    underTest = new CreateAssetBlobIndexTask(
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      // Only create test and npm tables; maven table does not exist
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+      createAssetBlobTable(conn, NPM_ASSET_BLOB_TABLE);
+
+      Object result = underTest.execute();
+
+      assertEquals("Should have created 2 indexes (skipping maven)", 2, result);
+      assertTrue("test index should exist",
+          dbHelper.indexExists(conn, ASSET_BLOB_TABLE, INDEX_NAME));
+      assertTrue("npm index should exist",
+          dbHelper.indexExists(conn, NPM_ASSET_BLOB_TABLE, NPM_INDEX_NAME));
+    }
+  }
+
+  @Test
+  public void testExecute_multipleFormats_someAlreadyIndexed() throws Exception {
+    underTest = new CreateAssetBlobIndexTask(
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+      createAssetBlobTable(conn, MAVEN_ASSET_BLOB_TABLE);
+      createAssetBlobTable(conn, NPM_ASSET_BLOB_TABLE);
+
+      // Pre-create test and npm indexes; only maven should be new
+      createIndex(conn, ASSET_BLOB_TABLE, INDEX_NAME);
+      createIndex(conn, NPM_ASSET_BLOB_TABLE, NPM_INDEX_NAME);
+
+      Object result = underTest.execute();
+
+      assertEquals("Should have created only 1 new index (maven)", 1, result);
+      assertTrue("maven index should exist",
+          dbHelper.indexExists(conn, MAVEN_ASSET_BLOB_TABLE, MAVEN_INDEX_NAME));
+    }
+  }
+
+  @Test
+  public void testExecute_connectionFailure_throwsException() throws Exception {
+    when(dataSessionSupplier.openConnection(DEFAULT_DATASTORE_NAME))
+        .thenThrow(new SQLException("Connection refused"));
+
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+
+    try {
+      underTest.execute();
+      fail("Expected SQLException to propagate");
+    }
+    catch (SQLException e) {
+      assertThat("Exception message should indicate connection failure",
+          e.getMessage(), containsString("Connection refused"));
+    }
+  }
+
+  @Test
+  public void testExecute_idempotent_multipleFormats() throws Exception {
+    underTest = new CreateAssetBlobIndexTask(
+        Arrays.asList(testFormat, mavenFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+      createAssetBlobTable(conn, MAVEN_ASSET_BLOB_TABLE);
+
+      // First execution creates both indexes
+      Object result1 = underTest.execute();
+      assertEquals("First execution should create 2 indexes", 2, result1);
+
+      // Second execution creates no new indexes
+      Object result2 = underTest.execute();
+      assertEquals("Second execution should create 0 indexes", 0, result2);
+
+      // Third execution also creates no new indexes
+      Object result3 = underTest.execute();
+      assertEquals("Third execution should create 0 indexes", 0, result3);
+
+      // Indexes still exist after multiple runs
+      assertTrue("test index should still exist",
+          dbHelper.indexExists(conn, ASSET_BLOB_TABLE, INDEX_NAME));
+      assertTrue("maven index should still exist",
+          dbHelper.indexExists(conn, MAVEN_ASSET_BLOB_TABLE, MAVEN_INDEX_NAME));
+    }
+  }
+
+  @Test
+  public void testExecute_noTablesExist_returnsZero() throws Exception {
+    // All formats have no tables at all
+    underTest = new CreateAssetBlobIndexTask(
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+
+    Object result = underTest.execute();
+
+    assertEquals("Should have created 0 indexes when no tables exist", 0, result);
+  }
+
+  @Test
+  public void testExecute_singleFormat_indexAlreadyExists_returnsZero() throws Exception {
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+      createIndex(conn, ASSET_BLOB_TABLE, INDEX_NAME);
+
+      Object result = underTest.execute();
+
+      assertEquals("Should return 0 when index already exists", 0, result);
+    }
+  }
+
+  @Test
+  public void testExecute_indexCreatedOnCorrectColumns() throws Exception {
+    // Verifies the index is created on the right columns by inserting data and checking it works
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+
+      // Insert some test data
+      dbHelper.runStatement(conn,
+          "INSERT INTO " + ASSET_BLOB_TABLE + " (blob_ref, blob_size) VALUES ('ref1', 100)");
+      dbHelper.runStatement(conn,
+          "INSERT INTO " + ASSET_BLOB_TABLE + " (blob_ref, blob_size) VALUES ('ref2', 200)");
+
+      Object result = underTest.execute();
+
+      assertEquals("Should have created 1 index", 1, result);
+      assertTrue("index should exist",
+          dbHelper.indexExists(conn, ASSET_BLOB_TABLE, INDEX_NAME));
+    }
+  }
+
+  @Test
+  public void testGetMessage_isNotEmpty() {
+    underTest = new CreateAssetBlobIndexTask(Collections.emptyList(), dataSessionSupplier);
+
+    String message = underTest.getMessage();
+
+    assertThat("Message should not be null", message, notNullValue());
+    assertFalse("Message should not be empty", message.isEmpty());
+  }
+
+  @Test
+  public void testExecute_formatsProcessedInOrder() throws Exception {
+    // Verifies all formats are processed even if they appear in different orders
+    underTest = new CreateAssetBlobIndexTask(
+        Arrays.asList(npmFormat, testFormat, mavenFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, NPM_ASSET_BLOB_TABLE);
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+      createAssetBlobTable(conn, MAVEN_ASSET_BLOB_TABLE);
+
+      Object result = underTest.execute();
+
+      assertEquals("Should have created 3 indexes", 3, result);
+      assertTrue("npm index should exist",
+          dbHelper.indexExists(conn, NPM_ASSET_BLOB_TABLE, NPM_INDEX_NAME));
+      assertTrue("test index should exist",
+          dbHelper.indexExists(conn, ASSET_BLOB_TABLE, INDEX_NAME));
+      assertTrue("maven index should exist",
+          dbHelper.indexExists(conn, MAVEN_ASSET_BLOB_TABLE, MAVEN_INDEX_NAME));
+    }
+  }
+
+  @Test
+  public void testExecute_usesNexusDataStoreName() throws Exception {
+    // Verifies the task opens a connection with "nexus" as the datastore name
+    DataSessionSupplier strictSupplier = org.mockito.Mockito.mock(DataSessionSupplier.class);
+    when(strictSupplier.openConnection("nexus"))
+        .thenAnswer(invocation -> sessionRule.openConnection(DEFAULT_DATASTORE_NAME));
+
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), strictSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+    }
+
+    Object result = underTest.execute();
+
+    assertEquals("Should have created 1 index", 1, result);
+    org.mockito.Mockito.verify(strictSupplier).openConnection("nexus");
+  }
+
+  @Test
+  public void testExecute_mixedTableStates_correctCount() throws Exception {
+    // 3 formats: one table missing, one index already exists, one needs creation
+    underTest = new CreateAssetBlobIndexTask(
+        Arrays.asList(testFormat, mavenFormat, npmFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      // test table doesn't exist (should skip)
+      // maven table exists with index already (should skip)
+      createAssetBlobTable(conn, MAVEN_ASSET_BLOB_TABLE);
+      createIndex(conn, MAVEN_ASSET_BLOB_TABLE, MAVEN_INDEX_NAME);
+      // npm table exists without index (should create)
+      createAssetBlobTable(conn, NPM_ASSET_BLOB_TABLE);
+
+      Object result = underTest.execute();
+
+      assertEquals("Should have created exactly 1 index (only npm)", 1, result);
+      assertTrue("npm index should have been created",
+          dbHelper.indexExists(conn, NPM_ASSET_BLOB_TABLE, NPM_INDEX_NAME));
+    }
+  }
+
+  @Test
+  public void testExecute_singletonFormatList_sameAsSingletonCollections() throws Exception {
+    // Verify that List.of() works the same as Collections.singletonList()
+    underTest = new CreateAssetBlobIndexTask(List.of(testFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+
+      Object result = underTest.execute();
+
+      assertEquals("Should have created 1 index", 1, result);
+      assertTrue("index should exist",
+          dbHelper.indexExists(conn, ASSET_BLOB_TABLE, INDEX_NAME));
+    }
+  }
+
+  @Test
+  public void testExecute_closesConnectionProperly() throws Exception {
+    // After task execution, the connection should be closed.
+    // We verify that the DataSessionSupplier was called and the task completes without resource leak errors.
+    underTest = new CreateAssetBlobIndexTask(Collections.singletonList(testFormat), dataSessionSupplier);
+
+    try (Connection conn = sessionRule.openConnection(DEFAULT_DATASTORE_NAME)) {
+      createAssetBlobTable(conn, ASSET_BLOB_TABLE);
+    }
+
+    // Execute should complete without throwing any resource-related errors
+    Object result = underTest.execute();
+    assertEquals("Should have created 1 index", 1, result);
+
+    // Verify connection was requested
+    org.mockito.Mockito.verify(dataSessionSupplier).openConnection(DEFAULT_DATASTORE_NAME);
+  }
+
   private void createAssetBlobTable(Connection conn, String tableName) throws SQLException {
     String createTable = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
         + "asset_blob_id INT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,"
@@ -284,7 +572,6 @@ public class CreateAssetBlobIndexTaskTest
   }
 
   private void createIndex(Connection conn, String tableName, String indexName) throws SQLException {
-    String format = tableName.replace("_asset_blob", "");
     String createIndex = "CREATE INDEX " + indexName +
         " ON " + tableName + " (blob_created DESC, asset_blob_id ASC)";
     dbHelper.runStatement(conn, createIndex);

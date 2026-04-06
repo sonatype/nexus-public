@@ -55,7 +55,7 @@ public interface PrivilegeApiResourceDoc
   @ApiResponses(value = {
       @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 204, message = NexusSecurityApiConstants.SUCCESS)})
+      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
   Response createPrivilege(
       @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeApplicationRequest privilege);
 
@@ -72,7 +72,8 @@ public interface PrivilegeApiResourceDoc
   @ApiOperation("Create a wildcard type privilege.")
   @ApiResponses(value = {
       @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
+      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
   Response createPrivilege(
       @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeWildcardRequest privilege);
 

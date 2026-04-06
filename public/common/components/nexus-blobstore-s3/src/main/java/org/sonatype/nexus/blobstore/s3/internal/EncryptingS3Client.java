@@ -33,6 +33,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -401,39 +402,55 @@ public class EncryptingS3Client
       final String key,
       final InputStream contents)
   {
+    // Properly close async resources to prevent resource leaks
+    // Both S3AsyncClient and S3TransferManager implement AutoCloseable and must be closed.
+    // Create a NEW credentials provider instance to avoid sharing with the main S3Client,
+    // preventing premature STS client shutdown during IRSA token refresh.
     final S3AsyncClient asyncClient = S3AsyncClient.builder()
-        .credentialsProvider(delegate.serviceClientConfiguration().credentialsProvider())
+        .credentialsProvider(DefaultCredentialsProvider.create())
         .region(delegate.serviceClientConfiguration().region())
         .build();
 
-    final S3TransferManager transferManager = S3TransferManager.builder()
-        .s3Client(asyncClient)
-        .build();
+    try (asyncClient) {
+      final S3TransferManager transferManager = S3TransferManager.builder()
+          .s3Client(asyncClient)
+          .build();
 
-    final PutObjectRequest putRequest = PutObjectRequest.builder()
-        .bucket(bucket)
-        .key(key)
-        .build();
+      try (transferManager) {
+        final PutObjectRequest putRequest = PutObjectRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .build();
 
-    // https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/best-practices-s3-uploads.html
-    // Using the asynchronous API: null can be used when contentLength is not known, adding this comment
-    // because this is not stated in the JavaDocs, was a bit hard to find and the Claude Code seemed to get
-    // tripped up over this method, trying instead to pass -1L which throws an exception
-    final UploadRequest uploadRequest = UploadRequest.builder()
-        .putObjectRequest(putRequest)
-        .requestBody(AsyncRequestBody.fromInputStream(
-            contents,
-            null,
-            Executors.newSingleThreadExecutor()))
-        .build();
+        // https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/best-practices-s3-uploads.html
+        // Using the asynchronous API: null can be used when contentLength is not known, adding this comment
+        // because this is not stated in the JavaDocs, was a bit hard to find and the Claude Code seemed to get
+        // tripped up over this method, trying instead to pass -1L which throws an exception
+        final UploadRequest uploadRequest = UploadRequest.builder()
+            .putObjectRequest(putRequest)
+            .requestBody(AsyncRequestBody.fromInputStream(
+                contents,
+                null,
+                Executors.newSingleThreadExecutor()))
+            .build();
 
-    return transferManager.upload(uploadRequest)
-        .completionFuture()
-        .join();
+        return transferManager.upload(uploadRequest)
+            .completionFuture()
+            .join();
+      }
+    }
   }
 
   /*
    * Constructing the S3Presigner involves classpath scanning by the AWS SDK to identify interceptors
+   *
+   * IMPORTANT: S3Presigner MUST have its own credentials provider instance, separate from the S3Client.
+   * Sharing the same credentials provider causes "Connection pool shut down" errors when using AWS IRSA
+   * (AWS_WEB_IDENTITY_TOKEN_FILE) because closing the presigner closes the shared credentials provider's
+   * internal STS client used for token refresh.
+   *
+   * See: https://github.com/aws/aws-sdk-java-v2/issues/4386
+   * "The StsClient should not be shut down as long as the credentials provider is in use"
    */
   private static S3Presigner createPresigner(final S3Client delegate, final BlobStoreConfiguration blobStoreConfig) {
     // Create S3Presigner with the same configuration as the main S3 client
@@ -441,7 +458,14 @@ public class EncryptingS3Client
 
     // Copy the same configuration from the delegate S3Client
     presignerBuilder.region(delegate.serviceClientConfiguration().region());
-    presignerBuilder.credentialsProvider(delegate.serviceClientConfiguration().credentialsProvider());
+
+    // Create a NEW credentials provider instance for the presigner
+    // instead of sharing the delegate's credentials provider. This prevents the presigner from
+    // closing the shared credentials provider's internal STS client when the presigner is closed.
+    // The DefaultCredentialsProvider will use the same credential sources (env vars, config files,
+    // IRSA token file, etc.) but with its own STS client instance.
+    presignerBuilder.credentialsProvider(
+        software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create());
 
     // Copy endpoint override if present
     Optional<URI> endpointOverride = delegate.serviceClientConfiguration().endpointOverride();

@@ -97,6 +97,16 @@ public class SessionServlet
       final HttpServletResponse response) throws ServletException, IOException
   {
     Subject subject = SecurityUtils.getSubject();
+
+    // Handle the case where session has already timed out (user is anonymous)
+    // This prevents NPE when getPrincipal() or getPrincipals() returns null
+    if (subject.getPrincipal() == null) {
+      log.info("Session already expired or user not authenticated");
+      response.setStatus(SC_NO_CONTENT);
+      response.setHeader(X_FRAME_OPTIONS, DENY);
+      return;
+    }
+
     log.info("Deleting session for user: {}", subject.getPrincipal());
     Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
     realmName.ifPresent(realm -> eventManager.post(new LogoutEvent(subject.getPrincipal().toString(), realm)));

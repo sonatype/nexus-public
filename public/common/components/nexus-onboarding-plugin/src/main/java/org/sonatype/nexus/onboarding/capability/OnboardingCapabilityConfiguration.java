@@ -23,10 +23,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class OnboardingCapabilityConfiguration
     extends CapabilityConfigurationSupport
 {
-  public static final String PRO_STARTER_INFO_PAGE_COMPLETED = "proStarterInfoPageCompleted";
-
-  public static final boolean DEFAULT_PRO_STARTER_INFO_PAGE_COMPLETED = false;
-
   public static final boolean DEFAULT_REGISTRATION_STARTED = false;
 
   public static final String REGISTRATION_STARTED = "registrationStarted";
@@ -35,16 +31,12 @@ public class OnboardingCapabilityConfiguration
 
   public static final String REGISTRATION_COMPLETED = "registrationCompleted";
 
-  private boolean proStarterInfoPageCompleted;
-
   private boolean registrationStarted;
 
   private boolean registrationCompleted;
 
   public OnboardingCapabilityConfiguration(final Map<String, String> properties) {
     checkNotNull(properties);
-    this.proStarterInfoPageCompleted =
-        parseBoolean(properties.get(PRO_STARTER_INFO_PAGE_COMPLETED), DEFAULT_PRO_STARTER_INFO_PAGE_COMPLETED);
     this.registrationStarted = parseBoolean(properties.get(REGISTRATION_STARTED), DEFAULT_REGISTRATION_STARTED);
     this.registrationCompleted = parseBoolean(properties.get(REGISTRATION_COMPLETED), DEFAULT_REGISTRATION_COMPLETED);
   }
@@ -69,7 +61,6 @@ public class OnboardingCapabilityConfiguration
 
   public Map<String, String> asMap() {
     final Map<String, String> properties = Maps.newHashMap();
-    properties.put(PRO_STARTER_INFO_PAGE_COMPLETED, String.valueOf(proStarterInfoPageCompleted));
     properties.put(REGISTRATION_STARTED, String.valueOf(registrationStarted));
     properties.put(REGISTRATION_COMPLETED, String.valueOf(registrationCompleted));
     return properties;
@@ -77,7 +68,7 @@ public class OnboardingCapabilityConfiguration
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{" + "proStarterInfoPageCompleted=" + proStarterInfoPageCompleted + "; " +
+    return getClass().getSimpleName() + "{" +
         "registrationStarted=" + registrationStarted + "; " + "registrationCompleted=" + registrationCompleted + "; " +
         "}";
   }

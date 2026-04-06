@@ -186,6 +186,74 @@ public class ConfigurationDAOTest
     assertThat(results, hasSize(4));
   }
 
+  @Test
+  public void testReadByIds() {
+    ConfigurationData config1 =
+        configurationData("repo1", "maven-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id1);
+    ConfigurationData config2 =
+        configurationData("repo2", "npm-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id2);
+    ConfigurationData config3 =
+        configurationData("repo3", "docker-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id3);
+
+    dao.create(config1);
+    dao.create(config2);
+    dao.create(config3);
+
+    Collection<EntityId> requestedIds = Arrays.asList(config1.getId(), config3.getId());
+    Collection<ConfigurationData> results = dao.readByIds(requestedIds);
+
+    assertThat(results, hasSize(2));
+
+    List<String> names = results.stream().map(ConfigurationData::getName).toList();
+    assertThat(names, containsInAnyOrder("repo1", "repo3"));
+  }
+
+  @Test
+  public void testReadByIds_emptyCollection() {
+    Collection<ConfigurationData> results = dao.readByIds(Arrays.asList());
+
+    assertThat(results, hasSize(0));
+  }
+
+  @Test
+  public void testReadByIds_singleId() {
+    ConfigurationData config1 =
+        configurationData("repo1", "maven-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id1);
+    ConfigurationData config2 =
+        configurationData("repo2", "npm-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id2);
+
+    dao.create(config1);
+    dao.create(config2);
+
+    Collection<EntityId> requestedIds = Arrays.asList(config1.getId());
+    Collection<ConfigurationData> results = dao.readByIds(requestedIds);
+
+    assertThat(results, hasSize(1));
+    assertThat(results.iterator().next().getName(), is("repo1"));
+  }
+
+  @Test
+  public void testReadByIds_allIds() {
+    ConfigurationData config1 =
+        configurationData("repo1", "maven-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id1);
+    ConfigurationData config2 =
+        configurationData("repo2", "npm-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id2);
+    ConfigurationData config3 =
+        configurationData("repo3", "docker-hosted", true, Map.of("storage", Map.of("blobStoreName", "default")), id3);
+
+    dao.create(config1);
+    dao.create(config2);
+    dao.create(config3);
+
+    Collection<EntityId> requestedIds = Arrays.asList(config1.getId(), config2.getId(), config3.getId());
+    Collection<ConfigurationData> results = dao.readByIds(requestedIds);
+
+    assertThat(results, hasSize(3));
+
+    List<String> names = results.stream().map(ConfigurationData::getName).toList();
+    assertThat(names, containsInAnyOrder("repo1", "repo2", "repo3"));
+  }
+
   private static ConfigurationData configurationData(
       final String name,
       final String recipeName,

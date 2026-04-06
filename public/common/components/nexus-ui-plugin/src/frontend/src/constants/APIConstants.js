@@ -79,13 +79,6 @@ export default {
         UPDATE_ROLE_MAPPINGS: 'updateRoleMappings',
       },
     },
-    FREEZE: {
-      ACTION: 'coreui_Freeze',
-      METHODS: {
-        UPDATE: 'update',
-        FORCE_RELEASE: 'forceRelease'
-      }
-    },
     CAPABILITY: {
       ACTION: 'capability_Capability',
       METHODS: {
@@ -322,6 +315,18 @@ export default {
       },
       get RECOVERY_MODE() {
         return `${this.BASE_URL}recovery-mode`;
+      },
+      get REPOSITORY_DASHBOARD() {
+        return `${this.BASE_URL}repository-dashboard`;
+      },
+      get REPOSITORY_DASHBOARD_FORMATS() {
+        return `${this.BASE_URL}repository-dashboard/formats`;
+      },
+      get HOSTED_REPO_EVALUATION_MONITOR() {
+        return `${this.BASE_URL}hosted-repo-evaluation/monitor`;
+      },
+      get EVALUATION_SETTINGS() {
+        return `${this.BASE_URL}evaluation/settings`;
       },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',

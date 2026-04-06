@@ -162,10 +162,10 @@ public class AssetBlobStore<T extends AssetBlobDAO>
    * Deletes batch of asset blobs from the content data store.
    *
    * @param blobRefIds the array of String with blobRefs
-   * @return {@code true} if the asset blob was deleted
+   * @return number of asset blobs deleted from database
    */
   @Transactional
-  public boolean deleteAssetBlobBatch(final String[] blobRefIds) {
+  public int deleteAssetBlobBatch(final String[] blobRefIds) {
     return dao().deleteAssetBlobBatch(blobRefIds);
   }
 

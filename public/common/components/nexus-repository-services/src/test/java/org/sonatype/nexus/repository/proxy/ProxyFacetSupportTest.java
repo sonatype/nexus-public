@@ -774,4 +774,62 @@ public class ProxyFacetSupportTest
     verify(underTest, never()).store(any(), any());
   }
 
+  /**
+   * Test for NEXUS-36994: Verify that when getUrl() returns null (e.g., for Conan requests
+   * without required metadata), fetch() returns null gracefully instead of throwing NPE.
+   * This should result in a 404 response instead of a 500 error.
+   */
+  @Test
+  public void testFetch_WithNullUrl_ReturnsNullWithoutNPE() throws Exception {
+    // Setup: Request that would cause getUrl() to return null
+    Request request = mock(Request.class);
+    when(request.getPath()).thenReturn("/conans/_/lz4/1.9.4/_/packages/xxx/conaninfo.txt");
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    // The test implementation's getUrl() returns null by design (see line 123-125)
+    // This simulates format-specific implementations returning null for invalid/incomplete requests
+
+    // When: fetch is called with null URL
+    Content result = underTest.fetch(null, cachedContext, null);
+
+    // Then: Should return null (which triggers 404) instead of throwing NPE
+    assertNull("fetch() should return null when URL is null", result);
+  }
+
+  /**
+   * Test for NEXUS-36994: Verify fetch(Context, Content) variant also handles null URLs
+   * gracefully when getUrl(context) returns null.
+   */
+  @Test
+  public void testFetch_WithContextReturningNullUrl_ReturnsNullWithoutNPE() throws Exception {
+    // Setup: Context that causes getUrl() to return null
+    Request request = mock(Request.class);
+    when(request.getPath()).thenReturn("/some/invalid/path");
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    // When: fetch is called via the Context variant (internally calls fetch(url, context, stale))
+    Content result = underTest.fetch(cachedContext, null);
+
+    // Then: Should return null gracefully
+    assertNull("fetch() should return null when getUrl() returns null", result);
+  }
+
+  /**
+   * Test for NEXUS-36994: Verify that the null URL check happens before any URI operations,
+   * ensuring no NPE is thrown during URI resolution.
+   */
+  @Test
+  public void testFetch_WithNullUrl_DoesNotAttemptURIResolution() throws Exception {
+    // Setup: Request with a path that would be problematic for URI resolution
+    Request request = mock(Request.class);
+    when(request.getPath()).thenReturn("/path/with/special/chars/[brackets]");
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    // When: fetch is called with null URL (before any URI operations)
+    Content result = underTest.fetch(null, cachedContext, content);
+
+    // Then: Should return null immediately without attempting URI.resolve() which would NPE
+    assertNull("fetch() should return null before attempting URI resolution", result);
+  }
+
 }

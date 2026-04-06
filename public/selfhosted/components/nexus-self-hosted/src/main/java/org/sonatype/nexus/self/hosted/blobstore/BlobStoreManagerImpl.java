@@ -23,7 +23,6 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
-import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.event.EventManager;
@@ -58,7 +57,6 @@ public class BlobStoreManagerImpl
       final BlobStoreConfigurationStore store,
       final @Lazy List<BlobStoreDescriptor> blobStoreDescriptors,
       final List<Provider<BlobStore>> blobStorePrototypes,
-      final FreezeService freezeService,
       final @Lazy Provider<RepositoryManager> repositoryManagerProvider,
       final NodeAccess nodeAccess,
       @Nullable @Value("${nexus.blobstore.provisionDefaults:#{null}}") final Boolean provisionDefaults,
@@ -68,7 +66,7 @@ public class BlobStoreManagerImpl
       final ReplicationBlobStoreStatusManager replicationBlobStoreStatusManager,
       final SecretsService secretService)
   {
-    super(eventManager, store, blobStoreDescriptors, blobStorePrototypes, freezeService,
+    super(eventManager, store, blobStoreDescriptors, blobStorePrototypes,
         repositoryManagerProvider, nodeAccess, provisionDefaults, blobstoreProvider, blobStoreTaskService,
         blobStoreOverrideProvider, replicationBlobStoreStatusManager, secretService);
   }

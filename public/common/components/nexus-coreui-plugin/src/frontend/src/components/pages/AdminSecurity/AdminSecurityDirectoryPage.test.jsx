@@ -14,7 +14,7 @@
 import givenUserLoggedIn from '../../../testUtils/givenUserLoggedIn';
 import givenBundleActiveStates from '../../../testUtils/givenBundleActiveStates';
 import givenExtJSState from '../../../testUtils/givenExtJSState';
-import { runLinkNotVisibleTest, runLinkVisiblityTest } from '../../../testUtils/directoryPageTestUtils';
+import { runLinkNotVisibleTest, runLinkVisiblityTest, runDirectoryPage404Test } from '../../../testUtils/directoryPageTestUtils';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 import UIStrings from '../../../constants/UIStrings';
 import givenPermissions from '../../../testUtils/givenPermissions';
@@ -31,6 +31,12 @@ describe('AdminSecurityDirectoryPage', () => {
     givenExtJSState(defaultExtState());
   });
 
+  it('redirects to 404 when user has no permissions for any child routes', async () => {
+    givenPermissions({});
+
+    await runDirectoryPage404Test(ROUTE_NAMES.ADMIN.SECURITY.DIRECTORY);
+  });
+
   describe('Privileges Link', () => {
     it('shows given permissions', async () => {
       givenPermissions({ [Permissions.PRIVILEGES.READ]: true });
@@ -38,7 +44,10 @@ describe('AdminSecurityDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.PRIVILEGES.READ]: false });
+      givenPermissions({
+        [Permissions.PRIVILEGES.READ]: false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.PRIVILEGES.MENU);
     });
   });
@@ -55,7 +64,8 @@ describe('AdminSecurityDirectoryPage', () => {
     it('does not show without permissions', async () => {
       givenPermissions({
         'nexus:roles:read': true,
-        'nexus:privileges:read': false
+        'nexus:privileges:read': false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
       });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.ROLES.MENU);
     });
@@ -73,7 +83,8 @@ describe('AdminSecurityDirectoryPage', () => {
     it('does not show without permissions', async () => {
       givenPermissions({
         [Permissions.USERS.READ]: true,
-        [Permissions.ROLES.READ]: false
+        [Permissions.ROLES.READ]: false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
       });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.USERS.MENU);
     });
@@ -86,7 +97,10 @@ describe('AdminSecurityDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.SETTINGS.READ]: false });
+      givenPermissions({
+        [Permissions.SETTINGS.READ]: false,
+        [Permissions.PRIVILEGES.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.ANONYMOUS_SETTINGS.MENU);
     });
   });
@@ -106,7 +120,10 @@ describe('AdminSecurityDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ 'nexus:crowd:read': false });
+      givenPermissions({
+        'nexus:crowd:read': false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.CROWD_SETTINGS.MENU);
     });
   });
@@ -118,7 +135,10 @@ describe('AdminSecurityDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.LDAP.READ]: false });
+      givenPermissions({
+        [Permissions.LDAP.READ]: false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.LDAP_SERVERS.MENU);
     });
   });
@@ -130,7 +150,10 @@ describe('AdminSecurityDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.SETTINGS.READ]: false });
+      givenPermissions({
+        [Permissions.SETTINGS.READ]: false,
+        [Permissions.PRIVILEGES.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.REALMS.MENU);
     });
   });
@@ -146,7 +169,10 @@ describe('AdminSecurityDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ 'nexus:*': false });
+      givenPermissions({
+        'nexus:*': false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.SAML_CONFIGURATION.MENU);
     });
   });
@@ -158,7 +184,10 @@ describe('AdminSecurityDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.SSL_TRUSTSTORE.READ]: false });
+      givenPermissions({
+        [Permissions.SSL_TRUSTSTORE.READ]: false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.SSL_CERTIFICATES.MENU);
     });
   });
@@ -174,7 +203,10 @@ describe('AdminSecurityDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.USER_TOKENS_SETTINGS.READ]: false});
+      givenPermissions({
+        [Permissions.USER_TOKENS_SETTINGS.READ]: false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSecurityPage(UIStrings.USER_TOKEN_CONFIGURATION.MENU);
     });
   });

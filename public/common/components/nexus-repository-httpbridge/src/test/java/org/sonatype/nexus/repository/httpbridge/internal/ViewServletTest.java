@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
+import java.io.IOException;
 import java.util.List;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -29,31 +31,45 @@ import org.sonatype.nexus.repository.view.Parameters;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.ViewFacet;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension.CaptureLogsFor;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension.TestLogAccessor;
 
 import com.google.common.net.HttpHeaders;
+import org.eclipse.jetty.io.EofException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.slf4j.event.Level;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.logLevel;
 
 /**
  * Tests for describe functionality of {@link ViewServlet}.
  */
+@ExtendWith(LoggingExtension.class)
 class ViewServletTest
     extends Test5Support
 {
+  @CaptureLogsFor(ViewServlet.class)
+  TestLogAccessor log;
+
   @Mock
   private Request request;
 
@@ -176,6 +192,27 @@ class ViewServletTest
     underTest.service(httpServletRequest, servletResponse);
 
     verify(servletResponse).setHeader(HttpHeaders.X_XSS_PROTECTION, "0");
+  }
+
+  @Test
+  void testEofException() throws ServletException, IOException {
+    when(httpServletRequest.getPathInfo()).thenReturn("maven-central/some/path");
+
+    doThrow(new EofException()).when(defaultResponseSender).send(any(), any(), any());
+
+    assertThrows(EofException.class, () -> underTest.service(httpServletRequest, servletResponse));
+
+    // EofException is the underlying cause
+    doThrow(new IllegalStateException(new EofException())).when(defaultResponseSender).send(any(), any(), any());
+    assertThrows(IllegalStateException.class, () -> underTest.service(httpServletRequest, servletResponse));
+
+    // EofException is suppressed
+    IOException re = new IOException();
+    re.addSuppressed(new EofException());
+    doThrow(re).when(defaultResponseSender).send(any(), any(), any());
+    assertThrows(IOException.class, () -> underTest.service(httpServletRequest, servletResponse));
+
+    assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
   }
 
   private void facetThrowsException(final boolean facetThrowsException) throws Exception {

@@ -17,7 +17,7 @@ import givenExtJSState from '../../../testUtils/givenExtJSState';
 import givenPermissions from '../../../testUtils/givenPermissions';
 import { Permissions } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../constants/UIStrings';
-import { runLinkNotVisibleTest, runLinkVisiblityTest } from '../../../testUtils/directoryPageTestUtils';
+import { runLinkNotVisibleTest, runLinkVisiblityTest, runDirectoryPage404Test } from '../../../testUtils/directoryPageTestUtils';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 import {screen} from "@testing-library/react";
 import {renderComponentRoute} from "../../../testUtils/renderUtils";
@@ -33,6 +33,12 @@ describe('AdminSystemDirectoryPage', () => {
     givenExtJSState(defaultExtState());
   });
 
+  it('redirects to 404 when user has no permissions for any child routes', async () => {
+    givenPermissions({});
+
+    await runDirectoryPage404Test(ROUTE_NAMES.ADMIN.SYSTEM.DIRECTORY);
+  });
+
   describe('API Link', () => {
     it('shows given permissions', async () => {
       givenPermissions({ [Permissions.SETTINGS.READ]: true });
@@ -40,7 +46,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.SETTINGS.READ]: false });
+      givenPermissions({
+        [Permissions.SETTINGS.READ]: false,
+        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSystemPage(UIStrings.API.MENU);
     });
   });
@@ -61,7 +70,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not render any link when user does not have permissions', async () => {
-      givenPermissions({ ['nexus:capabilities:read']: false });
+      givenPermissions({
+        ['nexus:capabilities:read']: false,
+        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSystemPage(UIStrings.CAPABILITIES.MENU);
     })
 
@@ -102,7 +114,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not render any link when both ExtJs and React feature flag is disabled', async () => {
-      givenPermissions({ ['nexus:capabilities:read']: true });
+      givenPermissions({
+        ['nexus:capabilities:read']: true,
+        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
+      });
       givenExtJSState({
         ...defaultExtState(),
         'nexus.extjs.capabilities.enabled': false,
@@ -119,7 +134,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.SETTINGS.READ]: false });
+      givenPermissions({
+        [Permissions.SETTINGS.READ]: false,
+        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSystemPage(UIStrings.EMAIL_SERVER.MENU);
     });
   });
@@ -131,7 +149,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.SETTINGS.READ]: false });
+      givenPermissions({
+        [Permissions.SETTINGS.READ]: false,
+        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSystemPage(UIStrings.HTTP.MENU);
     });
   });
@@ -143,7 +164,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.LICENSING.READ]: false });
+      givenPermissions({
+        [Permissions.LICENSING.READ]: false,
+        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSystemPage(UIStrings.LICENSING.MENU);
     });
   });
@@ -155,7 +179,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.ADMIN]: false });
+      givenPermissions({
+        [Permissions.ADMIN]: false,
+        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSystemPage(UIStrings.NODES.MENU);
     });
   });
@@ -167,7 +194,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.TASKS.READ]: false });
+      givenPermissions({
+        [Permissions.TASKS.READ]: false,
+        [Permissions.SETTINGS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSystemPage(UIStrings.TASKS.MENU);
     });
   });
@@ -187,7 +217,10 @@ describe('AdminSystemDirectoryPage', () => {
     });
 
     it('does not show without permissions', async () => {
-      givenPermissions({ [Permissions.MIGRATION.READ]: false });
+      givenPermissions({
+        [Permissions.MIGRATION.READ]: false,
+        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
+      });
       await runLinkNotVisibleTestForSystemPage(UIStrings.UPGRADE.MENU);
     });
   });

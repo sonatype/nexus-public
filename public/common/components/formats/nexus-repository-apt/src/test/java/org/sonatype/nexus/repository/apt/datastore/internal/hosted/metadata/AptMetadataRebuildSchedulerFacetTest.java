@@ -14,7 +14,10 @@ package org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -27,7 +30,12 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.apt.AptFormat;
+import org.sonatype.nexus.repository.apt.datastore.internal.metadata.AptMetadataFacetSupport;
+import org.sonatype.nexus.repository.apt.datastore.internal.metadata.AptMetadataRebuildSchedulerFacet;
+import org.sonatype.nexus.repository.apt.datastore.internal.metadata.AutomatedAptMetadataRebuildTaskDescriptor;
 import org.sonatype.nexus.repository.apt.internal.AptProperties;
+import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
@@ -35,6 +43,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -107,7 +116,10 @@ public class AptMetadataRebuildSchedulerFacetTest
   private ExternalTaskState completedState;
 
   @Mock
-  private AptHostedMetadataFacet metadataFacet;
+  private AptMetadataFacetSupport metadataFacet;
+
+  @Mock
+  private AptSigningFacet signingFacet;
 
   @Mock
   private EventManager eventManager;
@@ -124,7 +136,9 @@ public class AptMetadataRebuildSchedulerFacetTest
     when(repository.getName()).thenReturn(REPO_NAME);
     when(repository.getFormat()).thenReturn(aptFormat);
     when(repository.getType()).thenReturn(hostedType);
-    when(repository.facet(AptHostedMetadataFacet.class)).thenReturn(metadataFacet);
+    when(repository.facet(AptMetadataFacetSupport.class)).thenReturn(metadataFacet);
+    when(repository.facet(AptSigningFacet.class)).thenReturn(signingFacet);
+    when(signingFacet.isConfigured()).thenReturn(true);
 
     // Set up another repository (for cross-repo event tests)
     when(otherRepository.getName()).thenReturn(OTHER_REPO_NAME);
@@ -152,7 +166,7 @@ public class AptMetadataRebuildSchedulerFacetTest
     when(completedState.getState()).thenReturn(TaskState.OK);
     when(taskScheduler.toExternalTaskState(taskInfo)).thenReturn(waitingState);
 
-    // Create a facet with real Cooperation2Factory
+    // Create a facet with real Cooperation2Factory using anonymous subclass to access protected constructor
     Cooperation2Factory cooperationFactory = new DefaultCooperation2Factory();
     underTest = new AptMetadataRebuildSchedulerFacet(
         taskScheduler,
@@ -162,7 +176,9 @@ public class AptMetadataRebuildSchedulerFacetTest
         true, // cooperation enabled
         Duration.ZERO,
         Duration.ofSeconds(30),
-        100);
+        100)
+    {
+    };
 
     // Inject EventManager dependency required by FacetSupport
     underTest.installDependencies(eventManager);
@@ -425,6 +441,135 @@ public class AptMetadataRebuildSchedulerFacetTest
     underTest.on(event);
 
     verify(taskScheduler, never()).scheduleTask(any(TaskConfiguration.class), any(Once.class));
+  }
+
+  @Test
+  public void testRepositoryUpdatedEvent_SigningAdded_SchedulesRebuild() {
+    Configuration oldConfig = mockConfigurationWithoutSigning();
+    Configuration newConfig = mockConfigurationWithSigning("test-keypair");
+
+    when(repository.getConfiguration()).thenReturn(newConfig);
+    when(signingFacet.isConfigured()).thenReturn(true);
+    RepositoryUpdatedEvent event = new RepositoryUpdatedEvent(repository, oldConfig);
+
+    underTest.on(event);
+
+    verify(taskScheduler).scheduleTask(any(TaskConfiguration.class), any(Once.class));
+  }
+
+  @Test
+  public void testRepositoryUpdatedEvent_SigningRemoved_NoRebuild() {
+    Configuration oldConfig = mockConfigurationWithSigning("test-keypair");
+    Configuration newConfig = mockConfigurationWithoutSigning();
+
+    when(repository.getConfiguration()).thenReturn(newConfig);
+    when(signingFacet.isConfigured()).thenReturn(false); // Signing now disabled
+    RepositoryUpdatedEvent event = new RepositoryUpdatedEvent(repository, oldConfig);
+
+    underTest.on(event);
+
+    // Handler exits early when newKeypair is null (signing removed) - no log, no maybeScheduleRebuild() call
+    verify(taskScheduler, never()).scheduleTask(any(TaskConfiguration.class), any(Once.class));
+  }
+
+  @Test
+  public void testRepositoryUpdatedEvent_KeyChanged_SchedulesRebuild() {
+    Configuration oldConfig = mockConfigurationWithSigning("keypair-1");
+    Configuration newConfig = mockConfigurationWithSigning("keypair-2");
+
+    when(repository.getConfiguration()).thenReturn(newConfig);
+    when(signingFacet.isConfigured()).thenReturn(true);
+    RepositoryUpdatedEvent event = new RepositoryUpdatedEvent(repository, oldConfig);
+
+    underTest.on(event);
+
+    verify(taskScheduler).scheduleTask(any(TaskConfiguration.class), any(Once.class));
+  }
+
+  @Test
+  public void testRepositoryUpdatedEvent_NoSigningChange_NoRebuild() {
+    Configuration oldConfig = mockConfigurationWithSigning("test-keypair");
+    Configuration newConfig = mockConfigurationWithSigning("test-keypair");
+
+    when(repository.getConfiguration()).thenReturn(newConfig);
+    when(signingFacet.isConfigured()).thenReturn(true);
+    RepositoryUpdatedEvent event = new RepositoryUpdatedEvent(repository, oldConfig);
+
+    underTest.on(event);
+
+    verify(taskScheduler, never()).scheduleTask(any(TaskConfiguration.class), any(Once.class));
+  }
+
+  @Test
+  public void testRepositoryUpdatedEvent_DifferentRepository_IgnoresEvent() {
+    Configuration oldConfig = mockConfigurationWithoutSigning();
+    Configuration newConfig = mockConfigurationWithSigning("test-keypair");
+
+    RepositoryUpdatedEvent event = new RepositoryUpdatedEvent(otherRepository, oldConfig);
+
+    underTest.on(event);
+
+    verify(taskScheduler, never()).scheduleTask(any(TaskConfiguration.class), any(Once.class));
+  }
+
+  @Test
+  public void testRepositoryUpdatedEvent_PassphraseOnlyChanged_NoRebuild() {
+    Configuration oldConfig = mockConfigurationWithSigning("test-keypair", "pass1");
+    Configuration newConfig = mockConfigurationWithSigning("test-keypair", "pass2");
+
+    when(repository.getConfiguration()).thenReturn(newConfig);
+    when(signingFacet.isConfigured()).thenReturn(true);
+    RepositoryUpdatedEvent event = new RepositoryUpdatedEvent(repository, oldConfig);
+
+    underTest.on(event);
+
+    // Same keypair, so no rebuild needed
+    verify(taskScheduler, never()).scheduleTask(any(TaskConfiguration.class), any(Once.class));
+  }
+
+  @Test
+  public void testRepositoryUpdatedEvent_BlankKeypair_NoRebuild() {
+    Configuration oldConfig = mockConfigurationWithoutSigning();
+    Configuration newConfig = mockConfigurationWithBlankKeypair();
+
+    when(repository.getConfiguration()).thenReturn(newConfig);
+    when(signingFacet.isConfigured()).thenReturn(false); // Blank keypair = not configured
+    RepositoryUpdatedEvent event = new RepositoryUpdatedEvent(repository, oldConfig);
+
+    underTest.on(event);
+
+    // Blank/whitespace keypair normalized to null, handler exits early
+    verify(taskScheduler, never()).scheduleTask(any(TaskConfiguration.class), any(Once.class));
+  }
+
+  private Configuration mockConfigurationWithoutSigning() {
+    Configuration config = mock(Configuration.class);
+    when(config.getAttributes()).thenReturn(Collections.emptyMap());
+    return config;
+  }
+
+  private Configuration mockConfigurationWithSigning(String keypair) {
+    return mockConfigurationWithSigning(keypair, "passphrase");
+  }
+
+  private Configuration mockConfigurationWithSigning(String keypair, String passphrase) {
+    Configuration config = mock(Configuration.class);
+    Map<String, Object> signingAttrs = new HashMap<>();
+    signingAttrs.put("keypair", keypair);
+    signingAttrs.put("passphrase", passphrase);
+    when(config.getAttributes()).thenReturn(
+        Collections.singletonMap(AptSigningFacet.CONFIG_KEY, signingAttrs));
+    return config;
+  }
+
+  private Configuration mockConfigurationWithBlankKeypair() {
+    Configuration config = mock(Configuration.class);
+    Map<String, Object> signingAttrs = new HashMap<>();
+    signingAttrs.put("keypair", "   "); // Whitespace-only keypair
+    signingAttrs.put("passphrase", "passphrase");
+    when(config.getAttributes()).thenReturn(
+        Collections.singletonMap(AptSigningFacet.CONFIG_KEY, signingAttrs));
+    return config;
   }
 
   private Asset mockDebAsset() {

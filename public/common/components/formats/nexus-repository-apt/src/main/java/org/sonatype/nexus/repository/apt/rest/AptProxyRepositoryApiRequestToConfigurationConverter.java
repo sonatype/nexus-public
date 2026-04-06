@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.apt.rest;
 
 import jakarta.inject.Inject;
 
+import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
@@ -42,6 +43,13 @@ public class AptProxyRepositoryApiRequestToConfigurationConverter
     configuration.attributes("apt")
         .set("enforceDistribution",
             Boolean.TRUE.equals(request.getApt().getEnforceDistribution()));
+
+    // Add signing configuration if provided (optional for proxy repos)
+    if (request.getAptSigning() != null) {
+      configuration.attributes(AptSigningFacet.CONFIG_KEY).set("keypair", request.getAptSigning().getKeypair());
+      configuration.attributes(AptSigningFacet.CONFIG_KEY).set("passphrase", request.getAptSigning().getPassphrase());
+    }
+
     return configuration;
   }
 }

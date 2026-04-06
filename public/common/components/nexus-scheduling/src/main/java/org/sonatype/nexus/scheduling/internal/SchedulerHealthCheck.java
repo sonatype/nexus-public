@@ -28,8 +28,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
- * Scheduler health checks that reports a list of task descriptions that were recovered and had manual triggers created
- * automatically. This indicates to a user that those tasks should be reconfigured to their desired specification.
+ * Scheduler health check that reports tasks with auto-recovered triggers.
+ *
+ * This check identifies two scenarios:
+ * - Jobs that have no trigger at all in the database (should not occur after startup, as triggers are
+ * auto-created during startup)
+ * - Triggers that were automatically recovered during system startup and marked with a recovery flag,
+ * indicating the task schedule needs to be reconfigured by an administrator
+ *
+ * The alert message provides clear instructions for administrators to navigate to the Tasks UI and
+ * reconfigure affected task schedules. This addresses NEXUS-44603 by making the alert actionable.
  *
  * @since 3.17
  */
@@ -54,6 +62,10 @@ public class SchedulerHealthCheck
 
   private String reason(final List<String> missingTaskDescriptions) {
     String taskDescriptions = String.join(", ", missingTaskDescriptions);
-    return format("%s tasks require frequency updates: %s", missingTaskDescriptions.size(), taskDescriptions);
+    return format("Missing triggers were auto-recovered for %s task%s: %s. " +
+        "Review and update each task's schedule (Administration > System > Tasks).",
+        missingTaskDescriptions.size(),
+        missingTaskDescriptions.size() == 1 ? "" : "s",
+        taskDescriptions);
   }
 }

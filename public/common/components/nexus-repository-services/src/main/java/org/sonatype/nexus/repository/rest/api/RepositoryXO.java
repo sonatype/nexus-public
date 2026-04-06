@@ -37,7 +37,7 @@ public class RepositoryXO
 
   private String url;
 
-  @ApiModelProperty(hidden = true)
+  @ApiModelProperty(value = "Size of the repository in bytes")
   @JsonInclude(Include.NON_NULL)
   private Long size;
 

@@ -35,6 +35,8 @@ import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AttributeChangeSet;
+import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -42,6 +44,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.utils.FormatAttributesUtils;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
@@ -225,10 +228,32 @@ public class AptContentFacetImpl
 
   @Override
   public FluentAsset findOrCreateMetadataAsset(final TempBlob tempBlob, final String path) {
-    return assets()
-        .path(normalizeAssetPath(path))
+    String normalizedPath = normalizeAssetPath(path);
+
+    // Check if asset already exists with CacheInfo (from upstream passthrough)
+    Optional<FluentAsset> existing = assets().path(normalizedPath).find();
+    boolean hadCacheInfo = existing.isPresent() &&
+        existing.get().attributes().contains(CacheInfo.CACHE);
+
+    // Save the asset with new blob
+    FluentAsset asset = assets()
+        .path(normalizedPath)
         .blob(tempBlob)
         .save();
+
+    // For generated metadata (proxy signing mode):
+    // 1. Clear CacheInfo if it exists (from upstream passthrough)
+    // 2. Always set lastModified to NOW (as millis) for proper staleness tracking
+    log.debug("Setting lastModified for generated metadata asset: {}", path);
+    AttributeChangeSet changes = new AttributeChangeSet();
+    if (hadCacheInfo) {
+      log.debug("Clearing CacheInfo from generated metadata asset: {}", path);
+      changes.attributes(AttributeOperation.REMOVE, CacheInfo.CACHE, null);
+    }
+    changes.attributes(AttributeOperation.SET, Content.CONTENT_LAST_MODIFIED, System.currentTimeMillis());
+    asset.attributes(changes);
+
+    return asset;
   }
 
   private FluentComponent findOrCreateComponent(final PackageInfo info) {

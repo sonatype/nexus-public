@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -183,8 +182,6 @@ public class MyBatisDataStore
   private final List<TypeHandler> declaredTypeHandlers;
 
   private final Set<Class<?>> registeredAccessTypes = new HashSet<>();
-
-  private final AtomicBoolean frozenMarker = new AtomicBoolean();
 
   private final PbeCipher databaseCipher;
 
@@ -434,21 +431,6 @@ public class MyBatisDataStore
     return dataSource;
   }
 
-  @Override
-  public void freeze() {
-    frozenMarker.set(true);
-  }
-
-  @Override
-  public void unfreeze() {
-    frozenMarker.set(false);
-  }
-
-  @Override
-  public boolean isFrozen() {
-    return frozenMarker.get();
-  }
-
   @Guarded(by = STARTED)
   @Override
   public void backup(final String location) throws SQLException {
@@ -635,7 +617,7 @@ public class MyBatisDataStore
     }
 
     // generate new entity ids on-demand
-    register(new EntityInterceptor(new FrozenChecker(frozenMarker)));
+    register(new EntityInterceptor());
 
     // security handlers that used to only exist in the config store
     register(new PasswordCharacterArrayTypeHandler(passwordHelper));

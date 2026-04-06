@@ -57,6 +57,16 @@
     </if>
   </select>
 
+  <select id="readByIds" resultType="ConfigurationData">
+    SELECT * FROM repository
+    <if test="collection != null and !collection.isEmpty()">
+      WHERE id IN
+      <foreach item="id" collection="collection" open="(" separator="," close=")">
+        #{id}
+      </foreach>
+    </if>
+  </select>
+
   <select id="readByRecipe" resultType="ConfigurationData">
     SELECT * FROM repository WHERE recipe_name = #{value} ORDER by id ASC;
   </select>

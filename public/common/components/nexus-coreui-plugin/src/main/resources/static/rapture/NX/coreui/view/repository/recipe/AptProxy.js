@@ -24,6 +24,7 @@ Ext.define('NX.coreui.view.repository.recipe.AptProxy', {
   alias: 'widget.nx-coreui-repository-apt-proxy',
   requires: [
     'NX.coreui.view.repository.facet.AptProxyFacet',
+    'NX.coreui.view.repository.facet.AptSigningFacet',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
@@ -40,6 +41,7 @@ Ext.define('NX.coreui.view.repository.recipe.AptProxy', {
 
     me.items = [
       {xtype: 'nx-aptui-repository-aptproxy-facet'},
+      {xtype: 'nx-aptui-repository-aptsigning-facet', allowBlank: true},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},

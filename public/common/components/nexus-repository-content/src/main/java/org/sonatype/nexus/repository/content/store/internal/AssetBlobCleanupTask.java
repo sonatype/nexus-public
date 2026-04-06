@@ -13,12 +13,15 @@
 package org.sonatype.nexus.repository.content.store.internal;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import jakarta.inject.Inject;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -88,11 +91,11 @@ public class AssetBlobCleanupTask
   public AssetBlobCleanupTask(
       final List<FormatStoreManager> formatStoreManagersList,
       final BlobStoreManager blobStoreManager,
-      final RecoveryModeService recoveryModeService)
+      @Nullable final RecoveryModeService recoveryModeService)
   {
     this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersList));
     this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.recoveryModeService = checkNotNull(recoveryModeService);
+    this.recoveryModeService = recoveryModeService;
   }
 
   protected void initBatchDeleteIfEnabled(final String format) {
@@ -112,7 +115,9 @@ public class AssetBlobCleanupTask
 
   @Override
   protected Void execute() throws Exception {
-    recoveryModeService.ensureNotInRecoveryMode(getName());
+    if (recoveryModeService != null) {
+      recoveryModeService.ensureNotInRecoveryMode(getName());
+    }
 
     String format = getConfiguration().getString(FORMAT_FIELD_ID);
     String contentStore = getConfiguration().getString(CONTENT_STORE_FIELD_ID);
@@ -209,13 +214,10 @@ public class AssetBlobCleanupTask
       }
       log.debug("Found {} unused {} blobs in {}", unusedAssetBlobs.size(), format, contentStore);
       List<BlobRef> blobRefAll = extractBlobRefsFromAssetBlobs(unusedAssetBlobs);
-      deleteAssetBlobsExecutorService(blobRefAll);
-
-      String[] blobRefIds = blobRefAll.stream()
-          .map(BlobRefTypeHandler::toPersistableString)
-          .toArray(String[]::new);
-      assetBlobStore.deleteAssetBlobBatch(blobRefIds);
-      deleteCount += blobRefAll.size();
+      List<BlobRef> successfullyDeletedBlobs = deleteAssetBlobsExecutorService(blobRefAll);
+      if (!successfullyDeletedBlobs.isEmpty()) {
+        deleteCount += deleteAssetBlobRecordsFromDatabase(assetBlobStore, successfullyDeletedBlobs);
+      }
 
       unusedAssetBlobs = assetBlobStore.browseUnusedAssetBlobs(
           BATCH_SIZE, BLOB_CREATED_DELAY_MINUTE, unusedAssetBlobs.nextContinuationToken());
@@ -233,8 +235,10 @@ public class AssetBlobCleanupTask
 
     BlobStore blobStore = blobStoreManager.get(blobRef.getStore());
     if (blobStore == null) {
-      // postpone delete if the store is temporarily AWOL
-      log.warn("Could not find blob store for {}", blobRef);
+      // blobstore is deleted - delete the orphaned database record
+      log.warn("Blob store {} no longer exists, deleting orphaned database record for {}",
+          blobRef.getStore(), blobRef);
+      assetBlobDeleted = assetBlobStore.deleteAssetBlob(blobRef);
     }
     else {
       assetBlobDeleted = assetBlobStore.deleteAssetBlob(blobRef);
@@ -248,21 +252,35 @@ public class AssetBlobCleanupTask
   }
 
   /**
-   * Deletes batch of {@link Blob}.
+   * Deletes batch of {@link Blob}s from their blob stores.
+   *
+   * @return list of blob refs that were successfully deleted or were already deleted
    */
-  private void deleteAssetBlobsExecutorService(final List<BlobRef> blobRefs) {
+  private List<BlobRef> deleteAssetBlobsExecutorService(final List<BlobRef> blobRefs) {
+    ConcurrentLinkedQueue<BlobRef> successfullyDeleted = new ConcurrentLinkedQueue<>();
     CountDownLatch latch = new CountDownLatch(blobRefs.size());
     for (BlobRef blobRef : blobRefs) {
       batchDeleteExecutorService.submit(() -> {
-        latch.countDown();
-        BlobStore blobStore = blobStoreManager.get(blobRef.getStore());
-        if (blobStore == null) {
-          // postpone delete if the store is temporarily AWOL
-          log.warn("Could not find blob store for {}", blobRef);
+        try {
+          BlobStore blobStore = blobStoreManager.get(blobRef.getStore());
+          if (blobStore == null) {
+            // blobstore is deleted - mark for database record deletion
+            log.warn("Blob store {} no longer exists, will delete orphaned database record for {}",
+                blobRef.getStore(), blobRef);
+            successfullyDeleted.add(blobRef);
+          }
+          else if (deleteBlobContent(blobStore, blobRef)) {
+            successfullyDeleted.add(blobRef);
+          }
+          else {
+            log.warn("Could not delete blob content under {}", blobRef);
+          }
         }
-        else if (!deleteBlobContent(blobStore, blobRef)) {
-          // still report asset blob as deleted...
-          log.warn("Could not delete blob content under {}", blobRef);
+        catch (Exception e) {
+          log.warn("Failed to delete blob content under {}", blobRef, e);
+        }
+        finally {
+          latch.countDown();
         }
       });
     }
@@ -271,6 +289,42 @@ public class AssetBlobCleanupTask
     }
     catch (InterruptedException ex) {
       log.debug("CountDownLatch interrupted", ex);
+    }
+    return new ArrayList<>(successfullyDeleted);
+  }
+
+  /**
+   * Deletes asset blob records from database for successfully deleted blobs.
+   *
+   * @param assetBlobStore the asset blob store to delete from
+   * @param successfullyDeletedBlobs list of blobs that were successfully deleted from storage
+   * @return number of records successfully deleted from database
+   */
+  private int deleteAssetBlobRecordsFromDatabase(
+      final AssetBlobStore<?> assetBlobStore,
+      final List<BlobRef> successfullyDeletedBlobs)
+  {
+    String[] blobRefIds = successfullyDeletedBlobs.stream()
+        .map(BlobRefTypeHandler::toPersistableString)
+        .toArray(String[]::new);
+
+    try {
+      int deletedCount = assetBlobStore.deleteAssetBlobBatch(blobRefIds);
+      if (deletedCount < blobRefIds.length) {
+        int missingCount = blobRefIds.length - deletedCount;
+        log.warn("Batch processing: {} blobs deleted from storage, but only {} database records deleted " +
+            "({} records not found)",
+            blobRefIds.length, deletedCount, missingCount);
+      }
+      else {
+        log.debug("Batch processing: {} blob records deleted from database", deletedCount);
+      }
+      return deletedCount;
+    }
+    catch (Exception e) {
+      log.warn("Batch processing: {} blobs deleted from storage, but database deletion failed.",
+          blobRefIds.length, e);
+      return 0;
     }
   }
 
@@ -291,7 +345,6 @@ public class AssetBlobCleanupTask
   private List<BlobRef> extractBlobRefsFromAssetBlobs(final Continuation<AssetBlob> assetBlobs) {
     return assetBlobs.stream()
         .map(AssetBlob::blobRef)
-        .filter(blobRef -> blobStoreManager.get(blobRef.getStore()) != null)
         .collect(Collectors.toList());
   }
 

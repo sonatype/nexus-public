@@ -51,10 +51,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -284,6 +287,96 @@ class SqlSearchServiceTest
   }
 
   /**
+   * Verifies that OrderBy returns null when distinctNameAndNamespace is true and sorting by namespace
+   */
+  @Test
+  void testSearch_distinctNameAndNamespace_withNamespaceSortReturnsNullOrderBy() {
+    SearchRequest searchRequest = SearchRequest.builder()
+        .limit(100)
+        .distinctNameAndNamespace()
+        .sortField("namespace")
+        .sortDirection(SortDirection.ASC)
+        .build();
+
+    SqlSearchQueryConditionGroup queryCondition = mockQueryCondition(searchRequest);
+    when(sqlSearchSortUtil.getSortExpression("namespace")).thenReturn(Optional.of("cs.namespace"));
+
+    SearchResult searchResult = createMockSearchResult("npm-hosted", "@scope/package", 1);
+    when(searchStore.searchComponents(anyInt(), anyInt(), any(), isNull(), isNull(), eq(true)))
+        .thenReturn(List.of(searchResult));
+
+    underTest.search(searchRequest);
+
+    verify(searchStore).searchComponents(
+        eq(100),
+        eq(0),
+        eq(queryCondition),
+        isNull(),
+        isNull(),
+        eq(true));
+  }
+
+  /**
+   * Verifies that OrderBy returns null when distinctNameAndNamespace is true and sorting by name
+   */
+  @Test
+  void testSearch_distinctNameAndNamespace_withNameSortReturnsNullOrderBy() {
+    SearchRequest searchRequest = SearchRequest.builder()
+        .limit(100)
+        .distinctNameAndNamespace()
+        .sortField("name")
+        .sortDirection(SortDirection.ASC)
+        .build();
+
+    SqlSearchQueryConditionGroup queryCondition = mockQueryCondition(searchRequest);
+    when(sqlSearchSortUtil.getSortExpression("name")).thenReturn(Optional.of("cs.search_component_name"));
+
+    SearchResult searchResult = createMockSearchResult("npm-hosted", "@scope/package", 1);
+    when(searchStore.searchComponents(anyInt(), anyInt(), any(), isNull(), isNull(), eq(true)))
+        .thenReturn(List.of(searchResult));
+
+    underTest.search(searchRequest);
+
+    verify(searchStore).searchComponents(
+        eq(100),
+        eq(0),
+        eq(queryCondition),
+        isNull(),
+        isNull(),
+        eq(true));
+  }
+
+  /**
+   * Verifies that OrderBy returns normal values when distinctNameAndNamespace is true but sorting by other field
+   */
+  @Test
+  void testSearch_distinctNameAndNamespace_withVersionSortReturnsNormalOrderBy() {
+    SearchRequest searchRequest = SearchRequest.builder()
+        .limit(100)
+        .distinctNameAndNamespace()
+        .sortField("version")
+        .sortDirection(SortDirection.DESC)
+        .build();
+
+    SqlSearchQueryConditionGroup queryCondition = mockQueryCondition(searchRequest);
+    when(sqlSearchSortUtil.getSortExpression("version")).thenReturn(Optional.of("cs.version"));
+
+    SearchResult searchResult = createMockSearchResult("npm-hosted", "@scope/package", 1);
+    when(searchStore.searchComponents(anyInt(), anyInt(), any(), eq("cs.version"), eq(SortDirection.DESC), eq(true)))
+        .thenReturn(List.of(searchResult));
+
+    underTest.search(searchRequest);
+
+    verify(searchStore).searchComponents(
+        eq(100),
+        eq(0),
+        eq(queryCondition),
+        eq("cs.version"),
+        eq(SortDirection.DESC),
+        eq(true));
+  }
+
+  /**
    * Verifies that assets for a component are filtered by the user's privileges
    */
   @Test
@@ -299,7 +392,7 @@ class SqlSearchServiceTest
 
     AssetStore<?> assetStore = mock();
     when(formatStoreManager.assetStore("nexus")).thenReturn(assetStore);
-    when(assetStore.findByComponentIds(eq(Set.of(1)), any(), any()))
+    when(assetStore.findByComponentIds(eq(Set.of(1)), any(), any(), anyBoolean()))
         .thenReturn(List.of(createAsset(1, 1), createAsset(1, 2)));
 
     when(assetPermissionChecker.findPermittedAssets(any(), any(), any()))
@@ -405,6 +498,20 @@ class SqlSearchServiceTest
   }
 
   /**
+   * Helper method to set up common mocks for expression builder and query factory
+   */
+  private SqlSearchQueryConditionGroup mockQueryCondition(final SearchRequest searchRequest) {
+    when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
+
+    SqlSearchQueryConditionGroup queryCondition = mock(SqlSearchQueryConditionGroup.class);
+    Optional<ExpressionGroup> expression = Optional.of(expressionGroup);
+    when(expressionBuilder.from(any(SearchRequest.class))).thenReturn(expression);
+    when(queryFactory.build(expression.get())).thenReturn(queryCondition);
+
+    return queryCondition;
+  }
+
+  /**
    * Helper method to create a mock SearchResult with specified values
    */
   private static SearchResult createMockSearchResult(
@@ -421,5 +528,54 @@ class SqlSearchServiceTest
     when(result.version()).thenReturn("1.0");
     when(result.lastModified()).thenReturn(OffsetDateTime.now());
     return result;
+  }
+
+  @Test
+  void testWaitForCalmReturnsSuccessfullyWhenCalmAfterMinimumWait() {
+    // Path 1: isCalm=true AND minWaitComplete=true -> returns successfully
+    when(sqlSearchEventHandler.getMinimumWaitTimeMs()).thenReturn(1000L);
+    when(sqlSearchEventHandler.isCalmPeriod()).thenReturn(true);
+
+    underTest.waitForCalm();
+
+    // Verify minimum wait logic was consulted
+    verify(sqlSearchEventHandler).getMinimumWaitTimeMs();
+    // Verify calm period was checked
+    verify(sqlSearchEventHandler, atLeastOnce()).isCalmPeriod();
+  }
+
+  @Test
+  void testWaitForCalmPollsUntilCalmPeriodReached() {
+    // Path 2: isCalm=false -> continues polling until calm
+    when(sqlSearchEventHandler.getMinimumWaitTimeMs()).thenReturn(1000L);
+    // Return false for first 10 polls, then true to allow minimum wait to complete and exit
+    when(sqlSearchEventHandler.isCalmPeriod())
+        .thenReturn(false, false, false, false, false, false, false, false, false, false)
+        .thenReturn(true);
+
+    underTest.waitForCalm();
+
+    // Verify it consulted minimum wait time
+    verify(sqlSearchEventHandler).getMinimumWaitTimeMs();
+    // Verify it polled multiple times until calm
+    verify(sqlSearchEventHandler, atLeast(10)).isCalmPeriod();
+    // Verify it eventually checked after minimum wait completed
+    verify(sqlSearchEventHandler, atLeast(11)).isCalmPeriod();
+  }
+
+  @Test
+  void testWaitForCalmRespectsMinimumWaitTimeEvenWhenImmediatelyCalm() {
+    // Path 3: minWaitComplete=false -> continues polling even if calm
+    // This tests the race condition fix: must wait minimum time before checking calm
+    when(sqlSearchEventHandler.getMinimumWaitTimeMs()).thenReturn(1000L);
+    // Calm immediately but must still wait minimum time
+    when(sqlSearchEventHandler.isCalmPeriod()).thenReturn(true);
+
+    underTest.waitForCalm();
+
+    // Verify minimum wait was calculated
+    verify(sqlSearchEventHandler).getMinimumWaitTimeMs();
+    // Verify it checked calm period multiple times during minimum wait (polls every 100ms for 1000ms = ~10 polls)
+    verify(sqlSearchEventHandler, atLeast(9)).isCalmPeriod();
   }
 }

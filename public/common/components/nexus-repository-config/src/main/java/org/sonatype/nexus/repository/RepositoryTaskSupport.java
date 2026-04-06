@@ -138,6 +138,13 @@ public abstract class RepositoryTaskSupport
   }
 
   /**
+   * Get the repository manager.
+   */
+  protected RepositoryManager getRepositoryManager() {
+    return repositoryManager;
+  }
+
+  /**
    * Returns true if the repository is of type {@link GroupType}
    *
    * @since 3.6.1

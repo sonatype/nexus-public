@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.datastore.api.DataAccessException;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
@@ -25,8 +26,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -76,36 +79,44 @@ public class AuthenticatingRealmImplTest
 
   @Test
   public void testLegacyPasswordIsReHashedUsingShiroOnOrient() {
-    when(passwordService.encryptPassword("admin123")).thenReturn("$shiro1$SHA-512$1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
+    when(passwordService.encryptPassword("admin123")).thenReturn(
+        "$shiro1$SHA-512$1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration, passwordService, true, SHIRO_PASSWORD_ALGORITHM, null);
+    AuthenticatingRealmImpl underTestOrient =
+        new AuthenticatingRealmImpl(configuration, passwordService, true, SHIRO_PASSWORD_ALGORITHM, null);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
     assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512$"));
   }
 
   @Test
   public void testLegacyPasswordIsReHashedUsingShiroOnNewDB() {
-    when(passwordService.encryptPassword("admin123")).thenReturn("$shiro1$SHA-512$1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
+    when(passwordService.encryptPassword("admin123")).thenReturn(
+        "$shiro1$SHA-512$1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration, passwordService, false, SHIRO_PASSWORD_ALGORITHM, null);
+    AuthenticatingRealmImpl underTestOrient =
+        new AuthenticatingRealmImpl(configuration, passwordService, false, SHIRO_PASSWORD_ALGORITHM, null);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
     assertThat(testUser.getPassword(), startsWith("$shiro1$SHA-512"));
   }
 
   @Test
   public void testLegacyPasswordIsReHashedToSha256OnOrient() {
-    when(passwordService.encryptPassword("admin123")).thenReturn("$pbkdf2-sha256$i=1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
+    when(passwordService.encryptPassword("admin123")).thenReturn(
+        "$pbkdf2-sha256$i=1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration, passwordService, true, SHA256_PASSWORD_ALGORITHM, 1024);
+    AuthenticatingRealmImpl underTestOrient =
+        new AuthenticatingRealmImpl(configuration, passwordService, true, SHA256_PASSWORD_ALGORITHM, 1024);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
     assertThat(testUser.getPassword(), startsWith("$pbkdf2-sha256$i"));
   }
 
   @Test
   public void testLegacyPasswordIsReHashedToSha256OnNewDB() {
-    when(passwordService.encryptPassword("admin123")).thenReturn("$pbkdf2-sha256$i=1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
+    when(passwordService.encryptPassword("admin123")).thenReturn(
+        "$pbkdf2-sha256$i=1024$jp/XAZ6ZsFoy8Tshw1/xGw==$CbW0M68TR1Sp+mS4SfQGolAv2tBiUTbp6PZVhzhVSnWeAtR1NWt1Hn2S+OlvIWg+qYKDmWRvbDEVwdJt9La4ng==");
     assertThat(testUser.getPassword(), is(LEGACY_PASSWORD_HASH));
-    AuthenticatingRealmImpl underTestOrient = new AuthenticatingRealmImpl(configuration, passwordService, false, SHA256_PASSWORD_ALGORITHM, 1024);
+    AuthenticatingRealmImpl underTestOrient =
+        new AuthenticatingRealmImpl(configuration, passwordService, false, SHA256_PASSWORD_ALGORITHM, 1024);
     underTestOrient.getAuthenticationInfo(new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD));
     assertThat(testUser.getPassword(), startsWith("$pbkdf2-sha256$i"));
   }
@@ -246,5 +257,26 @@ public class AuthenticatingRealmImplTest
     // 1. Algorithm matches (pbkdf2-sha256)
     // 2. No specific iterations required (null)
     assertThat(testUser.getPassword(), is(validPhcPassword));
+  }
+
+  @Test
+  public void testDataAccessExceptionWhenReadingUser() throws Exception {
+    UsernamePasswordToken upToken = new UsernamePasswordToken(TEST_USERNAME, TEST_PASSWORD);
+
+    // Mock configuration.readUser to throw DataAccessException
+    DataAccessException dataAccessException = new DataAccessException("Database unavailable");
+    when(configuration.readUser(TEST_USERNAME)).thenThrow(dataAccessException);
+
+    AuthenticatingRealmImpl underTest =
+        new AuthenticatingRealmImpl(configuration, passwordService, false, SHA256_PASSWORD_ALGORITHM, null);
+
+    try {
+      underTest.doGetAuthenticationInfo(upToken);
+      fail("Expected DataAccessException to be thrown");
+    }
+    catch (DataAccessException e) {
+      // Verify the exception message
+      assertThat(e.getMessage(), containsString("Database unavailable"));
+    }
   }
 }

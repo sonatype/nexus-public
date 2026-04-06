@@ -343,19 +343,21 @@ public class AssetStore<T extends AssetDAO>
    * @param componentIds a set of component ids to search
    * @param assetFilter optional filter to apply.
    * @param assetFilterParams parameter map for the optional filter.
+   * @param includeNullBlobs whether to include assets without associated blobs (uses LEFT JOIN instead of INNER JOIN)
    * @return collection of {@link AssetInfo}
    */
   @Transactional
   public Collection<Asset> findByComponentIds(
       final Set<Integer> componentIds,
       final String assetFilter,
-      final Map<String, Object> assetFilterParams)
+      final Map<String, Object> assetFilterParams,
+      final boolean includeNullBlobs)
   {
     if (CollectionUtils.isEmpty(componentIds)) {
       return List.of();
     }
 
-    return dao().findByComponentIds(componentIds, assetFilter, assetFilterParams);
+    return dao().findByComponentIds(componentIds, assetFilter, assetFilterParams, includeNullBlobs);
   }
 
   /**

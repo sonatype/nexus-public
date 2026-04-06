@@ -21,15 +21,16 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.s3.internal.BucketValidationCacheService.BucketValidationResult;
 
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
-import software.amazon.awssdk.services.s3.model.S3Exception;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredBucket;
+import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredEndpoint;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.bucketOwnershipError;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.insufficientCreatePermissionsError;
@@ -63,18 +64,18 @@ public class BucketManager
 
   public void setS3(final EncryptingS3Client s3) {
     this.s3 = s3;
-    this.cacheService.setS3Client(s3);
   }
 
   @Override
   public void prepareStorageLocation(final BlobStoreConfiguration blobStoreConfiguration) {
     String bucket = getConfiguredBucket(blobStoreConfiguration);
+    String endpoint = getConfiguredEndpoint(blobStoreConfiguration);
 
     try {
-      BucketValidationResult result = cacheService.validate(bucket);
+      BucketValidationResult result = cacheService.validate(s3, endpoint, bucket);
 
       if (!result.exists()) {
-        createBucketAndInvalidateCache(bucket);
+        createBucketAndInvalidateCache(endpoint, bucket);
       }
       else if (!result.ownershipValid()) {
         throw bucketOwnershipError();
@@ -85,10 +86,10 @@ public class BucketManager
     }
   }
 
-  private void createBucketAndInvalidateCache(final String bucket) {
+  private void createBucketAndInvalidateCache(final String endpoint, final String bucket) {
     try {
       s3.createBucket(bucket);
-      cacheService.invalidate(bucket);
+      cacheService.invalidate(endpoint, bucket);
     }
     catch (S3Exception e) {
       if (ACCESS_DENIED_CODE.equals(e.awsErrorDetails().errorCode())) {

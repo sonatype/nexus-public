@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.file.NoSuchFileException;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -37,7 +39,6 @@ import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.common.QualifierUtil;
-import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.crypto.secrets.Secret;
@@ -72,6 +73,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
@@ -101,9 +103,6 @@ class BaseBlobStoreManagerTest
 
   @Mock
   private BlobStore blobStore;
-
-  @Mock
-  private FreezeService freezeService;
 
   @Mock
   private RepositoryManager repositoryManager;
@@ -269,7 +268,6 @@ class BaseBlobStoreManagerTest
     verify(blobStore).shutdown();
     verify(store).delete(configuration);
     verify(secretsService).remove(secret);
-    verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.");
   }
 
   @Test
@@ -284,7 +282,6 @@ class BaseBlobStoreManagerTest
 
     verify(blobStore).shutdown();
     verify(store).delete(configuration);
-    verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.");
     verify(blobStore, never()).stop();
   }
 
@@ -301,7 +298,6 @@ class BaseBlobStoreManagerTest
     verify(blobStore).shutdown();
     verify(blobStore).remove();
     verify(store).delete(configuration);
-    verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.");
   }
 
   @Test
@@ -491,6 +487,241 @@ class BaseBlobStoreManagerTest
   }
 
   @Test
+  public void canCreateBlobStoreWithExistingSecretIds() throws Exception {
+    // Test that existing secret IDs (from configuration import) are not re-encrypted
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
+    when(provider.get()).thenReturn(blobStore);
+
+    // Mock an existing secret with ID "_1"
+    Secret existingSecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(existingSecret);
+
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID); // Use existing secret ID
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore createdBlobStore = underTest.create(configuration);
+
+    // Verify the secret ID is preserved (not changed)
+    assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(SECRET_ID));
+    assertThat(createdBlobStore, is(blobStore));
+
+    // Verify secretsService.from() was called to retrieve the existing secret
+    verify(secretsService).from(SECRET_ID);
+
+    // Verify encryptMaven was NOT called (no re-encryption)
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+
+    verify(store).create(configuration);
+    verify(blobStore).start();
+  }
+
+  @Test
+  public void canCreateBlobStoreWithMultipleExistingSecretIds() throws Exception {
+    // Test handling multiple existing secret IDs
+    String sessionTokenKey = "sessionToken";
+    String sessionTokenSecretId = "_2";
+
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY, sessionTokenKey));
+    when(provider.get()).thenReturn(blobStore);
+
+    Secret secretAccessKeySecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(secretAccessKeySecret);
+
+    Secret sessionTokenSecret = mock(Secret.class);
+    when(secretsService.from(sessionTokenSecretId)).thenReturn(sessionTokenSecret);
+
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID);
+    blobConfigMap.put(sessionTokenKey, sessionTokenSecretId);
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore createdBlobStore = underTest.create(configuration);
+
+    // Verify both secret IDs are preserved
+    assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(SECRET_ID));
+    assertThat(configuration.getAttributes().get("test").get(sessionTokenKey), is(sessionTokenSecretId));
+    assertThat(createdBlobStore, is(blobStore));
+
+    // Verify both secrets were retrieved but not re-encrypted
+    verify(secretsService).from(SECRET_ID);
+    verify(secretsService).from(sessionTokenSecretId);
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+
+    verify(store).create(configuration);
+    verify(blobStore).start();
+  }
+
+  @Test
+  public void canCreateBlobStoreWithMixOfSecretIdsAndPlaintext() throws Exception {
+    // Test handling mix of existing secret IDs and plaintext values
+    String sessionTokenKey = "sessionToken";
+    String sessionTokenPlaintext = "newSessionTokenValue";
+
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY, sessionTokenKey));
+    when(provider.get()).thenReturn(blobStore);
+
+    // Mock existing secret for secretAccessKey
+    Secret existingSecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(existingSecret);
+
+    // Mock new secret for sessionToken
+    Secret newSecret = mock(Secret.class);
+    when(newSecret.getId()).thenReturn("_2");
+    when(secretsService.encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, sessionTokenPlaintext.toCharArray(),
+        TEST_USER))
+            .thenReturn(newSecret);
+
+    Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+    Map<String, Object> blobConfigMap = new HashMap<>();
+    blobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID); // Existing secret ID
+    blobConfigMap.put(sessionTokenKey, sessionTokenPlaintext); // New plaintext value
+    blobStoreAttributes.put("test", blobConfigMap);
+    blobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration configuration = createConfig("test", blobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore createdBlobStore = underTest.create(configuration);
+
+    // Verify existing secret ID is preserved
+    assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(SECRET_ID));
+    // Verify plaintext value was encrypted and replaced with new secret ID
+    assertThat(configuration.getAttributes().get("test").get(sessionTokenKey), is("_2"));
+    assertThat(createdBlobStore, is(blobStore));
+
+    // Verify existing secret was retrieved but not re-encrypted
+    verify(secretsService).from(SECRET_ID);
+    // Verify plaintext value was encrypted
+    verify(secretsService).encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, sessionTokenPlaintext.toCharArray(),
+        TEST_USER);
+
+    verify(store).create(configuration);
+    verify(blobStore).start();
+  }
+
+  @Test
+  public void doesNotTreatNonSecretIdPatternsAsSecretIds() throws Exception {
+    // Test that values starting with "_" but not matching secret ID pattern are treated as plaintext
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
+    when(provider.get()).thenReturn(blobStore);
+
+    Secret newSecret = mock(Secret.class);
+    when(newSecret.getId()).thenReturn(SECRET_ID);
+
+    // Test various non-secret-ID patterns
+    String[] nonSecretIdValues = {
+        "_abc", // underscore followed by letters
+        "_", // just underscore
+        "__123", // double underscore
+        "_xyz123", // underscore followed by letters then numbers
+        "plaintext" // no underscore at all
+    };
+
+    for (String value : nonSecretIdValues) {
+      when(secretsService.encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, value.toCharArray(), TEST_USER))
+          .thenReturn(newSecret);
+
+      Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+      Map<String, Object> blobConfigMap = new HashMap<>();
+      blobConfigMap.put(SECRET_FIELD_KEY, value);
+      blobStoreAttributes.put("test", blobConfigMap);
+      blobStoreAttributes.put("file", Map.of("path", "foo"));
+      BlobStoreConfiguration configuration = createConfig("test-" + value.replace("_", "u"), blobStoreAttributes);
+
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+      underTest.create(configuration);
+
+      // Verify the value was encrypted (treated as plaintext, not as secret ID)
+      verify(secretsService).encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, value.toCharArray(), TEST_USER);
+    }
+  }
+
+  @Test
+  public void recognizesVariousSecretIdPatterns() throws Exception {
+    // Test that various valid secret ID patterns are correctly recognized
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
+    when(provider.get()).thenReturn(blobStore);
+
+    // Test various valid secret ID patterns
+    String[] validSecretIds = {
+        "_1",
+        "_2",
+        "_10",
+        "_999",
+        "_12345"
+    };
+
+    for (String secretId : validSecretIds) {
+      Secret existingSecret = mock(Secret.class);
+      when(secretsService.from(secretId)).thenReturn(existingSecret);
+
+      Map<String, Map<String, Object>> blobStoreAttributes = new HashMap<>();
+      Map<String, Object> blobConfigMap = new HashMap<>();
+      blobConfigMap.put(SECRET_FIELD_KEY, secretId);
+      blobStoreAttributes.put("test", blobConfigMap);
+      blobStoreAttributes.put("file", Map.of("path", "foo"));
+      BlobStoreConfiguration configuration = createConfig("test-" + secretId.substring(1), blobStoreAttributes);
+
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+      underTest.create(configuration);
+
+      // Verify secretsService.from() was called (secret ID was recognized)
+      verify(secretsService).from(secretId);
+      // Verify the secret ID is preserved in the configuration
+      assertThat(configuration.getAttributes().get("test").get(SECRET_FIELD_KEY), is(secretId));
+    }
+
+    // Verify encryptMaven was never called (all were treated as existing secret IDs)
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+  }
+
+  @Test
+  public void updateBlobStorePreservesExistingSecretIds() throws Exception {
+    // Test that updating a blob store with unchanged secret IDs skips re-encryption
+    when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
+
+    Map<String, Map<String, Object>> oldBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> oldBlobConfigMap = new HashMap<>();
+    oldBlobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID);
+    oldBlobStoreAttributes.put("test", oldBlobConfigMap);
+    oldBlobStoreAttributes.put("file", Map.of("path", "foo"));
+    BlobStoreConfiguration oldBlobStoreConfig = createConfig("test", oldBlobStoreAttributes);
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(oldBlobStoreConfig);
+
+    Secret existingSecret = mock(Secret.class);
+    when(secretsService.from(SECRET_ID)).thenReturn(existingSecret);
+
+    // Create new config with same secret ID (unchanged)
+    Map<String, Map<String, Object>> newBlobStoreAttributes = new HashMap<>();
+    Map<String, Object> newBlobConfigMap = new HashMap<>();
+    newBlobConfigMap.put(SECRET_FIELD_KEY, SECRET_ID);
+    newBlobStoreAttributes.put("test", newBlobConfigMap);
+    newBlobStoreAttributes.put("file", Map.of("path", "bar")); // Changed something else
+    BlobStoreConfiguration newBlobStoreConfig = createConfig("test", newBlobStoreAttributes);
+
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    underTest.track("test", blobStore);
+
+    underTest.update(newBlobStoreConfig);
+
+    // When secret ID is unchanged, it should retrieve it but NOT re-encrypt
+    verify(secretsService).from(SECRET_ID);
+    verify(secretsService, never()).encryptMaven(any(), any(), any());
+
+    // The secret should NOT be removed since the value is unchanged
+    verify(secretsService, never()).remove(any());
+    verify(store).update(newBlobStoreConfig);
+  }
+
+  @Test
   public void cannotUpdateBlobStoreFromNewConfig() throws Exception {
     when(descriptor.getSensitiveConfigurationFields()).thenReturn(List.of(SECRET_FIELD_KEY));
     Map<String, Map<String, Object>> oldBlobStoreAttributes = new HashMap<>();
@@ -528,6 +759,236 @@ class BaseBlobStoreManagerTest
         TEST_USER);
   }
 
+  // Tests for moveBlob retry logic on temp file race condition
+
+  @Test
+  void moveBlobSucceedsOnFirstAttempt() throws Exception {
+    // Setup
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore srcBlobStore = mock(BlobStore.class);
+    BlobStore destBlobStore = mock(BlobStore.class);
+    BlobId blobId = new BlobId("test-blob-id", OffsetDateTime.now());
+    Blob srcBlob = mock(Blob.class);
+    Blob destBlob = mock(Blob.class);
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    InputStream inputStream = new ByteArrayInputStream("test content".getBytes());
+    Map<String, String> headers = Map.of("test-header", "test-value");
+    BlobStoreConfiguration srcConfig = mock(BlobStoreConfiguration.class);
+    BlobStoreConfiguration destConfig = mock(BlobStoreConfiguration.class);
+
+    when(srcBlobStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
+    when(destBlobStore.getBlobStoreConfiguration()).thenReturn(destConfig);
+    when(srcConfig.getName()).thenReturn("src-store");
+    when(destConfig.getName()).thenReturn("dest-store");
+    when(srcBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobAttributes.isDeleted()).thenReturn(false);
+    when(blobAttributes.getHeaders()).thenReturn(headers);
+    when(srcBlobStore.isInternalMoveSupported(destBlobStore)).thenReturn(false);
+    when(srcBlobStore.get(blobId, true)).thenReturn(srcBlob);
+    when(srcBlob.getInputStream()).thenReturn(inputStream);
+    when(destBlobStore.create(any(InputStream.class), any(), any())).thenReturn(destBlob);
+
+    // Execute
+    Blob result = underTest.moveBlob(blobId, srcBlobStore, destBlobStore);
+
+    // Verify
+    assertThat(result, is(destBlob));
+    verify(destBlobStore, times(1)).create(any(InputStream.class), any(), any());
+    verify(srcBlobStore).deleteHard(blobId);
+  }
+
+  @Test
+  void moveBlobRetriesOnTempFileNoSuchFileException() throws Exception {
+    // Setup
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore srcBlobStore = mock(BlobStore.class);
+    BlobStore destBlobStore = mock(BlobStore.class);
+    BlobId blobId = new BlobId("test-blob-id", OffsetDateTime.now());
+    Blob srcBlob = mock(Blob.class);
+    Blob destBlob = mock(Blob.class);
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    Map<String, String> headers = Map.of("test-header", "test-value");
+    BlobStoreConfiguration srcConfig = mock(BlobStoreConfiguration.class);
+    BlobStoreConfiguration destConfig = mock(BlobStoreConfiguration.class);
+
+    when(srcBlobStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
+    when(destBlobStore.getBlobStoreConfiguration()).thenReturn(destConfig);
+    when(srcConfig.getName()).thenReturn("src-store");
+    when(destConfig.getName()).thenReturn("dest-store");
+    when(srcBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobAttributes.isDeleted()).thenReturn(false);
+    when(blobAttributes.getHeaders()).thenReturn(headers);
+    when(srcBlobStore.isInternalMoveSupported(destBlobStore)).thenReturn(false);
+    when(srcBlobStore.get(blobId, true)).thenReturn(srcBlob);
+    // Return new input stream on each call
+    when(srcBlob.getInputStream())
+        .thenReturn(new ByteArrayInputStream("test content".getBytes()))
+        .thenReturn(new ByteArrayInputStream("test content".getBytes()));
+
+    // First call throws NoSuchFileException for temp file, second succeeds
+    NoSuchFileException tempFileException = new NoSuchFileException("/nexus-data/blobs/content/tmp/test.bytes");
+    when(destBlobStore.create(any(InputStream.class), any(), any()))
+        .thenThrow(new BlobStoreException(tempFileException, blobId))
+        .thenReturn(destBlob);
+
+    // Execute
+    Blob result = underTest.moveBlob(blobId, srcBlobStore, destBlobStore);
+
+    // Verify - should succeed after retry
+    assertThat(result, is(destBlob));
+    verify(destBlobStore, times(2)).create(any(InputStream.class), any(), any());
+    verify(srcBlobStore, times(2)).get(blobId, true);
+    verify(srcBlobStore).deleteHard(blobId);
+  }
+
+  @Test
+  void moveBlobRetriesOnWindowsTempFilePath() throws Exception {
+    // Setup
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore srcBlobStore = mock(BlobStore.class);
+    BlobStore destBlobStore = mock(BlobStore.class);
+    BlobId blobId = new BlobId("test-blob-id", OffsetDateTime.now());
+    Blob srcBlob = mock(Blob.class);
+    Blob destBlob = mock(Blob.class);
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    Map<String, String> headers = Map.of("test-header", "test-value");
+    BlobStoreConfiguration srcConfig = mock(BlobStoreConfiguration.class);
+    BlobStoreConfiguration destConfig = mock(BlobStoreConfiguration.class);
+
+    when(srcBlobStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
+    when(destBlobStore.getBlobStoreConfiguration()).thenReturn(destConfig);
+    when(srcConfig.getName()).thenReturn("src-store");
+    when(destConfig.getName()).thenReturn("dest-store");
+    when(srcBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobAttributes.isDeleted()).thenReturn(false);
+    when(blobAttributes.getHeaders()).thenReturn(headers);
+    when(srcBlobStore.isInternalMoveSupported(destBlobStore)).thenReturn(false);
+    when(srcBlobStore.get(blobId, true)).thenReturn(srcBlob);
+    when(srcBlob.getInputStream())
+        .thenReturn(new ByteArrayInputStream("test content".getBytes()))
+        .thenReturn(new ByteArrayInputStream("test content".getBytes()));
+
+    // Windows-style path with backslashes
+    NoSuchFileException tempFileException = new NoSuchFileException("C:\\nexus-data\\blobs\\content\\tmp\\test.bytes");
+    when(destBlobStore.create(any(InputStream.class), any(), any()))
+        .thenThrow(new BlobStoreException(tempFileException, blobId))
+        .thenReturn(destBlob);
+
+    // Execute
+    Blob result = underTest.moveBlob(blobId, srcBlobStore, destBlobStore);
+
+    // Verify - should succeed after retry with Windows path
+    assertThat(result, is(destBlob));
+    verify(destBlobStore, times(2)).create(any(InputStream.class), any(), any());
+  }
+
+  @Test
+  void moveBlobDoesNotRetryOnNonTempFileException() throws Exception {
+    // Setup
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore srcBlobStore = mock(BlobStore.class);
+    BlobStore destBlobStore = mock(BlobStore.class);
+    BlobId blobId = new BlobId("test-blob-id", OffsetDateTime.now());
+    Blob srcBlob = mock(Blob.class);
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    Map<String, String> headers = Map.of("test-header", "test-value");
+    BlobStoreConfiguration srcConfig = mock(BlobStoreConfiguration.class);
+    BlobStoreConfiguration destConfig = mock(BlobStoreConfiguration.class);
+
+    // Use lenient() for stubs that may not be called due to exception
+    lenient().when(srcBlobStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
+    lenient().when(destBlobStore.getBlobStoreConfiguration()).thenReturn(destConfig);
+    lenient().when(srcConfig.getName()).thenReturn("src-store");
+    lenient().when(destConfig.getName()).thenReturn("dest-store");
+    when(srcBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobAttributes.isDeleted()).thenReturn(false);
+    when(blobAttributes.getHeaders()).thenReturn(headers);
+    when(srcBlobStore.isInternalMoveSupported(destBlobStore)).thenReturn(false);
+    when(srcBlobStore.get(blobId, true)).thenReturn(srcBlob);
+    when(srcBlob.getInputStream()).thenReturn(new ByteArrayInputStream("test content".getBytes()));
+
+    // NoSuchFileException for non-temp file path - should NOT retry
+    NoSuchFileException nonTempFileException = new NoSuchFileException("/nexus-data/blobs/content/vol-01/blob.bytes");
+    when(destBlobStore.create(any(InputStream.class), any(), any()))
+        .thenThrow(new BlobStoreException(nonTempFileException, blobId));
+
+    // Execute & Verify - should throw immediately without retry
+    assertThrows(BlobStoreException.class, () -> underTest.moveBlob(blobId, srcBlobStore, destBlobStore));
+    verify(destBlobStore, times(1)).create(any(InputStream.class), any(), any());
+  }
+
+  @Test
+  void moveBlobFailsAfterMaxRetries() throws Exception {
+    // Setup
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore srcBlobStore = mock(BlobStore.class);
+    BlobStore destBlobStore = mock(BlobStore.class);
+    BlobId blobId = new BlobId("test-blob-id", OffsetDateTime.now());
+    Blob srcBlob = mock(Blob.class);
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    Map<String, String> headers = Map.of("test-header", "test-value");
+    BlobStoreConfiguration srcConfig = mock(BlobStoreConfiguration.class);
+    BlobStoreConfiguration destConfig = mock(BlobStoreConfiguration.class);
+
+    // Use lenient() for stubs that may not be called due to exception
+    lenient().when(srcBlobStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
+    lenient().when(destBlobStore.getBlobStoreConfiguration()).thenReturn(destConfig);
+    lenient().when(srcConfig.getName()).thenReturn("src-store");
+    lenient().when(destConfig.getName()).thenReturn("dest-store");
+    when(srcBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobAttributes.isDeleted()).thenReturn(false);
+    when(blobAttributes.getHeaders()).thenReturn(headers);
+    when(srcBlobStore.isInternalMoveSupported(destBlobStore)).thenReturn(false);
+    when(srcBlobStore.get(blobId, true)).thenReturn(srcBlob);
+    when(srcBlob.getInputStream())
+        .thenReturn(new ByteArrayInputStream("test content".getBytes()))
+        .thenReturn(new ByteArrayInputStream("test content".getBytes()))
+        .thenReturn(new ByteArrayInputStream("test content".getBytes()));
+
+    // Always throw temp file exception - should fail after 3 attempts
+    NoSuchFileException tempFileException = new NoSuchFileException("/nexus-data/blobs/content/tmp/test.bytes");
+    when(destBlobStore.create(any(InputStream.class), any(), any()))
+        .thenThrow(new BlobStoreException(tempFileException, blobId));
+
+    // Execute & Verify - should fail after max retries (3 attempts)
+    assertThrows(BlobStoreException.class, () -> underTest.moveBlob(blobId, srcBlobStore, destBlobStore));
+    verify(destBlobStore, times(3)).create(any(InputStream.class), any(), any());
+    verify(srcBlobStore, times(3)).get(blobId, true);
+  }
+
+  @Test
+  void moveBlobDoesNotRetryOnOtherBlobStoreException() throws Exception {
+    // Setup
+    BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+    BlobStore srcBlobStore = mock(BlobStore.class);
+    BlobStore destBlobStore = mock(BlobStore.class);
+    BlobId blobId = new BlobId("test-blob-id", OffsetDateTime.now());
+    Blob srcBlob = mock(Blob.class);
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    Map<String, String> headers = Map.of("test-header", "test-value");
+    BlobStoreConfiguration srcConfig = mock(BlobStoreConfiguration.class);
+    BlobStoreConfiguration destConfig = mock(BlobStoreConfiguration.class);
+
+    // Use lenient() for stubs that may not be called due to exception
+    lenient().when(srcBlobStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
+    lenient().when(destBlobStore.getBlobStoreConfiguration()).thenReturn(destConfig);
+    lenient().when(srcConfig.getName()).thenReturn("src-store");
+    lenient().when(destConfig.getName()).thenReturn("dest-store");
+    when(srcBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobAttributes.isDeleted()).thenReturn(false);
+    when(blobAttributes.getHeaders()).thenReturn(headers);
+    when(srcBlobStore.isInternalMoveSupported(destBlobStore)).thenReturn(false);
+    when(srcBlobStore.get(blobId, true)).thenReturn(srcBlob);
+    when(srcBlob.getInputStream()).thenReturn(new ByteArrayInputStream("test content".getBytes()));
+
+    // BlobStoreException without NoSuchFileException cause - should NOT retry
+    when(destBlobStore.create(any(InputStream.class), any(), any()))
+        .thenThrow(new BlobStoreException("Disk full", blobId));
+
+    // Execute & Verify - should throw immediately without retry
+    assertThrows(BlobStoreException.class, () -> underTest.moveBlob(blobId, srcBlobStore, destBlobStore));
+    verify(destBlobStore, times(1)).create(any(InputStream.class), any(), any());
+  }
 
   @Test
   public void moveBlobMarksDestinationAsStaleWhenSoftDeleted() throws Exception {
@@ -565,7 +1026,6 @@ class BaseBlobStoreManagerTest
     verify(context.srcBlobStore()).deleteHard(context.blobId());
   }
 
-
   @SuppressWarnings({"unchecked", "rawtypes"})
   private BaseBlobStoreManager newBlobStoreManager(
       final Boolean provisionDefaults,
@@ -580,7 +1040,7 @@ class BaseBlobStoreManagerTest
     when(store.list()).thenReturn(List.of(configurations));
 
     BaseBlobStoreManager bbsm = new BaseBlobStoreManager(eventManager, store, List.of(), List.of(),
-        freezeService, () -> repositoryManager, nodeAccess, provisionDefaults, blobStoreConfigProvider,
+        () -> repositoryManager, nodeAccess, provisionDefaults, blobStoreConfigProvider,
         blobStoreTaskService, blobStoreOverrideProvider, replicationBlobStoreStatusManager, secretsService)
     {
     };

@@ -19,17 +19,14 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
 
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import static java.util.Collections.emptySet;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@ExtendWith(DatabaseExtension.class)
 class ConfigurationStoreImplTest
     extends Test5Support
 {
@@ -43,7 +40,7 @@ class ConfigurationStoreImplTest
     underTest = new ConfigurationStoreImpl(sessionSupplier);
   }
 
-  @Test
+  @DatabaseTest
   void readByNamesShouldBeEmptyWhenRepositoriesIsEmpty() {
     Collection<Configuration> configurations = underTest.readByNames(emptySet());
 

@@ -421,6 +421,10 @@
   <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
     -- The prefixes 'cs' and 'ap' are used to prevent ambiguity in column names.
     -- Be cautious when modifying them, as some classes rely on these prefixes for building filters.
+    -- IMPORTANT: When distinctNameAndNamespace=true, PostgreSQL requires that the ORDER BY clause
+    -- MUST start with cs.namespace, cs.search_component_name to match the DISTINCT ON expressions.
+    -- H2 is more lenient and does not enforce this requirement.
+    -- See NEXUS-50690 for details on the bug caused by ORDER BY mismatch.
     SELECT
         <if test="distinctNameAndNamespace == true">
           DISTINCT ON (cs.namespace, cs.search_component_name)
@@ -452,7 +456,11 @@
     <where>
       <if test="filter != null">(${filter})</if>
     </where>
-    ORDER BY <if test="sortColumnName != null">
+    ORDER BY
+    <if test="distinctNameAndNamespace == true">
+      cs.namespace, cs.search_component_name,
+    </if>
+    <if test="sortColumnName != null">
       ${sortColumnName} ${sortDirection}
       <if test="sortColumnName != defaultSortColumnName">, ${defaultSortColumnName}</if>
       <if test="sortColumnName != secondDefaultSortColumnName">, ${secondDefaultSortColumnName}</if>
@@ -736,23 +744,41 @@
   </insert>
 
   <sql id="toTsVector" databaseId="PostgreSQL">
+    <!--
+      Uses VALUES clause with direct ::tsvector casting to avoid both stack depth and tokenization issues.
+      The old || concatenation created deeply nested expression trees that exceeded PostgreSQL's stack limit.
+      The VALUES clause provides a flat structure (no nesting), while ::tsvector casting preserves exact lexemes
+      without tokenization (unlike to_tsvector which would break keywords into separate tokens).
+
+      This approach:
+      - Avoids stack depth issues: VALUES clause creates flat structure vs nested || expressions
+      - Preserves exact lexemes: ::tsvector casting treats each token as single lexeme
+      - Maintains compatibility: Output is identical to old || approach (exact same lexemes, no positions)
+    -->
     <choose>
       <when test="${tokens}.isEmpty()">null</when>
       <otherwise>
-        <foreach collection="${tokens}" separator="||" item="token" open="(" close=")">
-          LOWER(#{token})::tsvector
-        </foreach>
+        (SELECT string_agg(LOWER(token)::tsvector::text, ' ')::tsvector FROM (VALUES <foreach collection="${tokens}" separator="," item="token">(#{token})</foreach>) AS t(token))
       </otherwise>
     </choose>
   </sql>
 
   <sql id="toQuotedTsVector" databaseId="PostgreSQL">
+    <!--
+      Uses VALUES clause with direct ::tsvector casting to avoid both stack depth and tokenization issues.
+      The old || concatenation created deeply nested expression trees that exceeded PostgreSQL's stack limit.
+      The VALUES clause provides a flat structure (no nesting), while ::tsvector casting preserves exact lexemes
+      without tokenization (unlike to_tsvector which would break paths into separate tokens).
+
+      This approach:
+      - Avoids stack depth issues: VALUES clause creates flat structure vs nested || expressions
+      - Preserves exact lexemes: ::tsvector casting treats each token as single lexeme
+      - Maintains compatibility: Output is identical to old || approach (exact same lexemes, no positions)
+    -->
     <choose>
       <when test="${tokens}.isEmpty()">null</when>
       <otherwise>
-        <foreach collection="${tokens}" separator="||" item="token" open="(" close=")">
-          #{token, typeHandler=QuotingTypeHandler}::tsvector
-        </foreach>
+        (SELECT string_agg(token::tsvector::text, ' ')::tsvector FROM (VALUES <foreach collection="${tokens}" separator="," item="token">(#{token, typeHandler=QuotingTypeHandler})</foreach>) AS t(token))
       </otherwise>
     </choose>
   </sql>
@@ -762,7 +788,8 @@
       <when test="${thePaths}.isEmpty()">null</when>
       <otherwise>
         (SELECT STRING_AGG('{' || path || '}', ' ')
-        FROM unnest(ARRAY[<foreach collection="${thePaths}" separator="," item="path">#{path}::VARCHAR</foreach>]) AS path)
+        FROM (VALUES <foreach collection="${thePaths}" separator="," item="path">(#{path}::VARCHAR)</foreach>
+        ) AS t(path))
       </otherwise>
     </choose>
   </sql>

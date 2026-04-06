@@ -50,7 +50,7 @@
         <tbody>
           #foreach ($entry in $map.entrySet())
           <tr>
-            <td>$entry.key</td>
+            <td>$esc.html($entry.key)</td>
             <td>$esc.html($entry.value)</td>
           </tr>
           #end
@@ -93,12 +93,12 @@
     <div class="content-section">
       #foreach ($item in $items)
         #if($item.type == "topic")
-          <h2>$item.name</h2>
+          <h2>$esc.html($item.name)</h2>
         #elseif($item.type == "string")
-          <h3>$item.name</h3>
+          <h3>$esc.html($item.name)</h3>
           <p>$esc.html($item.value)</p>
         #elseif($item.type == "table")
-          <h3>$item.name</h3>
+          <h3>$esc.html($item.name)</h3>
           #table($item.value)
         #end
       #end

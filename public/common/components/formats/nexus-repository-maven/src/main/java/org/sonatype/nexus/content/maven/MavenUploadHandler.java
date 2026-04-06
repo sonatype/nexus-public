@@ -173,7 +173,9 @@ public class MavenUploadHandler
   {
     MavenContentFacet mavenFacet = repository.facet(MavenContentFacet.class);
     Content asset = mavenFacet.put(mavenPath, payload);
-    putChecksumFiles(mavenFacet, mavenPath, asset);
+    if (!mavenPath.isHash()) {
+      putChecksumFiles(mavenFacet, mavenPath, asset);
+    }
     return asset;
   }
 

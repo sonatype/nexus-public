@@ -38,6 +38,7 @@ import org.sonatype.nexus.coreui.AssetXO;
 import org.sonatype.nexus.coreui.ComponentHelper;
 import org.sonatype.nexus.coreui.ComponentXO;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheAttributeUtils;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -368,6 +369,12 @@ public class ContentComponentHelper
 
     asset.lastDownloaded().ifPresent(when -> assetXO.setLastDownloaded(Date.from(when.toInstant())));
 
+    // Extract and set lastVerified from cache attributes (proxy repos only)
+    Date lastVerified = CacheAttributeUtils.extractLastVerified(attributes);
+    if (lastVerified != null) {
+      assetXO.setLastVerified(lastVerified);
+    }
+
     return assetXO;
   }
 
@@ -378,4 +385,5 @@ public class ContentComponentHelper
   private static String assetId(final Asset asset) {
     return toExternalId(internalAssetId(asset)).getValue();
   }
+
 }

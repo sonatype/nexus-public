@@ -32,6 +32,9 @@ public class FeatureFlags
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 
+  /* Conda Group format is temporarily hidden behind the feature flag. Default value: false */
+  public static final String CONDA_GROUP_FORMAT_ENABLED = "nexus.format.conda.group.enabled";
+
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   public static final String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 
@@ -51,6 +54,8 @@ public class FeatureFlags
   public static final String CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED_VALUE = "${nexus.zero.downtime.enabled:false}";
 
   public static final String CLUSTERED_ZERO_DOWNTIME_ENABLED_ENV = "NEXUS_ZERO_DOWNTIME_ENABLED";
+
+  public static final String CONDA_HOSTED_FEATURE_ENABLED = "nexus.format.conda.hosted.enabled";
 
   /**
    * Heartbeat interval in seconds for cluster node health monitoring.
@@ -263,11 +268,6 @@ public class FeatureFlags
 
   public static final String PYPI_METADATA_ENABLED_NAMED_VALUE = "${nexus.pypi.metadata.enabled:false}";
 
-  /* React Tasks Experience. Available values: true, false. Default value: false */
-  public static final String REACT_TASKS_ENABLED = "nexus.react.tasks.enabled";
-
-  public static final String REACT_TASKS_ENABLED_NAMED_VALUE = "${nexus.react.tasks.enabled:false}";
-
   public static final String NEXUS_USER_CONFIGURATION_SOURCE_ENABLED = "nexus.user.configuration.source.enabled";
 
   /* ExtJS Capabilities Page. Available values: true, false. Default value: false */
@@ -279,9 +279,6 @@ public class FeatureFlags
   public static final String REACT_CAPABILITIES_ENABLED = "nexus.react.capabilities.enabled";
 
   public static final String REACT_CAPABILITIES_NAMED_VALUE = "${nexus.react.capabilities.enabled:true}";
-
-  // Swift Group repository type. Default value: false
-  public static final String SWIFT_GROUP_ENABLED = "nexus.format.swift.group.enabled";
 
   /* Enable principal permissions cache. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE =
@@ -321,4 +318,10 @@ public class FeatureFlags
 
   public static final String PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL_NAMED_VALUE =
       "${nexus.authorizingrealm.permissionscache.concurrencylevel:16}";
+
+  // Hosted Repository Evaluation feature. Default value: false
+  public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED = "nexus.hosted.repository.evaluation.enabled";
+
+  public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED_NAMED_VALUE =
+      "${nexus.hosted.repository.evaluation.enabled:false}";
 }

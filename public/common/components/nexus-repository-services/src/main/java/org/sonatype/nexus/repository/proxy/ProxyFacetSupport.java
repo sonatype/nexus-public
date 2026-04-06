@@ -672,6 +672,13 @@ public abstract class ProxyFacetSupport
   }
 
   protected Content fetch(final String url, final Context context, @Nullable final Content stale) throws IOException {
+    if (url == null) {
+      log.debug(
+          "Unable to determine remote URL for request path: {}. The format-specific getUrl() method returned null, indicating the request path is not valid or requires metadata that has not been fetched yet.",
+          context.getRequest().getPath());
+      return null;
+    }
+
     HttpClient client = httpClient.getHttpClient();
 
     checkState(config.remoteUrl.isAbsolute(),
@@ -709,6 +716,10 @@ public abstract class ProxyFacetSupport
 
     HttpRequestBase request = buildFetchHttpRequest(uri, context, stale);
 
+    // DEBUG-level logging for troubleshooting
+    log.debug("ProxyFacet: Fetching from upstream: {} - Repository: {}",
+        uri, getRepository().getName());
+
     log.debug("Fetching: {}", request);
     log.debug("Fetching Request Headers: {}", Arrays.toString(request.getAllHeaders()));
 
@@ -718,6 +729,10 @@ public abstract class ProxyFacetSupport
 
     StatusLine status = response.getStatusLine();
     log.debug("Status: {}", status);
+
+    // DEBUG-level response logging
+    log.debug("ProxyFacet: Response from upstream: {} - Status: {} - Repository: {}",
+        uri, status.getStatusCode(), getRepository().getName());
 
     mayThrowBypassHttpErrorException(context, response);
 
@@ -774,13 +789,70 @@ public abstract class ProxyFacetSupport
     HttpEntity entity = response.getEntity();
     log.debug("Entity: {}", entity);
 
-    final Header etagHeader = response.getLastHeader(HttpHeaders.ETAG);
+    // INFO-level: Log key response headers for production visibility
+    StringBuilder headerSummary = new StringBuilder();
+    Header[] allHeaders = response.getAllHeaders();
+    for (Header header : allHeaders) {
+      String name = header.getName().toLowerCase();
+      // Log important headers: etag, ETag, content-type, content-length, cache-control
+      if (name.equals("etag") || name.equals("content-type") || name.equals("content-length") ||
+          name.equals("cache-control") || name.equals("last-modified")) {
+        if (headerSummary.length() > 0) {
+          headerSummary.append(", ");
+        }
+        headerSummary.append(header.getName()).append(": ").append(header.getValue());
+      }
+    }
+    log.debug("ProxyFacet: Key response headers from upstream - {} - Repository: {}",
+        headerSummary.toString(), getRepository().getName());
+
+    // Diagnostic logging to debug ETag extraction issues (DEBUG level - all headers)
+    if (log.isDebugEnabled()) {
+      log.debug("ProxyFacet - ALL Response Headers:");
+      for (Header header : allHeaders) {
+        log.debug("  Header: {} = {}", header.getName(), header.getValue());
+      }
+    }
+
+    // Azure Blob Storage (used by NuGet.org) may return "etag" (lowercase) or "ETag" (standard)
+    // HTTP header names are case-insensitive per RFC 7230, but Apache HttpClient lookup is case-sensitive
+    // Try standard case first, then lowercase
+    Header etagHeader = response.getLastHeader(HttpHeaders.ETAG);
+    boolean foundLowercase = false;
+    if (etagHeader == null) {
+      etagHeader = response.getLastHeader("etag");
+      if (etagHeader != null) {
+        foundLowercase = true;
+        log.debug("Found lowercase 'etag' header instead of standard 'ETag'");
+      }
+    }
+
     final String etag = etagHeader != null ? ETagHeaderUtils.extract(etagHeader.getValue()) : null;
+
+    // DEBUG-level logging for ETag extraction result
+    if (etag != null) {
+      log.debug("ProxyFacet: ETag extracted from upstream - Value: {} - Lowercase: {} - Repository: {}",
+          etag, foundLowercase, getRepository().getName());
+    }
+    else {
+      log.debug("ProxyFacet: NO ETag found in upstream response - Repository: {}",
+          getRepository().getName());
+    }
+
+    if (log.isDebugEnabled()) {
+      log.debug("ProxyFacet - ETag Header Object: {}", etagHeader);
+      log.debug("ProxyFacet - Extracted ETag value: {}", etag);
+    }
 
     final Content content = createContent(context, response);
     content.getAttributes().set(Content.CONTENT_LAST_MODIFIED, extractLastModified(request, response));
     content.getAttributes().set(Content.CONTENT_ETAG, etag);
     content.getAttributes().set(CacheInfo.class, cacheInfo);
+
+    if (log.isDebugEnabled()) {
+      log.debug("ProxyFacet - Content ETAG attribute set to: {}",
+          content.getAttributes().get(Content.CONTENT_ETAG, String.class));
+    }
 
     return content;
   }
@@ -1066,6 +1138,8 @@ public abstract class ProxyFacetSupport
           "nexus.proxy.allowPrivateNetworks=true to allow all private networks, or configure specific " +
           "hosts using nexus.proxy.privateNetworks.allowedIPs or nexus.proxy.privateNetworks.allowedDomains.")
               .formatted(uri, result.getErrorMessage());
+      log.debug("Blocked outbound request to local/private network URL: {} (repository: {}, reason: {})",
+          uri, getRepository().getName(), result.getErrorMessage());
       throw new RemoteBlockedIOException(message);
     }
   }

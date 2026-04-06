@@ -13,9 +13,13 @@
 package org.sonatype.nexus.repository.content.rest.internal.resources;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -27,6 +31,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetDependencies;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
@@ -36,10 +41,10 @@ import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
+import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.rest.Page;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -47,11 +52,21 @@ import org.mockito.Mock;
 import static java.util.Base64.getUrlEncoder;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
-import static java.util.Optional.empty;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
@@ -105,9 +120,6 @@ public class AssetsResourceTest
   @Mock
   private ContentAuthHelper contentAuthHelper;
 
-  @Mock
-  private ObjectMapper objectMapper;
-
   private AssetsResource underTest;
 
   @Before
@@ -117,6 +129,8 @@ public class AssetsResourceTest
     underTest = new AssetsResource(repositoryManagerRESTAdapter, maintenanceService, contentAuthHelper, emptyList());
   }
 
+  // --- getAssets tests ---
+
   @Test
   public void getAssetsShouldReturnAPageAssets() {
     Page<AssetXO> assets = underTest.getAssets(null, REPOSITORY_NAME);
@@ -125,6 +139,150 @@ public class AssetsResourceTest
 
     verify(fluentAssets).browse(PAGE_SIZE_LIMIT, null);
   }
+
+  @Test
+  public void getAssets_returnsEmptyPageWhenNoAssets() {
+    when(assetContinuation.isEmpty()).thenReturn(true);
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page, is(notNullValue()));
+    assertThat(page.getItems(), is(empty()));
+    assertThat(page.getContinuationToken(), is(nullValue()));
+  }
+
+  @Test
+  public void getAssets_continuationTokenIsNullWhenFewerThanPageLimit() {
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
+
+    List<FluentAsset> assetList = List.of(aFluentAsset());
+    when(assetContinuation.isEmpty()).thenReturn(false).thenReturn(true);
+    when(assetContinuation.stream()).thenReturn(assetList.stream());
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page.getItems(), hasSize(1));
+    assertThat(page.getContinuationToken(), is(nullValue()));
+  }
+
+  @Test
+  public void getAssets_continuationTokenIsSetWhenExactlyPageLimit() {
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
+
+    List<FluentAsset> assetList = createFluentAssets(PAGE_SIZE_LIMIT);
+    when(assetContinuation.isEmpty()).thenReturn(false);
+    when(assetContinuation.stream()).thenReturn(assetList.stream());
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page.getItems(), hasSize(PAGE_SIZE_LIMIT));
+    assertThat(page.getContinuationToken(), is(notNullValue()));
+  }
+
+  @Test
+  public void getAssets_filtersOutAssetsWithoutPermission() {
+    // Deny permission for all assets
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(false);
+
+    List<FluentAsset> assetList = List.of(aFluentAsset());
+    when(assetContinuation.isEmpty()).thenReturn(false).thenReturn(true);
+    when(assetContinuation.stream()).thenReturn(assetList.stream());
+    when(assetContinuation.nextContinuationToken()).thenReturn("next-token");
+
+    // Second call returns empty to end the loop
+    Continuation<FluentAsset> emptyContinuation = mock(Continuation.class);
+    when(emptyContinuation.isEmpty()).thenReturn(true);
+    when(fluentAssets.browse(eq(PAGE_SIZE_LIMIT), eq("next-token"))).thenReturn(emptyContinuation);
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page.getItems(), is(empty()));
+    assertThat(page.getContinuationToken(), is(nullValue()));
+  }
+
+  @Test
+  public void getAssets_filtersPermittedAndNonPermittedAssets() {
+    String permittedPath = "/allowed/path.jar";
+    String deniedPath = "/denied/path.jar";
+
+    when(contentAuthHelper.checkPathPermissions(permittedPath, A_FORMAT, REPOSITORY_NAME)).thenReturn(true);
+    when(contentAuthHelper.checkPathPermissions(deniedPath, A_FORMAT, REPOSITORY_NAME)).thenReturn(false);
+
+    FluentAssetImpl permittedAsset = aFluentAssetWithPath(10, permittedPath);
+    FluentAssetImpl deniedAsset = aFluentAssetWithPath(11, deniedPath);
+
+    List<FluentAsset> assetList = List.of(permittedAsset, deniedAsset);
+    when(assetContinuation.isEmpty()).thenReturn(false).thenReturn(true);
+    when(assetContinuation.stream()).thenReturn(assetList.stream());
+    when(assetContinuation.nextContinuationToken()).thenReturn("next-token");
+
+    Continuation<FluentAsset> emptyContinuation = mock(Continuation.class);
+    when(emptyContinuation.isEmpty()).thenReturn(true);
+    when(fluentAssets.browse(eq(PAGE_SIZE_LIMIT), eq("next-token"))).thenReturn(emptyContinuation);
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page.getItems(), hasSize(1));
+    assertThat(page.getItems().iterator().next().getPath(), is(permittedPath));
+  }
+
+  @Test
+  public void getAssets_paginatesUntilPageSizeLimitReached() {
+    // All assets are permitted
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
+
+    // First page returns half of the limit
+    int halfLimit = PAGE_SIZE_LIMIT / 2;
+    List<FluentAsset> firstBatch = createFluentAssets(halfLimit);
+    when(assetContinuation.isEmpty()).thenReturn(false);
+    when(assetContinuation.stream()).thenReturn(firstBatch.stream());
+    when(assetContinuation.nextContinuationToken()).thenReturn("page-2-token");
+
+    // Second page returns remaining to fill page limit
+    List<FluentAsset> secondBatch = createFluentAssetsStartingAt(halfLimit + 1, halfLimit);
+    Continuation<FluentAsset> secondContinuation = mock(Continuation.class);
+    when(secondContinuation.isEmpty()).thenReturn(false);
+    when(secondContinuation.stream()).thenReturn(secondBatch.stream());
+    when(secondContinuation.nextContinuationToken()).thenReturn("page-3-token");
+
+    when(fluentAssets.browse(eq(PAGE_SIZE_LIMIT), eq("page-2-token"))).thenReturn(secondContinuation);
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page.getItems(), hasSize(PAGE_SIZE_LIMIT));
+    assertThat(page.getContinuationToken(), is(notNullValue()));
+  }
+
+  @Test
+  public void getAssets_groupRepositoryUsesGroupMemberContent() {
+    when(repository.getType()).thenReturn(new GroupType());
+
+    FluentQuery<FluentAsset> groupMemberQuery = mock(FluentQuery.class);
+    when(fluentAssets.withOnlyGroupMemberContent()).thenReturn(groupMemberQuery);
+
+    Continuation<FluentAsset> groupContinuation = mock(Continuation.class);
+    when(groupContinuation.isEmpty()).thenReturn(true);
+    when(groupMemberQuery.browse(PAGE_SIZE_LIMIT, null)).thenReturn(groupContinuation);
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    verify(fluentAssets).withOnlyGroupMemberContent();
+    verify(groupMemberQuery).browse(PAGE_SIZE_LIMIT, null);
+    assertThat(page, is(notNullValue()));
+    assertThat(page.getItems(), is(empty()));
+  }
+
+  @Test
+  public void getAssets_hostedRepositoryDoesNotUseGroupMemberContent() {
+    when(assetContinuation.isEmpty()).thenReturn(true);
+
+    underTest.getAssets(null, REPOSITORY_NAME);
+
+    verify(fluentAssets, never()).withOnlyGroupMemberContent();
+    verify(fluentAssets).browse(PAGE_SIZE_LIMIT, null);
+  }
+
+  // --- getAssetById tests ---
 
   @Test
   public void getAssetByIdShouldReturnAnAssetWhenFound() {
@@ -140,12 +298,50 @@ public class AssetsResourceTest
 
   @Test(expected = NotFoundException.class)
   public void getAssetByIdShouldThrowNotFoundExceptionWhenNotFound() {
-    when(fluentAssets.find(new DetachedEntityId(AN_ASSET_ID + ""))).thenReturn(empty());
+    when(fluentAssets.find(new DetachedEntityId(AN_ASSET_ID + ""))).thenReturn(Optional.empty());
 
     AssetXO assetXO = underTest.getAssetById(anEncodedAssetId());
 
     assertThat(assetXO, is(anAssetXO()));
   }
+
+  @Test(expected = NotFoundException.class)
+  public void getAssetById_throwsNotFoundWhenAssetNotPermitted() {
+    FluentAssetImpl fluentAsset = aFluentAsset();
+    when(fluentAssets.find(any(DetachedEntityId.class))).thenReturn(Optional.of(fluentAsset));
+
+    // Deny permission for this asset
+    when(contentAuthHelper.checkPathPermissions(ASSET_PATH, A_FORMAT, REPOSITORY_NAME)).thenReturn(false);
+
+    underTest.getAssetById(anEncodedAssetId());
+  }
+
+  @Test
+  public void getAssetById_throwsUnprocessableEntityOnIllegalArgument() {
+    when(fluentAssets.find(any(DetachedEntityId.class)))
+        .thenThrow(new IllegalArgumentException("bad id"));
+
+    try {
+      underTest.getAssetById(anEncodedAssetId());
+      fail("Expected WebApplicationException");
+    }
+    catch (WebApplicationException e) {
+      assertThat(e.getResponse().getStatus(), is(422));
+    }
+  }
+
+  @Test
+  public void getAssetById_setsIdCorrectly() {
+    FluentAssetImpl fluentAsset = aFluentAsset();
+    when(fluentAssets.find(any(DetachedEntityId.class))).thenReturn(Optional.of(fluentAsset));
+
+    AssetXO result = underTest.getAssetById(anEncodedAssetId());
+
+    String expectedId = new RepositoryItemIDXO(REPOSITORY_NAME, toExternalId(AN_ASSET_ID).getValue()).getValue();
+    assertThat(result.getId(), is(expectedId));
+  }
+
+  // --- deleteAsset tests ---
 
   @Test
   public void deleteAssetShouldDeleteAsset() {
@@ -164,6 +360,317 @@ public class AssetsResourceTest
     underTest.deleteAsset(anEncodedAssetId());
   }
 
+  @Test(expected = NotFoundException.class)
+  public void deleteAsset_throwsNotFoundWhenAssetNotPermitted() {
+    FluentAssetImpl fluentAsset = aFluentAsset();
+    when(fluentAssets.find(any(DetachedEntityId.class))).thenReturn(Optional.of(fluentAsset));
+
+    // Deny permission
+    when(contentAuthHelper.checkPathPermissions(ASSET_PATH, A_FORMAT, REPOSITORY_NAME)).thenReturn(false);
+
+    underTest.deleteAsset(anEncodedAssetId());
+  }
+
+  @Test
+  public void deleteAsset_throwsUnprocessableEntityOnIllegalArgument() {
+    when(fluentAssets.find(any(DetachedEntityId.class)))
+        .thenThrow(new IllegalArgumentException("bad id"));
+
+    try {
+      underTest.deleteAsset(anEncodedAssetId());
+      fail("Expected WebApplicationException");
+    }
+    catch (WebApplicationException e) {
+      assertThat(e.getResponse().getStatus(), is(422));
+    }
+  }
+
+  @Test
+  public void deleteAsset_doesNotDeleteWhenAssetNotFound() {
+    when(fluentAssets.find(any(DetachedEntityId.class))).thenReturn(Optional.empty());
+
+    try {
+      underTest.deleteAsset(anEncodedAssetId());
+    }
+    catch (NotFoundException e) {
+      // expected
+    }
+
+    verify(maintenanceService, never()).deleteAsset(any(), any());
+  }
+
+  // --- browse (AssetsResourceSupport) pagination tests ---
+
+  @Test
+  public void browse_trimsResultsWhenPermittedAssetsExceedLimit() {
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
+
+    // Return more than PAGE_SIZE_LIMIT assets in a single continuation
+    int overLimit = PAGE_SIZE_LIMIT + 10;
+    List<FluentAsset> assetList = createFluentAssets(overLimit);
+    when(assetContinuation.isEmpty()).thenReturn(false);
+    when(assetContinuation.stream()).thenReturn(assetList.stream());
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page.getItems(), hasSize(PAGE_SIZE_LIMIT));
+  }
+
+  @Test
+  public void browse_continuesToFetchWhenPermissionFilterRemovesAllAssetsFromPage() {
+    // First page: all assets denied
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(false);
+
+    List<FluentAsset> firstBatch = List.of(aFluentAssetWithPath(10, "/denied1.jar"));
+    when(assetContinuation.isEmpty()).thenReturn(false).thenReturn(true);
+    when(assetContinuation.stream()).thenReturn(firstBatch.stream());
+    when(assetContinuation.nextContinuationToken()).thenReturn("token2");
+
+    Continuation<FluentAsset> secondContinuation = mock(Continuation.class);
+    when(secondContinuation.isEmpty()).thenReturn(true);
+    when(fluentAssets.browse(eq(PAGE_SIZE_LIMIT), eq("token2"))).thenReturn(secondContinuation);
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page.getItems(), is(empty()));
+    // Verify it fetched the second page trying to find permitted assets
+    verify(fluentAssets).browse(PAGE_SIZE_LIMIT, "token2");
+  }
+
+  // --- browseEager tests ---
+
+  @Test
+  public void browseEager_returnsPermittedAssetsForHostedRepository() {
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
+
+    Continuation<FluentAsset> eagerContinuation = mock(Continuation.class);
+    List<FluentAsset> assetList = List.of(aFluentAsset());
+    when(eagerContinuation.isEmpty()).thenReturn(false).thenReturn(true);
+    when(eagerContinuation.stream()).thenReturn(assetList.stream());
+    when(eagerContinuation.nextContinuationToken()).thenReturn("eager-token");
+
+    when(fluentAssets.browseEager(eq(PAGE_SIZE_LIMIT), isNull())).thenReturn(eagerContinuation);
+
+    Continuation<FluentAsset> emptyEagerContinuation = mock(Continuation.class);
+    when(emptyEagerContinuation.isEmpty()).thenReturn(true);
+    when(fluentAssets.browseEager(eq(PAGE_SIZE_LIMIT), eq("eager-token"))).thenReturn(emptyEagerContinuation);
+
+    List<FluentAsset> result = underTest.browseEager(repository, null);
+
+    assertThat(result, hasSize(1));
+    verify(fluentAssets).browseEager(PAGE_SIZE_LIMIT, null);
+  }
+
+  @Test
+  public void browseEager_groupRepositoryUsesGroupMemberContent() {
+    when(repository.getType()).thenReturn(new GroupType());
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
+
+    FluentQuery<FluentAsset> groupMemberQuery = mock(FluentQuery.class);
+    when(fluentAssets.withOnlyGroupMemberContent()).thenReturn(groupMemberQuery);
+
+    Continuation<FluentAsset> groupContinuation = mock(Continuation.class);
+    when(groupContinuation.isEmpty()).thenReturn(true);
+    when(groupMemberQuery.browseEager(eq(PAGE_SIZE_LIMIT), isNull())).thenReturn(groupContinuation);
+
+    List<FluentAsset> result = underTest.browseEager(repository, null);
+
+    verify(fluentAssets).withOnlyGroupMemberContent();
+    verify(groupMemberQuery).browseEager(PAGE_SIZE_LIMIT, null);
+    assertThat(result, is(empty()));
+  }
+
+  @Test
+  public void browseEager_filtersOutUnpermittedAssets() {
+    String permittedPath = "/allowed.jar";
+    String deniedPath = "/denied.jar";
+
+    when(contentAuthHelper.checkPathPermissions(permittedPath, A_FORMAT, REPOSITORY_NAME)).thenReturn(true);
+    when(contentAuthHelper.checkPathPermissions(deniedPath, A_FORMAT, REPOSITORY_NAME)).thenReturn(false);
+
+    FluentAssetImpl permitted = aFluentAssetWithPath(10, permittedPath);
+    FluentAssetImpl denied = aFluentAssetWithPath(11, deniedPath);
+
+    Continuation<FluentAsset> eagerContinuation = mock(Continuation.class);
+    List<FluentAsset> assetList = List.of(permitted, denied);
+    when(eagerContinuation.isEmpty()).thenReturn(false).thenReturn(true);
+    when(eagerContinuation.stream()).thenReturn(assetList.stream());
+    when(eagerContinuation.nextContinuationToken()).thenReturn("next");
+
+    when(fluentAssets.browseEager(eq(PAGE_SIZE_LIMIT), isNull())).thenReturn(eagerContinuation);
+
+    Continuation<FluentAsset> emptyContinuation = mock(Continuation.class);
+    when(emptyContinuation.isEmpty()).thenReturn(true);
+    when(fluentAssets.browseEager(eq(PAGE_SIZE_LIMIT), eq("next"))).thenReturn(emptyContinuation);
+
+    List<FluentAsset> result = underTest.browseEager(repository, null);
+
+    assertThat(result, hasSize(1));
+    assertThat(result.get(0).path(), is(permittedPath));
+  }
+
+  @Test
+  public void browseEager_trimsResultsToPageSizeLimit() {
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
+
+    int overLimit = PAGE_SIZE_LIMIT + 20;
+    List<FluentAsset> assetList = createFluentAssets(overLimit);
+
+    Continuation<FluentAsset> eagerContinuation = mock(Continuation.class);
+    when(eagerContinuation.isEmpty()).thenReturn(false);
+    when(eagerContinuation.stream()).thenReturn(assetList.stream());
+
+    when(fluentAssets.browseEager(eq(PAGE_SIZE_LIMIT), isNull())).thenReturn(eagerContinuation);
+
+    List<FluentAsset> result = underTest.browseEager(repository, null);
+
+    assertThat(result, hasSize(PAGE_SIZE_LIMIT));
+  }
+
+  @Test
+  public void browseEager_returnsEmptyListWhenNonePermitted() {
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(false);
+
+    List<FluentAsset> assetList = List.of(aFluentAsset());
+
+    Continuation<FluentAsset> eagerContinuation = mock(Continuation.class);
+    when(eagerContinuation.isEmpty()).thenReturn(false).thenReturn(true);
+    when(eagerContinuation.stream()).thenReturn(assetList.stream());
+    when(eagerContinuation.nextContinuationToken()).thenReturn("next");
+
+    when(fluentAssets.browseEager(eq(PAGE_SIZE_LIMIT), isNull())).thenReturn(eagerContinuation);
+
+    Continuation<FluentAsset> emptyContinuation = mock(Continuation.class);
+    when(emptyContinuation.isEmpty()).thenReturn(true);
+    when(fluentAssets.browseEager(eq(PAGE_SIZE_LIMIT), eq("next"))).thenReturn(emptyContinuation);
+
+    List<FluentAsset> result = underTest.browseEager(repository, null);
+
+    assertThat(result, is(empty()));
+  }
+
+  // --- toInternalToken tests ---
+
+  @Test
+  public void toInternalToken_returnsNullForNullInput() {
+    String result = AssetsResourceSupport.toInternalToken(null);
+    assertThat(result, is(nullValue()));
+  }
+
+  @Test
+  public void toInternalToken_convertsExternalTokenToInternalToken() {
+    // Use a known external ID
+    String externalId = toExternalId(AN_ASSET_ID).getValue();
+    String result = AssetsResourceSupport.toInternalToken(externalId);
+
+    assertThat(result, is(notNullValue()));
+    // The result should be the internal ID as a string (the integer value)
+    assertThat(result, is(AN_ASSET_ID + ""));
+  }
+
+  // --- trim tests ---
+
+  @Test
+  public void trim_doesNotModifyListSmallerThanLimit() {
+    List<String> items = new ArrayList<>(List.of("a", "b", "c"));
+
+    List<String> result = AssetsResourceSupport.trim(items, 5);
+
+    assertThat(result, hasSize(3));
+    assertThat(result, is(items));
+  }
+
+  @Test
+  public void trim_doesNotModifyListEqualToLimit() {
+    List<String> items = new ArrayList<>(List.of("a", "b", "c"));
+
+    List<String> result = AssetsResourceSupport.trim(items, 3);
+
+    assertThat(result, hasSize(3));
+  }
+
+  @Test
+  public void trim_truncatesListLargerThanLimit() {
+    List<String> items = new ArrayList<>(List.of("a", "b", "c", "d", "e"));
+
+    List<String> result = AssetsResourceSupport.trim(items, 3);
+
+    assertThat(result, hasSize(3));
+    assertThat(result.get(0), is("a"));
+    assertThat(result.get(1), is("b"));
+    assertThat(result.get(2), is("c"));
+  }
+
+  @Test
+  public void trim_handlesEmptyList() {
+    List<String> items = new ArrayList<>();
+
+    List<String> result = AssetsResourceSupport.trim(items, 10);
+
+    assertThat(result, is(empty()));
+  }
+
+  // --- toAssetXOs tests ---
+
+  @Test
+  public void toAssetXOs_convertsFluentAssetsToAssetXOs() {
+    List<FluentAsset> assets = List.of(aFluentAsset());
+
+    List<AssetXO> result = AssetsResource.toAssetXOs(repository, assets, emptyMap());
+
+    assertThat(result, hasSize(1));
+    assertThat(result.get(0).getPath(), is(ASSET_PATH));
+    assertThat(result.get(0).getRepository(), is(REPOSITORY_NAME));
+  }
+
+  @Test
+  public void toAssetXOs_returnsEmptyListForEmptyInput() {
+    List<AssetXO> result = AssetsResource.toAssetXOs(repository, emptyList(), emptyMap());
+
+    assertThat(result, is(empty()));
+  }
+
+  @Test
+  public void toAssetXOs_convertsMultipleAssets() {
+    FluentAssetImpl asset1 = aFluentAssetWithPath(1, "/path1.jar");
+    FluentAssetImpl asset2 = aFluentAssetWithPath(2, "/path2.jar");
+
+    List<AssetXO> result = AssetsResource.toAssetXOs(repository, List.of(asset1, asset2), emptyMap());
+
+    assertThat(result, hasSize(2));
+    assertThat(result.get(0).getPath(), is("/path1.jar"));
+    assertThat(result.get(1).getPath(), is("/path2.jar"));
+  }
+
+  // --- nextContinuationToken tests (indirectly through getAssets) ---
+
+  @Test
+  public void nextContinuationToken_returnsNullWhenEmptyResult() {
+    when(assetContinuation.isEmpty()).thenReturn(true);
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    assertThat(page.getContinuationToken(), is(nullValue()));
+  }
+
+  @Test
+  public void nextContinuationToken_returnsTokenBasedOnLastAssetId() {
+    when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
+
+    int lastAssetId = PAGE_SIZE_LIMIT;
+    List<FluentAsset> assetList = createFluentAssets(PAGE_SIZE_LIMIT);
+    when(assetContinuation.isEmpty()).thenReturn(false);
+    when(assetContinuation.stream()).thenReturn(assetList.stream());
+
+    Page<AssetXO> page = underTest.getAssets(null, REPOSITORY_NAME);
+
+    // When exactly PAGE_SIZE_LIMIT results, continuation token should be the external ID of the last asset
+    String expectedToken = toExternalId(lastAssetId).getValue();
+    assertThat(page.getContinuationToken(), is(expectedToken));
+  }
+
+  // --- Helper methods ---
+
   private void mockRepository() {
     when(repositoryManagerRESTAdapter.getRepository(REPOSITORY_NAME)).thenReturn(repository);
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
@@ -181,6 +688,28 @@ public class AssetsResourceTest
 
   private FluentAssetImpl aFluentAsset() {
     return new FluentAssetImpl(contentFacetSupport, anAsset());
+  }
+
+  private FluentAssetImpl aFluentAssetWithPath(final int assetId, final String path) {
+    AssetData asset = new AssetData();
+    asset.setAssetId(assetId);
+    asset.setPath(path);
+    asset.setCreated(OffsetDateTime.now());
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setAssetBlobId(assetId);
+    assetBlob.setBlobCreated(BLOB_CREATED);
+    asset.setAssetBlob(assetBlob);
+    return new FluentAssetImpl(contentFacetSupport, asset);
+  }
+
+  private List<FluentAsset> createFluentAssets(final int count) {
+    return createFluentAssetsStartingAt(1, count);
+  }
+
+  private List<FluentAsset> createFluentAssetsStartingAt(final int startId, final int count) {
+    return IntStream.range(startId, startId + count)
+        .mapToObj(i -> (FluentAsset) aFluentAssetWithPath(i, "/path/" + i + ".jar"))
+        .collect(toList());
   }
 
   private AssetData anAsset() {

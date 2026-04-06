@@ -92,14 +92,17 @@ Ext.define('NX.coreui.view.task.TaskScopeFieldSet', {
       return;
     }
 
-    const taskScope = me.config.properties['taskScope'];
+    const taskScope = me.config.properties && me.config.properties['taskScope'];
     const scopeCombo = me.down('combo[name="taskScope"]');
-    if (taskScope) {
-      scopeCombo.setValue(taskScope);
-    } else {
-      scopeCombo.setValue('duration');
-    }
+    const scopeValue = taskScope || 'duration';
+    scopeCombo.setValue(scopeValue);
     scopeCombo.resetOriginalValue();
+
+    // Ensure child fieldset always has the latest properties
+    const fieldsSet = me.down('nx-coreui-task-scope-' + scopeValue);
+    if (fieldsSet) {
+      fieldsSet.importProperties(me.config.properties);
+    }
   },
 
   exportProperties: function() {

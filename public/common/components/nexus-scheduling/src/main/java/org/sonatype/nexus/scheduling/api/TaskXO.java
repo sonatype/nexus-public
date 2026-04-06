@@ -42,15 +42,13 @@ public class TaskXO
 
   private Date lastRun;
 
-  private String schedule;
-
   public static TaskXO fromTaskInfo(final TaskInfo taskInfo, ExternalTaskState externalTaskState) {
     TaskXO taskXO = new TaskXO();
 
     taskXO.setId(taskInfo.getId());
     taskXO.setName(taskInfo.getName());
     taskXO.setType(taskInfo.getTypeId());
-    taskXO.setMessage(taskInfo.getConfiguration().getTypeName());
+    taskXO.setMessage(taskInfo.getMessage());
     if (externalTaskState.getState().isRunning() && StringUtils.isNotBlank(externalTaskState.getProgress())) {
       taskXO.setCurrentState(externalTaskState.getState().toString() + ": " + externalTaskState.getProgress());
     }
@@ -63,7 +61,6 @@ public class TaskXO
       taskXO.setLastRunResult(externalTaskState.getLastEndState().toString());
     }
     taskXO.setLastRun(externalTaskState.getLastRunStarted());
-    taskXO.setSchedule(taskInfo.getSchedule() != null ? taskInfo.getSchedule().getType() : null);
     return taskXO;
   }
 
@@ -131,14 +128,6 @@ public class TaskXO
     this.lastRun = lastRun;
   }
 
-  public String getSchedule() {
-    return schedule;
-  }
-
-  public void setSchedule(String schedule) {
-    this.schedule = schedule;
-  }
-
   @Override
   public String toString() {
     return "TaskXO(" +
@@ -150,7 +139,6 @@ public class TaskXO
         ", lastRunResult:'" + lastRunResult + '\'' +
         ", nextRun:" + nextRun +
         ", lastRun:" + lastRun +
-        ", schedule:'" + schedule + '\'' +
         ')';
   }
 }

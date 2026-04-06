@@ -13,13 +13,14 @@
 import React from 'react';
 import {render, screen} from '@testing-library/react';
 import {UsageInsightsChartTooltip} from './UsageInsightsChartTooltip';
+import UIStrings from './../../../../constants/HistoricalUsageStrings';
 
 describe('UsageInsightsChartTooltip', () => {
   it('renders tooltip with date and values', () => {
     const data = {
       metricDate: '2024-01-15',
-      egress: 1000,
-      storage: 2000
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_EGRESS]: 1000,
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_STORAGE]: 2000
     };
 
     render(<UsageInsightsChartTooltip data={data} />);
@@ -51,8 +52,8 @@ describe('UsageInsightsChartTooltip', () => {
   it('renders correct CSS classes', () => {
     const data = {
       metricDate: '2024-01-15',
-      egress: 1000,
-      storage: 2000
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_EGRESS]: 1000,
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_STORAGE]: 2000
     };
 
     const {container} = render(<UsageInsightsChartTooltip data={data} />);
@@ -66,8 +67,8 @@ describe('UsageInsightsChartTooltip', () => {
   it('renders egress and storage symbols', () => {
     const data = {
       metricDate: '2024-01-15',
-      egress: 1000,
-      storage: 2000
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_EGRESS]: 1000,
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_STORAGE]: 2000
     };
 
     const {container} = render(<UsageInsightsChartTooltip data={data} />);
@@ -79,8 +80,8 @@ describe('UsageInsightsChartTooltip', () => {
   it('handles zero values', () => {
     const data = {
       metricDate: '2024-01-15',
-      egress: 0,
-      storage: 0
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_EGRESS]: 0,
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_STORAGE]: 0
     };
 
     render(<UsageInsightsChartTooltip data={data} />);
@@ -106,8 +107,8 @@ describe('UsageInsightsChartTooltip', () => {
   it('formats large byte values correctly', () => {
     const data = {
       metricDate: '2024-01-15',
-      egress: 1000000000, // 1 GB (using decimal)
-      storage: 2000000000 // 2 GB (using decimal)
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_EGRESS]: 1000000000, // 1 GB (using decimal)
+      [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_STORAGE]: 2000000000 // 2 GB (using decimal)
     };
 
     render(<UsageInsightsChartTooltip data={data} />);

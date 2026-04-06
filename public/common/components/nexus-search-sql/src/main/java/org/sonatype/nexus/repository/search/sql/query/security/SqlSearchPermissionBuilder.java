@@ -167,15 +167,6 @@ public class SqlSearchPermissionBuilder
         .map(ExactTerm::new)
         .collect(Collectors.toCollection(LinkedHashSet::new));
 
-    if (log.isDebugEnabled()) {
-      log.debug("Creating repository condition for {} repositories: {}",
-          repositoryNames.size(),
-          repositoryNames.stream()
-              .map(term -> ((ExactTerm) term).term())
-              .limit(10)
-              .collect(Collectors.toList()) + (repositoryNames.size() > 10 ? "..." : ""));
-    }
-
     SqlPredicate predicate =
         new SqlPredicate(Operand.IN, SearchField.REPOSITORY_NAME, TermCollection.create(repositoryNames));
 
@@ -234,10 +225,8 @@ public class SqlSearchPermissionBuilder
   }
 
   private Set<Repository> getAllRepositories() {
-    Set<Repository> repositories = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
+    return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
         .collect(Collectors.toCollection(LinkedHashSet::new));
-    log.debug("getAllRepositories found {} repositories", repositories.size());
-    return repositories;
   }
 
   private Collection<String> getRepositoriesInRequest(final SearchRequest request) {

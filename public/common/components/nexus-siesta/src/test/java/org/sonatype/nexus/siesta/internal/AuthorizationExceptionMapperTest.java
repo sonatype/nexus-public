@@ -17,17 +17,34 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.testsupport.Test5Support;
+import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 
 import jakarta.inject.Provider;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.subject.Subject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+/**
+ * Tests for {@link AuthorizationExceptionMapper}.
+ * <p>
+ * Uses WARN strictness because code intentionally calls getAttribute() with different keys,
+ * and short-circuit evaluation of boolean expressions makes some stubs appear unused.
+ */
+@MockitoSettings(strictness = Strictness.WARN)
 class AuthorizationExceptionMapperTest
     extends Test5Support
 {
@@ -37,30 +54,103 @@ class AuthorizationExceptionMapperTest
   @Mock
   private Provider<HttpServletRequest> httpRequestProvider;
 
+  @Mock
+  private Subject subject;
+
+  @Mock
+  private AnonymousPrincipalCollection anonymousPrincipals;
+
+  private MockedStatic<SecurityUtils> securityUtilsMock;
+
   private AuthorizationExceptionMapper underTest;
 
   @BeforeEach
   void setup() {
-    when(httpRequestProvider.get()).thenReturn(httpRequest);
+    securityUtilsMock = mockStatic(SecurityUtils.class);
+    securityUtilsMock.when(SecurityUtils::getSubject).thenReturn(subject);
+
     underTest = new AuthorizationExceptionMapper(httpRequestProvider);
   }
 
-  @Test
-  void convertAnonymousReturnsForbidden() {
-    when(httpRequest.getAttribute("nexus.anonymous")).thenReturn(null);
-    try (Response response = underTest.convert(null, null)) {
-      assertThat(response.getStatus(), is(Status.FORBIDDEN.getStatusCode()));
+  @AfterEach
+  void tearDown() {
+    if (securityUtilsMock != null) {
+      securityUtilsMock.close();
     }
   }
 
   @Test
-  void convertAnonymousReturnsUnauthorized() {
-    when(httpRequest.getAttribute("nexus.anonymous")).thenReturn("anonymous");
-    when(httpRequest.getAttribute("auth.scheme")).thenReturn("scheme");
-    when(httpRequest.getAttribute("auth.realm")).thenReturn("realm");
-    try (Response response = underTest.convert(null, null)) {
+  void shouldReturn401WithAuthChallenge_whenUserIsNotAuthenticated() {
+    // Given: user is not authenticated (no principal)
+    when(subject.getPrincipal()).thenReturn(null);
+    when(subject.isAuthenticated()).thenReturn(false);
+
+    // Stub httpRequest and BOTH attributes using doReturn (Mockito recommendation for strict mode)
+    doReturn(httpRequest).when(httpRequestProvider).get();
+    doReturn("Bearer").when(httpRequest).getAttribute("auth.scheme");
+    doReturn("Test Realm").when(httpRequest).getAttribute("auth.realm");
+
+    // When: converting authorization exception
+    try (Response response = underTest.convert(new AuthorizationException(), "test-id")) {
+      // Then: should return 401 Unauthorized with WWW-Authenticate header
       assertThat(response.getStatus(), is(Status.UNAUTHORIZED.getStatusCode()));
-      assertThat(response.getHeaders().get("WWW-Authenticate"), contains("scheme realm=\"realm\""));
+      assertThat(response.getHeaderString("WWW-Authenticate"), is("Bearer realm=\"Test Realm\""));
+    }
+  }
+
+  @Test
+  void shouldReturn403WithoutAuthChallenge_whenUserIsAuthenticatedButLacksPermission() {
+    // Given: user is authenticated (has principal) but lacks required permission
+    when(subject.getPrincipal()).thenReturn("testuser");
+    when(subject.isAuthenticated()).thenReturn(true);
+
+    // Do NOT stub httpRequestProvider - it's never called when authenticated=true
+
+    // When: converting authorization exception
+    try (Response response = underTest.convert(new AuthorizationException(), "test-id")) {
+      // Then: should return 403 Forbidden without WWW-Authenticate header
+      assertThat(response.getStatus(), is(Status.FORBIDDEN.getStatusCode()));
+      assertThat(response.getHeaderString("WWW-Authenticate"), is(nullValue()));
+    }
+  }
+
+  @Test
+  void shouldReturn403_whenAnonymousUserIsAuthenticatedButLacksPermission() {
+    // Given: anonymous user (has principal="anonymous")
+    // Note: Anonymous has isAuthenticated()=false in Shiro but is treated as authenticated
+    when(subject.getPrincipal()).thenReturn("anonymous");
+    when(subject.isAuthenticated()).thenReturn(false);
+    when(subject.getPrincipals()).thenReturn(anonymousPrincipals); // AnonymousPrincipalCollection
+
+    // Do NOT stub httpRequestProvider - it's never called when authenticated=true
+
+    // When: converting authorization exception
+    try (Response response = underTest.convert(new AuthorizationException(), "test-id")) {
+      // Then: should return 403 Forbidden (anonymous is technically authenticated)
+      assertThat(response.getStatus(), is(Status.FORBIDDEN.getStatusCode()));
+      assertThat(response.getHeaderString("WWW-Authenticate"), is(nullValue()));
+    }
+  }
+
+  @Test
+  void shouldReturn401_whenPrincipalExistsButUserNotAuthenticated() {
+    // Given: subject has principal but isAuthenticated() returns false
+    // (edge case: remembered user but not authenticated in current session)
+    when(subject.getPrincipal()).thenReturn("remembereduser");
+    when(subject.isAuthenticated()).thenReturn(false);
+    when(subject.getPrincipals()).thenReturn(null); // Not AnonymousPrincipalCollection
+
+    // Stub httpRequest and BOTH attributes using doReturn (Mockito recommendation for strict mode)
+    doReturn(httpRequest).when(httpRequestProvider).get();
+    doReturn("Basic").when(httpRequest).getAttribute("auth.scheme");
+    doReturn("Nexus").when(httpRequest).getAttribute("auth.realm");
+
+    // When: converting authorization exception
+    try (Response response = underTest.convert(new AuthorizationException(), "test-id")) {
+      // Then: should return 401 because user is not authenticated
+      // (both conditions must be true: has principal AND isAuthenticated)
+      assertThat(response.getStatus(), is(Status.UNAUTHORIZED.getStatusCode()));
+      assertThat(response.getHeaderString("WWW-Authenticate"), is("Basic realm=\"Nexus\""));
     }
   }
 }

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.browse.node;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.inject.Inject;
 
 import org.sonatype.nexus.repository.Repository;
@@ -43,6 +44,10 @@ public class RebuildBrowseNodesTask
 
   private final TaskResultStateStore taskResultStateStore;
 
+  private final AtomicInteger currentRepositoryIndex = new AtomicInteger(0);
+
+  private final AtomicInteger totalRepositories = new AtomicInteger(0);
+
   @Inject
   public RebuildBrowseNodesTask(
       final RebuildBrowseNodeService rebuildBrowseNodeService,
@@ -58,12 +63,72 @@ public class RebuildBrowseNodesTask
   }
 
   @Override
+  protected Object execute() throws Exception {
+    // Initialize counters for progress tracking (NEXUS-49003)
+    currentRepositoryIndex.set(0);
+    totalRepositories.set(0);
+
+    // Count total repositories first to provide accurate progress
+    String repositoryField = getRepositoryField();
+    if (ALL_REPOSITORIES.equals(repositoryField)) {
+      // Count all applicable repositories
+      for (Repository ignored : getRepositoryManager().browse()) {
+        if (appliesTo(ignored)) {
+          totalRepositories.incrementAndGet();
+        }
+      }
+    }
+    else if (repositoryField.contains(",")) {
+      String[] repositoryNames = repositoryField.split(",");
+      if (java.util.Arrays.asList(repositoryNames).contains(ALL_REPOSITORIES)) {
+        // Count all applicable repositories
+        for (Repository ignored : getRepositoryManager().browse()) {
+          if (appliesTo(ignored)) {
+            totalRepositories.incrementAndGet();
+          }
+        }
+      }
+      else {
+        for (String repoName : repositoryNames) {
+          Repository repo = getRepositoryManager().get(repoName);
+          if (appliesTo(repo)) {
+            totalRepositories.incrementAndGet();
+          }
+        }
+      }
+    }
+    else {
+      totalRepositories.set(1);
+    }
+
+    // Send initial progress
+    updateProgress(taskResultStateStore, "0% Complete");
+
+    // Execute the parent's logic which will call execute(Repository) for each repo
+    Object result = super.execute();
+
+    // Send completion message only on success
+    updateProgress(taskResultStateStore, "100% Complete");
+
+    return result;
+  }
+
+  @Override
   protected void execute(final Repository repo) {
     try {
-      // since this task doesn't support 'resume', the progress should be cleared each time it is run
-      updateProgress(taskResultStateStore, null);
+      // Increment the current repository index
+      int currentIndex = currentRepositoryIndex.incrementAndGet();
+
       delayIfPyPi(repo);
-      rebuildBrowseNodeService.rebuild(repo, progressMessage -> updateProgress(taskResultStateStore, progressMessage));
+      rebuildBrowseNodeService.rebuild(repo, percentageMessage -> {
+        // Format: "{repository-name} {percentage} ({num_completed_repo}/{total_repo})"
+        String formattedProgress = String.format("%s %s (%d/%d)",
+            repo.getName(),
+            percentageMessage,
+            currentIndex,
+            totalRepositories.get());
+        updateProgress(taskResultStateStore, formattedProgress);
+      });
     }
     catch (RebuildBrowseNodeFailedException e) {
       log.error("Error rebuilding browse nodes for repository: {}", repo, e);

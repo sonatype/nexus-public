@@ -27,7 +27,7 @@ import org.sonatype.nexus.quartz.internal.SchedulerTestConfiguration.TestJob;
 import org.sonatype.nexus.quartz.internal.SchedulerTestConfiguration.TestJobWithSync;
 import org.sonatype.nexus.quartz.internal.SchedulerTestConfiguration.UncleanShutdownJob;
 
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -73,7 +73,7 @@ public class SchedulerTest
 
   public static final long TEST_TIMEOUT_SECONDS = 125;
 
-  @Test
+  @DatabaseTest
   void testBasicStorageFunctions() throws Exception {
     Scheduler sched = getScheduler();
 
@@ -250,7 +250,7 @@ public class SchedulerTest
     sched.shutdown(true);
   }
 
-  @Test
+  @DatabaseTest
   void testDurableStorageFunctions() throws Exception {
     Scheduler sched = getScheduler();
     try {
@@ -288,7 +288,7 @@ public class SchedulerTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testShutdownWithSleepReturnsAfterAllThreadsAreStopped() throws Exception {
     Map<Thread, StackTraceElement[]> allThreadsStart = Thread.getAllStackTraces();
 
@@ -349,7 +349,7 @@ public class SchedulerTest
     assertEquals(0, allThreadsEnd.size(), "Found unexpected new threads (see console output for listing)");
   }
 
-  @Test
+  @DatabaseTest
   void testAbilityToFireImmediatelyWhenStartedBefore() throws Exception {
     List<Long> jobExecTimestamps = Collections.synchronizedList(new ArrayList<Long>());
     CyclicBarrier barrier = new CyclicBarrier(2);
@@ -378,7 +378,7 @@ public class SchedulerTest
     assertTrue((fTime - sTime < 7000L), "Immediate trigger did not fire within a reasonable amount of time.");
   }
 
-  @Test
+  @DatabaseTest
   void testAbilityToFireImmediatelyWhenStartedBeforeWithTriggerJob() throws Exception {
     List<Long> jobExecTimestamps = Collections.synchronizedList(new ArrayList<Long>());
     CyclicBarrier barrier = new CyclicBarrier(2);
@@ -409,7 +409,7 @@ public class SchedulerTest
     assertTrue((fTime - sTime < 7000L), "Immediate trigger did not fire within a reasonable amount of time.");
   }
 
-  @Test
+  @DatabaseTest
   void testAbilityToFireImmediatelyWhenStartedAfter() throws Exception {
     List<Long> jobExecTimestamps = Collections.synchronizedList(new ArrayList<Long>());
     CyclicBarrier barrier = new CyclicBarrier(2);
@@ -436,7 +436,7 @@ public class SchedulerTest
     assertTrue((fTime - sTime < 7000L), "Immediate trigger did not fire within a reasonable amount of time.");
   }
 
-  @Test
+  @DatabaseTest
   void testScheduleMultipleTriggersForAJob() throws SchedulerException {
     JobDetail job = newJob(TestJob.class).withIdentity("job1", "group1").build();
     Trigger trigger1 = newTrigger()
@@ -470,7 +470,7 @@ public class SchedulerTest
     sched.shutdown(true);
   }
 
-  @Test
+  @DatabaseTest
   void testShutdownWithoutWaitIsUnclean() throws Exception {
     CyclicBarrier barrier = new CyclicBarrier(2);
     Scheduler scheduler = getScheduler();
@@ -497,7 +497,7 @@ public class SchedulerTest
     jobThread.join(TimeUnit.SECONDS.toMillis(TEST_TIMEOUT_SECONDS));
   }
 
-  @Test
+  @DatabaseTest
   void testShutdownWithWaitIsClean() throws Exception {
     final AtomicBoolean shutdown = new AtomicBoolean(false);
     List<Long> jobExecTimestamps = Collections.synchronizedList(new ArrayList<Long>());

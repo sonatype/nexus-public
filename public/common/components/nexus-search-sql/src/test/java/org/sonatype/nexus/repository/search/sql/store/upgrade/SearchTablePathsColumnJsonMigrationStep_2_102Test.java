@@ -19,11 +19,10 @@ import java.sql.ResultSet;
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.search.sql.store.SearchTableDAO;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
+
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -32,7 +31,6 @@ import static org.hamcrest.Matchers.equalToIgnoringCase;
 /**
  * DB tests for {@link SearchTablePathsColumnJsonMigrationStep_2_102} class
  */
-@ExtendWith(DatabaseExtension.class)
 class SearchTablePathsColumnJsonMigrationStep_2_102Test
     extends Test5Support
 {
@@ -52,7 +50,7 @@ class SearchTablePathsColumnJsonMigrationStep_2_102Test
   private static final String ALTER_TO_VARCHAR =
       "ALTER TABLE search_components ALTER COLUMN paths SET DATA TYPE VARCHAR";
 
-  @Test
+  @DatabaseTest
   void testMigration() throws Exception {
     try (Connection conn = dataSessionSupplier.openConnection()) {
       if (underTest.isH2(conn)) {

@@ -28,7 +28,6 @@ export default {
     LIST: {
       CREATE_BUTTON: 'Create task',
       EMPTY_LIST: 'There are no tasks available',
-      SECTION_TITLE: 'Available Tasks',
       COLUMNS: {
         NAME: 'Name',
         TYPE: 'Type',

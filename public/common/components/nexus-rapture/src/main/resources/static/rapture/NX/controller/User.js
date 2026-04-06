@@ -277,8 +277,14 @@ Ext.define('NX.controller.User', {
       method: 'DELETE',
       scope: me,
       suppressStatus: true,
-      success: function () {
-        NX.State.setUser(undefined);
+      success: function (response) {
+        var location = response.getResponseHeader('Location');
+        if (location) {
+          // No need to clear user state, href navigation clears all state automatically.
+          window.location.href = location;
+        } else {
+          NX.State.setUser(undefined);
+        }
       }
     });
   },

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletConfig;
@@ -138,7 +139,7 @@ public class ViewServlet
       send(null, HttpResponses.badRequest(e.getMessage()), httpResponse);
     }
     catch (Exception e) {
-      if (e instanceof EofException) {
+      if (isEofException(e)) {
         log.info("Client terminated connection", log.isDebugEnabled() ? e : null);
       }
       else if (!(e instanceof AuthorizationException)) {
@@ -150,6 +151,14 @@ public class ViewServlet
     finally {
       MDC.remove(getClass().getName());
     }
+  }
+
+  private static boolean isEofException(final Exception e) {
+    if (e instanceof EofException || Throwables.getRootCause(e) instanceof EofException) {
+      return true;
+    }
+    return Stream.of(e.getSuppressed())
+        .anyMatch(t -> t instanceof EofException);
   }
 
   protected void doService(

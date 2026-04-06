@@ -16,7 +16,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.datastore.api.DataAccessException;
 
 import org.apache.ibatis.exceptions.PersistenceException;
@@ -36,8 +35,7 @@ import org.apache.ibatis.transaction.TransactionFactory;
  * {@link SqlSession} that avoids MyBatis specific exceptions from leaking back to clients.
  *
  * It unwraps {@link PersistenceException} to get the original cause and message and then
- * re-wraps them with {@link DataAccessException}. Some application state exceptions like
- * {@link FrozenException} thrown by our {@link EntityExecutor} are propagated unchanged.
+ * re-wraps them with {@link DataAccessException}.
  *
  * @since 3.26
  */
@@ -116,9 +114,6 @@ final class DataAccessSqlSession
     // unwrap these special informational exceptions
     if (cause instanceof DataAccessException) {
       return (DataAccessException) cause;
-    }
-    else if (cause instanceof FrozenException) {
-      return (FrozenException) cause;
     }
 
     // swap MyBatis exception wrapper with our generic one

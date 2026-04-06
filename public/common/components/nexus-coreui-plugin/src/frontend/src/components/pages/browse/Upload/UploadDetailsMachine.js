@@ -82,6 +82,8 @@ import {
   TERRAFORM_FORMAT,
   TERRAFORM_MODULE_COORDS_GROUP,
   TERRAFORM_PROVIDER_COORDS_GROUP,
+  TERRAFORM_MODULE_COORDS_GROUP_HELP,
+  TERRAFORM_PROVIDER_COORDS_GROUP_HELP,
   TERRAFORM_UPLOAD_TYPE_FIELD_NAME,
   TERRAFORM_UPLOAD_TYPE_MODULE,
   TERRAFORM_UPLOAD_TYPE_PROVIDER
@@ -372,6 +374,15 @@ export default FormUtils.buildFormMachine({
       // The following two context fields expose the field definitions to the view logic. The actual state of those
       // field is stored in the `data` context field
       componentFieldsByGroup: flip(pipe(path(['data', 'uploadDefinition', 'componentFields']), groupBy(prop('group')))),
+
+      groupHelpText: (_, { data: { repoSettings } }) => {
+        const helpTextMap = {};
+        if (repoSettings?.format === TERRAFORM_FORMAT) {
+          helpTextMap[TERRAFORM_MODULE_COORDS_GROUP] = TERRAFORM_MODULE_COORDS_GROUP_HELP;
+          helpTextMap[TERRAFORM_PROVIDER_COORDS_GROUP] = TERRAFORM_PROVIDER_COORDS_GROUP_HELP;
+        }
+        return helpTextMap;
+      },
 
       assetFields: (_, { data: { uploadDefinition: { assetFields } } }) => assetFields,
       regexMapFields: (_, { data: { uploadDefinition: { regexMap } } }) => regexMap?.fieldList,

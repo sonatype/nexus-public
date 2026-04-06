@@ -15,7 +15,6 @@ package org.sonatype.nexus.self.hosted.repository.manager;
 import java.util.List;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -63,7 +62,6 @@ public class RepositoryManagerImpl
       @Lazy final List<Recipe> recipes,
       final RepositoryAdminSecurityContributor securityContributor,
       final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
-      final FreezeService freezeService,
       @Value("${nexus.skipDefaultRepositories:false}") final boolean skipDefaultRepositories,
       final BlobStoreManager blobStoreManager,
       final GroupMemberMappingCache groupMemberMappingCache,
@@ -71,7 +69,7 @@ public class RepositoryManagerImpl
       final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder)
   {
     super(eventManager, store, factory, configFacet, recipes, securityContributor, defaultRepositoriesContributors,
-        freezeService, skipDefaultRepositories, blobStoreManager, groupMemberMappingCache, configurationValidators,
+        skipDefaultRepositories, blobStoreManager, groupMemberMappingCache, configurationValidators,
         httpAuthenticationSecretEncoder);
   }
 }

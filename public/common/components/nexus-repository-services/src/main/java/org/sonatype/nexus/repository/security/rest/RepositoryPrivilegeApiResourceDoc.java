@@ -34,7 +34,7 @@ public interface RepositoryPrivilegeApiResourceDoc
   @ApiResponses(value = {
       @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 204, message = NexusSecurityApiConstants.SUCCESS)
+      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)
   })
   Response createPrivilege(
       @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeRepositoryAdminRequest privilege);
@@ -53,7 +53,8 @@ public interface RepositoryPrivilegeApiResourceDoc
   @ApiOperation("Create a repository view type privilege.")
   @ApiResponses(value = {
       @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)
+      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)
   })
   Response createPrivilege(
       @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeRepositoryViewRequest privilege);
@@ -73,7 +74,7 @@ public interface RepositoryPrivilegeApiResourceDoc
   @ApiResponses(value = {
       @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 204, message = NexusSecurityApiConstants.SUCCESS)
+      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)
   })
   Response createPrivilege(
       @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeRepositoryContentSelectorRequest privilege);

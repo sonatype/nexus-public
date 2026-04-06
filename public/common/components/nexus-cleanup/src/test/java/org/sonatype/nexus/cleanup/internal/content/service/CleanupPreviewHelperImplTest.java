@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetStores;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
+import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.content.store.ComponentData;
@@ -128,12 +129,17 @@ class CleanupPreviewHelperImplTest
     when(contentFacetSupport.stores()).thenReturn(contentFacetStores);
     when(contentFacetStores.assetStore()).thenReturn(assetStore);
 
+    AssetBlobData assetBlob = new AssetBlobData();
+    assetBlob.setAssetBlobId(1);
+    assetBlob.setBlobCreated(NOW);
+
     AssetData asset = new AssetData();
     asset.setPath("/assetPath");
     asset.setBlobStoreName("blobStoreName");
     asset.setAssetBlobSize(100L);
     asset.setLastDownloaded(NOW);
     asset.setCreated(NOW);
+    asset.setAssetBlob(assetBlob);
 
     when(assetStore.browseComponentAssets(any(Component.class))).thenReturn(Collections.singleton(asset));
 
@@ -155,6 +161,62 @@ class CleanupPreviewHelperImplTest
 
     assertCleanupPolicy(cleanPolicyCaptor.getValue());
     assertComponentResultXO(componentXOStream, true);
+  }
+
+  @Test
+  void testGetSearchResultsStream_withNullBlob() {
+    Collection<Component> componentCollection = getComponentCollection();
+    ContentFacetSupport contentFacetSupport = mock(ContentFacetSupport.class);
+    ContentFacetStores contentFacetStores = mock(ContentFacetStores.class);
+    AssetStore assetStore = mock(AssetStore.class);
+
+    when(contentFacetSupport.stores()).thenReturn(contentFacetStores);
+    when(contentFacetStores.assetStore()).thenReturn(assetStore);
+
+    AssetData asset = new AssetData();
+    asset.setPath("/assetPath");
+    asset.setBlobStoreName("blobStoreName");
+    asset.setAssetBlobSize(100L);
+    asset.setLastDownloaded(NOW);
+    asset.setCreated(NOW);
+    asset.setAssetBlob(null);
+
+    when(assetStore.browseComponentAssets(any(Component.class))).thenReturn(Collections.singleton(asset));
+
+    Stream<FluentComponent> fluentComponentStream = componentCollection.stream()
+        .map(component -> new FluentComponentImpl(contentFacetSupport, component));
+
+    when(cleanupComponentBrowse.browseIncludingAssets(any(CleanupPolicy.class), any(Repository.class)))
+        .thenReturn(fluentComponentStream);
+
+    CleanupPolicyPreviewXO cleanupPolicyPreviewXO = createCleanupPolicyPreviewXO();
+    Repository repository = createRepository();
+
+    Stream<ComponentXO> componentXOStream =
+        underTest.getSearchResultsStream(cleanupPolicyPreviewXO, repository, createQueryOptions());
+
+    verify(cleanupPolicyStorage).newCleanupPolicy();
+    verify(browseServiceFactory).getPreviewService();
+    verify(cleanupComponentBrowse).browseIncludingAssets(cleanPolicyCaptor.capture(), eq(repository));
+
+    assertCleanupPolicy(cleanPolicyCaptor.getValue());
+
+    List<ComponentXO> componentsResult = componentXOStream.toList();
+    assertThat(componentsResult, hasSize(2));
+
+    componentsResult.forEach(componentXO -> {
+      List<AssetXO> assets = componentXO.getAssets();
+      assertThat(assets, hasSize(1));
+
+      AssetXO assetXO = assets.get(0);
+      assertThat(assetXO.getPath(), is("/assetPath"));
+      assertThat(assetXO.getBlobStoreName(), is("blobStoreName"));
+      assertThat(assetXO.getFileSize(), is(100L));
+
+      Date nowDate = Date.from(NOW.toInstant());
+      assertThat(assetXO.getLastDownloaded(), is(nowDate));
+      assertThat(assetXO.getBlobCreated(), is((Date) null));
+    });
   }
 
   private static void assertComponentResultXO(final Stream<ComponentXO> componentXOStream, final boolean withAssets) {

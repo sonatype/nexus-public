@@ -20,18 +20,16 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
+
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith(DatabaseExtension.class)
 class KeyValueMigrationStep_2_78Test
     extends Test5Support
 {
@@ -42,7 +40,7 @@ class KeyValueMigrationStep_2_78Test
 
   KeyValueMigrationStep_2_78 underTest = new KeyValueMigrationStep_2_78();
 
-  @Test
+  @DatabaseTest
   void testMigrate() throws Exception {
     try (Connection conn = dataSessionSupplier.openConnection(); Statement statement = conn.createStatement()) {
       String table = underTest.isPostgresql(conn) ? PG_TABLE : H2_TABLE;
@@ -66,7 +64,7 @@ class KeyValueMigrationStep_2_78Test
     }
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_noTables() throws Exception {
     try (Connection conn = dataSessionSupplier.openConnection()) {
       assertDoesNotThrow(() -> underTest.migrate(conn));

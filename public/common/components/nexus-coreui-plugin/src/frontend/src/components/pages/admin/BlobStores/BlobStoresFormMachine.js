@@ -54,6 +54,45 @@ export const SPACE_USED_QUOTA_ID = 'spaceUsedQuota';
 export const canUseSpaceUsedQuotaOnly = (storeType) =>
   ['azure', 's3', 'google'].includes(storeType.id);
 
+const DANGEROUS_FIELDS = {
+  'file': ['path'],
+  's3': [
+    'bucketConfiguration.bucket.name',
+    'bucketConfiguration.bucket.region',
+    'bucketConfiguration.encryption'
+  ],
+  'google': [
+    'bucketConfiguration.bucket.name',
+    'bucketConfiguration.bucket.projectId',
+    'bucketConfiguration.bucket.region',
+    'bucketConfiguration.encryption'
+  ],
+  'azure': [
+    'bucketConfiguration.accountName',
+    'bucketConfiguration.containerName'
+  ],
+  'group': ['members']
+};
+
+function getNestedValue(obj, path) {
+  return path.split('.').reduce((current, key) => current?.[key], obj);
+}
+
+function hasDangerousFieldChanges(pristineData, data, type) {
+  const dangerousFields = DANGEROUS_FIELDS[type?.id?.toLowerCase()] || [];
+  
+  return dangerousFields.some(field => {
+    const pristineValue = getNestedValue(pristineData, field);
+    const currentValue = getNestedValue(data, field);
+    
+    if (typeof pristineValue === 'object' && pristineValue !== null) {
+      return JSON.stringify(pristineValue) !== JSON.stringify(currentValue);
+    }
+    
+    return pristineValue !== currentValue;
+  });
+}
+
 function extractErrorMessage(event) {
   let saveErrors = event.data?.response?.data ? event.data.response.data : UIStrings.ERROR.SAVE_ERROR;
   let errorMessage = '';
@@ -140,7 +179,7 @@ export default FormUtils.buildFormMachine({
 
           SAVE: [{
             target: 'confirmSave',
-            cond: 'isEdit'
+            cond: 'isDangerousEdit'
           }, {
               target: 'saving',
               cond: 'canSave'
@@ -361,6 +400,16 @@ export default FormUtils.buildFormMachine({
       const isValid = !ValidationUtils.isInvalid(validationErrors);
       const isEdit = ValidationUtils.notBlank(pristineData.name);
       return isEdit && !isPristine && isValid;
+    },
+    isDangerousEdit: ({pristineData, data, type, isPristine, validationErrors}) => {
+      const isValid = !ValidationUtils.isInvalid(validationErrors);
+      const isEdit = ValidationUtils.notBlank(pristineData.name);
+      
+      if (!isEdit || isPristine || !isValid) {
+        return false;
+      }
+      
+      return hasDangerousFieldChanges(pristineData, data, type);
     },
     canDelete: ({blobStoreUsage, repositoryUsage}) => blobStoreUsage === 0 && repositoryUsage === 0
   },

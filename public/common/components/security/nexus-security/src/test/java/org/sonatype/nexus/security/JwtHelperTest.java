@@ -236,22 +236,6 @@ public class JwtHelperTest
     assertEquals("NexusAuthorizingRealm", realm.asString());
   }
 
-  private void assertJwtWithIdToken(final String jwt) {
-    DecodedJWT decode = decodeJwt(jwt);
-
-    Claim user = decode.getClaim(USER);
-    Claim userId = decode.getClaim(USER_SESSION_ID);
-    Claim issuer = decode.getClaim("iss");
-    Claim realm = decode.getClaim(REALM);
-    Claim idToken = decode.getClaim(ID_TOKEN);
-
-    assertEquals("admin", user.asString());
-    assertNotNull(userId.asString());
-    assertEquals(ISSUER, issuer.asString());
-    assertEquals("NexusAuthorizingRealm", realm.asString());
-    assertEquals(VALID_JWT_TOKEN, idToken.asString());
-  }
-
   private DecodedJWT decodeJwt(final String jwt) {
     try {
       return JWT.decode(jwt);
@@ -259,5 +243,68 @@ public class JwtHelperTest
     catch (Exception e) {
       throw new IllegalArgumentException("Invalid token");
     }
+  }
+
+  @Test
+  public void testSetExpirySeconds_updatesExpiry() {
+    assertEquals(300, underTest.getExpirySeconds());
+
+    underTest.setExpirySeconds(600);
+
+    assertEquals(600, underTest.getExpirySeconds());
+  }
+
+  @Test
+  public void testSetExpirySeconds_createsTokenWithNewExpiry() {
+    underTest.setExpirySeconds(600);
+
+    Session session = mock(Session.class);
+    doReturn(session).when(subject).getSession();
+    Cookie jwtCookie = underTest.createJwtCookie(subject, false);
+
+    assertEquals(600, jwtCookie.getMaxAge());
+
+    // Verify JWT token also has correct expiry claim
+    DecodedJWT decoded = decodeJwt(jwtCookie.getValue());
+    Date expiresAt = decoded.getExpiresAt();
+    Date issuedAt = decoded.getIssuedAt();
+    long expirySeconds = (expiresAt.getTime() - issuedAt.getTime()) / 1000;
+    assertTrue("Expiry should be approximately 600 seconds", Math.abs(expirySeconds - 600) <= 1);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testSetExpirySeconds_rejectsZero() {
+    underTest.setExpirySeconds(0);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testSetExpirySeconds_rejectsNegative() {
+    underTest.setExpirySeconds(-1);
+  }
+
+  @Test
+  public void testSetExpirySeconds_threadSafety() throws Exception {
+    // Test concurrent updates don't cause race conditions
+    Thread t1 = new Thread(() -> {
+      for (int i = 0; i < 100; i++) {
+        underTest.setExpirySeconds(300 + i);
+      }
+    });
+
+    Thread t2 = new Thread(() -> {
+      for (int i = 0; i < 100; i++) {
+        underTest.setExpirySeconds(600 + i);
+      }
+    });
+
+    t1.start();
+    t2.start();
+    t1.join();
+    t2.join();
+
+    // Final value should be valid (either from t1 or t2)
+    int finalExpiry = underTest.getExpirySeconds();
+    assertTrue("Final expiry should be in valid range",
+        (finalExpiry >= 300 && finalExpiry < 400) || (finalExpiry >= 600 && finalExpiry < 700));
   }
 }

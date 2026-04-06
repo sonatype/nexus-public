@@ -37,6 +37,7 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyPreviewXO;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -46,11 +47,11 @@ import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.DefaultComponentXO;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
+import org.sonatype.nexus.common.time.DateHelper;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
-import static org.sonatype.nexus.common.time.DateHelper.offsetToDate;
 import static org.sonatype.nexus.common.time.DateHelper.optionalOffsetToDate;
 
 /**
@@ -194,7 +195,7 @@ public class CleanupPreviewHelperImpl
           assetXO.setBlobStoreName(it.blobStoreName());
           assetXO.setFileSize(it.assetBlobSize());
           assetXO.setLastDownloaded(optionalOffsetToDate(it.lastDownloaded()));
-          assetXO.setBlobCreated(offsetToDate(it.created()));
+          assetXO.setBlobCreated(it.blob().map(AssetBlob::blobCreated).map(DateHelper::offsetToDate).orElse(null));
 
           return assetXO;
         })
