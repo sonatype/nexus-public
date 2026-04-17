@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.91.0-07</version>
+    <version>3.91.1-04</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-ui</artifactId>
