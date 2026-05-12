@@ -14,7 +14,6 @@ package org.sonatype.nexus.extender.internal;
 
 import javax.servlet.ServletContextEvent;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.EditionVersionFormatter;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
@@ -41,12 +40,14 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link NexusServletContextListener}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NexusServletContextListenerTest
-    extends TestSupport
 {
   @Mock
   private NexusEditionSelector nexusEditionSelector;
@@ -104,14 +105,11 @@ public class NexusServletContextListenerTest
 
     // Verify - check log message contains edition and version
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("PRO/3.75.0-01"))
-    ));
+        hasProperty("formattedMessage", containsString("PRO/3.75.0-01"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Uptime:"))
-    ));
+        hasProperty("formattedMessage", containsString("Uptime:"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("level", is(Level.INFO))
-    ));
+        hasProperty("level", is(Level.INFO))));
 
     // Verify lifecycle manager moves to OFF phase
     verify(nexusLifecycleManager).to(Phase.OFF);
@@ -154,18 +152,14 @@ public class NexusServletContextListenerTest
 
     // Verify - check log message contains "unknown" for edition with version
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("unknown/3.75.0-01"))
-    ));
+        hasProperty("formattedMessage", containsString("unknown/3.75.0-01"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Uptime:"))
-    ));
+        hasProperty("formattedMessage", containsString("Uptime:"))));
     // Verify warning log about unable to determine edition
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Unable to determine edition ID"))
-    ));
+        hasProperty("formattedMessage", containsString("Unable to determine edition ID"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("level", is(Level.WARN))
-    ));
+        hasProperty("level", is(Level.WARN))));
 
     // Verify lifecycle manager moves to OFF phase
     verify(nexusLifecycleManager).to(Phase.OFF);
@@ -234,11 +228,9 @@ public class NexusServletContextListenerTest
 
     // Verify - check error log
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Failed to stop nexus"))
-    ));
+        hasProperty("formattedMessage", containsString("Failed to stop nexus"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("level", is(Level.ERROR))
-    ));
+        hasProperty("level", is(Level.ERROR))));
 
     // Verify lifecycle manager was still called
     verify(nexusLifecycleManager).to(Phase.OFF);

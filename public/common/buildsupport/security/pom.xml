@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-security</artifactId>
@@ -29,7 +29,7 @@
 
   <properties>
     <apache-shiro.version>1.13.0</apache-shiro.version>
-    <bouncycastle.version>1.81</bouncycastle.version>
+    <bouncycastle.version>1.84</bouncycastle.version>
     <bcpkix.fips.version>2.1.9</bcpkix.fips.version>
     <bcpg.fips.version>2.1.11</bcpg.fips.version>
     <bcutil.fips.version>2.1.4</bcutil.fips.version>
@@ -192,7 +192,7 @@
       <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-saml2-service-provider</artifactId>
-        <version>6.5.9</version>
+        <version>6.5.10</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

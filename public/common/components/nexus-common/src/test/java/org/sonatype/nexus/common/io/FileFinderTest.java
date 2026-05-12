@@ -18,8 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +28,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class FileFinderTest
-    extends TestSupport
 {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -43,7 +40,7 @@ public class FileFinderTest
 
   @Before
   public void prepare() throws IOException {
-    root = util.createTempDir();
+    root = temporaryFolder.newFolder("test-files");
     Path path = root.toPath();
     Files.write(path.resolve("file-2024-05-15-10-50-44.txt"), PAYLOAD);
     Files.write(path.resolve("file-2024-04-15-10-50-44.txt"), PAYLOAD);

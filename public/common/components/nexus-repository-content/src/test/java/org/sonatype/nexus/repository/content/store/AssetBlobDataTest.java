@@ -17,7 +17,6 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.HeavyBlobRef;
 
@@ -34,7 +33,6 @@ import static org.hamcrest.Matchers.not;
  * {@link HeavyBlobRef} when sha1 checksum and blobCreated are both present.
  */
 public class AssetBlobDataTest
-    extends TestSupport
 {
   private static final OffsetDateTime TIME = OffsetDateTime.of(2024, 1, 15, 10, 30, 0, 0, ZoneOffset.UTC);
 

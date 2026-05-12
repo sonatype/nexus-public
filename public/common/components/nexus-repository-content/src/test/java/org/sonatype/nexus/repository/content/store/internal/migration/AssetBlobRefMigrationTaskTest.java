@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -33,8 +32,10 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,8 +52,8 @@ import static org.sonatype.nexus.repository.content.store.internal.AssetBlobClea
 /**
  * Tests for {@link AssetBlobRefMigrationTask}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetBlobRefMigrationTaskTest
-    extends TestSupport
 {
   private static final int READ_ASSETS_BATCH_SIZE = 100;
 

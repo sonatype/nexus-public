@@ -17,13 +17,14 @@ import java.io.InputStream;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
@@ -36,8 +37,9 @@ import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.Metad
 @Component
 @Singleton
 public class MavenMetadataContentValidator
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public void validate(final String path, final InputStream mavenMetadata) {
     try {
       Metadata metadata = MavenModels.readMetadata(mavenMetadata);

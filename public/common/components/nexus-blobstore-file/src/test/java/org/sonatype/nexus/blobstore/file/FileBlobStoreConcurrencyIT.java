@@ -23,10 +23,14 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedDeque;
-
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MetricsInputStream;
@@ -41,9 +45,10 @@ import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.file.internal.datastore.metrics.DatastoreFileBlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 import org.sonatype.nexus.scheduling.internal.PeriodicJobServiceImpl;
 
 import com.google.common.base.Objects;
@@ -51,8 +56,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.io.ByteStreams.nullOutputStream;
@@ -68,9 +79,14 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 /**
  * {@link FileBlobStore} concurrency tests.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FileBlobStoreConcurrencyIT
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(FileBlobStoreConcurrencyIT.class);
+
+  @Rule
+  public TemporaryFolder tmpDir = new TemporaryFolder();
+
   public static final ImmutableMap<String, String> TEST_HEADERS = ImmutableMap.of(
       CREATED_BY_HEADER, "test",
       BLOB_NAME_HEADER, "test/randomData.bin");
@@ -104,9 +120,11 @@ public class FileBlobStoreConcurrencyIT
   @Mock
   private BlobStoreReconciliationLogger reconciliationLogger;
 
+  private final DirectoryHelper directoryHelper = new DirectoryHelper();
+
   @Before
   public void setUp() throws Exception {
-    Path root = util.createTempDir().toPath();
+    Path root = tmpDir.newFolder().toPath();
     Path content = root.resolve("content");
 
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
@@ -121,9 +139,9 @@ public class FileBlobStoreConcurrencyIT
     blobStoreQuotaUsageChecker = spy(
         new BlobStoreQuotaUsageChecker(new PeriodicJobServiceImpl(10), QUOTA_CHECK_INTERVAL, quotaService));
 
-    this.underTest = new FileBlobStore(content, new DefaultBlobIdLocationResolver(), new SimpleFileOperations(),
-        metricsStore, config, applicationDirectories, nodeAccess, dryRunPrefix, reconciliationLogger, 0L,
-        blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
+    this.underTest = new FileBlobStore(content, new DefaultBlobIdLocationResolver(),
+        new SimpleFileOperations(directoryHelper), applicationDirectories, directoryHelper, metricsStore, config,
+        nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     underTest.start();
   }
 
@@ -151,7 +169,7 @@ public class FileBlobStoreConcurrencyIT
 
     int numberOfIterations = 15;
     int timeoutMinutes = 5;
-    final ConcurrentRunner runner = new ConcurrentRunner(numberOfIterations, timeoutMinutes * 60);
+    final ConcurrentRunner runner = new ConcurrentRunner(numberOfIterations, timeoutMinutes * 60L);
 
     runner.addTask(numberOfCreators, () -> {
       final byte[] data = new byte[random.nextInt(BLOB_MAX_SIZE_BYTES) + 1];
@@ -164,7 +182,7 @@ public class FileBlobStoreConcurrencyIT
     runner.addTask(numberOfReaders, () -> {
       final BlobId blobId = blobIdsInTheStore.peek();
 
-      log("Attempting to read " + blobId);
+      log.info("Attempting to read " + blobId);
 
       if (blobId == null) {
         return;
@@ -172,7 +190,7 @@ public class FileBlobStoreConcurrencyIT
 
       final Blob blob = underTest.get(blobId);
       if (blob == null) {
-        log("Attempted to obtain blob, but it was deleted:" + blobId);
+        log.info("Attempted to obtain blob, but it was deleted:" + blobId);
         return;
       }
 
@@ -182,17 +200,17 @@ public class FileBlobStoreConcurrencyIT
       catch (BlobStoreException e) {
         checkState(deletedIds.contains(e.getBlobId()));
         // This is normal operation if another thread deletes your blob after you obtain a Blob reference
-        log("Concurrent deletion suspected while calling blob.getInputStream().", e);
+        log.warn("Concurrent deletion suspected while calling blob.getInputStream().", e);
       }
     });
 
     runner.addTask(numberOfDeleters, () -> {
       final BlobId blobId = blobIdsInTheStore.poll();
       if (blobId == null) {
-        log("deleter: null blob id");
+        log.info("deleter: null blob id");
         return;
       }
-      log("Deleting {}", blobId);
+      log.info("Deleting {}", blobId);
 
       // There's a race condition here, we need to note that we're attempting to delete this before the deletion
       // goes through, otherwise we may fail the check, above.
@@ -244,6 +262,54 @@ public class FileBlobStoreConcurrencyIT
       throw new RuntimeException(
           "Blob " + blobId + "'s measured " + propertyName + " differed from its metadata. Expected " + expected +
               " but was " + measured + ".");
+    }
+  }
+
+  @FunctionalInterface
+  private interface ConcurrentTask
+  {
+    void run() throws Exception;
+  }
+
+  private static class ConcurrentRunner
+  {
+    private final int iterations;
+
+    private final long timeoutSeconds;
+
+    private final List<ConcurrentTask> allTasks = new ArrayList<>();
+
+    ConcurrentRunner(final int iterations, final long timeoutSeconds) {
+      this.iterations = iterations;
+      this.timeoutSeconds = timeoutSeconds;
+    }
+
+    void addTask(final int threads, final ConcurrentTask task) {
+      for (int i = 0; i < threads; i++) {
+        allTasks.add(task);
+      }
+    }
+
+    void go() throws Exception {
+      ExecutorService executor = Executors.newFixedThreadPool(allTasks.size());
+      try {
+        for (int i = 0; i < iterations; i++) {
+          List<Callable<Void>> callables = new ArrayList<>();
+          for (ConcurrentTask task : allTasks) {
+            callables.add(() -> {
+              task.run();
+              return null;
+            });
+          }
+          List<Future<Void>> futures = executor.invokeAll(callables, timeoutSeconds, TimeUnit.SECONDS);
+          for (Future<Void> f : futures) {
+            f.get();
+          }
+        }
+      }
+      finally {
+        executor.shutdownNow();
+      }
     }
   }
 }

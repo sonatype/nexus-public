@@ -17,7 +17,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.security.jwt.JwtSessionRevocationService;
@@ -32,8 +31,10 @@ import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.apache.shiro.web.subject.WebSubject;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -50,8 +51,8 @@ import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 /**
  * Tests for {@link JwtSecurityFilter} focusing on JWT session revocation logic.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class JwtSecurityFilterTest
-    extends TestSupport
 {
   @Mock
   private WebSecurityManager webSecurityManager;

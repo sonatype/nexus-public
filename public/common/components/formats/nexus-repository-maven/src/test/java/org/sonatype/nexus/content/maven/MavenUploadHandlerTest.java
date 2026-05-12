@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.internal.MavenVariableResolverAdapter;
@@ -68,7 +67,9 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
@@ -91,8 +92,9 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.BOOLEAN;
 import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenUploadHandlerTest
-    extends TestSupport
+
 {
   private static final String GROUP_NAME_COORDINATES = "Component coordinates";
 

@@ -14,7 +14,6 @@ package org.sonatype.nexus.bootstrap.entrypoint;
 
 import java.util.regex.Pattern;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.bootstrap.application.JavaxProviderDefaultListableBeanFactory;
 
 import jakarta.inject.Named;
@@ -31,6 +30,8 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.RegexPatternTypeFilter;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -41,8 +42,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class SpringComponentScan
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String CHILDREN_CONTEXT_ID = "nexus-spring-component-scan";
 
   private static final Pattern ENTRYPOINT_PACKAGES_PATTERN =

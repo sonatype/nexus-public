@@ -29,7 +29,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.text.Strings2;
@@ -44,6 +43,8 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.SecurityHelper;
 
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
@@ -61,9 +62,10 @@ import org.springframework.stereotype.Component;
 @Path(RepositoryBrowseResource.RESOURCE_URI)
 @Produces(TEXT_HTML)
 public class RepositoryBrowseResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String REPOSITORY_PATH_SEGMENT = "{noop: (/)?}{repositoryPath: ((?<=/).*)?}";
 
   public static final String RESOURCE_URI = "/repository/browse/{repositoryName}" + REPOSITORY_PATH_SEGMENT;

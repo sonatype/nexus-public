@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.audit.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.audit.InitiatorProvider;
@@ -37,9 +36,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AuditRecorderImplTest
-    extends TestSupport
 {
   private static final String INITIATOR = "test/1.2.3.4";
 
@@ -111,7 +112,7 @@ public class AuditRecorderImplTest
     verify(eventManager).post(eventCaptor.capture());
     verifyNoMoreInteractions(eventManager);
 
-    AuditDataRecordedEvent captured =  eventCaptor.getValue();
+    AuditDataRecordedEvent captured = eventCaptor.getValue();
     assertThat(captured.getData().getTimestamp(), notNullValue());
     assertThat(captured.getData().getNodeId(), is(NODE_ID));
     assertThat(captured.getData().getInitiator(), is("someuser/1.2.3.4"));

@@ -35,6 +35,22 @@ const XSS_STRING = TestUtils.XSS_STRING;
 
 jest.mock('axios');
 
+jest.mock('@fortawesome/react-fontawesome', () => ({
+  FontAwesomeIcon: (props) => React.createElement('span', { 'data-testid': `fa-icon`, className: 'fa-icon' }),
+}));
+
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const actual = jest.requireActual('@sonatype/nexus-ui-plugin');
+  return {
+    ...actual,
+    HistoricalUsage: function MockHistoricalUsage() {
+      return React.createElement('div', null,
+        React.createElement('h2', null, 'Historical Usage')
+      );
+    },
+  };
+});
+
 const selectors = {
   ...TestUtils.selectors,
   contactCompany: () => screen.getByText(DETAILS.COMPANY.LABEL).nextSibling,

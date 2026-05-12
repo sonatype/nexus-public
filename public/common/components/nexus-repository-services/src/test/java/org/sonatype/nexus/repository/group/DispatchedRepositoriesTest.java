@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.group;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupHandler.DispatchedRepositories;
 
@@ -23,9 +22,11 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DispatchedRepositoriesTest
-    extends TestSupport
 {
   private static final String REPOSITORY_1 = "repository1";
 

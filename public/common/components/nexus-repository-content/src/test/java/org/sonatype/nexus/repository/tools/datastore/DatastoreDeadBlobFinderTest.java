@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -47,7 +46,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -69,8 +70,8 @@ import static org.sonatype.nexus.repository.tools.ResultState.MISSING_BLOB_REF;
 import static org.sonatype.nexus.repository.tools.ResultState.SHA1_DISAGREEMENT;
 import static org.sonatype.nexus.repository.tools.ResultState.UNAVAILABLE_BLOB;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DatastoreDeadBlobFinderTest
-    extends TestSupport
 {
   @Rule
   public ExpectedException thrown = ExpectedException.none();

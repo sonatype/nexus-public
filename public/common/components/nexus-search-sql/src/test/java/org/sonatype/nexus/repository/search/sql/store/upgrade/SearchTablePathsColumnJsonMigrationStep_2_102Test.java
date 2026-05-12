@@ -16,7 +16,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.search.sql.store.SearchTableDAO;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 
@@ -32,7 +31,6 @@ import static org.hamcrest.Matchers.equalToIgnoringCase;
  * DB tests for {@link SearchTablePathsColumnJsonMigrationStep_2_102} class
  */
 class SearchTablePathsColumnJsonMigrationStep_2_102Test
-    extends Test5Support
 {
   @DataSessionConfiguration(daos = {SearchTableDAO.class})
   TestDataSessionSupplier dataSessionSupplier;

@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.browse.store;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -35,7 +34,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class AssetAuditorTest
-    extends TestSupport
 {
   AssetAuditor assetAuditor;
 

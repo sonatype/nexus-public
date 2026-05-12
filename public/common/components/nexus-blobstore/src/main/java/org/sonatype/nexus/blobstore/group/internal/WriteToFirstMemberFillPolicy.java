@@ -16,7 +16,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.FillPolicy;
@@ -24,6 +23,8 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link FillPolicy} that writes to first blobstore in group.
@@ -34,9 +35,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier(WriteToFirstMemberFillPolicy.TYPE)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class WriteToFirstMemberFillPolicy
-    extends ComponentSupport
     implements FillPolicy
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   public static final String TYPE = "writeToFirst";
 

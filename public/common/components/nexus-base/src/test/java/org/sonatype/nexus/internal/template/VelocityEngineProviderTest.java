@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.template;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.velocity.app.VelocityEngine;
 import org.junit.Test;
 
@@ -23,7 +21,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class VelocityEngineProviderTest
-    extends TestSupport
 {
   @Test
   public void testParserPoolSizeIsSet() {

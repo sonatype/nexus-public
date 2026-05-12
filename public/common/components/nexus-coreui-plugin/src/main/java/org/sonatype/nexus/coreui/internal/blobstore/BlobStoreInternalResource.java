@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorProvider;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -57,9 +56,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Path(RESOURCE_PATH)
 public class BlobStoreInternalResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String RESOURCE_PATH = "/internal/ui/blobstores";
 
   public static final String GOOGLE_CONFIG = "google cloud storage";

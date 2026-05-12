@@ -174,7 +174,7 @@ describe('IqServerConnected', () => {
 
     const exploreLink = screen.getByText(IQ_SERVER.CONNECTED.FIREWALL.EXPLORE_LINK);
     expect(exploreLink).toBeInTheDocument();
-    expect(exploreLink.closest('a')).toHaveAttribute('href', 'https://www.sonatype.com/products/firewall');
+    expect(exploreLink.closest('a')).toHaveAttribute('href', 'https://links.sonatype.com/nexus-repository-firewall');
   });
 
   it('does not show Firewall explore link when available', () => {
@@ -191,7 +191,7 @@ describe('IqServerConnected', () => {
     const connectionSettingsButton = screen.getByText(IQ_SERVER.CONNECTED.CONNECTION_SETTINGS_BUTTON);
     await userEvent.click(connectionSettingsButton);
 
-    expect(mockRouter.stateService.go).toHaveBeenCalledWith('admin.iq');
+    expect(mockRouter.stateService.go).toHaveBeenCalledWith('admin.iq', {fromConnected: true});
   });
 
   it('applies enabled class to Lifecycle tile when enabled', () => {

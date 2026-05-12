@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 
@@ -23,10 +22,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 public abstract class BlobStoreOverrideImplTestSupport
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   @Rule
   public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 

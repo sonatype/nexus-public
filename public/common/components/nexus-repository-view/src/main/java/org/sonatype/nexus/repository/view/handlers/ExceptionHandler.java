@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.view.handlers;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -25,6 +24,8 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 
@@ -37,9 +38,10 @@ import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ExceptionHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception { // NOSONAR

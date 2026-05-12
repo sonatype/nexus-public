@@ -28,8 +28,10 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.sonatype.nexus.testdb.DatabaseTest;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.util.UUID.randomUUID;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +42,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@ExtendWith(MockitoExtension.class)
 class BrowseNodeMigrationStep_2_3Test
     extends ExampleContentTestSupport
 {

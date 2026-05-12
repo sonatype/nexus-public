@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.upgrade;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import jakarta.inject.Inject;
@@ -24,6 +23,8 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED;
 
@@ -31,9 +32,10 @@ import static org.sonatype.nexus.common.app.FeatureFlags.ZERO_DOWNTIME_FUTURE_MI
 @ConditionalOnProperty(name = ZERO_DOWNTIME_FUTURE_MIGRATION_ENABLED, havingValue = "true")
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class NexusFutureMigrationStep_99_99
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String FAIL_MIGRATION_FLAG = "nexus.zdu.baseline.fail";
 
   private final boolean shouldFail;

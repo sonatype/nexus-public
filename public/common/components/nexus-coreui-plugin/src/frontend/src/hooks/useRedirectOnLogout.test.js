@@ -17,6 +17,7 @@
 import { renderHook } from '@testing-library/react-hooks';
 import { ExtJS, isVisible } from '@sonatype/nexus-ui-plugin';
 import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
+import { isExtJSLoaded, onExtJSLoad } from '../utils/extJsLoader';
 import { useRedirectOnLogout } from './useRedirectOnLogout';
 
 jest.mock('@uirouter/react', () => ({
@@ -31,8 +32,13 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   isVisible: jest.fn()
 }));
 
+jest.mock('../utils/extJsLoader', () => ({
+  isExtJSLoaded: jest.fn(() => true),
+  onExtJSLoad: jest.fn()
+}));
+
 describe('useRedirectOnLogout', () => {
-  let goMock, onMock, offMock;
+  let goMock, onMock, offMock, urlMock;
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -41,10 +47,17 @@ describe('useRedirectOnLogout', () => {
     goMock = jest.fn();
     onMock = jest.fn();
     offMock = jest.fn();
+    urlMock = jest.fn().mockReturnValue('/admin/repository/repositories');
+
+    isExtJSLoaded.mockReturnValue(true);
+    onExtJSLoad.mockClear();
 
     useRouter.mockReturnValue({
       stateService: {
         go: goMock,
+      },
+      urlService: {
+        url: urlMock,
       },
     });
 
@@ -73,7 +86,7 @@ describe('useRedirectOnLogout', () => {
     jest.clearAllMocks();
   });
 
-  it('should redirect if user is not authenticated and route is not visible', () => {
+  it('should redirect to login with returnTo parameter if user is not authenticated and route is not visible', () => {
     ExtJS.useUser.mockReturnValue(null); // no autenticado
     isVisible.mockReturnValue(false);    // no visible
 
@@ -85,7 +98,8 @@ describe('useRedirectOnLogout', () => {
 
     jest.advanceTimersByTime(150);
 
-    expect(goMock).toHaveBeenCalledWith('browse.welcome');
+    const expectedReturnTo = btoa('#/admin/repository/repositories');
+    expect(goMock).toHaveBeenCalledWith('login', { returnTo: expectedReturnTo });
   });
 
   it('should clear unsaved changes before redirecting', () => {
@@ -101,7 +115,8 @@ describe('useRedirectOnLogout', () => {
     jest.advanceTimersByTime(150);
 
     expect(window.dirty).toEqual([]);
-    expect(goMock).toHaveBeenCalledWith('browse.welcome');
+    const expectedReturnTo = btoa('#/admin/repository/repositories');
+    expect(goMock).toHaveBeenCalledWith('login', { returnTo: expectedReturnTo });
   });
 
   it('should not redirect if user is authenticated', () => {

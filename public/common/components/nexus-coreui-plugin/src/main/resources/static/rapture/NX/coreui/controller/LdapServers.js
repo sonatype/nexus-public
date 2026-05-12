@@ -615,7 +615,9 @@ Ext.define('NX.coreui.controller.LdapServers', {
   },
 
   onNavigate: function() {
-    if (NX.Bookmarks.getBookmark().getToken().includes('security/ldap')) {
+    var bookmark = NX.Bookmarks.getBookmark();
+    var token = bookmark && bookmark.getToken ? bookmark.getToken() : null;
+    if (token && token.includes('security/ldap')) {
       this.reselect();
     }
   }

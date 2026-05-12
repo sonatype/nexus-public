@@ -15,21 +15,22 @@ package org.sonatype.nexus.repository.content.upgrades;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class PrivilegeNxRM2UpgradeStep_2_74Test
-    extends TestSupport
 {
   @Mock
   private UpgradeTaskScheduler upgradeTaskScheduler;

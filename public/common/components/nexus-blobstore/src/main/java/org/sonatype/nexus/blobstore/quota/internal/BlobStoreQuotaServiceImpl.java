@@ -20,7 +20,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
@@ -28,6 +27,8 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.rest.ValidationErrorsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -43,9 +44,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class BlobStoreQuotaServiceImpl
-    extends ComponentSupport
     implements BlobStoreQuotaService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, BlobStoreQuota> quotas;
 
   @Inject

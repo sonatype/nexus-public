@@ -14,7 +14,6 @@ package org.sonatype.nexus.mime.internal;
 
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.mime.MimeRule;
 
 import com.google.common.base.Joiner;
@@ -31,7 +30,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Tests for {@link NexusMimeTypes}.
  */
 public class NexusMimeTypesTest
-    extends TestSupport
 {
   private NexusMimeTypes underTest = new NexusMimeTypes();
 

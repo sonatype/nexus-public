@@ -13,15 +13,17 @@
 import React from 'react';
 import { NxH3, NxPageSidebar } from '@sonatype/react-shared-components';
 import {
+  ExtJS,
   LeftNavigationMenuItem,
   LeftNavigationMenuCollapsibleItem,
-  LeftNavigationMenuCollapsibleChildItem
+  LeftNavigationMenuCollapsibleChildItem,
+  isExtjsCapabilitiesEnabled,
+  isReactCapabilitiesEnabled
 } from '@sonatype/nexus-ui-plugin';
 
 import './SettingsPageLayout.scss';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 import UIStrings from '../../../constants/UIStrings';
-import { isExtjsCapabilitiesEnabled, isReactCapabilitiesEnabled } from '@sonatype/nexus-ui-plugin';
 
 export default function SettingsSidebar() {
   const ADMIN = ROUTE_NAMES.ADMIN;
@@ -205,11 +207,6 @@ export default function SettingsSidebar() {
         text={UIStrings.ADMIN_SYSTEM_DIRECTORY.MENU.text}
         data-analytics-id="nxrm-global-secondary-navbar-system"
       >
-        <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.SYSTEM.API.ROOT}
-          text={UIStrings.API.MENU.text}
-          data-analytics-id="nxrm-global-secondary-navbar-system-api"
-        />
         {isExtjsCapabilitiesEnabled() &&
           <LeftNavigationMenuCollapsibleChildItem
             name={ADMIN.SYSTEM.CAPABILITIES_EXTJS.ROOT}
@@ -224,6 +221,18 @@ export default function SettingsSidebar() {
             text={UIStrings.CAPABILITIES.MENU.text}
             selectedState={ADMIN.SYSTEM.CAPABILITIES.ROOT}
             data-analytics-id='nxrm-global-secondary-navbar-system-capabilities'
+          />
+        }
+        <LeftNavigationMenuCollapsibleChildItem
+          name={ADMIN.SYSTEM.API.ROOT}
+          text={UIStrings.API.MENU.text}
+          data-analytics-id="nxrm-global-secondary-navbar-system-api"
+        />
+        {ExtJS.state().getValue('nexus.previewui.enabled') &&
+          <LeftNavigationMenuCollapsibleChildItem
+            name={ADMIN.SYSTEM.PREVIEWUI.ROOT}
+            text={UIStrings.PREVIEW_UI_SETTINGS.MENU.text}
+            data-analytics-id="nxrm-global-secondary-navbar-system-previewui"
           />
         }
         <LeftNavigationMenuCollapsibleChildItem

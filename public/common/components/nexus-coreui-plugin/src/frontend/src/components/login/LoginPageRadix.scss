@@ -1,0 +1,222 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Sonatype Nexus branding (see theme-variables.css --sona-green)
+$nxrm-brand: var(--sona-green, #00a676);
+$nxrm-brand-hover: #008f68;
+
+// Full-viewport overlay (native div — not Radix Box, so .rt-Box never overrides display)
+.nxrm-login-page-radix {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100dvh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  isolation: isolate;
+  background-color: #ffffff;
+
+  [data-theme='dark'] & {
+    background-color: var(--color-background);
+  }
+}
+
+// Guide-style bar: white surface, bottom border, edition wordmark left, theme toggle right
+.nxrm-login-header {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--gray-5);
+
+  [data-theme='dark'] & {
+    background-color: var(--color-surface);
+    border-bottom-color: var(--color-border);
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+  }
+
+  &__logo {
+    height: 32px;
+    width: auto;
+    max-width: min(280px, 55vw);
+    object-fit: contain;
+    display: block;
+  }
+}
+
+// Second grid row: fills height under banner; grid centers the card on both axes
+.nxrm-login-content {
+  box-sizing: border-box;
+  min-height: 0;
+  width: 100%;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+}
+
+// Border only (no drop shadow); always white card per goal UI
+.nxrm-login-card {
+  // Avoid width:100% alone stretching the grid item to full width (breaks horizontal centering)
+  width: min(100%, 420px);
+  max-width: 420px;
+  background-color: #ffffff !important;
+  border: 1px solid var(--gray-5);
+  box-shadow: none !important;
+
+  [data-theme='dark'] & {
+    background-color: var(--gray-2) !important;
+    border-color: var(--gray-6);
+  }
+
+  // Remove Radix Card ::before pseudo-element background (scoped to login card only)
+  &.rt-Card:where(.rt-variant-surface)::before {
+    background: none !important;
+  }
+
+  &__brand {
+    width: 100%;
+  }
+
+  &__mark {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    display: block;
+  }
+
+  &__title {
+    text-align: center;
+    margin: 0;
+    color: #0f172a !important;
+
+    [data-theme='dark'] & {
+      color: var(--gray-12) !important;
+    }
+  }
+
+  &__label {
+    color: #0f172a !important;
+
+    [data-theme='dark'] & {
+      color: var(--gray-12) !important;
+    }
+  }
+
+  .nxrm-login-card__content {
+    // Override any inherited --color-surface variable that might cause gray background
+    --color-surface: #ffffff;
+
+    [data-theme='dark'] & {
+      --color-surface: var(--gray-2);
+    }
+
+    input[type='text'],
+    input[type='password'] {
+      color: #0f172a !important;
+      background-color: #ffffff !important;
+
+      [data-theme='dark'] & {
+        color: var(--gray-12) !important;
+        background-color: var(--gray-3) !important;
+      }
+
+      &::placeholder {
+        color: #94a3b8 !important;
+
+        [data-theme='dark'] & {
+          color: var(--gray-9) !important;
+        }
+      }
+
+      // Override browser autofill background color
+      &:-webkit-autofill,
+      &:-webkit-autofill:hover,
+      &:-webkit-autofill:focus,
+      &:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+        -webkit-text-fill-color: #0f172a !important;
+
+        [data-theme='dark'] & {
+          -webkit-box-shadow: 0 0 0 30px var(--gray-3) inset !important;
+          -webkit-text-fill-color: var(--gray-12) !important;
+        }
+      }
+    }
+
+    .rt-TextFieldRoot:focus-within {
+      box-shadow: 0 0 0 2px $nxrm-brand;
+    }
+  }
+}
+
+.nxrm-login-submit {
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.nxrm-login-divider {
+  height: 1px;
+  background-color: var(--gray-5);
+
+  [data-theme='dark'] & {
+    background-color: var(--gray-7);
+  }
+}
+
+.nxrm-login-error {
+  padding: 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  text-align: center;
+
+  [data-theme='dark'] & {
+    background-color: #450a0a;
+    border-color: #7f1d1d;
+  }
+}
+
+.nxrm-login-filepath {
+  font-family: monospace;
+  overflow-wrap: break-word;
+}
+
+.nxrm-login-footer {
+  &__lead {
+    color: var(--gray-9);
+  }
+}
+
+.nxrm-login-continue {
+  cursor: pointer;
+}

@@ -20,13 +20,14 @@ import javax.cache.expiry.Duration;
 import javax.cache.expiry.EternalExpiryPolicy;
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.cache.Cache;
 import org.apache.shiro.cache.CacheManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.shiro.session.mgt.eis.CachingSessionDAO.ACTIVE_SESSION_CACHE_NAME;
@@ -37,9 +38,10 @@ import static org.apache.shiro.session.mgt.eis.CachingSessionDAO.ACTIVE_SESSION_
  * @since 3.0
  */
 public class ShiroJCacheManagerAdapter
-    extends ComponentSupport
     implements CacheManager
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Provider<CacheHelper> cacheHelperProvider;
 
   private final Provider<Time> defaultTimeToLive;

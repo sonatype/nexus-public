@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui.internal.blobstore;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 
 import org.junit.Test;
@@ -24,9 +23,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class S3FailoverStateContributorTest
-    extends TestSupport
 {
   @Mock
   private DatabaseCheck databaseCheck;

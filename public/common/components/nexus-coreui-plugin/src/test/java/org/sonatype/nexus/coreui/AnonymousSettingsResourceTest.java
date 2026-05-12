@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
@@ -21,6 +20,7 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -30,11 +30,11 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class AnonymousSettingsResourceTest
-    extends Test5Support
 {
   @Mock
   private AnonymousManager anonymousManager;

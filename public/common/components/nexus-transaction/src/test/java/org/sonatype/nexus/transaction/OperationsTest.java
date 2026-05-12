@@ -14,14 +14,14 @@ package org.sonatype.nexus.transaction;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.base.Suppliers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -37,8 +37,9 @@ import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
  * Test operations behaviour.
  */
 @SuppressWarnings("boxing")
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class OperationsTest
-    extends TestSupport
+
 {
   ExampleMethods methods = new ExampleMethods();
 

@@ -16,8 +16,6 @@ import java.io.IOException;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,7 +29,6 @@ import static org.junit.Assert.fail;
  * Tests for {@link GeneratedWebResource}.
  */
 public class GeneratedWebResourceTest
-    extends TestSupport
 {
   private GeneratedWebResource underTest;
 

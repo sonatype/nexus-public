@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.security.internal;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 
@@ -30,9 +29,11 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class VariableResolverAdapterManagerImplTest
-    extends TestSupport
 {
   @Mock
   private VariableResolverAdapter specializedAdapter;

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.cleanup.datastore.search.criteria.AssetCleanupEvaluator;
 import org.sonatype.nexus.cleanup.datastore.search.criteria.ComponentCleanupEvaluator;
 import org.sonatype.nexus.cleanup.internal.storage.CleanupPolicyData;
@@ -38,7 +37,9 @@ import com.google.common.collect.ForwardingCollection;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -50,8 +51,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class DefaultCleanupComponentBrowseTest
-    extends Test5Support
+
 {
   @Mock
   private Repository repository;

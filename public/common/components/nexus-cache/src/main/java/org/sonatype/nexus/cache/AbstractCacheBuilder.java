@@ -16,8 +16,8 @@ import java.util.function.BiConsumer;
 
 import javax.cache.configuration.Factory;
 import javax.cache.expiry.ExpiryPolicy;
-
-import org.sonatype.goodies.common.ComponentSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstracts cache builder to contain all of the getters/setters
@@ -25,9 +25,10 @@ import org.sonatype.goodies.common.ComponentSupport;
  * @since 3.14
  */
 public abstract class AbstractCacheBuilder<K, V>
-    extends ComponentSupport
     implements CacheBuilder<K, V>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected String name;
 
   protected Factory<? extends ExpiryPolicy> expiryFactory;

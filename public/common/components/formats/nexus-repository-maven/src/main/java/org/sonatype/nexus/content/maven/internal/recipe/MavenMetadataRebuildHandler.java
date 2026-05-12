@@ -15,13 +15,14 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 import javax.annotation.Nonnull;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -34,9 +35,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class MavenMetadataRebuildHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String PATH_PREFIX = "/";
 
   @Nonnull

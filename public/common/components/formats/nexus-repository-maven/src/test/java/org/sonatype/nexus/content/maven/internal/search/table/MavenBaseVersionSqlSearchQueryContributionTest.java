@@ -15,7 +15,6 @@ package org.sonatype.nexus.content.maven.internal.search.table;
 import java.util.Arrays;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.maven.internal.search.MavenSearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
@@ -34,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.content.maven.internal.search.table.MavenBaseVersionSqlSearchQueryContribution.BASE_VERSION;
 
 public class MavenBaseVersionSqlSearchQueryContributionTest
-    extends TestSupport
+
 {
   private MavenBaseVersionSqlSearchQueryContribution underTest;
 

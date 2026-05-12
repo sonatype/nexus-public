@@ -14,10 +14,11 @@ package org.sonatype.nexus.repository.view.matchers;
 
 import java.util.List;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Matcher;
 import org.sonatype.nexus.repository.view.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -29,9 +30,10 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public class ActionMatcher
-    extends ComponentSupport
     implements Matcher
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final List<String> allowedActions;
 
   public ActionMatcher(final String... allowedActions) {

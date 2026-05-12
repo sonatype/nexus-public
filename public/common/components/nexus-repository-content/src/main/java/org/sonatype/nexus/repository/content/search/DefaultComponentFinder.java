@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.util.Optional.empty;
@@ -37,9 +38,10 @@ import static java.util.Optional.empty;
 @Singleton
 @Qualifier("default")
 public class DefaultComponentFinder
-    extends ComponentSupport
     implements ComponentFinder
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public Stream<FluentComponent> findComponentsByModel(
       final Repository repository,

@@ -18,12 +18,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SearchMappingService;
-import org.sonatype.nexus.repository.search.sql.query.syntax.*;
+import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
+import org.sonatype.nexus.repository.search.sql.query.syntax.LenientTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SingleValueTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
+import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
+import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
+import org.sonatype.nexus.repository.search.sql.query.syntax.Term;
+import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
+import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.junit.Before;
@@ -37,7 +46,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DefaultSqlSearchQueryContributionTest
-    extends TestSupport
 {
   private static final String GROUP_RAW = "group.raw";
 
@@ -85,8 +93,8 @@ public class DefaultSqlSearchQueryContributionTest
     assertThat(split("foo?*"), contains(new WildcardTerm("foo")));
     assertThat(split("foo?"), contains(new WildcardTerm("foo")));
     assertThat(split("foo*bar*ddd"),
-        contains(new WildcardTerm("foo"), new WildcardTerm("bar"), new ExactTerm("ddd")));
-    assertThat(split("foo?bar"), contains(new WildcardTerm("foo"), new ExactTerm("bar")));
+        contains(new WildcardTerm("foo"), new WildcardTerm("bar"), new LenientTerm("ddd")));
+    assertThat(split("foo?bar"), contains(new WildcardTerm("foo"), new LenientTerm("bar")));
 
     // escaped wildcards - these should be ExactTerm since group field now uses exact matching
     assertThat(split("foo\\*bar"), contains(new ExactTerm("foo*bar")));

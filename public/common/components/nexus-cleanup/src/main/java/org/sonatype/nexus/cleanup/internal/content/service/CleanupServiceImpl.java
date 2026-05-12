@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory;
 import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
@@ -42,6 +41,8 @@ import org.sonatype.nexus.repository.types.GroupType;
 
 import com.google.common.base.Predicates;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
@@ -55,9 +56,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class CleanupServiceImpl
-    extends ComponentSupport
     implements CleanupService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String CLEANUP_ATTRIBUTES_KEY = "cleanup";
 
   public static final String CLEANUP_NAME_KEY = "policyName";

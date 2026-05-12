@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.security.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.internal.AuthenticatingRealmImpl;
@@ -27,9 +26,11 @@ import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultUserHealthCheckTest
-    extends TestSupport
 {
   @Mock
   private RealmManager realmManager;

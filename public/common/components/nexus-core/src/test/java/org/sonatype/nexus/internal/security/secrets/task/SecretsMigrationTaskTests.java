@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.security.secrets.task;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.secrets.SecretsMigrator;
 
 import org.junit.Test;
@@ -25,7 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 public class SecretsMigrationTaskTests
-    extends TestSupport
 {
   @Test
   public void testTaskMigratesSeveralSources() throws Exception {

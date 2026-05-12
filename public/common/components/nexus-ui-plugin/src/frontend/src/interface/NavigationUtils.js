@@ -57,7 +57,22 @@ export function isVisible(visibilityRequirements) {
   } = visibilityRequirements;
 
   // check that all our expected global dependencies are in place
-  if (!hasValidDependencies()) {
+  // If ExtJS isn't ready yet, check for session cookie to determine visibility
+  const depsValid = hasValidDependencies();
+  if (!depsValid) {
+    // If no visibility requirements exist, allow the route (for login, etc.)
+    const hasAnyRequirements = bundle || licenseValid || statesEnabled || permissions ||
+                                requiresAnyPermission || permissionPrefix || permissionPrefixes ||
+                                capability || editions || requiresUser ||
+                                browseableFormat || notClustered || anonymousAccessOrHasUser;
+    if (!hasAnyRequirements) {
+      return true;
+    }
+    // CRITICAL FIX for debug mode refresh: If user has session cookie, assume they're authorized
+    // until ExtJS loads and can properly check permissions. This prevents logout on refresh.
+    if (document.cookie.includes('NXSESSIONID')) {
+      return true;
+    }
     return false;
   }
 
@@ -66,77 +81,63 @@ export function isVisible(visibilityRequirements) {
 
   // hide this route on HA
   if (notClustered && isClustered()) {
-    console.debug("notClustered=true; isClustered=true", bundle);
     return false;
   }
 
   if (bundle && !Application.bundleActive(bundle)) {
     // check that the bundles required by the route are enabled
-    console.debug("bundleActive=false", bundle);
-
     return false;
   }
 
   // check that all licenses required by this are present
   if (licenseValid && !areAllRequiredLicensesPresent(licenseValid)) {
-    console.debug("licenseValid=false", licenseValid);
     return false;
   }
 
   // check that all required statesEnabled for this route are present
   if (statesEnabled && !areAllRequiredStatesEnabled(statesEnabled)) {
-    console.debug("statesEnabled=false", statesEnabled);
     return false;
   }
 
   // check that all required permissions are present
   if (permissions && !areAllRequiredPermissionsPresent(permissions)) {
-    console.debug('permissions=false', permissions);
     return false
   }
 
   // check that at least one of the listed permissions is present
   if (requiresAnyPermission && !hasAnyOfTheRequiredPermissions(requiresAnyPermission)) {
-    console.debug('requiresAnyPermission=false', requiresAnyPermission);
     return false;
   }
 
   if (permissionPrefix && !hasAnyPermissionWithPrefix(permissionPrefix)) {
-    console.debug('permissionPrefix=false', permissionPrefix);
     return false;
   }
 
   // check that user has ANY permission matching at least one of the prefixes
   if (permissionPrefixes && !hasAnyPermissionWithAnyPrefix(permissionPrefixes)) {
-    console.debug('permissionPrefixes=false', permissionPrefixes);
     return false;
   }
 
   // check that edition requirements are met, i.e. must be PRO or COMMUNITY
   if (editions && !meetsEditionRequirement(editions)) {
-    console.debug('editions=false', editions);
     return false;
   }
 
   // check if the required capability is enabled and active
   if (capability && !isTheRequiredCapabilityPresentAndActive(capability)) {
-    console.debug('capability=false', editions);
     return false;
   }
 
   if (requiresUser && !Security.hasUser()) {
-    console.debug('requiresUser=false', requiresUser);
     return false
   }
 
   if (browseableFormat && !isFormatBrowseable(browseableFormat)) {
-    console.debug('browseableFormat=false', browseableFormat);
     return false;
   }
 
   if (anonymousAccessOrHasUser &&
       !(!!NX.State.getValue('anonymousUsername') || Security.hasUser())) {
-    console.debug('anonymousAccessOrHasUser=false', anonymousAccessOrHasUser);
     return false;
   }
 
@@ -166,9 +167,6 @@ function areAllRequiredStatesEnabled(statesEnabled) {
 function areAllRequiredPermissionsPresent(permissions) {
   return permissions.every((permission) => {
     const hasPermission = NX.Permissions.check(permission);
-    if (!hasPermission) {
-      console.debug(`permission ${permission} was not present`);
-    }
     return hasPermission;
   });
 }
@@ -182,18 +180,15 @@ function areAllRequiredPermissionsPresent(permissions) {
  */
 function hasAnyOfTheRequiredPermissions(permissions) {
   if (!NX.Permissions) {
-    console.debug('NX.Permissions not available');
     return false;
   }
 
   for (const permission of permissions) {
     if (NX.Permissions.check(permission)) {
-      console.debug(`Found required permission: ${permission}`);
       return true;
     }
   }
 
-  console.debug('None of the required permissions were found:', permissions);
   return false;
 }
 
@@ -206,7 +201,6 @@ function hasAnyOfTheRequiredPermissions(permissions) {
  */
 function hasAnyPermissionWithPrefix(prefix) {
   if (!NX.Permissions || !NX.Permissions.permissions) {
-    console.debug(`NX.Permissions or NX.Permissions.permissions not available`);
     return false;
   }
 
@@ -215,12 +209,10 @@ function hasAnyPermissionWithPrefix(prefix) {
   // Check if any permission starts with the prefix and is permitted
   for (const permission in permissions) {
     if (permission.startsWith(prefix) && permissions[permission] === true) {
-      console.debug(`Found permission with prefix ${prefix}: ${permission}`);
       return true;
     }
   }
 
-  console.debug(`No permissions found with prefix: ${prefix}`);
   return false;
 }
 
@@ -234,24 +226,20 @@ function hasAnyPermissionWithPrefix(prefix) {
  */
 function hasAnyPermissionWithAnyPrefix(prefixes) {
   if (!prefixes || prefixes.length === 0) {
-    console.debug('No prefixes provided');
     return false;
   }
 
   if (!NX.Permissions || !NX.Permissions.permissions) {
-    console.debug('NX.Permissions or NX.Permissions.permissions not available');
     return false;
   }
 
   // Check if any permission matches any of the prefixes
   for (const prefix of prefixes) {
     if (hasAnyPermissionWithPrefix(prefix)) {
-      console.debug(`Found permission matching one of the prefixes: ${prefix}`);
       return true;
     }
   }
 
-  console.debug('No permissions found with any of the prefixes:', prefixes);
   return false;
 }
 
@@ -276,11 +264,7 @@ function isTheRequiredCapabilityPresentAndActive(capability) {
 
 function meetsEditionRequirement(editions) {
   return editions.some((edition) => {
-    const hasEdition = NX.State.getEdition() === edition;
-    if (hasEdition) {
-      console.debug(`edition ${edition} found`);
-    }
-    return hasEdition;
+    return NX.State.getEdition() === edition;
   });
 }
 
@@ -294,24 +278,7 @@ function hasValidDependencies() {
   const Permissions = NX.Permissions;
   const Security = NX.Security;
 
-  if (!Application) {
-    console.warn('could not determine visibility of menu items without Ext JS Application');
-    return false;
-  }
-  if (!State) {
-    console.warn('could not determine visibility of menu items without NX State');
-    return false;
-  }
-  if (!Permissions) {
-    console.warn('could not determine visibility of menu items without NX Permissions');
-    return false;
-  }
-  if (!Security) {
-    console.warn('could not determine visibility of menu items without NX Security');
-    return false;
-  }
-
-  return true;
+  return !!(Application && State && Permissions && Security);
 }
 
 export function useIsVisible(visibilityRequirements) {

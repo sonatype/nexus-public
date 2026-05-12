@@ -1,0 +1,79 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.ssl-certificates-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+
+  &__source-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 16px);
+  }
+
+  &__radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2, 8px);
+  }
+
+  &__radio-label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3, 12px);
+    cursor: pointer;
+    padding: var(--space-2, 8px);
+    border-radius: var(--radius-2, 6px);
+    transition: background-color 0.15s;
+
+    &:hover {
+      background: var(--gray-2, #fafafa);
+    }
+
+    [data-theme='dark'] &:hover {
+      background: var(--gray-3, #27272b);
+    }
+  }
+
+  &__radio-input {
+    margin-top: 4px;
+    cursor: pointer;
+    accent-color: var(--accent-9, #0091ff);
+  }
+
+  &__radio-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1, 4px);
+    flex: 1;
+  }
+
+  &__radio-description {
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__field {
+    margin-top: var(--space-3, 12px);
+    margin-left: var(--space-8, 32px);
+  }
+
+  &__alerts {
+    margin-bottom: var(--space-4, 16px);
+  }
+}
+

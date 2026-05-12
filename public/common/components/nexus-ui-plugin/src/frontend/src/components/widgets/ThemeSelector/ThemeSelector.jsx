@@ -18,6 +18,7 @@ import {faMoon, faSun} from "@fortawesome/free-solid-svg-icons";
 export function ThemeSelector() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const themeIcon = theme === 'dark' ? faMoon : faSun;
+  const themeTitle = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
 
   useEffect(() => {
     document.documentElement.classList.add('nx-html--enable-color-schemes');
@@ -37,6 +38,8 @@ export function ThemeSelector() {
   }
 
   return (
-      <NxButton variant="icon-only" onClick={toggleTheme}><NxFontAwesomeIcon icon={themeIcon}/></NxButton>
+      <NxButton variant="icon-only" title={themeTitle} onClick={toggleTheme}>
+        <NxFontAwesomeIcon icon={themeIcon}/>
+      </NxButton>
   );
 }

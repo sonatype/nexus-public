@@ -15,13 +15,13 @@ package org.sonatype.nexus.extjs;
 import java.io.File;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -33,8 +33,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Tests for {@link ClassDefScanner}.
  */
 public class ClassDefScannerTest
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(ClassDefScannerTest.class);
+
   private ClassDefScanner scanner;
 
   @Before
@@ -55,11 +56,11 @@ public class ClassDefScannerTest
     files.setIncludes(new String[]{"**/*.js"});
 
     List<ClassDef> classes = scanner.scan(files);
-    log("Classes:");
+    log.info("Classes:");
     for (ClassDef def : classes) {
-      log("  {} [priority: {}]", def.getName(), def.getPriority());
+      log.info("  {} [priority: {}]", def.getName(), def.getPriority());
       for (String dep : def.getDependencies()) {
-        log("    + {}", dep);
+        log.info("    + {}", dep);
       }
     }
     return classes;
@@ -67,7 +68,7 @@ public class ClassDefScannerTest
 
   @Test
   public void basicOrder() throws Exception {
-    File basedir = util.resolveFile("src/test/resources/basic");
+    File basedir = new File("src/test/resources/basic");
     List<ClassDef> classes = scan(basedir);
 
     assertThat(classes, hasSize(3));
@@ -86,7 +87,7 @@ public class ClassDefScannerTest
 
   @Test
   public void priorityOrder() throws Exception {
-    File basedir = util.resolveFile("src/test/resources/priority");
+    File basedir = new File("src/test/resources/priority");
     List<ClassDef> classes = scan(basedir);
 
     assertThat(classes, hasSize(5));
@@ -112,7 +113,7 @@ public class ClassDefScannerTest
 
   @Test
   public void altClassNameOrder() throws Exception {
-    File basedir = util.resolveFile("src/test/resources/altclassname");
+    File basedir = new File("src/test/resources/altclassname");
     List<ClassDef> classes = scan(basedir);
 
     assertThat(classes, hasSize(3));
@@ -133,7 +134,7 @@ public class ClassDefScannerTest
 
   @Test
   public void mvcOrder() throws Exception {
-    File basedir = util.resolveFile("src/test/resources/mvc");
+    File basedir = new File("src/test/resources/mvc");
     scanner.setNamespace("Test");
     List<ClassDef> classes = scan(basedir);
 

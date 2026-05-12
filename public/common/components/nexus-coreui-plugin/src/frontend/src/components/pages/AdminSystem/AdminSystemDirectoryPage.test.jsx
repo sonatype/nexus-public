@@ -60,11 +60,11 @@ describe('AdminSystemDirectoryPage', () => {
 
       await renderComponentRoute(ROUTE_NAMES.ADMIN.SYSTEM.DIRECTORY);
 
-      const extJsLink = screen.getAllByRole('link', { name: 'Capabilities' })[0];
+      const extJsLink = screen.getAllByRole('link', { name: /^Capabilities\b/ })[0];
       expect(extJsLink).toBeVisible();
       expect(extJsLink.href).toContain('/#admin/system/capabilities-extjs');
 
-      const reactLink = screen.getAllByRole('link', { name: 'Capabilities' })[1];
+      const reactLink = screen.getAllByRole('link', { name: /^Capabilities\b/ })[1];
       expect(reactLink).toBeVisible();
       expect(reactLink.href).toContain('/#admin/system/capabilities');
     });
@@ -87,12 +87,13 @@ describe('AdminSystemDirectoryPage', () => {
 
       await renderComponentRoute(ROUTE_NAMES.ADMIN.SYSTEM.DIRECTORY);
 
-      const links = screen.getAllByRole('link', { name: 'Capabilities' });
-      expect(links).toHaveLength(1);
-
-      const extJsLink = links[0];
-      expect(extJsLink).toBeVisible();
-      expect(extJsLink.href).toContain('/#admin/system/capabilities-extjs');
+      const links = screen.getAllByRole('link', { name: /^Capabilities\b/ });
+      // Expect nav sidebar link + content list link (both extjs since react is disabled)
+      expect(links).toHaveLength(2);
+      links.forEach(link => {
+        expect(link).toBeVisible();
+        expect(link.href).toContain('/#admin/system/capabilities-extjs');
+      });
     });
 
     it('does not render ExtJs link when ExtJs feature flag is disabled', async () => {
@@ -105,12 +106,14 @@ describe('AdminSystemDirectoryPage', () => {
 
       await renderComponentRoute(ROUTE_NAMES.ADMIN.SYSTEM.DIRECTORY);
 
-      const links = screen.getAllByRole('link', { name: 'Capabilities' });
-      expect(links).toHaveLength(1);
-
-      const reactLink = links[0];
-      expect(reactLink).toBeVisible();
-      expect(reactLink.href).toContain('/#admin/system/capabilities');
+      const links = screen.getAllByRole('link', { name: /^Capabilities\b/ });
+      // Expect nav sidebar link + content list link (both react since extjs is disabled)
+      expect(links).toHaveLength(2);
+      links.forEach(link => {
+        expect(link).toBeVisible();
+        expect(link.href).toContain('/#admin/system/capabilities');
+        expect(link.href).not.toContain('capabilities-extjs');
+      });
     });
 
     it('does not render any link when both ExtJs and React feature flag is disabled', async () => {

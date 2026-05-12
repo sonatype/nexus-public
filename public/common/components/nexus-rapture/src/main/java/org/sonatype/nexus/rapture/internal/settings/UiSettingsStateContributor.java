@@ -18,11 +18,12 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.rapture.UiSettingsManager;
 
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -35,9 +36,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class UiSettingsStateContributor
-    extends ComponentSupport
     implements StateContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String STATE_ID = "uiSettings";
 
   private final UiSettingsManager rapture;

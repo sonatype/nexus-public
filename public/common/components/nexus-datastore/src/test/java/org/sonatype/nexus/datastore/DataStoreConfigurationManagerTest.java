@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
 import org.junit.Before;
@@ -40,12 +39,14 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * {@link DataStoreConfigurationManager} tests.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DataStoreConfigurationManagerTest
-    extends TestSupport
 {
   @Mock
   private List<DataStoreConfigurationSource> configurationSources;

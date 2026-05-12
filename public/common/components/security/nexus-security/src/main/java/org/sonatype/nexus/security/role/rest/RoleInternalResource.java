@@ -23,7 +23,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -32,6 +31,8 @@ import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -45,9 +46,10 @@ import org.springframework.stereotype.Component;
 @Produces(APPLICATION_JSON)
 @Path(RoleInternalResource.RESOURCE_PATH)
 public class RoleInternalResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String RESOURCE_PATH = "internal/ui/roles";
 
   private final SecuritySystem securitySystem;

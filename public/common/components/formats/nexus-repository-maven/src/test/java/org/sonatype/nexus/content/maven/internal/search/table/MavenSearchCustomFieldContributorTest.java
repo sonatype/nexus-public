@@ -14,7 +14,6 @@ package org.sonatype.nexus.content.maven.internal.search.table;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
@@ -23,7 +22,9 @@ import org.sonatype.nexus.repository.search.sql.SearchRecord;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mockito;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -32,8 +33,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenSearchCustomFieldContributorTest
-    extends TestSupport
+
 {
   @Mock
   private Component component;

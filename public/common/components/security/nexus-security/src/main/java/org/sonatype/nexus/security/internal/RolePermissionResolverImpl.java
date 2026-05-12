@@ -24,7 +24,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
@@ -46,6 +45,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -57,9 +58,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Qualifier("default")
 @Singleton
 public class RolePermissionResolverImpl
-    extends ComponentSupport
     implements RolePermissionResolver
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SecurityConfigurationManager configuration;
 
   private final List<PrivilegeDescriptor> privilegeDescriptors;

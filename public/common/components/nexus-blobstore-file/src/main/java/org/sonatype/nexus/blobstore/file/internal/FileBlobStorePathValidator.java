@@ -30,7 +30,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.codahale.metrics.health.HealthCheck;

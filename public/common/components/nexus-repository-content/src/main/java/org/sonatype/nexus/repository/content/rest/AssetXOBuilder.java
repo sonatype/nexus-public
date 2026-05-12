@@ -154,6 +154,7 @@ public class AssetXOBuilder
         .entrySet()
         .stream()
         .filter(entry -> exposedAttributeKeys.contains(entry.getKey()))
+        .filter(entry -> entry.getValue() != null)
         .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
     return Collections.singletonMap(format, exposedAttributes);

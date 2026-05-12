@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.config.internal.datastore;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.MissingRepositoryException;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationCreatedEvent;
@@ -31,9 +30,11 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ConfigurationSubscriberTest
-    extends TestSupport
 {
   private static final String TEST_REPO_NAME = "test-repo";
 

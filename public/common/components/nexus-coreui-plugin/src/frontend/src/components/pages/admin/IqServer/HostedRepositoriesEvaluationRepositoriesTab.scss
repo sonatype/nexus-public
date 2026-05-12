@@ -19,6 +19,26 @@
       margin-bottom: 0;
     }
   }
+
+  .repository-name-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-spacing-2x);
+
+    .custom-config-tag {
+      &::before {
+        display: none;
+      }
+
+      .nx-small-tag__text {
+        background-color: var(--nx-swatch-blue-95);
+        border: 1px solid var(--nx-color-interactive-border-focus);
+        border-radius: 16px;
+        box-sizing: content-box;
+        color: var(--nx-color-text);
+      }
+    }
+  }
 }
 
 .nx-modal .nx-modal-header {

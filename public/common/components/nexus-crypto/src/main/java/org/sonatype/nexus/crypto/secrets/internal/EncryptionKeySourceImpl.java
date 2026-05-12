@@ -20,7 +20,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.secrets.EncryptionKeyValidator;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.FixedEncryption;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
@@ -28,6 +27,8 @@ import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryp
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.SECRETS_FILE;
@@ -42,9 +43,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class EncryptionKeySourceImpl
-    extends ComponentSupport
     implements EncryptionKeySource, EncryptionKeyValidator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ObjectMapper objectMapper;
 
   private final String secretsFilePath;

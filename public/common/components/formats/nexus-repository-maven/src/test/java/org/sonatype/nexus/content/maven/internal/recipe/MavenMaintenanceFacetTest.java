@@ -13,7 +13,6 @@
 
 package org.sonatype.nexus.content.maven.internal.recipe;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -27,7 +26,9 @@ import org.sonatype.nexus.repository.maven.MavenPath;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Optional.empty;
@@ -38,8 +39,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenMaintenanceFacetTest
-    extends TestSupport
+
 {
   @Mock
   private Repository repository;

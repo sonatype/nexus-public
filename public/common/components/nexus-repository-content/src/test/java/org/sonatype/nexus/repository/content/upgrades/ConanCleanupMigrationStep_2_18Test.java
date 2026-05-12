@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.upgrades;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Rule;
@@ -33,7 +32,6 @@ import static org.sonatype.nexus.repository.content.upgrades.ConanCleanupMigrati
 import static org.sonatype.nexus.repository.content.upgrades.ConanCleanupMigrationStep_2_18.TABLE_NAME;
 
 public class ConanCleanupMigrationStep_2_18Test
-    extends TestSupport
 {
   private static final String NEW_INDEX_NAME = "idx_conan_component_coordinates";
 

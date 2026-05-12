@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.jwt;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.security.jwt.SecretStore;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
@@ -22,13 +21,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class JwtSecretApiResourceTest
-    extends Test5Support
 {
   @Mock
   private SecretStore secretStore;

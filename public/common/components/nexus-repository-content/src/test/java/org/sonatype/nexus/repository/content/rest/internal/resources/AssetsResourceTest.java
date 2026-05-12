@@ -21,7 +21,6 @@ import java.util.stream.IntStream;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Format;
@@ -47,7 +46,9 @@ import org.sonatype.nexus.rest.Page;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Base64.getUrlEncoder;
 import static java.util.Collections.emptyList;
@@ -72,8 +73,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetsResourceTest
-    extends TestSupport
 {
   private static final String ASSET_PATH = "/junit/junit/4.12/junit-4.12.jar";
 

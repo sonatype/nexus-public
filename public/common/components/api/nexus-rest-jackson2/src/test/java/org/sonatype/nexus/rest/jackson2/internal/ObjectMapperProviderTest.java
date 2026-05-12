@@ -15,7 +15,6 @@ package org.sonatype.nexus.rest.jackson2.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +33,6 @@ import static org.junit.Assert.assertEquals;
  * Tests for {@link ObjectMapperProvider} to verify proper configuration of Jackson modules.
  */
 public class ObjectMapperProviderTest
-    extends TestSupport
 {
   private ObjectMapper objectMapper;
 

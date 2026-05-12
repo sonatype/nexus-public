@@ -11,14 +11,14 @@
     "watch": "rspack --config rspack.dev.js  --watch"
   },
   "dependencies": {
-    "@babel/runtime": "7.17.2",
+    "@babel/runtime": "7.26.10",
     "@fortawesome/fontawesome-svg-core": "1.2.25",
     "@fortawesome/free-solid-svg-icons": "5.11.2",
     "@fortawesome/react-fontawesome": "0.1.4",
     "@sonatype/react-shared-components": "14.0.3",
     "@xstate/inspect": "0.4.1",
-    "axios": "1.12.0",
-    "core-js": "3.28.0",
+    "axios": "1.15.0",
+    "core-js": "3.48.0",
     "luxon": "1.28.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",

@@ -25,6 +25,7 @@ Ext.define('NX.coreui.view.repository.recipe.CondaHosted', {
   requires: [
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.StorageFacetHosted',
+    'NX.coreui.view.repository.facet.EvaluationFacet',
     'NX.coreui.view.repository.facet.CleanupPolicyFacet'
   ],
 
@@ -39,6 +40,11 @@ Ext.define('NX.coreui.view.repository.recipe.CondaHosted', {
       {xtype: 'nx-coreui-repository-storage-hosted-facet', writePolicy: 'ALLOW'},
       {xtype: 'nx-coreui-repository-cleanup-policy-facet'}
     ];
+
+    // Only add evaluation facet if feature is enabled
+    if (NX.State.getValue('hostedRepositoryEvaluationEnabled')) {
+      me.items.splice(me.items.length - 1, 0, {xtype: 'nx-coreui-repository-evaluation-facet'});
+    }
 
     me.callParent();
   }

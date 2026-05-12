@@ -13,7 +13,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {FormUtils, UseNexusTruststore} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
   NxFieldset,
@@ -120,6 +120,11 @@ export default function OAuth2Configuration() {
                   onBlur={FormUtils.trimOnBlur('idpJwksUrl', send)}
               />
             </NxFormGroup>
+            <UseNexusTruststore
+                remoteUrl={current.context.data?.idpTokenUrl}
+                {...FormUtils.checkboxProps('useTrustStore', current)}
+                onChange={FormUtils.handleUpdate('useTrustStore', send)}
+            />
           </NxFieldset>
 
           <NxFieldset label={LABELS.CLAIM_MAPPINGS} isRequired>

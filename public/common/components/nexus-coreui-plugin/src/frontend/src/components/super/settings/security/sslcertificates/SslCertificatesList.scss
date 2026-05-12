@@ -1,0 +1,290 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.ssl-certificates-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+
+  &__filters {
+    margin-bottom: var(--space-2, 8px);
+  }
+
+  &__search {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+
+    &-icon {
+      position: absolute;
+      left: var(--space-3, 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-9, #71717a);
+      pointer-events: none;
+    }
+
+    &-input {
+      width: 100%;
+      padding: var(--space-2, 8px) var(--space-2, 8px) var(--space-2, 8px) var(--space-8, 32px);
+      border: 1px solid var(--gray-6, #e4e4e7);
+      border-radius: var(--radius-2, 6px);
+      font-size: var(--font-size-2, 14px);
+      background: var(--color-background, #fff);
+      color: var(--color-text-primary, #1a1a1a);
+
+      &:focus {
+        outline: none;
+        border-color: var(--accent-9, #0091ff);
+        box-shadow: 0 0 0 2px var(--accent-3, #e0f2fe);
+      }
+
+      &::placeholder {
+        color: var(--gray-9, #71717a);
+      }
+
+      [data-theme='dark'] & {
+        background: var(--gray-2, #1a1a1d);
+        border-color: var(--gray-6, #3d3d43);
+        color: var(--gray-12, #edeef0);
+
+        &:focus {
+          border-color: var(--accent-9, #0091ff);
+        }
+      }
+    }
+  }
+
+  &__error {
+    padding: var(--space-3, 12px);
+    background: var(--red-2, #fff1f2);
+    border: 1px solid var(--red-6, #fecdd3);
+    border-radius: var(--radius-2, 6px);
+    color: var(--red-11, #be123c);
+
+    [data-theme='dark'] & {
+      background: var(--red-3, #1f1315);
+      border-color: var(--red-7, #b91c1c);
+      color: var(--red-10, #f87171);
+    }
+  }
+
+  &__loading {
+    padding: var(--space-6, 24px);
+    gap: var(--space-3, 12px);
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+    color: var(--accent-9, #0091ff);
+  }
+
+  &__empty {
+    padding: var(--space-6, 24px);
+    text-align: center;
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--gray-6, #e4e4e7);
+    border-radius: var(--radius-3, 8px);
+    background: var(--color-background, #fff);
+
+    [data-theme='dark'] & {
+      background: var(--gray-2, #1a1a1d);
+      border-color: var(--gray-6, #3d3d43);
+    }
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  &__th {
+    padding: var(--space-3, 12px);
+    text-align: left;
+    font-weight: 600;
+    font-size: var(--font-size-2, 14px);
+    color: var(--gray-12, #18181b);
+    border-bottom: 1px solid var(--gray-6, #e4e4e7);
+    background: var(--gray-2, #fafafa);
+
+    [data-theme='dark'] & {
+      background: var(--gray-3, #27272b);
+      color: var(--gray-12, #edeef0);
+      border-bottom-color: var(--gray-6, #3d3d43);
+    }
+
+    &--sortable {
+      cursor: pointer;
+      user-select: none;
+
+      &:hover {
+        background: var(--gray-3, #f4f4f5);
+
+        [data-theme='dark'] & {
+          background: var(--gray-4, #3f3f46);
+        }
+      }
+    }
+  }
+
+  &__sort-icon {
+    color: var(--gray-9, #71717a);
+    flex-shrink: 0;
+
+    &--inactive {
+      opacity: 0.4;
+    }
+
+    [data-theme='dark'] & {
+      color: var(--gray-10, #a1a1aa);
+    }
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background-color 0.15s;
+
+    &:hover {
+      background: var(--gray-2, #fafafa);
+    }
+
+    [data-theme='dark'] &:hover {
+      background: var(--gray-3, #27272b);
+    }
+
+    &--expired {
+      opacity: 0.6;
+      background: var(--red-1, #fff1f2);
+
+      [data-theme='dark'] & {
+        background: var(--red-2, #1f1315);
+      }
+    }
+
+    &--expiring {
+      background: var(--amber-1, #fffbeb);
+
+      [data-theme='dark'] & {
+        background: var(--amber-2, #1c1917);
+      }
+    }
+  }
+
+  &__td {
+    padding: var(--space-3, 12px);
+    border-bottom: 1px solid var(--gray-4, #e8e8eb);
+    font-size: var(--font-size-2, 14px);
+    color: var(--gray-12, #18181b);
+
+    [data-theme='dark'] & {
+      border-bottom-color: var(--gray-4, #27272b);
+      color: var(--gray-12, #edeef0);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &--action {
+      width: 40px;
+      text-align: right;
+    }
+  }
+
+  &__fingerprint {
+    font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__row-edit-icon {
+    color: var(--gray-9, #71717a);
+
+    [data-theme='dark'] & {
+      color: var(--gray-10, #a1a1aa);
+    }
+  }
+
+  &__help {
+    margin-top: var(--space-4, 16px);
+    padding: var(--space-4, 16px);
+    background: var(--blue-2, #eff6ff);
+    border: 1px solid var(--blue-6, #bfdbfe);
+    border-radius: var(--radius-3, 8px);
+
+    [data-theme='dark'] & {
+      background: var(--blue-3, #1e3a5f);
+      border-color: var(--blue-7, #3b82f6);
+    }
+  }
+
+  &__help-header {
+    margin-bottom: var(--space-2, 8px);
+    color: var(--blue-11, #1e40af);
+
+    [data-theme='dark'] & {
+      color: var(--blue-10, #60a5fa);
+    }
+  }
+
+  &__help-text {
+    color: var(--blue-11, #1e40af);
+    line-height: 1.6;
+
+    [data-theme='dark'] & {
+      color: var(--blue-10, #60a5fa);
+    }
+  }
+
+  &__help-link {
+    color: var(--blue-11, #1e40af);
+    text-decoration: underline;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1, 4px);
+
+    &:hover {
+      color: var(--blue-12, #1e3a8a);
+    }
+
+    [data-theme='dark'] & {
+      color: var(--blue-10, #60a5fa);
+
+      &:hover {
+        color: var(--blue-9, #93c5fd);
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+

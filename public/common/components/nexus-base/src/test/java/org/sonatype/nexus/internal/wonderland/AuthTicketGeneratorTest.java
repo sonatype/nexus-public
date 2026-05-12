@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.internal.wonderland;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.RandomBytesGeneratorImpl;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -24,14 +25,15 @@ import static org.junit.Assert.assertNotNull;
  * Tests for {@link AuthTicketGenerator}.
  */
 public class AuthTicketGeneratorTest
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(AuthTicketGeneratorTest.class);
+
   @Test
   public void generateWithDefault() {
     AuthTicketGenerator generator =
         new AuthTicketGenerator(new RandomBytesGeneratorImpl(new CryptoHelperImpl(false)), 16);
     String token = generator.generate();
-    log(token);
+    log.info(token);
     assertNotNull(token);
   }
 
@@ -39,7 +41,7 @@ public class AuthTicketGeneratorTest
     AuthTicketGenerator generator =
         new AuthTicketGenerator(new RandomBytesGeneratorImpl(new CryptoHelperImpl(false)), 16);
     String token = generator.generate(size);
-    log(token);
+    log.info(token);
     assertNotNull(token);
   }
 

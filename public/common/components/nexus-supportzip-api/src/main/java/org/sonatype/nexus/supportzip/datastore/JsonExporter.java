@@ -27,7 +27,6 @@ import java.util.Optional;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapDeserializer;
@@ -43,6 +42,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS;
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
@@ -59,8 +60,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class JsonExporter
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private static final String EMPTY_JSON = "{}";

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.math;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,7 +21,7 @@ import static org.hamcrest.Matchers.is;
  * Tests for {@link Math2}
  */
 public class Math2Test
-    extends TestSupport
+
 {
   @Test
   public void testAddClamped() {

@@ -16,17 +16,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class WildcardPermission2Test
-    extends TestSupport
 {
   private static final List<String> SUB_PARTS = asList("subPart1", "subPart2");
 

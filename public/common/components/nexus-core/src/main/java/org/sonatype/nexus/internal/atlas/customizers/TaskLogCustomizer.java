@@ -17,13 +17,14 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.logging.task.TaskLogHome;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.time.Instant.ofEpochMilli;
 import static org.apache.commons.io.FileUtils.iterateFiles;
@@ -39,9 +40,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class TaskLogCustomizer
-    extends ComponentSupport
     implements SupportBundleCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String[] extensions = new String[]{"log"};
 
   @Override

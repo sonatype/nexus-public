@@ -1,0 +1,91 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.nxrm-quick-action-card {
+  cursor: pointer;
+  height: 80px;
+  min-width: 265px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: var(--color-surface-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--accent-8);
+    outline-offset: 2px;
+  }
+
+  .nxrm-quick-action-body {
+    display: grid;
+    grid-template-columns: 84px 1fr 36px;
+    align-items: center;
+    height: 100%;
+
+    .nxrm-quick-action-logo {
+      margin: auto;
+
+      .nxrm-quick-action-icon-container {
+        background-image: linear-gradient(270deg, rgba(0, 184, 145, 1) 0%, rgba(0, 189, 111, 1) 100%);
+        color: var(--color-text-contrast);
+        border-radius: 50%;
+        height: 48px;
+        width: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    }
+
+    .nxrm-quick-action-name {
+      font-family: var(--nx-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+
+      .nxrm-quick-action-title {
+        margin: 0 0 4px 0;
+      }
+
+      .nxrm-quick-action-subtitle {
+        margin: 0;
+      }
+    }
+
+    .nxrm-quick-action-chevron {
+      font-size: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--color-text-tertiary);
+    }
+  }
+}
+
+.nxrm-outreach-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: var(--space-4, 1rem);
+  row-gap: var(--space-6, 1.5rem);
+  width: 100%;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nxrm-quick-action-card {
+  // Override min-width for grid layout
+  min-width: 0;
+  flex: 1;
+}
+

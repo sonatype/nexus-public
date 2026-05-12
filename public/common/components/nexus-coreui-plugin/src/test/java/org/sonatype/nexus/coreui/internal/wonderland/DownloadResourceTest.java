@@ -16,7 +16,6 @@ import java.io.IOException;
 
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.common.wonderland.DownloadService;
 import org.sonatype.nexus.common.wonderland.DownloadService.Download;
@@ -26,6 +25,7 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
@@ -34,11 +34,11 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class DownloadResourceTest
-    extends Test5Support
 {
   @Mock
   private DownloadService downloadService;

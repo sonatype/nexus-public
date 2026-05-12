@@ -24,7 +24,8 @@ import {mergeDeepRight, indexBy, prop} from 'ramda';
 import {
   isIqServerEnabled,
   canReadFirewallStatus,
-  canUpdateHealthCheck
+  canUpdateHealthCheck,
+  hasFirewall
 } from './IQServerColumns/IQServerHelpers';
 
 const {
@@ -234,7 +235,9 @@ export default ListMachineUtils.buildListMachine({
     }
   },
   guards: {
-    shouldRequestHealthCheck: () => canUpdateHealthCheck(),
+    // Only request health check if user has permission AND NOT (IQ enabled AND Firewall enabled)
+    // Health Check should be requested when: IQ is disabled OR IQ doesn't have Firewall
+    shouldRequestHealthCheck: () => canUpdateHealthCheck() && !(isIqServerEnabled() && hasFirewall()),
     shouldRequestFirewallStatus: () => isIqServerEnabled() && canReadFirewallStatus()
   }
 });

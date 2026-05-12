@@ -108,6 +108,15 @@ public class AptProxyFacet
   }
 
   @Override
+  protected String encodeUrl(final String url) {
+    // Only encode when EncodingHelper is not active (legacy mode)
+    if (getEncodingHelper() == null) {
+      return getEscapeHelper().uriSegments(url);
+    }
+    return url;
+  }
+
+  @Override
   public CacheController getCacheController(final Context context) {
     if (isDebPackageContentType(assetPath(context))) {
       return cacheControllerHolder.getContentCacheController();
@@ -145,7 +154,8 @@ public class AptProxyFacet
     CacheInfo cacheInfo = cacheController.current();
     Content oldVersion = facet(AptContentFacet.class).get(spec.path).orElse(null);
 
-    URI fetchUri = proxyFacet.getRemoteUrl().resolve(spec.path);
+    String encodedPath = getEscapeHelper().uriSegments(spec.path);
+    URI fetchUri = proxyFacet.getRemoteUrl().resolve(encodedPath);
     HttpGet getRequest = buildFetchRequest(oldVersion, fetchUri);
 
     HttpResponse response = httpClient.execute(getRequest);

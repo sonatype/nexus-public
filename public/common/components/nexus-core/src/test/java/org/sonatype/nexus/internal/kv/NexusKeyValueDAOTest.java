@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.kv.NexusKeyValue;
 import org.sonatype.nexus.kv.ValueType;
@@ -38,7 +37,6 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class NexusKeyValueDAOTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule()

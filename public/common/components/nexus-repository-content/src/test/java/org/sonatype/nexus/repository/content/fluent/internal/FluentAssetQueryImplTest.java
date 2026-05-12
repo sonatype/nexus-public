@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -25,7 +24,9 @@ import org.sonatype.nexus.repository.types.HostedType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -38,8 +39,8 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FluentAssetQueryImplTest
-    extends TestSupport
 {
   @Mock
   private ContentFacetSupport facet;

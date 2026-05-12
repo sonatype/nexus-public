@@ -19,7 +19,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -30,6 +29,8 @@ import org.sonatype.nexus.common.stateguard.Transitions;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryCacheSyncTokenEvent;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
@@ -47,9 +48,10 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STOPPED;
  * @since 3.0
  */
 public abstract class FacetSupport
-    extends ComponentSupport
     implements Facet, StateGuardAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected static final String CACHE_TOKEN_ATTRIBUTE = "cacheToken";
 
   private EventManager eventManager;
@@ -104,7 +106,7 @@ public abstract class FacetSupport
   }
 
   protected final StateGuard states = new StateGuard.Builder()
-      .logger(createLogger())
+      .logger(log)
       .initial(NEW)
       .failure(FAILED)
       .create();

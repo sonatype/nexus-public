@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Repository;
@@ -36,7 +35,9 @@ import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,8 +49,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class DeleteCleanupMethodTest
-    extends Test5Support
+
 {
   @Mock
   private Repository repository;

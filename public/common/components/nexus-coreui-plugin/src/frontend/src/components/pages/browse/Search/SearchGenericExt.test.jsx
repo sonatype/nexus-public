@@ -21,6 +21,13 @@ jest.mock( '../../../widgets/ExtJsContainer/useExtComponent', () => ({
   useExtComponent: jest.fn()
 }));
 
+// Phase 1: Mock ExtJS loader to return loaded state in tests
+jest.mock('../../../../utils/extJsLoader', () => ({
+  isExtJSLoaded: jest.fn(() => true),
+  loadExtJS: jest.fn(() => Promise.resolve()),
+  onExtJSLoad: jest.fn((callback) => callback())
+}));
+
 describe("SearchGenericExt", () => {
   let historySpy;
 
@@ -48,7 +55,7 @@ describe("SearchGenericExt", () => {
     expect(main).toBeVisible();
     const alert = within(main).getByRole('alert', { name: 'Malicious Components Found' })
     expect(alert).toBeVisible();
-    expect(within(alert).getByRole('heading', { name: '36 Malware Components Found'})).toBeVisible();
+    expect(within(alert).getByRole('heading', { name: '36 Malicious Packages Found'})).toBeVisible();
   });
 
   function givenExtJSState(values = getDefaultExtJSStateValues()) {

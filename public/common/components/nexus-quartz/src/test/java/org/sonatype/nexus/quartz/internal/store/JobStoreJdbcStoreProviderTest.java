@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.quartz.internal.store;
 
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.quartz.internal.AbstractJobStoreTest;
 import org.sonatype.nexus.quartz.internal.JobStoreJdbcProvider;
 import org.sonatype.nexus.quartz.internal.datastore.QuartzDAO;
@@ -20,10 +19,8 @@ import org.sonatype.nexus.quartz.internal.datastore.QuartzJobDataTypeHandler;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Rule;
-import org.junit.experimental.categories.Category;
 import org.quartz.spi.JobStore;
 
-@Category(SQLTestGroup.class)
 public class JobStoreJdbcStoreProviderTest
     extends AbstractJobStoreTest
 {

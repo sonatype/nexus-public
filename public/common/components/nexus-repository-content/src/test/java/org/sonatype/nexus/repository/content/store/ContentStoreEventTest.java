@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 
@@ -28,7 +27,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ContentStoreEventTest
-    extends TestSupport
 {
   @Test
   public void testToStringWithoutRepositorySupplier() {

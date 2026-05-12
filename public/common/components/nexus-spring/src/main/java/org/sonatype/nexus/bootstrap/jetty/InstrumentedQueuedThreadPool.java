@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.bootstrap.jetty;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.METRICS_INTERNAL_ENABLED;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
 /**
  * Extension of {@link io.dropwizard.metrics.jetty12.InstrumentedQueuedThreadPool} that restores the default
@@ -21,7 +25,16 @@ import com.codahale.metrics.SharedMetricRegistries;
 public final class InstrumentedQueuedThreadPool // NOSONAR
     extends io.dropwizard.metrics.jetty12.InstrumentedQueuedThreadPool
 {
+  private static final MetricRegistry NOOP_REGISTRY = new MetricRegistry();
+
   public InstrumentedQueuedThreadPool() {
-    super(SharedMetricRegistries.getOrCreate("nexus"));
+    super(resolveRegistry());
+  }
+
+  private static MetricRegistry resolveRegistry() {
+    if (Boolean.parseBoolean(System.getProperty(METRICS_INTERNAL_ENABLED, "true"))) {
+      return SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
+    }
+    return NOOP_REGISTRY;
   }
 }

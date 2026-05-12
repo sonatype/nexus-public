@@ -11,16 +11,203 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+/* Import Radix UI Themes CSS */
+@import '@radix-ui/themes/styles.css';
+
+/* Import theme variables (ux-standards) before design tokens */
+@import './styles/theme-variables.css';
+
+/* Import design tokens for Radix UI components */
+@import './styles/design-tokens.css';
+
+/* ==========================================================================
+ * Radix Tooltip Styling
+ *
+ * Tooltips use TooltipContainerProvider to render inside the Theme subtree,
+ * so they inherit --gray-12, --gray-1 from Radix. No color overrides needed.
+ *
+ * Fix: Remove default <p> margin from tooltip text (browser adds ~1em).
+ * ========================================================================== */
+.rt-TooltipContent .rt-TooltipText {
+  margin: 0;
+}
+
+/* Ensure Radix portals (tooltips, dropdowns) render above the sticky top nav */
+[data-radix-portal] {
+  position: relative;
+  z-index: 10000;
+}
+
+/* DropdownMenu viewport: gap between items (Radix default has none) */
+.rt-BaseMenuViewport.rt-DropdownMenuViewport {
+  gap: var(--space-1);
+}
+
+/* Internal nav links - no underline (underline reserved for external links) */
+a.nxrm-internal-link,
+a.nxrm-internal-link:hover {
+  text-decoration: none;
+}
+
 .nxrm-page {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  height: 100vh;
+  display: grid;
+  
+  // Make Radix Theme wrapper transparent to grid - it sits between grid container and items
+  > .radix-themes {
+    display: contents;
+    
+    // Ensure portals inside Radix Theme don't get clipped by grid areas
+    // This is a common issue when using display: contents on a parent of a portal
+    &::after {
+      content: none;
+    }
+  }
+  
+  // Fixed grid layout - header spans 100% width, left nav sits BELOW header
   grid-template:
-    "branding-header branding-header branding-header branding-header" auto
-    "global-sidebar notices notices notices" auto
-    "global-sidebar header header header" auto
-    "global-sidebar global-sidebar-2 old-sidebar content" 1fr
-    "branding-footer branding-footer branding-footer branding-footer" auto / auto auto min(var(--nx-width-sidebar), 270px) 1fr;
-  .nx-global-sidebar-2__navigation-link.nx-text-link.selected {
-    background-image: none;
-    background-color: var(--nx-swatch-green-30);
+    "branding-header branding-header branding-header" auto
+    "header header header" auto
+    "notices notices notices" auto
+    "global-sidebar old-sidebar content" 1fr
+    "branding-footer branding-footer branding-footer" auto / auto auto 1fr;
+
+  // No separator line under header (removed per UX)
+  .nxrm-global-header-radix {
+    position: relative;
+  }
+  
+  // ==========================================================================
+  // Main content area - Radix blue accent for actions, active, focus (UX lab)
+  //
+  // Uses the same Radix accent color as Theme accentColor="blue" for consistency.
+  // Top bar and sidebar navigation keep green accent (outer Theme).
+  // ==========================================================================
+  .nxrm-main-content {
+    grid-area: content;
+    overflow: auto;
+    min-height: 0;
+    min-width: 0;
+    background-color: var(--color-background);
+
+    // Flex layout needed for Default UI pages (NxPageSidebar + NxPageMain)
+    display: flex;
+    flex-direction: column;
+
+    // Inner Theme (accentColor="blue") fills content; map design tokens to Radix accent
+    // so CTAs, links, selections use the same blue as Radix components
+    > .radix-themes {
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      overflow: auto;
+
+      // Use Radix accent scale (from Theme accentColor="blue") for design tokens
+      --color-primary: var(--accent-9);
+      --color-primary-hover: var(--accent-10);
+      --color-primary-active: var(--accent-11);
+      --color-selection: var(--accent-3);
+    }
+
+    // ==========================================================================
+    // ExtJS-only layout rules (scoped to ExtJsContainer)
+    //
+    // These rules ONLY apply when an ExtJS page is rendering inside
+    // ExtJsContainer. Preview UI pages are not affected.
+    // ==========================================================================
+    .nxrm-ext-js-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 0 !important; // Override .nx-page-main's padding — ExtJS manages its own internal spacing
+
+      > div {
+        flex: 1;
+        min-height: 0;
+      }
+    }
+
+    // Default UI pages using RSC's NxPageSidebar + NxPageMain pattern
+    // These classes only exist in Default UI ExtJS wrapper pages
+    .nx-page-sidebar {
+      flex-shrink: 0;
+      width: 270px;
+      overflow-y: auto;
+    }
+    
+    .nx-page-main {
+      grid-area: unset !important;
+      position: relative !important;
+      top: unset !important;
+      left: unset !important;
+      right: unset !important;
+      bottom: unset !important;
+      flex: 1;
+      height: 100%;
+      width: 100%;
+      min-height: 0;
+      padding: var(--nx-spacing-6x, 24px);
+      overflow: auto;
+      box-sizing: border-box;
+    }
+  }
+
+  // Dark mode: Radix Theme handles accent automatically; no override needed
+
+  // ==========================================================================
+  // Scope RSC nx-text-link and rapture theme link styles to Classic UI only.
+  // In Nexus One (no ExtJS wrapper), reset link styles so Radix/design system
+  // controls link appearance. Rapture's a:not([class*="x-"]) would otherwise
+  // apply the wrong blue to Dashboard stat cards and other Nexus One links.
+  // ==========================================================================
+  .nxrm-main-content > .radix-themes:not(:has(.nxrm-ext-js-wrapper)) {
+    .nx-text-link,
+    a.nx-text-link,
+    button.nx-text-link,
+    a:not([class*="x-"]) {
+      color: inherit;
+      text-decoration: none;
+
+      &:hover,
+      &:focus,
+      &:active,
+      &:visited {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .nx-code {
+        color: inherit;
+      }
+    }
+  }
+
+  .nx-global-sidebar-2__navigation-link.nx-text-link {
+    color: var(--color-text, #1a1a1a);
+
+    &.selected {
+      background-image: none;
+      background-color: #00bb6c;
+      color: #ffffff;
+    }
+  }
+
+  // ==========================================================================
+  // Fix Radix <Flex> default direction for list pages with filter sidebars.
+  // Radix Flex defaults to flex-direction: column. List pages that use
+  // <Flex className="*-list" gap="4"> with a FilterSidebar + main content
+  // need row direction so sidebar and table sit side by side.
+  // ==========================================================================
+  .repositories-list,
+  .users-list,
+  .roles-list,
+  .privileges-list {
+    flex-direction: row !important;
   }
 
   .nxrm-branding-header {
@@ -29,6 +216,22 @@
 
   .nxrm-branding-footer {
     grid-area: branding-footer;
+  }
+
+  // Ensure Radix portals are truly top-level and not constrained by the grid layout
+  // Radix UI Portals use data-radix-portal attribute
+  [data-radix-portal] {
+    z-index: 10000 !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none; // Let events through to the actual content
+
+    > * {
+      pointer-events: auto; // Content should catch events
+    }
   }
 
   .nx-html--dark-mode & {
@@ -40,4 +243,13 @@
   .nxrm-left-nav.closed .nxrm-navigation-expandable-link__expandable-list__item {
     display: none;
   }
+}
+
+/*
+ * Suppress legacy ExtJS toast notifications when the Preview UI shell is active.
+ * The .nxrm-page container only exists when React has rendered the Preview UI shell.
+ * ExtJS toasts use .x-toast and render as direct children of <body>, outside .nxrm-page.
+ */
+body:has(.nxrm-page) > .x-toast {
+  display: none !important;
 }

@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityUUID;
@@ -49,7 +48,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 
 class KeyValueDAOTest
-    extends Test5Support
 {
   private static final String CATEGORY = "test";
 

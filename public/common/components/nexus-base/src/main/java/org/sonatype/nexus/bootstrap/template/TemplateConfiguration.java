@@ -12,14 +12,14 @@
  */
 package org.sonatype.nexus.bootstrap.template;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import org.apache.velocity.app.VelocityEngine;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.velocity.runtime.RuntimeConstants.PARSER_POOL_SIZE;
 import static org.apache.velocity.runtime.RuntimeConstants.RESOURCE_LOADERS;
@@ -32,8 +32,9 @@ import static org.apache.velocity.runtime.RuntimeConstants.VM_PERM_INLINE_LOCAL;
 
 @Configuration
 public class TemplateConfiguration
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Bean
   public VelocityEngine velocityEngine(
       @Value("${nexus.velocity." + PARSER_POOL_SIZE + ":20}") final int velocityParserPoolSize)

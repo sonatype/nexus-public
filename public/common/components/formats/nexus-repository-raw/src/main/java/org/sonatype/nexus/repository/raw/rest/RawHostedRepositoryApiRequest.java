@@ -22,8 +22,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static org.sonatype.nexus.repository.raw.ContentDisposition.ATTACHMENT;
-
 /**
  * @since 3.24
  */
@@ -43,7 +41,7 @@ public class RawHostedRepositoryApiRequest
       @JsonProperty("component") final ComponentAttributes componentAttributes)
   {
     super(name, RawFormat.NAME, online, storage, cleanup, componentAttributes);
-    this.raw = raw != null ? raw : new RawAttributes(ATTACHMENT);
+    this.raw = raw;
   }
 
   public RawAttributes getRaw() {

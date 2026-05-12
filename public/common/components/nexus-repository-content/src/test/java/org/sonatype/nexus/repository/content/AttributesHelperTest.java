@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,7 +41,6 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
  * Test {@link AttributesHelper}.
  */
 public class AttributesHelperTest
-    extends TestSupport
 {
   private static final ObjectMapper objectMapper = new ObjectMapper();
 

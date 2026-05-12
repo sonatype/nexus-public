@@ -16,12 +16,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.logging.task.TaskLoggerFactory;
 import org.sonatype.nexus.logging.task.TaskLoggerHelper;
 import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
@@ -37,9 +38,10 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
  * @since 3.0
  */
 public abstract class TaskSupport
-    extends ComponentSupport
     implements Task
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final TaskConfiguration configuration;
 
   private final AtomicBoolean canceledFlag;

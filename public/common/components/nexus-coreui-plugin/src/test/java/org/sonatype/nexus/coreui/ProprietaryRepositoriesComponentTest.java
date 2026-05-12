@@ -15,7 +15,6 @@ package org.sonatype.nexus.coreui;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -33,6 +32,7 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationEx
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import javax.validation.Validator;
 import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
@@ -51,11 +51,11 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.COMPONENT;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.PROPRIETARY_COMPONENTS;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class ProprietaryRepositoriesComponentTest
-    extends Test5Support
 {
   @ValidationExecutor
   private final Validator validator =

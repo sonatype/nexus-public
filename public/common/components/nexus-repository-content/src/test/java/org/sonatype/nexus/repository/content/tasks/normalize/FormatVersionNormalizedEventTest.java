@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.tasks.normalize;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -21,7 +19,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 public class FormatVersionNormalizedEventTest
-    extends TestSupport
 {
   @Test
   public void testConstructorWithFormat() {

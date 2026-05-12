@@ -1,0 +1,119 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Search bar with format dropdown BEFORE the input
+.search-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--search-bg-input, #374151);
+  border: 1px solid var(--search-border, #4b5563);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+
+  &:focus-within {
+    border-color: var(--search-border-focus, #3b82f6);
+  }
+
+  &__format-select {
+    min-width: 140px;
+    padding: 12px 16px;
+    background: var(--search-bg-card, #1f2937);
+    border: none;
+    border-right: 1px solid var(--search-border, #4b5563);
+    color: var(--search-text-primary, #f3f4f6);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+
+    &:focus {
+      outline: none;
+      background-color: var(--search-bg-input, #374151);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    option {
+      background: var(--search-bg-card, #1f2937);
+      color: var(--search-text-primary, #f3f4f6);
+    }
+  }
+
+  &__input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  &__icon {
+    position: absolute;
+    left: 14px;
+    color: var(--search-text-muted, #6b7280);
+    pointer-events: none;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
+    background: transparent;
+    border: none;
+    color: var(--search-text-primary, #f3f4f6);
+    font-size: 14px;
+
+    &::placeholder {
+      color: var(--search-text-muted, #6b7280);
+    }
+
+    &:focus {
+      outline: none;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__button {
+    padding: 12px 24px;
+    background: var(--search-accent, #3b82f6);
+    border: none;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      background: var(--search-accent-hover, #2563eb);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+

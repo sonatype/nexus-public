@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.httpclient.internal;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
 import org.sonatype.nexus.repository.httpclient.FilteredHttpClientSupport.Filterable;
 import org.sonatype.nexus.repository.httpclient.OutboundRequestMetricRecorder;
@@ -58,9 +57,11 @@ import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusTyp
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.READY;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.UNAVAILABLE;
 import static org.sonatype.nexus.test.util.Whitebox.setInternalState;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BlockingHttpClientTest
-    extends TestSupport
 {
 
   @Mock

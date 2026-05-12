@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Format;
@@ -43,7 +42,9 @@ import org.sonatype.nexus.security.SecurityHelper;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -63,8 +64,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DeleteFolderServiceImplTest
-    extends TestSupport
 {
   @Mock
   private BrowseNodeQueryService browseNodeQueryService;

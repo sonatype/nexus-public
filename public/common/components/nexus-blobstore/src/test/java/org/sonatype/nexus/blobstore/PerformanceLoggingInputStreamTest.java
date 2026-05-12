@@ -15,8 +15,6 @@ package org.sonatype.nexus.blobstore;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -25,9 +23,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class PerformanceLoggingInputStreamTest
-    extends TestSupport
 {
   @Mock
   private InputStream source;

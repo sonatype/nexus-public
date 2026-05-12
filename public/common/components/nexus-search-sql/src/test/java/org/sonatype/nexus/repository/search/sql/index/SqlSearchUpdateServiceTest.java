@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.sql.index;
 
 import java.util.HashMap;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -31,9 +30,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class SqlSearchUpdateServiceTest
-    extends Test5Support
 {
   @Mock
   private Repository repository;

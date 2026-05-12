@@ -18,8 +18,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.sonatype.goodies.testsupport.Test5Support;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 
@@ -29,8 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RegexCleanupEvaluatorTest
-    extends Test5Support
+
 {
 
   @Mock

@@ -20,13 +20,14 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
 import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -43,9 +44,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class NodeIdApiResource
-    extends ComponentSupport
     implements Resource, NodeIdApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String PATH = V1_API_PREFIX + "/system/node";
 
   private final NodeIdStore nodeIdStore;

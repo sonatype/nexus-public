@@ -14,8 +14,6 @@ package org.sonatype.nexus.ui;
 
 import java.net.URL;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -25,9 +23,11 @@ import org.springframework.core.io.Resource;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UiUtilTest
-    extends TestSupport
 {
   private static final String TEST_URL = "https://someurl/nexus-frontend-bundle.js";
 

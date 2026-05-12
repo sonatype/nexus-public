@@ -12,27 +12,23 @@
  */
 package org.sonatype.nexus.selector.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.selector.JexlEngine;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
 import org.apache.commons.jexl3.parser.ASTJexlScript;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class DatastoreCselToSqlTest
-    extends TestSupport
 {
   private JexlEngine jexlEngine = new JexlEngine();
 
   private SelectorSqlBuilder builder;
 
-  @InjectMocks
-  private DatastoreCselToSql underTest;
+  private DatastoreCselToSql underTest = new DatastoreCselToSql();
 
   @Before
   public void createSqlBuilder() {

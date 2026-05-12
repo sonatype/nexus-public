@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.sql.SearchMappingService;
 import org.sonatype.nexus.repository.search.sql.query.DatabaseTypeDetector;
@@ -34,6 +33,8 @@ import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -46,8 +47,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SearchContentSelectorSqlFilterGenerator
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String PATH = "path";
 
   private final SelectorManager selectorManager;

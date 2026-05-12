@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.BadRequestException;
 
 import org.junit.Rule;
@@ -28,7 +27,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Tests for {@link RepositoryPath}.
  */
 public class RepositoryPathTest
-    extends TestSupport
 {
   static final String RELATIVE_TOKEN_MESSAGE = "Repository path must not contain a relative token";
 

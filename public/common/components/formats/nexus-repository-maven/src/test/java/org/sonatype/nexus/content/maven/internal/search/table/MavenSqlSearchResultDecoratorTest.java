@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.content.maven.internal.search.table;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
@@ -29,7 +28,7 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 
 public class MavenSqlSearchResultDecoratorTest
-    extends TestSupport
+
 {
   private NestedAttributesMap attributes;
 

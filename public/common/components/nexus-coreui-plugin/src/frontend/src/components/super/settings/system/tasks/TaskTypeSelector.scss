@@ -1,0 +1,303 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.task-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  &__loading,
+  &__error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-6);
+    color: var(--gray-11);
+  }
+
+  &__error {
+    color: var(--red-11);
+  }
+
+  &__spinner {
+    animation: task-type-spin 1s linear infinite;
+  }
+
+  &__search {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-shrink: 0;
+  }
+
+  &__search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+  }
+
+  &__search-icon {
+    position: absolute;
+    left: var(--space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-9);
+    pointer-events: none;
+  }
+
+  &__search-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 var(--space-3) 0 calc(var(--space-3) + 20px);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-2);
+    background: var(--color-background);
+    color: var(--gray-12);
+    font-size: var(--font-size-2);
+
+    &::placeholder {
+      color: var(--gray-9);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-8);
+      box-shadow: 0 0 0 1px var(--accent-8);
+    }
+  }
+
+  &__count {
+    color: var(--gray-11);
+    flex-shrink: 0;
+  }
+
+  &__grid-wrapper {
+    flex: 1;
+    min-height: 0;
+  }
+
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-right: var(--space-2);
+  }
+
+  &__card {
+    // Reset button styles
+    appearance: none;
+    font: inherit;
+    text-align: left;
+    width: 100%;
+
+    padding: var(--space-4);
+    border: 1px solid var(--gray-5);
+    border-radius: var(--radius-3);
+    background: var(--color-background);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover:not(:disabled) {
+      border-color: var(--accent-8);
+      background: var(--gray-2);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-8);
+      outline-offset: 2px;
+    }
+
+    &:disabled,
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-2);
+    background: var(--accent-3);
+    color: var(--accent-11);
+    flex-shrink: 0;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    display: block;
+    color: var(--gray-12);
+    margin-bottom: var(--space-1);
+  }
+
+  &__category {
+    display: block;
+    color: var(--gray-10);
+    margin-bottom: var(--space-1);
+    font-size: var(--font-size-1);
+  }
+
+  &__description {
+    display: block;
+    color: var(--gray-11);
+    line-height: 1.4;
+
+    // Limit to 2 lines
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  &__chevron {
+    color: var(--gray-9);
+    flex-shrink: 0;
+    margin-top: var(--space-2);
+  }
+
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    color: var(--gray-10);
+  }
+}
+
+@keyframes task-type-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Dynamic form field styles
+.dynamic-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  &__label {
+    font-size: var(--font-size-2);
+    font-weight: 500;
+    color: var(--gray-12);
+  }
+
+  &__required {
+    color: var(--red-9);
+    margin-left: var(--space-1);
+  }
+
+  &__input,
+  &__textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-2);
+    font-family: inherit;
+    color: var(--gray-12);
+    background: var(--color-background);
+    border: 1px solid var(--gray-7);
+    border-radius: var(--radius-2);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover:not(:disabled) {
+      border-color: var(--gray-8);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-8);
+      box-shadow: 0 0 0 2px var(--accent-4);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &::placeholder {
+      color: var(--gray-9);
+    }
+  }
+
+  &__textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  &__checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-9);
+      cursor: pointer;
+    }
+  }
+
+  &__help {
+    color: var(--gray-11);
+    line-height: 1.4;
+  }
+
+  &__error {
+    color: var(--red-11);
+  }
+}
+
+.dynamic-form-fields {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--gray-6);
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+// Dark mode adjustments
+:root[data-theme="dark"] {
+  .task-type-selector {
+    &__card {
+      &:hover:not(:disabled) {
+        background: var(--gray-3);
+      }
+    }
+  }
+
+  .dynamic-field {
+    &__input,
+    &__textarea {
+      background: var(--gray-3);
+    }
+  }
+
+  .dynamic-form-fields {
+    background: var(--gray-2);
+  }
+}

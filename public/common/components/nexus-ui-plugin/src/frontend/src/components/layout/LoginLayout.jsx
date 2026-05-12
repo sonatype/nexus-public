@@ -12,59 +12,61 @@
  */
 
 import React from "react";
-import { NxGlobalHeader2, NxPageMain } from "@sonatype/react-shared-components";
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 import './LoginLayout.scss';
 
+// Edition constants - must match backend values
+const EDITION_COMMUNITY = "COMMUNITY";
+const EDITION_PRO = "PRO";
+
 /**
  * Minimal layout for login page with only branding/logo in header.
- * No navigation menu or other header components.
+ * No navigation menu, theme switcher, or other header components.
+ * Always uses light theme for login page.
  */
 export default function LoginLayout({ children, logoConfig }) {
-  const COMMUNITY = "COMMUNITY";
-  const PRO = "PRO";
 
   const edition = ExtJS.useState(() => ExtJS.state().getEdition());
   const contextPath = ExtJS.useState(() => ExtJS.state().getValue('nexus-context-path', ''));
 
-  function getLogoProps() {
-    return {
-      lightPath: getLogo(),
-      darkPath: getDarkLogo(),
-      altText: `Sonatype Nexus Repository ${getEditionText()}`
-    };
-  }
-
   function getLogo() {
-    return edition === COMMUNITY ? (logoConfig?.ceLight || logoConfig?.proLight)
-        : edition === PRO ? logoConfig?.proLight
+    // Light-only theme, so we only use light logos
+    return edition === EDITION_COMMUNITY ? (logoConfig?.ceLight || logoConfig?.proLight)
+        : edition === EDITION_PRO ? logoConfig?.proLight
         : (logoConfig?.coreLight || logoConfig?.proLight); // Core or fallback to pro
   }
 
-  function getDarkLogo() {
-    return edition === COMMUNITY ? (logoConfig?.ceDark || logoConfig?.proDark)
-        : edition === PRO ? logoConfig?.proDark
-        : (logoConfig?.coreDark || logoConfig?.proDark); // Core or fallback to pro
-  }
-
   function getEditionText() {
-    return edition === COMMUNITY ? "Community"
-        : edition === PRO ? "Professional"
+    return edition === EDITION_COMMUNITY ? "Community"
+        : edition === EDITION_PRO ? "Professional"
         : "Core";
   }
 
+  const homeHref = contextPath ? `${contextPath}/#browse/welcome` : "/#browse/welcome";
+
   return (
-    <>
-      <NxGlobalHeader2
-        homeHref={contextPath || "/"}
-        logoProps={getLogoProps()}
-        className="login-header"
-      >
-      </NxGlobalHeader2>
-      <NxPageMain className="nxrm-login-page-main">
+    <div className="nxrm-login-layout">
+      <header className="nxrm-login-header" role="banner">
+        <a
+          href={homeHref}
+          className="nxrm-login-header__link"
+          title="Home"
+          aria-label={`Sonatype Nexus Repository ${getEditionText()} home`}
+        >
+          <img
+            src={getLogo()}
+            alt={`Sonatype Nexus Repository ${getEditionText()}`}
+            className="nxrm-login-header__logo"
+            width={220}
+            height={32}
+            decoding="async"
+          />
+        </a>
+      </header>
+      <main className="nxrm-login-main">
         {children}
-      </NxPageMain>
-    </>
+      </main>
+    </div>
   );
 }

@@ -1,0 +1,136 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.ssl-certificates-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-background, #fff);
+  color: var(--color-text-primary, #1a1a1a);
+
+  // Dark mode
+  [data-theme='dark'] & {
+    background: var(--gray-1, #111113);
+    color: var(--gray-12, #edeef0);
+  }
+
+  &__back {
+    padding: var(--space-2, 8px);
+    border-radius: var(--radius-2, 6px);
+
+    &:hover {
+      background: var(--gray-3, #f1f1f3);
+    }
+
+    [data-theme='dark'] &:hover {
+      background: var(--gray-4, #27272b);
+    }
+  }
+
+  &__alerts {
+    margin-bottom: var(--space-4, 16px);
+  }
+
+  &__content {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  // ==========================================================================
+  // Delete Confirmation Modal
+  // ==========================================================================
+  &__modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    animation: sslFadeIn 0.15s ease-out;
+  }
+
+  &__modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--color-background, #fff);
+    border-radius: var(--radius-3, 8px);
+    box-shadow: 0 10px 38px -10px rgba(0, 0, 0, 0.35),
+                0 10px 20px -15px rgba(0, 0, 0, 0.2);
+    padding: var(--space-5, 24px);
+    width: 90vw;
+    max-width: 450px;
+    z-index: 1001;
+    animation: sslSlideIn 0.15s ease-out;
+
+    [data-theme='dark'] & {
+      background: var(--gray-2, #1a1a1d);
+    }
+  }
+
+  &__modal-header {
+    margin-bottom: var(--space-3, 12px);
+  }
+
+  &__modal-icon {
+    color: var(--red-9, #e5484d);
+    flex-shrink: 0;
+  }
+
+  &__modal-title {
+    font-size: var(--font-size-5, 18px);
+    font-weight: 600;
+    margin: 0;
+    color: var(--gray-12, #1a1a1a);
+
+    [data-theme='dark'] & {
+      color: var(--gray-12, #edeef0);
+    }
+  }
+
+  &__modal-description {
+    font-size: var(--font-size-2, 14px);
+    color: var(--gray-11, #6f6f78);
+    margin: 0 0 var(--space-4, 16px) 0;
+    line-height: 1.5;
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__modal-actions {
+    margin-top: var(--space-4, 16px);
+  }
+}
+
+@keyframes sslFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sslSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+

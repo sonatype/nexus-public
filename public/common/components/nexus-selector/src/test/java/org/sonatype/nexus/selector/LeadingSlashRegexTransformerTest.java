@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.selector;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -21,7 +19,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.sonatype.nexus.selector.LeadingSlashRegexTransformer.trimLeadingSlashes;
 
 public class LeadingSlashRegexTransformerTest
-    extends TestSupport
 {
   @Test
   public void expectedLeadingSlashTransformations() {

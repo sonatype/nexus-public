@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
@@ -32,13 +31,15 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Unit test for {@link ProxyRepositoryApiRequestToConfigurationConverter}.
  *
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ProxyRepositoryApiRequestToConfigurationConverterTest
-    extends TestSupport
 {
   @Mock
   private RoutingRuleStore routingRuleStore;

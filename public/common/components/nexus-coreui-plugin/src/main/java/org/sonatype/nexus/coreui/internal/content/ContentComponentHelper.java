@@ -30,7 +30,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.text.Strings2;
@@ -62,6 +61,8 @@ import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.shiro.authz.AuthorizationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -84,9 +85,10 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 @org.springframework.stereotype.Component
 @Singleton
 public class ContentComponentHelper
-    extends ComponentSupport
     implements ComponentHelper
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final MaintenanceService maintenanceService;
 
   private final Map<String, ComponentFinder> componentFinders;

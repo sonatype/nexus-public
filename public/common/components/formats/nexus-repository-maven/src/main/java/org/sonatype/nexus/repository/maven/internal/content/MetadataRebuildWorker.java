@@ -23,8 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
@@ -58,6 +57,8 @@ import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
 import org.eclipse.aether.version.VersionScheme;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.getPluginPrefix;
@@ -70,8 +71,9 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  * Worker class to hold the context of a particular rebuild.
  */
 public class MetadataRebuildWorker
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
   private final MultipleFailures failures = new MultipleFailures();

@@ -64,7 +64,7 @@ public class CapabilityOfTypeExistsCondition
     try {
       bindLock.writeLock().lock();
       for (final CapabilityReference reference : capabilityRegistry.getAll()) {
-        handle(new CapabilityEvent.Created(capabilityRegistry, reference));
+        handle(new CapabilityEvent.Created(reference));
       }
     }
     finally {

@@ -1,0 +1,75 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.blob-stores-list {
+  padding: var(--space-4);
+  max-width: 1400px;
+
+  // Filter input in page header
+  &__filter {
+    max-width: 300px;
+  }
+
+  // Content layout with sidebar
+  &__content {
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__sidebar {
+    flex-shrink: 0;
+    width: 280px;
+  }
+
+  // Type icons (used in table accessor function)
+  &__type-icon {
+    flex-shrink: 0;
+
+    &--file {
+      color: var(--gray-9);
+    }
+
+    &--s3 {
+      color: #ff9900; // AWS Orange
+    }
+
+    &--azure {
+      color: #0078d4; // Azure Blue
+    }
+
+    &--google {
+      color: #4285f4; // Google Blue
+    }
+
+    &--group {
+      color: var(--accent-9);
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 1024px) {
+    &__content {
+      flex-direction: column;
+    }
+
+    &__sidebar {
+      width: 100%;
+    }
+  }
+}

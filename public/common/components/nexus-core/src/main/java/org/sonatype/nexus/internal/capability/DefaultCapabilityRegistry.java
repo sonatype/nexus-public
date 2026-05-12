@@ -33,6 +33,7 @@ import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
+import org.sonatype.nexus.capability.CapabilityEventQueue;
 import org.sonatype.nexus.capability.CapabilityFactory;
 import org.sonatype.nexus.capability.CapabilityFactoryRegistry;
 import org.sonatype.nexus.capability.CapabilityIdentity;
@@ -46,6 +47,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
@@ -99,6 +101,8 @@ public class DefaultCapabilityRegistry
 
   private final EventManager eventManager;
 
+  private final CapabilityEventQueue capabilityEventQueue;
+
   private final ActivationConditionHandlerFactory activationConditionHandlerFactory;
 
   private final ValidityConditionHandlerFactory validityConditionHandlerFactory;
@@ -127,6 +131,7 @@ public class DefaultCapabilityRegistry
       final CapabilityFactoryRegistry capabilityFactoryRegistry,
       final CapabilityDescriptorRegistry capabilityDescriptorRegistry,
       final EventManager eventManager,
+      final CapabilityEventQueue capabilityEventQueue,
       final ActivationConditionHandlerFactory activationConditionHandlerFactory,
       final ValidityConditionHandlerFactory validityConditionHandlerFactory,
       final SecretsService secretsService,
@@ -137,6 +142,7 @@ public class DefaultCapabilityRegistry
     this.capabilityFactoryRegistry = checkNotNull(capabilityFactoryRegistry);
     this.capabilityDescriptorRegistry = checkNotNull(capabilityDescriptorRegistry);
     this.eventManager = checkNotNull(eventManager);
+    this.capabilityEventQueue = checkNotNull(capabilityEventQueue);
     this.activationConditionHandlerFactory = checkNotNull(activationConditionHandlerFactory);
     this.validityConditionHandlerFactory = checkNotNull(validityConditionHandlerFactory);
     this.secretsService = checkNotNull(secretsService);
@@ -627,7 +633,7 @@ public class DefaultCapabilityRegistry
   {
     return new DefaultCapabilityReference(
         this,
-        eventManager,
+        capabilityEventQueue,
         activationConditionHandlerFactory,
         validityConditionHandlerFactory,
         id,
@@ -650,32 +656,34 @@ public class DefaultCapabilityRegistry
   private void processRemoteCapabilityEvent(final CapabilityIdentity id) {
     lock.lock();
     try {
-      CapabilityStorageItem item = capabilityStorage.read(entityId(id)).orElse(null);
+      EventHelper.asReplicating(() -> {
+        CapabilityStorageItem item = capabilityStorage.read(entityId(id)).orElse(null);
 
-      if (item == null) {
-        // Capability was deleted from database - remove from memory if present
-        log.debug("Capability {} no longer in storage, removing from memory", id);
-        if (references.containsKey(id)) {
-          doRemove(id);
+        if (item == null) {
+          // Capability was deleted from database - remove from memory if present
+          log.debug("Capability {} no longer in storage, removing from memory", id);
+          if (references.containsKey(id)) {
+            doRemove(id);
+          }
+          return;
         }
-        return;
-      }
 
-      // Check if already up-to-date before doing work
-      if (capabilityAlreadyUpToDate(id, item)) {
-        log.debug("Capability {} already up-to-date, skipping sync", id);
-        return;
-      }
+        // Check if already up-to-date before doing work
+        if (capabilityAlreadyUpToDate(id, item)) {
+          log.debug("Capability {} already up-to-date, skipping sync", id);
+          return;
+        }
 
-      CapabilityType type = capabilityType(item.getType());
-      CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
+        CapabilityType type = capabilityType(item.getType());
+        CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
 
-      if (descriptor == null) {
-        log.warn("Cannot sync capability {} - unknown type {}", id, item.getType());
-        return;
-      }
+        if (descriptor == null) {
+          log.warn("Cannot sync capability {} - unknown type {}", id, item.getType());
+          return;
+        }
 
-      syncCapabilityReference(id, item, descriptor, type);
+        syncCapabilityReference(id, item, descriptor, type);
+      });
     }
     finally {
       lock.unlock();

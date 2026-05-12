@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.apt.api;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
@@ -30,7 +29,9 @@ import org.sonatype.nexus.repository.types.ProxyType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.Matchers.is;
@@ -41,8 +42,8 @@ import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.class)
 public class AptApiRepositoryAdapterTest
-    extends TestSupport
 {
   private AptApiRepositoryAdapter underTest;
 

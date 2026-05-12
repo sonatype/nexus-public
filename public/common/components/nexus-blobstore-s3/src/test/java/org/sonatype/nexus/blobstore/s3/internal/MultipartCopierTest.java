@@ -15,7 +15,6 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -28,9 +27,11 @@ import org.mockito.Mock;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MultipartCopierTest
-    extends TestSupport
 {
 
   private MultipartCopier multipartCopier;
@@ -76,7 +77,7 @@ public class MultipartCopierTest
         .build());
     when(s3.uploadPartCopy(any())).thenThrow(SdkClientException.builder().build());
 
-    assertThrows(BlobStoreException.class , () -> multipartCopier.copy(s3, "bucketName", "source", "destination"));
+    assertThrows(BlobStoreException.class, () -> multipartCopier.copy(s3, "bucketName", "source", "destination"));
 
     verify(s3).createMultipartUpload(any());
     verify(s3).getObjectMetadata("bucketName", "source");

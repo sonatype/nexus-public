@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.rest.internal.resources;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -37,8 +36,10 @@ import org.sonatype.nexus.repository.upload.UploadManager;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
@@ -51,8 +52,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ComponentsResourceSupportTest
-    extends TestSupport
 {
   private static final String A_FORMAT = "A_Format";
 

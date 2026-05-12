@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
@@ -53,9 +52,11 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.internal.security.apikey.store.ApiKeyStoreV2Impl.accessKey;
 import static org.sonatype.nexus.internal.security.apikey.store.ApiKeyStoreV2Impl.secret;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ApiKeyStoreV2ImplTest
-    extends TestSupport
 {
   private static final String BOB = "bob";
 

@@ -28,7 +28,7 @@ import javax.cache.expiry.ExpiryPolicy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.atlas.SystemInformationGenerator;

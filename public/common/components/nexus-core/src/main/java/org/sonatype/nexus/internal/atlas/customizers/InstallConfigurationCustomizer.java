@@ -20,8 +20,7 @@ import java.io.InputStream;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.SanitizedXmlSourceSupport;
@@ -30,6 +29,8 @@ import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -49,9 +50,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class InstallConfigurationCustomizer
-    extends ComponentSupport
     implements SupportBundleCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String INSTALL_ETC = "install/etc";
 
   private static final String WORK_ETC = "work/etc";

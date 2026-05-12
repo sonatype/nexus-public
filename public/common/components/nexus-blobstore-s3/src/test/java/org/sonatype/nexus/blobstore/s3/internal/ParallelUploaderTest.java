@@ -18,7 +18,6 @@ import java.io.InputStream;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -32,9 +31,11 @@ import org.mockito.Mock;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ParallelUploaderTest
-    extends TestSupport
 {
 
   private ParallelUploader parallelUploader;

@@ -15,7 +15,6 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -34,9 +33,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MultipartUploaderTest
-    extends TestSupport
 {
 
   private MultipartUploader multipartUploader;

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.security.internal.secrets.migration;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.repository.Repository;
@@ -28,9 +27,11 @@ import org.sonatype.nexus.security.UserIdHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -41,9 +42,11 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.security.internal.secrets.migration.RepositoriesSecretsMigrator.AUTHENTICATION_KEY;
 import static org.sonatype.nexus.repository.security.internal.secrets.migration.RepositoriesSecretsMigrator.HTTP_CLIENT_KEY;
 import static org.sonatype.nexus.repository.security.internal.secrets.migration.RepositoriesSecretsMigrator.PASSWORD_KEY;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RepositoriesSecretsMigratorTest
-    extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;
@@ -100,6 +103,22 @@ public class RepositoriesSecretsMigratorTest
     verify(repositoryManager, never()).update(any());
   }
 
+  @Test
+  public void testMigrate_proxy_trimsRemoteUrl() throws Exception {
+    // Test for NEXUS-51248: remoteUrl with trailing whitespace should be trimmed
+    Repository proxyWithWhitespace = mockProxyWithRemoteUrl("https://repo1.maven.org/maven2/ ");
+
+    mockRepositoryManager(proxyWithWhitespace);
+
+    underTest.migrate();
+
+    // Verify that update was called with the trimmed remoteUrl
+    ArgumentCaptor<Configuration> captor = ArgumentCaptor.forClass(Configuration.class);
+    verify(repositoryManager, times(1)).update(captor.capture());
+    assertThat(captor.getValue().attributes("proxy").get("remoteUrl", String.class))
+        .isEqualTo("https://repo1.maven.org/maven2/");
+  }
+
   private void mockRepositoryManager(final Repository... repositories) {
     when(repositoryManager.browse()).thenReturn(Arrays.asList(repositories));
   }
@@ -131,6 +150,22 @@ public class RepositoriesSecretsMigratorTest
       configuration.attributes(HTTP_CLIENT_KEY)
           .child(AUTHENTICATION_KEY)
           .set(PASSWORD_KEY, passwordKey);
+    }
+
+    return repository;
+  }
+
+  private static Repository mockProxyWithRemoteUrl(final String remoteUrl) {
+    Configuration configuration = new ConfigurationData();
+    Repository repository = mock(Repository.class);
+    when(repository.getConfiguration()).thenReturn(configuration);
+    when(repository.getType()).thenReturn(new ProxyType());
+
+    configuration.setRepositoryName("test-proxy");
+    configuration.setAttributes(new HashMap<>());
+
+    if (remoteUrl != null) {
+      configuration.attributes("proxy").set("remoteUrl", remoteUrl);
     }
 
     return repository;

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.text;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static java.lang.Math.pow;
@@ -22,7 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class UnitFormatterTest
-    extends TestSupport
+
 {
   @Test
   public void testFormatStorage_units() {

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.config.internal.datastore;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.repository.MissingRepositoryException;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.repository.config.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import com.google.common.eventbus.Subscribe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -36,9 +37,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ConfigurationSubscriber
-    extends ComponentSupport
     implements EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final RepositoryManager repositoryManager;
 
   @Inject

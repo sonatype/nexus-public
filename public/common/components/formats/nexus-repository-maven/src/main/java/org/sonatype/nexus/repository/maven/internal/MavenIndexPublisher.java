@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -47,6 +46,8 @@ import org.apache.maven.index.reader.RecordExpander;
 import org.apache.maven.index.reader.ResourceHandler;
 import org.apache.maven.index.reader.WritableResourceHandler;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -68,8 +69,9 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.INDEX_PROPE
  * @since 3.26
  */
 public abstract class MavenIndexPublisher
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String INDEX_PROPERTY_FILE = "/" + INDEX_PROPERTY_FILE_PATH;
 
   private static final String INDEX_MAIN_CHUNK_FILE = "/" + INDEX_MAIN_CHUNK_FILE_PATH;

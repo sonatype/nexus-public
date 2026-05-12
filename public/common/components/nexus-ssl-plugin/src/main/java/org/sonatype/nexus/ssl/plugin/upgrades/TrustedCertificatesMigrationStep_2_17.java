@@ -18,9 +18,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import com.sonatype.nexus.ssl.plugin.tasks.TrustedCertificatesMigrationTaskDescriptor;
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -28,9 +29,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Component
 public class TrustedCertificatesMigrationStep_2_17
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final UpgradeTaskScheduler upgradeTaskScheduler;
 
   @Inject

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.mime;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.mime.internal.DefaultMimeSupport;
@@ -29,7 +28,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DefaultContentValidatorTest
-    extends TestSupport
 {
   private DefaultContentValidator testSubject;
 

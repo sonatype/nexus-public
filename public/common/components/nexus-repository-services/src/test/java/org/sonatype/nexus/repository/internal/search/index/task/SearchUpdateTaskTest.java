@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.internal.search.index.task;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
@@ -27,9 +26,11 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SearchUpdateTaskTest
-    extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;

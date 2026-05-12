@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -27,9 +25,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class JsonParseDecoratorTest
-    extends TestSupport
 {
   @Mock
   private JsonParser jsonParser;

@@ -129,6 +129,14 @@ function ProfileMenu() {
       </NxStatefulNavigationDropdown>);
 
   function onSingOutClick() {
+    // Reset to light mode on logout since Default UI doesn't support dark mode
+    // This ensures consistent state when user logs back in
+    try {
+      localStorage.setItem('nexus-theme-preference', 'light');
+      document.documentElement.setAttribute('data-theme', 'light');
+    } catch (e) {
+      // Ignore localStorage errors
+    }
     ExtJS.signOut();
   }
 }

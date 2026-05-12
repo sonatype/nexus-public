@@ -15,8 +15,6 @@ package org.sonatype.nexus.swagger.internal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.Swagger;
@@ -32,7 +30,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Test for {@link InputStreamSwaggerContributor}.
  */
 public class InputStreamSwaggerContributorTest
-    extends TestSupport
 {
   private InputStreamSwaggerContributor underTest;
 

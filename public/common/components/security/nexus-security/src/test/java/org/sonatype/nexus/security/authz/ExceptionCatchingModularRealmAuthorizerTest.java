@@ -14,8 +14,6 @@ package org.sonatype.nexus.security.authz;
 
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -27,9 +25,11 @@ import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ExceptionCatchingModularRealmAuthorizerTest
-    extends TestSupport
 {
   private static final AuthorizingRealm BROKEN_REALM = new AuthorizingRealm()
   {

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
@@ -37,9 +36,11 @@ import org.sonatype.nexus.repository.content.store.AssetData;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -56,8 +57,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetAuditorTest
-    extends TestSupport
 {
   private static final String REPO_NAME = "test-repo";
 

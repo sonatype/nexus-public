@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal.filter;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -21,6 +20,8 @@ import org.apache.maven.index.reader.Record;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,9 +32,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @Component
 public class DuplicateDetectionStrategyProvider
-    extends ComponentSupport
     implements FactoryBean<DuplicateDetectionStrategy<Record>>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final String strategy;
 
   private final ApplicationDirectories applicationDirectories;

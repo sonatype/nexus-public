@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.repository.content.tasks.normalize.NormalizationPriori
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OSS implementation which does no prioritization of formats for normalization
@@ -34,9 +35,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class DefaultNormalizationPriorityService
-    extends ComponentSupport
     implements NormalizationPriorityService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final Map<Format, FormatStoreManager> prioritizedFormats;
 

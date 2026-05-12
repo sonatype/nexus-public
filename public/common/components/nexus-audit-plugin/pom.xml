@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-audit-plugin</artifactId>
@@ -61,6 +61,12 @@
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-testsupport</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-common</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

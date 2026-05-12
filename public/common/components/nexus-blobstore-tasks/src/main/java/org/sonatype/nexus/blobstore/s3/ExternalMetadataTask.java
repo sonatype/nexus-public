@@ -19,8 +19,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.entity.Continuations;
@@ -40,7 +38,11 @@ import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.CONFIG_KEY;
@@ -48,9 +50,6 @@ import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 /**
  * Retrieves S3's etag and last-modified headers.
@@ -70,16 +69,14 @@ public class ExternalMetadataTask
 
   /**
    * @param blobStoreManager the blob store manager
-   * @param concurrencyLimit the number of concurrent threads processing the queue allowed
-   * @param queueCapacity the number of queued jobs allowed
+   * @param concurrencyLimit the number of concurrent threads processing the queue allowed.
    */
   @Inject
   public ExternalMetadataTask(
       final BlobStoreManager blobStoreManager,
-      @Value("${external.metadata.repository.concurrencyLimit:5}") final int concurrencyLimit,
-      @Value("${external.metadata.repository.queueCapacity:15}") final int queueCapacity)
+      @Value("${external.metadata.repository.concurrencyLimit:5}") final int concurrencyLimit)
   {
-    super(concurrencyLimit, queueCapacity);
+    super(concurrencyLimit);
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }
 

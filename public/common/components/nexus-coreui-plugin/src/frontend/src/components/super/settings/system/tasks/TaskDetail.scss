@@ -1,0 +1,203 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.task-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  &--loading {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__alert {
+    margin-bottom: var(--space-2);
+  }
+
+  &__header {
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--gray-6);
+  }
+
+  &__type {
+    color: var(--gray-11);
+    margin-top: var(--space-1);
+  }
+
+  &__status {
+    padding: var(--space-3);
+    background: var(--gray-3);
+    border-radius: var(--radius-2);
+  }
+
+  &__tabs {
+    margin-top: var(--space-2);
+
+    [role="tablist"] {
+      display: flex;
+      gap: var(--space-1);
+      border-bottom: 1px solid var(--gray-6);
+      padding-bottom: var(--space-1);
+    }
+
+    [role="tab"] {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--font-size-2);
+      font-weight: 500;
+      color: var(--gray-11);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color 0.15s ease, border-color 0.15s ease;
+
+      &:hover:not(:disabled) {
+        color: var(--gray-12);
+      }
+
+      &[data-state="active"] {
+        color: var(--accent-11);
+        border-bottom-color: var(--accent-9);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      svg {
+        opacity: 0.7;
+      }
+    }
+  }
+
+  &__summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-3);
+  }
+
+  &__summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    border-radius: var(--radius-2);
+    transition: background-color 0.15s ease;
+
+    &--clickable {
+      cursor: pointer;
+
+      &:hover {
+        background-color: var(--gray-3);
+      }
+    }
+  }
+
+  &__summary-label {
+    color: var(--gray-10);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  &__tab-content {
+    padding-top: var(--space-4);
+  }
+}
+
+// Keep old names for compatibility if used elsewhere, but these seem to be the new ones
+.task-summary {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-3);
+  }
+}
+
+// Task Settings View (read-only)
+.task-settings-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+
+  &__section {
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-3);
+  }
+
+  &__title {
+    display: block;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--gray-5);
+    color: var(--gray-12);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--space-4);
+  }
+}
+
+// Summary Item
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  &__label {
+    color: var(--gray-10);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  &__value {
+    color: var(--gray-12);
+    word-break: break-word;
+  }
+}
+
+// Dark mode adjustments
+:root[data-theme="dark"] {
+  .task-detail {
+    &__status {
+      background: var(--gray-4);
+    }
+  }
+
+  .task-summary__grid,
+  .task-settings-view__section {
+    background: var(--gray-2);
+  }
+}
+
+

@@ -25,13 +25,14 @@ import java.util.Properties;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -44,9 +45,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class MetadataDatabase
-    extends ComponentSupport
     implements SupportBundleCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final Path PATH = Paths.get("work");
 
   private static final String DB_INFO_FILE_NAME = "db_info.properties";

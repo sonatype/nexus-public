@@ -18,7 +18,6 @@ import java.util.Set;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.scheduling.internal.upgrade.datastore.UpgradeTaskStore
 
 import com.google.common.collect.ImmutableMap;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.requireNonNull;
 
@@ -38,9 +39,10 @@ import static java.util.Objects.requireNonNull;
 @Component
 @Singleton
 public class BlobStoreMetricsStateContributor
-    extends ComponentSupport
     implements StateContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String BLOBSTORE_METRICS_CALCULATING = "nexus.datastore.blobstore.metrics.calculating";
 
   private static final Set<String> METRIC_TASK_IDS = Set.of(

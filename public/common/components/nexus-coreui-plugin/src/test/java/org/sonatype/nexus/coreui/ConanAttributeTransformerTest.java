@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.coreui;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.sonatype.nexus.coreui.ConanAttributeTransformer.CONAN_FORMAT;
@@ -26,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConanAttributeTransformerTest
-    extends TestSupport
 {
   private static final String JSON =
       "{\"settings\":{\"os\":\"Windows\",\"compiler.runtime_type\":\"Release\",\"compiler.runtime\":\"dynamic\",\"arch\":\"x86_64\",\"compiler\":\"msvc\",\"build_type\":\"Release\",\"mysub\":{\"foo\":\"bar\"},\"compiler.version\":\"193\"},\"options\":{\"shared\":\"True\"}}";

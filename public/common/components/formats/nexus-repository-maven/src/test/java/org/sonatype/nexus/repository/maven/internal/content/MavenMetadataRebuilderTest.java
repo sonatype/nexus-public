@@ -22,8 +22,7 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.sonatype.goodies.common.MultipleFailures;
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -46,7 +45,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runners.model.MultipleFailureException;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 
@@ -67,8 +68,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenMetadataRebuilderTest
-    extends TestSupport
+
 {
   @Mock
   private MavenContentFacet mavenContentFacet;
@@ -96,7 +98,6 @@ public class MavenMetadataRebuilderTest
     when(mavenPathParser.parsePath(anyString())).thenReturn(mock(MavenPath.class));
     when(mavenContentFacet.assets()).thenReturn(assets);
     when(mavenContentFacet.components()).thenReturn(components);
-
 
     Logger logger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
     logger.addAppender(mockAppender);

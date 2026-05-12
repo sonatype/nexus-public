@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -113,6 +114,13 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
   protected final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
 
+  protected final FailedRepositoryTracker failedRepositoryTracker;
+
+  /**
+   * Lock map for retry operations to prevent concurrent retries for the same repository.
+   */
+  private final Map<String, Object> retryLocks = new ConcurrentHashMap<>();
+
   protected BaseRepositoryManager(
       final EventManager eventManager,
       final ConfigurationStore store,
@@ -125,7 +133,8 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
       final BSM blobStoreManager,
       final GroupMemberMappingCache groupMemberMappingCache,
       final List<ConfigurationValidator> configurationValidators,
-      final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder)
+      final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder,
+      final FailedRepositoryTracker failedRepositoryTracker)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -139,6 +148,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     this.groupMemberMappingCache = checkNotNull(groupMemberMappingCache);
     this.configurationValidators = checkNotNull(configurationValidators);
     this.httpAuthenticationSecretEncoder = checkNotNull(httpAuthenticationSecretEncoder);
+    this.failedRepositoryTracker = checkNotNull(failedRepositoryTracker);
   }
 
   /**
@@ -246,11 +256,11 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
         }
       }
     }
-    else {
-      restoreRepositories(configurations);
 
-      startRepositories();
-    }
+    // Restore and start all configured repositories (both provisioned defaults and existing)
+    restoreRepositories(configurations);
+
+    startRepositories();
 
     groupMemberMappingCache.init(this);
 
@@ -269,29 +279,47 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   private void restoreRepositories(final List<Configuration> configurations) throws Exception {
     log.info("Restoring {} repositories", configurations.size());
     for (Configuration configuration : configurations) {
-      log.debug("Restoring repository: {}", configuration);
-      Stopwatch stopwatch = Stopwatch.createStarted();
-      String recipeName = configuration.getRecipeName();
-      if (!isRecipeAvailable(recipeName)) {
-        log.warn("Skipping repository '{}' because recipe '{}' is not available (possibly disabled by feature flag)",
-            configuration.getRepositoryName(), recipeName);
-        continue;
+      try {
+        log.debug("Restoring repository: {}", configuration);
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        String recipeName = configuration.getRecipeName();
+        if (!isRecipeAvailable(recipeName)) {
+          log.warn("Skipping repository '{}' because recipe '{}' is not available (possibly disabled by feature flag)",
+              configuration.getRepositoryName(), recipeName);
+          continue;
+        }
+        Repository repository = newRepository(configuration);
+        track(repository);
+        failedRepositoryTracker.clearFailure(configuration.getRepositoryName());
+        log.debug("Repository {} restored in {}", repository.getName(), stopwatch.stop());
+        eventManager.post(new RepositoryLoadedEvent(repository));
       }
-      Repository repository = newRepository(configuration);
-      track(repository);
-      log.debug("Repository {} restored in {}", repository.getName(), stopwatch.stop());
-      eventManager.post(new RepositoryLoadedEvent(repository));
+      catch (Exception e) {
+        log.error("Failed to restore repository: {}. Repository will not be available.",
+            configuration.getRepositoryName(), e);
+        failedRepositoryTracker.recordFailure(configuration.getRepositoryName(), e);
+        // Continue with other repositories - don't let one failure stop the entire system
+      }
     }
   }
 
   private void startRepositories() throws Exception {
     log.info("Starting {} repositories", repositories.size());
     for (Repository repository : repositories.values()) {
-      log.debug("Starting repository: {}", repository);
-      Stopwatch stopwatch = Stopwatch.createStarted();
-      repository.start();
-      log.debug("Repository {} started in {}", repository.getName(), stopwatch.stop());
-      eventManager.post(new RepositoryRestoredEvent(repository));
+      try {
+        log.debug("Starting repository: {}", repository);
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        repository.start();
+        failedRepositoryTracker.clearFailure(repository.getName());
+        log.debug("Repository {} started in {}", repository.getName(), stopwatch.stop());
+        eventManager.post(new RepositoryRestoredEvent(repository));
+      }
+      catch (Exception e) {
+        log.error("Failed to start repository: {}. Repository will remain in stopped/failed state.",
+            repository.getName(), e);
+        failedRepositoryTracker.recordFailure(repository.getName(), e);
+        // Continue with other repositories - don't let one failure stop the entire system
+      }
     }
   }
 
@@ -352,30 +380,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   @Guarded(by = STARTED)
   public Repository get(final String name) {
     checkNotNull(name);
-
-    String lcName = name.toLowerCase();
-    Repository repository = repositories.get(lcName);
-
-    if (repository != null) {
-      return repository;
-    }
-
-    log.debug("Repository not found, attempting to load from database");
-
-    return retrieveConfigurationByName(lcName)
-        .map(config -> EventHelper.asReplicating(() -> {
-          log.debug("Found repository in DB, attempting to load {}", config);
-          try {
-            // Don't return this, return the tracked one just in case
-            create(config);
-          }
-          catch (Exception e) {
-            // Don't return null, an event happened while we were working
-            log.debug("An error occurred loading repository from storage", e);
-          }
-          return repositories.get(lcName);
-        }))
-        .orElse(null);
+    return repositories.get(name.toLowerCase());
   }
 
   @Nullable
@@ -386,6 +391,77 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
     String lcName = name.toLowerCase();
     return repositories.get(lcName);
+  }
+
+  /**
+   * Attempts to load a repository that previously failed to initialize or start.
+   * This method is synchronized per-repository to prevent concurrent retry attempts.
+   *
+   * @param name the repository name
+   * @return the loaded repository if successful, empty if still failing
+   */
+  @Guarded(by = STARTED)
+  public Optional<Repository> retryFailedRepository(final String name) {
+    checkNotNull(name);
+    String lcName = name.toLowerCase();
+
+    // If already loaded, just return it
+    Repository existing = repositories.get(lcName);
+    if (existing != null) {
+      failedRepositoryTracker.clearFailure(name);
+      return Optional.of(existing);
+    }
+
+    // Only retry if there's a recorded failure
+    if (!failedRepositoryTracker.hasFailed(name)) {
+      log.debug("Repository '{}' has no recorded failure, nothing to retry", name);
+      return Optional.empty();
+    }
+
+    // Synchronize per-repository to prevent concurrent retries
+    Object lock = retryLocks.computeIfAbsent(lcName, k -> new Object());
+    synchronized (lock) {
+      // Double-check after acquiring lock
+      existing = repositories.get(lcName);
+      if (existing != null) {
+        failedRepositoryTracker.clearFailure(name);
+        return Optional.of(existing);
+      }
+
+      // Guard: failure may have been cleared by another thread between outer check and lock acquisition
+      if (!failedRepositoryTracker.hasFailed(lcName)) {
+        log.debug("Retry skipped for '{}': failure was cleared by another thread", name);
+        return Optional.empty();
+      }
+
+      return retrieveConfigurationByName(lcName)
+          .flatMap(config -> {
+            try {
+              log.info("Retrying failed repository: {}", name);
+              Repository repository = newRepository(config);
+              track(repository);
+              repository.start();
+              failedRepositoryTracker.clearFailure(name);
+              log.info("Repository '{}' successfully recovered", name);
+              eventManager.post(new RepositoryRestoredEvent(repository));
+              return Optional.of(repository);
+            }
+            catch (Exception e) {
+              log.error("Retry failed for repository '{}': {}", name, e.getMessage(), e);
+              failedRepositoryTracker.recordFailure(name, e);
+              return Optional.empty();
+            }
+          });
+    }
+  }
+
+  /**
+   * Gets the tracker for failed repositories.
+   *
+   * @return the failed repository tracker
+   */
+  public FailedRepositoryTracker getFailedRepositoryTracker() {
+    return failedRepositoryTracker;
   }
 
   @Override
@@ -487,6 +563,21 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
         log.debug("Repository '{}' already deleted during event replication, skipping", name);
         return; // already deleted is OK during replication
       }
+
+      // Check if this is a failed repository that needs cleanup
+      if (failedRepositoryTracker.hasFailed(name.toLowerCase())) {
+        log.info("Deleting failed repository: {}", name);
+        Configuration configuration = store.list()
+            .stream()
+            .filter(c -> c.getRepositoryName().equalsIgnoreCase(name))
+            .findFirst()
+            .orElseThrow(() -> new MissingRepositoryException(name));
+        store.delete(configuration);
+        failedRepositoryTracker.clearFailure(name);
+        log.info("Deleted failed repository: {}", name);
+        return;
+      }
+
       throw new MissingRepositoryException(name);
     }
 
@@ -521,12 +612,11 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
    * @since 3.14
    *
    * @param repositoryName
-   * @return List of group(s) that contain the supplied repository. Ordered from closest to the repo to farthest away
-   *         i.e. if group A contains group B which contains repo C the returned list would be ordered B,A
+   * @return Set of group(s) that contain the supplied repository
    */
   @Override
   @Guarded(by = STARTED)
-  public List<String> findContainingGroups(final String repositoryName) {
+  public Set<String> findContainingGroups(final String repositoryName) {
     return groupMemberMappingCache.getGroups(repositoryName);
   }
 

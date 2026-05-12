@@ -1,0 +1,104 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Allow combobox dropdowns to extend outside the config column
+// Form column = left (1), Selection Insights = right (2) - explicit column order
+.privilege-form--audit-grid {
+  overflow: visible;
+}
+
+// Form column: full-width inputs, reduce wasted whitespace
+.privilege-form__form-column {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  // Ensure comboboxes and inputs stretch to full column width
+  .settings-combobox {
+    width: 100%;
+    max-width: 100%;
+
+    .settings-combobox__wrapper {
+      width: 100%;
+    }
+  }
+
+  .settings-section__content {
+    width: 100%;
+  }
+}
+
+.privilege-form {
+  &__loading {
+    padding: var(--space-6, 24px);
+    gap: var(--space-2, 8px);
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  &__actions {
+    margin-top: var(--space-4, 16px);
+    padding-top: var(--space-4, 16px);
+    border-top: 1px solid var(--gray-6, #e4e4e7);
+
+    [data-theme='dark'] & {
+      border-top-color: var(--gray-6, #3d3d43);
+    }
+  }
+
+  &__sidecar-container {
+    margin-top: 0;
+    grid-column: 2; // Force Selection Insights to right column
+  }
+}
+
+// Global overrides for SettingsForm to create the Audit Workspace
+// Target the form by the custom class we added in PrivilegeForm.tsx (edit mode)
+// OR wizard-form--audit-workspace when in wizard Step 3 (create flow)
+.settings-form--audit-workspace,
+.wizard-form--audit-workspace {
+  // Expand the inner container to use full available width (responsive)
+  .settings-form__inner {
+    max-width: 1600px !important;
+    width: 100% !important;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  // Ensure the action bar spans the same wide container
+  .settings-form__action-bar {
+    display: flex;
+    justify-content: center;
+
+    // Internal wrapper for action bar content if needed
+    & > div {
+      max-width: 1400px;
+      width: 100%;
+    }
+  }
+}
+
+

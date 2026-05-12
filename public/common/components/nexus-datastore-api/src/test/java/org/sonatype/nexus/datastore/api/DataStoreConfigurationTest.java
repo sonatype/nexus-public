@@ -15,8 +15,6 @@ package org.sonatype.nexus.datastore.api;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,7 +26,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.sonatype.nexus.datastore.api.DataStoreConfiguration.REDACTED;
 
 public class DataStoreConfigurationTest
-    extends TestSupport
 {
   private DataStoreConfiguration configurationA;
 

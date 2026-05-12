@@ -15,7 +15,7 @@ package org.sonatype.nexus.quartz.internal;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.quartz.internal.bulkread.BulkReadScheduler;

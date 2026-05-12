@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.script.plugin.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.script.ScriptManager;
 
 import com.codahale.metrics.health.HealthCheck.Result;
@@ -23,9 +22,11 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ScriptPluginHealthCheckTest
-    extends TestSupport
 {
   @Mock
   ScriptManager scriptManager;

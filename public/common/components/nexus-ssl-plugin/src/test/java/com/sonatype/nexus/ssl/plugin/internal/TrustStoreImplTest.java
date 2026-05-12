@@ -21,7 +21,6 @@ import javax.net.ssl.SSLContext;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedKeyStoreManager;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificate;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateStore;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.CryptoHelper;
@@ -46,9 +45,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TrustStoreImplTest
-    extends TestSupport
 {
 
   private static final String CERT_IN_PEM = """

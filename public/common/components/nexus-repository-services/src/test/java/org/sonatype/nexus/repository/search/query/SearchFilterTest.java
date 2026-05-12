@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.search.query.SearchFilter.FilterOperator;
 
 import org.junit.Test;
@@ -28,7 +27,6 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link SearchFilter} including operator support.
  */
 public class SearchFilterTest
-    extends TestSupport
 {
   @Test
   public void testConstructor_withoutOperator() {

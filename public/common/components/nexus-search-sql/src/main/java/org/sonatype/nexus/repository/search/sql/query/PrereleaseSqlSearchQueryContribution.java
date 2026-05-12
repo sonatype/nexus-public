@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.sql.query;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContribution;
@@ -25,15 +24,18 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.search.sql.query.syntax.Operand.EQ;
 
 @Component
 @Qualifier(PrereleaseSqlSearchQueryContribution.NAME)
 public class PrereleaseSqlSearchQueryContribution
-    extends ComponentSupport
     implements SqlSearchQueryContribution
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String NAME = "isPrerelease";
 
   @Override

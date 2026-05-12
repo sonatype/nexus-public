@@ -14,8 +14,6 @@ package org.sonatype.nexus.swagger;
 
 import java.util.Collection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.swagger.models.HttpMethod;
@@ -39,9 +37,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ParameterContributorTest
-    extends TestSupport
 {
   private static final String TEST_PATH_1 = "/foo/{id}";
 

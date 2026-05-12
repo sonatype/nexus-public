@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.common.app.ApplicationVersion;
@@ -43,9 +42,11 @@ import static org.sonatype.nexus.upgrade.datastore.internal.audit.UpgradeAuditor
 import static org.sonatype.nexus.upgrade.datastore.internal.audit.UpgradeAuditor.NODE_IDS;
 import static org.sonatype.nexus.upgrade.datastore.internal.audit.UpgradeAuditor.SCHEMA_VERSION;
 import static org.sonatype.nexus.upgrade.datastore.internal.audit.UpgradeAuditor.STARTED;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UpgradeAuditorTest
-    extends TestSupport
 {
   private static final String V3_99 = "3.99";
 

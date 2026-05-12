@@ -1,0 +1,133 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.custom-filter-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+
+  &__field {
+    flex: 0 0 150px;
+  }
+
+  &__operator {
+    flex: 0 0 130px;
+  }
+
+  &__value {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  &__actions {
+    flex: 0 0 40px;
+    display: flex;
+    justify-content: center;
+  }
+
+  &__select {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--search-border, #4b5563);
+    border-radius: 6px;
+    background: var(--search-bg-input, #374151);
+    color: var(--search-text-primary, #f3f4f6);
+    font-size: 14px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+
+    &:hover:not(:disabled) {
+      border-color: var(--search-text-muted, #6b7280);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--search-border-focus, #3b82f6);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    option {
+      background: var(--search-bg-card, #1f2937);
+      color: var(--search-text-primary, #f3f4f6);
+    }
+  }
+
+  &__input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--search-border, #4b5563);
+    border-radius: 6px;
+    background: var(--search-bg-input, #374151);
+    color: var(--search-text-primary, #f3f4f6);
+    font-size: 14px;
+
+    &::placeholder {
+      color: var(--search-text-muted, #6b7280);
+    }
+
+    &:hover:not(:disabled) {
+      border-color: var(--search-text-muted, #6b7280);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--search-border-focus, #3b82f6);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--search-text-muted, #6b7280);
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+  }
+}

@@ -26,7 +26,7 @@ public class SqlSearchRequest
   // The maximum number of rows to return
   public final int limit;
 
-  // Number of rows to skip in relation to the first row of the first page
+  // Number of rows to skip in relation to the first row of the first page (legacy, prefer cursor)
   public final int offset;
 
   // Optional filter to apply
@@ -51,6 +51,14 @@ public class SqlSearchRequest
   // Indicates sort direction
   public final String sortDirection;
 
+  // Keyset cursor: last format seen (used for efficient pagination via WHERE clause)
+  @Nullable
+  public final String cursorFormat;
+
+  // Keyset cursor: last component_id seen (used for efficient pagination via WHERE clause)
+  @Nullable
+  public final Integer cursorComponentId;
+
   // Column name to be used for default/secondary sort
   public static final String defaultSortColumnName = "cs." + SearchViewColumns.FORMAT.name();
 
@@ -68,6 +76,8 @@ public class SqlSearchRequest
     this.assetFilterParams = builder.assetFilterValues;
     this.sortColumnName = builder.sortColumnName;
     this.sortDirection = builder.sortDirection;
+    this.cursorFormat = builder.cursorFormat;
+    this.cursorComponentId = builder.cursorComponentId;
     this.distinctNameAndNamespace = builder.distinctNameAndNamespace;
   }
 
@@ -92,6 +102,10 @@ public class SqlSearchRequest
     private String assetFilter;
 
     private Map<String, Object> assetFilterValues;
+
+    private String cursorFormat;
+
+    private Integer cursorComponentId;
 
     private boolean distinctNameAndNamespace = false;
 
@@ -132,6 +146,34 @@ public class SqlSearchRequest
 
     public Builder searchAssetFilterValues(final Map<String, Object> assetFilterValues) {
       this.assetFilterValues = assetFilterValues;
+      return this;
+    }
+
+    /**
+     * Sets keyset cursor values for efficient pagination.
+     * When set, the query will use WHERE clause instead of OFFSET.
+     *
+     * @param cursor the cursor containing last seen format and component_id
+     * @return this builder
+     */
+    public Builder cursor(@Nullable final SearchCursor cursor) {
+      if (cursor != null) {
+        this.cursorFormat = cursor.getLastFormat();
+        this.cursorComponentId = cursor.getLastComponentId();
+      }
+      return this;
+    }
+
+    /**
+     * Sets keyset cursor values directly.
+     *
+     * @param format the last seen format
+     * @param componentId the last seen component_id
+     * @return this builder
+     */
+    public Builder cursor(final String format, final int componentId) {
+      this.cursorFormat = format;
+      this.cursorComponentId = componentId;
       return this;
     }
 

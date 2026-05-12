@@ -63,13 +63,13 @@ export default FormUtils.buildFormMachine({
         clientId: ValidationUtils.isBlank(data?.clientId) ? ERROR.FIELD_REQUIRED : null,
         clientSecret: ValidationUtils.isBlank(data?.clientSecret) ? ERROR.FIELD_REQUIRED : null,
         idpAuthorizationUrl: ValidationUtils.isBlank(data?.idpAuthorizationUrl) ? ERROR.FIELD_REQUIRED :
-            ValidationUtils.notUri(data?.idpAuthorizationUrl) ? ERROR.FIELD_INVALID_URI : null,
+            ValidationUtils.validateIsUrl(data?.idpAuthorizationUrl),
         idpLogoutUrl: ValidationUtils.isBlank(data?.idpLogoutUrl) ? ERROR.FIELD_REQUIRED :
-            ValidationUtils.notUri(data?.idpLogoutUrl) ? ERROR.FIELD_INVALID_URI : null,
+            ValidationUtils.validateIsUrl(data?.idpLogoutUrl),
         idpTokenUrl: ValidationUtils.isBlank(data?.idpTokenUrl) ? ERROR.FIELD_REQUIRED :
-            ValidationUtils.notUri(data?.idpTokenUrl) ? ERROR.FIELD_INVALID_URI : null,
+            ValidationUtils.validateIsUrl(data?.idpTokenUrl),
         idpJwksUrl: ValidationUtils.isBlank(data?.idpJwksUrl) ? ERROR.FIELD_REQUIRED :
-            ValidationUtils.notUri(data?.idpJwksUrl) ? ERROR.FIELD_INVALID_URI : null,
+            ValidationUtils.validateIsUrl(data?.idpJwksUrl),
         usernameClaim: ValidationUtils.isBlank(data?.usernameClaim) ? ERROR.FIELD_REQUIRED : null,
         firstNameClaim: ValidationUtils.isBlank(data?.firstNameClaim) ? ERROR.FIELD_REQUIRED : null,
         lastNameClaim: ValidationUtils.isBlank(data?.lastNameClaim) ? ERROR.FIELD_REQUIRED : null,
@@ -153,6 +153,7 @@ function mapOAuth2Response({data}) {
     idpLogoutUrl: '',
     idpTokenUrl: '',
     authorizationCustomParams: {},
-    tokenRequestCustomParams: {}
+    tokenRequestCustomParams: {},
+    useTrustStore: false
   };
 }

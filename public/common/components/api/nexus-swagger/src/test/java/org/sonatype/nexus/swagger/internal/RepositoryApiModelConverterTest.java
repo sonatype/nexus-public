@@ -15,8 +15,6 @@ package org.sonatype.nexus.swagger.internal;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import io.swagger.converter.ModelConverter;
 import io.swagger.converter.ModelConverterContext;
 import io.swagger.models.Model;
@@ -36,12 +34,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Test for {@link RepositoryApiModelConverter}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RepositoryApiModelConverterTest
-    extends TestSupport
 {
   @Mock
   private ModelConverterContext context;

@@ -17,7 +17,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.SetOfCheckboxesFormField;
 import org.sonatype.nexus.repository.Format;
@@ -38,16 +37,17 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class PrivilegesUIResourceTest
-    extends Test5Support
 {
   public static final String HELP_TEXT = "The actions you wish to allow";
 

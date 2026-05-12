@@ -21,20 +21,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Monitors memory usage and logs warnings when memory thresholds are exceeded.
  */
 @Component
 public class MemoryMonitor
-    extends ComponentSupport
     implements JvmMonitor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String SYSTEM_MARKER = "*SYSTEM";
 
   private final int memoryWarningThresholdPercent;

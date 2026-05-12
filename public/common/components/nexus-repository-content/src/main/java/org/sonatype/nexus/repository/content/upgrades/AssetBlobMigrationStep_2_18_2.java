@@ -15,10 +15,11 @@ package org.sonatype.nexus.repository.content.upgrades;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.content.tasks.CreateAssetBlobIndexTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
@@ -35,9 +36,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(SCOPE_SINGLETON)
 public class AssetBlobMigrationStep_2_18_2
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final UpgradeTaskScheduler upgradeTaskScheduler;
 
   @Autowired

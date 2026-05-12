@@ -42,6 +42,9 @@ Ext.define('NX.app.Application', {
   },
 
   uses: [
+    // container overrides
+    'NX.ext.container.Container',
+
     // direct overrides
     'NX.ext.direct.RemotingProvider',
     'NX.ext.form.action.DirectLoad',

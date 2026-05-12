@@ -1,0 +1,138 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.nxrm-quick-action-stats {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.nxrm-quick-action-stat-card--zero-cleanup,
+.nxrm-quick-action-stat-card--unhealthy {
+  border-left: 4px solid var(--tomato-9);
+}
+
+.nxrm-quick-action-stat-card--healthy {
+  border-left: 4px solid var(--green-9);
+}
+
+.nxrm-quick-action-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: var(--space-4, 1rem);
+  row-gap: var(--space-4, 1rem);
+  width: 100%;
+  align-items: stretch;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nxrm-quick-action-stat-card {
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    background-color: var(--color-surface-hover);
+  }
+
+  &__link {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__value {
+    font-variant-numeric: tabular-nums;
+
+    .rt-Heading {
+      margin: 0;
+    }
+  }
+
+  &__number {
+    margin: 0;
+  }
+
+  &__icon--healthy {
+    color: var(--green-9);
+    flex-shrink: 0;
+  }
+
+  &__icon--unhealthy {
+    color: var(--red-9);
+    flex-shrink: 0;
+  }
+}
+
+/* System Health progress bar */
+.nxrm-system-health__progress {
+  width: 100%;
+}
+
+.nxrm-system-health__number--unhealthy {
+  color: var(--tomato-9);
+}
+
+.nxrm-system-health__progress-bar {
+  height: 8px;
+  border-radius: var(--radius-1);
+  overflow: hidden;
+  display: flex;
+  width: 100%;
+}
+
+.nxrm-system-health__progress-segment {
+  min-width: 0;
+  transition: flex 0.2s ease;
+
+  &--unhealthy {
+    background-color: var(--tomato-9);
+  }
+
+  &--healthy {
+    background-color: var(--blue-9);
+  }
+}
+
+/* When total is 0, both segments show gray */
+.nxrm-system-health__progress-bar--empty {
+  .nxrm-system-health__progress-segment--unhealthy,
+  .nxrm-system-health__progress-segment--healthy {
+    background-color: var(--gray-6);
+  }
+}

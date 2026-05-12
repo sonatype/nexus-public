@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.blobstore.quota;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -28,9 +28,10 @@ import static com.google.common.base.Preconditions.checkArgument;
  * @since 3.14
  */
 public abstract class BlobStoreQuotaSupport
-    extends ComponentSupport
     implements BlobStoreQuota
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String ROOT_KEY = "blobStoreQuotaConfig";
 
   public static final String TYPE_KEY = "quotaType";

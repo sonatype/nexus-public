@@ -18,12 +18,13 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.CapabilityRegistryEvent.Ready;
 import org.sonatype.nexus.common.event.EventAware;
 
 import com.google.common.base.Throwables;
 import com.google.common.eventbus.Subscribe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Support for components which need to handle capability registration upon booting.
@@ -31,9 +32,10 @@ import com.google.common.eventbus.Subscribe;
  * @since capabilities 2.2
  */
 public abstract class CapabilityBooterSupport
-    extends ComponentSupport
     implements EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Subscribe
   public void handle(final Ready event) {
     final CapabilityRegistry registry = event.getCapabilityRegistry();

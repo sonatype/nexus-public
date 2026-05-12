@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
@@ -34,6 +33,8 @@ import com.codahale.metrics.json.HealthCheckModule;
 import com.codahale.metrics.json.MetricsModule;
 import com.codahale.metrics.jvm.ThreadDump;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.HIGH;
@@ -51,9 +52,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class MetricsCustomizer
-    extends ComponentSupport
     implements SupportBundleCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final MetricRegistry metricRegistry;
 
   private final HealthCheckRegistry healthCheckRegistry;

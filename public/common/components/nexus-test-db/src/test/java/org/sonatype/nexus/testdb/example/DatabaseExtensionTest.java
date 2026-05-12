@@ -14,7 +14,6 @@ package org.sonatype.nexus.testdb.example;
 
 import java.sql.SQLException;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
@@ -27,7 +26,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 class DatabaseExtensionTest
-    extends Test5Support
 {
   @DataSessionConfiguration(daos = TestItemDAO.class)
   TestDataSessionSupplier supplier;

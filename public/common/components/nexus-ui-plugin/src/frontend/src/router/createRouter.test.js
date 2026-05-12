@@ -120,4 +120,23 @@ describe('createRouter - onBefore - validate permissions and configuration on ea
     expect(goSpy).toHaveBeenNthCalledWith(2, 'login', {returnTo: expectedReturnTo});
     expect(urlSpy).toHaveBeenCalled();
   });
+
+  it('unauthenticated user with empty URL should redirect to login without returnTo', async () => {
+    const protectedRoute = {
+      name: 'protected',
+      url: '/protected',
+      component: () => null,
+      data: { visibilityRequirements: { permissions: ['admin:all'] } }
+    };
+    router.stateRegistry.register(protectedRoute);
+    await router.urlService.sync();
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    jest.spyOn(router.urlService, 'url').mockReturnValue('');
+    await router.stateService.go('protected').catch(() => {});
+
+    expect(goSpy).toHaveBeenCalledTimes(2);
+    expect(goSpy).toHaveBeenNthCalledWith(1, 'protected');
+    expect(goSpy).toHaveBeenNthCalledWith(2, 'login');
+  });
 });

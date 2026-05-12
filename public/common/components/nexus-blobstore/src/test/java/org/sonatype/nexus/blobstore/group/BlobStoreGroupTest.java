@@ -28,7 +28,6 @@ import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -49,6 +48,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -68,8 +69,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 
+@ExtendWith(MockitoExtension.class)
 class BlobStoreGroupTest
-    extends Test5Support
 {
   @Mock
   private BlobStoreManager blobStoreManager;

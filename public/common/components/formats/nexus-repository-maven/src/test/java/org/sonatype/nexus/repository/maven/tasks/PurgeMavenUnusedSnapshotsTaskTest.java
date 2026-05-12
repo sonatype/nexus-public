@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -23,7 +22,9 @@ import org.sonatype.nexus.repository.types.HostedType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,8 +33,9 @@ import static org.sonatype.nexus.repository.maven.VersionPolicy.MIXED;
 import static org.sonatype.nexus.repository.maven.VersionPolicy.RELEASE;
 import static org.sonatype.nexus.repository.maven.VersionPolicy.SNAPSHOT;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class PurgeMavenUnusedSnapshotsTaskTest
-    extends TestSupport
+
 {
   @Mock
   private Repository repository;

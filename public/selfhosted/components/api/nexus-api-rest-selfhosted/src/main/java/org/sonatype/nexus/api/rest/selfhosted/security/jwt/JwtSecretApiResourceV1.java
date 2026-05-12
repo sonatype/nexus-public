@@ -19,7 +19,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.jwt.SecretStore;
 
@@ -29,6 +28,8 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -50,9 +51,10 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Component
 @Singleton
 public class JwtSecretApiResourceV1
-    extends ComponentSupport
     implements Resource, JwtSecretApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String PATH = V1_API_PREFIX + "/security/jwt";
 
   private final SecretStore secretStore;

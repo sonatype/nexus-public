@@ -1,0 +1,249 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.datastore-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-6, 24px);
+  background: var(--color-background, #fff);
+
+  [data-theme='dark'] & {
+    background: var(--gray-1, #111113);
+  }
+
+  &__header {
+    margin-bottom: var(--space-6, 24px);
+    flex-shrink: 0;
+  }
+
+  &__icon {
+    color: var(--accent-9, #0090ff);
+  }
+
+  &__description {
+    color: var(--gray-11, #6f6f78);
+    margin-top: var(--space-1, 4px);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__alerts {
+    margin-bottom: var(--space-4, 16px);
+    flex-shrink: 0;
+  }
+
+  &__content {
+    flex: 1;
+    overflow: auto;
+  }
+
+  &__loading {
+    padding: var(--space-6, 24px);
+    gap: var(--space-2, 8px);
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  &__help {
+    margin-bottom: var(--space-4, 16px);
+    padding: var(--space-4, 16px);
+    background: var(--blue-2, #f0f9ff);
+    border-radius: var(--radius-2, 6px);
+
+    [data-theme='dark'] & {
+      background: var(--blue-2, #0d2847);
+    }
+  }
+
+  &__help-header {
+    margin-bottom: var(--space-2, 8px);
+    color: var(--blue-11, #0d74ce);
+
+    [data-theme='dark'] & {
+      color: var(--blue-11, #52a9ff);
+    }
+  }
+
+  &__help-text {
+    color: var(--gray-11, #6f6f78);
+    line-height: 1.5;
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__help-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--blue-11, #0d74ce);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    [data-theme='dark'] & {
+      color: var(--blue-11, #52a9ff);
+    }
+  }
+
+  &__readonly-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 16px);
+    padding: var(--space-4, 16px);
+    background: var(--gray-2, #f9f9fb);
+    border-radius: var(--radius-2, 6px);
+
+    [data-theme='dark'] & {
+      background: var(--gray-2, #19191b);
+    }
+  }
+
+  &__readonly-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1, 4px);
+  }
+
+  &__readonly-label {
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__readonly-value {
+    color: var(--color-text-primary, #1a1a1a);
+    word-break: break-all;
+
+    [data-theme='dark'] & {
+      color: var(--gray-12, #edeef0);
+    }
+
+    &--mono {
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+      font-size: 13px;
+    }
+  }
+
+  &__section-error {
+    margin-bottom: var(--space-3, 12px);
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    background: var(--red-3, #ffefef);
+    border-radius: var(--radius-2, 6px);
+    color: var(--red-11, #cd2b31);
+
+    [data-theme='dark'] & {
+      background: var(--red-3, #3c1618);
+      color: var(--red-11, #ff6369);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__effective-config {
+    border: 1px solid var(--gray-6, #d9d9e0);
+    border-radius: var(--radius-2, 6px);
+    overflow: hidden;
+
+    [data-theme='dark'] & {
+      border-color: var(--gray-6, #3a3a3e);
+    }
+
+    table {
+      width: 100%;
+    }
+
+    th {
+      background: var(--gray-2, #f9f9fb);
+      font-weight: 500;
+
+      [data-theme='dark'] & {
+        background: var(--gray-3, #212123);
+      }
+    }
+  }
+
+  &__effective-name {
+    font-weight: 500;
+  }
+
+  &__effective-value {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 13px;
+    color: var(--gray-12, #1a1a1a);
+
+    [data-theme='dark'] & {
+      color: var(--gray-12, #edeef0);
+    }
+  }
+
+  &__effective-source {
+    display: inline-block;
+    padding: var(--space-1, 4px) var(--space-2, 8px);
+    border-radius: var(--radius-1, 4px);
+    font-weight: 500;
+
+    &--default {
+      background: var(--blue-3, #e6f4ff);
+      color: var(--blue-11, #0d74ce);
+
+      [data-theme='dark'] & {
+        background: var(--blue-4, #0d3868);
+        color: var(--blue-11, #52a9ff);
+      }
+    }
+
+    &--custom {
+      background: var(--green-3, #e6f9ed);
+      color: var(--green-11, #18794e);
+
+      [data-theme='dark'] & {
+        background: var(--green-4, #113b29);
+        color: var(--green-11, #4cc38a);
+      }
+    }
+  }
+
+  &__actions {
+    margin-top: var(--space-6, 24px);
+    padding-top: var(--space-4, 16px);
+    border-top: 1px solid var(--gray-4, #ebebef);
+
+    [data-theme='dark'] & {
+      border-top-color: var(--gray-4, #27272b);
+    }
+  }
+}
+

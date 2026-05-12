@@ -15,7 +15,6 @@ package org.sonatype.nexus.coreui.internal.branding;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 
 import org.junit.After;
@@ -31,7 +30,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Tests for {@link Branding}.
  */
 public class BrandingTest
-    extends TestSupport
 {
   private Branding underTest;
 

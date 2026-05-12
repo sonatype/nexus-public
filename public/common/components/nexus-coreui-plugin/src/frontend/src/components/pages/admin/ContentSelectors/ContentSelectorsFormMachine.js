@@ -30,6 +30,32 @@ function isEdit({name}) {
 
 export default FormUtils.buildFormMachine({
   id: 'ContentSelectorsFormMachine',
+  context: (context) => ({
+    ...context,
+    showDeleteModal: false
+  }),
+  config: (config) => ({
+    ...config,
+    states: {
+      ...config.states,
+      loaded: {
+        ...config.states.loaded,
+        on: {
+          ...config.states.loaded.on,
+          CONFIRM_DELETE: {
+            actions: assign({showDeleteModal: true})
+          },
+          HIDE_DELETE_MODAL: {
+            actions: assign({showDeleteModal: false})
+          },
+          DELETE: {
+            target: 'delete',
+            actions: assign({showDeleteModal: false})
+          }
+        }
+      }
+    }
+  })
 }).withConfig({
   actions: {
     validate: assign({
@@ -117,13 +143,6 @@ export default FormUtils.buildFormMachine({
         });
       }
     },
-
-    confirmDelete: ({data}) => ExtJS.requestConfirmation({
-      title: UIStrings.CONTENT_SELECTORS.MESSAGES.CONFIRM_DELETE.TITLE,
-      message: UIStrings.CONTENT_SELECTORS.MESSAGES.CONFIRM_DELETE.MESSAGE(data.name),
-      yesButtonText: UIStrings.CONTENT_SELECTORS.MESSAGES.CONFIRM_DELETE.YES,
-      noButtonText: UIStrings.CONTENT_SELECTORS.MESSAGES.CONFIRM_DELETE.NO
-    }),
 
     delete: ({data}) => Axios.delete(url(data.name))
   }

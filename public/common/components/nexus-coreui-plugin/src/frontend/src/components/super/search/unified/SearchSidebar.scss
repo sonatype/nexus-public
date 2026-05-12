@@ -1,0 +1,90 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/* Sidebar in main layout - fixed 250px (matches ux-lab) */
+.search-sidebar {
+  width: 250px;
+  min-width: 250px;
+  max-width: 250px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+/* Sidebar in mobile drawer - full width, responsive */
+.search-sidebar--drawer {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.repository-search-dropdown__trigger {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  padding-right: 36px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-neutral-400);
+  }
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-selection);
+  }
+
+  &:disabled {
+    background-color: var(--color-surface-secondary);
+    color: var(--color-text-tertiary);
+    cursor: not-allowed;
+  }
+}
+
+.repository-search-dropdown__trigger-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repository-search-dropdown__trigger-chevron {
+  position: absolute;
+  right: 12px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* Repository dropdown content - match sort dropdown (background, position below) */
+.repository-dropdown-content {
+  background-color: var(--color-background) !important;
+  backdrop-filter: none !important;
+  border: 1px solid var(--gray-6) !important;
+  box-shadow: 0 10px 38px -10px rgba(0, 0, 0, 0.35),
+    0 10px 20px -15px rgba(0, 0, 0, 0.2) !important;
+}

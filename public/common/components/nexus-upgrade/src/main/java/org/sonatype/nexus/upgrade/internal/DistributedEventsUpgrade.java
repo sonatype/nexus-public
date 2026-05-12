@@ -16,10 +16,11 @@ import java.sql.Connection;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * No-op upgrade step.
@@ -33,9 +34,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class DistributedEventsUpgrade
-    extends ComponentSupport
     implements RepeatableDatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public Integer getChecksum() {
     return 1;

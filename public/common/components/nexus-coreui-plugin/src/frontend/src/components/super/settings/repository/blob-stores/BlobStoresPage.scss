@@ -1,0 +1,136 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.blob-stores-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-4);
+  gap: var(--space-4);
+  background-color: var(--gray-1);
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: var(--font-size-2);
+    color: var(--gray-11);
+  }
+
+  &__alerts {
+    margin-bottom: var(--space-2);
+  }
+
+  &__filter {
+    width: 300px;
+  }
+
+  &__content {
+    flex: 1;
+    gap: var(--space-4);
+    min-height: 0;
+  }
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__sidebar {
+    width: 300px;
+    flex-shrink: 0;
+  }
+
+  &__type-icon {
+    color: var(--gray-11);
+
+    &--s3 {
+      color: var(--orange-9);
+    }
+
+    &--azure {
+      color: var(--blue-9);
+    }
+
+    &--google {
+      color: var(--red-9);
+    }
+
+    &--group {
+      color: var(--purple-9);
+    }
+
+    &--file {
+      color: var(--gray-9);
+    }
+  }
+
+  &__form-container {
+    max-width: 800px;
+  }
+
+  &__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  &__modal {
+    background: var(--color-panel-solid);
+    border-radius: var(--radius-3);
+    padding: var(--space-5);
+    max-width: 400px;
+    width: 100%;
+    box-shadow: var(--shadow-6);
+
+    h3 {
+      margin: 0 0 var(--space-3);
+      font-size: var(--font-size-4);
+      font-weight: var(--font-weight-medium);
+    }
+
+    p {
+      margin: 0 0 var(--space-4);
+      color: var(--gray-11);
+    }
+  }
+
+  &__modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 1024px) {
+  .blob-stores-page {
+    &__sidebar {
+      display: none;
+    }
+
+    &__filter {
+      width: 100%;
+      max-width: 300px;
+    }
+  }
+}
+

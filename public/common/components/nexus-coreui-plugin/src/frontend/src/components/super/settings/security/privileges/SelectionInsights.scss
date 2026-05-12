@@ -1,0 +1,305 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.selection-insights {
+  &__section {
+    padding-bottom: var(--space-4);
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--gray-a3);
+    }
+  }
+
+  &__repo-card {
+    background: var(--color-surface);
+    padding: var(--space-3);
+    border-radius: var(--radius-2);
+    border: 1px solid var(--gray-a4);
+  }
+
+  &__expression {
+    background: var(--gray-3);
+    padding: var(--space-3);
+    border-radius: var(--radius-2);
+    border: 1px solid var(--gray-a4);
+  }
+
+  &__code {
+    margin: 0;
+    font-size: var(--font-size-1);
+    font-family: var(--font-family-mono);
+    color: var(--accent-11);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  &__metrics {
+    background: var(--accent-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-2);
+    border: 1px solid var(--accent-5);
+  }
+
+  &__tree-preview {
+    margin-top: var(--space-2);
+    padding: var(--space-2);
+    background: var(--gray-2);
+    border-radius: var(--radius-2);
+    border: 1px solid var(--gray-4);
+  }
+
+  &__tree-node {
+    cursor: pointer;
+    border-radius: var(--radius-1);
+    transition: background-color 0.1s ease;
+    width: 100%;
+    min-width: 0;
+
+    &:hover {
+      background: var(--gray-3);
+    }
+
+    &-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+
+    &-chevron {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-9);
+    }
+
+    &-chevron-wrapper {
+      margin-left: auto;
+      flex-shrink: 0;
+      width: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      color: var(--gray-9);
+    }
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  &__all-repos-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--blue-3);
+    color: var(--blue-11);
+    border-radius: var(--radius-3);
+  }
+
+  // Two-column layout adjustments
+  &__sidecar {
+    background: var(--color-panel-solid);
+    border-radius: var(--radius-3);
+    padding: var(--space-4);
+    height: fit-content;
+    border: 1px solid var(--gray-6);
+    box-shadow: var(--shadow-2);
+  }
+
+  &__placeholder {
+    color: var(--gray-9);
+    text-align: center;
+    padding: var(--space-6) 0;
+    border: 1px dashed var(--gray-6);
+    border-radius: var(--radius-3);
+    background: var(--gray-2);
+  }
+
+  &__content-tree {
+    background: var(--gray-2);
+    border: 1px solid var(--gray-4);
+    border-radius: var(--radius-2);
+    margin-top: var(--space-2);
+    max-height: 300px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    &-header {
+      padding: var(--space-2) var(--space-3);
+      border-bottom: 1px solid var(--gray-4);
+      background: var(--gray-3);
+    }
+
+    &-scroll {
+      flex: 1;
+    }
+  }
+
+  &__file-node {
+    cursor: default;
+    border-radius: var(--radius-1);
+    transition: background-color 0.1s ease;
+    width: 100%;
+    min-width: 0;
+
+    &:hover {
+      background: var(--gray-3);
+    }
+
+    &--matched {
+      background: var(--accent-3) !important;
+      border-left: 3px solid var(--accent-9);
+    }
+
+    &-name {
+      font-family: var(--font-family-mono);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
+    }
+
+    &-chevron-wrapper {
+      margin-left: auto;
+      flex-shrink: 0;
+      width: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      color: var(--gray-9);
+    }
+  }
+}
+
+// Full Match List: full-screen overlay like Repository Tree - portal to body, above everything (z-index 10002)
+.selection-insights__fullscreen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10002;
+  background: var(--color-background);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.selection-insights__fullscreen-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.selection-insights__fullscreen-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--gray-6);
+  background: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.selection-insights__fullscreen-close {
+  flex-shrink: 0;
+}
+
+.selection-insights__inline-code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-1);
+  background: var(--gray-3);
+  padding: 1px 5px;
+  border-radius: var(--radius-1);
+  color: var(--accent-11);
+}
+
+// Toolbar: search + filter count
+.selection-insights__fullscreen-table-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.selection-insights__fullscreen-toolbar {
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--gray-4);
+  background: var(--gray-1);
+  flex-shrink: 0;
+}
+
+.selection-insights__fullscreen-search {
+  width: 320px;
+}
+
+.selection-insights__fullscreen-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.selection-insights__fullscreen-table {
+  width: 100%;
+  margin-top: var(--space-3);
+}
+
+.selection-insights__fullscreen-table-row {
+  &:hover {
+    background: var(--accent-2);
+  }
+}
+
+.selection-insights__fullscreen-file-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.selection-insights__fullscreen-path-text {
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+  color: var(--gray-12);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100vw - 160px);
+}
+
+:root[data-theme="dark"] {
+  .selection-insights {
+    &__repo-card,
+    &__expression {
+      background: var(--gray-4);
+    }
+
+    &__metrics {
+      background: var(--accent-3);
+    }
+
+    &__sidecar {
+      background: var(--gray-3);
+    }
+  }
+}

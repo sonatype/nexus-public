@@ -25,8 +25,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.join;
@@ -46,8 +47,9 @@ import static org.sonatype.nexus.thread.NexusExecutorService.forFixedSubject;
  * @since 3.8
  */
 public class StreamCopier<T>
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Used as a default common thread pool, mainly allowing simple usage of this class
    **/

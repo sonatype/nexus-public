@@ -14,13 +14,14 @@ package org.sonatype.nexus.repository.search.sql.store.upgrade;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.search.sql.store.upgrade.task.CleanOrphanedSearchRecordsTask;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,8 +30,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class RemoveOrphanedSearchRecordsMigrationStep_2_76Test
-    extends Test5Support
 {
   @Mock
   private Connection connection;

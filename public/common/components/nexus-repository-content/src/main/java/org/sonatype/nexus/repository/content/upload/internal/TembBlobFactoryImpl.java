@@ -16,7 +16,6 @@ import java.io.InputStream;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -24,6 +23,8 @@ import org.sonatype.nexus.repository.upload.TempBlobFactory;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Content implementation of {@code TempBlobFactory}
@@ -33,9 +34,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class TembBlobFactoryImpl
-    extends ComponentSupport
     implements TempBlobFactory
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public TempBlob create(
       final Repository repository,

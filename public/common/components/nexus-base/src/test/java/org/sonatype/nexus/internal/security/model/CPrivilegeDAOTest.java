@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -29,7 +27,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,9 +34,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
-@Category(SQLTestGroup.class)
 public class CPrivilegeDAOTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(CPrivilegeDAO.class);

@@ -17,8 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,7 +28,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Tests for {@link CacheAttributeUtils}.
  */
 public class CacheAttributeUtilsTest
-    extends TestSupport
 {
   @Test
   public void extractLastVerified_withJodaDateTimeString() {

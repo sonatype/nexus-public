@@ -16,22 +16,27 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
+import java.util.Optional;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.ValidationException;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Sort;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.event.SearchEvent;
+import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.query.SearchResultsGenerator;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
@@ -43,6 +48,7 @@ import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintVa
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,6 +59,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -60,11 +67,11 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link SearchComponent}.
  */
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class SearchComponentTest
-    extends Test5Support
 {
   @ValidationExecutor
   private final Validator validator =
@@ -79,11 +86,28 @@ class SearchComponentTest
   @Mock
   private SearchResultsGenerator searchResultsGenerator;
 
+  @Mock
+  private org.sonatype.nexus.repository.manager.RepositoryManager repositoryManager;
+
+  @Mock
+  private Repository memberRepo;
+
+  @Mock
+  private Repository groupRepo;
+
   private SearchComponent underTest;
 
   @BeforeEach
   void setUp() {
-    underTest = new SearchComponent(searchService, 1000, searchResultsGenerator, eventManager);
+    underTest = new SearchComponent(searchService, 1000, searchResultsGenerator, eventManager, repositoryManager);
+  }
+
+  private List<SearchFilter> createSearchFilters(List<Filter> filters) {
+    return Optional.ofNullable(filters)
+        .map(List::stream)
+        .orElseGet(Stream::empty)
+        .map(filter -> new SearchFilter(filter.getProperty(), filter.getValue()))
+        .collect(Collectors.toList());
   }
 
   @Test
@@ -454,5 +478,229 @@ class SearchComponentTest
     LimitedPagedResponse<ComponentXO> result = underTest.read(parameters);
 
     assertThat(result, is(notNullValue()));
+  }
+
+  @Test
+  void testRead_withGroupRepository_searchResultsUseGroupName() {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("repository_name");
+            setValue("maven-public");
+          }
+        },
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("test-artifact");
+          }
+        }));
+
+    SearchResponse searchResponse = new SearchResponse();
+    searchResponse.setTotalHits(1L);
+    when(searchService.search(any(SearchRequest.class))).thenReturn(searchResponse);
+
+    // Search result returns the member repo name "maven-releases"
+    ComponentSearchResult searchResult = new ComponentSearchResult();
+    searchResult.setId("comp-1");
+    searchResult.setGroup("org.example");
+    searchResult.setName("test-artifact");
+    searchResult.setVersion("1.0.0");
+    searchResult.setRepositoryName("maven-releases"); // Member repo from search index
+    searchResult.setFormat("maven2");
+
+    // Mock the repositories and group facet for mapping
+    // memberRepo.getName() is called on the members returned by leafMembers()
+    when(memberRepo.getName()).thenReturn("maven-releases");
+
+    when(groupRepo.getName()).thenReturn("maven-public");
+
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(groupFacet.leafMembers()).thenReturn(List.of(memberRepo));
+    when(groupRepo.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+
+    when(repositoryManager.get("maven-public")).thenReturn(groupRepo);
+
+    when(searchResultsGenerator.getSearchResultList(searchResponse)).thenReturn(List.of(searchResult));
+
+    LimitedPagedResponse<ComponentXO> result = underTest.read(parameters);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getData(), hasSize(1));
+    List<ComponentXO> data = new ArrayList<>(result.getData());
+    // The repositoryName should be mapped from "maven-releases" to "maven-public"
+    assertThat(data.get(0).getRepositoryName(), is("maven-public"));
+  }
+
+  @Test
+  void testRead_withMultipleRepositories_groupMappingApplied() {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("repository_name");
+            setValue("group-a");
+          }
+        },
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("artifact");
+          }
+        }));
+
+    SearchResponse searchResponse = new SearchResponse();
+    searchResponse.setTotalHits(2L);
+    when(searchService.search(any(SearchRequest.class))).thenReturn(searchResponse);
+
+    ComponentSearchResult result1 = new ComponentSearchResult();
+    result1.setId("comp-1");
+    result1.setName("artifact1");
+    result1.setRepositoryName("repo-a1"); // Member of group-a
+
+    ComponentSearchResult result2 = new ComponentSearchResult();
+    result2.setId("comp-2");
+    result2.setName("artifact2");
+    result2.setRepositoryName("repo-a2"); // Another member of group-a
+
+    Repository groupARepo = mock(Repository.class);
+    when(groupARepo.getName()).thenReturn("group-a");
+
+    Repository memberRepo1 = mock(Repository.class);
+    when(memberRepo1.getName()).thenReturn("repo-a1");
+
+    Repository memberRepo2 = mock(Repository.class);
+    when(memberRepo2.getName()).thenReturn("repo-a2");
+
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(groupFacet.leafMembers()).thenReturn(List.of(memberRepo1, memberRepo2));
+    when(groupARepo.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+
+    when(repositoryManager.get("group-a")).thenReturn(groupARepo);
+
+    when(searchResultsGenerator.getSearchResultList(searchResponse))
+        .thenReturn(List.of(result1, result2));
+
+    LimitedPagedResponse<ComponentXO> result = underTest.read(parameters);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getData(), hasSize(2));
+    List<ComponentXO> data = new ArrayList<>(result.getData());
+    // Both should be mapped to "group-a"
+    assertThat(data.get(0).getRepositoryName(), is("group-a"));
+    assertThat(data.get(1).getRepositoryName(), is("group-a"));
+  }
+
+  @Test
+  void testTryExtractRepositoryFromSearch_noRepositoryNameFilter_returnsIdentity() {
+    List<Filter> filters = List.of(
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("test");
+          }
+        });
+
+    UnaryOperator<String> result = underTest.tryExtractRepositoryFromSearch(createSearchFilters(filters));
+
+    assertThat(result.apply("any-repo"), is("any-repo"));
+  }
+
+  @Test
+  void testTryExtractRepositoryFromSearch_nonGroupRepository_passesThrough() {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("repository_name");
+            setValue("maven-central");
+          }
+        },
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("test");
+          }
+        }));
+
+    SearchResponse searchResponse = new SearchResponse();
+    searchResponse.setTotalHits(1L);
+    when(searchService.search(any(SearchRequest.class))).thenReturn(searchResponse);
+
+    ComponentSearchResult searchResult = new ComponentSearchResult();
+    searchResult.setId("comp-1");
+    searchResult.setName("test-artifact");
+    searchResult.setRepositoryName("maven-central");
+    searchResult.setFormat("maven2");
+
+    when(repositoryManager.get("maven-central")).thenReturn(memberRepo);
+    when(memberRepo.getName()).thenReturn("maven-central");
+
+    when(searchResultsGenerator.getSearchResultList(searchResponse)).thenReturn(List.of(searchResult));
+
+    LimitedPagedResponse<ComponentXO> result = underTest.read(parameters);
+
+    assertThat(result, is(notNullValue()));
+    List<ComponentXO> data = new ArrayList<>(result.getData());
+    assertThat(data.get(0).getRepositoryName(), is("maven-central"));
+  }
+
+  @Test
+  void testTryExtractRepositoryFromSearch_resultRepoNotInFilter_mapToOriginal() {
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("repository_name");
+            setValue("maven-public");
+          }
+        },
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("test");
+          }
+        }));
+
+    SearchResponse searchResponse = new SearchResponse();
+    searchResponse.setTotalHits(1L);
+    when(searchService.search(any(SearchRequest.class))).thenReturn(searchResponse);
+
+    ComponentSearchResult searchResult = new ComponentSearchResult();
+    searchResult.setId("comp-1");
+    searchResult.setName("test-artifact");
+    searchResult.setRepositoryName("some-other-repo"); // Not in filter map
+    searchResult.setFormat("maven2");
+
+    when(repositoryManager.get("maven-public")).thenReturn(groupRepo);
+    when(groupRepo.getName()).thenReturn("maven-public");
+
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(groupFacet.leafMembers()).thenReturn(List.of(memberRepo));
+    when(groupRepo.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
+    when(memberRepo.getName()).thenReturn("maven-releases");
+
+    when(searchResultsGenerator.getSearchResultList(searchResponse)).thenReturn(List.of(searchResult));
+
+    LimitedPagedResponse<ComponentXO> result = underTest.read(parameters);
+
+    assertThat(result, is(notNullValue()));
+    List<ComponentXO> data = new ArrayList<>(result.getData());
+    // Result repo not in filter map, so it uses original name
+    assertThat(data.get(0).getRepositoryName(), is("some-other-repo"));
   }
 }

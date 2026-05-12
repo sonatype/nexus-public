@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.capability.condition.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.Condition;
@@ -33,7 +32,6 @@ import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
  * @since capabilities 2.0
  */
 public class CapabilityConditionsImplTest
-    extends TestSupport
 {
 
   private CapabilityConditionsImpl underTest;

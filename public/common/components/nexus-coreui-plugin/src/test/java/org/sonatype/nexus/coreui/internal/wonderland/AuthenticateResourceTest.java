@@ -17,7 +17,6 @@ import java.util.Base64;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
@@ -25,6 +24,7 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,11 +35,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class AuthenticateResourceTest
-    extends Test5Support
 {
   @Mock
   private AuthTicketService authTicketService;

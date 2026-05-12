@@ -14,7 +14,6 @@ package org.sonatype.nexus.siesta.internal;
 
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,7 +26,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class JsonProcessingExceptionMapperTest
-    extends Test5Support
 {
   private JsonProcessingExceptionMapper mapper;
 

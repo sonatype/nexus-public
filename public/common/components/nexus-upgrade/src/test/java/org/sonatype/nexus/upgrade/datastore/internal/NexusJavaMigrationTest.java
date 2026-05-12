@@ -15,7 +15,6 @@ package org.sonatype.nexus.upgrade.datastore.internal;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.junit.Test;
@@ -25,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.upgrade.datastore.internal.NexusJavaMigration.nameMatcher;
 
 public class NexusJavaMigrationTest
-    extends TestSupport
 {
 
   @Test

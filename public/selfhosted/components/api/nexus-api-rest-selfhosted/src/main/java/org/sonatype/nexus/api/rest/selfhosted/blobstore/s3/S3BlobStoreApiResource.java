@@ -24,7 +24,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.common.blobstore.BlobStoreResourceUtil;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.PreSignedUrlNotAllowedException;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConfigurationMapper;
@@ -46,6 +45,8 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -67,9 +68,10 @@ import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiMode
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class S3BlobStoreApiResource
-    extends ComponentSupport
     implements Resource, S3BlobStoreApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String S3_PRE_SIGNED_URL_PAYMENT_REQUIRED = "S3 pre-signed URL is a Pro only feature.";
 
   private final S3BlobStoreApiUpdateValidation s3BlobStoreApiUpdateValidation;

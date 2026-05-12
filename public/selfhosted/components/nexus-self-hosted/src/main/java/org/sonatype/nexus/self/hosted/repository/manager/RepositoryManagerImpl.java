@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.manager.ConfigurationValidator;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager;
+import org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker;
 import org.sonatype.nexus.repository.manager.internal.GroupMemberMappingCache;
 import org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder;
 import org.sonatype.nexus.repository.manager.internal.RepositoryAdminSecurityContributor;
@@ -66,10 +67,11 @@ public class RepositoryManagerImpl
       final BlobStoreManager blobStoreManager,
       final GroupMemberMappingCache groupMemberMappingCache,
       final List<ConfigurationValidator> configurationValidators,
-      final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder)
+      final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder,
+      final FailedRepositoryTracker failedRepositoryTracker)
   {
     super(eventManager, store, factory, configFacet, recipes, securityContributor, defaultRepositoriesContributors,
         skipDefaultRepositories, blobStoreManager, groupMemberMappingCache, configurationValidators,
-        httpAuthenticationSecretEncoder);
+        httpAuthenticationSecretEncoder, failedRepositoryTracker);
   }
 }

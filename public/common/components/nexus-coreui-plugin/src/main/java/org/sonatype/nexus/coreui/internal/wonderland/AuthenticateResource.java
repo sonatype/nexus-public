@@ -24,7 +24,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.rest.NotCacheable;
@@ -34,6 +33,8 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -47,9 +48,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Path(AuthenticateResource.RESOURCE_URI)
 public class AuthenticateResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = "/wonderland/authenticate";
 
   private final AuthTicketService authTickets;

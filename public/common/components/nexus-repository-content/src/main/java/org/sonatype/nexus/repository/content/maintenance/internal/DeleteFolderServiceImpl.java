@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
@@ -48,6 +47,8 @@ import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.time.OffsetDateTime.now;
@@ -61,9 +62,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class DeleteFolderServiceImpl
-    extends ComponentSupport
     implements DeleteFolderService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final BrowseNodeQueryService browseNodeQueryService;
 
   private final BrowseNodeConfiguration configuration;

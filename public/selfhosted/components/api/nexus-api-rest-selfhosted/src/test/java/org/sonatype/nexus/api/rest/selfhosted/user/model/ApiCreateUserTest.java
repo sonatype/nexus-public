@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -30,7 +29,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class ApiCreateUserTest
-    extends TestSupport
 {
   @Test
   public void testToUser_withNullRoles() {

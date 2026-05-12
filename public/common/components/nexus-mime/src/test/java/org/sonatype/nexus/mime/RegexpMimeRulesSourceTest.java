@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.mime;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
@@ -27,7 +25,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Tests for {@link RegexpMimeRulesSource}.
  */
 public class RegexpMimeRulesSourceTest
-    extends TestSupport
 {
   @Test
   public void testRegectMimeRulesSourceTest() {

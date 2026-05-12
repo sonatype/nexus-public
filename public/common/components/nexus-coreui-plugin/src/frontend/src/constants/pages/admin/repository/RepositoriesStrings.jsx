@@ -301,6 +301,7 @@ export default {
         REMOVE: 'Remove',
       },
       REMOTE_URL_EXAMPLES: {
+        pub: ' (e.g., https://pub.dev)',
         docker: ' (e.g., https://registry-1.docker.io)',
         maven2: ' (e.g., https://repo1.maven.org/maven2/)',
         npm: ' (e.g., https://registry.npmjs.org)',

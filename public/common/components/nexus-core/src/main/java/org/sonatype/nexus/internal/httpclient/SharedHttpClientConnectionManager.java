@@ -19,7 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
 
 import org.apache.http.config.Registry;

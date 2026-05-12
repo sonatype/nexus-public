@@ -1,0 +1,121 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.nxrm-global-header-radix.nx-global-header-2 {
+  grid-area: header !important;  // Force into grid
+  z-index: 100;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible; // Changed from hidden to allow autocomplete dropdown to show
+  box-sizing: border-box;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  // No custom padding - child Flex uses Radix px="4" for horizontal padding
+  padding-left: 0;
+  padding-right: 0;
+  
+  // Force ALL RSC buttons (NxButton) to use theme colors
+  .nx-btn {
+    color: var(--color-text) !important;
+    
+    &.nx-btn--icon-only {
+      color: var(--color-text) !important;
+    }
+    
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
+    
+    svg {
+      color: var(--color-text) !important;
+    }
+  }
+  
+  // Force NxFontAwesomeIcon to use theme colors
+  .nx-icon {
+    color: var(--color-text) !important;
+  }
+  
+  // Force dropdown toggles
+  .nx-icon-dropdown__toggle {
+    color: var(--color-text) !important;
+    
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
+  }
+  
+  // Force navigation dropdown (Help menu, Profile menu)
+  .nx-navigation-dropdown__toggle {
+    color: var(--color-text) !important;
+    
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
+  }
+  
+  // SystemStatus bell icon
+  .fa-layers {
+    color: var(--color-text) !important;
+    
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
+  }
+  
+  // Radix IconButton
+  .rt-IconButton {
+    color: var(--color-text) !important;
+  }
+  
+  // Radix Button
+  .rt-Button {
+    color: var(--color-text) !important;
+  }
+  
+  // Links
+  a {
+    color: var(--color-text) !important;
+  }
+  
+  [data-theme="dark"] & {
+    background-color: var(--color-surface);
+    border-bottom-color: var(--color-border);
+  }
+}
+
+// UI Switch Popover - ensure it floats above all content
+// This targets the Radix Popover.Content which renders via portal
+.rt-PopoverContent {
+  background-color: var(--color-panel-solid) !important;
+  z-index: 14999 !important;
+  border: 1px solid var(--gray-6) !important;
+  box-shadow: var(--shadow-5) !important;
+}
+
+// Classic UI unavailable Dialog - ensure it floats above all content
+// This targets the Radix Dialog.Content which renders via portal
+.rt-DialogContent {
+  background-color: var(--color-panel-solid) !important;
+  z-index: 14999 !important;
+  border: 1px solid var(--gray-6) !important;
+  box-shadow: var(--shadow-5) !important;
+}
+
+// Dialog overlay (backdrop) - ensure it dims content behind
+.rt-DialogOverlay {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 14998 !important;
+}

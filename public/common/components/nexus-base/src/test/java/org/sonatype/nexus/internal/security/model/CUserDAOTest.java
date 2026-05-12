@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.security.model;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -23,7 +21,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -32,9 +29,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.sonatype.nexus.security.config.CUser.STATUS_ACTIVE;
 import static org.sonatype.nexus.security.config.CUser.STATUS_DISABLED;
 
-@Category(SQLTestGroup.class)
 public class CUserDAOTest
-    extends TestSupport
 {
   private static final String PASSWORD1 =
       "$shiro1$SHA-512$1024$NYQKemFvZqat9CepP2xO9A==$4m4dBi9f/EtJLpJSW6/7+IVxW3wHR4RNeGtbopiH+D5tlVDFqNKo667eMnqWUxFrRz4Y4IQvn5hv/BnWmEfN0Q==";

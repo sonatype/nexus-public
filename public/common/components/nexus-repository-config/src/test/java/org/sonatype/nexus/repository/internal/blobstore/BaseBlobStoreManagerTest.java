@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
@@ -45,6 +44,9 @@ import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.common.event.EventHelper;
+import org.sonatype.nexus.distributed.event.service.api.EventType;
+import org.sonatype.nexus.distributed.event.service.api.common.BlobStoreDistributedConfigurationEvent;
 import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager;
 import org.sonatype.nexus.security.UserIdHelper;
 
@@ -55,6 +57,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -78,8 +82,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 
+@ExtendWith(MockitoExtension.class)
 class BaseBlobStoreManagerTest
-    extends Test5Support
 {
   private static final String SECRET_FIELD_KEY = "secretAccessKey";
 
@@ -1130,6 +1134,126 @@ class BaseBlobStoreManagerTest
   {
     void executeMove() {
       manager.moveBlob(blobId, srcBlobStore, destBlobStore);
+    }
+  }
+
+  // Tests for distributed event handling with race conditions
+
+  @Test
+  public void shouldHandleNullConfigurationOnCREATED() throws Exception {
+    MockedStatic<EventHelper> eventHelperMockedStatic = mockStatic(EventHelper.class);
+    eventHelperMockedStatic.when(EventHelper::isReplicating).thenReturn(true);
+
+    try {
+      when(store.read("test")).thenReturn(null);
+
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+
+      underTest.on(new BlobStoreDistributedConfigurationEvent("test", EventType.CREATED));
+
+      assertThat(underTest.browse().iterator().hasNext(), is(false));
+    }
+    finally {
+      eventHelperMockedStatic.close();
+    }
+  }
+
+  @Test
+  public void shouldHandleNullConfigurationOnUPDATED() throws Exception {
+    MockedStatic<EventHelper> eventHelperMockedStatic = mockStatic(EventHelper.class);
+    eventHelperMockedStatic.when(EventHelper::isReplicating).thenReturn(true);
+
+    try {
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+      underTest.track("test", blobStore);
+
+      when(store.read("test")).thenReturn(null);
+
+      underTest.on(new BlobStoreDistributedConfigurationEvent("test", EventType.UPDATED));
+
+      assertThat(underTest.browse().iterator().hasNext(), is(true));
+    }
+    finally {
+      eventHelperMockedStatic.close();
+    }
+  }
+
+  @Test
+  public void shouldSkipDELETEDForNonExistentBlobStore() throws Exception {
+    MockedStatic<EventHelper> eventHelperMockedStatic = mockStatic(EventHelper.class);
+    eventHelperMockedStatic.when(EventHelper::isReplicating).thenReturn(true);
+
+    try {
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+
+      underTest.on(new BlobStoreDistributedConfigurationEvent("nonexistent", EventType.DELETED));
+
+      verify(store, never()).delete(any(BlobStoreConfiguration.class));
+    }
+    finally {
+      eventHelperMockedStatic.close();
+    }
+  }
+
+  @Test
+  public void shouldHandleCREATEDWithValidConfiguration() throws Exception {
+    MockedStatic<EventHelper> eventHelperMockedStatic = mockStatic(EventHelper.class);
+    eventHelperMockedStatic.when(EventHelper::isReplicating).thenReturn(true);
+
+    try {
+      BlobStoreConfiguration config = createConfig("test");
+      when(store.read("test")).thenReturn(config);
+
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+
+      underTest.on(new BlobStoreDistributedConfigurationEvent("test", EventType.CREATED));
+
+      assertThat(underTest.browse().iterator().hasNext(), is(true));
+    }
+    finally {
+      eventHelperMockedStatic.close();
+    }
+  }
+
+  @Test
+  public void shouldHandleUPDATEDWithValidConfiguration() throws Exception {
+    MockedStatic<EventHelper> eventHelperMockedStatic = mockStatic(EventHelper.class);
+    eventHelperMockedStatic.when(EventHelper::isReplicating).thenReturn(true);
+
+    try {
+      BlobStoreConfiguration config = createConfig("test");
+      when(store.read("test")).thenReturn(config);
+
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+      underTest.track("test", blobStore);
+      when(blobStore.getBlobStoreConfiguration()).thenReturn(config);
+
+      underTest.on(new BlobStoreDistributedConfigurationEvent("test", EventType.UPDATED));
+
+      assertThat(underTest.browse().iterator().hasNext(), is(true));
+    }
+    finally {
+      eventHelperMockedStatic.close();
+    }
+  }
+
+  @Test
+  public void shouldHandleDELETEDForExistingBlobStore() throws Exception {
+    MockedStatic<EventHelper> eventHelperMockedStatic = mockStatic(EventHelper.class);
+    eventHelperMockedStatic.when(EventHelper::isReplicating).thenReturn(true);
+
+    try {
+      BaseBlobStoreManager underTest = newBlobStoreManager(true, this::getBlobStoreConfig);
+      underTest.track("test", blobStore);
+
+      underTest.on(new BlobStoreDistributedConfigurationEvent("test", EventType.DELETED));
+
+      // When replicating, store.delete should NOT be called (eventual consistency)
+      verify(store, never()).delete(any(BlobStoreConfiguration.class));
+      assertThat(underTest.browse().iterator().hasNext(), is(false));
+    }
+    finally {
+      eventHelperMockedStatic.close();
     }
   }
 }

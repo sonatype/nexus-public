@@ -24,8 +24,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -39,6 +38,8 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptySet;
@@ -50,9 +51,10 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  * @since 3.26
  */
 public abstract class AbstractMetadataRebuilder
-    extends ComponentSupport
     implements MetadataRebuilder
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected final int bufferSize;
 
   protected final int timeoutSeconds;
@@ -131,8 +133,9 @@ public abstract class AbstractMetadataRebuilder
    * Inner class that encapsulates the work, as metadata builder is stateful.
    */
   protected abstract static class Worker
-      extends ComponentSupport
   {
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
     protected final Repository repository;
 
     protected final MavenPathParser mavenPathParser;

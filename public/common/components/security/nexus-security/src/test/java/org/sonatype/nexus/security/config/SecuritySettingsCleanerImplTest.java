@@ -12,19 +12,20 @@
  */
 package org.sonatype.nexus.security.config;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.internal.SecurityConfigurationCleanerImpl;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertFalse;
 
 /**
  * Tests for {@link SecurityConfigurationCleanerImpl}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecuritySettingsCleanerImplTest
-    extends TestSupport
 {
   private SecurityConfigurationCleanerImpl underTest;
 

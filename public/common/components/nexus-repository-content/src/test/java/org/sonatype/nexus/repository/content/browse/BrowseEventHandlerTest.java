@@ -17,7 +17,6 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
@@ -37,7 +36,9 @@ import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -51,8 +52,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BrowseEventHandlerTest
-    extends TestSupport
 {
   private static final String FORMAT_NAME = "maven2";
 

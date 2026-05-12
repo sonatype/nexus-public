@@ -12,12 +12,13 @@
  */
 package org.sonatype.nexus.repository.view.matchers;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Matcher;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -27,9 +28,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class SuffixMatcher
-    extends ComponentSupport
     implements Matcher
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final String suffix;
 
   private final boolean ignoreCase;

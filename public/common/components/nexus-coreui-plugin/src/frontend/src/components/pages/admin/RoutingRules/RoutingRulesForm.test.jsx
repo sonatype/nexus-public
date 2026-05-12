@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {act} from 'react-dom/test-utils';
-import {waitFor, waitForElementToBeRemoved, within, screen, queryByLabelText} from '@testing-library/react';
+import {waitFor, waitForElementToBeRemoved, within, screen, queryByLabelText, fireEvent} from '@testing-library/react';
 import {when} from 'jest-when';
 import userEvent from '@testing-library/user-event';
 
@@ -215,8 +215,27 @@ describe('RoutingRulesForm', function() {
 
     axios.put.mockResolvedValue(null);
 
-    ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     userEvent.click(deleteButton());
+
+    // Modal should appear
+    await waitFor(() => {
+      expect(screen.getByText('Delete routing rule?')).toBeInTheDocument();
+    });
+
+    // Type DELETE to confirm
+    const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
+    fireEvent.change(input, { target: { value: 'DELETE' } });
+
+    // Click modal's delete button
+    await waitFor(() => {
+      const deleteButtons = screen.getAllByRole('button', { name: /^delete$/i });
+      const modalDeleteButton = deleteButtons.find(btn => btn.textContent === 'Delete' && !btn.disabled);
+      expect(modalDeleteButton).toBeDefined();
+    });
+
+    const deleteButtons = screen.getAllByRole('button', { name: /^delete$/i });
+    const modalDeleteButton = deleteButtons.find(btn => btn.textContent === 'Delete' && !btn.disabled);
+    fireEvent.click(modalDeleteButton);
 
     await waitFor(() => expect(axios.delete).toBeCalledWith(ROUTING_RULES_URL(itemId)));
   });

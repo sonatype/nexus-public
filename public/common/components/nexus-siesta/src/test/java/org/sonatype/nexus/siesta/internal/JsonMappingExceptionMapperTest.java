@@ -16,7 +16,6 @@ import java.util.List;
 
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -29,7 +28,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 class JsonMappingExceptionMapperTest
-    extends Test5Support
 {
   private JsonMappingExceptionMapper mapper;
 

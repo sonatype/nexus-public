@@ -1,0 +1,57 @@
+.malicious-packages-page {
+  padding: var(--space-5) 0;
+
+  .page-header {
+    margin-bottom: var(--space-4);
+  }
+
+  .section-gap {
+    margin-top: var(--space-4);
+  }
+
+  .tab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    border-bottom: 1px solid var(--gray-6);
+    padding-bottom: var(--space-1);
+    margin-bottom: var(--space-1);
+  }
+
+  .tab-bar__tab {
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+    border-radius: var(--radius-2);
+    border-bottom: 2px solid transparent;
+    margin-bottom: calc(-1 * var(--space-1) - 1px);
+  }
+
+  .tab-bar__tab--active {
+    font-weight: var(--font-weight-bold);
+    border-bottom-color: var(--accent-9);
+  }
+
+  .tab-bar__badge {
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-1);
+    line-height: 1;
+    background-color: var(--gray-6);
+    color: var(--gray-12);
+  }
+
+  .tab-bar__badge--alert {
+    background-color: var(--red-9);
+    color: #fff;
+  }
+
+  .tab-content {
+    margin-top: var(--space-4);
+  }
+}

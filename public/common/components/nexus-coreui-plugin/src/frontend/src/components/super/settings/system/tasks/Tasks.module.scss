@@ -1,0 +1,544 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/* Tasks page styles with dark mode support */
+
+.tasksContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-4);
+}
+
+.tasksHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.tasksTitle {
+  margin: 0;
+  font-size: var(--font-size-6);
+  font-weight: var(--font-weight-bold);
+  color: var(--gray-12);
+}
+
+.tasksActions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.searchContainer {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+/* Task list styles */
+.tasksList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.taskRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  background-color: var(--color-panel);
+  border: 1px solid var(--gray-6);
+  border-radius: var(--radius-2);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--gray-3);
+    border-color: var(--gray-7);
+  }
+
+  &[data-selected='true'] {
+    border-color: var(--accent-8);
+    background-color: var(--accent-3);
+  }
+}
+
+.taskName {
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-12);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskType {
+  color: var(--gray-11);
+  font-size: var(--font-size-2);
+}
+
+/* Status badge styles */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-2);
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+
+  &[data-status='WAITING'] {
+    background-color: var(--blue-3);
+    color: var(--blue-11);
+  }
+
+  &[data-status='RUNNING'] {
+    background-color: var(--green-3);
+    color: var(--green-11);
+  }
+
+  &[data-status='OK'] {
+    background-color: var(--green-3);
+    color: var(--green-11);
+  }
+
+  &[data-status='ERROR'] {
+    background-color: var(--red-3);
+    color: var(--red-11);
+  }
+
+  &[data-status='CANCELED'] {
+    background-color: var(--orange-3);
+    color: var(--orange-11);
+  }
+
+  &[data-status='DISABLED'] {
+    background-color: var(--gray-3);
+    color: var(--gray-11);
+  }
+
+  &[data-status='BLOCKED'] {
+    background-color: var(--amber-3);
+    color: var(--amber-11);
+  }
+}
+
+/* Task detail styles */
+.taskDetail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.taskDetailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.taskDetailInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.detailSection {
+  background-color: var(--color-panel);
+  border: 1px solid var(--gray-6);
+  border-radius: var(--radius-3);
+  padding: var(--space-4);
+}
+
+.detailSectionTitle {
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-12);
+  margin-bottom: var(--space-3);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.detailLabel {
+  font-size: var(--font-size-1);
+  color: var(--gray-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detailValue {
+  font-size: var(--font-size-2);
+  color: var(--gray-12);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Schedule picker styles */
+.schedulePicker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.scheduleTypeSelect {
+  width: 100%;
+  max-width: 300px;
+}
+
+.scheduleFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--gray-6);
+}
+
+.dateTimeRow {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.dateTimeField {
+  flex: 1;
+  min-width: 150px;
+  max-width: 200px;
+}
+
+/* Weekly days picker */
+.weekDaysPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.weekDayButton {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gray-6);
+  border-radius: var(--radius-2);
+  background-color: var(--color-panel);
+  color: var(--gray-11);
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--accent-8);
+    background-color: var(--accent-3);
+  }
+
+  &[data-selected='true'] {
+    background-color: var(--accent-9);
+    color: white;
+    border-color: var(--accent-9);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* Monthly days picker */
+.monthDaysPicker {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+  max-width: 350px;
+}
+
+.monthDayButton {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gray-6);
+  border-radius: var(--radius-2);
+  background-color: var(--color-panel);
+  color: var(--gray-11);
+  font-size: var(--font-size-1);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--accent-8);
+    background-color: var(--accent-3);
+  }
+
+  &[data-selected='true'] {
+    background-color: var(--accent-9);
+    color: white;
+    border-color: var(--accent-9);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.lastDayButton {
+  grid-column: span 3;
+}
+
+/* Cron expression input */
+.cronInput {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2);
+}
+
+.cronPresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.cronHelp {
+  font-size: var(--font-size-1);
+  color: var(--gray-11);
+  font-family: var(--font-mono);
+  background-color: var(--gray-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-2);
+}
+
+/* Task history styles */
+.historyContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.historyTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--gray-6);
+  }
+
+  th {
+    font-size: var(--font-size-1);
+    font-weight: var(--font-weight-medium);
+    color: var(--gray-11);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: var(--gray-2);
+  }
+
+  td {
+    font-size: var(--font-size-2);
+    color: var(--gray-12);
+  }
+
+  tbody tr {
+    &:hover {
+      background-color: var(--gray-3);
+    }
+  }
+}
+
+/* Task form styles */
+.taskForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 800px;
+}
+
+.formSection {
+  background-color: var(--color-panel);
+  border: 1px solid var(--gray-6);
+  border-radius: var(--radius-3);
+  padding: var(--space-4);
+}
+
+.formSectionTitle {
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-12);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--gray-6);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--gray-6);
+}
+
+/* Task actions styles */
+.actionButtons {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Empty state styles */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--gray-11);
+}
+
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+  color: var(--gray-8);
+  margin-bottom: var(--space-3);
+}
+
+.emptyTitle {
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-12);
+  margin-bottom: var(--space-2);
+}
+
+.emptyDescription {
+  font-size: var(--font-size-2);
+  color: var(--gray-11);
+  margin-bottom: var(--space-4);
+}
+
+/* Loading state */
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+/* Error state */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--red-3);
+  border: 1px solid var(--red-6);
+  border-radius: var(--radius-3);
+  color: var(--red-11);
+}
+
+.errorIcon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tasksHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchContainer {
+    max-width: none;
+  }
+
+  .taskRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dateTimeRow {
+    flex-direction: column;
+  }
+
+  .dateTimeField {
+    max-width: none;
+  }
+
+  .monthDaysPicker {
+    max-width: none;
+  }
+}
+
+/* Dark mode specific overrides */
+.dark {
+  .taskRow {
+    background-color: var(--gray-2);
+
+    &:hover {
+      background-color: var(--gray-4);
+    }
+  }
+
+  .detailSection {
+    background-color: var(--gray-2);
+  }
+
+  .formSection {
+    background-color: var(--gray-2);
+  }
+
+  .historyTable {
+    th {
+      background-color: var(--gray-3);
+    }
+
+    tbody tr:hover {
+      background-color: var(--gray-4);
+    }
+  }
+
+  .cronHelp {
+    background-color: var(--gray-4);
+  }
+}
+
+

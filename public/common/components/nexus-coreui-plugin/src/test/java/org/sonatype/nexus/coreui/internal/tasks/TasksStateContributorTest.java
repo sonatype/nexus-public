@@ -12,15 +12,12 @@
  */
 package org.sonatype.nexus.coreui.internal.tasks;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class TasksStateContributorTest
-    extends TestSupport
 {
   @Test
   public void shouldReturnEnabledWhenFeatureFlagIsTrue() {

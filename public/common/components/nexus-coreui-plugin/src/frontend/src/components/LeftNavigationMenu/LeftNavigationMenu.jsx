@@ -178,6 +178,13 @@ export default function LeftNavigationMenu() {
           params={{ keyword: null }}
         />
         <LeftNavigationMenuCollapsibleChildItem
+          name={BROWSE.SEARCH.PUB}
+          text={UIStrings.SEARCH.PUB.MENU.text}
+          icon={UIStrings.SEARCH.PUB.MENU.icon}
+          data-analytics-id="nxrm-global-navbar-search-pub"
+          params={{ keyword: null }}
+        />
+        <LeftNavigationMenuCollapsibleChildItem
           name={BROWSE.SEARCH.R}
           text={UIStrings.SEARCH.R.MENU.text}
           icon={UIStrings.SEARCH.R.MENU.icon}

@@ -31,7 +31,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -48,6 +47,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import javax.validation.constraints.NotEmpty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -60,9 +61,10 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 public class RoleApiResource
-    extends ComponentSupport
     implements Resource, RoleApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String SOURCE_NOT_FOUND = "\"Source '%s' not found.\"";
 
   public static final String ROLE_NOT_FOUND = "\"Role '%s' not found.\"";

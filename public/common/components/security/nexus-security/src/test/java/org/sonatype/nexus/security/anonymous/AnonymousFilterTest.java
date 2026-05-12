@@ -15,21 +15,22 @@ package org.sonatype.nexus.security.anonymous;
 import jakarta.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 
 import org.apache.shiro.util.ThreadContext;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AnonymousFilterTest
-    extends TestSupport
 {
   private AnonymousFilter underTest;
 

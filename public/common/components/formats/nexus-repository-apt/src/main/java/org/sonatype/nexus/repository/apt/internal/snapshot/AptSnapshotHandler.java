@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
@@ -28,6 +27,8 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.DELETE;
 import static org.sonatype.nexus.repository.http.HttpMethods.MKCOL;
@@ -40,9 +41,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AptSnapshotHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final Pattern SNAPSHOT_PATH_PATTERN = Pattern.compile("/snapshots/([^/]+)/?(.*)");
 
   public static final class State

@@ -1,0 +1,198 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.tasks-list {
+  display: flex;
+  gap: var(--space-4);
+
+  &__sidebar {
+    flex-shrink: 0;
+  }
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &--loading {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__alert {
+    margin-bottom: var(--space-2);
+  }
+
+  &__search {
+    position: relative;
+    max-width: 400px;
+  }
+
+  &__search-input {
+    padding-right: var(--space-8);
+  }
+
+  &__search-icon {
+    position: absolute;
+    right: var(--space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-9);
+    pointer-events: none;
+  }
+
+  &__count {
+    padding: var(--space-2) 0;
+  }
+
+  &__count-text {
+    color: var(--gray-11);
+  }
+
+  &__empty {
+    padding: var(--space-6);
+    text-align: center;
+    background: var(--gray-3);
+    border-radius: var(--radius-3);
+    color: var(--gray-11);
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-surface);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-3);
+    overflow: hidden;
+  }
+
+  &__header-cell {
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    font-weight: 600;
+    font-size: var(--font-size-2);
+    color: var(--gray-11);
+    background: var(--gray-3);
+    border-bottom: 1px solid var(--gray-6);
+    white-space: nowrap;
+
+    &--sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background: var(--gray-4);
+      }
+    }
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: var(--accent-3);
+    }
+
+    &--disabled {
+      opacity: 0.6;
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--gray-6);
+    }
+  }
+
+  &__cell {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-2);
+    color: var(--gray-12);
+    vertical-align: middle;
+  }
+}
+
+// Sort icon styles
+.sort-icon {
+  color: var(--accent-9);
+  flex-shrink: 0;
+
+  &--inactive {
+    color: var(--gray-8);
+    opacity: 0.5;
+  }
+}
+
+// Task status icon styles
+.task-status-icon {
+  flex-shrink: 0;
+
+  &--running {
+    color: var(--blue-9);
+    animation: spin 1.5s linear infinite;
+  }
+
+  &--ok {
+    color: var(--green-9);
+  }
+
+  &--waiting {
+    color: var(--gray-9);
+  }
+
+  &--blocked {
+    color: var(--yellow-9);
+  }
+
+  &--error {
+    color: var(--red-9);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Dark mode adjustments
+:root[data-theme="dark"] {
+  .tasks-list {
+    &__empty {
+      background: var(--gray-4);
+    }
+
+    &__table {
+      background: var(--gray-2);
+    }
+
+    &__header-cell {
+      background: var(--gray-4);
+
+      &--sortable:hover {
+        background: var(--gray-5);
+      }
+    }
+
+    &__row:hover {
+      background: var(--accent-4);
+    }
+  }
+}
+
+

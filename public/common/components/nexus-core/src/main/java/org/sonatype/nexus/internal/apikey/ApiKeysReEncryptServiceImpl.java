@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.apikey;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -30,6 +29,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -42,9 +43,9 @@ import static org.sonatype.nexus.crypto.secrets.SecretsService.SECRETS_MIGRATION
 @Component
 @Singleton
 public class ApiKeysReEncryptServiceImpl
-    extends ComponentSupport
     implements ApiKeysReEncryptService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final TaskScheduler taskScheduler;
 

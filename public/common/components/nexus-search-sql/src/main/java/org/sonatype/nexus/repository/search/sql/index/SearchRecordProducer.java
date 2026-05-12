@@ -19,13 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
-import org.sonatype.nexus.repository.search.sql.query.DatabaseTypeDetector;
-import org.sonatype.nexus.repository.search.sql.store.SearchRecordData;
-
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -41,6 +34,13 @@ import org.sonatype.nexus.repository.content.utils.PreReleaseEvaluator;
 import org.sonatype.nexus.repository.content.utils.SearchComponentPathFilter;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 import org.sonatype.nexus.repository.search.sql.SearchRecord;
+import org.sonatype.nexus.repository.search.sql.query.DatabaseTypeDetector;
+import org.sonatype.nexus.repository.search.sql.store.SearchRecordData;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
@@ -56,8 +56,9 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 @org.springframework.stereotype.Component
 @Singleton
 public class SearchRecordProducer
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, SearchCustomFieldContributor> searchCustomFieldContributors;
 
   private final VersionNormalizerService versionNormalizerService;

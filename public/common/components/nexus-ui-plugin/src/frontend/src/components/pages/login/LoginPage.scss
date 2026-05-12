@@ -11,180 +11,168 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-.nxrm-login-page-main {
-  > .nx-alert {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
+// Color tokens - use CSS custom properties with fallbacks for light theme
+// These map to common design system colors
+$color-surface-light: var(--color-surface, #ffffff);
+$color-surface-raw: #ffffff; // Required for -webkit-box-shadow autofill workaround (needs literal value)
+$color-text-primary: var(--gray-12, #0f172a);
+$color-text-secondary: var(--gray-11, #64748b);
+$color-text-placeholder: var(--gray-9, #94a3b8);
+$color-border: var(--gray-5, #e2e8f0);
+$color-error: var(--red-9, #ef4444);
+$color-error-bg: var(--red-2, #fef2f2);
+$color-error-border: var(--red-6, #fecaca);
+
+// Theme wrapper - transparent, no stretching
+.login-theme-wrapper {
+  // Override Radix Theme default background and dimensions
+  background: transparent !important;
+  min-height: auto !important;
+  height: auto !important;
+  width: auto !important;
+
+  // Ensure it doesn't create a stacking context that affects layout
+  &.radix-themes {
+    background: transparent !important;
+    min-height: auto !important;
   }
 }
 
-.login-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem 1rem;
-  height: calc(100% - var(--nx-global-header-height, 60px));
+// Login card (Radix Card)
+.login-card {
+  width: 420px;
+  max-width: 100%; // Responsive: shrink on small viewports
+  background-color: $color-surface-light !important;
+  border: 1px solid $color-border;
+  box-shadow: none !important;
 
-  .login-tile {
-    width: 450px;
-    padding-bottom: 42px;
-    border: var(--nx-border-width) solid var(--nx-color-global-sidebar-2-border);
+  // Remove Radix Card ::before pseudo-element background (required to override Radix defaults)
+  &.rt-Card:where(.rt-variant-surface)::before {
+    background: none !important;
+  }
 
-    .nx-tile-header {
-      text-align: center;
-      display: block;
+  &__content {
+    width: 100%;
+  }
 
-      .nx-tile-header__title {
-        font-size: 22px;
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-      .nx-tile-header__subtitle {
-        font-size: 16px;
-        font-weight: 400;
-      }
-    }
-    .login-content {
-      margin-top: 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
+  &__header {
+    width: 100%;
+  }
 
-      .initial-password-info {
-        width: 100%;
-        max-width: 336px;
-        margin:0;
-        text-align: left;
-        color: var(--nx-color-text);
+  &__mark {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    display: block;
+  }
 
-        &__text {
-          margin: 0 0 8px 0;
-          font-size: 14px;
-          line-height: 1.5;
-        }
+  &__title {
+    text-align: center;
+    margin: 0;
+    color: $color-text-primary;
+  }
 
-        &__path {
-          margin: 0;
-          font-size: 14px;
-          font-weight: 600;
-          word-break: break-all;
-        }
-      }
+  &__subtitle {
+    text-align: center;
+  }
+}
 
-      .sso-login-button {
-        width: 100%;
-        max-width: 336px;
-        min-height: 48px;
-        font-weight: 600;
-      }
+// Error message box
+.login-error {
+  padding: 12px;
+  background-color: $color-error-bg;
+  border: 1px solid $color-error-border;
+  border-radius: 6px;
 
-      .login-divider {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        color: var(--nx-color-text-subtle);
-        font-size: 14px;
-        text-transform: none;
-        width: 100%;
-        max-width: 336px;
-        margin-top: 24px;
+  &__close {
+    background: none;
+    border: none;
+    color: $color-error;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 4px;
 
-        &::before,
-        &::after {
-          content: "";
-          flex: 1;
-          height: 1px;
-          background: var(--nx-color-border);
-        }
-
-        span {
-          flex-shrink: 0;
-        }
-      }
-
-      .login-form {
-        width: 100%;
-        max-width: 336px;
-
-        .nx-fieldset {
-          width: 100%;
-        }
-
-        .nx-form-group {
-          display: flex;
-          flex-direction: column;
-          margin: 0;
-          width: 100%;
-
-          .nx-text-input,
-          .nx-password-input {
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 5px;
-
-            .nx-field-validation-message {
-              top: 35px;
-            }
-          }
-
-          .nx-text-input input,
-          .nx-password-input input {
-            width: 100%;
-            box-sizing: border-box;
-          }
-        }
-        .nx-form-group label {
-          font-size: 16px;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-        }
-
-        .username-field {
-          margin-bottom: 1rem;
-        }
-
-        .nx-form-group:not(.username-field) {
-          margin-bottom: 1rem;
-        }
-
-        .nx-alert {
-          margin: 1rem 0;
-        }
-
-        .login-button {
-          width: 100%;
-          margin: 0;
-          min-height: 48px;
-          font-weight: 600;
-        }
-        .server-error-container {
-          min-height: 24px;
-          display: flex;
-          align-items: flex-start;
-          margin: 0;
-        }
-
-        .server-error-message {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: var(--nx-color-validation-invalid);
-          font-size: 14px;
-          line-height: 1.4;
-
-          svg {
-            flex-shrink: 0;
-            width: 16px;
-            height: 16px;
-          }
-        }
-
-        .nx-footer {
-          display: none;
-        }
-      }
+    &:hover {
+      background-color: rgba(239, 68, 68, 0.1);
     }
   }
+}
+
+// Divider between SSO and local login
+.login-divider {
+  width: 100%;
+
+  &__line {
+    height: 1px;
+    background-color: $color-border;
+  }
+}
+
+// Form field labels
+.login-form-label {
+  color: $color-text-primary;
+}
+
+// Submit button styling
+.login-submit {
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+// Input focus ring - uses Radix accent color (blue from Theme)
+.login-card__content {
+  .rt-TextFieldRoot:focus-within {
+    box-shadow: 0 0 0 2px var(--accent-9);
+  }
+
+  input[type='text'],
+  input[type='password'] {
+    color: $color-text-primary;
+    background-color: $color-surface-light;
+
+    &::placeholder {
+      color: $color-text-placeholder;
+    }
+
+    // Override browser autofill background color (required for webkit browsers)
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus,
+    &:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px $color-surface-raw inset !important;
+      -webkit-text-fill-color: $color-text-primary !important;
+    }
+  }
+}
+
+// Server error message
+.server-error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: $color-error;
+  font-size: 14px;
+  line-height: 1.4;
+
+  svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// Footer link styling
+.login-footer {
+  &__lead {
+    color: $color-text-secondary;
+  }
+}
+
+.login-continue {
+  cursor: pointer;
 }

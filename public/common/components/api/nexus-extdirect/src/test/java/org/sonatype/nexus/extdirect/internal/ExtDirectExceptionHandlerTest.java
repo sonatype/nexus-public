@@ -20,7 +20,6 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Path;
 
 import org.apache.shiro.authz.UnauthorizedException;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.extdirect.model.ErrorResponse;
 import org.sonatype.nexus.extdirect.model.ValidationResponse;
 
@@ -35,9 +34,11 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ExtDirectExceptionHandlerTest
-    extends TestSupport
 {
   @Mock
   private RegisteredMethod registeredMethod;

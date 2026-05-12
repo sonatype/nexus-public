@@ -1,0 +1,100 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.helm-result-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--nx-color-component-background-hover, #f5f5f5);
+  }
+
+  &:focus {
+    outline: none;
+    background-color: var(--nx-color-component-background-hover, #f5f5f5);
+  }
+
+  td {
+    padding: var(--nx-spacing-3x, 12px) var(--nx-spacing-4x, 16px);
+    border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+    vertical-align: middle;
+  }
+
+  &__name {
+    min-width: 250px;
+  }
+
+  &__name-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--nx-spacing-3x, 12px);
+  }
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex-shrink: 0;
+    border-radius: var(--nx-border-radius, 4px);
+  }
+
+  &__name-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name-primary {
+    font-weight: 500;
+    color: var(--nx-color-text-dark, #333);
+  }
+
+  &__description {
+    font-size: 0.75rem;
+    color: var(--nx-color-text-dark, #666);
+    margin-top: 2px;
+  }
+
+  &__version,
+  &__app-version {
+    font-family: var(--nx-font-family-monospace, monospace);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  &__versions-count {
+    text-align: center;
+    color: var(--nx-color-text-dark, #666);
+  }
+
+  &__updated {
+    white-space: nowrap;
+    color: var(--nx-color-text-dark, #666);
+  }
+
+  &__chevron {
+    text-align: center;
+  }
+
+  &__chevron-icon {
+    font-size: 1.25rem;
+    color: var(--nx-color-text-dark, #999);
+    transition: transform 0.15s ease;
+  }
+
+  &:hover &__chevron-icon {
+    transform: translateX(4px);
+    color: var(--nx-color-primary-button-background, #0066cc);
+  }
+}
+
+

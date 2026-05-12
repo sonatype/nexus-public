@@ -14,7 +14,6 @@ package org.sonatype.nexus.api.rest.selfhosted.security.anonymous;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.api.rest.selfhosted.security.anonymous.model.AnonymousAccessSettingsXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.TestAnonymousConfiguration;
@@ -31,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -39,10 +39,10 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class AnonymousAccessApiResourceTest
-    extends Test5Support
 {
   @Mock
   private AnonymousManager anonymousManager;

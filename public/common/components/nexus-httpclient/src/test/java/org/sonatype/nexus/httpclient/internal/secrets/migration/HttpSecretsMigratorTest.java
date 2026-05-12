@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.httpclient.internal.secrets.migration;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.httpclient.HttpClientManager;
@@ -37,9 +36,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.httpclient.config.AuthenticationConfiguration.AUTHENTICATION_CONFIGURATION;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class HttpSecretsMigratorTest
-    extends TestSupport
 {
   @Mock
   private HttpClientManager httpClientManager;

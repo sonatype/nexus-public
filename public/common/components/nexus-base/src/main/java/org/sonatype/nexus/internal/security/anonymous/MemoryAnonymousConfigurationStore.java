@@ -16,7 +16,6 @@ import javax.annotation.Nullable;
 import javax.annotation.Priority;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -24,6 +23,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.Ordered;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -37,9 +38,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Order(Ordered.LOWEST_PRECEDENCE)
 @VisibleForTesting
 public class MemoryAnonymousConfigurationStore
-    extends ComponentSupport
     implements AnonymousConfigurationStore
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private AnonymousConfiguration model;
 
   @Override

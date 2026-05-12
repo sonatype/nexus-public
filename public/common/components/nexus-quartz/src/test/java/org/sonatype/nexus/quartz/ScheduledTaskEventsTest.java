@@ -34,6 +34,8 @@ import org.sonatype.nexus.testdb.DatabaseTest;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import org.junit.jupiter.api.BeforeEach;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -49,6 +51,8 @@ import static org.hamcrest.Matchers.instanceOf;
 class ScheduledTaskEventsTest
     extends TaskSchedulerTestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(ScheduledTaskEventsTest.class);
+
   private Listener listener;
 
   @BeforeEach
@@ -297,7 +301,7 @@ class ScheduledTaskEventsTest
 
     @Subscribe
     public void on(final TaskEvent e) {
-      log("Observing task event {}", e);
+      ScheduledTaskEventsTest.log.info("Observing task event {}", e);
       arrivedEvents.add(e);
     }
   }

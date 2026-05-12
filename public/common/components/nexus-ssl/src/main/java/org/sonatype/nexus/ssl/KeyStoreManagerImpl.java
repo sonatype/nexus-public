@@ -23,7 +23,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.TrustManager;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.ssl.internal.ReloadableX509KeyManager;
 import org.sonatype.nexus.ssl.internal.ReloadableX509TrustManager;
@@ -34,6 +33,8 @@ import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -46,9 +47,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class KeyStoreManagerImpl
-    extends ComponentSupport
     implements KeyStoreManager
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String PRIVATE_KEY_STORE_NAME = "private.ks";
 
   private static final String TRUSTED_KEY_STORE_NAME = "trusted.ks";

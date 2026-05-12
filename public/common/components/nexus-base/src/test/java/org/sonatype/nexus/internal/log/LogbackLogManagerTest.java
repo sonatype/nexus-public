@@ -16,8 +16,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
@@ -37,6 +36,8 @@ import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.FileAppender;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
@@ -61,8 +62,8 @@ import static org.sonatype.nexus.internal.log.LogbackLogManager.getLogFor;
 /**
  * Tests for {@link LogbackLogManager}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LogbackLogManagerTest
-    extends TestSupport
 {
   @Mock
   private ApplicationContext applicationContext;

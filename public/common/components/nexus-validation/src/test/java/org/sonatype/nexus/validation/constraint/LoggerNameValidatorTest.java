@@ -13,8 +13,6 @@
 
 package org.sonatype.nexus.validation.constraint;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.junit.Assert.assertThrows;
@@ -22,7 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class LoggerNameValidatorTest
-    extends TestSupport
+
 {
   private static final String INVALID_CHARS_MESSAGE =
       "Logger name cannot include <, >, &, ', \", /, newline, or tab characters";

@@ -23,7 +23,6 @@ import {
 } from '@sonatype/react-shared-components';
 import { faBox, faGhost } from '@fortawesome/free-solid-svg-icons';
 
-import './MissingRoutePage.scss';
 import { useSref } from '@uirouter/react';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 

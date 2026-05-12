@@ -20,7 +20,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.apt.AptFormat;
@@ -29,6 +28,8 @@ import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -42,9 +43,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Qualifier(AptFormat.NAME)
 @Singleton
 public class AptContentValidator
-    extends ComponentSupport
     implements ContentValidator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String TEXT_PLAIN = "text/plain";
 
   private static final String TXT = ".txt";

@@ -19,7 +19,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.validation.ValidationException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.formfields.FormField;
@@ -38,9 +37,11 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CapabilityDescriptorSupportTest
-    extends TestSupport
 {
   @Mock
   private CapabilityRegistry capabilityRegistry;
@@ -125,8 +126,8 @@ public class CapabilityDescriptorSupportTest
 
     underTest.installComponents(() -> capabilityRegistry);
 
-    ValidationException expected = assertThrows(ValidationException.class, () ->
-        underTest.validate(null, Collections.singletonMap("repository", "foo"), ValidationMode.CREATE));
+    ValidationException expected = assertThrows(ValidationException.class,
+        () -> underTest.validate(null, Collections.singletonMap("repository", "foo"), ValidationMode.CREATE));
 
     assertThat(expected.getMessage(),
         allOf(containsString("Test"), containsString("repository"), containsString("foo")));

@@ -1,0 +1,76 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+import { UIView } from '@uirouter/react';
+import { Permissions } from '@sonatype/nexus-ui-plugin';
+import { previewAdminRoutes } from '../previewAdminRoutes';
+import { SETTINGS_SECTIONS } from '../../../components/super/settings/settingsConfig';
+import { PREVIEW_FEATURE_FLAGS } from '../../../config/previewFeatureFlags';
+
+describe('previewAdminRoutes', () => {
+  it('defines preview.admin as the abstract admin route container', () => {
+    const previewAdminRoute = previewAdminRoutes.find((route) => route.name === 'preview.admin');
+
+    expect(previewAdminRoute).toBeDefined();
+    expect(previewAdminRoute.abstract).toBe(true);
+    expect(previewAdminRoute.component).toBe(UIView);
+  });
+
+  it('keeps preview.admin.pages as the shared settings layout wrapper', () => {
+    const pagesRoute = previewAdminRoutes.find((route) => route.name === 'preview.admin.pages');
+
+    expect(pagesRoute).toBeDefined();
+    expect(pagesRoute.component).toBeDefined();
+    expect(pagesRoute.component).not.toBe(UIView);
+  });
+
+  it('defines the Nexus One UI settings route with correct permissions', () => {
+    const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.system.previewui');
+
+    expect(route).toBeDefined();
+    expect(route.url).toBe('/previewui');
+    expect(route.component).toBeDefined();
+    expect(route.data.visibilityRequirements.permissions).toContain(Permissions.SETTINGS.READ);
+  });
+
+  it('defines the settings hub route', () => {
+    const route = previewAdminRoutes.find((r) => r.name === 'preview.settings');
+
+    expect(route).toBeDefined();
+    expect(route.url).toBe('/settings');
+    expect(route.component).toBeDefined();
+  });
+
+  it('gates all route components whose SETTINGS_SECTIONS featureKey resolves to false', () => {
+    const allCards = SETTINGS_SECTIONS.flatMap((section) => section.cards);
+    const ungatedCards = allCards.filter(
+      (card) => card.featureKey && PREVIEW_FEATURE_FLAGS[card.featureKey] === false,
+    );
+
+    expect(ungatedCards.length).toBeGreaterThan(0);
+
+    ungatedCards.forEach((card) => {
+      // Build route name prefix from the card path (handles both single-segment
+      // paths like 'iq' and multi-segment paths like 'repository/repositories')
+      const routeNamePrefix = `preview.admin.${card.path.replace(/\//g, '.')}`;
+      const leafRoutes = previewAdminRoutes.filter(
+        (route) => route.name.startsWith(routeNamePrefix) && route.component && !route.abstract,
+      );
+
+      expect(leafRoutes.length).toBeGreaterThan(0);
+      leafRoutes.forEach((route) => {
+        expect(route.component.displayName).toMatch(/^FeatureGate\(/);
+      });
+    });
+  });
+});

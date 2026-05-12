@@ -32,7 +32,7 @@ import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 import org.sonatype.nexus.common.QualifierUtil;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;

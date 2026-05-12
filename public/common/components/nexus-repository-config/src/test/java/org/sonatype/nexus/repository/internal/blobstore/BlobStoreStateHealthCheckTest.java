@@ -16,7 +16,6 @@ package org.sonatype.nexus.repository.internal.blobstore;
 import java.util.Collections;
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -35,9 +34,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BlobStoreStateHealthCheckTest
-    extends TestSupport
 {
   @Mock
   private BlobStoreManager blobStoreManager;
@@ -77,10 +78,10 @@ public class BlobStoreStateHealthCheckTest
     when(blobStore.isStorageAvailable()).thenReturn(false);
     when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
 
-
     Result result = healthCheck.check();
     assertFalse(result.isHealthy());
-    assertThat(result.getMessage(), is("1/1 blob stores report issues<br>Blob store 'blob-store-name' reports as not available"));
+    assertThat(result.getMessage(),
+        is("1/1 blob stores report issues<br>Blob store 'blob-store-name' reports as not available"));
   }
 
   @Test
@@ -92,7 +93,8 @@ public class BlobStoreStateHealthCheckTest
 
     Result result = healthCheck.check();
     assertFalse(result.isHealthy());
-    assertThat(result.getMessage(), is("1/1 blob stores report issues<br>Blob store 'blob-store-name' reports as not writeable"));
+    assertThat(result.getMessage(),
+        is("1/1 blob stores report issues<br>Blob store 'blob-store-name' reports as not writeable"));
   }
 
   @Test
@@ -104,7 +106,8 @@ public class BlobStoreStateHealthCheckTest
 
     Result result = healthCheck.check();
     assertFalse(result.isHealthy());
-    assertThat(result.getMessage(), is("1/1 blob stores report issues<br>Blob store 'blob-store-name' reports as not started"));
+    assertThat(result.getMessage(),
+        is("1/1 blob stores report issues<br>Blob store 'blob-store-name' reports as not started"));
   }
 
   @Test
@@ -181,6 +184,7 @@ public class BlobStoreStateHealthCheckTest
 
     Result result = healthCheck.check();
     assertFalse(result.isHealthy());
-    assertThat(result.getMessage(), is("2/3 blob stores report issues<br>Blob store 'blob-store-2' reports as not started<br>Blob store 'blob-store-3' reports as not available"));
+    assertThat(result.getMessage(), is(
+        "2/3 blob stores report issues<br>Blob store 'blob-store-2' reports as not started<br>Blob store 'blob-store-3' reports as not available"));
   }
 }

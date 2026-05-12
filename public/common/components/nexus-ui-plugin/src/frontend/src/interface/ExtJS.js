@@ -14,10 +14,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 
 /**
- * @since 3.22
+ * Phase 1: React Shell - Bridge between React and ExtJS
+ *
+ * This class provides a facade for React components to access ExtJS functionality.
+ * All methods now gracefully handle ExtJS not being loaded, providing fallbacks
+ * where appropriate.
  */
 export default class ExtJS {
   /**
@@ -25,7 +29,12 @@ export default class ExtJS {
    * @param text
    */
   static showSuccessMessage(text) {
-    NX.Messages.success(text)
+    if (window.NX?.Messages?.success) {
+      window.NX.Messages.success(text);
+    } else {
+      // Fallback: Console log when ExtJS not loaded
+      console.info('[Success]', text);
+    }
   }
 
   /**
@@ -33,21 +42,34 @@ export default class ExtJS {
    * @param text
    */
   static showErrorMessage(text) {
-    NX.Messages.error(text);
+    if (window.NX?.Messages?.error) {
+      window.NX.Messages.error(text);
+    } else {
+      // Fallback: Console error when ExtJS not loaded
+      console.error('[Error]', text);
+    }
   }
 
   /**
    *@returns a complete url for the current nexus instance
    */
   static urlOf(path) {
-    return NX.util.Url.urlOf(path);
+    if (window.NX?.util?.Url?.urlOf) {
+      return window.NX.util.Url.urlOf(path);
+    }
+    // Fallback: Basic URL construction
+    return window.location.origin + (path.startsWith('/') ? path : '/' + path);
   }
 
   /**
    * @returns an absolute path when given a relative path.
    */
   static absolutePath(path) {
-    return NX.util.Url.absolutePath(path); 
+    if (window.NX?.util?.Url?.absolutePath) {
+      return window.NX.util.Url.absolutePath(path);
+    }
+    // Fallback: Ensure path starts with /
+    return path.startsWith('/') ? path : '/' + path;
   }
 
   /**
@@ -231,11 +253,40 @@ export default class ExtJS {
   }
 
   static state() {
-    return NX.State;
+    // Only return real state if ExtJS application is fully initialized
+    try {
+      if (window.NX?.getApplication &&
+          typeof window.NX.getApplication === 'function' &&
+          window.NX.getApplication() &&
+          window.NX?.State) {
+        return window.NX.State;
+      }
+    } catch {
+      // ExtJS not ready yet
+    }
+    // Fallback: Use REST bootstrap data if available, otherwise return empty defaults
+    const rest = typeof window !== 'undefined' ? window.__nxRestBootstrap : null;
+    return {
+      getValue: (key, defaultValue) => {
+        if (rest?.stateValues) {
+          const val = rest.stateValues[key];
+          return val !== undefined ? val : (defaultValue !== undefined ? defaultValue : null);
+        }
+        return defaultValue !== undefined ? defaultValue : null;
+      },
+      setValue: () => {},
+      getUser: () => rest?.user || null,
+      getEdition: () => rest?.edition || 'OSS',
+      getVersion: () => rest?.version || null
+    };
   }
 
   static formatDate(date, format) {
-    return Ext.Date.format(date, format);
+    if (window.Ext?.Date?.format) {
+      return window.Ext.Date.format(date, format);
+    }
+    // Fallback: Use JavaScript Date toLocaleString
+    return date.toLocaleString();
   }
 
   /**
@@ -250,14 +301,29 @@ export default class ExtJS {
    * @returns {boolean} true if the user has the requested permission
    */
   static checkPermission(permission) {
-    return NX.Permissions.check(permission)
+    if (window.NX?.Permissions?.check) {
+      return window.NX.Permissions.check(permission);
+    }
+    // Fallback: Use REST bootstrap permissions if available
+    if (typeof window !== 'undefined' && window.__nxRestBootstrap?.checkPermission) {
+      return window.__nxRestBootstrap.checkPermission(permission);
+    }
+    return false;
   }
 
   /**
    * @returns {{id: string, authenticated: boolean, administrator: boolean, authenticatedRealms: string[]} | undefined}
    */
   static useUser() {
-    return ExtJS.useState(() => NX.State.getUser());
+    return ExtJS.useState(() => {
+      try {
+        if (window.NX?.State?.getUser) return window.NX.State.getUser();
+      } catch {
+        // ExtJS not ready
+      }
+      // Fallback: REST bootstrap data
+      return window.__nxRestBootstrap?.user || undefined;
+    });
   }
 
   /**
@@ -276,28 +342,84 @@ export default class ExtJS {
 
   // don't use directly, use useIsVisible, where possible
   static useVisiblityWithChanges(isVisibleMethod) {
-    const [isVisible, setIsVisible] = useState(isVisibleMethod());
+    // Initial read is guarded so React can render even if ExtJS is not ready yet.
+    const [isVisible, setIsVisible] = useState(() => {
+      try {
+        return isVisibleMethod();
+      }
+      catch {
+        return false;
+      }
+    });
+
+    // Track if we've connected to ExtJS
+    const [extJsReady, setExtJsReady] = useState(() => !!window.Ext?.getApplication?.());
+
+    // Keep a ref to isVisibleMethod so the event handler always uses the latest function
+    // without needing to re-subscribe to events on every render
+    const isVisibleMethodRef = useRef(isVisibleMethod);
+    isVisibleMethodRef.current = isVisibleMethod;
 
     useEffect(() => {
-      function handleChange() {
-        const newValue = isVisibleMethod();
-        if (isVisible !== newValue) {
-          setIsVisible(newValue);
-        }
+      // Poll for ExtJS readiness if not ready yet
+      if (!extJsReady) {
+        const checkInterval = setInterval(() => {
+          const app = window.Ext?.getApplication?.();
+          const hasState = !!window.NX?.State;
+          const hasPermissions = !!window.NX?.Permissions;
+          const hasSecurity = !!window.NX?.Security;
+          if (app && hasState && hasPermissions && hasSecurity) {
+            setExtJsReady(true);
+            try {
+              const newValue = isVisibleMethodRef.current();
+              setIsVisible(newValue);
+            } catch {
+              // Silently handle errors
+            }
+            clearInterval(checkInterval);
+          }
+        }, 100);
+
+        return () => clearInterval(checkInterval);
+      }
+    }, [extJsReady]);
+
+    useEffect(() => {
+      // If ExtJS is not initialized, do not wire listeners. This avoids crashes during
+      // early React render (e.g., login route) when ExtJS loads lazily.
+      const app = window.Ext?.getApplication?.();
+      if (!app) {
+        return;
       }
 
-      const permissionsController = Ext.getApplication().getController('Permissions');
-      permissionsController.on('changed', handleChange);
+      function handleChange() {
+        // Use ref to always get the latest isVisibleMethod
+        const newValue = isVisibleMethodRef.current();
+        setIsVisible(prevVisible => {
+          if (prevVisible !== newValue) {
+            return newValue;
+          }
+          return prevVisible;
+        });
+      }
 
-      const stateController = Ext.getApplication().getController('State');
-      stateController.on('changed', handleChange);
+      const permissionsController = app.getController?.('Permissions');
+      const stateController = app.getController?.('State');
+
+      permissionsController?.on('changed', handleChange);
+      stateController?.on('changed', handleChange);
+      stateController?.on('userchanged', handleChange);
+
+      // Also call handleChange immediately to ensure we have the latest value
+      handleChange();
 
       return () => {
         // cleanup code
-        permissionsController.un('changed', handleChange);
-        stateController.un('changed', handleChange);
+        permissionsController?.un('changed', handleChange);
+        stateController?.un('changed', handleChange);
+        stateController?.un('userchanged', handleChange);
       }
-    }, [isVisible]);
+    }, [extJsReady]);
 
     return isVisible;
   }
@@ -308,6 +430,119 @@ export default class ExtJS {
    * @returns {unknown}
    */
   static useState(getValue) {
+    const [value, setValue] = useState(() => {
+      try {
+        return getValue();
+      }
+      catch {
+        return undefined;
+      }
+    });
+
+    useEffect(() => {
+      // If ExtJS not loaded, just return the current value
+      try {
+        if (!window.Ext?.getApplication ||
+            typeof window.Ext.getApplication !== 'function' ||
+            !window.Ext.getApplication()) {
+          return;
+        }
+      } catch {
+        return;
+      }
+
+      function handleChange() {
+        try {
+          const newValue = getValue();
+          if (value !== newValue) {
+            setValue(newValue);
+          }
+        } catch {
+          // Ignore until ExtJS is ready
+        }
+      }
+
+      try {
+        const app = window.Ext?.getApplication?.();
+        if (app && typeof app.getStore === 'function') {
+          const state = app.getStore('State');
+          if (state) {
+            state.on('datachanged', handleChange);
+            return () => state.un('datachanged', handleChange);
+          }
+        }
+      } catch {
+        // ExtJS not ready, skip setting up listener
+      }
+    }, [value]);
+
+    return value;
+  }
+
+  /**
+   * A hook to add search criteria to the search subsystem
+   * @param {*} criterias
+   */
+  static useCriteria(criterias) {
+    if (!window.Ext?.getApplication) {
+      console.warn('[ExtJS.useCriteria] ExtJS not loaded');
+      return;
+    }
+
+    const app = window.Ext.getApplication();
+    if (!app) {
+      console.warn('[ExtJS.useCriteria] ExtJS application not initialized');
+      return;
+    }
+
+    const state = app.getStore('SearchCriteria');
+    if (!state) {
+      console.warn('[ExtJS.useCriteria] SearchCriteria store not found');
+      return;
+    }
+
+    const models = state.add(criterias);
+
+    useEffect(() => {
+      return () => {
+        if (state && models) {
+          state.remove(models);
+        }
+      }
+    }, []);
+  }
+
+  /**
+   * A hook to use a search filter model
+   * @param {*} filter
+   * @returns
+   */
+  static useSearchFilterModel(filter) {
+    if (!window.Ext?.getApplication) {
+      console.warn('[ExtJS.useSearchFilterModel] ExtJS not loaded');
+      return null;
+    }
+
+    const app = window.Ext.getApplication();
+    if (!app) {
+      console.warn('[ExtJS.useSearchFilterModel] ExtJS application not initialized');
+      return null;
+    }
+
+    try {
+      return app.getModel("NX.coreui.model.SearchFilter").create(filter);
+    } catch (error) {
+      console.error('[ExtJS.useSearchFilterModel] Failed to create SearchFilter model:', error);
+      return null;
+    }
+  }
+
+  /**
+   * A hook that automatically re-evaluates whenever any state is changed
+   * @param getValue - A function to get the value from the state subsystem
+   * @returns {unknown}
+   */
+  static usePermission(getValue, dependencies) {
     const [value, setValue] = useState(getValue());
 
     useEffect(() => {
@@ -318,74 +553,79 @@ export default class ExtJS {
         }
       }
 
-      const state = Ext.getApplication().getStore('State');
-      state.on('datachanged', handleChange);
-      return () => state.un('datachanged', handleChange);
-    }, [value]);
+      const app = window.Ext?.getApplication?.();
+      if (!app) {
+        console.warn('[ExtJS.usePermission] ExtJS application not initialized; skipping subscriptions');
+        return undefined;
+      }
+
+      const permissionsController = app.getController?.('Permissions');
+      const stateController = app.getController?.('State');
+
+      if (!permissionsController || !stateController) {
+        console.warn('[ExtJS.usePermission] Controllers not available; skipping subscriptions');
+        return undefined;
+      }
+
+      permissionsController.on?.('changed', handleChange);
+      stateController.on?.('userchanged', handleChange);
+
+      return () => {
+        permissionsController.un?.('changed', handleChange);
+        stateController.un?.('userchanged', handleChange);
+      };
+    }, [value, ...(dependencies ?? [])]);
 
     return value;
   }
 
-  /**
-   * A hook to add search criteria to the search subsystem
-   * @param {*} criterias 
-   */
-  static useCriteria(criterias) {
-    const state = Ext.getApplication().getStore('SearchCriteria');
-    const models = state.add(criterias);
-
-    useEffect(() => {
-      return () => {
-        state.remove(models);
-      }
-    }, []);
-  }
-
-  /**
-   * A hook to use a search filter model
-   * @param {*} filter 
-   * @returns 
-   */
-  static useSearchFilterModel(filter) {
-    return Ext.getApplication().getModel("NX.coreui.model.SearchFilter").create(filter);
-  }
-
-  /**
-   * A hook that automatically re-evaluates whenever any state is changed
-   * @param getValue - A function to get the value from the state subsystem
-   * @returns {unknown}
-   */
-    static usePermission(getValue, dependencies) {
-      const [value, setValue] = useState(getValue());
-  
-      useEffect(() => {
-        function handleChange() {
-          const newValue = getValue();
-          if (value !== newValue) {
-            setValue(newValue);
-          }
-        }
-
-      const permissionsController = Ext.getApplication().getController('Permissions');
-      permissionsController.on('changed', handleChange);
-
-      const stateController = Ext.getApplication().getController('State');
-      stateController.on('userchanged', handleChange);
-      return () => {
-        permissionsController.un('changed', handleChange);
-        stateController.un('userchanged', handleChange);
-        }
-      }, [value, ...(dependencies ?? [])]);
-  
-      return value;
-    }
-
   static hasUser() {
-    return NX.Security.hasUser();
+    // Wait for ExtJS application to be fully initialized
+    try {
+      if (window.NX?.getApplication &&
+          typeof window.NX.getApplication === 'function' &&
+          window.NX.getApplication() &&
+          window.NX?.Security?.hasUser) {
+        const result = window.NX.Security.hasUser();
+        console.debug('[ExtJS.hasUser] Via NX.Security.hasUser():', result);
+        return result;
+      }
+    } catch {
+      // ExtJS not ready yet
+    }
+    // Fallback 1: Check if user exists in NX.State (after State controller initializes)
+    if (window.NX?.State?.getUser) {
+      const user = window.NX.State.getUser();
+      if (user) {
+        console.debug('[ExtJS.hasUser] Via NX.State.getUser():', true);
+        return true;
+      }
+    }
+    // Fallback 2: Check initial app state from server (before State controller initializes)
+    // This works when app.js has loaded but ExtJS app hasn't fully initialized
+    if (window.NX?.app?.state?.user?.value) {
+      console.debug('[ExtJS.hasUser] Via NX.app.state.user.value:', true);
+      return true;
+    }
+    // Fallback 3: Check session cookie exists (critical for debug mode)
+    // In debug mode, React loads before app.js, so NX.app.state isn't set yet.
+    // The NXSESSIONID cookie is the most reliable indicator of an authenticated session.
+    const hasCookie = document.cookie.includes('NXSESSIONID');
+    if (hasCookie) {
+      console.debug('[ExtJS.hasUser] Via NXSESSIONID cookie:', true);
+      return true;
+    }
+    console.debug('[ExtJS.hasUser] No user found. Cookie:', document.cookie.substring(0, 100));
+    return false;
   }
 
   static signOut() {
-    NX.Security.signOut();
+    if (window.NX?.Security?.signOut) {
+      window.NX.Security.signOut();
+    } else {
+      // Fallback: Navigate to logout endpoint
+      window.location.href = '/service/rapture/session';
+    }
   }
 
   static showAbout() {
@@ -410,11 +650,58 @@ export default class ExtJS {
    */
   static waitForExtJs(callback) {
     const interval = setInterval(() => {
-      if (Ext.getApplication() && NX.Permissions.permissions !== undefined) {
-        clearInterval(interval);
-        callback();
+      try {
+        if (Ext.getApplication() && NX.Permissions.permissions !== undefined) {
+          clearInterval(interval);
+          callback();
+        }
+      } catch {
+        // Ext/NX not defined yet, keep polling
       }
-    }, 1);
+    }, 50);
+  }
+
+  /**
+   * Wait for ExtJS to be fully initialized.
+   * Returns a Promise that resolves when ExtJS is ready.
+   * @returns {Promise<void>}
+   */
+  static waitForExtJsReady() {
+    return new Promise((resolve, reject) => {
+      // Check if already loaded
+      try {
+        if (window.Ext?.getApplication &&
+            typeof window.NX?.getApplication === 'function' &&
+            window.NX.getApplication() &&
+            window.NX.Permissions?.permissions !== undefined) {
+          resolve();
+          return;
+        }
+      } catch {
+        // Not ready yet, continue polling
+      }
+
+      // Poll for ExtJS to be ready
+      const checkInterval = setInterval(() => {
+        try {
+          if (window.Ext?.getApplication &&
+              typeof window.NX?.getApplication === 'function' &&
+              window.NX.getApplication() &&
+              window.NX.Permissions?.permissions !== undefined) {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        } catch {
+          // Keep polling
+        }
+      }, 100);
+
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        reject(new Error('ExtJS failed to initialize within 30 seconds'));
+      }, 30000);
+    });
   }
 
   static calculateTimeout() {

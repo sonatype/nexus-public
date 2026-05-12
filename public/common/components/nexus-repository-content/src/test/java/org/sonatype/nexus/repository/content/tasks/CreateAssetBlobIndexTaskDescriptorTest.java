@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.tasks;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -22,7 +20,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class CreateAssetBlobIndexTaskDescriptorTest
-    extends TestSupport
 {
   private CreateAssetBlobIndexTaskDescriptor underTest;
 

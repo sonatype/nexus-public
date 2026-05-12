@@ -21,7 +21,6 @@ import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.ErrorMessageUtil;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -39,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
@@ -50,10 +50,10 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class RoleApiResourceTest
-    extends Test5Support
 {
   @Mock
   private SecuritySystem securitySystem;
@@ -110,7 +110,7 @@ class RoleApiResourceTest
   }
 
   @Test
-   void testGetRoles_noRoles() throws Exception {
+  void testGetRoles_noRoles() throws Exception {
     when(securitySystem.listRoles("default")).thenReturn(new HashSet<>());
 
     List<RoleXOResponse> apiRoles = underTest.getRoles("default");
@@ -131,7 +131,7 @@ class RoleApiResourceTest
   }
 
   @Test
-   void testGetRole_notFound() {
+  void testGetRole_notFound() {
     when(authorizationManager.getRole("roleId")).thenThrow(NoSuchRoleException.class);
 
     try {
@@ -147,7 +147,7 @@ class RoleApiResourceTest
   }
 
   @Test
-   void testGetRole_sourceNotFound() throws Exception {
+  void testGetRole_sourceNotFound() throws Exception {
     when(securitySystem.getAuthorizationManager("bad")).thenThrow(NoSuchAuthorizationManagerException.class);
 
     try {
@@ -185,7 +185,7 @@ class RoleApiResourceTest
   }
 
   @Test
-   void testCreateRole_alreadyExists() throws Exception {
+  void testCreateRole_alreadyExists() throws Exception {
     when(authorizationManager.addRole(any())).thenThrow(DuplicateRoleException.class);
 
     RoleXORequest roleXo = createApiRole("roleId", "roleName", "description", Collections.emptySet(),
@@ -261,7 +261,7 @@ class RoleApiResourceTest
   }
 
   @Test
-   void testUpdateRole_notFound() {
+  void testUpdateRole_notFound() {
     when(authorizationManager.getRole(any())).thenThrow(new NoSuchRoleException("id1"));
     RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Arrays.asList("role1", "role2"),
         Arrays.asList("priv1", "priv2"));

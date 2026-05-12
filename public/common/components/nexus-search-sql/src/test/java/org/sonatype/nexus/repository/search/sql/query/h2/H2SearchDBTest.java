@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.search.sql.query.h2;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +19,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 
 class H2SearchDBTest
-    extends Test5Support
 {
   private H2SearchDB underTest;
 

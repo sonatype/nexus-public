@@ -22,7 +22,6 @@ import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskState;
@@ -31,6 +30,8 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 import com.google.common.base.Throwables;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -45,9 +46,10 @@ import static org.sonatype.nexus.scheduling.TaskState.RUNNING_STARTING;
  * @since 3.0
  */
 public class QuartzTaskFuture
-    extends ComponentSupport
     implements Future<Object>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Key used in job execution context to stick future in.
    */

@@ -15,7 +15,6 @@ package org.sonatype.nexus.scheduling.internal;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 
 import org.awaitility.Awaitility;
@@ -29,7 +28,7 @@ import static org.hamcrest.Matchers.is;
  * Tests for {@link PeriodicJobServiceImpl}
  */
 public class PeriodicJobServiceImplTest
-    extends TestSupport
+
 {
   private PeriodicJobServiceImpl service;
 

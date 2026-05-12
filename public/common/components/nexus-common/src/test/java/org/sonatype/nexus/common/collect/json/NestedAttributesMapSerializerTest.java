@@ -15,7 +15,6 @@ package org.sonatype.nexus.common.collect.json;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,7 +30,7 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link NestedAttributesMapSerializer} and {@link NestedAttributesMapDeserializer}.
  */
 public class NestedAttributesMapSerializerTest
-    extends TestSupport
+
 {
   private ObjectMapper objectMapper;
 

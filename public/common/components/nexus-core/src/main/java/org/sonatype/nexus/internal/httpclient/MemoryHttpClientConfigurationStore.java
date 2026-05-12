@@ -17,7 +17,6 @@ import javax.annotation.Priority;
 import jakarta.inject.Singleton;
 import javax.validation.Valid;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
@@ -30,6 +29,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -45,9 +46,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Order(Ordered.LOWEST_PRECEDENCE)
 @VisibleForTesting
 public class MemoryHttpClientConfigurationStore
-    extends ComponentSupport
     implements HttpClientConfigurationStore
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private HttpClientConfiguration model;
 
   @Nullable

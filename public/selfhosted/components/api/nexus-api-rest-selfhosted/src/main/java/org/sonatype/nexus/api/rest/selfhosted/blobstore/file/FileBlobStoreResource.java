@@ -23,7 +23,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.common.blobstore.BlobStoreResourceUtil;
 import org.sonatype.nexus.api.rest.common.blobstore.file.model.FileBlobStoreApiCreateRequest;
 import org.sonatype.nexus.api.rest.common.blobstore.file.model.FileBlobStoreApiModel;
@@ -40,6 +39,8 @@ import org.sonatype.nexus.validation.Validate;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -51,9 +52,10 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class FileBlobStoreResource
-    extends ComponentSupport
     implements Resource, FileBlobStoreResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private BlobStoreManager blobStoreManager;
 
   @Inject

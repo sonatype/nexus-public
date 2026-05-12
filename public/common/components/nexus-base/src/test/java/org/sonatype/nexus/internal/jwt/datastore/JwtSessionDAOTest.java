@@ -16,7 +16,6 @@ import java.time.OffsetDateTime;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
@@ -30,7 +29,6 @@ import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class JwtSessionDAOTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(JwtSessionDAO.class);

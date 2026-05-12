@@ -47,7 +47,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.config.DefaultCleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.content.CleanupPolicyCreatedEvent;
@@ -83,6 +82,8 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Boolean.TRUE;
@@ -119,9 +120,10 @@ import java.util.regex.PatternSyntaxException;
 @Produces(APPLICATION_JSON)
 @Path(RESOURCE_URI)
 public class CleanupPolicyResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected static final String RESOURCE_URI = INTERNAL_API_PREFIX + "/cleanup-policies";
 
   protected static final String MODE_DELETE = "delete";

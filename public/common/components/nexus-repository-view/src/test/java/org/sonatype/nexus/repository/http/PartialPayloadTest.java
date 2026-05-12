@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.http;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 
 import com.google.common.collect.Range;
@@ -30,7 +29,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Tests {@link PartialPayload}.
  */
 public class PartialPayloadTest
-    extends TestSupport
 {
   private final byte[] input = Bytes.toArray(asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9));
 

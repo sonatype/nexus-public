@@ -15,7 +15,6 @@ package org.sonatype.nexus.blobstore.internal.softdeleted;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.softdeleted.BlobLocationUpdate;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobMoveService;
@@ -25,6 +24,8 @@ import com.google.common.collect.Iterables;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -34,9 +35,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Service
 public class SoftDeletedBlobMoveServiceImpl
-    extends ComponentSupport
     implements SoftDeletedBlobMoveService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final int DEFAULT_BATCH_SIZE = 100;
 
   private final SoftDeletedBlobsStore softDeletedBlobsStore;

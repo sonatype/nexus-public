@@ -15,7 +15,6 @@ package org.sonatype.nexus.selfhosted.internal.jvm;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 
@@ -27,12 +26,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link JvmMonitoringService}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class JvmMonitoringServiceTest
-    extends TestSupport
 {
   @Mock
   private PeriodicJobService periodicJobService;

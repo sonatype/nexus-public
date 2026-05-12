@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -33,7 +33,7 @@
        the netty BOM import
     -->
     <aws-java-sdk.version>2.33.5</aws-java-sdk.version>
-    <woodstox-core.version>6.5.0</woodstox-core.version>
+    <woodstox-core.version>6.7.0</woodstox-core.version>
     <!--
       IMPORTANT: When upgrading azure-storage-blob.version check if the security override
       of azure-core-http-netty can be removed from dependencyManagement below.
@@ -114,7 +114,7 @@
       <dependency>
         <groupId>org.apache.velocity</groupId>
         <artifactId>velocity-engine-core</artifactId>
-        <version>2.3</version>
+        <version>2.4</version>
       </dependency>
 
       <dependency>
@@ -224,7 +224,13 @@
       <dependency>
         <groupId>org.codehaus.plexus</groupId>
         <artifactId>plexus-utils</artifactId>
-        <version>3.5.1</version>
+        <version>4.0.3</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-xml</artifactId>
+        <version>4.1.1</version>
       </dependency>
 
       <dependency>
@@ -254,7 +260,7 @@
       <dependency>
         <groupId>org.mozilla</groupId>
         <artifactId>rhino</artifactId>
-        <version>1.7.13</version>
+        <version>1.7.15</version>
       </dependency>
 
       <dependency>
@@ -302,21 +308,13 @@
       </dependency>
 
       <!--
-        Fix NEXUS-50083: Upgrade netty-bom from 4.2.9.Final to 4.2.10.Final
-        to resolve license policy violation with netty-tcnative-boringssl-static.
-
-        Version 4.2.9.Final includes netty-tcnative-boringssl-static 2.0.74.Final which has
-        improper license declaration ("No Sources/Not Declared" policy violation).
-        Version 4.2.10.Final includes netty-tcnative-boringssl-static 2.0.75.Final which
-        properly declares Apache 2.0 license.
-
-        This approach is preferred over explicit version overrides as it allows natural
-        dependency evolution and avoids blocking future security updates.
+        Upgrade netty-bom to 4.2.12.Final to resolve CVE-2026-33871 (CVSS 7.5)
+        in netty-codec-http2.
       -->
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
-        <version>4.2.10.Final</version>
+        <version>4.2.12.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

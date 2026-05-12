@@ -16,11 +16,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.memory.MemoryCRole;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -31,9 +34,11 @@ import static org.hamcrest.Matchers.is;
  * Tests for the reverse index (privilege-to-roles mapping) in MemorySecurityConfiguration.
  * This addresses NEXUS-49996: performance optimization for repository deletion with large role sets.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MemorySecurityConfigurationReverseIndexTest
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(MemorySecurityConfigurationReverseIndexTest.class);
+
   private MemorySecurityConfiguration config;
 
   @Before
@@ -221,7 +226,7 @@ public class MemorySecurityConfigurationReverseIndexTest
 
     // Verify lookup was fast (should be < 100ms even with 8000 roles)
     long duration = endTime - startTime;
-    log("Reverse index lookup with {} roles took {}ms", numRoles, duration);
+    log.info("Reverse index lookup with {} roles took {}ms", numRoles, duration);
     assertThat("Lookup should be sub-second", duration < 1000, is(true));
   }
 

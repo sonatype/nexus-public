@@ -19,25 +19,33 @@ import { isVisible } from '@sonatype/nexus-ui-plugin';
 import useFilteredRoutes from "../../hooks/useFilteredRoutes";
 import { ROUTE_NAMES } from "../../routerConfig/routeNames/routeNames";
 
+/**
+ * Hook to check if any route in a section is visible.
+ * Uses useFilteredRoutes which internally subscribes to permission change events
+ * via ExtJS.useVisiblityWithChanges.
+ */
+function useIsSectionVisible(section) {
+  // useFilteredRoutes internally uses ExtJS.useVisiblityWithChanges, which subscribes to
+  // Permissions#changed, State#changed, and State#userchanged events.
+  // The isVisible check inside the filter is re-evaluated when these events fire.
+  const visibleRoutes = useFilteredRoutes(
+    (state) =>
+      state.name.startsWith(`${section}.`) &&
+      !state?.data?.visibilityRequirements?.ignoreForMenuVisibilityCheck &&
+      isVisible(state.data.visibilityRequirements)
+  );
+
+  return visibleRoutes.length > 0;
+}
+
 export function useDefaultAdminRouteName() {
   const { ADMIN } = ROUTE_NAMES;
 
-  function isRouteVisible(section) {
-    const visibleRoutes = useFilteredRoutes(
-      (state) =>
-        state.name.startsWith(`${section}.`) &&
-        !state?.data?.visibilityRequirements?.ignoreForMenuVisibilityCheck &&
-        isVisible(state.data.visibilityRequirements)
-    );
-
-    return visibleRoutes.length > 0;
-  }
-
-  const repoVisible = isRouteVisible(ADMIN.REPOSITORY.DIRECTORY);
-  const securityVisible = isRouteVisible(ADMIN.SECURITY.DIRECTORY);
-  const systemVisible = isRouteVisible(ADMIN.SYSTEM.DIRECTORY);
-  const supportVisible = isRouteVisible(ADMIN.SUPPORT.DIRECTORY);
-  const iqVisible = isRouteVisible(ADMIN.IQ.ROOT);
+  const repoVisible = useIsSectionVisible(ADMIN.REPOSITORY.DIRECTORY);
+  const securityVisible = useIsSectionVisible(ADMIN.SECURITY.DIRECTORY);
+  const systemVisible = useIsSectionVisible(ADMIN.SYSTEM.DIRECTORY);
+  const supportVisible = useIsSectionVisible(ADMIN.SUPPORT.DIRECTORY);
+  const iqVisible = useIsSectionVisible(ADMIN.IQ.ROOT);
 
   if (repoVisible) {
     return ADMIN.REPOSITORY.DIRECTORY;

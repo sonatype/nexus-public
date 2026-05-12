@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.91.1-04</version>
+  <version>3.92.1-05</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,23 +62,22 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.91.1-04</nexus.version>
+    <nexus.version>3.92.1-05</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
-    <spring-boot.version>3.5.12</spring-boot.version>
-    <spring.version>6.2.17</spring.version>
+    <spring-boot.version>3.5.14</spring-boot.version>
+    <spring.version>6.2.18</spring.version>
 
     <!-- Default empty argLine for JaCoCo agent, will be populated by jacoco:prepare-agent -->
     <argLine/>
 
-    <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
+    <!-- Define the node version used by the frontend-maven-plugin -->
     <node.version>v22.19.0</node.version>
-    <!-- NOTE: Yarn 1.22.22 is downloaded by frontend-maven-plugin but not used at runtime.
-         The actual yarn version used is 4.9.1 (see .yarnrc.yml which points to .yarn/releases/yarn-4.9.1.cjs).
-         This resolves CVE-2025-9308 and CVE-2025-8262 as the vulnerable yarn 1.x is never executed.
-         While 1.22.22 is still technically vulnerable to CVE-2025-8262 (patch not officially released),
-         the risk is mitigated by using Yarn 4.9.1 at runtime. Upgrading to 1.22.22 shows due diligence. -->
-    <yarn.version>v1.22.22</yarn.version>
+    <!-- NOTE: We use corepack (bundled with Node 16.9+) to manage yarn instead of downloading it.
+         This avoids CVE-2025-9308 in yarn 1.x by using Yarn 4.9.1 specified in package.json's
+         "packageManager" field. Corepack reads this field and uses the correct yarn version.
+         See: https://nodejs.org/api/corepack.html -->
+    <corepack.version>v0.31.0</corepack.version>
     <npm.install>install --immutable</npm.install>
     <npm.skipTests>false</npm.skipTests>
     <npm.build>build-all</npm.build>
@@ -115,6 +114,7 @@
 
     <test.argLine>
       --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+      --add-opens=java.base/java.lang=ALL-UNNAMED
       --add-opens=java.base/java.net=ALL-UNNAMED
       --add-opens=java.base/java.util=ALL-UNNAMED
       --add-exports=java.base/sun.security.x509=ALL-UNNAMED
@@ -229,7 +229,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.91.1-04</version>
+          <version>3.92.1-05</version>
           <executions>
             <execution>
               <goals>
@@ -287,11 +287,11 @@
         <plugin>
           <groupId>com.github.eirslett</groupId>
           <artifactId>frontend-maven-plugin</artifactId>
-          <version>1.11.3</version>
+          <version>1.15.1</version>
 
           <configuration>
             <nodeVersion>${node.version}</nodeVersion>
-            <yarnVersion>${yarn.version}</yarnVersion>
+            <corepackVersion>${corepack.version}</corepackVersion>
             <workingDirectory>${project.basedir}</workingDirectory>
             <installDirectory>${project.build.directory}</installDirectory>
             <environmentVariables>
@@ -302,30 +302,30 @@
 
           <executions>
             <execution>
-              <id>install node and yarn</id>
+              <id>install node and corepack</id>
               <goals>
-                <goal>install-node-and-yarn</goal>
+                <goal>install-node-and-corepack</goal>
               </goals>
               <phase>generate-resources</phase>
             </execution>
             <execution>
               <id>yarn install</id>
               <goals>
-                <goal>yarn</goal>
+                <goal>corepack</goal>
               </goals>
               <phase>generate-resources</phase>
               <configuration>
-                <arguments>${npm.install}</arguments>
+                <arguments>yarn ${npm.install}</arguments>
               </configuration>
             </execution>
             <execution>
               <id>yarn run build</id>
               <goals>
-                <goal>yarn</goal>
+                <goal>corepack</goal>
               </goals>
               <phase>compile</phase>
               <configuration>
-                <arguments>${npm.build}</arguments>
+                <arguments>yarn ${npm.build}</arguments>
               </configuration>
             </execution>
           </executions>
@@ -529,12 +529,32 @@
                   <!--
                   Excludes for specific classes which have compatible, yet different licenses.
                   -->
-                  <exclude>**/nexus-ldap-plugin/**/org/sonatype/nexus/ldap/internal/connector/dao/LdapEncoder.java</exclude>
+                  <exclude>**/nexus-ldap-plugin/**/com/sonatype/nexus/ldap/internal/connector/dao/LdapEncoder.java</exclude>
                   <exclude>**/dependency-reduced-pom.xml</exclude>
                   <!--
                   Exclude files generated by swagger codegen
                   -->
                   <exclude>**/io/swagger/client/**</exclude>
+                  <!--
+                  Exclude ExtJS rapture JS files in private modules - these use the OSS ExtJS header
+                  format (copied from public/coreui) which doesn't match the private header template.
+                  -->
+                  <exclude>**/src/main/resources/static/rapture/**</exclude>
+                  <!--
+                  Exclude frontend JavaScript/TypeScript source files in private modules.
+                  These are managed by their own build toolchain (rspack/jest) and use a different
+                  header format or no header.
+                  -->
+                  <exclude>private/**/src/frontend/**</exclude>
+                  <exclude>private/**/rspack.*.js</exclude>
+                  <!--
+                  Exclude test JS files (jasmine, etc.) in private modules.
+                  -->
+                  <exclude>private/**/src/test/jasmine/**</exclude>
+                  <!--
+                  Exclude artifact detail templates with third-party JS.
+                  -->
+                  <exclude>private/**/artifact-details-template/**/*.js</exclude>
                 </excludes>
               </licenseSet>
             </licenseSets>
@@ -1324,8 +1344,8 @@
                         <artifactId>frontend-maven-plugin</artifactId>
                         <versionRange>[0.7,)</versionRange>
                         <goals>
-                          <goal>install-node-and-yarn</goal>
-                          <goal>yarn</goal>
+                          <goal>install-node-and-corepack</goal>
+                          <goal>corepack</goal>
                         </goals>
                       </pluginExecutionFilter>
                       <action>

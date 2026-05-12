@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven.internal;
 import javax.annotation.Nonnull;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -24,6 +23,8 @@ import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -40,9 +41,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class VersionPolicyHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final VersionPolicyValidator versionPolicyValidator;
 
   @Inject

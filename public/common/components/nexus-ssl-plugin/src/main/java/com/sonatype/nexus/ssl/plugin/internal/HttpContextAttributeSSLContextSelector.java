@@ -16,12 +16,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javax.net.ssl.SSLContext;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
 import org.sonatype.nexus.ssl.TrustStore;
 
 import org.apache.http.protocol.HttpContext;
 import org.springframework.context.annotation.Lazy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -35,9 +36,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class HttpContextAttributeSSLContextSelector
-    extends ComponentSupport
     implements SSLContextSelector
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final TrustStore trustStore;
 
   @Inject

@@ -18,12 +18,13 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.recipe.RouterBuilder;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -35,8 +36,9 @@ import static org.sonatype.nexus.repository.view.ViewUtils.copyLocalContextAttri
  * @since 3.0
  */
 public class Router
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final List<Route> routes;
 
   private final DefaultRoute defaultRoute;

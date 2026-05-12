@@ -18,7 +18,6 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.internal.NexusHttpRoutePlanner;
 import org.apache.http.HttpHost;
@@ -32,9 +31,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ConfigurationCustomizerTest
-    extends TestSupport
 {
 
   @Mock
@@ -203,9 +204,10 @@ public class ConfigurationCustomizerTest
     HttpClientBuilder clientBuilder = mock(HttpClientBuilder.class);
     when(plan.getClient()).thenReturn(clientBuilder);
     configurationCustomizer.customize(plan);
-    if(disableContentCompression == null || !disableContentCompression) {
+    if (disableContentCompression == null || !disableContentCompression) {
       verify(clientBuilder, never()).disableContentCompression();
-    } else {
+    }
+    else {
       verify(clientBuilder).disableContentCompression();
     }
   }

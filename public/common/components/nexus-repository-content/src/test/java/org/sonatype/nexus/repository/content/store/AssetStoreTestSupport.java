@@ -32,7 +32,9 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableList;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
@@ -47,6 +49,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 import static org.sonatype.nexus.repository.content.store.VersionedAssetDAOTest.browseAssets;
 import static org.sonatype.nexus.repository.content.store.VersionedAssetDAOTest.countAssets;
 
+@ExtendWith(MockitoExtension.class)
 public abstract class AssetStoreTestSupport
     extends ExampleContentTestSupport
 {

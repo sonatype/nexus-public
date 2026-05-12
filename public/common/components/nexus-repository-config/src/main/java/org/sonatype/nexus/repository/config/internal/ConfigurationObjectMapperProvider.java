@@ -17,7 +17,6 @@ import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.config.ConfigurationObjectMapperCustomizer;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -26,6 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -38,9 +39,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Qualifier(ConfigurationObjectMapperProvider.NAME)
 @Singleton
 public class ConfigurationObjectMapperProvider
-    extends ComponentSupport
     implements FactoryBean<ObjectMapper>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String NAME = "repository-configuration";
 
   private final List<ConfigurationObjectMapperCustomizer> customizers;

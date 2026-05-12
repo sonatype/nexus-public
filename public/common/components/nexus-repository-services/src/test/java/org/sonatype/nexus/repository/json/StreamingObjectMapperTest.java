@@ -16,8 +16,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.Test;
 
@@ -32,7 +30,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class StreamingObjectMapperTest
-    extends TestSupport
 {
   private UntypedObjectDeserializerSerializer serializer;
 

@@ -14,7 +14,6 @@ package org.sonatype.nexus.quartz.internal.task;
 
 import java.util.Date;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -30,6 +29,8 @@ import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
 import org.quartz.JobListener;
 import org.quartz.Trigger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
@@ -52,9 +53,17 @@ import static org.sonatype.nexus.scheduling.TaskState.WAITING;
  * @since 3.0
  */
 public class QuartzTaskJobListener
-    extends ComponentSupport
     implements JobListener
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
+  /**
+   * Key used to store initialization errors in the JobExecutionContext.
+   * If present, indicates that context initialization failed in jobToBeExecuted.
+   * See NEXUS-51042.
+   */
+  public static final String INIT_ERROR_KEY = QuartzTaskJobListener.class.getName() + ".initError";
+
   private final String name;
 
   private final EventManager eventManager;
@@ -81,8 +90,27 @@ public class QuartzTaskJobListener
 
   @Override
   public void jobToBeExecuted(final JobExecutionContext context) {
-    final JobKey jobKey = context.getJobDetail().getKey();
-    log.trace("Job {} : {} jobToBeExecuted", jobKey.getName(), taskInfo.getConfiguration().getTaskLogName());
+    JobKey jobKey = null;
+
+    try {
+      jobKey = context.getJobDetail().getKey();
+      log.trace("Job {} : {} jobToBeExecuted", jobKey.getName(),
+          taskInfo.getConfiguration().getTaskLogName());
+
+      initializeContext(context, jobKey);
+    }
+    catch (Exception e) {
+      // NEXUS-51042: Catch any exception during initialization and store it in context.
+      // This ensures QuartzTaskJob.doExecute() receives a proper error instead of
+      // failing with a confusing IllegalStateException when taskInfo/future are null.
+      final String jobName = jobKey != null ? jobKey.getName() : "<unknown>";
+      log.error("Failed to initialize job context for {} : {}", jobName,
+          taskInfo.getConfiguration().getTaskLogName(), e);
+      context.put(INIT_ERROR_KEY, e);
+    }
+  }
+
+  private void initializeContext(final JobExecutionContext context, final JobKey jobKey) {
     // get current trigger, which in this method SHOULD be job's trigger.
     // Still, in some circumstances (that I cannot imagine right now, except to have concurrency bug)
     // the NX Task's Trigger might be missing. Still, we don't want to throw in this listener

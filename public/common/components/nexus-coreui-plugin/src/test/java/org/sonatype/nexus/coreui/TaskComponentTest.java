@@ -21,7 +21,6 @@ import java.util.Set;
 import javax.validation.Validator;
 import javax.ws.rs.NotFoundException;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.scheduling.CurrentState;
@@ -54,6 +53,7 @@ import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Answers;
 import org.mockito.Mock;
@@ -77,11 +77,11 @@ import static org.mockito.Mockito.when;
 /**
  * Tests {@link TaskComponent}.
  */
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class TaskComponentTest
-    extends Test5Support
 {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TaskScheduler scheduler;

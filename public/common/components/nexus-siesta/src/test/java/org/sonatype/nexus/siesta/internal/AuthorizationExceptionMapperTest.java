@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 
 import jakarta.inject.Provider;
@@ -30,6 +29,8 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -45,8 +46,8 @@ import static org.mockito.Mockito.when;
  * and short-circuit evaluation of boolean expressions makes some stubs appear unused.
  */
 @MockitoSettings(strictness = Strictness.WARN)
+@ExtendWith(MockitoExtension.class)
 class AuthorizationExceptionMapperTest
-    extends Test5Support
 {
   @Mock
   private HttpServletRequest httpRequest;

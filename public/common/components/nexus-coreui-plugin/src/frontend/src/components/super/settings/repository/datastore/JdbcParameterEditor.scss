@@ -1,0 +1,349 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.jdbc-parameter-editor {
+  &__help {
+    margin-bottom: var(--space-4);
+    padding: var(--space-3);
+    background: var(--blue-2);
+    border: 1px solid var(--blue-5);
+    border-radius: var(--radius-2);
+  }
+
+  &__help-header {
+    color: var(--blue-11);
+    user-select: none;
+
+    &:hover {
+      color: var(--blue-12);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__help-content {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--blue-5);
+  }
+
+  &__help-intro {
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+
+  &__help-category {
+    margin-bottom: var(--space-4);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__help-category-title {
+    display: block;
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-1);
+    border-bottom: 1px solid var(--blue-4);
+    color: var(--blue-11);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  &__help-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  &__help-item {
+    padding: var(--space-2);
+    background: var(--blue-3);
+    border-radius: var(--radius-1);
+    flex-wrap: wrap;
+  }
+
+  &__help-name {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    color: var(--blue-12);
+    min-width: 180px;
+  }
+
+  &__help-desc {
+    flex: 1;
+  }
+
+  &__help-values {
+    color: var(--amber-11);
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 11px;
+  }
+
+  &__list {
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-2);
+    overflow: hidden;
+  }
+
+  &__header {
+    padding: var(--space-2) var(--space-3);
+    background: var(--gray-2);
+    border-bottom: 1px solid var(--gray-6);
+
+    &-name {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    &-value {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    &-source {
+      width: 80px;
+    }
+
+    &-actions {
+      width: 40px;
+    }
+  }
+
+  &__empty {
+    padding: var(--space-6);
+    text-align: center;
+    background: var(--gray-2);
+    border: 1px dashed var(--gray-6);
+    border-radius: var(--radius-2);
+  }
+
+  &__actions {
+    margin-top: var(--space-3);
+  }
+}
+
+// Autocomplete styles
+.jdbc-autocomplete {
+  position: relative;
+
+  &__dropdown {
+    position: fixed;
+    z-index: 9999;
+    min-width: 300px;
+    padding: var(--space-1);
+    background: var(--color-background, #fff);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  &__option {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-1);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+
+    &:hover {
+      background: var(--blue-3);
+    }
+
+    span:first-child {
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    }
+  }
+}
+
+.jdbc-parameter-row {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--gray-4);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--gray-2);
+  }
+
+  &__fields {
+    align-items: flex-start;
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  &__value {
+    flex: 1;
+    min-width: 200px;
+
+    // Style the Select dropdown to match TextField
+    .rt-SelectTrigger {
+      width: 100%;
+    }
+  }
+
+  &__badge {
+    width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: var(--space-2);
+
+    &--default {
+      padding: var(--space-1) var(--space-2);
+      background: var(--blue-3);
+      color: var(--blue-11);
+      border-radius: var(--radius-1);
+      font-weight: 500;
+    }
+
+    &--custom {
+      padding: var(--space-1) var(--space-2);
+      background: var(--green-3);
+      color: var(--green-11);
+      border-radius: var(--radius-1);
+      font-weight: 500;
+    }
+  }
+
+  &__remove {
+    padding: var(--space-2) !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    color: var(--gray-11);
+    border: 1px solid var(--gray-6) !important;
+    border-radius: var(--radius-2);
+
+    &:hover:not(:disabled) {
+      color: var(--red-9);
+      background: var(--red-3);
+      border-color: var(--red-6) !important;
+    }
+  }
+
+  &__meta {
+    margin-top: var(--space-2);
+    padding-left: 0;
+  }
+
+  &__description {
+    color: var(--gray-10);
+    
+    svg {
+      color: var(--gray-8);
+      flex-shrink: 0;
+    }
+  }
+
+  &__type {
+    color: var(--gray-9);
+    font-style: italic;
+  }
+
+  &__warning {
+    color: var(--amber-11);
+    margin-top: var(--space-1);
+    
+    svg {
+      color: var(--amber-9);
+      flex-shrink: 0;
+    }
+  }
+
+  &__error {
+    color: var(--red-11);
+    margin-top: var(--space-1);
+    
+    svg {
+      color: var(--red-9);
+      flex-shrink: 0;
+    }
+  }
+
+  &__input--error {
+    border-color: var(--red-8) !important;
+    
+    &:focus {
+      box-shadow: 0 0 0 1px var(--red-8) !important;
+    }
+  }
+}
+
+// Dark mode support
+:root[class~="dark"] {
+  .jdbc-parameter-editor {
+    &__help {
+      background: var(--blue-3);
+      border-color: var(--blue-6);
+    }
+
+    &__help-content {
+      border-top-color: var(--blue-6);
+    }
+
+    &__help-category-title {
+      border-bottom-color: var(--blue-5);
+    }
+
+    &__help-item {
+      background: var(--blue-4);
+    }
+
+    &__header {
+      background: var(--gray-3);
+    }
+
+    &__empty {
+      background: var(--gray-3);
+    }
+  }
+
+  .jdbc-autocomplete {
+    &__dropdown {
+      background: var(--gray-2);
+      border-color: var(--gray-5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    &__option:hover {
+      background: var(--blue-4);
+    }
+  }
+
+  .jdbc-parameter-row {
+    &:hover {
+      background: var(--gray-3);
+    }
+
+    &__badge {
+      &--default {
+        background: var(--blue-4);
+        color: var(--blue-11);
+      }
+
+      &--custom {
+        background: var(--green-4);
+        color: var(--green-11);
+      }
+    }
+  }
+}

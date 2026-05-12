@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal.matcher;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -21,15 +20,18 @@ import org.sonatype.nexus.repository.view.Request;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenNx2MetaFilesMatcherTest
-    extends TestSupport
+
 {
   @Mock
   MavenPathParser mavenPathParser;

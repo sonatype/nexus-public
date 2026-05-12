@@ -15,11 +15,12 @@ package org.sonatype.nexus.quartz.internal.upgrades;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Resolve issue when job can't be scheduled due to limited size of 'description' column
@@ -29,9 +30,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class JobDescriptionMigrationStep_1_3
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String QRTZ_JOB_DETAILS = "qrtz_job_details";
 
   private static final String QUARTZ_TRIGGERS = "qrtz_triggers";

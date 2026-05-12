@@ -1,0 +1,74 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.users-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-4, 16px);
+  background: var(--color-background, #fff);
+  color: var(--color-text-primary, #1a1a1a);
+
+  // Dark mode
+  [data-theme='dark'] & {
+    background: var(--gray-1, #111113);
+    color: var(--gray-12, #edeef0);
+  }
+
+  &__header {
+    margin-bottom: var(--space-4, 16px);
+    padding-bottom: var(--space-4, 16px);
+    border-bottom: 1px solid var(--gray-6, #e4e4e7);
+
+    [data-theme='dark'] & {
+      border-bottom-color: var(--gray-6, #3d3d43);
+    }
+  }
+
+  &__icon {
+    color: var(--accent-9, #0091ff);
+  }
+
+  &__description {
+    color: var(--gray-11, #6f6f78);
+    margin-top: var(--space-1, 4px);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__back {
+    padding: var(--space-2, 8px);
+    border-radius: var(--radius-2, 6px);
+
+    &:hover {
+      background: var(--gray-3, #f1f1f3);
+    }
+
+    [data-theme='dark'] &:hover {
+      background: var(--gray-4, #27272b);
+    }
+  }
+
+  &__alerts {
+    margin-bottom: var(--space-4, 16px);
+  }
+
+  &__content {
+    flex: 1;
+    // Parent layout (settings-layout-radix__content) handles scrolling
+  }
+}
+
+

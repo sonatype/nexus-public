@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Context;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.repository.view.Response;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handler that validates requests against the configured distribution when requireDistribution is enabled.
@@ -34,9 +35,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AptDistributionValidationHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final Pattern DISTS_PATH_PATTERN = Pattern.compile("^/?dists/([^/]+)/");
 
   @Override

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
 
 import org.joda.time.DateTime;
@@ -33,7 +32,7 @@ import static org.junit.Assert.fail;
  * @since 3.0
  */
 public class MetadataBuilderTest
-    extends TestSupport
+
 {
   private final Maven2MavenPathParser mavenPathParser = new Maven2MavenPathParser();
 

@@ -12,31 +12,85 @@
  */
 
  .nxrm-left-nav{
+  // Force sidebar background to use design tokens
+  &.nx-global-sidebar-2 {
+    background-color: var(--color-surface) !important;
+    border-right: 1px solid var(--color-border) !important;
+  }
+  
   &__link.nx-text-link {
     &.nxrm-left-nav__link--no-icon .nx-icon {
       display: none;
     }
     &:hover {
-      background-color: var(--nx-swatch-indigo-90);
+      background-color: var(--color-surface-hover) !important;
     }
     &.selected {
-      color: var(--nx-swatch-white);
+      color: var(--color-text) !important;
+      background-color: var(--color-selection) !important;
     }
   }
+  
+  // Override all nav link colors (main items)
+  .nx-global-sidebar-2__navigation-link.nx-text-link {
+    color: var(--color-text) !important;
+    
+    &:hover {
+      background-color: var(--color-surface-hover) !important;
+    }
+    
+    &.selected {
+      background-color: var(--color-selection) !important;
+      color: var(--color-text) !important;
+    }
+  }
+  
+  // Override collapsible/expandable item colors (sub-nav)
   .nxrm-navigation-expandable-link__navigation-link {
-    &.nx-global-sidebar-2__navigation-link.nx-text-link:not(.selected):hover {
-      background-color: var(--nx-swatch-indigo-90);
+    &.nx-global-sidebar-2__navigation-link.nx-text-link {
+      color: var(--color-text) !important;
+      
+      &:not(.selected):hover {
+        background-color: var(--color-surface-hover) !important;
+      }
     }
     &> .nx-icon {
       padding: 0 2px;
+      color: var(--color-text) !important;
     }
   }
+  
+  // Override expandable list items (child items under Search, etc.)
+  .nxrm-navigation-expandable-link__expandable-list {
+    background-color: var(--color-surface) !important;
+    
+    &__item {
+      color: var(--color-text) !important;
+      
+      &:hover {
+        background-color: var(--color-surface-hover) !important;
+      }
+    }
+  }
+  
   &.closed {
     .nxrm-navigation-expandable-link__navigation-link > .nx-icon {
       padding: 0;
     }
   }
-  .nx-global-sidebar-2__toggle.nx-btn:hover {
-    background-color: var(--nx-swatch-indigo-90);
+  
+  // Toggle button (collapse/expand)
+  .nx-global-sidebar-2__toggle.nx-btn {
+    color: var(--color-text) !important;
+    background-color: var(--color-surface) !important;
+    
+    &:hover {
+      background-color: var(--color-surface-hover) !important;
+    }
+    
+    .nx-icon {
+      color: var(--color-text) !important;
+    }
   }
 }
+

@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.datastore;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
@@ -22,6 +21,8 @@ import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.flywaydb.core.api.MigrationVersion;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertFalse;
@@ -29,8 +30,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DatabaseCheckImplTest
-    extends TestSupport
 {
   private DatabaseCheckImpl underTest;
 

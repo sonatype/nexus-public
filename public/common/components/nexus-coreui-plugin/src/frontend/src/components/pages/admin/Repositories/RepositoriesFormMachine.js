@@ -25,7 +25,7 @@ import UIStrings from '../../../../constants/UIStrings';
 
 import {getDefaultValues, getValidators} from './RepositoryFormConfig';
 
-const {CONFIRM_DELETE, DELETE_ERROR, DELETE_SUCCESS} = UIStrings.REPOSITORIES.EDITOR.MESSAGES;
+const {DELETE_ERROR, DELETE_SUCCESS} = UIStrings.REPOSITORIES.EDITOR.MESSAGES;
 
 const {INTERNAL, PUBLIC} = APIConstants.REST;
 
@@ -35,9 +35,18 @@ export const saveRepositoryUrl = (format, type, name) =>
   )}/${name ? encodeURIComponent(name) : ''}`;
 export const getRepositoryUrl = (name) => INTERNAL.REPOSITORIES_REPOSITORY + name;
 export const deleteRepositoryUrl = (name) => PUBLIC.REPOSITORIES + name;
+export const getEvaluationSettingsUrl = (repositoryId) =>
+  `/service/rest/v1/repositories/${encodeURIComponent(repositoryId)}/evaluation-settings`;
+export const saveEvaluationSettingsUrl = (repositoryId) =>
+  `/service/rest/v1/repositories/${encodeURIComponent(repositoryId)}/evaluation-settings`;
 
 export default FormUtils.buildFormMachine({
   id: 'RepositoriesFormMachine',
+  initial: 'loading',
+  context: (context) => ({
+    ...context,
+    showDeleteModal: false
+  }),
   config: (config) =>
     mergeDeepRight(config, {
       states: {
@@ -57,6 +66,17 @@ export default FormUtils.buildFormMachine({
               target: 'loaded',
               actions: ['updatePreemptivePull']
             },
+            CONFIRM_DELETE: {
+              actions: assign({showDeleteModal: true})
+            },
+            HIDE_DELETE_MODAL: {
+              actions: assign({showDeleteModal: false})
+            },
+            DELETE: {
+              target: 'delete',
+              actions: assign({showDeleteModal: false}),
+              cond: 'canDelete'
+            }
           }
         }
       }
@@ -105,6 +125,41 @@ export default FormUtils.buildFormMachine({
     fetchData: async ({pristineData}) => {
       if (isEdit(pristineData)) {
         const response = await Axios.get(getRepositoryUrl(pristineData.name));
+
+        // Fetch evaluation settings for hosted repositories if feature is enabled
+        const isEvaluationEnabled = ExtJS.state().getValue('hostedRepositoryEvaluationEnabled');
+
+        if (response.data.type === 'hosted' && isEvaluationEnabled) {
+          try {
+            const evalResponse = await Axios.get(getEvaluationSettingsUrl(response.data.name));
+            // Store in attributes.evaluation to match ExtJS structure
+            if (!response.data.attributes) {
+              response.data.attributes = {};
+            }
+            response.data.attributes.evaluation = {
+              mode: evalResponse.data.mode,
+              activityTimeFrame: evalResponse.data.activityTimeFrame,
+              artifactLatestVersions: evalResponse.data.artifactLatestVersions,
+              policyEvaluationStage: evalResponse.data.policyEvaluationStage
+            };
+          } catch (error) {
+            if (error.response?.status === 404) {
+              // No evaluation settings exist yet - use defaults from attributes or INHERIT mode
+              if (!response.data.attributes) {
+                response.data.attributes = {};
+              }
+              if (!response.data.attributes.evaluation) {
+                response.data.attributes.evaluation = {
+                  mode: 'INHERIT',
+                  activityTimeFrame: null,
+                  artifactLatestVersions: null,
+                  policyEvaluationStage: null
+                };
+              }
+            }
+          }
+        }
+
         return mergeDeepRight(response, {
           data: {
             routingRule: response.data.routingRuleName
@@ -114,21 +169,37 @@ export default FormUtils.buildFormMachine({
         return {data: {name: ''}};
       }
     },
-    saveData: ({data, pristineData}) => {
+    saveData: async ({data, pristineData}) => {
+      const evaluation = data.attributes?.evaluation;
       const {format, type} = data;
       const {name} = pristineData;
-      const payload = data;
-      return isEdit(pristineData)
-        ? Axios.put(saveRepositoryUrl(format, type, name), payload)
-        : Axios.post(saveRepositoryUrl(format, type), payload);
+
+      // Save repository with attributes.evaluation included
+      const repoResponse = isEdit(pristineData)
+        ? await Axios.put(saveRepositoryUrl(format, type, name), data)
+        : await Axios.post(saveRepositoryUrl(format, type), data);
+
+      // Also save evaluation settings via dedicated API for hosted repositories if feature is enabled
+      const isEvaluationEnabled = ExtJS.state().getValue('hostedRepositoryEvaluationEnabled');
+
+      if (type === 'hosted' && evaluation && isEvaluationEnabled) {
+        const repositoryId = isEdit(pristineData) ? name : repoResponse.data.name;
+
+        try {
+          await Axios.put(saveEvaluationSettingsUrl(repositoryId), {
+            mode: evaluation.mode,
+            activityTimeFrame: evaluation.activityTimeFrame || null,
+            artifactLatestVersions: evaluation.artifactLatestVersions || null,
+            policyEvaluationStage: evaluation.policyEvaluationStage || null
+          });
+        } catch (error) {
+          // Don't fail the whole save if evaluation API call fails
+          // The data is already saved in repository attributes
+        }
+      }
+
+      return repoResponse;
     },
-    confirmDelete: ({data}) =>
-      ExtJS.requestConfirmation({
-        title: CONFIRM_DELETE.TITLE,
-        message: CONFIRM_DELETE.MESSAGE(data.name),
-        yesButtonText: CONFIRM_DELETE.YES,
-        noButtonText: CONFIRM_DELETE.NO
-      }),
     delete: ({data}) => Axios.delete(deleteRepositoryUrl(data.name))
   }
 });

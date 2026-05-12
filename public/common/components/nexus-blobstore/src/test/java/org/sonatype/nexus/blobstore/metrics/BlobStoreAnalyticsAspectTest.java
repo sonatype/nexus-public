@@ -18,7 +18,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobSupport;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -30,9 +29,11 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BlobStoreAnalyticsAspectTest
-    extends TestSupport
 {
 
   private BlobStoreAnalyticsAspect aspect;
@@ -73,7 +74,8 @@ public class BlobStoreAnalyticsAspectTest
     when(blobSupport.getMetrics().getContentSize()).thenReturn(100L);
 
     // Execute the aspect
-    Object result = aspect.monitorBlobStoreOperation(joinPoint, TestBlobStore.class.getMethod("uploadBlob").getAnnotation(MonitoringBlobStoreMetrics.class));
+    Object result = aspect.monitorBlobStoreOperation(joinPoint,
+        TestBlobStore.class.getMethod("uploadBlob").getAnnotation(MonitoringBlobStoreMetrics.class));
 
     // Verify interactions
     verify(operationMetrics).addSuccessfulRequest();
@@ -94,9 +96,11 @@ public class BlobStoreAnalyticsAspectTest
 
     // Execute the aspect and expect an exception
     try {
-      aspect.monitorBlobStoreOperation(joinPoint, TestBlobStore.class.getMethod("uploadBlob").getAnnotation(MonitoringBlobStoreMetrics.class));
+      aspect.monitorBlobStoreOperation(joinPoint,
+          TestBlobStore.class.getMethod("uploadBlob").getAnnotation(MonitoringBlobStoreMetrics.class));
       fail("Expected exception was not thrown");
-    } catch (RuntimeException e) {
+    }
+    catch (RuntimeException e) {
       assertEquals("Test Exception", e.getMessage());
     }
 

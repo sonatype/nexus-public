@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.ws.rs.WebApplicationException;
 
@@ -72,7 +73,7 @@ public interface RepositoryManagerRESTAdapter
   /**
    * Retrieves all group repository names that the specified repository is a member of.
    */
-  List<String> findContainingGroups(String repositoryName);
+  Set<String> findContainingGroups(String repositoryName);
 
   Optional<Long> getRepositorySize(String repositoryName);
 }

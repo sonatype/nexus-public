@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.rest;
 
 import java.time.OffsetDateTime;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.Format;
@@ -26,7 +25,9 @@ import org.sonatype.nexus.repository.rest.api.AssetXO;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -35,8 +36,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetXOBuilderTest
-    extends TestSupport
 {
   @Mock
   Repository repository;

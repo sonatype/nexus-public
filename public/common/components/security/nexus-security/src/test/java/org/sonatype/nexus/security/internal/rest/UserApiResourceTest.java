@@ -18,8 +18,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-import org.sonatype.goodies.testsupport.hamcrest.BeanMatchers;
+import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.internal.RealmToSource;
@@ -41,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -55,11 +55,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class UserApiResourceTest
-    extends Test5Support
 {
   public static final String USER_ID = "jsmith";
 
@@ -116,7 +116,7 @@ class UserApiResourceTest
     Collection<ApiUser> users = underTest.getUsers("js", UserManager.DEFAULT_SOURCE);
 
     assertThat(users, hasSize(1));
-    assertThat(users, contains(BeanMatchers.similarTo(underTest.fromUser(createUser()))));
+    assertThat(users, contains(samePropertyValuesAs(underTest.fromUser(createUser()))));
 
     ArgumentCaptor<UserSearchCriteria> captor = ArgumentCaptor.forClass(UserSearchCriteria.class);
     verify(securitySystem).searchUsers(captor.capture());

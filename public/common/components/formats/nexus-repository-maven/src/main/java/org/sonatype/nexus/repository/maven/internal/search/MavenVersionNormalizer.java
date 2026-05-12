@@ -15,11 +15,12 @@ package org.sonatype.nexus.repository.maven.internal.search;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.normalize.VersionNormalizer;
 import org.sonatype.nexus.repository.search.normalize.VersionNumberExpander;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.content.maven.internal.search.Maven2ComponentFinder.SNAPSHOT_TIMESTAMP;
@@ -62,9 +63,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier(Maven2Format.NAME)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenVersionNormalizer
-    extends ComponentSupport
     implements VersionNormalizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   // major + minor + patch
   private static final int VERSION_LENGTH = 3;
 

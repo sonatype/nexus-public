@@ -1,0 +1,171 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.repository-structure-tree-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gray-5);
+  border-radius: var(--radius-3);
+  background-color: var(--color-background);
+  overflow: hidden;
+
+  &--fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    border-radius: 0;
+  }
+}
+
+.repository-structure-tree {
+  .repository-tree-container {
+    outline: none;
+    background: var(--gray-1);
+    border: 1px solid var(--gray-4);
+    border-radius: var(--radius-2);
+  }
+
+  .repository-tree-toolbar {
+    background: var(--color-surface);
+    padding: var(--space-2);
+    border-radius: var(--radius-2);
+    border: 1px solid var(--gray-4);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: var(--space-3);
+  }
+
+  .repository-tree-node {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.1s;
+    border-bottom: 1px solid var(--gray-3);
+
+    &:hover {
+      background-color: var(--gray-2);
+    }
+
+    &--focused {
+      background-color: var(--blue-2);
+      box-shadow: inset 2px 0 0 var(--blue-9);
+      outline: none;
+    }
+
+    &__chevron {
+      color: var(--gray-8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &__name {
+      flex-shrink: 0;
+    }
+
+    &__blobstore {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    // Proxy Remote URL link: standard body text size/weight, color differentiates as link
+    &__remote-url-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: var(--font-size-1);
+      font-weight: var(--font-weight-regular);
+      color: var(--blue-9);
+      text-decoration: underline;
+      white-space: nowrap;
+      min-width: 0;
+
+      &:hover {
+        color: var(--blue-10);
+      }
+    }
+
+    &__spinner {
+      animation: spin 1s linear infinite;
+    }
+
+    &__actions {
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+
+    &:hover &__actions,
+    &--focused &__actions {
+      opacity: 1;
+    }
+
+    &__action-icon {
+      color: var(--gray-8);
+      transition: color 0.1s;
+
+      &:hover {
+        color: var(--blue-9);
+      }
+
+    }
+
+    &__action-btn {
+      color: var(--gray-8);
+      
+      &:hover {
+        color: var(--blue-9);
+        background-color: var(--gray-3);
+      }
+    }
+  }
+
+  .repository-tree-container {
+    &:focus-within {
+      border-color: var(--blue-8);
+    }
+  }
+
+  .repository-tree-node--match {
+    background-color: var(--yellow-2);
+    
+    .repository-tree-node__name {
+      color: var(--yellow-11);
+    }
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .repo-type-icon {
+    &--group {
+      color: var(--blue-9) !important;
+    }
+    &--hosted {
+      color: var(--green-9) !important;
+    }
+    &--proxy {
+      color: var(--purple-9) !important;
+    }
+  }
+}
+
+// Ensure tooltips appear above fullscreen tree
+.repository-structure-tree-container--fullscreen [data-radix-popper-content-wrapper] {
+  z-index: 1001;
+}

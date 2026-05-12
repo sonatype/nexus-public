@@ -17,8 +17,9 @@ import java.nio.file.Path;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -31,8 +32,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class RestoreHelper
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String FILE_SUFFIX = ".json";
 
   private static final String DB_FOLDER_NAME = "db";

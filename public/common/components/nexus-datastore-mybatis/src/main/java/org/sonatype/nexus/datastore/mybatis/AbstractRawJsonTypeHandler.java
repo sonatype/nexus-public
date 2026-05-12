@@ -15,6 +15,7 @@ package org.sonatype.nexus.datastore.mybatis;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
@@ -25,7 +26,8 @@ import org.apache.ibatis.type.TypeHandler;
 public abstract class AbstractRawJsonTypeHandler<T>
     extends AbstractJsonTypeHandler<T>
 {
-  private static final ObjectMapper RAW_OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper RAW_OBJECT_MAPPER = new ObjectMapper()
+      .registerModule(new Jdk8Module());
 
   @Override
   protected ObjectMapper buildObjectMapper(final Supplier<ObjectMapper> unused) {

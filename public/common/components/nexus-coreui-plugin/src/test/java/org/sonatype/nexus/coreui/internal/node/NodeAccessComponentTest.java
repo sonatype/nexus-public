@@ -17,10 +17,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.node.NodeAccess;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -30,8 +31,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class NodeAccessComponentTest
-    extends Test5Support
 {
   @Mock
   NodeAccess nodeAccess;

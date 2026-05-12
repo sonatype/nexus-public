@@ -20,7 +20,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.selfhosted.security.eula.model.EulaStatus;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
@@ -29,11 +28,13 @@ import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CommunityEulaApiResource
-    extends ComponentSupport
     implements Resource, CommunityEulaApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final String EULA_KEY = "nexus.community.eula.accepted";
 

@@ -16,8 +16,9 @@ import java.time.Duration;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Global repository settings.
@@ -27,8 +28,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class GlobalRepositorySettings
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final Duration DEFAULT_LAST_DOWNLOADED_INTERVAL = Duration.ofHours(12);
 
   private Duration lastDownloadedInterval = DEFAULT_LAST_DOWNLOADED_INTERVAL;

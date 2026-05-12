@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.http;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Context;
@@ -32,12 +31,15 @@ import com.google.common.net.HttpHeaders;
 import org.apache.http.client.utils.DateUtils;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -47,7 +49,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
 public class ConditionalRequestHandlerTest
-    extends TestSupport
 {
   private static final String WILDCARD = "*";
 
@@ -116,6 +117,9 @@ public class ConditionalRequestHandlerTest
 
   @Parameter(8)
   public String testName;
+
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
 
   @Mock
   private Context context;

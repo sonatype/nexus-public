@@ -15,7 +15,6 @@ package org.sonatype.nexus.upgrade.datastore.internal.steps;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
@@ -27,7 +26,6 @@ import static org.assertj.db.api.Assertions.assertThat;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class DistributedAuthTicketMigrationStep_1_30Test
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME);

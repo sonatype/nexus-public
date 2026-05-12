@@ -65,4 +65,5 @@ export default {
   SEARCH: generatePermissions('search', [READ]),
   CAPABILITIES: generatePermissions('capabilities'),
   MIGRATION: generatePermissions('migration', [READ]),
+  AUDIT: generatePermissions('audit', [READ]),
 };

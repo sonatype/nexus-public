@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-formats-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-repository-maven</artifactId>
@@ -102,6 +102,11 @@
     <dependency>
       <groupId>org.apache.maven.archetype</groupId>
       <artifactId>archetype-catalog</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-xml</artifactId>
     </dependency>
 
     <dependency>

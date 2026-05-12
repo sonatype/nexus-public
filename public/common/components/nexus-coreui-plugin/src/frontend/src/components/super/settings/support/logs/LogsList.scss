@@ -1,0 +1,127 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.logs-list {
+  &--loading {
+    min-height: 200px;
+  }
+
+  &__toolbar {
+    margin-bottom: var(--space-4);
+  }
+
+  &__filter {
+    max-width: 400px;
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      text-align: left;
+    }
+  }
+
+  &__header-cell {
+    padding: var(--space-3);
+    font-weight: 500;
+    color: var(--gray-12);
+    border-bottom: 2px solid var(--gray-a6);
+    background-color: var(--gray-a2);
+
+    &--sortable {
+      cursor: pointer;
+      user-select: none;
+
+      &:hover {
+        background-color: var(--gray-a3);
+      }
+    }
+
+    &--size {
+      width: 120px;
+    }
+
+    &--modified {
+      width: 200px;
+    }
+
+    &--action {
+      width: 40px;
+    }
+  }
+
+  &__sort-icon {
+    color: var(--accent-9);
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--accent-a3);
+    }
+
+    &:active {
+      background-color: var(--accent-a4);
+    }
+  }
+
+  &__cell {
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--gray-a4);
+    color: var(--gray-12);
+
+    &--size,
+    &--modified {
+      color: var(--gray-11);
+      font-variant-numeric: tabular-nums;
+    }
+
+    &--action {
+      text-align: right;
+    }
+  }
+
+  &__empty-cell {
+    padding: var(--space-6);
+    text-align: center;
+    border-bottom: 1px solid var(--gray-a4);
+  }
+
+  &__file-icon {
+    color: var(--gray-10);
+    flex-shrink: 0;
+  }
+
+  &__edit-icon {
+    color: var(--gray-9);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+

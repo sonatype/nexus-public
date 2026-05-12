@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.view.handlers;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.date.DateTimeUtils;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.http.NxrmHttpHeaders;
@@ -33,14 +32,16 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * UT for {@link ContentHeadersHandler}.
  *
  * @since 3.0
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ContentHeadersHandlerTest
-    extends TestSupport
 {
   final DateTime now = DateTime.now();
 

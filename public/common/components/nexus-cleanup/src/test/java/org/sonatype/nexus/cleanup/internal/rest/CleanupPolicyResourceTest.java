@@ -19,7 +19,6 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.config.DefaultCleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.internal.preview.CsvCleanupPreviewContentWriter;
@@ -44,7 +43,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -67,11 +68,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
 
-@ExtendWith(ValidationExtension.class)
-@ExtendWith(AuthenticationExtension.class)
+@ExtendWith({ValidationExtension.class, AuthenticationExtension.class, MockitoExtension.class})
 @WithUser
 class CleanupPolicyResourceTest
-    extends Test5Support
 {
   @Mock
   private CleanupPolicyStorage cleanupPolicyStorage;

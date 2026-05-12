@@ -37,7 +37,6 @@ import javax.management.RuntimeMBeanException;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.TabularData;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
@@ -45,6 +44,8 @@ import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
@@ -64,9 +65,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Component
 @Singleton
 public class JmxCustomizer
-    extends ComponentSupport
     implements SupportBundleCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String INFINITY = "infinity";
 
   private static final String NOT_A_NUMBER = "NaN";

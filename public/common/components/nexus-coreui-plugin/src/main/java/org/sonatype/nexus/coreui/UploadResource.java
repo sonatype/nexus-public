@@ -26,7 +26,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.coreui.internal.UploadService;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.validation.Validate;
@@ -35,6 +34,8 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.softwarementors.extjs.djn.EncodingUtils.htmlEncode;
 import org.springframework.stereotype.Component;
@@ -48,9 +49,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Path(UploadResource.RESOURCE_PATH)
 public class UploadResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_PATH = "internal/ui/upload";
 
   private UploadService uploadService;

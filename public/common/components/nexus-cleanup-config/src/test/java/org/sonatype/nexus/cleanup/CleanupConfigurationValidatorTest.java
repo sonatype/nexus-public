@@ -18,7 +18,6 @@ import java.util.Map;
 
 import javax.validation.ConstraintViolation;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.repository.Format;
@@ -31,7 +30,9 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -41,8 +42,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CleanupConfigurationValidatorTest
-    extends TestSupport
+
 {
   private static final String REPO_NAME = "repoName";
 
@@ -101,7 +103,9 @@ public class CleanupConfigurationValidatorTest
     when(repositoryManager.getAllSupportedRecipes()).thenReturn(recipes);
     when(configuration.getRecipeName()).thenReturn(FORMAT + "-" + ProxyType.NAME);
     when(recipe.getType()).thenReturn(new ProxyType());
-    when(recipe.getFormat()).thenReturn(new Format(FORMAT){});
+    when(recipe.getFormat()).thenReturn(new Format(FORMAT)
+    {
+    });
 
     underTest = new CleanupConfigurationValidator(constraintFactory, repositoryManager, cleanupPolicyStorage);
   }

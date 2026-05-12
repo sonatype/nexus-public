@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.internal.validation;
 
 import java.io.InputStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 
 import org.junit.Before;
@@ -23,7 +22,7 @@ import org.junit.Test;
 import static org.apache.commons.io.IOUtils.toInputStream;
 
 public class MavenMetadataContentValidatorTest
-    extends TestSupport
+
 {
   private static final String VALID_PATH = "group/artifact/maven-metadata.xml";
 

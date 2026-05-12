@@ -17,7 +17,6 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.quartz.internal.datastore.QuartzDAO;
 import org.sonatype.nexus.quartz.internal.datastore.QuartzJobDataTypeHandler;
 import org.sonatype.nexus.quartz.internal.store.ConfigStoreConnectionProvider;
@@ -67,7 +66,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
  * Unit tests for {@link BulkReadSchedulerImpl}.
  */
 class BulkReadSchedulerImplTest
-    extends Test5Support
 {
   private static final String SCHEDULER_NAME = "nexus-test";
 

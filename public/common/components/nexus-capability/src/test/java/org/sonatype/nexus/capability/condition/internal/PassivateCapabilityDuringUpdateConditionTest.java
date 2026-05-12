@@ -75,9 +75,9 @@ public class PassivateCapabilityDuringUpdateConditionTest
   @Test
   public void passivateDuringUpdate() {
     underTest.handle(new CapabilityEvent.BeforeUpdate(
-        capabilityRegistry, reference, Maps.<String, String>newHashMap(), Maps.<String, String>newHashMap()));
+        reference, Maps.<String, String>newHashMap(), Maps.<String, String>newHashMap()));
     underTest.handle(new CapabilityEvent.AfterUpdate(
-        capabilityRegistry, reference, Maps.<String, String>newHashMap(), Maps.<String, String>newHashMap()));
+        reference, Maps.<String, String>newHashMap(), Maps.<String, String>newHashMap()));
 
     verifyEventManagerEvents(unsatisfied(underTest), satisfied(underTest));
   }

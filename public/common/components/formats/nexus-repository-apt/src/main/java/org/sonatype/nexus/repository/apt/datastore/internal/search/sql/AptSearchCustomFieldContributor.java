@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.apt.datastore.internal.search.sql;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.search.sql.SearchCustomFieldContributor;
@@ -22,14 +21,17 @@ import org.sonatype.nexus.repository.search.sql.SearchRecord;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @Qualifier(AptFormat.NAME)
 @Singleton
 public class AptSearchCustomFieldContributor
-    extends ComponentSupport
     implements SearchCustomFieldContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public void populateSearchCustomFields(final SearchRecord searchTableData, final Asset asset) {
     searchTableData.addKeyword(asset.path().substring(1));

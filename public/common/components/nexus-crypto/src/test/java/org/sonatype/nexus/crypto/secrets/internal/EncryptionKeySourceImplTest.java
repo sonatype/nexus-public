@@ -18,7 +18,6 @@ import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +40,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class EncryptionKeySourceImplTest
-    extends TestSupport
 {
   private static final String BASE_PATH = "src/test/resources/";
 

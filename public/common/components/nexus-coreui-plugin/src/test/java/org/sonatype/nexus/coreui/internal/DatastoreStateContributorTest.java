@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 
 import org.junit.Test;
@@ -23,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class DatastoreStateContributorTest
-    extends TestSupport
 {
   @Test
   public void datastoreStateContributorExposesIsPostgresqlState() {

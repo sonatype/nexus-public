@@ -12,15 +12,17 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.user;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-import org.sonatype.goodies.testsupport.hamcrest.BeanMatchers;
+import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import org.sonatype.nexus.rest.ValidationErrorXO;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
@@ -44,6 +46,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -59,11 +62,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class UserApiResourceTest
-    extends Test5Support
 {
   public static final String USER_ID = "jsmith";
 
@@ -121,7 +124,7 @@ class UserApiResourceTest
 
     ApiUser returned = underTest.createUser(createUser);
 
-    assertThat(returned, BeanMatchers.similarTo(underTest.fromUser(user)));
+    assertThat(returned, samePropertyValuesAs(underTest.fromUser(user)));
 
     verify(securitySystem).addUser(user, "admin123");
   }
@@ -281,6 +284,29 @@ class UserApiResourceTest
 
     verify(securitySystem).changePassword("test", "test");
     verify(adminPasswordFileManager, never()).removeFile();
+  }
+
+  /*
+   * validateRoles
+   */
+  @Test
+  void testCreateUser_nullRoleIdIsRejected() {
+    ApiCreateUser createUser = new ApiCreateUser(USER_ID, "John", "Smith", "jsmith@example.org", "admin123",
+        ApiUserStatus.disabled, new HashSet<>(Arrays.asList("nx-admin", null)));
+
+    ValidationErrorsException ex = assertThrows(ValidationErrorsException.class,
+        () -> underTest.createUser(createUser));
+    assertThat(ex.getValidationErrors().stream().anyMatch(e -> e.getId().equals("roles")), is(true));
+  }
+
+  @Test
+  void testCreateUser_blankRoleIdIsRejected() {
+    ApiCreateUser createUser = new ApiCreateUser(USER_ID, "John", "Smith", "jsmith@example.org", "admin123",
+        ApiUserStatus.disabled, new HashSet<>(Arrays.asList("nx-admin", "   ")));
+
+    ValidationErrorsException ex = assertThrows(ValidationErrorsException.class,
+        () -> underTest.createUser(createUser));
+    assertThat(ex.getValidationErrors().stream().anyMatch(e -> e.getId().equals("roles")), is(true));
   }
 
   private static User createUser() {

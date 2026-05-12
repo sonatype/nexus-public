@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
@@ -35,7 +33,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
 public class MultiHashingInputStreamTest
-    extends TestSupport
+
 {
   @Test
   public void sha512IsAccurate() throws IOException {

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal.utils;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.collect.ImmutableMap;
 import org.apache.maven.index.reader.Record;
 import org.junit.Test;
@@ -28,7 +26,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.sonatype.nexus.repository.maven.internal.utils.RecordUtils.gavceForRecord;
 
 public class RecordUtilsTest
-    extends TestSupport
+
 {
   public static final String GROUP = "group";
 

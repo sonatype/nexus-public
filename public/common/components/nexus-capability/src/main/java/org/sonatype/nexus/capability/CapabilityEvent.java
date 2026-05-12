@@ -21,15 +21,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since capabilities 2.0
  */
-public class CapabilityEvent
+public abstract class CapabilityEvent
 {
-
   private final CapabilityReference reference;
 
-  public CapabilityEvent(
-      final CapabilityRegistry capabilityRegistry,
-      final CapabilityReference reference)
-  {
+  public CapabilityEvent(final CapabilityReference reference) {
     this.reference = checkNotNull(reference);
   }
 
@@ -50,12 +46,8 @@ public class CapabilityEvent
   public static class AfterActivated
       extends CapabilityEvent
   {
-
-    public AfterActivated(
-        final CapabilityRegistry capabilityRegistry,
-        final CapabilityReference reference)
-    {
-      super(capabilityRegistry, reference);
+    public AfterActivated(final CapabilityReference reference) {
+      super(reference);
     }
 
     @Override
@@ -73,12 +65,10 @@ public class CapabilityEvent
   public static class BeforePassivated
       extends CapabilityEvent
   {
-
     public BeforePassivated(
-        final CapabilityRegistry capabilityRegistry,
         final CapabilityReference reference)
     {
-      super(capabilityRegistry, reference);
+      super(reference);
     }
 
     @Override
@@ -102,12 +92,11 @@ public class CapabilityEvent
     private final Map<String, String> previousProperties;
 
     public BeforeUpdate(
-        final CapabilityRegistry capabilityRegistry,
         final CapabilityReference reference,
         final Map<String, String> properties,
         final Map<String, String> previousProperties)
     {
-      super(capabilityRegistry, reference);
+      super(reference);
       this.properties = checkNotNull(properties);
       this.previousProperties = checkNotNull(previousProperties);
     }
@@ -141,12 +130,11 @@ public class CapabilityEvent
     private final Map<String, String> previousProperties;
 
     public AfterUpdate(
-        final CapabilityRegistry capabilityRegistry,
         final CapabilityReference reference,
         final Map<String, String> properties,
         final Map<String, String> previousProperties)
     {
-      super(capabilityRegistry, reference);
+      super(reference);
       this.properties = checkNotNull(properties);
       this.previousProperties = checkNotNull(previousProperties);
     }
@@ -176,19 +164,14 @@ public class CapabilityEvent
   public static class Created
       extends CapabilityEvent
   {
-
-    public Created(
-        final CapabilityRegistry capabilityRegistry,
-        final CapabilityReference reference)
-    {
-      super(capabilityRegistry, reference);
+    public Created(final CapabilityReference reference) {
+      super(reference);
     }
 
     @Override
     public String toString() {
       return "Created " + super.toString();
     }
-
   }
 
   /**
@@ -201,12 +184,8 @@ public class CapabilityEvent
   public static class AfterRemove
       extends CapabilityEvent
   {
-
-    public AfterRemove(
-        final CapabilityRegistry capabilityRegistry,
-        final CapabilityReference reference)
-    {
-      super(capabilityRegistry, reference);
+    public AfterRemove(final CapabilityReference reference) {
+      super(reference);
     }
 
     @Override
@@ -224,18 +203,16 @@ public class CapabilityEvent
   public static class CallbackFailure
       extends CapabilityEvent
   {
-
     private String failingAction;
 
     private Exception failure;
 
     public CallbackFailure(
-        final CapabilityRegistry capabilityRegistry,
         final CapabilityReference reference,
         final String failingAction,
         final Exception failure)
     {
-      super(capabilityRegistry, reference);
+      super(reference);
       this.failingAction = checkNotNull(failingAction);
       this.failure = checkNotNull(failure);
     }
@@ -262,12 +239,8 @@ public class CapabilityEvent
   public static class CallbackFailureCleared
       extends CapabilityEvent
   {
-
-    public CallbackFailureCleared(
-        final CapabilityRegistry capabilityRegistry,
-        final CapabilityReference reference)
-    {
-      super(capabilityRegistry, reference);
+    public CallbackFailureCleared(final CapabilityReference reference) {
+      super(reference);
     }
 
     @Override

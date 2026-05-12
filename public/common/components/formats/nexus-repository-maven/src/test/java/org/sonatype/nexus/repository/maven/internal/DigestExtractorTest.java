@@ -16,8 +16,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,7 +30,7 @@ import static org.hamcrest.Matchers.nullValue;
  * @since 3.0
  */
 public class DigestExtractorTest
-    extends TestSupport
+
 {
   private String[][] validDigests =
       {

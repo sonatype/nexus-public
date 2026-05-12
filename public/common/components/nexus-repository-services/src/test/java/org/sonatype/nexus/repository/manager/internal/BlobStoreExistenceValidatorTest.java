@@ -17,7 +17,6 @@ import java.util.Map;
 
 import javax.validation.ConstraintViolation;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -36,12 +35,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Tests for {@link BlobStoreExistenceValidator}.
  */
+@ExtendWith(MockitoExtension.class)
 public class BlobStoreExistenceValidatorTest
-    extends Test5Support
 {
   @Mock
   private BlobStoreManager blobStoreManager;

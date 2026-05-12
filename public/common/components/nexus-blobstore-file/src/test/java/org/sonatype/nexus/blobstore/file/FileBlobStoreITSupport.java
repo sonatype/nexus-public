@@ -27,7 +27,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
@@ -42,8 +41,8 @@ import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.file.internal.datastore.metrics.DatastoreFileBlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
@@ -59,7 +58,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.tuple.Pair.of;
@@ -94,8 +97,13 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
  * {@link FileBlobStore} integration tests.
  */
 public abstract class FileBlobStoreITSupport
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
+  @Rule
+  public TemporaryFolder tmpDir = new TemporaryFolder();
+
   public static final int TEST_DATA_LENGTH = 10;
 
   private static final int METRICS_FLUSH_TIMEOUT = 1;
@@ -120,6 +128,8 @@ public abstract class FileBlobStoreITSupport
   private SimpleFileOperations fileOperations;
 
   private DefaultBlobIdLocationResolver blobIdResolver;
+
+  private final DirectoryHelper directoryHelper = new DirectoryHelper();
 
   @Mock(answer = Answers.RETURNS_MOCKS)
   private BlobStoreMetricsStore blobStoreMetricsStore;
@@ -151,11 +161,11 @@ public abstract class FileBlobStoreITSupport
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
     when(nodeAccess.isOldestNode()).thenReturn(true);
     when(dryRunPrefix.get()).thenReturn("");
-    blobStoreDirectory = util.createTempDir().toPath();
+    blobStoreDirectory = tmpDir.newFolder().toPath();
     contentDirectory = blobStoreDirectory.resolve("content");
     when(applicationDirectories.getWorkDirectory(anyString())).thenReturn(blobStoreDirectory.toFile());
 
-    fileOperations = spy(new SimpleFileOperations());
+    fileOperations = spy(new SimpleFileOperations(directoryHelper));
 
     blobIdResolver = new DefaultBlobIdLocationResolver();
 
@@ -170,8 +180,8 @@ public abstract class FileBlobStoreITSupport
     final BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     config.setName(name);
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, blobStoreDirectory.toString());
-    FileBlobStore blobstore = new FileBlobStore(blobIdResolver, fileOperations, applicationDirectories, metricsStore,
-        nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, index);
+    FileBlobStore blobstore = new FileBlobStore(blobIdResolver, fileOperations, applicationDirectories, directoryHelper,
+        metricsStore, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, index);
     blobstore.init(config);
     blobstore.start();
     return blobstore;
@@ -533,8 +543,8 @@ public abstract class FileBlobStoreITSupport
   }
 
   private Path testFile(final byte[] content) throws IOException {
-    Path tempFile = util.createTempFile().toPath();
-    DirectoryHelper.mkdir(tempFile.getParent());
+    Path tempFile = tmpDir.newFile().toPath();
+    directoryHelper.mkdir(tempFile.getParent());
     Files.write(tempFile, content);
     return tempFile;
   }

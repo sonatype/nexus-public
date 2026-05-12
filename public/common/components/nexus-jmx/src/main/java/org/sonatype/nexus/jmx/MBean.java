@@ -26,10 +26,10 @@ import javax.management.MBeanInfo;
 import javax.management.ReflectionException;
 import javax.management.ServiceNotFoundException;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -41,9 +41,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class MBean
-    extends ComponentSupport
     implements DynamicMBean
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final MBeanInfo info;
 
   private final Map<String, MBeanAttribute> attributes;

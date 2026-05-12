@@ -19,7 +19,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter;
@@ -33,6 +32,7 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static com.google.common.collect.Lists.reverse;
@@ -44,10 +44,10 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class PrivilegeComponentTest
-    extends Test5Support
 {
   @Mock
   private SecuritySystem securitySystem;

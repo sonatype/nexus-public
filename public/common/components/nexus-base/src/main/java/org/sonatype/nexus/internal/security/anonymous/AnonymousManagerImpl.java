@@ -16,7 +16,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
@@ -32,6 +31,8 @@ import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 import com.google.common.eventbus.Subscribe;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -46,9 +47,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Singleton
 @ManagedObject
 public class AnonymousManagerImpl
-    extends ComponentSupport
     implements AnonymousManager, EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final EventManager eventManager;
 
   private final AnonymousConfigurationStore store;

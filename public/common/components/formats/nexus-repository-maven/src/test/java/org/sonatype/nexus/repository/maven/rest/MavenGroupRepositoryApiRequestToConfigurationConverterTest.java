@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.rest;
 
 import java.util.Arrays;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
@@ -23,7 +22,9 @@ import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
@@ -32,8 +33,9 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link MavenGroupRepositoryApiRequestToConfigurationConverter}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenGroupRepositoryApiRequestToConfigurationConverterTest
-    extends TestSupport
+
 {
   @Mock
   private ConfigurationStore configurationStore;

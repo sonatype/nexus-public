@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
@@ -50,7 +49,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,8 +69,9 @@ import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE
 /**
  * Tests for {@link AptHostedMetadataFacet}, focusing on the package index building logic.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AptHostedMetadataFacetTest
-    extends TestSupport
+
 {
   private static final String REPO_NAME = "apt-hosted-test";
 

@@ -23,8 +23,7 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -38,6 +37,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -51,9 +52,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Component
 public class MavenMetadataRebuilder
-    extends ComponentSupport
     implements MetadataRebuilder
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String PATH_PREFIX = "/";
 
   private final int bufferSize;

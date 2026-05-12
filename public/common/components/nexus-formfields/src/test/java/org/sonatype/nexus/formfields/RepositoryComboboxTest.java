@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.formfields;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,7 +20,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 public class RepositoryComboboxTest
-    extends TestSupport
 
 {
   RepositoryCombobox underTest;

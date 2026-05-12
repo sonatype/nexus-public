@@ -11,16 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
-import {
-  NxButton,
-  NxFieldset,
-  NxFontAwesomeIcon,
-  NxFormGroup,
-  NxLoadingSpinner,
-  NxStatefulForm,
-  NxTextInput
-} from '@sonatype/react-shared-components';
+import { Flex, Text, TextField, Button } from '@radix-ui/themes';
+import { AlertCircle } from 'lucide-react';
 import { useMachine } from '@xstate/react';
 import { useRouter } from '@uirouter/react';
 import PropTypes from 'prop-types';
@@ -43,16 +35,19 @@ const { LOGIN_BUTTON_LOADING, USERNAME_LABEL, PASSWORD_LABEL, LOGIN_BUTTON } = L
 export default function LocalLogin({ primaryButton, onError }) {
   const router = useRouter();
 
-  const handleLoginSuccess = async ({ username }) => {
+  const handleLoginSuccess = async () => {
     onError?.(null);
-    console.log(`User ${username} authenticated successfully`);
     try {
       await ExtJS.waitForNextPermissionChange();
       const returnTo = router.globals.params.returnTo;
       if (returnTo) {
-        const originalReturnTo = atob(returnTo);
-        // `router.urlService.url` does set and navigate to the returnTo url
-        router.urlService.url(originalReturnTo);
+        const decodedReturnTo = atob(returnTo);
+        // Validate decoded URL is a safe relative path (prevents open redirect)
+        if (decodedReturnTo.startsWith('/') || decodedReturnTo.startsWith('#')) {
+          router.urlService.url(decodedReturnTo);
+        } else {
+          router.stateService.go(RouteNames.MISSING_ROUTE);
+        }
       } else {
         router.stateService.go('browse.welcome');
       }
@@ -87,10 +82,13 @@ export default function LocalLogin({ primaryButton, onError }) {
 
   const formProps = FormUtils.formProps(current, send);
 
-  const { saveError: serverError, saveErrorData, saveErrors = {} } = current.context;
+  const { saveError: serverError, saveErrorData, saveErrors = {}, validationErrors = {} } = current.context;
   const isLoading = current.matches('saving');
   const hasAuthError = Boolean(saveErrors.username && saveErrors.password);
-  const authErrorOverride = hasAuthError ? { validationErrors: ' ' } : {};
+
+  // Check for validation errors (empty fields) or server errors (wrong credentials)
+  const usernameHasError = Boolean(validationErrors.username || saveErrors.username);
+  const passwordHasError = Boolean(validationErrors.password || saveErrors.password);
 
   const shouldShowInlineError = serverError && hasAuthError;
 
@@ -117,71 +115,83 @@ export default function LocalLogin({ primaryButton, onError }) {
     }
   }, [serverError, saveErrorData?.username, onError]);
 
-  const statefulFormProps = {
-    ...formProps,
-    className: formProps.className ? `${formProps.className} login-form` : 'login-form',
-    submitBtnText: LOGIN_BUTTON,
-    submitBtnClasses: [formProps.submitBtnClasses, 'login-form__hidden-submit'].filter(Boolean).join(' '),
-    submitError: null,
-    submitMaskState: null,
-    onSubmit: handleSubmit
+  const { data } = current.context;
+  const isFormValid = data.username?.trim() && data.password;
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (isFormValid && !isLoading) {
+      handleSubmit();
+    }
   };
 
   return (
-    <NxStatefulForm {...statefulFormProps}>
-      <NxFieldset>
-        <NxFormGroup label={USERNAME_LABEL} className="username-field" isRequired>
-          <NxTextInput
-            {...FormUtils.fieldProps('username', current)}
-            {...authErrorOverride}
-            onChange={handleFieldChange('username')}
-            placeholder={USERNAME_LABEL}
-            disabled={isLoading}
-            inputAttributes={{
-              id: 'username',
-              'data-analytics-id': 'login-username-input',
-              'aria-required': 'true',
-              autoFocus: primaryButton
-            }}
-          />
-        </NxFormGroup>
-
-        <NxFormGroup label={PASSWORD_LABEL} isRequired>
-          <NxTextInput type="password"
-            {...FormUtils.fieldProps('password', current)}
-            {...authErrorOverride}
-            onChange={handleFieldChange('password')}
-            placeholder={PASSWORD_LABEL}
-            disabled={isLoading}
-            inputAttributes={{
-              id: 'password',
-              'data-analytics-id': 'login-password-input',
-              'aria-required': 'true'
-            }}
-          />
-        </NxFormGroup>
-
-        <div className="server-error-container">
-          {shouldShowInlineError && (
-            <div className="server-error-message">
-              <NxFontAwesomeIcon icon={faExclamationCircle} />
-              {serverError}
-            </div>
-          )}
-        </div>
-
-        <NxButton
-          type="submit"
-          variant={primaryButton ? 'primary' : null}
-          className="login-button"
+    <form onSubmit={handleFormSubmit}>
+      <Flex direction="column" gap="4" width="100%">
+        {/* Username */}
+      <Flex direction="column" gap="2">
+        <Text as="label" size="2" weight="bold" htmlFor="username" className="login-form-label">
+          {USERNAME_LABEL}
+        </Text>
+        <TextField.Root
+          id="username"
+          placeholder={USERNAME_LABEL}
+          value={data.username || ''}
+          onChange={(e) => handleFieldChange('username')(e.target.value)}
+          size="3"
+          required
+          autoFocus={primaryButton}
+          autoComplete="username"
           disabled={isLoading}
-          data-analytics-id="nxrm-login-local"
-          data-testid="login-primary-button"
-        >
-          {isLoading ? <NxLoadingSpinner>{LOGIN_BUTTON_LOADING}</NxLoadingSpinner> : LOGIN_BUTTON}
-        </NxButton>
-      </NxFieldset>
-    </NxStatefulForm>
+          data-analytics-id="login-username-input"
+          aria-required="true"
+          aria-invalid={usernameHasError || undefined}
+        />
+      </Flex>
+
+      {/* Password */}
+      <Flex direction="column" gap="2">
+        <Text as="label" size="2" weight="bold" htmlFor="password" className="login-form-label">
+          {PASSWORD_LABEL}
+        </Text>
+        <TextField.Root
+          id="password"
+          type="password"
+          placeholder={PASSWORD_LABEL}
+          value={data.password || ''}
+          onChange={(e) => handleFieldChange('password')(e.target.value)}
+          size="3"
+          required
+          autoComplete="current-password"
+          disabled={isLoading}
+          data-analytics-id="login-password-input"
+          aria-required="true"
+          aria-invalid={passwordHasError || undefined}
+        />
+      </Flex>
+
+      {/* Server Error */}
+      {shouldShowInlineError && (
+        <Flex align="center" gap="2" className="server-error-message">
+          <AlertCircle size={16} />
+          <Text size="2" color="red">{serverError}</Text>
+        </Flex>
+      )}
+
+      {/* Sign In Button */}
+      <Button
+        type="submit"
+        size="3"
+        variant={primaryButton ? 'solid' : 'outline'}
+        className="login-submit"
+        disabled={isLoading || !isFormValid}
+        data-analytics-id="nxrm-login-local"
+        data-testid="login-primary-button"
+      >
+        {isLoading ? LOGIN_BUTTON_LOADING : LOGIN_BUTTON}
+      </Button>
+      </Flex>
+    </form>
   );
 }
 

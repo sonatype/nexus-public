@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.httpclient.internal;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.Secret;
@@ -40,6 +39,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -57,8 +58,8 @@ import static org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetI
 /**
  * Tests for {@link HttpClientFacetImpl}.
  */
+@ExtendWith(MockitoExtension.class)
 class HttpClientFacetImplTest
-    extends Test5Support
 {
   private static final String DEFAULT = "default";
 

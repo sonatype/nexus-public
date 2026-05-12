@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.security.anonymous;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
@@ -22,6 +21,8 @@ import org.sonatype.nexus.security.anonymous.AnonymousConfigurationChangedEvent;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
@@ -35,8 +36,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AnonymousManagerImplTest
-    extends TestSupport
 {
   @Mock
   private EventManager eventManager;

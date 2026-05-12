@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.search.sql.query;
 import java.util.Arrays;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
@@ -42,7 +41,6 @@ import static org.sonatype.nexus.repository.rest.sql.SearchField.NAMESPACE;
 import static org.sonatype.nexus.repository.rest.sql.SearchField.VERSION;
 
 public class KeywordSqlSearchQueryContributionTest
-    extends TestSupport
 {
   public static final String GAVEC_CONDITION_FORMAT = "GAVEC_CONDITION";
 

@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -50,6 +51,7 @@ import static org.sonatype.nexus.logging.task.TaskLogType.NEXUS_LOG_ONLY;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RepairAptMetadataLeadingSlashTask
     extends RepositoryParallelTaskSupport
+    implements Cancelable
 {
   @VisibleForTesting
   static final String INDEX_SECTION = "index_section";
@@ -64,7 +66,7 @@ public class RepairAptMetadataLeadingSlashTask
   public RepairAptMetadataLeadingSlashTask(
       @Value("${external.metadata.repository.concurrencyLimit:5}") final int concurrencyLimit)
   {
-    super(false, concurrencyLimit, 20);
+    super(false, concurrencyLimit);
   }
 
   @Override

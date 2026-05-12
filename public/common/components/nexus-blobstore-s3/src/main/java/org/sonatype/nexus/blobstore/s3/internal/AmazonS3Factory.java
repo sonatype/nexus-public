@@ -19,7 +19,6 @@ import javax.annotation.Nullable;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
@@ -33,6 +32,8 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import com.google.common.base.Predicates;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -68,8 +69,9 @@ import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AmazonS3Factory
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String DEFAULT = "DEFAULT";
 
   private final int defaultConnectionPoolSize;

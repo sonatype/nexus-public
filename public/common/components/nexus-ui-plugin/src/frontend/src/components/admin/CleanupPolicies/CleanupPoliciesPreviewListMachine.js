@@ -73,6 +73,9 @@ export default ListMachineUtils.buildListMachine({
         target: 'loaded',
         actions: ['clear']
       },
+      HIDE_ALERT: {
+        actions: ['hideAlert']
+      },
       RETRY_PREVIEW: {
         target: 'loading'
       },
@@ -80,6 +83,10 @@ export default ListMachineUtils.buildListMachine({
   })
 }).withConfig({
   actions: {
+    hideAlert: assign({
+      isAlertShown: () => false
+    }),
+
     setData: assign({
       data: (_, {data}) => data.data.results,
       pristineData: (_, {data}) => data.data.results,

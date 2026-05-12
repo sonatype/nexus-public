@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.wonderland;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 
@@ -25,7 +24,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
 public class WonderlandSecurityContributorTest
-    extends TestSupport
 {
   private WonderlandSecurityContributor underTest;
 

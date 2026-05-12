@@ -24,8 +24,7 @@ import javax.annotation.Nonnull;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -43,6 +42,8 @@ import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.manager.internal.RepositoryImpl.State.DELETED;
@@ -59,9 +60,10 @@ import static org.sonatype.nexus.repository.manager.internal.RepositoryImpl.Stat
  * @since 3.0
  */
 public class RepositoryImpl
-    extends ComponentSupport
     implements Repository, StateGuardAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final long LOCK_TIMEOUT = 60L;
 
   private final EventManager eventManager;
@@ -139,7 +141,7 @@ public class RepositoryImpl
   }
 
   private final StateGuard states = new StateGuard.Builder()
-      .logger(createLogger())
+      .logger(log)
       .initial(NEW)
       .failure(FAILED)
       .create();

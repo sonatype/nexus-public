@@ -16,7 +16,6 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpConditions;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
@@ -29,6 +28,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.http.HttpConditions.makeConditional;
 import static org.sonatype.nexus.repository.http.HttpConditions.makeUnconditional;
@@ -56,9 +57,10 @@ import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ConditionalRequestHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {

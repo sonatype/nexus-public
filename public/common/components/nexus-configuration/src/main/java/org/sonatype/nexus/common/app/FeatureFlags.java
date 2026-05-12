@@ -21,7 +21,7 @@ package org.sonatype.nexus.common.app;
 public class FeatureFlags
 {
   /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
-  public static final String FEATURE_GOLANG_HOSTED = "nexus.golang.hosted";
+  public static final String FEATURE_GOLANG_HOSTED = "nexus.format.golang.hosted.enabled";
 
   /* Cargo format is temporarily hidden behind the feature flag. Default value: false */
   public static final String CARGO_FORMAT_ENABLED = "nexus.format.cargo.enabled";
@@ -31,9 +31,6 @@ public class FeatureFlags
 
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
-
-  /* Conda Group format is temporarily hidden behind the feature flag. Default value: false */
-  public static final String CONDA_GROUP_FORMAT_ENABLED = "nexus.format.conda.group.enabled";
 
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   public static final String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
@@ -54,8 +51,6 @@ public class FeatureFlags
   public static final String CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED_VALUE = "${nexus.zero.downtime.enabled:false}";
 
   public static final String CLUSTERED_ZERO_DOWNTIME_ENABLED_ENV = "NEXUS_ZERO_DOWNTIME_ENABLED";
-
-  public static final String CONDA_HOSTED_FEATURE_ENABLED = "nexus.format.conda.hosted.enabled";
 
   /**
    * Heartbeat interval in seconds for cluster node health monitoring.
@@ -210,7 +205,7 @@ public class FeatureFlags
       "${nexus.malware.risk.on.disk.nonadmin.override.enabled:false}";
 
   public static final String MALWARE_REMEDIATOR_TASK_CHECK_REPOSITORY_IN_KNOWN_REGISTRIES_NAMED_VALUE =
-      "${nexus.malware.remediator.task.check.repository.in.known.registries:true}";
+      "${nexus.malware.remediator.task.check.repository.in.known.registries:false}";
 
   public static final String MALWARE_REMEDIATOR_TASK_IGNORE_QUARANTINE_STATE_NAMED_VALUE =
       "${nexus.malware.remediator.task.ignore.quarantine.state:true}";
@@ -284,6 +279,59 @@ public class FeatureFlags
   public static final String PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE =
       "${nexus.security.principal.permissions.cache.enabled:true}";
 
+  /* Preview UI for anonymous users. Available values: true, false. Default value: false */
+  public static final String PREVIEW_UI_ANONYMOUS_ENABLED = "nexus.preview.ui.anonymous.enabled";
+
+  public static final String PREVIEW_UI_ANONYMOUS_ENABLED_NAMED_VALUE =
+      "${nexus.preview.ui.anonymous.enabled:false}";
+
+  /* Preview UI for logged-in users. Available values: true, false. Default value: false */
+  public static final String PREVIEW_UI_LOGGEDIN_ENABLED = "nexus.preview.ui.loggedin.enabled";
+
+  public static final String PREVIEW_UI_LOGGEDIN_ENABLED_NAMED_VALUE =
+      "${nexus.preview.ui.loggedin.enabled:false}";
+
+  /* Default to Preview UI for all users. Available values: true, false. Default value: false */
+  public static final String PREVIEW_UI_DEFAULT_ENABLED = "nexus.preview.ui.default.enabled";
+
+  public static final String PREVIEW_UI_DEFAULT_ENABLED_NAMED_VALUE =
+      "${nexus.preview.ui.default.enabled:false}";
+
+  /* Disable Legacy UI (ExtJS) for all users. Available values: true, false. Default value: false */
+  public static final String PREVIEW_UI_LEGACY_DISABLED = "nexus.preview.ui.legacy.disabled";
+
+  public static final String PREVIEW_UI_LEGACY_DISABLED_NAMED_VALUE =
+      "${nexus.preview.ui.legacy.disabled:false}";
+
+  /* Disable Classic UI switch feedback collection. Available values: true, false. Default value: false */
+  public static final String PREVIEW_UI_SWITCH_FEEDBACK_DISABLED =
+      "nexus.preview.ui.switch.feedback.disabled";
+
+  public static final String PREVIEW_UI_SWITCH_FEEDBACK_DISABLED_NAMED_VALUE =
+      "${nexus.preview.ui.switch.feedback.disabled:false}";
+
+  public static final String PREVIEW_UI_SWITCH_FEEDBACK_DISABLED_KEY =
+      "preview.ui.switch.feedback.disabled";
+
+  /*
+   * Preview UI settings page visibility in the legacy UI.
+   * When true, Preview UI REST endpoints and the settings page are registered.
+   * Available values: true, false. Default value: true
+   */
+  public static final String PREVIEW_UI_SETTINGS_ENABLED = "nexus.previewui.enabled";
+
+  public static final String PREVIEW_UI_SETTINGS_ENABLED_NAMED_VALUE = "${nexus.previewui.enabled:true}";
+
+  /*
+   * Gates Preview UI audit event DB persistence and the audit log REST/UI surface.
+   * Intentionally decoupled from the preview UI visibility flags so audit DB writes can be
+   * deferred until the persistence path is production-ready.
+   * Available values: true, false. Default value: false
+   */
+  public static final String PREVIEW_UI_AUDIT_ENABLED = "nexus.previewui.audit.enabled";
+
+  public static final String PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE = "${nexus.previewui.audit.enabled:false}";
+
   /* Principal permissions cache maximum size. Default value: 250 */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE =
       "nexus.authorizingrealm.permissionscache.maximumsize";
@@ -324,4 +372,21 @@ public class FeatureFlags
 
   public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED_NAMED_VALUE =
       "${nexus.hosted.repository.evaluation.enabled:false}";
+
+  /**
+   * Controls whether internal JVM/infrastructure metrics (JVM gauges, Jetty metrics, HikariCP metrics, thread dumps,
+   * HTTP request metrics, and @Timed/@ExceptionMetered aspects) are registered. When disabled, the metrics endpoints
+   * remain available but only expose custom application gauges. Default: true (all metrics enabled).
+   */
+  public static final String METRICS_INTERNAL_ENABLED = "nexus.metrics.internal.enabled";
+
+  public static final String METRICS_INTERNAL_ENABLED_NAMED_VALUE = "${nexus.metrics.internal.enabled:true}";
+
+  /**
+   * Default is false until NEXUS-49817 development is complete.
+   */
+  public static final String TELEMETRY_MANDATORY_ENABLED = "nexus.telemetry.mandatory.enabled";
+
+  public static final String TELEMETRY_MANDATORY_ENABLED_NAMED_VALUE =
+      "${nexus.telemetry.mandatory.enabled:false}";
 }

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
@@ -30,7 +29,9 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -40,8 +41,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenValidatingComponentUploadTest
-    extends TestSupport
+
 {
 
   private static final String MAVEN_CLASSIFIER_AND_EXTENSION_EXTRACTOR_REGEX =

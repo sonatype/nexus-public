@@ -1,0 +1,476 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Tags Page - Sonatype Guide-inspired layout
+.tags-page {
+  min-height: 100%;
+  background: var(--gray-1);
+
+  // Hero Header - Full width banner with gradient
+  &__hero {
+    background: linear-gradient(180deg, var(--gray-2) 0%, var(--gray-1) 100%);
+    border-bottom: 1px solid var(--gray-a4);
+    padding: var(--space-5) 0;
+  }
+
+  &__hero-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+  }
+
+  &__hero-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--violet-9) 0%, var(--violet-10) 100%);
+    border-radius: 16px;
+    color: white;
+    box-shadow: 0 8px 24px var(--violet-a4);
+    flex-shrink: 0;
+  }
+
+  &__title {
+    color: var(--gray-12);
+    letter-spacing: -0.02em;
+  }
+
+  &__subtitle {
+    color: var(--gray-11);
+    max-width: 600px;
+    line-height: 1.6;
+    margin-top: var(--space-1);
+  }
+
+  &__badges {
+    padding-top: var(--space-1);
+  }
+
+  &__format-badge {
+    font-weight: 600;
+  }
+
+  // Container for content
+  &__container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-6);
+  }
+
+  // Two-column layout
+  &__layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  // Main content column
+  &__main {
+    min-width: 0;
+  }
+
+  // Sidebar column
+  &__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    position: sticky;
+    top: var(--space-4);
+  }
+
+  // Card styling
+  &__card {
+    padding: var(--space-5);
+    border-radius: 16px;
+    background: var(--color-background);
+    border: 1px solid var(--gray-a4);
+    box-shadow: 0 1px 3px var(--gray-a2), 0 4px 12px var(--gray-a1);
+  }
+
+  &__main-card {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  // Card header with tabs and filter
+  &__card-header {
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--gray-a4);
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  // Tabs styling
+  &__tabs {
+    gap: var(--space-1);
+    border: none;
+    background: transparent;
+  }
+
+  &__tab {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-11);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+
+    &:hover {
+      color: var(--gray-12);
+      background: var(--gray-a3);
+    }
+
+    &[data-state='active'] {
+      color: var(--violet-9);
+      background: var(--violet-a3);
+      border-color: var(--violet-a5);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__filter {
+    width: 280px;
+    flex-shrink: 0;
+  }
+
+  &__tab-content {
+    // No padding - content handles its own padding
+  }
+
+  // Scroll area for tags list
+  &__scroll-area {
+    max-height: calc(100vh - 480px);
+    min-height: 320px;
+    padding: var(--space-4) var(--space-5);
+  }
+
+  // Pagination
+  &__pagination {
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--gray-a4);
+    display: flex;
+    justify-content: center;
+  }
+
+  // Footer with count
+  &__footer {
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--gray-a4);
+  }
+
+  // Sidebar cards
+  &__sidebar-card {
+    background: var(--color-background);
+  }
+
+  &__sidebar-header {
+    color: var(--gray-12);
+
+    svg {
+      color: var(--violet-9);
+    }
+  }
+
+  &__help-text {
+    color: var(--gray-11);
+    line-height: 1.6;
+  }
+
+  &__tip-icon {
+    color: var(--amber-9);
+  }
+
+  &__usecase {
+    line-height: 1.5;
+    color: var(--gray-11);
+  }
+
+  &__usecase-icon {
+    color: var(--gray-10);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &__docs-link {
+    font-weight: 500;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  // Actions card
+  &__actions-card {
+    padding: var(--space-4);
+  }
+
+  &__action-icon {
+    color: var(--green-9);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  // Pro feature card
+  &__pro-card {
+    background: linear-gradient(135deg, var(--violet-2) 0%, var(--violet-1) 100%);
+    border-color: var(--violet-a4);
+    padding: var(--space-4);
+  }
+
+  &__pro-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--violet-9) 0%, var(--violet-10) 100%);
+    color: white;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+}
+
+// Collapsible section styling
+.collapsible-section {
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-11);
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--gray-12);
+    }
+  }
+
+  &__title {
+    color: var(--gray-12);
+
+    svg {
+      color: var(--gray-10);
+    }
+  }
+
+  &__content {
+    animation: collapseIn 0.2s ease;
+  }
+}
+
+// TagsList styles
+.tags-list {
+  width: 100%;
+
+  &__header-cell {
+    &--sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background-color: var(--gray-a3);
+      }
+    }
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--gray-a3);
+    }
+
+    &:focus {
+      outline: 2px solid var(--violet-8);
+      outline-offset: -2px;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--violet-8);
+      outline-offset: -2px;
+    }
+  }
+}
+
+// Sort icon styles
+.sort-icon {
+  flex-shrink: 0;
+
+  &--inactive {
+    opacity: 0.4;
+  }
+
+  &--active {
+    color: var(--violet-9);
+  }
+}
+
+// Chevron icon in table rows
+.chevron-icon {
+  color: var(--gray-9);
+}
+
+// Pagination styles
+.pagination {
+  padding: var(--space-2) 0;
+}
+
+@keyframes collapseIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Dark mode
+:root[data-theme='dark'],
+.dark {
+  .tags-page {
+    background: var(--gray-1);
+
+    &__hero {
+      background: linear-gradient(180deg, var(--gray-2) 0%, var(--gray-1) 100%);
+      border-color: var(--gray-a5);
+    }
+
+    &__card {
+      background: var(--gray-2);
+      border-color: var(--gray-a5);
+    }
+
+    &__main-card {
+      background: var(--gray-2);
+    }
+
+    &__tab {
+      &[data-state='active'] {
+        background: var(--violet-a4);
+        border-color: var(--violet-a6);
+      }
+    }
+
+    &__pro-card {
+      background: linear-gradient(135deg, var(--violet-3) 0%, var(--violet-2) 100%);
+      border-color: var(--violet-a5);
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 1200px) {
+  .tags-page {
+    &__layout {
+      grid-template-columns: 1fr;
+    }
+
+    &__sidebar {
+      position: static;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    &__sidebar-card,
+    &__actions-card,
+    &__pro-card {
+      flex: 1;
+      min-width: 300px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .tags-page {
+    &__hero {
+      padding: var(--space-4) 0;
+    }
+
+    &__hero-container {
+      padding: 0 var(--space-4);
+    }
+
+    &__hero-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    &__container {
+      padding: var(--space-4);
+    }
+
+    &__card-header {
+      padding: var(--space-3) var(--space-4);
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__tabs {
+      justify-content: center;
+    }
+
+    &__tab {
+      padding: var(--space-2);
+      font-size: 13px;
+    }
+
+    &__filter {
+      width: 100%;
+    }
+
+    &__scroll-area {
+      padding: var(--space-3) var(--space-4);
+      max-height: calc(100vh - 520px);
+    }
+
+    &__pagination,
+    &__footer {
+      padding: var(--space-3) var(--space-4);
+    }
+
+    &__sidebar {
+      flex-direction: column;
+    }
+
+    &__sidebar-card,
+    &__actions-card,
+    &__pro-card {
+      min-width: auto;
+    }
+  }
+}

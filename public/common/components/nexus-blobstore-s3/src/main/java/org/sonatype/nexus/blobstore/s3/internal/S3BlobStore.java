@@ -100,6 +100,7 @@ import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
@@ -209,7 +210,7 @@ public class S3BlobStore
     this.bucketManager = checkNotNull(bucketManager);
     this.preferAsyncCleanup = preferAsyncCleanup;
 
-    MetricRegistry registry = SharedMetricRegistries.getOrCreate("nexus");
+    MetricRegistry registry = SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
 
     existsTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "exists"));
     expireTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "expire"));

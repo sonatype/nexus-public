@@ -13,9 +13,21 @@
 package org.sonatype.nexus.scheduling.api;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.sonatype.nexus.scheduling.ExternalTaskState;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
+import org.sonatype.nexus.scheduling.TaskNotificationCondition;
+import org.sonatype.nexus.scheduling.schedule.Cron;
+import org.sonatype.nexus.scheduling.schedule.Daily;
+import org.sonatype.nexus.scheduling.schedule.Hourly;
+import org.sonatype.nexus.scheduling.schedule.Monthly;
+import org.sonatype.nexus.scheduling.schedule.Once;
+import org.sonatype.nexus.scheduling.schedule.Schedule;
+import org.sonatype.nexus.scheduling.schedule.Weekly;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -42,8 +54,28 @@ public class TaskXO
 
   private Date lastRun;
 
+  private String schedule;
+
+  private Map<String, String> properties;
+
+  private boolean enabled;
+
+  private String alertEmail;
+
+  private TaskNotificationCondition notificationCondition;
+
+  private Date startDate;
+
+  private Integer[] recurringDays;
+
+  private String cronExpression;
+
+  private String timeZoneOffset;
+
   public static TaskXO fromTaskInfo(final TaskInfo taskInfo, ExternalTaskState externalTaskState) {
     TaskXO taskXO = new TaskXO();
+    TaskConfiguration configuration = taskInfo.getConfiguration();
+    Schedule schedule = taskInfo.getSchedule();
 
     taskXO.setId(taskInfo.getId());
     taskXO.setName(taskInfo.getName());
@@ -61,7 +93,69 @@ public class TaskXO
       taskXO.setLastRunResult(externalTaskState.getLastEndState().toString());
     }
     taskXO.setLastRun(externalTaskState.getLastRunStarted());
+    taskXO.setSchedule(schedule != null ? getScheduleType(schedule) : null);
+
+    taskXO.setEnabled(configuration.isEnabled());
+    taskXO.setAlertEmail(configuration.getAlertEmail());
+    taskXO.setNotificationCondition(configuration.getNotificationCondition());
+    taskXO.setProperties(extractTaskProperties(configuration));
+
+    if (schedule != null) {
+      populateScheduleDetails(taskXO, schedule);
+    }
+
     return taskXO;
+  }
+
+  private static String getScheduleType(final Schedule schedule) {
+    String type = schedule.getType();
+    return "cron".equals(type) ? "advanced" : type;
+  }
+
+  private static Map<String, String> extractTaskProperties(final TaskConfiguration configuration) {
+    return configuration.asMap()
+        .entrySet()
+        .stream()
+        .filter(e -> !e.getKey().startsWith(".") && !e.getKey().contains("lastRunState"))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, HashMap::new));
+  }
+
+  private static void populateScheduleDetails(final TaskXO taskXO, final Schedule schedule) {
+    if (schedule instanceof Once) {
+      taskXO.setStartDate(((Once) schedule).getStartAt());
+    }
+    else if (schedule instanceof Hourly) {
+      taskXO.setStartDate(((Hourly) schedule).getStartAt());
+    }
+    else if (schedule instanceof Daily) {
+      taskXO.setStartDate(((Daily) schedule).getStartAt());
+    }
+    else if (schedule instanceof Weekly) {
+      Weekly weekly = (Weekly) schedule;
+      taskXO.setStartDate(weekly.getStartAt());
+      taskXO.setRecurringDays(weekly.getDaysToRun()
+          .stream()
+          .map(day -> day.ordinal() + 1)
+          .toArray(Integer[]::new));
+    }
+    else if (schedule instanceof Monthly) {
+      Monthly monthly = (Monthly) schedule;
+      taskXO.setStartDate(monthly.getStartAt());
+      taskXO.setRecurringDays(monthly.getDaysToRun()
+          .stream()
+          .map(day -> day.isLastDayOfMonth() ? 999 : day.getDay())
+          .toArray(Integer[]::new));
+    }
+    else if (schedule instanceof Cron) {
+      Cron cron = (Cron) schedule;
+      taskXO.setStartDate(cron.getStartAt());
+      taskXO.setCronExpression(cron.getCronExpression());
+      taskXO.setTimeZoneOffset(cron.getTimeZone()
+          .toZoneId()
+          .getRules()
+          .getOffset(java.time.Instant.now())
+          .getId());
+    }
   }
 
   public String getId() {
@@ -128,6 +222,78 @@ public class TaskXO
     this.lastRun = lastRun;
   }
 
+  public String getSchedule() {
+    return schedule;
+  }
+
+  public void setSchedule(String schedule) {
+    this.schedule = schedule;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  public void setProperties(Map<String, String> properties) {
+    this.properties = properties;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public String getAlertEmail() {
+    return alertEmail;
+  }
+
+  public void setAlertEmail(String alertEmail) {
+    this.alertEmail = alertEmail;
+  }
+
+  public TaskNotificationCondition getNotificationCondition() {
+    return notificationCondition;
+  }
+
+  public void setNotificationCondition(TaskNotificationCondition notificationCondition) {
+    this.notificationCondition = notificationCondition;
+  }
+
+  public Date getStartDate() {
+    return startDate;
+  }
+
+  public void setStartDate(Date startDate) {
+    this.startDate = startDate;
+  }
+
+  public Integer[] getRecurringDays() {
+    return recurringDays;
+  }
+
+  public void setRecurringDays(Integer[] recurringDays) {
+    this.recurringDays = recurringDays;
+  }
+
+  public String getCronExpression() {
+    return cronExpression;
+  }
+
+  public void setCronExpression(String cronExpression) {
+    this.cronExpression = cronExpression;
+  }
+
+  public String getTimeZoneOffset() {
+    return timeZoneOffset;
+  }
+
+  public void setTimeZoneOffset(String timeZoneOffset) {
+    this.timeZoneOffset = timeZoneOffset;
+  }
+
   @Override
   public String toString() {
     return "TaskXO(" +
@@ -139,6 +305,15 @@ public class TaskXO
         ", lastRunResult:'" + lastRunResult + '\'' +
         ", nextRun:" + nextRun +
         ", lastRun:" + lastRun +
+        ", schedule:'" + schedule + '\'' +
+        ", properties:" + properties +
+        ", enabled:" + enabled +
+        ", alertEmail:'" + alertEmail + '\'' +
+        ", notificationCondition:" + notificationCondition +
+        ", startDate:" + startDate +
+        ", recurringDays:" + java.util.Arrays.toString(recurringDays) +
+        ", cronExpression:'" + cronExpression + '\'' +
+        ", timeZoneOffset:'" + timeZoneOffset + '\'' +
         ')';
   }
 }

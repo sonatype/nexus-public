@@ -19,11 +19,12 @@ import java.net.URL;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.servlet.ServletHelper;
 import org.sonatype.nexus.servlet.XFrameOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
@@ -32,8 +33,9 @@ import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
  * Support service to write a rendered HTML page
  */
 public abstract class PageServiceSupport
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected final TemplateHelper templateHelper;
 
   private final XFrameOptions xFrameOptions;

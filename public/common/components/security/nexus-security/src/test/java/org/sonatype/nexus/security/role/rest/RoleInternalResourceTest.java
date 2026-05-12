@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
@@ -29,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -37,10 +37,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class RoleInternalResourceTest
-    extends Test5Support
 {
   @Mock
   private SecuritySystem securitySystem;

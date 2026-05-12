@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 
@@ -30,8 +30,9 @@ import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.logging.task.ProgressTaskLogger.PROGRESS_LINE;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ProgressTaskLoggerTest
-    extends TestSupport
+
 {
   @Mock
   private Logger mockLogger;

@@ -17,7 +17,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
@@ -31,9 +30,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ScheduleS3CompactTasksMigrationStepTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule dataSessionRule = new DataSessionRule();

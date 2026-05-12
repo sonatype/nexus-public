@@ -1,0 +1,158 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.coming-soon-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  padding: 24px;
+  background: var(--color-background);
+
+  &__card {
+    max-width: 500px;
+    width: 100%;
+    background: var(--gray-1);
+    border: 1px solid var(--gray-5);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  &__icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--amber-3) 0%, var(--orange-3) 100%);
+    border-radius: 50%;
+    color: var(--amber-11);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  &__sparkle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--amber-9);
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  &__title {
+    background: linear-gradient(135deg, var(--amber-11) 0%, var(--orange-11) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  &__feature {
+    font-weight: 600;
+    color: var(--gray-12) !important;
+  }
+
+  &__description {
+    max-width: 380px;
+    line-height: 1.6;
+  }
+
+  &__notice {
+    padding: 16px;
+    background: var(--gray-3);
+    border-radius: 8px;
+    border-left: 3px solid var(--amber-9);
+    max-width: 380px;
+  }
+
+  &__button {
+    cursor: pointer;
+    transition: transform 0.15s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+
+    &--primary {
+      background: linear-gradient(135deg, var(--green-9) 0%, var(--green-10) 100%);
+      
+      &:hover {
+        background: linear-gradient(135deg, var(--green-10) 0%, var(--green-11) 100%);
+      }
+    }
+
+    &--wip {
+      border-color: var(--orange-7);
+      color: var(--orange-11);
+      
+      &:hover {
+        background: var(--orange-3);
+        border-color: var(--orange-8);
+      }
+    }
+  }
+
+  // DEV ONLY: WIP Preview Section
+  &__dev-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 24px;
+    margin-top: 16px;
+    background: linear-gradient(135deg, var(--orange-2) 0%, var(--amber-2) 100%);
+    border: 1px dashed var(--orange-6);
+    border-radius: 8px;
+    text-align: center;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2) rotate(15deg);
+    opacity: 0.7;
+  }
+}
+
+// Dark mode adjustments
+:root[data-theme="dark"] .coming-soon-page {
+  &__card {
+    background: var(--gray-2);
+    border-color: var(--gray-6);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  &__notice {
+    background: var(--gray-4);
+  }
+
+  &__dev-section {
+    background: linear-gradient(135deg, var(--orange-3) 0%, var(--amber-3) 100%);
+    border-color: var(--orange-7);
+  }
+}
+
+

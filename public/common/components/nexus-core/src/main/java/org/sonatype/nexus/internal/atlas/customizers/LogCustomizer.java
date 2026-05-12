@@ -21,8 +21,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javax.ws.rs.NotFoundException;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
@@ -31,6 +30,8 @@ import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER;
@@ -46,9 +47,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class LogCustomizer
-    extends ComponentSupport
     implements SupportBundleCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final LogManager logManager;
 
   private final ApplicationDirectories applicationDirectories;

@@ -15,15 +15,12 @@ package org.sonatype.nexus.quartz.internal.store;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -32,9 +29,7 @@ import static org.hamcrest.Matchers.startsWith;
 /**
  * Test the {@link ConfigStoreConnectionProvider}.
  */
-@Category(SQLTestGroup.class)
 public class ConfigStoreConnectionProviderTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule();

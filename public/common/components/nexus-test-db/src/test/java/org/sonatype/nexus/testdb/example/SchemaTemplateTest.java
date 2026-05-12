@@ -18,7 +18,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -40,7 +39,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
  * Test the {@link SchemaTemplate} annotation.
  */
 public class SchemaTemplateTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule()

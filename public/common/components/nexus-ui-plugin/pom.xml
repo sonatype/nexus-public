@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-ui-plugin</artifactId>
@@ -30,11 +30,6 @@
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.goodies</groupId>
-      <artifactId>goodies-common</artifactId>
     </dependency>
 
     <dependency>
@@ -59,11 +54,11 @@
           <execution>
             <id>js-unit-test</id>
             <goals>
-              <goal>yarn</goal>
+              <goal>corepack</goal>
             </goals>
             <phase>test</phase>
             <configuration>
-              <arguments>test --reporters=jest-junit --reporters=default</arguments>
+              <arguments>yarn test --silent --reporters=jest-junit --reporters=default</arguments>
               <skip>${npm.skipTests}</skip>
             </configuration>
           </execution>
@@ -124,25 +119,27 @@
             <artifactId>frontend-maven-plugin</artifactId>
 
               <executions>
-                <!-- Skip yarn install - workspaces must be initialized at root first -->
-                <execution>
-                  <id>yarn install</id>
-                  <phase>none</phase>
-                </execution>
-                <!-- Skip yarn build - not needed for OSS release, frontend already built by Copybara -->
-                <execution>
-                  <id>yarn run build</id>
-                  <phase>none</phase>
-                </execution>
+                <!--
+                  DO NOT skip yarn install here!
+
+                  Maven clean deletes target/ including node installation. The frontend-maven-plugin
+                  must run yarn install to restore node_modules after clean, otherwise yarn build-all
+                  fails with "Couldn't find the node_modules state file".
+
+                  Running yarn install twice (once at root via script, once per module via Maven) is
+                  expected and safe due to Yarn's caching.
+
+                  See: NEXUS-52614
+                -->
                 <!-- Use test-no-lint to avoid arch-specific native modules -->
                 <execution>
                   <id>js-unit-test</id>
                   <goals>
-                    <goal>yarn</goal>
+                    <goal>corepack</goal>
                   </goals>
                   <phase>test</phase>
                   <configuration>
-                    <arguments>test-no-lint --reporters=jest-junit --reporters=default</arguments>
+                    <arguments>yarn test-no-lint --silent --reporters=jest-junit --reporters=default</arguments>
                     <skip>${npm.skipTests}</skip>
                   </configuration>
                 </execution>

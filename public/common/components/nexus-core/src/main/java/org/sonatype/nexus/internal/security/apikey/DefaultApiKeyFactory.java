@@ -19,7 +19,6 @@ import java.util.UUID;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.RandomBytesGenerator;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
 
@@ -27,6 +26,8 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.springframework.context.annotation.Primary;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -40,9 +41,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Qualifier("default")
 @Singleton
 public class DefaultApiKeyFactory
-    extends ComponentSupport
     implements ApiKeyFactory
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final RandomBytesGenerator randomBytesGenerator;
 
   @Inject

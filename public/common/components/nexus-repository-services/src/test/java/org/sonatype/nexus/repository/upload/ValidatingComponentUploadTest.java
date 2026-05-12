@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -35,9 +34,11 @@ import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ValidatingComponentUploadTest
-    extends TestSupport
 {
   @Mock
   private UploadDefinition uploadDefinition;

@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.security;
 
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
@@ -24,6 +23,8 @@ import org.sonatype.nexus.security.authc.NexusAuthenticationEvent;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -34,8 +35,8 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AuthenticationEventSubscriberTest
-    extends TestSupport
 {
   @Mock
   private ClientInfoProvider clientInfoProvider;

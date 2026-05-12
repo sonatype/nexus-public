@@ -18,7 +18,8 @@ import java.util.Map;
 import jakarta.inject.Provider;
 import javax.validation.ValidationException;
 
-import org.sonatype.goodies.testsupport.Test5Support;
+import org.sonatype.nexus.rest.ValidationErrorsException;
+
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.SelectOption;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -28,14 +29,15 @@ import org.sonatype.nexus.blobstore.s3.internal.capability.CustomS3RegionCapabil
 import org.sonatype.nexus.blobstore.s3.internal.capability.CustomS3RegionCapabilityConfiguration;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper.SsrfValidationResult;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import com.google.common.base.Predicate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -52,8 +55,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 
+@ExtendWith(MockitoExtension.class)
 class S3BlobStoreDescriptorTest
-    extends Test5Support
 {
 
   @Mock
@@ -69,7 +72,7 @@ class S3BlobStoreDescriptorTest
   private CapabilityRegistry capabilityRegistry;
 
   @Mock
-  private AntiSsrfHelper antiSsrfHelper;
+  private AntiSsrfService antiSsrfService;
 
   private S3BlobStoreDescriptor underTest;
 
@@ -77,7 +80,7 @@ class S3BlobStoreDescriptorTest
 
   @BeforeEach
   void setup() {
-    underTest = new S3BlobStoreDescriptor(quotaService, blobStoreManager, capabilityRegistryProvider, antiSsrfHelper);
+    underTest = new S3BlobStoreDescriptor(quotaService, blobStoreManager, capabilityRegistryProvider, antiSsrfService);
     blobStores = new HashMap<>();
 
     lenient().when(blobStoreManager.get(anyString())).thenAnswer(invocation -> {
@@ -311,7 +314,7 @@ class S3BlobStoreDescriptorTest
   @Test
   void testCustomS3RegionCapabilityIsEnabled() {
     S3BlobStoreDescriptor spyDescriptor =
-        spy(new S3BlobStoreDescriptor(quotaService, blobStoreManager, capabilityRegistryProvider, antiSsrfHelper));
+        spy(new S3BlobStoreDescriptor(quotaService, blobStoreManager, capabilityRegistryProvider, antiSsrfService));
     doReturn(true).when(spyDescriptor).isCustomS3RegionCapabilityEnabled();
 
     CustomS3RegionCapability mockCapability = mock(CustomS3RegionCapability.class);
@@ -347,9 +350,6 @@ class S3BlobStoreDescriptorTest
     config.setName("self");
     config.setAttributes(attributes);
 
-    when(antiSsrfHelper.validateHostForConfiguration("s3.endpoint.com"))
-        .thenReturn(SsrfValidationResult.success());
-
     underTest.validateConfig(config);
   }
 
@@ -367,8 +367,9 @@ class S3BlobStoreDescriptorTest
     config.setName("self");
     config.setAttributes(attributes);
 
-    when(antiSsrfHelper.validateHostForConfiguration("localhost"))
-        .thenReturn(SsrfValidationResult.failure("loopback address"));
+    doThrow(new ValidationException("loopback address"))
+        .when(antiSsrfService)
+        .validateHostWithoutCache("localhost");
 
     assertThrows(ValidationException.class, () -> {
       underTest.validateConfig(config);
@@ -389,7 +390,7 @@ class S3BlobStoreDescriptorTest
     config.setName("self");
     config.setAttributes(attributes);
 
-    assertThrows(ValidationException.class, () -> {
+    assertThrows(ValidationErrorsException.class, () -> {
       underTest.validateConfig(config);
     });
   }

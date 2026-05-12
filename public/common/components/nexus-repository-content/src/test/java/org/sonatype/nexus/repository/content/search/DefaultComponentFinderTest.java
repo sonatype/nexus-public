@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.search;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -24,7 +23,9 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -34,8 +35,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultComponentFinderTest
-    extends TestSupport
 {
   @Mock
   private Repository repository;

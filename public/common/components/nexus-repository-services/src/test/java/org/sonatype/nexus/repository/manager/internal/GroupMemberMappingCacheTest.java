@@ -14,10 +14,10 @@ package org.sonatype.nexus.repository.manager.internal;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -30,6 +30,8 @@ import org.sonatype.nexus.repository.manager.internal.RepositoryImpl.State;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -44,8 +46,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class GroupMemberMappingCacheTest
-    extends Test5Support
 {
   @Mock
   RepositoryManager repositoryManager;
@@ -66,7 +68,7 @@ class GroupMemberMappingCacheTest
     when(repositoryManager.browse()).thenReturn(List.of(repo1, repo2, group1));
 
     underTest.init(repositoryManager);
-    List<String> groups = underTest.getGroups("repo1");
+    Set<String> groups = underTest.getGroups("repo1");
     assertThat(groups, contains("group1"));
     groups = underTest.getGroups("repo2");
     assertThat(groups, empty());
@@ -82,11 +84,11 @@ class GroupMemberMappingCacheTest
     when(repositoryManager.browse()).thenReturn(List.of(repo, group));
 
     underTest.init(repositoryManager);
-    List<String> groups = underTest.getGroups("repo");
+    Set<String> groups = underTest.getGroups("repo");
     assertThat(groups, contains("group"));
-    // add some fake item to the list
+    // add some fake item to the set
     // first it validates we can mutate the response if desired
-    // second the next assert validates that we didn't touch the actual list in cache
+    // second the next assert validates that we didn't touch the actual set in cache
     groups.add("fakevalue");
     groups = underTest.getGroups("repo");
     assertThat(groups, contains("group"));
@@ -105,7 +107,7 @@ class GroupMemberMappingCacheTest
     when(repositoryManager.browse()).thenReturn(List.of(group5, group4, group3, group2, group1, repo));
 
     underTest.init(repositoryManager);
-    List<String> groups = underTest.getGroups("repo");
+    Set<String> groups = underTest.getGroups("repo");
     assertThat(groups, containsInAnyOrder("group1", "group2", "group3", "group4", "group5"));
   }
 
@@ -119,9 +121,9 @@ class GroupMemberMappingCacheTest
     underTest.init(repositoryManager);
     underTest.on(new RepositoryCreatedEvent(group));
 
-    List<String> groups = underTest.getGroups("repo");
+    Set<String> groups = underTest.getGroups("repo");
 
-    assertThat(groups, contains("group"));
+    assertThat(groups, containsInAnyOrder("group"));
   }
 
   @Test
@@ -147,7 +149,7 @@ class GroupMemberMappingCacheTest
     when(repositoryManager.browse()).thenReturn(List.of(repo, repo2, repo3, group, group2));
 
     underTest.init(repositoryManager);
-    List<String> groups = underTest.getGroups("repo2");
+    Set<String> groups = underTest.getGroups("repo2");
 
     assertThat(groups, empty());
 
@@ -182,7 +184,7 @@ class GroupMemberMappingCacheTest
     when(repositoryManager.browse()).thenReturn(List.of(repo, repo2, group));
 
     underTest.init(repositoryManager);
-    List<String> groups = underTest.getGroups("repo2");
+    Set<String> groups = underTest.getGroups("repo2");
 
     assertThat(groups, contains("group"));
 
@@ -202,7 +204,7 @@ class GroupMemberMappingCacheTest
     when(repositoryManager.browse()).thenReturn(List.of(repo, group));
 
     underTest.init(repositoryManager);
-    List<String> groups = underTest.getGroups("repo");
+    Set<String> groups = underTest.getGroups("repo");
 
     assertThat(groups, contains("group"));
 

@@ -17,9 +17,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import static org.sonatype.nexus.common.entity.Continuations.PageInfo;
 
 import com.google.common.collect.ForwardingCollection;
 import org.junit.Test;
@@ -28,8 +30,13 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -39,7 +46,7 @@ import static org.sonatype.nexus.common.entity.Continuations.iteratorOf;
 import static org.sonatype.nexus.common.entity.Continuations.streamOf;
 
 public class ContinuationsTest
-    extends TestSupport
+
 {
   private static final String[] STRINGS =
       new String[]{"one", "two", "three", "four", "five", "six", "seven", "eight"};
@@ -290,5 +297,243 @@ public class ContinuationsTest
     public String nextContinuationToken() {
       return continuationToken;
     }
+  }
+
+  // ==================== CONTINUATION TOKEN CALLBACK TESTS ====================
+
+  @Test
+  public void testIteratorCallbackCalledForEachPage() {
+    List<PageInfo> pageInfos = new LinkedList<>();
+    Consumer<PageInfo> callback = pageInfo -> pageInfos.add(pageInfo);
+
+    List<String> result = streamOf(browseMock::browse, 3, null, callback).collect(toList());
+    assertThat(result, contains(STRINGS));
+
+    // Callback should be called after page 1 (at "three"), page 2 (at "six"), and page 3 (null)
+    // Page 1: one, two, three (3 items) -> next token is "three"
+    // Page 2: four, five, six (3 items) -> next token is "six"
+    // Page 3: seven, eight (2 items) -> last page, callback with null
+    assertThat(pageInfos, hasSize(3));
+    assertThat(pageInfos.get(0).getContinuationToken(), containsString("three"));
+    assertThat(pageInfos.get(0).getPageSize(), equalTo(3));
+    assertThat(pageInfos.get(1).getContinuationToken(), containsString("six"));
+    assertThat(pageInfos.get(1).getPageSize(), equalTo(3));
+    assertThat(pageInfos.get(2).getContinuationToken(), nullValue());
+    assertThat(pageInfos.get(2).getPageSize(), equalTo(2));
+  }
+
+  @Test
+  public void testIteratorCallbackWithNullTokenOnLastPage() {
+    browseMock = spy(new BrowseMock(true, "one", "two", "three"));
+    List<PageInfo> pageInfos = new LinkedList<>();
+    Consumer<PageInfo> callback = pageInfo -> pageInfos.add(pageInfo);
+
+    List<String> result = streamOf(browseMock::browse, 2, null, callback).collect(toList());
+    assertThat(result, contains("one", "two", "three"));
+
+    // Two callbacks: "two" (end of page 1 with 2 items), and null (end of page 2 with 1 item - last page)
+    assertThat(pageInfos, hasSize(2));
+    assertThat(pageInfos.get(0).getContinuationToken(), containsString("two"));
+    assertThat(pageInfos.get(0).getPageSize(), equalTo(2));
+    assertThat(pageInfos.get(1).getContinuationToken(), nullValue());
+    assertThat(pageInfos.get(1).getPageSize(), equalTo(1));
+  }
+
+  @Test
+  public void testIteratorCallbackWithStartToken() {
+    List<PageInfo> pageInfos = new LinkedList<>();
+    Consumer<PageInfo> callback = pageInfo -> pageInfos.add(pageInfo);
+
+    // Start from "two" - BrowseMock skips up to and including "two", so result is "three" onwards
+    List<String> result = streamOf(browseMock::browse, 3, "two", callback).collect(toList());
+    assertThat(result, contains("three", "four", "five", "six", "seven", "eight"));
+
+    // Callbacks at "five" (end of page 1, 3 items), "eight" (end of page 2, 3 items), and null (end of page 3 - last
+    // page, 0 items)
+    assertThat(pageInfos, hasSize(3));
+    assertThat(pageInfos.get(0).getContinuationToken(), containsString("five"));
+    assertThat(pageInfos.get(0).getPageSize(), equalTo(3));
+    assertThat(pageInfos.get(1).getContinuationToken(), containsString("eight"));
+    assertThat(pageInfos.get(1).getPageSize(), equalTo(3));
+    assertThat(pageInfos.get(2).getContinuationToken(), nullValue());
+    assertThat(pageInfos.get(2).getPageSize(), equalTo(0));
+  }
+
+  @Test
+  public void testIterableCallbackCalledForEachPage() {
+    List<PageInfo> pageInfos = new LinkedList<>();
+    Consumer<PageInfo> callback = pageInfo -> pageInfos.add(pageInfo);
+
+    List<String> result =
+        stream(iterableOf(browseMock::browse, 3, null, callback).spliterator(), false).collect(toList());
+    assertThat(result, contains(STRINGS));
+
+    // Callbacks at "three" (3 items), "six" (3 items), and null (for final page with 2 items)
+    assertThat(pageInfos, hasSize(3));
+  }
+
+  @Test
+  public void testIteratorCallbackNotNullWhenNullTokenProvided() {
+    browseMock = spy(new BrowseMock(true, "one"));
+    List<PageInfo> pageInfos = new LinkedList<>();
+    Consumer<PageInfo> callback = pageInfo -> pageInfos.add(pageInfo);
+
+    List<String> result = streamOf(browseMock::browse, 2, null, callback).collect(toList());
+    assertThat(result, contains("one"));
+
+    // Callback is invoked with null because the first page is also the last page (1 item)
+    assertThat(pageInfos, hasSize(1));
+    assertThat(pageInfos.get(0).getContinuationToken(), nullValue());
+    assertThat(pageInfos.get(0).getPageSize(), equalTo(1));
+  }
+
+  @Test
+  public void testIteratorCallbackEmptyPage() {
+    BrowseMock emptyMock = spy(new BrowseMock());
+    List<PageInfo> pageInfos = new LinkedList<>();
+    Consumer<PageInfo> callback = pageInfo -> pageInfos.add(pageInfo);
+
+    List<String> result = streamOf(emptyMock::browse, 10, null, callback).collect(toList());
+    assertThat(result, empty());
+    // When continuation is empty, callback is invoked with null to signal completion
+    assertThat(pageInfos, hasSize(1));
+    assertThat(pageInfos.get(0).getContinuationToken(), nullValue());
+    assertThat(pageInfos.get(0).getPageSize(), equalTo(0));
+  }
+
+  /**
+   * Verifies that exceptions thrown from the continuation callback propagate
+   * and cause the stream to stop processing.
+   */
+  @Test
+  public void testIteratorCallbackExceptionPropagates() {
+    List<PageInfo> pageInfos = new LinkedList<>();
+    Consumer<PageInfo> callback = pageInfo -> {
+      pageInfos.add(pageInfo);
+      if (pageInfos.size() == 2) {
+        throw new RuntimeException("Callback exception on second call");
+      }
+    };
+
+    // Verify that the exception from the callback propagates and stops the stream
+    boolean exceptionThrown = false;
+    try {
+      streamOf(browseMock::browse, 3, null, callback).collect(toList());
+    }
+    catch (RuntimeException e) {
+      exceptionThrown = true;
+    }
+
+    // Exception thrown from callback
+    assertThat(exceptionThrown, equalTo(true));
+    // At least 2 callbacks occurred before exception stopped processing
+    assertThat(pageInfos.size(), greaterThanOrEqualTo(2));
+  }
+
+  @Test
+  public void testIteratorTokenLengthValidation() {
+    String longToken = new String(new char[1025]).replace('\0', 'a');
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+      iteratorOf(browseMock::browse, 10, longToken, null);
+    });
+    assertThat(exception.getMessage(), containsString("Continuation token too long"));
+  }
+
+  @Test
+  public void testIteratorNullStartTokenAllowed() {
+    // Should not throw exception with null start token
+    List<String> result = streamOf(browseMock::browse, 10, null, null).collect(toList());
+    assertThat(result, contains(STRINGS));
+  }
+
+  @Test
+  public void testCallbackReceivesCorrectContinuationToken() {
+    AtomicInteger callCount = new AtomicInteger(0);
+    List<PageInfo> capturedPageInfos = new LinkedList<>();
+
+    Consumer<PageInfo> callback = pageInfo -> {
+      int currentCall = callCount.incrementAndGet();
+      capturedPageInfos.add(pageInfo);
+      // Token should be the last item of the current page
+      if (currentCall == 1) {
+        // After page 1 (one, two, three), token should be "three"
+        assertThat(pageInfo.getContinuationToken(), containsString("three"));
+        assertThat(pageInfo.getPageSize(), equalTo(3));
+      }
+      else if (currentCall == 2) {
+        // After page 2 (four, five, six), token should be "six"
+        assertThat(pageInfo.getContinuationToken(), containsString("six"));
+        assertThat(pageInfo.getPageSize(), equalTo(3));
+      }
+      else if (currentCall == 3) {
+        // After page 3 (seven, eight), token should be null (final page)
+        assertThat(pageInfo.getContinuationToken(), nullValue());
+        assertThat(pageInfo.getPageSize(), equalTo(2));
+      }
+    };
+
+    streamOf(browseMock::browse, 3, null, callback).collect(toList());
+    assertThat(capturedPageInfos, hasSize(3));
+  }
+
+  @Test
+  public void testIteratorNullCallbackInvokedOnlyOnce() {
+    AtomicInteger nullCallbackCount = new AtomicInteger(0);
+    Consumer<PageInfo> callback = pageInfo -> {
+      if (pageInfo.getContinuationToken() == null) {
+        nullCallbackCount.incrementAndGet();
+      }
+    };
+
+    Iterator<String> iterator = iteratorOf(browseMock::browse, 3, null, callback);
+
+    // Call hasNext() multiple times to simulate Stream/collector behavior
+    // that may buffer or check hasNext() multiple times
+    while (iterator.hasNext()) {
+      iterator.next();
+    }
+
+    // The null callback should be invoked exactly once, even though hasNext()
+    // was called multiple times
+    assertThat(nullCallbackCount.get(), equalTo(1));
+  }
+
+  @Test
+  public void testIteratorNullCallbackInvokedOnlyOnce_StreamFilter() {
+    AtomicInteger nullCallbackCount = new AtomicInteger(0);
+    Consumer<PageInfo> callback = pageInfo -> {
+      if (pageInfo.getContinuationToken() == null) {
+        nullCallbackCount.incrementAndGet();
+      }
+    };
+
+    // Using Stream.filter can cause hasNext() to be called multiple times
+    // on the iterator, which could trigger multiple null callbacks without protection
+    List<String> result = streamOf(browseMock::browse, 3, null, callback)
+        .filter(s -> true) // Identity filter that may affect iteration behavior
+        .collect(toList());
+
+    assertThat(result, contains(STRINGS));
+    // The null callback should be invoked exactly once
+    assertThat(nullCallbackCount.get(), equalTo(1));
+  }
+
+  @Test
+  public void testIterableNullCallbackInvokedOnlyOnce_Reusable() {
+    AtomicInteger nullCallbackCount = new AtomicInteger(0);
+    Consumer<PageInfo> callback = pageInfo -> {
+      if (pageInfo.getContinuationToken() == null) {
+        nullCallbackCount.incrementAndGet();
+      }
+    };
+
+    Iterable<String> iterable = iterableOf(browseMock::browse, 3, null, callback);
+
+    // Consume the iterable multiple times via separate iterators
+    // The null callback should only be invoked for the actual final page
+    stream(iterable.spliterator(), false).collect(toList());
+
+    // The null callback should be invoked exactly once per iterator
+    assertThat(nullCallbackCount.get(), equalTo(1));
   }
 }

@@ -14,7 +14,6 @@ package org.sonatype.nexus.datastore.mybatis;
 
 import java.sql.SQLException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.datastore.api.SerializedAccessException;
 
@@ -29,9 +28,11 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class EntityExecutorTest
-    extends TestSupport
 {
   @Mock
   private Executor delegate;

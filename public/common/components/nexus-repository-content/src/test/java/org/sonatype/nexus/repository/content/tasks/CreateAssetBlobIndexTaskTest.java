@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -27,7 +26,9 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -40,8 +41,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CreateAssetBlobIndexTaskTest
-    extends TestSupport
 {
   private static final String TEST_FORMAT = "test";
 

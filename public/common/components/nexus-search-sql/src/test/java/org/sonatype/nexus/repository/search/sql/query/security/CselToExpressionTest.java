@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.sql.query.security;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.sql.SearchMappingService;
 import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
@@ -30,6 +29,8 @@ import org.apache.commons.jexl3.parser.ASTJexlScript;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -37,8 +38,8 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.lenient;
 
+@ExtendWith(MockitoExtension.class)
 abstract class CselToExpressionTest
-    extends Test5Support
 {
   @Mock
   protected SearchMappingService service;

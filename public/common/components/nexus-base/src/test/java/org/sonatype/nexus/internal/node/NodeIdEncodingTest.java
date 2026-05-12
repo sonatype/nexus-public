@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.node;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,7 +21,6 @@ import static org.hamcrest.Matchers.equalTo;
  * Tests for {@link NodeIdEncoding}.
  */
 public class NodeIdEncodingTest
-    extends TestSupport
 {
   private static final String SHA1 = "05F4743FA756584643FDF9D0577BE4FB079289C6";
 

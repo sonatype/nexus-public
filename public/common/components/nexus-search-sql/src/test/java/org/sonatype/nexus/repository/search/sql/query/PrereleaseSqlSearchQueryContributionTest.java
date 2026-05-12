@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.sql.query;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.query.syntax.BooleanTerm;
@@ -32,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PrereleaseSqlSearchQueryContributionTest
-    extends Test5Support
 {
   private PrereleaseSqlSearchQueryContribution underTest = new PrereleaseSqlSearchQueryContribution();
 

@@ -15,8 +15,6 @@ package org.sonatype.nexus.crypto.internal;
 import java.nio.CharBuffer;
 import java.security.Security;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.After;
 import org.junit.Before;
@@ -31,7 +29,6 @@ import static org.hamcrest.Matchers.notNullValue;
  * UT for {@link MavenCipherImpl}.
  */
 public class MavenCipherImplTest
-    extends TestSupport
 {
   private final String passPhrase = "foofoo";
 

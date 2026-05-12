@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -23,8 +23,8 @@ import static org.hamcrest.Matchers.is;
 /**
  * Tests for {@link LegacyNexusPasswordService}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LegacyNexusPasswordServiceTest
-    extends TestSupport
 {
   private LegacyNexusPasswordService underTest;
 

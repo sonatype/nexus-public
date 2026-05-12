@@ -87,7 +87,6 @@ public class SanitizedXmlSourceSupport
         parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
 
         XMLReader reader = parser.getXMLReader();
-        reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false);
         reader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 
         transformer.transform(new SAXSource(reader, new InputSource(input)), new StreamResult(output));

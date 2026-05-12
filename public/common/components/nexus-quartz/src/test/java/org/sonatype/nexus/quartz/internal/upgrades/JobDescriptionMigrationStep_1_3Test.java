@@ -15,8 +15,6 @@ package org.sonatype.nexus.quartz.internal.upgrades;
 import java.sql.Connection;
 import java.util.Locale;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.quartz.internal.datastore.QuartzDAO;
 import org.sonatype.nexus.quartz.internal.datastore.QuartzJobDataTypeHandler;
@@ -27,7 +25,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
@@ -37,9 +34,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 /**
  * Unit tests for {@link JobDescriptionMigrationStep_1_3} class
  */
-@Category(SQLTestGroup.class)
 public class JobDescriptionMigrationStep_1_3Test
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule()

@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
@@ -33,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -45,9 +45,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.browse.store.BrowseNodeManager.MAX_CHILDREN;
 
-@ExtendWith(LoggingExtension.class)
+@ExtendWith({LoggingExtension.class, MockitoExtension.class})
 public class BrowseNodeManagerTest
-    extends Test5Support
 {
   @CaptureLogsFor(value = BrowseNodeManager.class, level = org.slf4j.event.Level.DEBUG)
   TestLogAccessor logs;

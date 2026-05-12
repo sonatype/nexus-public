@@ -26,7 +26,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateAccessible;
@@ -46,6 +45,8 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -67,9 +68,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class RaptureWebResourceBundle
-    extends ComponentSupport
     implements WebResourceBundle
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ApplicationVersion applicationVersion;
 
   private final Provider<HttpServletRequest> servletRequestProvider;

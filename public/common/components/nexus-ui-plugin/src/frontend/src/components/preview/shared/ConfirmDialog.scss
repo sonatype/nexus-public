@@ -1,0 +1,163 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.confirm-dialog {
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+  }
+
+  &__content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 500px;
+    max-height: 85vh;
+    padding: var(--space-5);
+    background-color: var(--color-panel-solid);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-6);
+    animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1001;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__header {
+    margin: 0;
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-2);
+    flex-shrink: 0;
+
+    &--danger {
+      background-color: var(--red-3);
+      color: var(--red-11);
+    }
+
+    &--warning {
+      background-color: var(--amber-3);
+      color: var(--amber-11);
+    }
+  }
+
+  &__title {
+    font-size: var(--font-size-4);
+    font-weight: var(--font-weight-medium);
+    color: var(--gray-12);
+    margin: 0;
+  }
+
+  &__message {
+    color: var(--gray-11);
+    line-height: 1.5;
+  }
+
+  &__actions {
+    margin-top: var(--space-2);
+  }
+
+  &__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-2);
+    font-size: var(--font-size-2);
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    cursor: pointer;
+    transition: all 150ms ease;
+    border: none;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-9);
+      outline-offset: 2px;
+    }
+
+    &--cancel {
+      background-color: var(--gray-3);
+      color: var(--gray-12);
+
+      &:hover {
+        background-color: var(--gray-4);
+      }
+
+      &:active {
+        background-color: var(--gray-5);
+      }
+    }
+
+    &--confirm {
+      color: white;
+
+      &.confirm-dialog__button--danger {
+        background-color: var(--red-9);
+
+        &:hover {
+          background-color: var(--red-10);
+        }
+
+        &:active {
+          background-color: var(--red-11);
+        }
+      }
+
+      &.confirm-dialog__button--warning {
+        background-color: var(--amber-9);
+
+        &:hover {
+          background-color: var(--amber-10);
+        }
+
+        &:active {
+          background-color: var(--amber-11);
+        }
+      }
+    }
+  }
+}
+
+@keyframes overlayShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}

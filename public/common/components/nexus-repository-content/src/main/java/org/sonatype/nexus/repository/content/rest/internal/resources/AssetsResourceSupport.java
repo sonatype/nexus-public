@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.repository.Repository;
@@ -27,6 +26,8 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.GroupType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -40,8 +41,9 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toInternal
  * @since 3.27
  */
 public abstract class AssetsResourceSupport
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Limit the number of assets returned per page. This value is aligned with ComponentsResourceSupport.PAGE_SIZE_LIMIT.
    */

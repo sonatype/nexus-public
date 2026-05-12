@@ -166,6 +166,28 @@ public class JwtServlet
   }
 
   /**
+   * Handle logout when Shiro principal is null (e.g., after OIDC logout filter).
+   * Extracts user information from JWT cookie and performs cleanup.
+   */
+  private void handleNullPrincipalLogout(
+      final HttpServletRequest request,
+      final HttpServletResponse response)
+  {
+    // Still revoke the JWT session using data from the cookie itself
+    revokeJwtSessionFromCookie(request);
+
+    // Still clear the cookie on the client
+    Cookie cookie = new Cookie(JWT_COOKIE_NAME, "null");
+    cookie.setPath(contextPath);
+    cookie.setMaxAge(0);
+    cookie.setSecure(request.isSecure() && cookieSecure);
+    response.addCookie(cookie);
+
+    response.setStatus(SC_NO_CONTENT);
+    response.setHeader(X_FRAME_OPTIONS, DENY);
+  }
+
+  /**
    * Extract the JWT from the request and revoke the session in the database.
    */
   private void revokeJwtSession(final HttpServletRequest request, final String username) {
@@ -221,38 +243,6 @@ public class JwtServlet
     else {
       log.debug("No JWT cookie found during logout for user {}", username);
     }
-  }
-
-  /**
-   * Handle logout when Shiro principal is null (e.g., after OIDC logout filter).
-   * Extracts user information from JWT cookie and performs cleanup.
-   */
-  private void handleNullPrincipalLogout(
-      final HttpServletRequest request,
-      final HttpServletResponse response)
-  {
-    // Attempt to logout Shiro session if it exists (may already be logged out by OIDC filter)
-    try {
-      Subject subject = SecurityUtils.getSubject();
-      if (subject != null) {
-        subject.logout();
-      }
-    }
-    catch (Exception e) {
-      log.debug("Could not logout Shiro subject (likely already logged out by OIDC filter): {}", e.getMessage());
-    }
-    // Still revoke the JWT session using data from the cookie itself
-    revokeJwtSessionFromCookie(request);
-
-    // Still clear the cookie on the client
-    Cookie cookie = new Cookie(JWT_COOKIE_NAME, "");
-    cookie.setPath(contextPath);
-    cookie.setMaxAge(0);
-    cookie.setSecure(request.isSecure() && cookieSecure);
-    response.addCookie(cookie);
-
-    response.setStatus(SC_NO_CONTENT);
-    response.setHeader(X_FRAME_OPTIONS, DENY);
   }
 
   /**

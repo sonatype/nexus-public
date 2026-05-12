@@ -58,6 +58,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("huggingface")
         .add("terraform")
         .add("swift")
+        .add("pub")
         .build();
   }
 }

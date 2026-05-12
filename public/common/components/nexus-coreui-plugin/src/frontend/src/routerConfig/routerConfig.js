@@ -21,16 +21,32 @@ import {browseRoutes} from './routes/browseRoutes';
 import {adminRoutes} from './routes/adminRoutes';
 import {userRoutes} from './routes/userRoutes';
 import {loginRoutes} from "./routes/loginRoutes";
-import {MissingRoutePage} from '../components/pages/MissingRoutePage/MissingRoutePage';
+import {previewAdminRoutes, sonatypeInternalTestRoutes} from './routes/previewAdminRoutes';
+import {previewBrowseRoutes} from './routes/previewBrowseRoutes';
+import {previewUserRoutes} from './routes/previewUserRoutes';
+import {MissingRoutePage} from '../components/super/pages/MissingRoutePage/MissingRoutePage';
 
 export function getRouter() {
   const initialRoute = getInitialRoute();
 
   const menuRoutes = [
+    // DEFAULT UI (current - unchanged)
     ...browseRoutes,
     ...adminRoutes,
     ...userRoutes,
     ...loginRoutes,
+
+    // PREVIEW UI (new - Phase 4.0)
+    ...previewBrowseRoutes,
+    ...previewAdminRoutes,
+    ...previewUserRoutes,
+
+    // SONATYPE INTERNAL TEST PAGES — standalone (no Settings sidebar) at preview.test* level
+    // Gate: SONATYPE_INTERNAL build flag OR localStorage flag
+    ...((typeof __SONATYPE_INTERNAL__ !== 'undefined' && __SONATYPE_INTERNAL__)
+      || (typeof localStorage !== 'undefined' && localStorage.getItem('SONATYPE_INTERNAL') === 'true')
+      ? sonatypeInternalTestRoutes
+      : []),
   ];
 
   const missingRoute = {
@@ -42,19 +58,30 @@ export function getRouter() {
     }
   };
 
-  return createRouter({initialRoute, menuRoutes, missingRoute});
+  const router = createRouter({initialRoute, menuRoutes, missingRoute});
+  
+  return router;
 }
 
 /**
  * Determines the initial route based on anonymous access settings.
+ *
+ * Phase 2: bootstrapFromREST() seeds window.NX.State before this runs,
+ * so ExtJS.state().getValue() returns real data from REST.
+ * The try/catch is a safety net in case REST bootstrap failed.
  */
 function getInitialRoute() {
-  let initialRoute = ROUTE_NAMES.BROWSE.WELCOME.ROOT;
-
-  const isAnonymousAccessEnabled = !!ExtJS.state().getValue('anonymousUsername');
-  if (!isAnonymousAccessEnabled) {
-    initialRoute = ROUTE_NAMES.LOGIN;
+  try {
+    const state = ExtJS.state();
+    if (state && typeof state.getValue === 'function') {
+      const anonUser = state.getValue('anonymousUsername');
+      // Only use ExtJS state if it returned a real value (not the fallback null)
+      if (anonUser !== null && anonUser !== undefined) {
+        return anonUser ? ROUTE_NAMES.BROWSE.WELCOME.ROOT : ROUTE_NAMES.LOGIN;
+      }
+    }
+  } catch {
+    // ExtJS not ready
   }
-
-  return initialRoute;
+  return ROUTE_NAMES.BROWSE.WELCOME.ROOT;
 }

@@ -1,0 +1,156 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.csel-editor {
+  width: 100%;
+
+  &__container {
+    position: relative;
+  }
+
+  &__textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: var(--space-3);
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: var(--font-size-2);
+    line-height: 1.5;
+    color: var(--gray-12);
+    background-color: var(--gray-1);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-2);
+    resize: vertical;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-8);
+      box-shadow: 0 0 0 2px var(--accent-4);
+    }
+
+    &:disabled {
+      background-color: var(--gray-3);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    &--error {
+      border-color: var(--red-8);
+
+      &:focus {
+        border-color: var(--red-8);
+        box-shadow: 0 0 0 2px var(--red-4);
+      }
+    }
+
+    &::placeholder {
+      color: var(--gray-9);
+    }
+  }
+
+  &__suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    margin-top: var(--space-1);
+    background-color: var(--gray-1);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-2);
+    box-shadow: var(--shadow-3);
+    overflow: hidden;
+  }
+
+  &__suggestion {
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+    border-bottom: 1px solid var(--gray-4);
+    transition: background-color 0.1s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover,
+    &--selected {
+      background-color: var(--accent-3);
+    }
+  }
+
+  &__suggestion-category {
+    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 1px 4px;
+    border-radius: var(--radius-1);
+    background-color: var(--gray-4);
+  }
+
+  &__suggestion-label {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  &__suggestion-description {
+    display: block;
+    margin-top: var(--space-1);
+    padding-left: calc(var(--space-2) + 50px);
+  }
+
+  &__validation {
+    margin-top: var(--space-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  &__message {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-1);
+    font-size: var(--font-size-1);
+
+    &--error {
+      color: var(--red-11);
+      background-color: var(--red-3);
+
+      svg {
+        color: var(--red-9);
+      }
+    }
+
+    &--warning {
+      color: var(--amber-11);
+      background-color: var(--amber-3);
+
+      svg {
+        color: var(--amber-9);
+      }
+    }
+  }
+
+  &__valid {
+    margin-top: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    color: var(--green-11);
+    background-color: var(--green-3);
+    border-radius: var(--radius-1);
+    font-size: var(--font-size-1);
+
+    svg {
+      color: var(--green-9);
+    }
+  }
+}
+
+

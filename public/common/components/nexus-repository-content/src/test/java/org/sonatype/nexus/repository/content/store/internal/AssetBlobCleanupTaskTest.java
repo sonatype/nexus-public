@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -40,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -69,9 +69,8 @@ import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.logLevel;
 /**
  * Test {@link AssetBlobCleanupTask}.
  */
-@ExtendWith(LoggingExtension.class)
+@ExtendWith({LoggingExtension.class, MockitoExtension.class})
 public class AssetBlobCleanupTaskTest
-    extends Test5Support
 {
   @CaptureLogsFor(value = AssetBlobCleanupTask.class, level = Level.WARN)
   TestLogAccessor logs;

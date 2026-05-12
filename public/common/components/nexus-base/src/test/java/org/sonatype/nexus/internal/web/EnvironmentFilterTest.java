@@ -19,10 +19,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -41,8 +42,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.internal.web.EnvironmentFilter.STS_VALUE;
 
+@ExtendWith(MockitoExtension.class)
 class EnvironmentFilterTest
-    extends Test5Support
 {
   @Mock
   private ApplicationVersion applicationVersion;

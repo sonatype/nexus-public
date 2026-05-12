@@ -37,11 +37,20 @@ export default {
   },
   MALWARERISK: {
     ROOT: 'browse.malwarerisk',
-    TITLE: 'Malicious Risk',
+    TITLE: 'Malware Risk',
+  },
+  MALICIOUS_PACKAGES: {
+    ROOT: 'preview.browse.malicious-packages',
+    TITLE: 'Malicious Packages',
+  },
+  PROTECT: {
+    ROOT: 'preview.browse.protect',
+    TITLE: 'Protect',
   },
   SEARCH: {
     ROOT: 'browse.search',
     TITLE: 'Search',
+    UNIFIED: 'browse.search.unified',
     GENERIC: 'browse.search.generic',
     CUSTOM: 'browse.search.custom',
     APT: 'browse.search.apt',
@@ -60,6 +69,7 @@ export default {
     NUGET: 'browse.search.nuget',
     P2: 'browse.search.p2',
     PYPI: 'browse.search.pypi',
+    PUB: 'browse.search.pub',
     R: 'browse.search.r',
     RAW: 'browse.search.raw',
     RUBYGEMS: 'browse.search.rubygems',

@@ -16,7 +16,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
@@ -37,7 +36,7 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.INDEX_PROPE
  * @since 3.0
  */
 public class Maven2MavenPathParserTest
-    extends TestSupport
+
 {
   private final Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
 

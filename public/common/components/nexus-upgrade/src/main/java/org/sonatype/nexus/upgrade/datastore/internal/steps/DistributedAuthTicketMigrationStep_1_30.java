@@ -17,9 +17,10 @@ import java.util.Optional;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Delete all tokens from the {@code distributed_auth_ticket_cache} table
@@ -27,9 +28,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class DistributedAuthTicketMigrationStep_1_30
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String DELETE_ALL_RECORDS = "TRUNCATE TABLE distributed_auth_ticket_cache";
 
   @Override

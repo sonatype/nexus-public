@@ -14,7 +14,6 @@ package org.sonatype.nexus.security.token;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyService;
@@ -25,7 +24,9 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -38,8 +39,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BearerTokenManagerTest
-    extends TestSupport
 {
   private static final String FORMAT = "format";
 
@@ -72,7 +73,9 @@ public class BearerTokenManagerTest
     when(authenticationInfo.getPrincipals()).thenReturn(principalCollection);
     when(securityHelper.subject()).thenReturn(subject);
     when(subject.getPrincipals()).thenReturn(principalCollection);
-    underTest = new BearerTokenManager(apiKeyService, securityHelper, FORMAT) { };
+    underTest = new BearerTokenManager(apiKeyService, securityHelper, FORMAT)
+    {
+    };
   }
 
   @Test(expected = NullPointerException.class)

@@ -15,7 +15,6 @@ package org.sonatype.nexus.coreui.internal.atlas;
 import java.util.Map;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
@@ -34,6 +33,7 @@ import org.apache.shiro.authz.Permission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -47,10 +47,10 @@ import static org.mockito.Mockito.when;
 
 import javax.ws.rs.NotFoundException;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class SecurityDiagnosticResourceTest
-    extends Test5Support
 {
   @Mock
   private SecuritySystem securitySystem;

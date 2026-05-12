@@ -1,0 +1,188 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+body.nxrm-security-summary-modal-open .rt-BaseDialogOverlay {
+  background: var(--black-a6);
+}
+
+.security-summary-modal {
+  width: 50vw;
+  min-width: 480px;
+  max-width: 640px;
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-5);
+  background: var(--color-panel-solid, var(--color-panel));
+  padding: var(--space-5);
+  animation: security-summary-modal-in 200ms ease-out;
+
+  &__header {
+    margin-bottom: var(--space-4);
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__unprotected {
+    padding: var(--space-3);
+    background: var(--orange-2);
+    border-radius: var(--radius-3);
+    border-left: 4px solid var(--orange-9);
+    margin-bottom: var(--space-4);
+  }
+
+  &__quarantine {
+    padding: var(--space-2) var(--space-3);
+    background: var(--amber-2);
+    border-radius: var(--radius-2);
+    border-left: 4px solid var(--amber-9);
+  }
+
+  &__meta {
+    margin-bottom: var(--space-4);
+  }
+
+  &__components-block {
+    text-align: right;
+  }
+
+  &__sections {
+    margin-bottom: var(--space-4);
+  }
+
+  &__section {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  &__section-title {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__threat-bars {
+    .security-summary-modal__threat-bar {
+      height: 8px;
+      border-radius: var(--radius-1);
+      min-width: 2px;
+    }
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-2);
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 36px;
+    text-align: center;
+
+    &--red {
+      background: var(--red-2);
+      color: var(--red-11);
+      border: 1px solid var(--red-6);
+    }
+
+    &--orange {
+      background: var(--orange-2);
+      color: var(--orange-11);
+      border: 1px solid var(--orange-6);
+    }
+
+    &--yellow {
+      background: var(--yellow-2);
+      color: var(--yellow-11);
+      border: 1px solid var(--yellow-6);
+    }
+
+    &--amber {
+      background: var(--amber-2);
+      color: var(--amber-11);
+      border: 1px solid var(--amber-6);
+    }
+
+    &--green {
+      background: var(--green-2);
+      color: var(--green-11);
+      border: 1px solid var(--green-6);
+    }
+  }
+
+  &__empty {
+    background: var(--green-2);
+    border-radius: var(--radius-3);
+  }
+
+  &__secondary {
+    display: block;
+  }
+
+  &__upsell {
+    padding: var(--space-3);
+    background: var(--gray-2);
+    border-radius: var(--radius-3);
+    border: 1px dashed var(--gray-6);
+  }
+
+  &__ctas {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+}
+
+@keyframes security-summary-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Match SecurityReportModal.scss: Radix soft/solid (and ghost) buttons lack contrast on dark panel.
+:root[data-theme="dark"] {
+  .security-summary-modal {
+    .rt-Button {
+      &[data-variant="soft"] {
+        background-color: var(--gray-4);
+        color: var(--gray-12);
+
+        &:hover {
+          background-color: var(--gray-5);
+        }
+
+        a {
+          color: var(--gray-12);
+        }
+      }
+
+      &[data-variant="solid"] {
+        background-color: var(--accent-9);
+        color: var(--accent-contrast);
+      }
+
+      &[data-variant="ghost"] {
+        color: var(--gray-12);
+
+        &:hover {
+          background-color: var(--gray-a3);
+          color: var(--gray-12);
+        }
+      }
+    }
+  }
+}

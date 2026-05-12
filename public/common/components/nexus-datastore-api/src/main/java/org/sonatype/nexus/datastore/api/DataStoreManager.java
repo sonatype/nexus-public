@@ -14,7 +14,7 @@ package org.sonatype.nexus.datastore.api;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.app.Freezable;
 
 /**

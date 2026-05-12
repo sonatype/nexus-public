@@ -28,13 +28,14 @@ import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
@@ -54,9 +55,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class DatastoreBlobReconciliationLogMigrator_1_11
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RECONCILIATION_DIRECTORY_NAME = "reconciliation";
 
   protected static final String BLOBSTORE = "blobstore";

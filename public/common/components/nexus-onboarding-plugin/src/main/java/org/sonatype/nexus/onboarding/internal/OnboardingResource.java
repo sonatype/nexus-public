@@ -23,7 +23,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.onboarding.OnboardingItem;
 import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.rest.Resource;
@@ -35,6 +34,8 @@ import org.sonatype.nexus.validation.Validate;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import javax.validation.constraints.NotEmpty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -47,9 +48,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Path(OnboardingResource.RESOURCE_URI)
 public class OnboardingResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String PASSWORD_REQUIRED = "password is a required field, and cannot be empty.";
 
   public static final String RESOURCE_URI = "internal/ui/onboarding";

@@ -17,20 +17,22 @@ import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.realm.RealmManager;
 
 import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @Singleton
 public class LdapStateContributor
-    extends ComponentSupport
     implements StateContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String LDAP_REALM_NAME = "LdapRealm";
 
   public boolean featureFlag;

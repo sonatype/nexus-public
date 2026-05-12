@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.internal.web.ErrorPageService.ErrorInfo;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.servlet.ServletHelper;
 import org.sonatype.nexus.servlet.XFrameOptions;
 
 import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
@@ -42,8 +43,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class ErrorPageServiceTest
-    extends Test5Support
 {
   @Mock
   HttpServletRequest request;

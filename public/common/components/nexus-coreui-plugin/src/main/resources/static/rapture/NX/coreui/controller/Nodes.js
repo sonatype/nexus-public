@@ -31,8 +31,7 @@ Ext.define('NX.coreui.controller.Nodes', {
     'NX.I18n'
   ],
   masters: [
-    'nx-coreui-system-nodelist',
-    'nx-coreui-system-nodes-disabled'
+    'nx-coreui-system-nodelist'
   ],
   models: [
     'Node'
@@ -43,7 +42,6 @@ Ext.define('NX.coreui.controller.Nodes', {
   views: [
     'system.Nodes',
     'system.NodeList',
-    'system.NodesDisabledMessage',
     'system.NodeSettings',
     'system.NodeSettingsForm'
   ],

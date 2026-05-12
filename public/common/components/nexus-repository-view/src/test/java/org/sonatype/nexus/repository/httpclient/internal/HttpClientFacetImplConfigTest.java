@@ -19,7 +19,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.httpclient.HttpClientManager;
@@ -45,7 +44,6 @@ import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusTyp
  * Tests for {@link HttpClientFacetImpl.Config}.
  */
 public class HttpClientFacetImplConfigTest
-    extends TestSupport
 {
   private Validator validator;
 

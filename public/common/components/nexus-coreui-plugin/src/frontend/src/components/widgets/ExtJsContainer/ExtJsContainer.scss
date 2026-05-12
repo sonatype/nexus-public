@@ -12,7 +12,8 @@
  */
 
 .nxrm-ext-js-wrapper {
-  .risk-on-disk-container {
+ .risk-on-disk-container {
+    flex: none !important;
     border-bottom: 8px solid #606060;
   }
   .searchInfo .x-title-text {

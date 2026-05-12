@@ -1,0 +1,114 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.log-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &__header {
+    margin-bottom: var(--space-4);
+  }
+
+  &__title {
+    color: var(--gray-12);
+  }
+
+  &__toolbar {
+    padding: var(--space-3);
+    background-color: var(--gray-a2);
+    border-radius: var(--radius-2);
+    margin-bottom: var(--space-4);
+  }
+
+  &__mark-section {
+    flex-shrink: 0;
+  }
+
+  &__mark-input {
+    width: 200px;
+  }
+
+  &__options {
+    flex-shrink: 0;
+  }
+
+  &__label {
+    color: var(--gray-11);
+    white-space: nowrap;
+  }
+
+  &__select {
+    min-width: 150px;
+  }
+
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+  }
+
+  &__loading {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-a2);
+    border-radius: var(--radius-2);
+    color: var(--gray-11);
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  &__textarea {
+    flex: 1;
+    width: 100%;
+    min-height: 400px;
+    padding: var(--space-3);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--gray-12);
+    background-color: var(--gray-1);
+    border: 1px solid var(--gray-a6);
+    border-radius: var(--radius-2);
+    resize: vertical;
+    overflow: auto;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-8);
+      box-shadow: 0 0 0 1px var(--accent-8);
+    }
+
+    // Dark mode adjustments
+    .dark & {
+      background-color: var(--gray-2);
+      color: var(--gray-12);
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+

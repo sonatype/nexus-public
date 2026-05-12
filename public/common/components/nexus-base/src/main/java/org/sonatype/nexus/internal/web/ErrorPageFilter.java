@@ -24,7 +24,6 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.security.authc.NexusAuthenticationException;
 import org.sonatype.nexus.servlet.XFrameOptions;
@@ -36,6 +35,8 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.eclipse.jetty.io.EofException;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
@@ -54,9 +55,10 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 @Component
 @Singleton
 public class ErrorPageFilter
-    extends ComponentSupport
     implements Filter
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final XFrameOptions xFrameOptions;
 
   @Inject

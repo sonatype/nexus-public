@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -36,7 +35,6 @@ import static org.sonatype.nexus.repository.routing.RoutingMode.ALLOW;
 import static org.sonatype.nexus.repository.routing.RoutingMode.BLOCK;
 
 public class RoutingRuleDAOTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(RoutingRuleDAO.class);

@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -81,6 +81,9 @@ import org.sonatype.nexus.datastore.mybatis.handlers.SetTypeHandler;
 import org.sonatype.nexus.security.PasswordHelper;
 import org.sonatype.nexus.transaction.TransactionIsolation;
 
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Splitter.MapSplitter;
@@ -130,6 +133,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 import static org.apache.ibatis.session.TransactionIsolationLevel.SERIALIZABLE;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.common.text.Strings2.lower;
@@ -143,8 +147,6 @@ import static org.sonatype.nexus.datastore.mybatis.SensitiveAttributes.buildSens
 
 /**
  * MyBatis {@link DataStore}.
- *
- * @since 3.19
  */
 @Qualifier(MyBatisDataStoreDescriptor.NAME)
 @Component
@@ -204,6 +206,8 @@ public class MyBatisDataStore
 
   private final boolean orientWarning;
 
+  private final boolean internalMetricsEnabled;
+
   @Inject
   public MyBatisDataStore(
       @Qualifier("mybatis") final PbeCipher databaseCipher,
@@ -212,7 +216,8 @@ public class MyBatisDataStore
       final LogManager logManager,
       @Lazy final List<TransactionalStoreSupport> declaredAccessTypes,
       @Lazy final List<TypeHandler> declaredTypeHandlers,
-      @Value(FeatureFlags.ORIENT_WARNING_NAMED_VALUE) final boolean orientWarning)
+      @Value(FeatureFlags.ORIENT_WARNING_NAMED_VALUE) final boolean orientWarning,
+      @Value(FeatureFlags.METRICS_INTERNAL_ENABLED_NAMED_VALUE) final boolean internalMetricsEnabled)
   {
     checkState(databaseCipher instanceof MyBatisCipher);
     this.databaseCipher = checkNotNull(databaseCipher);
@@ -225,6 +230,7 @@ public class MyBatisDataStore
     this.declaredAccessTypes = checkNotNull(declaredAccessTypes);
     this.declaredTypeHandlers = checkNotNull(declaredTypeHandlers);
     this.orientWarning = orientWarning;
+    this.internalMetricsEnabled = internalMetricsEnabled;
   }
 
   @VisibleForTesting
@@ -244,6 +250,7 @@ public class MyBatisDataStore
     this.declaredAccessTypes = List.of();
     this.declaredTypeHandlers = List.of();
     this.orientWarning = false;
+    this.internalMetricsEnabled = true;
   }
 
   @Override
@@ -317,6 +324,11 @@ public class MyBatisDataStore
         log.info("Shutting down H2 database");
         executeH2Shutdown();
       }
+      else if (internalMetricsEnabled) {
+        // Clean up metrics for PostgreSQL datastores
+        cleanupPostgresqlMetrics();
+      }
+
       dataSource.close();
     }
     finally {
@@ -324,6 +336,24 @@ public class MyBatisDataStore
     }
   }
 
+  /**
+   * Cleans up PostgreSQL metrics for this datastore by removing all metrics from the shared registry
+   * that match the datastore's name prefix. This ensures stale metrics are removed when a datastore
+   * is stopped to prevent metric name conflicts when a new datastore with the same name is created.
+   */
+  private void cleanupPostgresqlMetrics() {
+    String metricsPrefix = configuration.getName().replace("-", "_") + ".pool.";
+    MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
+    metricRegistry.removeMatching(MetricFilter.startsWith(metricsPrefix));
+  }
+
+  /**
+   * Determines whether this datastore is configured to use an H2 database by checking the JDBC URL.
+   * This is used to determine whether to execute the H2 SHUTDOWN command or clean up PostgreSQL metrics.
+   *
+   * @return {@code true} if the JDBC URL starts with "jdbc:h2:", {@code false} otherwise
+   */
+  @VisibleForTesting
   boolean isH2Database() {
     String jdbcUrl = configuration.getAttributes().get("jdbcUrl");
     return jdbcUrl != null && jdbcUrl.toLowerCase().contains("jdbc:h2:");
@@ -335,8 +365,7 @@ public class MyBatisDataStore
       return;
     }
 
-    try (Connection connection = dataSource.getConnection();
-        Statement statement = connection.createStatement()) {
+    try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
       statement.execute("SHUTDOWN");
       log.info("Executed H2 SHUTDOWN command");
     }
@@ -525,7 +554,9 @@ public class MyBatisDataStore
   @VisibleForTesting
   HikariConfig configureHikari(final String storeName, final Map<String, String> attributes) {
     Properties properties = new Properties();
-    properties.put("poolName", storeName);
+    // Use a unique pool name per datastore to avoid metric name conflicts when multiple datastores
+    // are created in the same JVM (e.g., during tests). HikariCP uses the pool name in metric names.
+    properties.put("poolName", storeName.replace("-", "_"));
     properties.putAll(attributes);
     if (properties.getProperty(JDBC_URL, "").contains("${karaf.data}")) {
       String jdbcUrl = properties.getProperty(JDBC_URL);
@@ -539,23 +570,60 @@ public class MyBatisDataStore
       TO_MAP.split((String) advanced).forEach(properties::putIfAbsent);
     }
 
-    if (attributes.get(JDBC_URL).startsWith("jdbc:postgresql")) {
-      properties.put("driverClassName", "org.postgresql.Driver");
-      // workaround https://github.com/pgjdbc/pgjdbc/issues/265
-      properties.put("dataSource.stringtype", "unspecified");
-
-      properties.putIfAbsent("maximumPoolSize", DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
-      // Allow more time for database connectivity during startup, especially in cloud environments
-      // where network latency or database provisioning delays may occur
-      properties.putIfAbsent("initializationFailTimeout", DEFAULT_INITIALIZATION_FAIL_TIMEOUT_MS);
-    }
-
     // Hikari doesn't like blank schemas in its config
     if (isBlank(properties.getProperty(SCHEMA))) {
       properties.remove(SCHEMA);
     }
 
-    return new HikariConfig(properties);
+    HikariConfig hikariConfig = new HikariConfig(properties);
+
+    // Setup postgresql specific config
+    if (properties.getProperty(JDBC_URL, "").startsWith("jdbc:postgresql")) {
+      configureHikariForPostgresql(hikariConfig, properties);
+    }
+
+    return hikariConfig;
+  }
+
+  /**
+   * Configures HikariCP for PostgreSQL database connections.
+   * <p>
+   * This method sets up PostgreSQL-specific configuration including:
+   * <ul>
+   * <li>Driver class name</li>
+   * <li>Data source properties for string type handling</li>
+   * <li>Default maximum pool size (100)</li>
+   * <li>Default initialization timeout (10 seconds)</li>
+   * <li>Unique pool name for metrics isolation</li>
+   * <li>Metric registry with cleanup of stale metrics</li>
+   * </ul>
+   *
+   * @param hikariConfig the HikariConfig to configure
+   * @param properties the application properties, used to check for configuration existence
+   */
+  private void configureHikariForPostgresql(final HikariConfig hikariConfig, final Properties properties) {
+    hikariConfig.setDriverClassName("org.postgresql.Driver");
+    // workaround https://github.com/pgjdbc/pgjdbc/issues/265
+    hikariConfig.addDataSourceProperty("stringtype", "unspecified");
+
+    if (!properties.containsKey("maximumPoolSize")) {
+      hikariConfig.setMaximumPoolSize(DEFAULT_CONTENT_STORE_MAX_POOL_SIZE);
+    }
+
+    if (!properties.containsKey("initializationFailTimeout")) {
+      // Allow more time for database connectivity during startup, especially in cloud environments
+      // where network latency or database provisioning delays may occur
+      hikariConfig.setInitializationFailTimeout(DEFAULT_INITIALIZATION_FAIL_TIMEOUT_MS);
+    }
+
+    // When reusing the same shared registry across multiple datastore instances (common in tests),
+    // we need to remove existing metrics with the same pool name prefix to avoid conflicts.
+    // This must be done BEFORE setting the metric registry so the new datastore doesn't inherit
+    // old metrics with the same prefix.
+    if (internalMetricsEnabled) {
+      cleanupPostgresqlMetrics();
+      hikariConfig.setMetricRegistry(SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME));
+    }
   }
 
   /**
@@ -966,6 +1034,11 @@ public class MyBatisDataStore
     catch (Exception | LinkageError e) {
       log.warn("Problem applying MyBatis proxy workaround", e);
     }
+  }
+
+  @VisibleForTesting
+  void setDataSource(final HikariDataSource dataSource) {
+    this.dataSource = dataSource;
   }
 
   private static Stream<Class<DataAccess>> daos(final List<TransactionalStoreSupport> stores) {

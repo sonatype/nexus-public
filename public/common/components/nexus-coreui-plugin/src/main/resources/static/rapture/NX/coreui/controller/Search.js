@@ -839,7 +839,9 @@ Ext.define('NX.coreui.controller.Search', {
   },
 
   onNavigate: function() {
-    if (NX.Bookmarks.getBookmark().getToken().includes('browse/search')) {
+    var bookmark = NX.Bookmarks.getBookmark();
+    var token = bookmark && bookmark.getToken ? bookmark.getToken() : null;
+    if (token && token.includes('browse/search')) {
       setTimeout(function(){
         this.reselect()
       }.bind(this), 100);

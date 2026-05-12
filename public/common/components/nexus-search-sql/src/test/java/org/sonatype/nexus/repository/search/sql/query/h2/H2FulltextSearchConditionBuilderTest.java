@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.sql.query.h2;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.query.syntax.BooleanTerm;
@@ -34,7 +33,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 class H2FulltextSearchConditionBuilderTest
-    extends Test5Support
 {
   @Test
   void testBooleanTerm() {
@@ -313,14 +311,12 @@ class H2FulltextSearchConditionBuilderTest
   }
 
   @Test
-  void testWildcardVersionWithLeadingSeparatorStripped() {
-    // Leading separators should be stripped from wildcard search terms
+  void testWildcardVersionWithLeadingSeparatorPreserved() {
     Expression expression = new SqlPredicate(Operand.EQ, SearchField.VERSION, new WildcardTerm(".4.1*"));
     SqlSearchQueryCondition result = underTest().build(expression);
 
     assertThat(result.getSqlFilter(), is("LOWER(cs.version) LIKE LOWER(#{filterParams.cs_version0})"));
-    // Leading dot should be stripped
-    assertThat(result.getParameters().get("cs_version0"), is("4.1%"));
+    assertThat(result.getParameters().get("cs_version0"), is(".4.1%"));
   }
 
   @Test

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.raw;
 import java.io.IOException;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
@@ -37,7 +36,10 @@ import org.sonatype.nexus.security.BreadActions;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Rule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
@@ -52,8 +54,10 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 
 public abstract class RawUploadHandlerTestSupport
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   protected final String REPO_NAME = "raw-hosted";
 
   @Mock

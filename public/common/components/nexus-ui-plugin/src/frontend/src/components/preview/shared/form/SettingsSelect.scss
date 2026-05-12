@@ -1,0 +1,76 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.settings-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+
+  &__label {
+    font-size: var(--font-size-sm, 14px);
+    font-weight: var(--font-weight-medium, 500);
+    color: var(--color-text, var(--gray-12));
+    display: flex;
+    align-items: center;
+    gap: var(--space-1, 4px);
+  }
+
+  &__required {
+    color: var(--color-error, #dc2626);
+  }
+
+  &__wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  // Radix Select Trigger (the button that shows selected value)
+  &__trigger {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  // Radix Select Content (the dropdown)
+  &__content {
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: var(--z-dropdown, 1000);
+  }
+
+  // Radix Select Item
+  &__item {
+    cursor: pointer;
+  }
+
+  &--error &__trigger {
+    border-color: var(--color-error, #dc2626);
+
+    &:focus {
+      box-shadow: 0 0 0 2px var(--color-error-bg, #fee2e2);
+    }
+  }
+
+  &__help {
+    color: var(--color-text-secondary, var(--gray-11));
+    margin: 0;
+  }
+
+  &__error-text {
+    color: var(--color-error, #dc2626);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1, 4px);
+  }
+}

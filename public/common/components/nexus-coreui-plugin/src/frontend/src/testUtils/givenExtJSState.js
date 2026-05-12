@@ -39,4 +39,10 @@ export default   function givenExtJSState(
   // because of the way they are accessed
   jest.spyOn(ExtJS, 'state').mockReturnValue(stateMock);
   global.NX.State = stateMock;
+  
+  // Also mock useStatus for components that use that hook
+  jest.spyOn(ExtJS, 'useStatus').mockReturnValue({
+    edition: edition,
+    version: fullVersion,
+  });
 }

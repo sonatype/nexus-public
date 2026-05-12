@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.jwt;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.JwtHelper;
 
 import com.auth0.jwt.JWT;
@@ -20,6 +19,8 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Perform the verification against the given JWT,
@@ -27,8 +28,9 @@ import com.auth0.jwt.interfaces.DecodedJWT;
  * @since 3.38
  */
 public class JwtVerifier
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Algorithm algorithm;
 
   private final JWTVerifier verifier;

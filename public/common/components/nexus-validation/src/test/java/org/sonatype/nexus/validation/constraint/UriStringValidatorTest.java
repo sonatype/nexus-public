@@ -15,8 +15,6 @@ package org.sonatype.nexus.validation.constraint;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -28,7 +26,7 @@ import static org.hamcrest.core.Is.is;
 
 @RunWith(Parameterized.class)
 public class UriStringValidatorTest
-    extends TestSupport
+
 {
   private final UriStringValidator underTest = new UriStringValidator();
 

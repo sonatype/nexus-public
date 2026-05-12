@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.upgrade.plan.DependencyResolver.CyclicDependencyException;
 import org.sonatype.nexus.upgrade.plan.DependencyResolver.UnresolvedDependencyException;
 import org.sonatype.nexus.upgrade.plan.DependencySource.DependsOnAware;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.upgrade.plan.DependencySource.DependsOnAware;
 import com.google.common.collect.Multimap;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -34,8 +35,8 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link DependencyResolver}.
  */
 public class DependencyResolverTest
-    extends TestSupport
 {
+  private static final Logger logger = LoggerFactory.getLogger(DependencyResolverTest.class);
 
   static class Thing
       implements DependencySource<Thing>, DependsOnAware<Thing>

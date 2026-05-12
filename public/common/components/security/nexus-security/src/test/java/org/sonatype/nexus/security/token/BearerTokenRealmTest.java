@@ -17,7 +17,6 @@ import java.util.Optional;
 import jakarta.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
@@ -31,7 +30,9 @@ import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -47,8 +48,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.token.BearerTokenRealm.ANONYMOUS_USER;
 import static org.sonatype.nexus.security.token.BearerTokenRealm.IS_TOKEN_AUTH_KEY;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BearerTokenRealmTest
-    extends TestSupport
 {
   private static final String FORMAT = "format";
 
@@ -92,7 +93,9 @@ public class BearerTokenRealmTest
     when(principalsHelper.getUserStatus(principalCollection)).thenReturn(UserStatus.active);
     when(credentialsMatcher.doCredentialsMatch(any(), any())).thenReturn(true);
     when(requestProvider.get()).thenReturn(request);
-    underTest = new BearerTokenRealm(keyStore, principalsHelper, FORMAT) {};
+    underTest = new BearerTokenRealm(keyStore, principalsHelper, FORMAT)
+    {
+    };
     underTest.setRequestProvider(requestProvider);
     underTest.setCredentialsMatcher(credentialsMatcher);
   }

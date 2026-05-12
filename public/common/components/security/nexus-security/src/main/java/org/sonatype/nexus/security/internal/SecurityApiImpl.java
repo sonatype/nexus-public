@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.SecurityApi;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
@@ -34,6 +33,8 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
@@ -45,9 +46,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class SecurityApiImpl
-    extends ComponentSupport
     implements SecurityApi
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final AnonymousManager anonymousManager;
 
   private final SecuritySystem securitySystem;

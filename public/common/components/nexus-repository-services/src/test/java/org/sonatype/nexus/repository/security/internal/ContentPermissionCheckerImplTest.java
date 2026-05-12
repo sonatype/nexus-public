@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPermission;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.security.SelectorEvaluationCache;
@@ -45,9 +44,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ContentPermissionCheckerImplTest
-    extends TestSupport
 {
   @Mock
   SecurityHelper securityHelper;

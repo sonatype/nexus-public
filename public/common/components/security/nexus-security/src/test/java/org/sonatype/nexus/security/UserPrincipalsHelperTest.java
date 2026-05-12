@@ -14,7 +14,6 @@ package org.sonatype.nexus.security;
 
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -28,7 +27,9 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -37,8 +38,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link UserPrincipalsHelper}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UserPrincipalsHelperTest
-    extends TestSupport
 {
   private static final String ALPHA_REALM = "ALPHA";
 

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.coreui.internal.maliciousrisk;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -22,7 +20,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED;
 
 public class MaliciousRiskOnDiskStateContributorTest
-    extends TestSupport
 {
   @Test
   public void featureFlagRiskOnDiskShouldBeEnabled() {

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.rapture.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.rapture.internal.logging.LogEventComponent;
 import org.sonatype.nexus.rapture.internal.logging.LogEventXO;
 
@@ -26,9 +25,11 @@ import org.slf4j.LoggerFactory;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LogEventComponentTest
-    extends TestSupport
 {
   @Mock
   private MockedStatic<LoggerFactory> loggerFactory;

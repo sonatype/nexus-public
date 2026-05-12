@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.self.hosted.blobstore.s3.upgrade;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -22,7 +20,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class ScheduleS3CompactTasksTaskDescriptorTest
-    extends TestSupport
 {
   private ScheduleS3CompactTasksTaskDescriptor underTest;
 

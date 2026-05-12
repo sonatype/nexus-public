@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.crypto.secrets.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -34,9 +33,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecretsAuditorTest
-    extends TestSupport
 {
   @Mock
   private AuditRecorder auditRecorder;

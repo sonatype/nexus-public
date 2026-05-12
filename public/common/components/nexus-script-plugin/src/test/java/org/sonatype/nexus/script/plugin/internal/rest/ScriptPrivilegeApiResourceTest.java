@@ -17,7 +17,6 @@ import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.script.Script;
 import org.sonatype.nexus.script.ScriptManager;
@@ -38,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -51,11 +51,11 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.script.plugin.internal.rest.ApiPrivilegeScript.SCRIPT_KEY;
 import static org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWithActions.ACTIONS_KEY;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class ScriptPrivilegeApiResourceTest
-    extends Test5Support
 {
   @Mock
   private SecuritySystem securitySystem;

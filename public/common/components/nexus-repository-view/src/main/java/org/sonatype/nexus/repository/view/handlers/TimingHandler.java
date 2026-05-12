@@ -17,7 +17,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.AttributeKey;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.repository.view.Response;
 import com.google.common.base.Stopwatch;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple timing handler.
@@ -35,9 +36,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class TimingHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String ELAPSED_KEY = AttributeKey.get(TimingHandler.class, "elapsed");
 
   private final Handler meteringHandler;

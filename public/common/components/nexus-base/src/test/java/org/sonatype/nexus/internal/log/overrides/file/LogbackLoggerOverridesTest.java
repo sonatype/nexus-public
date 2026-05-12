@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.log.LoggerLevel;
 
 import ch.qos.logback.classic.Logger;
@@ -25,6 +24,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -33,8 +33,9 @@ import static org.hamcrest.core.Is.is;
  * Tests for {@link LogbackLoggerOverrides}.
  */
 public class LogbackLoggerOverridesTest
-    extends TestSupport
 {
+  private static final org.slf4j.Logger log = LoggerFactory.getLogger(LogbackLoggerOverridesTest.class);
+
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -59,7 +60,7 @@ public class LogbackLoggerOverridesTest
 
     String xml = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
 
-    log("XML:\n{}", xml);
+    log.info("XML:\n{}", xml);
 
     assertThat(xml, is(getExpectedXml(false)));
   }
@@ -76,7 +77,7 @@ public class LogbackLoggerOverridesTest
             "</included>";
     Files.write(file.toPath(), xmlString.getBytes(StandardCharsets.UTF_8));
 
-    log("XML:\n{}", new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+    log.info("XML:\n{}", new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
 
     underTest.load();
 
@@ -96,7 +97,7 @@ public class LogbackLoggerOverridesTest
 
     String xml = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
 
-    log("XML:\n{}", xml);
+    log.info("XML:\n{}", xml);
 
     assertThat(xml, is(getExpectedXml(true)));
   }

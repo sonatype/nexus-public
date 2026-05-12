@@ -25,7 +25,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.sonatype.goodies.testsupport.hamcrest.DiffMatchers.equalTo;
+import static org.hamcrest.Matchers.equalTo;
 
 @RunWith(Parameterized.class)
 public class BlobRefTypeHandlerTest

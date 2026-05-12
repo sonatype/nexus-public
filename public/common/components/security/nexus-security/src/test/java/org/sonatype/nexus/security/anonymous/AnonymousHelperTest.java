@@ -15,14 +15,15 @@ package org.sonatype.nexus.security.anonymous;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
 import org.sonatype.nexus.security.internal.DefaultRealmConstants;
 import org.sonatype.nexus.security.user.UserManager;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -32,8 +33,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link AnonymousHelper}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AnonymousHelperTest
-    extends TestSupport
 {
   private static final String TEST_REALM = "TEST";
 

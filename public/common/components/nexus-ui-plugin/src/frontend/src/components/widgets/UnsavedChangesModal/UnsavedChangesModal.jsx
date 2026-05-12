@@ -31,7 +31,7 @@ export default function UnsavedChangesModal() {
       </header>
       <div className="nx-modal-content">
         <NxWarningAlert className="nx-alert--modifier">
-          <span>The page may contain unsaved changes; continuing will discard them.</span>
+          <span>You have unsaved changes. Continuing will discard them.</span>
         </NxWarningAlert>
       </div>
       <footer className="nx-footer">

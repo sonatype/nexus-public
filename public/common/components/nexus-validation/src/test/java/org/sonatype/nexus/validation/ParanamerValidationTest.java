@@ -19,7 +19,6 @@ import javax.validation.constraints.NotNull;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.validation.internal.AopAwareParanamerParameterNameProvider;
 
 import java.lang.reflect.Method;
@@ -30,7 +29,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 public class ParanamerValidationTest
-    extends TestSupport
+
 {
 
   private ValidatorFactory factory;

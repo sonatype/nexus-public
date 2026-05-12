@@ -20,7 +20,6 @@ import jakarta.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
@@ -38,6 +37,8 @@ import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.cache.CacheLoader.from;
@@ -52,9 +53,10 @@ import static com.google.common.cache.CacheLoader.from;
 @Qualifier("default")
 @Singleton
 public class RestClientFactoryImpl
-    extends ComponentSupport
     implements RestClientFactory
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final LoadingCache<ClassLoader, ClassLoader> bridgeClassLoaderCache =
       CacheBuilder.newBuilder()
           .build(from(

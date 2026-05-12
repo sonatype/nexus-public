@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.onboarding.capability.OnboardingCapability;
 import org.sonatype.nexus.onboarding.capability.OnboardingCapabilityHelper;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
@@ -24,9 +23,11 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class InstanceStatusTest
-    extends TestSupport
 {
   private InstanceStatus underTest;
 

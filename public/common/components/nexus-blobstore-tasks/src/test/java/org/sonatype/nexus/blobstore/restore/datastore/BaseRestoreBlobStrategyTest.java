@@ -18,7 +18,6 @@ import java.util.Properties;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -37,7 +36,9 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import com.google.common.base.Throwables;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
@@ -51,8 +52,9 @@ import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PR
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
+@ExtendWith(MockitoExtension.class)
 class BaseRestoreBlobStrategyTest
-    extends Test5Support
+
 {
   private static final String BLOB_STORE_NAME = "test-blobstore";
 

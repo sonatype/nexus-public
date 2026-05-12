@@ -20,7 +20,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory;
 import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.storage.CleanupPolicyData;
@@ -50,7 +49,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -63,8 +64,9 @@ import static org.mockito.Mockito.*;
 
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.*;
 
+@ExtendWith(MockitoExtension.class)
 class CleanupPreviewHelperImplTest
-    extends Test5Support
+
 {
 
   private static final OffsetDateTime NOW = OffsetDateTime.now();

@@ -21,11 +21,12 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.webresources.UrlWebResource;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -33,9 +34,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class PublicFilesWebResourceBundle
-    extends ComponentSupport
     implements WebResourceBundle
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final List<String> FILES =
       Arrays.asList("apple-touch-icon.png", "browserconfig.xml", "favicon.ico", "favicon-16x16.png",
           "favicon-32x32.png", "mstile-144x144.png", "mstile-150x150.png", "mstile-310x310.png", "mstile-70x70.png",

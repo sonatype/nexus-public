@@ -18,7 +18,6 @@ import java.io.InputStream;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -30,9 +29,11 @@ import org.mockito.Mock;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ProducerConsumerUploaderTest
-    extends TestSupport
 {
 
   private ProducerConsumerUploader producerConsumerUploader;
@@ -68,13 +69,16 @@ public class ProducerConsumerUploaderTest
     when(registry.timer(anyString())).thenReturn(timer);
 
     when(readChunk.time()).thenReturn(context);
-    when(registry.timer("org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.readChunk")).thenReturn(readChunk);
+    when(registry.timer("org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.readChunk"))
+        .thenReturn(readChunk);
 
     when(uploadChunk.time()).thenReturn(context);
-    when(registry.timer("org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.uploadChunk")).thenReturn(uploadChunk);
+    when(registry.timer("org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.uploadChunk"))
+        .thenReturn(uploadChunk);
 
     when(multiPartUpload.time()).thenReturn(context);
-    when(registry.timer("org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.multiPartUpload")).thenReturn(multiPartUpload);
+    when(registry.timer("org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.multiPartUpload"))
+        .thenReturn(multiPartUpload);
 
     producerConsumerUploader = new ProducerConsumerUploader(100, 4, registry);
     producerConsumerUploader.start();

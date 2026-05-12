@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
@@ -34,7 +33,9 @@ import org.sonatype.nexus.security.role.RoleContainsItselfException;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -45,8 +46,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecurityConfigurationManagerImplTest
-    extends TestSupport
 {
   @Mock
   private SecurityConfigurationSource configSource;

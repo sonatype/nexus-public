@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.http;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
@@ -54,9 +53,11 @@ import static org.sonatype.nexus.repository.http.HttpStatus.REQUESTED_RANGE_NOT_
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_PLAIN;
 import static org.sonatype.nexus.repository.view.Status.failure;
 import static org.sonatype.nexus.repository.view.Status.success;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class PartialFetchHandlerTest
-    extends TestSupport
 {
   private static final String RANGE_HEADER = "theRangeHeader";
 

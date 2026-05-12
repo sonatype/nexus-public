@@ -18,8 +18,7 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -39,9 +38,11 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class H2BackupTaskTest
-    extends TestSupport
 {
   @Rule
   public ExpectedException thrown = ExpectedException.none();

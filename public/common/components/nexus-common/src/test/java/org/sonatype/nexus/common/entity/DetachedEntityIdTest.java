@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.entity;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +22,7 @@ import static org.hamcrest.Matchers.not;
  * Tests for {@link DetachedEntityId}
  */
 public class DetachedEntityIdTest
-    extends TestSupport
+
 {
   @Test
   public void testDetachedEquality() {

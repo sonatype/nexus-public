@@ -24,7 +24,6 @@ import java.util.function.Function;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
@@ -44,6 +43,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -52,6 +52,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -60,11 +61,9 @@ import static org.sonatype.nexus.scheduling.TaskState.OK;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 import static org.sonatype.nexus.scheduling.TaskState.WAITING;
 
-@ExtendWith(ValidationExtension.class)
-@ExtendWith(AuthenticationExtension.class)
+@ExtendWith({ValidationExtension.class, AuthenticationExtension.class, MockitoExtension.class})
 @WithUser
 class TasksApiResourceTest
-    extends Test5Support
 {
   private final TaskConfiguration visibleConfig = configuration(true);
 
@@ -100,7 +99,7 @@ class TasksApiResourceTest
    */
   @Test
   void testGetTasks() {
-    when( taskScheduler.listsTasks()).thenReturn(Arrays.asList(testTasks));
+    when(taskScheduler.listsTasks()).thenReturn(Arrays.asList(testTasks));
     when(taskScheduler.toExternalTaskState(any())).thenReturn(new ExternalTaskState(testTasks[1]),
         new ExternalTaskState(testTasks[2]), new ExternalTaskState(testTasks[3]));
 
@@ -110,7 +109,8 @@ class TasksApiResourceTest
     assertThat(extract(page.getItems(), TaskXO::getId), contains("task1", "task2", "task3"));
     assertThat(extract(page.getItems(), TaskXO::getName), contains("Task 1", "Task 2", "Task 3"));
     assertThat(extract(page.getItems(), TaskXO::getType), contains("anotherType", "aType", "anotherType"));
-    assertThat(extract(page.getItems(), TaskXO::getCurrentState), contains(WAITING.toString(), RUNNING.toString(), OK.toString()));
+    assertThat(extract(page.getItems(), TaskXO::getCurrentState),
+        contains(WAITING.toString(), RUNNING.toString(), OK.toString()));
   }
 
   /*
@@ -140,6 +140,38 @@ class TasksApiResourceTest
     assertThat(validTaskXO.getName(), is("Task 1"));
     assertThat(validTaskXO.getType(), is("anotherType"));
     assertThat(validTaskXO.getCurrentState(), is(WAITING.toString()));
+  }
+
+  /*
+   * getTaskById returns properties, enabled, alertEmail, notificationCondition, and schedule details
+   */
+  @Test
+  void testGetTaskById_includesNewFields() {
+    TaskConfiguration configWithExtras = configuration(true);
+    configWithExtras.setEnabled(false);
+    configWithExtras.setAlertEmail("alert@example.com");
+    configWithExtras.setNotificationCondition(org.sonatype.nexus.scheduling.TaskNotificationCondition.SUCCESS_FAILURE);
+    configWithExtras.setString("blobstoreName", "default");
+    configWithExtras.setString("daysOlderThan", "3");
+
+    TestTaskInfo taskWithExtras = new TestTaskInfo("task-extras", "Task with extras", "aType",
+        new TestCurrentState(WAITING), configWithExtras);
+    taskWithExtras.schedule = new org.sonatype.nexus.scheduling.schedule.Once(new Date());
+
+    when(taskScheduler.getTaskById("task-extras")).thenReturn(taskWithExtras);
+    when(taskScheduler.toExternalTaskState(any())).thenReturn(new ExternalTaskState(taskWithExtras));
+
+    TaskXO taskXO = tasksResource.getTaskById("task-extras");
+
+    assertThat(taskXO.getProperties(), notNullValue());
+    assertThat(taskXO.getProperties().get("blobstoreName"), is("default"));
+    assertThat(taskXO.getProperties().get("daysOlderThan"), is("3"));
+    assertThat(taskXO.isEnabled(), is(false));
+    assertThat(taskXO.getAlertEmail(), is("alert@example.com"));
+    assertThat(taskXO.getNotificationCondition(),
+        is(org.sonatype.nexus.scheduling.TaskNotificationCondition.SUCCESS_FAILURE));
+    assertThat(taskXO.getSchedule(), is("once"));
+    assertThat(taskXO.getStartDate(), notNullValue());
   }
 
   @Test

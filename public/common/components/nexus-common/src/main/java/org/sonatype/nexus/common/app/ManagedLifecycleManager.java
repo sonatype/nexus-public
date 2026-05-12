@@ -12,8 +12,9 @@
  */
 package org.sonatype.nexus.common.app;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages {@link ManagedLifecycle} components.
@@ -21,8 +22,9 @@ import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
  * @since 3.3
  */
 public abstract class ManagedLifecycleManager
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Returns the current phase.
    */

@@ -14,15 +14,12 @@ package org.sonatype.nexus.coreui.internal.log;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class LogViewerStateContributorTest
-    extends TestSupport
 {
   @Test
   public void shouldReturnLogViewerEnabledWhenNotClustered() {

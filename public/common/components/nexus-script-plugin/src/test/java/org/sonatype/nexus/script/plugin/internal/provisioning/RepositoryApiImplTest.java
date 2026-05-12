@@ -17,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import com.google.common.collect.ImmutableMap;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -31,9 +30,11 @@ import java.util.Map;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RepositoryApiImplTest
-    extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;

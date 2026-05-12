@@ -113,7 +113,11 @@ export default class TestUtils {
   }
 
   static formSelectors = {
-    queryTitle: () => screen.queryByRole('heading', {level: 1}),
+    queryTitle: () => {
+      const headings = screen.queryAllByRole('heading', {level: 1});
+      // Return the Default UI heading (with text content), skip any empty Preview UI headings
+      return headings.find(h => h.textContent?.trim()) || headings[0] || null;
+    },
     querySubmitButton: () => screen.queryByRole('button', {name: SAVE_BUTTON_LABEL}),
     queryDiscardButton: () => screen.queryByRole('button', {name: DISCARD_BUTTON_LABEL}),
     queryFormError: (message) => {

@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.capability.secrets.migration;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityReference;
@@ -40,9 +39,11 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CapabilitySecretsMigratorTest
-    extends TestSupport
 {
   @Mock
   private CapabilityRegistry capabilityRegistry;

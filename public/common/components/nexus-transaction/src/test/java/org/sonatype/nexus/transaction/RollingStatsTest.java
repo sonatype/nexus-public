@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.transaction;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -27,22 +30,33 @@ import static org.hamcrest.Matchers.is;
  * Test rolling stats behaviour.
  */
 public class RollingStatsTest
-    extends TestSupport
+
 {
   @Test
   public void testConcurrentStats() throws Exception {
     RollingStats underTest = new RollingStats(60_000, MILLISECONDS);
 
-    ConcurrentRunner runner = new ConcurrentRunner(3, 60);
-    runner.addTask(100, () -> {
-      // randomize where this will land inside the window
-      Thread.sleep(ThreadLocalRandom.current().nextInt(1_000));
-      underTest.mark();
-    });
+    int iterations = 3;
+    int threadCount = 100;
+    ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+    List<Future<?>> futures = new ArrayList<>();
+    for (int i = 0; i < iterations; i++) {
+      for (int t = 0; t < threadCount; t++) {
+        futures.add(executor.submit(() -> {
+          // randomize where this will land inside the window
+          Thread.sleep(ThreadLocalRandom.current().nextInt(1_000));
+          underTest.mark();
+          return null;
+        }));
+      }
+    }
+    executor.shutdown();
+    executor.awaitTermination(60, TimeUnit.SECONDS);
+    for (Future<?> f : futures) {
+      f.get();
+    }
 
-    runner.go();
-
-    assertThat(underTest.sum(), is(runner.getTaskCount() * runner.getIterations()));
+    assertThat(underTest.sum(), is(threadCount * iterations));
   }
 
   @Test

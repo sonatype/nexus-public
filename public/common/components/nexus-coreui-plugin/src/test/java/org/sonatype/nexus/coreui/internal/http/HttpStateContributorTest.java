@@ -15,7 +15,6 @@ package org.sonatype.nexus.coreui.internal.http;
 import java.util.Map;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.httpclient.HttpDefaultsCustomizer;
 
 import org.junit.Before;
@@ -25,9 +24,11 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class HttpStateContributorTest
-    extends TestSupport
 {
   @Mock
   private HttpDefaultsCustomizer customizer;

@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
@@ -35,13 +34,15 @@ import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
-import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException;
+import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresException;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertThrows;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,8 +55,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RebuildAptMetadataTaskTest
-    extends TestSupport
+
 {
   @Mock
   private RepositoryManager repositoryManager;

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
@@ -31,7 +30,7 @@ import static org.hamcrest.Matchers.nullValue;
  * @since 3.0
  */
 public class MavenPathTest
-    extends TestSupport
+
 {
   private final Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
 

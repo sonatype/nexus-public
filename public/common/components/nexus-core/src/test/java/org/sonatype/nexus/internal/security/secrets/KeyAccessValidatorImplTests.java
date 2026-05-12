@@ -21,7 +21,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
@@ -53,9 +52,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class KeyAccessValidatorImplTests
-    extends TestSupport
 {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -115,7 +116,9 @@ public class KeyAccessValidatorImplTests
     assertEquals(getNodeKey(NODE_A), keyValue.key());
     assertEquals(ValueType.OBJECT, keyValue.type());
     Map<String, Object> storedValue =
-        keyValue.getAsObject(OBJECT_MAPPER, new TypeReference<HashMap<String, Object>>() { });
+        keyValue.getAsObject(OBJECT_MAPPER, new TypeReference<HashMap<String, Object>>()
+        {
+        });
     assertThat(storedValue, hasEntry("keyId", "test-key"));
     assertThat(storedValue, hasEntry("hasAccess", true));
     assertThat(storedValue, hasEntry("timestamp", now.toString()));

@@ -21,13 +21,18 @@ import {when} from 'jest-when';
 import RepositoriesList from './RepositoriesList';
 import UIStrings from '../../../../constants/UIStrings';
 import RepositoriesContextProvider from './RepositoriesContextProvider';
-import {canReadFirewallStatus, canUpdateHealthCheck} from './IQServerColumns/IQServerHelpers';
+import {canReadFirewallStatus, canUpdateHealthCheck, hasFirewall} from './IQServerColumns/IQServerHelpers';
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
     ...jest.requireActual('@sonatype/nexus-ui-plugin'),
     ExtJS: {
-      checkPermission: jest.fn().mockReturnValue(true)
+      checkPermission: jest.fn().mockReturnValue(true),
+      state: jest.fn().mockReturnValue({
+        getValue: jest.fn().mockReturnValue({}),
+        on: jest.fn(),
+        un: jest.fn()
+      })
     },
     Utils: {
       useDebounce: (fun, args) => [() => fun(args), () => {}]
@@ -41,7 +46,8 @@ jest.mock('./IQServerColumns/IQServerHelpers', () => ({
   canUpdateHealthCheck: jest.fn().mockReturnValue(true),
   canReadFirewallStatus: jest.fn().mockReturnValue(true),
   canReadHealthCheckSummary: jest.fn().mockReturnValue(true),
-  canReadHealthCheckDetail: jest.fn().mockReturnValue(true)
+  canReadHealthCheckDetail: jest.fn().mockReturnValue(true),
+  hasFirewall: jest.fn().mockReturnValue(false)
 }));
 
 const mockCopyUrl = jest.fn((event) => event.stopPropagation());
@@ -416,6 +422,23 @@ describe('RepositoriesList', function () {
       );
 
       expect(selectors.healthCheck.columnHeader()).not.toBeInTheDocument();
+    });
+
+    it('does not display health-check column when firewall is enabled', async () => {
+      hasFirewall.mockReturnValue(true);
+
+      const {loadingMask} = render();
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      await waitFor(() =>
+        expect(axios.post).not.toHaveBeenCalledWith(EXT_URL, READ_HEALTH_CHECK_REQUEST)
+      );
+
+      expect(selectors.healthCheck.columnHeader()).not.toBeInTheDocument();
+
+      // Reset for other tests
+      hasFirewall.mockReturnValue(false);
     });
 
     it('displays correct cell content when repository supports or does not support health-check', async () => {

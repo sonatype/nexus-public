@@ -199,3 +199,15 @@ Ext.define('NX.app.Loader', {
     return config;
   }
 });
+
+// Silence NX.app.Loader logging in debug builds to keep console clean.
+// These overrides no-op the LogAware methods for this class only.
+/*if debug*/
+Ext.define('NX.app.LoaderLoggerSilencer', {
+  override: 'NX.app.Loader',
+  logInfo: Ext.emptyFn,
+  logDebug: Ext.emptyFn,
+  logWarn: Ext.emptyFn,
+  logError: Ext.emptyFn
+});
+/*end debug*/

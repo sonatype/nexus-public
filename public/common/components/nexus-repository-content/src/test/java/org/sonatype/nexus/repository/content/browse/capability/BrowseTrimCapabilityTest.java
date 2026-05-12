@@ -14,11 +14,11 @@ package org.sonatype.nexus.repository.content.browse.capability;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
@@ -26,8 +26,8 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.verify;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BrowseTrimCapabilityTest
-    extends TestSupport
 {
   @Mock
   private BrowseTrimService browseTrimService;

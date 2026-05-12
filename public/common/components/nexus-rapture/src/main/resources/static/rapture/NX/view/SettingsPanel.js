@@ -56,7 +56,13 @@ Ext.define('NX.view.SettingsPanel', {
    * @param form The form to add to this settings panel
    */
   addSettingsForm: function(form) {
-    this.down('panel').add(form);
+    if (this.isDestroyed || this.destroying || !this.items) {
+      return;
+    }
+    var panel = this.down('panel');
+    if (panel && !panel.isDestroyed && !panel.destroying) {
+      panel.add(form);
+    }
   },
 
   /**
@@ -65,7 +71,13 @@ Ext.define('NX.view.SettingsPanel', {
    * @override
    */
   removeAllSettingsForms: function() {
-    this.down('panel').removeAll();
+    if (this.isDestroyed || this.destroying || !this.items) {
+      return;
+    }
+    var panel = this.down('panel');
+    if (panel && !panel.isDestroyed && !panel.destroying) {
+      panel.removeAll();
+    }
   },
 
   /**
@@ -76,8 +88,11 @@ Ext.define('NX.view.SettingsPanel', {
    * @param model The model to load
    */
   loadRecord: function(model) {
+    if (this.isDestroyed || this.destroying || !this.items) {
+      return;
+    }
     var settingsForm = this.down('nx-settingsform');
-    if (settingsForm) {
+    if (settingsForm && !settingsForm.isDestroyed && !settingsForm.destroying) {
       settingsForm.loadRecord(model);
     }
   }

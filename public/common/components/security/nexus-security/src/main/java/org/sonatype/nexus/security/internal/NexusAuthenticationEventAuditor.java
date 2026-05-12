@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
 @Singleton
 public class NexusAuthenticationEventAuditor
     extends AuditorSupport
-    implements EventAware.Asynchronous
+    implements EventAware, EventAware.Asynchronous
 {
   private static final String DOMAIN = "security.user";
 

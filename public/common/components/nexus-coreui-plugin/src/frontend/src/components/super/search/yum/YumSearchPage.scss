@@ -1,0 +1,78 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+@import '../core/searchTheme.scss';
+
+.yum-search-page {
+  min-height: 100%;
+  padding: 24px;
+
+  &__container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  &__header {
+    margin-bottom: 24px;
+  }
+
+  &__title {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--search-text-primary, #f3f4f6);
+  }
+
+  &__subtitle {
+    margin: 0;
+    color: var(--search-text-secondary, #9ca3af);
+    font-size: 14px;
+  }
+
+  &__filters {
+    margin-bottom: 24px;
+  }
+
+  &__results {
+    background: var(--search-bg-card, #1f2937);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  &__load-more {
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+    border-top: 1px solid var(--search-border, #374151);
+  }
+
+  &__load-more-btn {
+    padding: 10px 24px;
+    background: var(--search-bg-input, #374151);
+    border: 1px solid var(--search-border, #4b5563);
+    border-radius: 6px;
+    color: var(--search-text-primary, #f3f4f6);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: var(--search-border, #4b5563);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}

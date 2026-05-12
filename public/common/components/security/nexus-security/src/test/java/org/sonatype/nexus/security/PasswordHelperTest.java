@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.security;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.AbstractPhraseService;
 import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
@@ -25,6 +25,8 @@ import com.google.common.base.Throwables;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
@@ -41,8 +43,8 @@ import static org.sonatype.nexus.crypto.PhraseService.LEGACY_PHRASE_SERVICE;
  * 
  * @since 2.8.0
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class PasswordHelperTest
-    extends TestSupport
 {
   private PasswordHelper legacyPasswordHelper;
 
@@ -183,7 +185,7 @@ public class PasswordHelperTest
 
   @Test
   public void testCustomPhraseFile() throws Exception {
-    PhraseService phraseService = new FilePhraseService(util.resolveFile("target/test-classes/custom.enc"));
+    PhraseService phraseService = new FilePhraseService(new File(getClass().getResource("/custom.enc").getFile()));
     PasswordHelper underTest =
         new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl(false)), phraseService);
 
@@ -195,7 +197,11 @@ public class PasswordHelperTest
 
   @Test
   public void testMissingPhraseFile() throws Exception {
-    PhraseService phraseService = new FilePhraseService(util.resolveFile("target/test-classes/missing.enc"));
+    PhraseService phraseService =
+        new FilePhraseService(new File(getClass().getResource("/custom.enc").getFile()).getParentFile()
+            .toPath()
+            .resolve("missing.enc")
+            .toFile());
     PasswordHelper underTest =
         new PasswordHelper(new MavenCipherImpl(new CryptoHelperImpl(false)), phraseService);
 

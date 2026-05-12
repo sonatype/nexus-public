@@ -16,7 +16,6 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
@@ -32,6 +31,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.MISSING_BLOB_SKIP_NEGATIVE_CACHE;
 import static org.sonatype.nexus.repository.replication.PullReplicationSupport.IS_REPLICATION_REQUEST;
@@ -47,9 +48,10 @@ import static org.sonatype.nexus.repository.replication.PullReplicationSupport.I
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class NegativeCacheHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final Set<String> NFC_CACHEABLE_ACTIONS = ImmutableSet.of(HttpMethods.GET, HttpMethods.HEAD);
 
   @Nonnull

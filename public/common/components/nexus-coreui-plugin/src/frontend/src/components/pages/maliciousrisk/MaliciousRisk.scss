@@ -38,6 +38,10 @@
     flex-shrink: 0;
     padding-right: var(--nx-spacing-4x);
     margin-right: var(--nx-spacing-6x);
+
+    &--wide {
+      width: 600px;
+    }
   }
 
   .nxrm-remediation-description {
@@ -69,6 +73,83 @@
     span {
       margin-left: 0;
     }
+  }
+}
+
+.nxrm-scenario-content {
+  margin-top: var(--nx-spacing-4x);
+
+  .nx-alert {
+    margin-bottom: var(--nx-spacing-4x);
+  }
+}
+
+.nxrm-scenario-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-spacing-4x);
+  margin-top: var(--nx-spacing-4x);
+  flex-wrap: wrap;
+}
+
+.nxrm-repo-breakdown {
+  margin: var(--nx-spacing-4x) 0;
+
+  h3 {
+    margin-bottom: var(--nx-spacing-2x);
+  }
+}
+
+.nxrm-repo-breakdown-table {
+  width: 100%;
+
+  .nx-cell--num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.nxrm-incident-response {
+  margin-top: var(--nx-spacing-6x);
+  border-top: 1px solid var(--nx-color-border);
+  padding-top: var(--nx-spacing-4x);
+
+  h3 {
+    margin-bottom: var(--nx-spacing-2x);
+  }
+}
+
+.nxrm-incident-response-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+
+  h3 {
+    margin: 0;
+  }
+
+  &:hover h3 {
+    color: var(--nx-color-text-stark);
+  }
+}
+
+.nxrm-incident-steps-list {
+  padding-left: var(--nx-spacing-6x);
+
+  li {
+    margin-bottom: var(--nx-spacing-3x);
+    line-height: 1.5;
+  }
+}
+
+.nxrm-malware-detected-alert {
+  h3 .fas {
+    margin-right: var(--nx-spacing-2x);
   }
 }
 

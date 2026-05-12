@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeStore;
 import org.sonatype.nexus.repository.content.browse.store.example.TestBrowseNodeDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
@@ -22,7 +21,9 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,8 +36,8 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class ContentStoreBeanDefinitionRegistryPostProcessorSupportTest
-    extends Test5Support
 {
   @Captor
   ArgumentCaptor<BeanDefinition> captor;

@@ -27,8 +27,6 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
 
 import com.google.common.collect.Iterables;
 
-import static org.sonatype.nexus.repository.search.sql.index.SearchTokenizer.stripLeadingSeparators;
-
 /**
  * H2 implementation of fulltext search using LIKE queries instead of PostgreSQL's TSVECTOR.
  *
@@ -111,7 +109,7 @@ public class H2FulltextSearchConditionBuilder
     // use prefix matching (starts-with) instead of contains matching
     if (column.supportsExact() && terms.size() == 1
         && Iterables.getOnlyElement(terms) instanceof WildcardTerm term) {
-      String value = stripLeadingSeparators(term.get());
+      String value = term.get();
       if (value.isBlank()) {
         return Optional.empty();
       }

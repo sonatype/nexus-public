@@ -19,13 +19,14 @@ import java.util.Map.Entry;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -41,9 +42,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class LocalAuthTicketCache
-    extends ComponentSupport
     implements AuthTicketCache
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Mutex lock = new Mutex();
 
   private final Map<UserAuthToken, Long> tokens = Maps.newHashMap();

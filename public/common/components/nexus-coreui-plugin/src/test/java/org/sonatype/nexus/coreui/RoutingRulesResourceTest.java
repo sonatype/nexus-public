@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
@@ -31,6 +30,7 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -40,10 +40,10 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class RoutingRulesResourceTest
-    extends Test5Support
 {
   @InjectMocks
   private RoutingRulesResource underTest;
@@ -73,7 +73,7 @@ class RoutingRulesResourceTest
   void testGetRoutingRules_AssignedRepositories() {
     when(routingRuleStore.list()).thenReturn(List.of(rule1, rule2, rule3));
 
-    Map<EntityId,List<Repository>> ruleRepoMap = new HashMap<>();
+    Map<EntityId, List<Repository>> ruleRepoMap = new HashMap<>();
     ruleRepoMap.put(new DetachedEntityId("rule1"), List.of(repository1));
     ruleRepoMap.put(new DetachedEntityId("rule2"), List.of(repository2));
     ruleRepoMap.put(new DetachedEntityId("rule3"), List.of(repository3));
@@ -101,7 +101,7 @@ class RoutingRulesResourceTest
   void testGetRoutingRules_NoAssignedRepositories() {
     when(routingRuleStore.list()).thenReturn(List.of(rule1, rule2, rule3));
 
-    Map<EntityId,List<Repository>> ruleRepoMap = new HashMap<>();
+    Map<EntityId, List<Repository>> ruleRepoMap = new HashMap<>();
     ruleRepoMap.put(new DetachedEntityId("rule1"), List.of());
     ruleRepoMap.put(new DetachedEntityId("rule2"), List.of());
     ruleRepoMap.put(new DetachedEntityId("rule3"), List.of());
@@ -120,7 +120,7 @@ class RoutingRulesResourceTest
   void testGetRoutingRules_AssignedRepositoriesHiddenByPerms() {
     when(routingRuleStore.list()).thenReturn(List.of(rule1, rule2, rule3));
 
-    Map<EntityId,List<Repository>> ruleRepoMap = new HashMap<>();
+    Map<EntityId, List<Repository>> ruleRepoMap = new HashMap<>();
     ruleRepoMap.put(new DetachedEntityId("rule1"), List.of(repository1));
     ruleRepoMap.put(new DetachedEntityId("rule2"), List.of(repository2));
     ruleRepoMap.put(new DetachedEntityId("rule3"), List.of(repository3));
@@ -148,7 +148,7 @@ class RoutingRulesResourceTest
   void testGetRoutingRules_AssignedRepositoriesMultipleHiddenByPerms() {
     when(routingRuleStore.list()).thenReturn(List.of(rule1, rule2, rule3));
 
-    Map<EntityId,List<Repository>> ruleRepoMap = new HashMap<>();
+    Map<EntityId, List<Repository>> ruleRepoMap = new HashMap<>();
     ruleRepoMap.put(new DetachedEntityId("rule1"), List.of(repository1, repository2, repository3));
     ruleRepoMap.put(new DetachedEntityId("rule2"), List.of());
     ruleRepoMap.put(new DetachedEntityId("rule3"), List.of());

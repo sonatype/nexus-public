@@ -38,8 +38,8 @@ module.exports = {
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
   collectCoverageFrom: [
-    'src/**/*.{js,jsx}',
-    '!src/**/*.test.{js,jsx}',
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.test.{js,jsx,ts,tsx}',
     '!src/**/__tests__/**',
     '!src/__jest__/**',
     '!src/**/__mocks__/**'
@@ -49,7 +49,14 @@ module.exports = {
   coverageDirectory: '../../target/js-coverage',
 
   // An array of regexp pattern strings used to skip coverage collection
-  coveragePathIgnorePatterns: ['/node_modules/'],
+  // ExtJS files are excluded - they will be deleted during migration
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    'interface/ExtJS.js',
+    '/ExtJS/',
+    '\\.extjs\\.',
+    'extjsUtils'
+  ],
 
   // A list of reporter names that Jest uses when writing coverage reports
   coverageReporters: [
@@ -60,7 +67,17 @@ module.exports = {
   ],
 
   // An object that configures minimum threshold enforcement for coverage results
-  // coverageThreshold: null,
+  // Phase 0: Coverage enforcement to prevent regressions during ExtJS migration
+  // NOTE: Per-directory thresholds removed temporarily - glob patterns not matching properly
+  coverageThreshold: {
+    global: {
+      // Thresholds adjusted after removing 306 dead subagent files from preview/settings/
+      branches: 55,
+      functions: 55,
+      lines: 55,
+      statements: 55
+    }
+  },
 
   // A path to a custom dependency extractor
   // dependencyExtractor: null,
@@ -88,16 +105,14 @@ module.exports = {
   // An array of file extensions your modules use
   moduleFileExtensions: [
     'js',
-    //   "json",
-    'jsx'
-    //   "ts",
-    //   "tsx",
-    //   "node"
+    'jsx',
+    'ts',
+    'tsx'
   ],
 
   // A map from regular expressions to module names that allow to stub out resources with a single module
   moduleNameMapper: {
-    '\\.scss$': '<rootDir>/__jest__/styleMock.js',
+    '\\.(scss|css)$': '<rootDir>/__jest__/styleMock.js',
     '\\.(png|svg)$': '<rootDir>/__jest__/imgMock.js'
   },
 

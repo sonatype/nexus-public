@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.config;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.junit.Test;
@@ -22,14 +21,16 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests validity of Repository "foo"s validated by {@link UniqueRepositoryNameValidator}
  *
  * @since 3.0
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UniqueRepositoryNameValidatorTest
-    extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;

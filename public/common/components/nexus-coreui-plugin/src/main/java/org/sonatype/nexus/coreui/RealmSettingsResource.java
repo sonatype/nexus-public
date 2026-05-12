@@ -21,13 +21,14 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.realm.SecurityRealm;
 import org.sonatype.nexus.security.user.UserManager;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -51,9 +52,10 @@ import org.springframework.stereotype.Component;
 @Produces(APPLICATION_JSON)
 @Path(RealmSettingsResource.RESOURCE_PATH)
 public class RealmSettingsResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String RESOURCE_PATH = "internal/ui/realms";
 
   private final RealmManager realmManager;

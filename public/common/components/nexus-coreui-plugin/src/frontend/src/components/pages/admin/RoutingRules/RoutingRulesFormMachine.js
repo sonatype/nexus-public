@@ -32,7 +32,8 @@ export default FormUtils.buildFormMachine({
     context: {
       ...config.context,
       path: '',
-      testResult: null
+      testResult: null,
+      showDeleteModal: false
     },
 
     states: {
@@ -71,8 +72,15 @@ export default FormUtils.buildFormMachine({
             target: 'loaded',
             actions: ['updatePath', 'clearTestResult']
           },
+          CONFIRM_DELETE: {
+            actions: assign({showDeleteModal: true})
+          },
+          HIDE_DELETE_MODAL: {
+            actions: assign({showDeleteModal: false})
+          },
           DELETE: {
-            target: 'confirmDelete'
+            target: 'delete',
+            actions: assign({showDeleteModal: false})
           }
         }
       },
@@ -176,12 +184,6 @@ export default FormUtils.buildFormMachine({
       }
       return Axios.post(url(''), data);
     },
-    confirmDelete: ({pristineData}) => ExtJS.requestConfirmation({
-      title: UIStrings.ROUTING_RULES.MESSAGES.CONFIRM_DELETE.TITLE,
-      message: UIStrings.ROUTING_RULES.MESSAGES.CONFIRM_DELETE.MESSAGE(pristineData.name),
-      yesButtonText: UIStrings.ROUTING_RULES.MESSAGES.CONFIRM_DELETE.YES,
-      noButtonText: UIStrings.ROUTING_RULES.MESSAGES.CONFIRM_DELETE.NO
-    }),
     delete: ({pristineData}) => Axios.delete(url(pristineData.name)),
     test: ({data, path}) => Axios.post(`/service/rest/internal/ui/routing-rules/test`, {
       mode: data.mode,

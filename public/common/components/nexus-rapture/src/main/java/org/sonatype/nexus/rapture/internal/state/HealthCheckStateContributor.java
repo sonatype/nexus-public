@@ -19,13 +19,14 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.systemchecks.NodeSystemCheckResult;
 import org.sonatype.nexus.systemchecks.SystemCheckService;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -38,9 +39,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class HealthCheckStateContributor
-    extends ComponentSupport
     implements StateContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @VisibleForTesting
   protected static final String HC_FAILED_KEY = "health_checks_failed";
 

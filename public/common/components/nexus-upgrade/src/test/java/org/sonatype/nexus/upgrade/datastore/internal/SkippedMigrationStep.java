@@ -16,8 +16,9 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Skipped test migration step
@@ -25,9 +26,10 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
  * @since 3.41
  */
 public class SkippedMigrationStep
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public Optional<String> version() {
     return Optional.of("2.0");

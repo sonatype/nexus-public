@@ -12,16 +12,16 @@
  */
 package org.sonatype.nexus.security.role;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link Role}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RoleTest
-    extends TestSupport
 {
   @Test
   public void testCompareDifferentId() throws Exception {

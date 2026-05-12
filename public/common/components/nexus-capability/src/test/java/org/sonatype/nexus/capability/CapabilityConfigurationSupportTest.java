@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.capability;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
@@ -28,12 +27,14 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link CapabilityConfigurationSupport#decryptSecret}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CapabilityConfigurationSupportTest
-    extends TestSupport
 {
   @Mock
   private SecretsService secretsService;

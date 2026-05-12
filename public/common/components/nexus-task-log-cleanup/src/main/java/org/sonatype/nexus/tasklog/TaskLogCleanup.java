@@ -22,12 +22,13 @@ import java.util.Iterator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.logging.task.TaskLogHome;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.filefilter.AgeFileFilter;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.io.FileUtils.forceDelete;
@@ -42,8 +43,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class TaskLogCleanup
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Integer numberOfDays;
 
   private String taskLogHome;

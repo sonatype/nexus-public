@@ -20,8 +20,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.internal.security.apikey.ApiKeyInternal;
@@ -38,7 +36,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.assertj.db.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -51,9 +48,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-@Category(SQLTestGroup.class)
 public class ApiKeyDAOTest
-    extends TestSupport
 {
   private static final String DOMAIN = "domain";
 

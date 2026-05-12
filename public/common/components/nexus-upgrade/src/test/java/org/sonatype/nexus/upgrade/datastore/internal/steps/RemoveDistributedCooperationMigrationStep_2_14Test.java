@@ -14,16 +14,16 @@ package org.sonatype.nexus.upgrade.datastore.internal.steps;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.mockito.Mockito.verifyNoInteractions;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RemoveDistributedCooperationMigrationStep_2_14Test
-    extends TestSupport
 {
   @Mock
   private Connection connection;

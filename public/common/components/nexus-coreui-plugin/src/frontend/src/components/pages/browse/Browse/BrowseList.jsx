@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import {ExtJS, ListMachineUtils, copyToClipboard} from '@sonatype/nexus-ui-plugin';
 import {
@@ -31,7 +31,8 @@ import {
 import {
   isIqServerEnabled,
   canReadFirewallStatus,
-  canUpdateHealthCheck
+  canUpdateHealthCheck,
+  hasFirewall
 } from '../../admin/Repositories/IQServerColumns/IQServerHelpers';
 
 import HealthCheckCell from '../../admin/Repositories/IQServerColumns/HealthCheckCell';
@@ -55,9 +56,29 @@ const {
 
 export default function BrowseList({onEdit, copyUrl = doCopyUrl}) {
   const [state, send] = useRepositoriesService();
+  // clmState exists solely to trigger re-renders when IQ/Firewall config changes.
+  // The actual state value is not used directly; we call helper functions instead.
+  const [clmState, setClmState] = useState(ExtJS.state().getValue('clm', {}));
 
   useEffect(() => {
     send({type: 'LOAD'});
+  }, []);
+
+  // Listen for clm state changes to re-render when IQ/Firewall config changes
+  useEffect(() => {
+    const state = ExtJS.state();
+    // Only set up listeners if ExtJS.state() supports events (not in test environment)
+    if (state && typeof state.on === 'function') {
+      const handleClmChange = () => {
+        setClmState(state.getValue('clm', {}));
+      };
+
+      state.on('clmchanged', handleClmChange);
+
+      return () => {
+        state.un('clmchanged', handleClmChange);
+      };
+    }
   }, []);
 
   const {data, error, filter: filterText} = state.context;
@@ -74,7 +95,11 @@ export default function BrowseList({onEdit, copyUrl = doCopyUrl}) {
 
   const filter = (value) => send({type: 'FILTER', filter: value});
 
-  const showHealthCheckColumn = canUpdateHealthCheck();
+  // Show Health Check column only if user has permission AND NOT (IQ enabled AND Firewall enabled)
+  // Health Check should show when: IQ is disabled OR IQ doesn't have Firewall
+  // clmState is used to trigger re-renders when IQ/Firewall config changes via 'clmchanged' event
+  // We call helper functions directly for the logic (so tests work with mocked helpers)
+  const showHealthCheckColumn = canUpdateHealthCheck() && !(isIqServerEnabled() && hasFirewall());
   const showIqPolicyViolationsColumn = isIqServerEnabled() && canReadFirewallStatus();
 
   return <div className="nxrm-browse">

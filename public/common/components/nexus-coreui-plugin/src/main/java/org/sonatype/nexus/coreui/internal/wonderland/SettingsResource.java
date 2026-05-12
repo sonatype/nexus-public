@@ -19,11 +19,12 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.rest.Resource;
 
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
@@ -38,9 +39,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Path(SettingsResource.RESOURCE_URI)
 public class SettingsResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = "/wonderland/settings";
 
   @GET

@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -45,7 +44,6 @@ import static org.mockito.Mockito.verify;
  * {@link DataStoreSupport} tests.
  */
 public class DataStoreSupportTest
-    extends TestSupport
 {
   @Rule
   public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();

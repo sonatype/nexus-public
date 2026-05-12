@@ -30,6 +30,22 @@ const XSS_STRING = TestUtils.XSS_STRING;
 const {TASKS: {FORM: LABELS, SUMMARY}, SETTINGS} = UIStrings;
 const {EXT: {TASK: {ACTION, METHODS}, URL: EXT_URL}} = APIConstants;
 
+// Mock the REST API from @/utils/api
+const mockRestClientPost = jest.fn();
+jest.mock('@/utils/api', () => ({
+  restClient: {
+    get: jest.fn(),
+    post: function() { return mockRestClientPost.apply(null, arguments); },
+    put: jest.fn(),
+    delete: jest.fn(),
+  },
+  parseApiError: jest.fn((err) => ({
+    message: err.message || 'Error',
+    status: err.status,
+  })),
+}));
+
+// Mock the UI plugin from @sonatype/nexus-ui-plugin
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
@@ -310,7 +326,7 @@ describe('TasksDetails', function() {
   it('requests confirmation when run task is requested', async function() {
     const {summary: {runButton}} = selectors;
 
-    when(Axios.post).calledWith(runTaskUrl(testId)).mockResolvedValue({});
+    mockRestClientPost.mockResolvedValue({});
 
     await renderAndWaitForLoad(testId);
 
@@ -318,7 +334,7 @@ describe('TasksDetails', function() {
     userEvent.click(runButton());
 
     await waitFor(() => {
-      expect(Axios.post).toHaveBeenLastCalledWith('service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/run');
+      expect(mockRestClientPost).toHaveBeenLastCalledWith('service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/run');
     });
 
     expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(expect.stringContaining('Task started'));
@@ -328,7 +344,7 @@ describe('TasksDetails', function() {
     const {summary: {stopButton}} = selectors;
 
     mockTasksResponse([{...TASK, runnable: false, stoppable: true}]);
-    when(Axios.post).calledWith(stopTaskUrl(testId)).mockResolvedValue({});
+    mockRestClientPost.mockResolvedValue({});
 
     await renderAndWaitForLoad(testId);
 
@@ -337,7 +353,7 @@ describe('TasksDetails', function() {
 
     userEvent.click(stopButton());
     await waitFor(() => {
-      expect(Axios.post).toHaveBeenLastCalledWith('service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/stop');
+      expect(mockRestClientPost).toHaveBeenLastCalledWith('service/rest/v1/tasks/d3275dbe-c784-47f1-8ea2-338088f7ceab/stop');
     });
 
     expect(ExtJS.showSuccessMessage).toHaveBeenCalledWith(expect.stringContaining('Task stopped'));

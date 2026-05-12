@@ -19,11 +19,12 @@ import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -39,8 +40,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AssetBlobRefFormatCheck
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, FormatStoreManager> formatStoreManagers;
 
   @Inject

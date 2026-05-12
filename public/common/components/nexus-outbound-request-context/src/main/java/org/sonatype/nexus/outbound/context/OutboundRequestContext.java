@@ -32,6 +32,10 @@ public class OutboundRequestContext
 
   public static final String FORMATTED_STRING = "request.formatted_string";
 
+  public static final String TIMESTAMP_PLACEHOLDER = "__TIMESTAMP__";
+
+  public static final String ELAPSED_TIME_PLACEHOLDER = "__ELAPSED_TIME__";
+
   public static void remove() {
     CONTEXT.remove();
   }

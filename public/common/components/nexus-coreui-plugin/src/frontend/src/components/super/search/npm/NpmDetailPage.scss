@@ -1,0 +1,180 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.npm-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--nx-spacing-4x, 16px);
+
+  &--loading,
+  &--error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: var(--nx-spacing-3x, 12px);
+  }
+
+  &__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--nx-color-border, #e0e0e0);
+    border-top-color: var(--nx-color-primary-button-background, #0066cc);
+    border-radius: 50%;
+    animation: npm-detail-spin 0.8s linear infinite;
+  }
+
+  &__error {
+    color: var(--nx-color-error-text, #c00);
+  }
+
+  &__header {
+    margin-bottom: var(--nx-spacing-6x, 24px);
+  }
+
+  &__back-btn {
+    background: none;
+    border: none;
+    color: var(--nx-color-primary-button-background, #0066cc);
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.875rem;
+    margin-bottom: var(--nx-spacing-2x, 8px);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__title {
+    margin: 0 0 var(--nx-spacing-2x, 8px) 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--nx-color-text-dark, #333);
+    font-family: var(--nx-font-family-monospace, monospace);
+  }
+
+  &__description {
+    margin: 0;
+    color: var(--nx-color-text-dark, #666);
+    font-size: 1rem;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nx-spacing-6x, 24px);
+  }
+
+  &__section {
+    background-color: var(--nx-color-component-background, #fff);
+    border: 1px solid var(--nx-color-border, #e0e0e0);
+    border-radius: var(--nx-border-radius, 4px);
+    padding: var(--nx-spacing-4x, 16px);
+  }
+
+  &__section-title {
+    margin: 0 0 var(--nx-spacing-3x, 12px) 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--nx-color-text-dark, #333);
+  }
+
+  &__metadata {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: var(--nx-spacing-2x, 8px);
+    margin: 0;
+
+    dt {
+      font-weight: 500;
+      color: var(--nx-color-text-dark, #666);
+    }
+
+    dd {
+      margin: 0;
+      color: var(--nx-color-text-dark, #333);
+
+      a {
+        color: var(--nx-color-primary-button-background, #0066cc);
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  &__keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--nx-spacing-1x, 4px);
+  }
+
+  &__keyword {
+    background-color: var(--nx-color-component-background-hover, #f0f0f0);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8125rem;
+  }
+
+  &__versions-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      text-align: left;
+      padding: var(--nx-spacing-2x, 8px) var(--nx-spacing-3x, 12px);
+      border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+    }
+
+    th {
+      font-weight: 600;
+      background-color: var(--nx-color-component-background-hover, #f5f5f5);
+    }
+  }
+
+  &__version-cell {
+    font-family: var(--nx-font-family-monospace, monospace);
+    font-weight: 500;
+  }
+
+  &__tag {
+    display: inline-block;
+    background-color: var(--nx-color-primary-button-background, #0066cc);
+    color: var(--nx-color-primary-button-text, #fff);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    margin-right: 4px;
+  }
+
+  &__repos-list {
+    margin: 0;
+    padding-left: var(--nx-spacing-4x, 16px);
+
+    li {
+      padding: var(--nx-spacing-1x, 4px) 0;
+    }
+  }
+}
+
+@keyframes npm-detail-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

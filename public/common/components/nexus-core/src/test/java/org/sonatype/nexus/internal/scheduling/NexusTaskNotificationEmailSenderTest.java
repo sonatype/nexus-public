@@ -20,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import com.google.common.collect.ImmutableMap;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -34,12 +33,14 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests {@link NexusTaskNotificationEmailSender}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NexusTaskNotificationEmailSenderTest
-    extends TestSupport
 {
 
   @Mock

@@ -16,11 +16,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.jexl3.JexlException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -37,8 +38,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class SelectorFactory
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final JexlEngine jexlEngine = new JexlEngine();
 
   private final ConstraintViolationFactory constraintViolationFactory;

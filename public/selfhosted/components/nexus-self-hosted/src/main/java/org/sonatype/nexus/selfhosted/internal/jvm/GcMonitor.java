@@ -23,20 +23,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Monitors garbage collection activity and logs warnings when GC pauses exceed configured thresholds.
  */
 @Component
 public class GcMonitor
-    extends ComponentSupport
     implements JvmMonitor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String SYSTEM_MARKER = "*SYSTEM";
 
   private final long gcInfoThresholdMs;

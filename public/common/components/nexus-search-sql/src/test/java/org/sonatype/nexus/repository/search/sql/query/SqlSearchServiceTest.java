@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.security.AssetPermissionChecker;
 import org.sonatype.nexus.repository.content.store.AssetData;
@@ -44,6 +43,8 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,8 +65,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class SqlSearchServiceTest
-    extends Test5Support
 {
   private static final String FORMAT = "maven2";
 

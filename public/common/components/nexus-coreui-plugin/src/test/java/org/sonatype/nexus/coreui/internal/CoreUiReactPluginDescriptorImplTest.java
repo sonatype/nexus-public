@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui.internal;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.ui.UiUtil;
 
 import org.junit.Before;
@@ -26,12 +25,14 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link CoreUiReactPluginDescriptorImpl}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CoreUiReactPluginDescriptorImplTest
-    extends TestSupport
 {
   @Mock
   private UiUtil uiUtil;

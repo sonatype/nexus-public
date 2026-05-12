@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.proxy;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.view.Context;
@@ -21,7 +20,9 @@ import org.sonatype.nexus.repository.view.Response;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -31,8 +32,9 @@ import static org.mockito.Mockito.when;
 /**
  * Test for {@link AptDistributionValidationHandler}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AptDistributionValidationHandlerTest
-    extends TestSupport
+
 {
   @Mock
   private Context context;

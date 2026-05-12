@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.collect;
 
 import java.util.HashMap;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,7 +28,7 @@ import static org.sonatype.nexus.common.collect.NestedAttributesMap.SEPARATOR;
  * Tests for {@link org.sonatype.nexus.common.collect.NestedAttributesMap}.
  */
 public class NestedAttributesMapTest
-    extends TestSupport
+
 {
   private NestedAttributesMap underTest;
 

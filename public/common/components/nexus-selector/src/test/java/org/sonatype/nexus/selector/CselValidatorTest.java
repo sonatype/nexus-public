@@ -17,8 +17,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.jexl3.JexlException;
@@ -28,7 +26,6 @@ import static com.google.common.collect.Streams.stream;
 import static org.sonatype.nexus.selector.CselValidator.validateCselExpression;
 
 public class CselValidatorTest
-    extends TestSupport
 {
   public static final String BASEDIR = new File(System.getProperty("basedir", "")).getAbsolutePath();
 

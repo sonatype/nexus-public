@@ -18,8 +18,6 @@ import java.net.MalformedURLException;
 
 import jakarta.inject.Named;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,7 +29,7 @@ import static org.junit.Assert.fail;
  * Test {@link Operations} builder methods.
  */
 public class OperationsBuilderTest
-    extends TestSupport
+
 {
   private interface SampleAnnotations
   {

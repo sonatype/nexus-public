@@ -1,0 +1,77 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.security-popover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--gray-6);
+
+  &--firewall {
+    border-left: 3px solid var(--orange-8);
+  }
+
+  &__policy-summary {
+    background: var(--gray-2);
+    border-radius: var(--radius-2);
+    border: 1px dashed var(--gray-6);
+  }
+
+  &__metric {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-2);
+    background: var(--gray-2);
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+
+    &--red { background: var(--red-9); }
+    &--orange { background: var(--orange-9); }
+    &--yellow { background: var(--yellow-9); }
+  }
+
+  &__quarantine-alert {
+    background: var(--orange-2);
+    color: var(--orange-11);
+    border-radius: var(--radius-2);
+    border: 1px solid var(--orange-4);
+
+    &--badge {
+      border-left: 3px solid var(--orange-8);
+      font-weight: 600;
+    }
+  }
+
+  &__action {
+    width: 100%;
+    justify-content: flex-start;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  &__status--safe {
+    background: var(--green-2);
+    border-radius: var(--radius-2);
+    border: 1px solid var(--green-4);
+  }
+}
+
+:root[data-theme="dark"] {
+  .security-popover {
+    &__metric { background: var(--gray-3); }
+    &__status--safe { background: var(--green-3); }
+    &__quarantine-alert { background: var(--orange-3); }
+  }
+}

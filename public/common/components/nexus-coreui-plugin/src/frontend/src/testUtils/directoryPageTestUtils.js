@@ -52,11 +52,9 @@ export async function runLinkNotVisibleTest(routeName, heading, expectedMenu) {
 export async function runDirectoryPage404Test(routeName) {
   await renderComponentRoute(routeName);
 
-  const main = await screen.getByRole('main');
-
-  // Should show 404 page
-  expect(within(main).getByRole('heading', { name: '404' })).toBeVisible();
-  expect(within(main).getByRole('heading', { name: 'RESOURCE NOT FOUND' })).toBeVisible();
+  // MissingRoutePage (Preview): no <main>; 404 code is plain text, title is h1
+  expect(screen.getByText('404')).toBeVisible();
+  expect(screen.getByRole('heading', { name: /resource not found/i })).toBeVisible();
 }
 
 async function assertPageRendered(heading) {

@@ -42,6 +42,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import {faPlus, faTrash} from '@fortawesome/free-solid-svg-icons';
 import RoutingRulesPreview from './RoutingRulesFormPreview';
 import RoutingRuleMatcherRow from './RoutingRuleMatcherRow';
+import { DeleteConfirmationModal } from '../../../shared/modals/DeleteConfirmationModal';
 import { isEmpty } from 'ramda';
 
 import './RoutingRules.scss';
@@ -72,7 +73,7 @@ export default function RoutingRulesForm() {
     devTools: true
   });
 
-  const {data, path, testError, testResult} = current.context;
+  const {data, path, testError, testResult, showDeleteModal} = current.context;
   const isTesting = current.matches('testing');
   const hasData = data && !isEmpty(data);
   const assignedRepositoryCount = data?.assignedRepositoryCount || 0;
@@ -102,7 +103,7 @@ export default function RoutingRulesForm() {
 
   function remove(e) {
     if (!e.currentTarget.classList.contains('disabled')) {
-      send({type: 'DELETE'});
+      send({type: 'CONFIRM_DELETE'});
     }
   }
 
@@ -194,5 +195,13 @@ export default function RoutingRulesForm() {
         </NxLoadWrapper>
       </Section>
     </ContentBody>
+
+    <DeleteConfirmationModal
+      open={showDeleteModal}
+      onClose={() => send('HIDE_DELETE_MODAL')}
+      onConfirm={() => send('DELETE')}
+      entityType="routing rule"
+      loading={current.matches('delete')}
+    />
   </Page>;
 }

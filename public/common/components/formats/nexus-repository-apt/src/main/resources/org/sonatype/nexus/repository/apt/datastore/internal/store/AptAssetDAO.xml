@@ -20,7 +20,7 @@
     Browses Package index metadata assets for a given repository and distribution.
     Returns all assets with paths matching /dists/{distribution}/main/binary-% that have no component_id.
   -->
-  <select id="browsePackageIndexAssets" resultType="AssetData">
+  <select id="browsePackageIndexAssets" resultMap="assetResult">
     SELECT * FROM apt_asset
     WHERE repository_id = #{repositoryId}
       AND path LIKE #{pathPattern}

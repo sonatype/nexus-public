@@ -18,9 +18,10 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -31,8 +32,9 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Component
 public class PasswordHelper
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String ENC = "CMMDwoV";
 
   private final MavenCipher mavenCipher;

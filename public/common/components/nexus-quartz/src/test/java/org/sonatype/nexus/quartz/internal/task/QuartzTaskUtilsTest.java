@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.quartz.internal.task;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
 import com.google.common.collect.ImmutableMap;
@@ -27,9 +26,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.scheduling.TaskConfiguration.REMOVE_ATTRIBUTE_MARKER;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class QuartzTaskUtilsTest
-    extends TestSupport
 {
   public static final String FOO_KEY = "foo";
 

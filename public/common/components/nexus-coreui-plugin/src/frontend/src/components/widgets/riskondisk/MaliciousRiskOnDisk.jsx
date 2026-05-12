@@ -55,9 +55,12 @@ const EXTJS_COLLAPSED_HEIGHT = 115;
 
 export default function MaliciousRiskOnDisk({ toggle, onSizeChanged, className }) {
   const isRiskOnDiskEnabled = ExtJS.state().getValue(MALWARE_RISK_ENABLED);
+  const malwareData = ExtJS.useState(() => ExtJS.state().getValue('nexus.malware.count'));
+  const testOverride = parseInt(localStorage.getItem('SONATYPE_TEST_MALWARE_BANNER') || '0', 10) || 0;
+  const malwareCount = testOverride || (malwareData?.totalCount ?? 0);
   const user = ExtJS.useUser();
   const userIsLogged = user ?? false;
-  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;
+  const showMaliciousRiskOnDisk = userIsLogged && (isRiskOnDiskEnabled || malwareCount > 0);
 
   const isRiskOnDiskNoneAdminOverrideEnabled = ExtJS.state().getValue(MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED);
   const isAdmin = user && user.administrator;
@@ -71,7 +74,7 @@ export default function MaliciousRiskOnDisk({ toggle, onSizeChanged, className }
     return null;
   }
 
-  return <MaliciousRiskOnDiskContent user={user} toggle={toggle} onSizeChanged={onSizeChanged}  />;
+  return <MaliciousRiskOnDiskContent user={user} toggle={toggle} onSizeChanged={onSizeChanged} />;
 }
 
 function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
@@ -87,7 +90,7 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
   const [state, send] = useMachine(MaliciousRiskOnDiskMachine, {
     devTools: true
   });
-  const maliciousRiskOnDisk = ExtJS.state().getValue('nexus.malware.count');
+  const maliciousRiskOnDisk = ExtJS.useState(() => ExtJS.state().getValue('nexus.malware.count'));
   const closeMalwareBanner = state.matches('close');
   const user = ExtJS.useUser();
 
@@ -99,7 +102,9 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
 
   const isWelcomePage = !window.location.hash || isPageHashIncluding(['#browse/welcome']);
 
-  const riskOnDiskCount = maliciousRiskOnDisk?.totalCount ?? 0;
+  const testOverrideContent = parseInt(localStorage.getItem('SONATYPE_TEST_MALWARE_BANNER') || '0', 10) || 0;
+  const riskOnDiskCount = testOverrideContent || (maliciousRiskOnDisk?.totalCount ?? 0);
+  // Show banner if malware count > 0 (and not dismissed)
   const showWarningAlert = riskOnDiskCount > 0 && !closeMalwareBanner;
   const throttlingStatus = useThrottlingStatus();
 
@@ -156,9 +161,7 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
                 }
               </NxGrid.Column>
               {isAdmin && <NxButtonBar>
-                <MalwareButton isProEdition={isProEdition}
-                               isMalwareRiskEnabled={isMalwareRiskEnabled}
-                               isIqServerEnabled={isIqServerEnabled}/>
+                <MalwareButton />
               </NxButtonBar>}
             </>
         )}
@@ -199,16 +202,8 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
   }
 }
 
-function MalwareButton({isProEdition, isMalwareRiskEnabled, isIqServerEnabled}) {
-  if (isProEdition && isMalwareRiskEnabled && isIqServerEnabled) {
-    return <a className="nx-btn nx-btn--error" href="#browse/malwarerisk">{VIEW_MALWARE_RISK}</a>;
-  }
-  else if (isProEdition) {
-    return <a className="nx-btn nx-btn--error" href={CONTACT_SONATYPE.URL.PRO}
-              target="_blank">{CONTACT_SONATYPE.TEXT}</a>;
-  }
-  else {
-    return <a className="nx-btn nx-btn--error" href={CONTACT_SONATYPE.URL.OSS}
-              target="_blank">{CONTACT_SONATYPE.TEXT}</a>;
-  }
+function MalwareButton() {
+  const isPreview = typeof window !== 'undefined' && window.location.hash.startsWith('#preview');
+  const href = isPreview ? '#preview/browse/malwarerisk' : '#browse/malwarerisk';
+  return <a className="nx-btn nx-btn--error" href={href}>{VIEW_MALWARE_RISK}</a>;
 }

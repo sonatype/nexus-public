@@ -19,7 +19,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Selector;
@@ -29,7 +28,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
 import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.scheduling.ExternalTaskState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -45,8 +43,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.is;
@@ -66,9 +65,9 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 /**
  * Tests for {@link QueuingUpgradeTaskScheduler}
  */
-@Category(SQLTestGroup.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class QueuingUpgradeTaskSchedulerTest
-    extends TestSupport
+
 {
   private static final Duration ONE_SECOND = Duration.ofSeconds(1);
 

@@ -17,7 +17,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.script.ScriptCleanupHandler;
 import org.sonatype.nexus.internal.script.ScriptServiceImpl;
 import org.sonatype.nexus.internal.script.ScriptTask;

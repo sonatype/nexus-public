@@ -16,9 +16,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Support for {@link ApplicationVersion} implementations.
@@ -26,9 +26,10 @@ import com.google.common.annotations.VisibleForTesting;
  * @since 3.0
  */
 public abstract class ApplicationVersionSupport
-    extends ComponentSupport
     implements ApplicationVersion
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String UNKNOWN = "UNKNOWN";
 
   @VisibleForTesting

@@ -16,7 +16,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
@@ -25,6 +24,8 @@ import jakarta.inject.Inject;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -34,9 +35,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ScheduleS3CompactTasksMigrationStep
-    extends ComponentSupport
     implements RepeatableDatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String TABLE = "blob_store_configuration";
 
   private static final String SELECT_COUNT = """

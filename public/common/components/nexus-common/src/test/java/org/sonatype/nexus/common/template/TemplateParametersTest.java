@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.template;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.collect.Maps;
 import org.junit.Test;
 
@@ -27,12 +25,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Tests for {@link TemplateParameters}
  */
 public class TemplateParametersTest
-    extends TestSupport
 {
   @Test
   public void empty() {
     Map<String, Object> params = new TemplateParameters().get();
-    log(params);
 
     assertNotNull(params);
     assertThat(params.size(), is(0));
@@ -44,7 +40,6 @@ public class TemplateParametersTest
         .set("a", "1")
         .set("b", 2)
         .get();
-    log(params);
 
     assertNotNull(params);
     assertThat(params.size(), is(2));
@@ -61,7 +56,6 @@ public class TemplateParametersTest
     Map<String, Object> params = new TemplateParameters()
         .setAll(other)
         .get();
-    log(params);
 
     assertNotNull(params);
     assertThat(params.size(), is(2));

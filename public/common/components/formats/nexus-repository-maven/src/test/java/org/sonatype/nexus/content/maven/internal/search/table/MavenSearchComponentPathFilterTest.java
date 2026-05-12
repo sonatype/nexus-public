@@ -14,8 +14,6 @@ package org.sonatype.nexus.content.maven.internal.search.table;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,7 +22,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class MavenSearchComponentPathFilterTest
-    extends TestSupport
+
 {
   private MavenSearchComponentPathFilter underTest;
 

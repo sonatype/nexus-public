@@ -20,13 +20,14 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorFilterBuilder;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
@@ -34,9 +35,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class SelectorFilterBuilderImpl
-    extends ComponentSupport
     implements SelectorFilterBuilder
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static String FILTER_PARAMS = "filterParams";
 
   private final SelectorManager selectorManager;

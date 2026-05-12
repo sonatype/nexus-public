@@ -24,7 +24,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTask;
@@ -33,6 +32,8 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -44,9 +45,10 @@ import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEA
  * {@link SearchUpdateTask} will check for the marked repositories and re-index them.
  */
 public abstract class SearchIndexUpgrade
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String SELECT_REPOSITORIES = "select id, name, recipe_name from repository";
 
   private static final String SELECT_REPOSITORY_ATTRIBUTES =

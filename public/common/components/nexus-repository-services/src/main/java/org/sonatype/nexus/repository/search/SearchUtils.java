@@ -25,15 +25,17 @@ import jakarta.inject.Singleton;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
+import org.sonatype.nexus.repository.search.query.SearchFilter.FilterOperator;
 
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -46,8 +48,9 @@ import static java.util.stream.StreamSupport.stream;
 @Component
 @Singleton
 public class SearchUtils
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String CONTINUATION_TOKEN = "continuationToken";
 
   public static final String SORT_FIELD = "sort";
@@ -125,12 +128,16 @@ public class SearchUtils
         .entrySet()
         .stream()
         .filter(entry -> !keys.contains(entry.getKey()))
-        .flatMap(entry -> entry.getValue()
-            .stream()
-            .map(value -> {
-              String key = searchParams.getOrDefault(entry.getKey(), entry.getKey());
-              return new SearchFilter(key, value);
-            }))
+        .flatMap(entry -> {
+          String key = searchParams.getOrDefault(entry.getKey(), entry.getKey());
+          List<String> values = entry.getValue();
+          // When multiple format values (e.g. format=maven2&format=npm), use OR so we match ANY format
+          boolean useOr = "format".equals(key) && values.size() > 1;
+          return values.stream()
+              .map(value -> useOr
+                  ? new SearchFilter(key, value, FilterOperator.OR)
+                  : new SearchFilter(key, value));
+        })
         .collect(toList());
 
     // Auto-inject format filter if format-specific field is used but format parameter is not present

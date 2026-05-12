@@ -16,18 +16,19 @@ import java.util.Set;
 
 import org.junit.Test;
 import org.mockito.Mock;
-import org.sonatype.goodies.testsupport.TestSupport;
 
 import javax.validation.ConstraintValidatorContext;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link NonProxyHostsValidator}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NonProxyHostsValidatorTest
-    extends TestSupport
 {
 
   @Mock

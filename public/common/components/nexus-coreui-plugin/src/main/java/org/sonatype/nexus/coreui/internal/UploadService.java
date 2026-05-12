@@ -19,7 +19,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -28,6 +27,8 @@ import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -38,8 +39,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class UploadService
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private UploadManager uploadManager;
 
   private RepositoryManager repositoryManager;
@@ -47,6 +49,8 @@ public class UploadService
   private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
 
   private static final String NPM_FORMAT = "npm";
+
+  private static final String HELM_FORMAT = "helm";
 
   @Inject
   public UploadService(
@@ -155,12 +159,19 @@ public class UploadService
       }
     }
 
+    // For formats with flat file structure (like Helm), directoryPath may be empty
+    // In that case, use the original filename path prefix instead
+    String format = repository.getFormat().getValue();
+    if ((directoryPath == null || directoryPath.isEmpty()) && HELM_FORMAT.equalsIgnoreCase(format)) {
+      // Helm uses flat structure, extract name from filename
+      return convertPathToSearchTerm(format, pathPrefix);
+    }
+
     if (directoryPath == null || directoryPath.isEmpty()) {
       return null;
     }
 
     // Convert path to format-specific search term
-    String format = repository.getFormat().getValue();
     return convertPathToSearchTerm(format, directoryPath);
   }
 
@@ -179,6 +190,12 @@ public class UploadService
       return convertMavenPathToGAV(pathPrefix);
     }
 
+    // For Helm format with flat file structure like /chart-name-version.tgz,
+    // extract the chart name from the filename
+    if (HELM_FORMAT.equalsIgnoreCase(format)) {
+      return convertHelmPathToName(pathPrefix);
+    }
+
     // For other formats, extract name from path by removing leading/trailing slashes
     // and using the last meaningful segment
     String cleaned = pathPrefix.replaceAll("^/+", "").replaceAll("/+$", "");
@@ -190,6 +207,46 @@ public class UploadService
     // For formats like npm, docker, etc., the path typically contains the package name
     // Return cleaned path segments joined by spaces for better keyword matching
     return cleaned.replace("/", " ");
+  }
+
+  /**
+   * Convert Helm file path to chart name for search.
+   *
+   * Helm paths follow the pattern: /{chartName}-{version}.tgz
+   * Example: /nginx-15.14.0.tgz converts to nginx
+   * Example: /nginx-1.0.0-rc.1.tgz converts to nginx (handles pre-release versions)
+   *
+   * @param path the Helm file path
+   * @return chart name, or the cleaned filename if pattern doesn't match
+   */
+  String convertHelmPathToName(final String path) {
+    // Remove leading and trailing slashes
+    String cleaned = path.replaceAll("^/+", "").replaceAll("/+$", "");
+
+    if (cleaned.isEmpty()) {
+      return path;
+    }
+
+    // Remove file extension (.tgz, .tar.gz, .prov)
+    String nameWithVersion = cleaned.replaceAll("\\.(tgz|tar\\.gz|prov)$", "");
+
+    // Extract chart name by removing version suffix (format: name-version)
+    // Walk backwards through hyphens to find the start of a semantic version
+    // This handles pre-release versions like 1.0.0-rc.1 where the last hyphen is part of the version
+    int hyphenIndex = nameWithVersion.lastIndexOf('-');
+    while (hyphenIndex > 0) {
+      String potentialVersion = nameWithVersion.substring(hyphenIndex + 1);
+      // Check if this segment starts with a digit followed by a dot (semver pattern like X.Y.Z)
+      // This distinguishes version segments from chart name segments
+      if (potentialVersion.matches("^\\d+\\.\\d.*")) {
+        return nameWithVersion.substring(0, hyphenIndex);
+      }
+      // Move to the previous hyphen
+      hyphenIndex = nameWithVersion.lastIndexOf('-', hyphenIndex - 1);
+    }
+
+    // Fallback: return the whole filename without extension
+    return nameWithVersion;
   }
 
   /**

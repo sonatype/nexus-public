@@ -10,17 +10,63 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-.login-header {
-  &.nx-global-header-2 {
-    padding-left: var(--nx-spacing-3x);
+
+// Full-viewport login layout
+.nxrm-login-layout {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100dvh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  isolation: isolate;
+  // Use --color-background for main page background (not --color-surface which is for elevated elements)
+  background-color: var(--color-background, #ffffff);
+}
+
+// Simple header with logo only (no theme switcher)
+// Uses --color-surface for elevated elements like top bar
+.nxrm-login-header {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: var(--color-surface, #ffffff);
+  border-bottom: 1px solid var(--gray-5, #e2e8f0);
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+    text-decoration: none;
+  }
+
+  &__logo {
+    height: 32px;
+    width: auto;
+    max-width: min(280px, 55vw);
+    object-fit: contain;
+    display: block;
   }
 }
 
-.nxrm-login-page-main {
-  min-height: calc(100vh - var(--nx-global-header-height, 60px));
-
-  .login-content {
-    display: flex;
-    justify-content: center;
-  }
+// Main content area - centers the login form
+.nxrm-login-main {
+  box-sizing: border-box;
+  min-height: 0;
+  width: 100%;
+  padding: 24px;
+  display: grid;
+  place-items: center;
 }

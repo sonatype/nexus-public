@@ -18,7 +18,6 @@ import java.util.EnumSet;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.EditionVersionFormatter;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.common.app.ApplicationVersion;
@@ -29,6 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
@@ -39,9 +40,10 @@ import static org.sonatype.nexus.common.time.DateHelper.toDurationString;
 @Lazy
 @Component
 public class NexusServletContextListener
-    extends ComponentSupport
     implements ServletContextListener
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String NEXUS_LIFECYCLE_STARTUP_PHASE = "nexus.lifecycle.startupPhase";
 
   private final NexusEditionSelector nexusEditionSelector;

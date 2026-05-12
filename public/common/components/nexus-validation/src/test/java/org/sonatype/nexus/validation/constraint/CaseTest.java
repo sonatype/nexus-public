@@ -18,7 +18,6 @@ import javax.validation.ConstraintViolation;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sonatype.goodies.testsupport.TestSupport;
 
 import java.util.Set;
 
@@ -28,7 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
 public class CaseTest
-    extends TestSupport
+
 {
 
   private Validator validator;

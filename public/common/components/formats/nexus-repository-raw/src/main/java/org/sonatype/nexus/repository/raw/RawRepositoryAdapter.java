@@ -78,6 +78,10 @@ public class RawRepositoryAdapter
 
   private RawAttributes createRawAttributes(final Repository repository) {
     String disposition = repository.getConfiguration().attributes(RAW).get("contentDisposition", String.class);
+    // Normalize null to INLINE - legacy repos with null serve inline at handler level
+    if (disposition == null) {
+      disposition = ContentDisposition.INLINE.name();
+    }
     return new RawAttributes(disposition);
   }
 }

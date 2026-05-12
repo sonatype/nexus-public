@@ -15,7 +15,6 @@ package org.sonatype.nexus.onboarding.internal;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.onboarding.OnboardingConfiguration;
 import org.sonatype.nexus.onboarding.OnboardingItem;
 import org.sonatype.nexus.onboarding.OnboardingManager;
@@ -29,9 +28,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class OnboardingStateContributorTest
-    extends TestSupport
 {
   @Mock
   private OnboardingConfiguration onboardingConfiguration;

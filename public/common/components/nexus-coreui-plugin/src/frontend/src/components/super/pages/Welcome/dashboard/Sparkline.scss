@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2008-present Sonatype, Inc.
+ *
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/pro/attributions
+ * Sonatype and Sonatype Nexus are trademarks of Sonatype, Inc. Apache Maven is a trademark of the Apache Foundation.
+ * M2Eclipse is a trademark of the Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.sparkline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &--empty {
+    .sparkline__no-data {
+      font-size: 12px;
+      color: var(--gray-9);
+    }
+  }
+
+  &__chart {
+    flex-shrink: 0;
+  }
+
+  &__trend {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 500;
+    gap: 2px;
+
+    &--up {
+      color: #22c55e;
+    }
+
+    &--down {
+      color: #ef4444;
+    }
+  }
+
+  &__percent {
+    font-size: 10px;
+  }
+}
+

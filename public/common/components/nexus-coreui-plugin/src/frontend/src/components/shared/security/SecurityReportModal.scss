@@ -1,0 +1,110 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.security-report-modal {
+  &--firewall {
+    .security-report-modal__card {
+      border-top-color: var(--orange-7);
+    }
+  }
+
+  &__policy-summary {
+    background: var(--orange-2);
+    border: 1px solid var(--orange-5);
+    border-radius: var(--radius-3);
+  }
+
+  &__quarantine-badge {
+    background: var(--orange-2);
+    border: 1px solid var(--orange-5);
+    border-radius: var(--radius-3);
+
+    &--firewall {
+      border-left: 4px solid var(--orange-9);
+    }
+  }
+
+  &__body {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: var(--space-2);
+  }
+
+  &__card {
+    transition: transform 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &--red { border-top: 3px solid var(--red-9); }
+    &--orange { border-top: 3px solid var(--orange-9); }
+    &--yellow { border-top: 3px solid var(--yellow-9); }
+  }
+
+  &__iframe-wrapper {
+    background: var(--gray-2);
+    border-radius: var(--radius-3);
+    padding: var(--space-1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  &__empty {
+    background: var(--gray-2);
+    border-radius: var(--radius-3);
+    border: 2px dashed var(--gray-6);
+  }
+}
+
+:root[data-theme="dark"] {
+  .security-report-modal {
+    &__iframe-wrapper,
+    &__empty {
+      background: var(--gray-3);
+    }
+
+    &__policy-summary {
+      background: var(--orange-3);
+      border-color: var(--orange-7);
+      color: var(--gray-12);
+    }
+
+    &__quarantine-badge {
+      background: var(--orange-3);
+      border-color: var(--orange-7);
+      color: var(--gray-12);
+    }
+
+    // Fix button contrast in dark mode - ensure text is readable
+    .rt-Button {
+      &[data-variant="soft"] {
+        background-color: var(--gray-4);
+        color: var(--gray-12);
+
+        &:hover {
+          background-color: var(--gray-5);
+        }
+
+        // Ensure link inside soft button is readable
+        a {
+          color: var(--gray-12);
+        }
+      }
+
+      &[data-variant="solid"] {
+        background-color: var(--accent-9);
+        color: var(--accent-contrast);
+      }
+    }
+  }
+}

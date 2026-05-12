@@ -11,11 +11,38 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+// Settings page layout container - flex row for sidebar + content
+.nxrm-settings-layout {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .nxrm-settings.nx-page-sidebar{
-  background-color: var(--nx-color-global-sidebar-2-background);
-  border-right: var(--nx-border-width) solid var(--nx-color-global-sidebar-2-border);
+  background-color: var(--color-surface);
+  border-right: var(--nx-border-width) solid var(--color-border);
   .nxrm-navigation-expandable-link:has(.nxrm-navigation-expandable-link__expandable-list:empty) {
     display: none;
+  }
+
+  // Fix: Ensure selected/expanded section headers have readable text color
+  // The RSC library may set white text for selected state, but our light green 
+  // selection background requires dark text for proper contrast
+  .nxrm-navigation-expandable-link__navigation-link {
+    &.nx-text-link.selected,
+    &.selected {
+      color: var(--color-text, #171717) !important;
+      background-color: var(--color-selection, #dcfce7) !important;
+      
+      // Ensure icons and chevrons are also readable
+      .nx-icon {
+        color: var(--color-text, #171717) !important;
+      }
+    }
   }
 
   // Override library CSS to handle UIView's hidden div during Suspense loading.

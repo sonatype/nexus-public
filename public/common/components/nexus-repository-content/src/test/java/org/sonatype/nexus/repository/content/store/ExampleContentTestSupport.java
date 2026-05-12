@@ -26,7 +26,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityUUID;
@@ -58,6 +57,8 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
@@ -73,8 +74,9 @@ import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
  */
 @ExtendWith(DatabaseExtension.class)
 public abstract class ExampleContentTestSupport
-    extends Test5Support
 {
+  protected final Logger logger = LoggerFactory.getLogger(getClass());
+
   @DataSessionConfiguration(daos = {TestContentRepositoryDAO.class, TestComponentDAO.class, TestAssetBlobDAO.class,
       TestAssetDAO.class, ConfigurationDAO.class},
       typeHandlers = {BlobRefTypeHandler.class, ExternalMetadataTypeHandler.class})

@@ -15,12 +15,12 @@ package org.sonatype.nexus.security;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.bootstrap.entrypoint.jetty.JettyServer;
 import org.sonatype.nexus.bootstrap.jetty.ManagedJetty;
 import org.sonatype.nexus.bootstrap.security.WebSecurityConfiguration;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -42,6 +42,8 @@ import org.apache.shiro.authc.credential.PasswordService;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -60,6 +62,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS;
 
 @DirtiesContext(classMode = AFTER_CLASS)
@@ -69,8 +72,9 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER
     excludeFilters = {@Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {ManagedJetty.class, JettyServer.class})})
 @Import({org.sonatype.nexus.bootstrap.security.SecurityConfiguration.class, WebSecurityConfiguration.class})
 public abstract class AbstractSecurityTest
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(AbstractSecurityTest.class);
+
   @Autowired
   protected ApplicationContext applicationContext;
 
@@ -88,7 +92,7 @@ public abstract class AbstractSecurityTest
       getSecuritySystem().stop();
     }
     catch (Exception e) {
-      util.getLog().warn("Failed to stop security-system", e);
+      log.warn("Failed to stop security-system", e);
     }
 
     ThreadContext.remove();
@@ -160,6 +164,17 @@ public abstract class AbstractSecurityTest
     @Bean
     public ApplicationDirectories applicationDirectories() {
       return mock(ApplicationDirectories.class);
+    }
+
+    /**
+     * {@link org.sonatype.nexus.swagger.internal.SwaggerModel} is component-scanned; its constructor needs this bean.
+     */
+    @Primary
+    @Bean
+    public ApplicationVersion applicationVersion() {
+      ApplicationVersion applicationVersion = mock(ApplicationVersion.class);
+      when(applicationVersion.getVersion()).thenReturn("0.0.0-test");
+      return applicationVersion;
     }
 
     @Bean

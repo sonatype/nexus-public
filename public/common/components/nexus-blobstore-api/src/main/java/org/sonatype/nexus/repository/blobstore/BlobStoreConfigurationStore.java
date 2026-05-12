@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.blobstore;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 /**

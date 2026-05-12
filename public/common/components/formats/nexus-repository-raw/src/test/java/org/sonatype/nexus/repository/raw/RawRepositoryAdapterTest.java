@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.raw;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
@@ -32,7 +31,9 @@ import org.sonatype.nexus.repository.types.ProxyType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mockito;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -44,8 +45,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RawRepositoryAdapterTest
-    extends TestSupport
+
 {
   private RawRepositoryAdapter adapter;
 
@@ -135,6 +137,41 @@ public class RawRepositoryAdapterTest
     Configuration configuration = config("my-repo");
     NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
     raw.set("contentDisposition", contentDisposition.toString());
+    when(configuration.attributes("raw")).thenReturn(raw);
+    repository.init(configuration);
+    return repository;
+  }
+
+  @Test
+  public void testAdapt_hostedRepository_normalizesNullContentDispositionToInline() throws Exception {
+    Repository repository = createRepositoryWithNullContentDisposition(new HostedType());
+
+    RawHostedApiRepository hostedRepository = (RawHostedApiRepository) adapter.adapt(repository);
+    assertThat(hostedRepository.getRaw().getContentDisposition(), is("INLINE"));
+  }
+
+  @Test
+  public void testAdapt_proxyRepository_normalizesNullContentDispositionToInline() throws Exception {
+    Repository repository = createRepositoryWithNullContentDisposition(new ProxyType());
+
+    RawProxyApiRepository proxyRepository = (RawProxyApiRepository) adapter.adapt(repository);
+    assertThat(proxyRepository.getRaw().getContentDisposition(), is("INLINE"));
+  }
+
+  @Test
+  public void testAdapt_groupRepository_normalizesNullContentDispositionToInline() throws Exception {
+    Repository repository = createRepositoryWithNullContentDisposition(new GroupType());
+
+    RawGroupApiRepository groupRepository = (RawGroupApiRepository) adapter.adapt(repository);
+    assertThat(groupRepository.getRaw().getContentDisposition(), is("INLINE"));
+  }
+
+  private static Repository createRepositoryWithNullContentDisposition(final Type type) throws Exception {
+    Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new RawFormat());
+
+    Configuration configuration = config("my-repo");
+    NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+    // Intentionally NOT setting contentDisposition - it will be null
     when(configuration.attributes("raw")).thenReturn(raw);
     repository.init(configuration);
     return repository;

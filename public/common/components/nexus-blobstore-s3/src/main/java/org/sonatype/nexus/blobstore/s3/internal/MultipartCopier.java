@@ -17,7 +17,6 @@ import java.util.List;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -35,6 +34,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Math.min;
@@ -50,9 +51,9 @@ import static java.lang.Math.min;
 @Qualifier("multipart-copier")
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MultipartCopier
-    extends ComponentSupport
     implements S3Copier
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final int chunkSize;
 

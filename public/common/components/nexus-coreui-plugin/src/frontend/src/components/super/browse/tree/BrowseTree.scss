@@ -1,0 +1,151 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/**
+ * Browse Tree Styles
+ *
+ * Styles for the lazy-loading browse tree component.
+ */
+
+/**
+ * Browse Tree Container - wraps search and tree
+ */
+.browse-tree-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/**
+ * Tree Search Input
+ */
+.tree-search-input {
+  padding: 0 var(--space-2);
+  flex-shrink: 0;
+}
+
+.browse-tree {
+  padding: 0 var(--space-2) var(--space-2) var(--space-2);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+
+  &__loading,
+  &__empty {
+    min-height: 200px;
+    color: var(--gray-11);
+  }
+
+  &__error-container {
+    text-align: center;
+  }
+
+  &__node-container {
+    // Container for each tree node
+  }
+
+  &__node {
+    cursor: pointer;
+    border-radius: var(--radius-2);
+    transition: background-color 0.15s ease;
+    user-select: none;
+
+    &:hover {
+      background-color: var(--gray-a3);
+    }
+
+    &:focus {
+      outline: none;
+      background-color: var(--accent-a3);
+      box-shadow: inset 0 0 0 1px var(--accent-a8);
+    }
+
+    &--focused {
+      background-color: var(--accent-a3);
+      box-shadow: inset 0 0 0 1px var(--accent-a8);
+    }
+
+    &--selected {
+      background-color: var(--yellow-a3);
+    }
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--gray-11);
+
+    &:hover {
+      color: var(--gray-12);
+    }
+  }
+
+  &__node-icon {
+    flex-shrink: 0;
+    color: var(--gray-11);
+  }
+
+  &__node-link {
+    color: var(--gray-12);
+    text-decoration: none;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      color: var(--accent-11);
+      text-decoration: none;
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__children {
+    // Nested children container
+  }
+
+  &__error {
+    padding: var(--space-1) 0;
+  }
+
+  &__no-results {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    color: var(--gray-11);
+  }
+}
+
+// Dark mode adjustments
+:root[data-theme="dark"] {
+  .browse-tree {
+    &__node {
+      &:hover {
+        background-color: var(--gray-a4);
+      }
+
+      &:focus,
+      &--focused {
+        background-color: var(--accent-a4);
+      }
+    }
+  }
+}

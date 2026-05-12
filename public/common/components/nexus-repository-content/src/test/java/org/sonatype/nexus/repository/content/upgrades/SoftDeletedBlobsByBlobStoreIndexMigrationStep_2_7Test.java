@@ -14,15 +14,12 @@ package org.sonatype.nexus.repository.content.upgrades;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SoftDeletedBlobsByBlobStoreIndexMigrationStep_2_7Test
-    extends TestSupport
 {
   private SoftDeletedBlobsByBlobStoreIndexMigrationStep_2_7 underTest;
 

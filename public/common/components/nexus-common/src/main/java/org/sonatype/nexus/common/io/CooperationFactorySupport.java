@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.io;
 
 import java.time.Duration;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 
 /**
  * Common scaffolding for {@link CooperationFactory} implementations.

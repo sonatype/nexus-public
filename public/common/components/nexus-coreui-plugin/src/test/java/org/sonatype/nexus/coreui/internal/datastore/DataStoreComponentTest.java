@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui.internal.datastore;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
@@ -31,9 +30,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DataStoreComponentTest
-    extends TestSupport
 {
   @Mock
   private DataStoreManager dataStoreManager;

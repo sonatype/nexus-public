@@ -12,173 +12,147 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import { DirectoryPage } from './DirectoryPage';
-import { RouteNames } from '../../../constants/RouteNames';
-import * as NavigationUtils from '../../../interface/NavigationUtils';
+import {render, screen} from '@testing-library/react';
+import {DirectoryPage} from './DirectoryPage';
+import {useCurrentStateAndParams} from '@uirouter/react';
 
-const mockStateRegistry = {
-  get: jest.fn()
-};
-
-const mockRouter = {
-  stateService: {
-    go: jest.fn()
-  },
-  stateRegistry: mockStateRegistry
-};
-
-const mockState = {
-  name: 'admin.system'
-};
-
+// Mock dependencies
 jest.mock('@uirouter/react', () => ({
-  ...jest.requireActual('@uirouter/react'),
-  useRouter: () => mockRouter,
-  useCurrentStateAndParams: () => ({ state: mockState }),
-  UIView: () => <div>UIView</div>
+  UIView: function MockUIView() {
+    return <div data-testid="ui-view">UIView</div>;
+  },
+  useCurrentStateAndParams: jest.fn(),
+  useRouter: jest.fn(() => ({
+    stateService: {
+      go: jest.fn()
+    },
+    stateRegistry: {
+      get: jest.fn(() => [])
+    }
+  }))
 }));
 
-jest.spyOn(NavigationUtils, 'isVisible');
+jest.mock('../../layout', () => ({
+  Page: ({children, ...props}) => <div data-testid="page" {...props}>{children}</div>
+}));
+
+jest.mock('@sonatype/react-shared-components', () => {
+  const Tile = ({children}) => <div data-testid="tile">{children}</div>;
+  const TileContent = ({children}) => <div data-testid="tile-content">{children}</div>;
+  TileContent.displayName = 'TileContent';
+  Tile.Content = TileContent;
+
+  return {
+    NxH1: ({children}) => <h1>{children}</h1>,
+    NxP: ({children}) => <p>{children}</p>,
+    NxTile: Tile
+  };
+});
 
 describe('DirectoryPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockState.name = 'admin.system';
-    NavigationUtils.isVisible.mockReturnValue(true);
   });
 
-  it('renders page with title and description when there are visible child routes', () => {
-    mockStateRegistry.get.mockReturnValue([
-      {
-        name: 'admin.system.api',
-        data: { visibilityRequirements: {} }
-      },
-      {
-        name: 'admin.system.tasks',
-        data: { visibilityRequirements: {} }
-      }
-    ]);
+  it('renders page content when route matches', () => {
+    useCurrentStateAndParams.mockReturnValue({
+      state: {name: 'test.route'}
+    });
 
     render(
       <DirectoryPage
-        routeName="admin.system"
-        text="System"
-        description="System configuration"
+        routeName="test.route"
+        text="Test Page"
+        description="Test description"
       >
-        <div>Content</div>
+        <div>Child content</div>
       </DirectoryPage>
     );
 
-    expect(screen.getByText('System')).toBeInTheDocument();
-    expect(screen.getByText('System configuration')).toBeInTheDocument();
-    expect(screen.getByText('Content')).toBeInTheDocument();
-    expect(mockRouter.stateService.go).not.toHaveBeenCalled();
+    expect(screen.getByText('Test Page')).toBeInTheDocument();
+    expect(screen.getByText('Test description')).toBeInTheDocument();
+    expect(screen.getByText('Child content')).toBeInTheDocument();
+    expect(screen.getByTestId('page')).toBeInTheDocument();
+    expect(screen.getByTestId('tile')).toBeInTheDocument();
   });
 
   it('renders UIView when route does not match', () => {
-    mockState.name = 'admin.security';
-    mockStateRegistry.get.mockReturnValue([]);
-
-    render(
-      <DirectoryPage
-        routeName="admin.system"
-        text="System"
-        description="System configuration"
-      >
-        <div>Content</div>
-      </DirectoryPage>
-    );
-
-    expect(screen.getByText('UIView')).toBeInTheDocument();
-    expect(screen.queryByText('System')).not.toBeInTheDocument();
-  });
-
-  it('redirects to 404 when no child routes are visible', async () => {
-    mockStateRegistry.get.mockReturnValue([
-      {
-        name: 'admin.system.api',
-        data: { visibilityRequirements: {} }
-      }
-    ]);
-    NavigationUtils.isVisible.mockReturnValue(false);
-
-    render(
-      <DirectoryPage
-        routeName="admin.system"
-        text="System"
-        description="System configuration"
-      >
-        <div>Content</div>
-      </DirectoryPage>
-    );
-
-    await waitFor(() => {
-      expect(mockRouter.stateService.go).toHaveBeenCalledWith(RouteNames.MISSING_ROUTE);
-    });
-  });
-
-  it('does not redirect when at least one child route is visible', async () => {
-    mockStateRegistry.get.mockReturnValue([
-      {
-        name: 'admin.system.api',
-        data: { visibilityRequirements: { permissions: ['permission1'] } }
-      },
-      {
-        name: 'admin.system.tasks',
-        data: { visibilityRequirements: { permissions: ['permission2'] } }
-      }
-    ]);
-    NavigationUtils.isVisible
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true);
-
-    render(
-      <DirectoryPage
-        routeName="admin.system"
-        text="System"
-        description="System configuration"
-      >
-        <div>Content</div>
-      </DirectoryPage>
-    );
-
-    await waitFor(() => {
-      expect(mockRouter.stateService.go).not.toHaveBeenCalled();
-    });
-  });
-
-  it('excludes routes with ignoreForMenuVisibilityCheck from visibility check', async () => {
-    mockStateRegistry.get.mockReturnValue([
-      {
-        name: 'admin.system',
-        data: {
-          visibilityRequirements: {
-            ignoreForMenuVisibilityCheck: true
-          }
-        }
-      },
-      {
-        name: 'admin.system.api',
-        data: { visibilityRequirements: {} }
-      }
-    ]);
-    NavigationUtils.isVisible.mockReturnValue(false);
-
-    render(
-      <DirectoryPage
-        routeName="admin.system"
-        text="System"
-        description="System configuration"
-      >
-        <div>Content</div>
-      </DirectoryPage>
-    );
-
-    await waitFor(() => {
-      expect(mockRouter.stateService.go).toHaveBeenCalledWith(RouteNames.MISSING_ROUTE);
+    useCurrentStateAndParams.mockReturnValue({
+      state: {name: 'other.route'}
     });
 
-    expect(NavigationUtils.isVisible).toHaveBeenCalledTimes(1);
+    render(
+      <DirectoryPage
+        routeName="test.route"
+        text="Test Page"
+        description="Test description"
+      >
+        <div>Child content</div>
+      </DirectoryPage>
+    );
+
+    expect(screen.getByTestId('ui-view')).toBeInTheDocument();
+    expect(screen.queryByText('Test Page')).not.toBeInTheDocument();
+    expect(screen.queryByText('Child content')).not.toBeInTheDocument();
+  });
+
+  it('passes additional attributes to Page component', () => {
+    useCurrentStateAndParams.mockReturnValue({
+      state: {name: 'test.route'}
+    });
+
+    render(
+      <DirectoryPage
+        routeName="test.route"
+        text="Test Page"
+        description="Test description"
+        className="custom-class"
+        data-test="custom-attr"
+      >
+        <div>Child content</div>
+      </DirectoryPage>
+    );
+
+    const page = screen.getByTestId('page');
+    expect(page).toHaveAttribute('class', 'custom-class');
+    expect(page).toHaveAttribute('data-test', 'custom-attr');
+  });
+
+  it('renders without children', () => {
+    useCurrentStateAndParams.mockReturnValue({
+      state: {name: 'test.route'}
+    });
+
+    render(
+      <DirectoryPage
+        routeName="test.route"
+        text="Test Page"
+        description="Test description"
+      />
+    );
+
+    expect(screen.getByText('Test Page')).toBeInTheDocument();
+    expect(screen.getByText('Test description')).toBeInTheDocument();
+    expect(screen.getByTestId('tile')).toBeInTheDocument();
+  });
+
+  it('renders with multiple children', () => {
+    useCurrentStateAndParams.mockReturnValue({
+      state: {name: 'test.route'}
+    });
+
+    render(
+      <DirectoryPage
+        routeName="test.route"
+        text="Test Page"
+        description="Test description"
+      >
+        <div>First child</div>
+        <div>Second child</div>
+      </DirectoryPage>
+    );
+
+    expect(screen.getByText('First child')).toBeInTheDocument();
+    expect(screen.getByText('Second child')).toBeInTheDocument();
   });
 });

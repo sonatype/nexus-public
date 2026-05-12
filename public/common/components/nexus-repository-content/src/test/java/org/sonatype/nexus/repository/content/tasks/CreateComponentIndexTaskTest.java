@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.repository.content.tasks;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -25,8 +26,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CreateComponentIndexTaskTest
-    extends TestSupport
 {
   @Mock
   private CreateComponentIndexService createComponentIndexService;

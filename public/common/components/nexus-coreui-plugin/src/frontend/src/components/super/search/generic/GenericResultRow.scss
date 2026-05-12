@@ -1,0 +1,152 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.generic-result-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--nx-color-border);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: var(--nx-color-interactive-background-hover);
+  }
+
+  &:focus {
+    outline: 2px solid var(--nx-color-primary);
+    outline-offset: -2px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+
+    // Format-specific gradient backgrounds
+    &--maven2 { background: linear-gradient(135deg, #c41e3a 0%, #9b1b2f 100%); }
+    &--npm { background: linear-gradient(135deg, #cb3837 0%, #a12e2d 100%); }
+    &--nuget { background: linear-gradient(135deg, #004880 0%, #003560 100%); }
+    &--pypi { background: linear-gradient(135deg, #3776ab 0%, #2a5a85 100%); }
+    &--docker { background: linear-gradient(135deg, #2496ed 0%, #1a7bc4 100%); }
+    &--helm { background: linear-gradient(135deg, #0f1689 0%, #0a0f5c 100%); }
+    &--go { background: linear-gradient(135deg, #00add8 0%, #0090b3 100%); }
+    &--rubygems { background: linear-gradient(135deg, #cc342d 0%, #a12924 100%); }
+    &--yum { background: linear-gradient(135deg, #ff6b35 0%, #d4562b 100%); }
+    &--apt { background: linear-gradient(135deg, #a80030 0%, #850026 100%); }
+    &--raw { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+    &--conan { background: linear-gradient(135deg, #6d9eff 0%, #4e7edf 100%); }
+    &--conda { background: linear-gradient(135deg, #43b02a 0%, #2d8021 100%); }
+    &--cargo { background: linear-gradient(135deg, #dea584 0%, #c87d56 100%); }
+    &--cocoapods { background: linear-gradient(135deg, #ee3322 0%, #c42a1c 100%); }
+    &--composer { background: linear-gradient(135deg, #885630 0%, #6a4225 100%); }
+    &--terraform { background: linear-gradient(135deg, #7b42bc 0%, #5f3290 100%); }
+    &--default { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  &__name-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--nx-color-text);
+  }
+
+  &__group {
+    font-size: 14px;
+    color: var(--nx-color-text-subtle);
+    margin-bottom: 8px;
+    font-family: monospace;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+
+  &__format-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: var(--nx-color-subsection-background);
+    color: var(--nx-color-text);
+
+    // Format-specific badge colors (work in both light/dark)
+    &--maven2 { background: rgba(196, 30, 58, 0.15); color: #c41e3a; }
+    &--npm { background: rgba(203, 56, 55, 0.15); color: #cb3837; }
+    &--nuget { background: rgba(0, 72, 128, 0.15); color: #004880; }
+    &--pypi { background: rgba(55, 118, 171, 0.15); color: #3776ab; }
+    &--docker { background: rgba(36, 150, 237, 0.15); color: #2496ed; }
+    &--helm { background: rgba(15, 22, 137, 0.15); color: #0f1689; }
+    &--go { background: rgba(0, 173, 216, 0.15); color: #00add8; }
+    &--rubygems { background: rgba(204, 52, 45, 0.15); color: #cc342d; }
+    &--yum { background: rgba(255, 107, 53, 0.15); color: #ff6b35; }
+    &--apt { background: rgba(168, 0, 48, 0.15); color: #a80030; }
+    &--raw { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+    &--conan { background: rgba(109, 158, 255, 0.15); color: #6d9eff; }
+    &--conda { background: rgba(67, 176, 42, 0.15); color: #43b02a; }
+    &--cargo { background: rgba(222, 165, 132, 0.15); color: #dea584; }
+    &--cocoapods { background: rgba(238, 51, 34, 0.15); color: #ee3322; }
+    &--composer { background: rgba(136, 86, 48, 0.15); color: #885630; }
+    &--terraform { background: rgba(123, 66, 188, 0.15); color: #7b42bc; }
+  }
+
+  &__version {
+    font-family: monospace;
+    font-size: 13px;
+    padding: 4px 8px;
+    background: var(--nx-color-subsection-background);
+    border-radius: 4px;
+    color: var(--nx-color-text);
+  }
+
+  &__repository {
+    font-size: 13px;
+    color: var(--nx-color-text-subtle);
+  }
+
+  &__chevron {
+    color: var(--nx-color-text-subtle);
+    flex-shrink: 0;
+    margin-top: 14px;
+  }
+}

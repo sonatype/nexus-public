@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.bootstrap.metrics;
 
-import java.lang.management.ManagementFactory;
 import java.util.List;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.systemchecks.ConditionallyAppliedHealthCheck;
 
@@ -24,34 +22,25 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import com.codahale.metrics.jvm.BufferPoolMetricSet;
-import com.codahale.metrics.jvm.FileDescriptorRatioGauge;
-import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
-import com.codahale.metrics.jvm.JvmAttributeGaugeSet;
-import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
-import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static com.codahale.metrics.MetricRegistry.name;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
 @Configuration
 public class MetricsConfiguration
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Primary
-  @Qualifier("nexus")
+  @Qualifier(NEXUS_METRICS_REGISTRY_NAME)
   @Bean
   public MetricRegistry nexusMetricRegistry(final List<Metric> metrics) {
-    MetricRegistry registry = SharedMetricRegistries.getOrCreate("nexus");
-    registry.register(name("jvm", "vm"), new JvmAttributeGaugeSet());
-    registry.register(name("jvm", "memory"), new MemoryUsageGaugeSet());
-    registry.register(name("jvm", "buffers"), new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer()));
-    registry.register(name("jvm", "fd_usage"), new FileDescriptorRatioGauge());
-    registry.register(name("jvm", "thread-states"), new ThreadStatesGaugeSet());
-    registry.register(name("jvm", "garbage-collectors"), new GarbageCollectorMetricSet());
+    MetricRegistry registry = SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
 
     for (Metric metric : metrics) {
       // Avoid adding registry to itself

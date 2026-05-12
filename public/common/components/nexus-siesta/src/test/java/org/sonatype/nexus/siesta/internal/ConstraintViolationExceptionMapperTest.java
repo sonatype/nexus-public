@@ -23,7 +23,6 @@ import javax.validation.Path;
 import javax.validation.Path.Node;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +35,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ConstraintViolationExceptionMapperTest
-    extends Test5Support
 {
   private ConstraintViolationExceptionMapper mapper;
 

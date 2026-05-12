@@ -18,13 +18,13 @@ import java.util.List;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -37,9 +37,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Singleton
 public class ScriptEngineManagerProvider
-    extends ComponentSupport
     implements FactoryBean<ScriptEngineManager>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String DEFAULT_LANGUAGE = "groovy";
 
   // TODO: Could consider a Mediator, except the ScriptEngineManager provides no means to "unregister"

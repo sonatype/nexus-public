@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -52,7 +51,9 @@ import org.apache.shiro.util.ThreadContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -74,8 +75,9 @@ import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAM
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
+@ExtendWith(MockitoExtension.class)
 class ExternalMetadataTaskTest
-    extends Test5Support
+
 {
   @Mock
   BlobStoreManager blobStoreManager;
@@ -104,7 +106,7 @@ class ExternalMetadataTaskTest
   void setup() {
     ThreadContext.bind(securityManager);
 
-    underTest = new ExternalMetadataTask(blobStoreManager, 5, 15);
+    underTest = new ExternalMetadataTask(blobStoreManager, 5);
     underTest.install(repositoryManager, new GroupType());
 
     lenient().when(content.stores()).thenReturn(stores);
@@ -118,10 +120,8 @@ class ExternalMetadataTaskTest
 
   @Test
   void testConstructor() {
-    assertThrows(IllegalArgumentException.class, () -> new ExternalMetadataTask(blobStoreManager, 0, 15),
+    assertThrows(IllegalArgumentException.class, () -> new ExternalMetadataTask(blobStoreManager, 0),
         "external.metadata.repository.concurrencyLimit must be positive");
-    assertThrows(IllegalArgumentException.class, () -> new ExternalMetadataTask(blobStoreManager, 5, 0),
-        "external.metadata.repository.queueCapacity must be positive");
   }
 
   @Test

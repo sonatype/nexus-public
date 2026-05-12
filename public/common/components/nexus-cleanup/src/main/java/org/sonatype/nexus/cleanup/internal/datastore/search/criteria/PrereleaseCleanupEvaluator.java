@@ -18,13 +18,14 @@ import java.util.function.BiPredicate;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.datastore.search.criteria.ComponentCleanupEvaluator;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.utils.PreReleaseEvaluator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PRERELEASE_KEY;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,9 +42,10 @@ import org.springframework.context.annotation.Scope;
 @Qualifier(IS_PRERELEASE_KEY)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class PrereleaseCleanupEvaluator
-    extends ComponentSupport
     implements ComponentCleanupEvaluator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private Map<String, PreReleaseEvaluator> matchers;
 
   @Inject

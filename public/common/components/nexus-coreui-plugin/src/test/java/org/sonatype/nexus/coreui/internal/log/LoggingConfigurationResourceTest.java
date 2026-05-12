@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.repository.BadRequestException;
@@ -26,6 +25,7 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,10 +37,10 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class LoggingConfigurationResourceTest
-    extends Test5Support
 {
   @Mock
   private LogManager logManager;

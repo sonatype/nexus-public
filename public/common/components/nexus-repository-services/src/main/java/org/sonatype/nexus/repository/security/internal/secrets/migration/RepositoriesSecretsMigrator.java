@@ -72,6 +72,13 @@ public class RepositoriesSecretsMigrator
     Configuration configuration = repository.getConfiguration().copy();
     boolean needUpdate = false;
 
+    // Trim remoteUrl to fix validation errors from legacy data with trailing whitespace (NEXUS-51248)
+    String remoteUrl = configuration.attributes("proxy").get("remoteUrl", String.class);
+    if (remoteUrl != null && !remoteUrl.equals(remoteUrl.trim())) {
+      configuration.attributes("proxy").set("remoteUrl", remoteUrl.trim());
+      needUpdate = true;
+    }
+
     Map<String, Object> authConfig = Optional.ofNullable(configuration.getAttributes())
         .map(global -> global.get(HTTP_CLIENT_KEY))
         .map(http -> (Map<String, Object>) http.get(AUTHENTICATION_KEY))

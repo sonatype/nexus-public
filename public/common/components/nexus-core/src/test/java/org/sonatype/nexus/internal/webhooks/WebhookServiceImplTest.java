@@ -21,7 +21,6 @@ import java.util.TimeZone;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Format;
@@ -48,12 +47,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.internal.webhooks.WebhookServiceImpl.WEBHOOK_SIGNATURE_HEADER;
 import static org.sonatype.nexus.repository.webhooks.GlobalRepositoryWebhook.EventAction.CREATED;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests {@link WebhookServiceImpl}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class WebhookServiceImplTest
-    extends TestSupport
 {
   private static final String SIGNATURE = "918cb6e16fcf197f2c3df5af2cf41b20974ec8a2";
 

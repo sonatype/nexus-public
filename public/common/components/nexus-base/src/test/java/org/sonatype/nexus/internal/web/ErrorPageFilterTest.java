@@ -18,12 +18,13 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.servlet.XFrameOptions;
 
 import org.eclipse.jetty.io.EofException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
@@ -33,8 +34,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ErrorPageFilterTest
-    extends TestSupport
 {
   private ErrorPageFilter underTest;
 

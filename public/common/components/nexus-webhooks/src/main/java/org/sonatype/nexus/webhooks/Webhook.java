@@ -19,10 +19,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.collect.ImmutableSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -39,8 +40,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.1
  */
 public abstract class Webhook
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private EventManager eventManager;
 
   protected final Set<SubscriptionImpl> subscriptions = new CopyOnWriteArraySet<>();

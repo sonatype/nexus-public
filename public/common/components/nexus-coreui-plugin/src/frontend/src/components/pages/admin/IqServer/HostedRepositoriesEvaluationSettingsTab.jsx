@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   NxH3,
   NxP,
@@ -35,6 +35,21 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
   const [artifactLatestVersions, setArtifactLatestVersions] = useState(initialData?.artifactLatestVersions || '');
   const [policyEvaluationStage, setPolicyEvaluationStage] = useState(initialData?.policyEvaluationStage || '');
   const [applyToNewRepos, setApplyToNewRepos] = useState(initialData?.applyToNewRepos || false);
+
+  useEffect(() => {
+    if (initialData?.activityTimeFrame) {
+      setActivityTimeFrame(initialData.activityTimeFrame);
+    }
+    if (initialData?.artifactLatestVersions) {
+      setArtifactLatestVersions(initialData.artifactLatestVersions);
+    }
+    if (initialData?.policyEvaluationStage) {
+      setPolicyEvaluationStage(initialData.policyEvaluationStage);
+    }
+    if (initialData?.applyToNewRepos !== undefined) {
+      setApplyToNewRepos(initialData.applyToNewRepos);
+    }
+  }, [initialData]);
 
   const handleFieldChange = (setter, value) => {
     setter(value);

@@ -14,8 +14,9 @@ package org.sonatype.nexus.common.stateguard;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
@@ -28,9 +29,10 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * @since 3.0
  */
 public class StateGuardLifecycleSupport
-    extends ComponentSupport
     implements Lifecycle, StateGuardAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * State constants.
    */
@@ -52,7 +54,7 @@ public class StateGuardLifecycleSupport
   }
 
   protected final StateGuard states = new StateGuard.Builder()
-      .logger(createLogger())
+      .logger(log)
       .initial(NEW)
       .failure(FAILED)
       .create();

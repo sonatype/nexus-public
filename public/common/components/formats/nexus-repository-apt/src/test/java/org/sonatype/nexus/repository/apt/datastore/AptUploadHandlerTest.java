@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.datastore.internal.hosted.AptHostedFacet;
@@ -34,7 +33,9 @@ import org.sonatype.nexus.security.BreadActions;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.MockedStatic;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,8 +50,9 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link AptUploadHandler}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AptUploadHandlerTest
-    extends TestSupport
+
 {
   private static final String REPO_NAME = "apt-hosted";
 

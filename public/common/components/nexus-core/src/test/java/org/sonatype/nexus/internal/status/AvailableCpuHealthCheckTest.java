@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.status;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.codahale.metrics.health.HealthCheck.Result;
 import org.junit.Test;
 
@@ -21,7 +19,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AvailableCpuHealthCheckTest
-    extends TestSupport
 {
   private AvailableCpuHealthCheck underTest;
 

@@ -15,19 +15,23 @@ package org.sonatype.nexus.capability;
 import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
-import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import javax.annotation.Nullable;
+
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.capability.condition.Conditions;
+import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -38,9 +42,10 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 2.7
  */
 public abstract class CapabilitySupport<ConfigT>
-    extends ComponentSupport
     implements Capability
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private interface Messages
       extends MessageBundle
   {
@@ -280,6 +285,7 @@ public abstract class CapabilitySupport<ConfigT>
       log.warn("Template not found: {}. Could not render.", template);
       return null;
     }
+    params.set("esc", new EscapeHelper());
     return templateHelper.render(url, params);
   }
 

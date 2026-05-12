@@ -1,0 +1,209 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.generic-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--nx-spacing-4x, 16px);
+
+  &--loading,
+  &--error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-align: center;
+  }
+
+  &__loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--nx-color-border, #e0e0e0);
+    border-top-color: var(--nx-color-primary-button-background, #0066cc);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: var(--nx-spacing-3x, 12px);
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  &__error-text {
+    color: var(--nx-color-error-text, #c62828);
+    margin-bottom: var(--nx-spacing-4x, 16px);
+  }
+
+  &__header {
+    margin-bottom: var(--nx-spacing-4x, 16px);
+  }
+
+  &__back-btn {
+    background: none;
+    border: none;
+    color: var(--nx-color-primary-button-background, #0066cc);
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: var(--nx-spacing-2x, 8px) 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__info {
+    background-color: var(--nx-color-component-background, #fff);
+    border: 1px solid var(--nx-color-border, #e0e0e0);
+    border-radius: var(--nx-border-radius, 4px);
+    padding: var(--nx-spacing-4x, 16px);
+    margin-bottom: var(--nx-spacing-4x, 16px);
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-spacing-3x, 12px);
+    margin-bottom: var(--nx-spacing-4x, 16px);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--nx-color-text-dark, #333);
+  }
+
+  &__format-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+
+    // Reuse format colors from GenericResultRow
+    &--orange { background-color: #fff3e0; color: #e65100; }
+    &--red { background-color: #ffebee; color: #c62828; }
+    &--blue { background-color: #e3f2fd; color: #1565c0; }
+    &--cyan { background-color: #e0f7fa; color: #00838f; }
+    &--yellow { background-color: #fffde7; color: #f9a825; }
+    &--gray { background-color: #f5f5f5; color: #616161; }
+    &--indigo { background-color: #e8eaf6; color: #3949ab; }
+    &--teal { background-color: #e0f2f1; color: #00796b; }
+    &--green { background-color: #e8f5e9; color: #388e3c; }
+  }
+
+  &__metadata {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--nx-spacing-4x, 16px);
+  }
+
+  &__metadata-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__metadata-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--nx-color-text-dark, #666);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--nx-spacing-1x, 4px);
+  }
+
+  &__metadata-value {
+    font-size: 0.875rem;
+    color: var(--nx-color-text-dark, #333);
+    word-break: break-all;
+  }
+
+  &__assets {
+    background-color: var(--nx-color-component-background, #fff);
+    border: 1px solid var(--nx-color-border, #e0e0e0);
+    border-radius: var(--nx-border-radius, 4px);
+    overflow: hidden;
+  }
+
+  &__section-title {
+    margin: 0;
+    padding: var(--nx-spacing-3x, 12px) var(--nx-spacing-4x, 16px);
+    font-size: 1rem;
+    font-weight: 600;
+    background-color: var(--nx-color-component-background, #fafafa);
+    border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+  }
+
+  &__no-assets {
+    padding: var(--nx-spacing-6x, 24px);
+    text-align: center;
+    color: var(--nx-color-text-dark, #666);
+  }
+
+  &__assets-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      text-align: left;
+      padding: var(--nx-spacing-3x, 12px) var(--nx-spacing-4x, 16px);
+      border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+    }
+
+    th {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--nx-color-text-dark, #333);
+      background-color: var(--nx-color-component-background, #fafafa);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background-color: var(--nx-color-component-background-hover, #f5f5f5);
+    }
+  }
+
+  &__asset-path {
+    font-family: monospace;
+    font-size: 0.813rem;
+    word-break: break-all;
+  }
+
+  &__asset-actions {
+    width: 120px;
+    white-space: nowrap;
+  }
+
+  &__download-btn {
+    padding: var(--nx-spacing-1x, 4px) var(--nx-spacing-2x, 8px);
+    background-color: var(--nx-color-primary-button-background, #0066cc);
+    color: var(--nx-color-primary-button-text, #fff);
+    border: none;
+    border-radius: var(--nx-border-radius, 4px);
+    font-size: 0.75rem;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--nx-color-primary-button-background-hover, #0052a3);
+    }
+  }
+}
+
+

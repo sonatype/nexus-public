@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -45,6 +44,7 @@ import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
+import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
 
 import jakarta.inject.Provider;
 import org.junit.After;
@@ -72,15 +72,18 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.CLEANUP_ATTRIBUTES_KEY;
 import static org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.CLEANUP_NAME_KEY;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BaseRepositoryManagerTest
-    extends TestSupport
 {
   private static final String GROUP_NAME = "group";
 
@@ -195,6 +198,9 @@ public class BaseRepositoryManagerTest
 
   @Mock
   private HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
+
+  @Mock
+  private FailedRepositoryTracker failedRepositoryTracker;
 
   // Subject of the test
   private BaseRepositoryManager<BlobStoreManager> repositoryManager;
@@ -312,7 +318,7 @@ public class BaseRepositoryManagerTest
     repositoryManager = new BaseRepositoryManager<>(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, List.of(), securityContributor,
         defaultRepositoriesContributorList, skipDefaultRepositories, blobStoreManager,
-        groupMemberMappingCache, List.of(), httpAuthenticationSecretEncoder)
+        groupMemberMappingCache, List.of(), httpAuthenticationSecretEncoder, failedRepositoryTracker)
     {
     };
 
@@ -361,6 +367,45 @@ public class BaseRepositoryManagerTest
     verify(configurationStore).create(mavenCentralConfiguration);
     verify(configurationStore).create(apacheSnapshotsConfiguration);
     verify(configurationStore).create(thirdPartyConfiguration);
+  }
+
+  /**
+   * NEXUS-52062: Default repositories must be loaded into memory after first start.
+   * Previously, provisionDefaultRepositories() only wrote configs to the store but
+   * didn't restore them into the in-memory repositories map, causing 404s on access.
+   */
+  @Test
+  public void testStartup_defaultRepositoriesAreLoadedIntoMemory() throws Exception {
+    // Simulate first start: initially empty store, then returns provisioned configs
+    when(configurationStore.list())
+        .thenReturn(List.of()) // First call: empty store triggers provisioning
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
+            groupConfiguration, parentGroupConfiguration, cycleGroupAConfiguration, cycleGroupBConfiguration,
+            ungroupedRepoConfiguration)); // Second call: after provisioning
+
+    repositoryManager = initializeAndStartRepositoryManager(false);
+
+    // Verify repositories are created in the store
+    verify(configurationStore).create(mavenCentralConfiguration);
+    verify(configurationStore).create(apacheSnapshotsConfiguration);
+    verify(configurationStore).create(thirdPartyConfiguration);
+
+    // NEXUS-52062: Verify repositories are also loaded into memory and started
+    // (This is the critical fix - previously they were created in DB but not loaded)
+    assertThat(repositoryManager.get(MAVEN_CENTRAL_NAME), is(notNullValue()));
+    assertThat(repositoryManager.get(APACHE_SNAPSHOTS_NAME), is(notNullValue()));
+    assertThat(repositoryManager.get(THIRD_PARTY_NAME), is(notNullValue()));
+
+    // Verify repositories were initialized and started
+    verify(mavenCentralRepository).init(mavenCentralConfiguration);
+    verify(mavenCentralRepository).start();
+    verify(apacheSnapshotsRepository).init(apacheSnapshotsConfiguration);
+    verify(apacheSnapshotsRepository).start();
+    verify(thirdPartyRepository).init(thirdPartyConfiguration);
+    verify(thirdPartyRepository).start();
+
+    // Verify browse() returns the provisioned repositories
+    assertThat(size(repositoryManager.browse()), equalTo(8)); // 3 defaults + 5 groups from setup
   }
 
   @Test
@@ -536,21 +581,21 @@ public class BaseRepositoryManagerTest
   }
 
   @Test
-  public void getFunctionalityShouldFallBackToDbIfMissing() throws Exception {
+  public void getReturnsNullWhenRepositoryNotLoaded() throws Exception {
+    // NEXUS-51389: get() no longer lazily loads from DB - it's a pure lookup
     repositoryManager = buildRepositoryManagerImpl(false, true);
 
-    when(configurationStore.list()).thenReturn(List.of(mavenCentralConfiguration));
-
+    // Repository not loaded during startup
     Repository repository = repositoryManager.get(MAVEN_CENTRAL_NAME);
 
-    assertThat(repository.getName(), is(MAVEN_CENTRAL_NAME));
+    // Should return null (no lazy loading)
+    assertThat(repository, is(nullValue()));
   }
 
   @Test
-  public void repoNotInCacheOrDbReturnsNullForGet() throws Exception {
+  public void getReturnsNullWhenRepositoryNotInCache() throws Exception {
+    // NEXUS-51389: get() is now a pure lookup, returns null if not loaded
     repositoryManager = buildRepositoryManagerImpl(false, true);
-
-    when(configurationStore.readByNames(any(Set.class))).thenReturn(Set.of());
 
     Repository repository = repositoryManager.get("maven-central");
 
@@ -839,6 +884,272 @@ public class BaseRepositoryManagerTest
     repositoryManager = buildRepositoryManagerImpl(true, false);
 
     verify(groupMemberMappingCache).init(repositoryManager);
+  }
+
+  @Test
+  public void testRetryFailedRepository_successfulRetry() throws Exception {
+    // Setup: Repository has a recorded failure and retry succeeds
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    String failedRepoName = "failed-repo";
+    Configuration failedRepoConfig = mock(Configuration.class);
+    Repository failedRepo = mock(Repository.class);
+
+    when(failedRepoConfig.getRepositoryName()).thenReturn(failedRepoName);
+    when(failedRepoConfig.getRecipeName()).thenReturn(recipeName);
+    when(failedRepo.getName()).thenReturn(failedRepoName);
+    when(failedRepo.getConfiguration()).thenReturn(failedRepoConfig);
+
+    // Mock the configuration store to return the failed repo config
+    when(configurationStore.list()).thenReturn(asList(failedRepoConfig));
+
+    // Mock the factory to create the repository
+    when(repositoryFactory.create(type, format)).thenReturn(failedRepo);
+
+    // Mock the failedRepositoryTracker
+    when(failedRepositoryTracker.hasFailed(failedRepoName)).thenReturn(true);
+
+    // Reset mock to clear setup interactions
+    reset(eventManager);
+
+    // Execute: Retry the failed repository
+    Optional<Repository> result = repositoryManager.retryFailedRepository(failedRepoName);
+
+    // Verify: Repository was successfully created and started
+    assertThat(result.isPresent(), is(true));
+    assertThat(result.get(), is(failedRepo));
+    verify(failedRepo).start();
+    verify(failedRepositoryTracker).clearFailure(failedRepoName);
+
+    // Verify: RepositoryRestoredEvent was posted for the failed repository
+    ArgumentCaptor<RepositoryRestoredEvent> eventCaptor = ArgumentCaptor.forClass(RepositoryRestoredEvent.class);
+    verify(eventManager).post(eventCaptor.capture());
+    assertThat(eventCaptor.getValue().getRepository(), is(failedRepo));
+  }
+
+  @Test
+  public void testRetryFailedRepository_failedRetry() throws Exception {
+    // Setup: Repository has a recorded failure and retry still fails
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    String failedRepoName = "failed-repo";
+    Configuration failedRepoConfig = mock(Configuration.class);
+    Repository failedRepo = mock(Repository.class);
+
+    when(failedRepoConfig.getRepositoryName()).thenReturn(failedRepoName);
+    when(failedRepoConfig.getRecipeName()).thenReturn(recipeName);
+    when(failedRepo.getName()).thenReturn(failedRepoName);
+    when(failedRepo.getConfiguration()).thenReturn(failedRepoConfig);
+
+    // Mock the configuration store to return the failed repo config
+    when(configurationStore.list()).thenReturn(asList(failedRepoConfig));
+
+    // Mock the factory to create the repository but throw on start
+    when(repositoryFactory.create(type, format)).thenReturn(failedRepo);
+    RuntimeException startException = new RuntimeException("Still broken");
+    doThrow(startException).when(failedRepo).start();
+
+    // Mock the failedRepositoryTracker
+    when(failedRepositoryTracker.hasFailed(failedRepoName)).thenReturn(true);
+
+    // Reset mocks to clear setup interactions
+    reset(eventManager, failedRepositoryTracker);
+    when(failedRepositoryTracker.hasFailed(failedRepoName)).thenReturn(true);
+
+    // Execute: Retry the failed repository
+    Optional<Repository> result = repositoryManager.retryFailedRepository(failedRepoName);
+
+    // Verify: Retry failed, failure was recorded again
+    assertThat(result.isPresent(), is(false));
+    verify(failedRepositoryTracker).recordFailure(failedRepoName, startException);
+    verify(failedRepositoryTracker, never()).clearFailure(failedRepoName);
+
+    // Verify: No RepositoryRestoredEvent was posted (since retry failed)
+    verify(eventManager, never()).post(any(RepositoryRestoredEvent.class));
+  }
+
+  @Test
+  public void testRetryFailedRepository_alreadyLoaded() throws Exception {
+    // Setup: Repository is already loaded (exists in repositories map)
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    // Reset mock to clear setup interactions
+    reset(failedRepositoryTracker);
+
+    // Mock the failedRepositoryTracker
+    when(failedRepositoryTracker.hasFailed(MAVEN_CENTRAL_NAME)).thenReturn(true);
+
+    // Execute: Retry a repository that's already loaded
+    Optional<Repository> result = repositoryManager.retryFailedRepository(MAVEN_CENTRAL_NAME);
+
+    // Verify: Returns the existing repository and clears failure
+    assertThat(result.isPresent(), is(true));
+    assertThat(result.get(), is(mavenCentralRepository));
+    verify(failedRepositoryTracker).clearFailure(MAVEN_CENTRAL_NAME);
+
+    // Verify: No new repository was created
+    verify(repositoryFactory, times(8)).create(type, format); // 8 from initial setup
+  }
+
+  @Test
+  public void testRetryFailedRepository_noRecordedFailure() throws Exception {
+    // Setup: Repository has no recorded failure
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    String repoName = "unknown-repo";
+
+    // Reset mock to clear setup interactions
+    reset(failedRepositoryTracker);
+
+    // Mock the failedRepositoryTracker to return false for hasFailed
+    when(failedRepositoryTracker.hasFailed(repoName)).thenReturn(false);
+
+    // Execute: Retry a repository with no recorded failure
+    Optional<Repository> result = repositoryManager.retryFailedRepository(repoName);
+
+    // Verify: Returns empty
+    assertThat(result.isPresent(), is(false));
+    verify(failedRepositoryTracker, never()).clearFailure(any());
+    verify(failedRepositoryTracker, never()).recordFailure(any(), any());
+  }
+
+  @Test
+  public void testRetryFailedRepository_concurrentRetry_firstWins() throws Exception {
+    // Setup: Two threads try to retry the same repository simultaneously
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    String failedRepoName = "failed-repo";
+    Configuration failedRepoConfig = mock(Configuration.class);
+    Repository failedRepo = mock(Repository.class);
+
+    when(failedRepoConfig.getRepositoryName()).thenReturn(failedRepoName);
+    when(failedRepoConfig.getRecipeName()).thenReturn(recipeName);
+    when(failedRepo.getName()).thenReturn(failedRepoName);
+    when(failedRepo.getConfiguration()).thenReturn(failedRepoConfig);
+
+    // Mock the configuration store
+    when(configurationStore.list()).thenReturn(asList(failedRepoConfig));
+
+    // Mock the factory to create the repository
+    when(repositoryFactory.create(type, format)).thenReturn(failedRepo);
+
+    // Mock the failedRepositoryTracker with special behavior:
+    // - First check (outside lock) returns true for both threads
+    // - Second check (inside lock after first thread completes) returns false for second thread
+    when(failedRepositoryTracker.hasFailed(failedRepoName))
+        .thenReturn(true) // First thread, outer check
+        .thenReturn(true) // Second thread, outer check
+        .thenReturn(true) // First thread, inner check (inside lock)
+        .thenReturn(false); // Second thread, inner check (inside lock, after first completes)
+
+    // Execute first retry (simulates first thread winning the race)
+    Optional<Repository> firstResult = repositoryManager.retryFailedRepository(failedRepoName);
+
+    // Verify first retry succeeded
+    assertThat(firstResult.isPresent(), is(true));
+    verify(failedRepo).start();
+    verify(failedRepositoryTracker).clearFailure(failedRepoName);
+
+    // Execute second retry (simulates second thread entering after first completed)
+    Optional<Repository> secondResult = repositoryManager.retryFailedRepository(failedRepoName);
+
+    // Verify second retry returns the existing repository (double-check pattern worked)
+    assertThat(secondResult.isPresent(), is(true));
+    assertThat(secondResult.get(), is(failedRepo));
+
+    // Verify repository was only created once (not twice)
+    verify(repositoryFactory, times(9)).create(type, format); // 8 from setup + 1 from first retry
+
+    // Verify failure was cleared (at least once, possibly twice for the double-check)
+    verify(failedRepositoryTracker, times(2)).clearFailure(failedRepoName);
+  }
+
+  @Test
+  public void testRetryFailedRepository_failureClearedBeforeLockAcquired() throws Exception {
+    // Setup: TOCTOU scenario - failure is cleared by another thread between outer check and lock acquisition
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    String failedRepoName = "failed-repo";
+
+    // Reset mocks to clear setup interactions
+    reset(failedRepositoryTracker, configurationStore, repositoryFactory);
+
+    // Mock the failedRepositoryTracker to simulate TOCTOU race:
+    // - Outer check (line 416): returns true → passes outer check
+    // - Inner check (line 432): returns false → failure was cleared by another thread
+    when(failedRepositoryTracker.hasFailed(failedRepoName))
+        .thenReturn(true) // Outer check: failure exists
+        .thenReturn(false); // Inner check after lock: failure was cleared
+
+    // Execute: Retry the repository
+    Optional<Repository> result = repositoryManager.retryFailedRepository(failedRepoName);
+
+    // Verify: Returns empty because failure was cleared before lock was acquired
+    assertThat(result.isPresent(), is(false));
+
+    // Verify: No retry was attempted (defensive check caught the race)
+    verify(configurationStore, never()).list();
+    verify(repositoryFactory, never()).create(any(), any());
+    verify(failedRepositoryTracker, never()).clearFailure(any());
+    verify(failedRepositoryTracker, never()).recordFailure(any(), any());
+  }
+
+  @Test
+  public void testRetryFailedRepository_caseInsensitive() throws Exception {
+    // Setup: Repository name is case-insensitive
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    String failedRepoName = "Failed-Repo";
+    String lowerCaseName = failedRepoName.toLowerCase();
+    Configuration failedRepoConfig = mock(Configuration.class);
+    Repository failedRepo = mock(Repository.class);
+
+    when(failedRepoConfig.getRepositoryName()).thenReturn(lowerCaseName);
+    when(failedRepoConfig.getRecipeName()).thenReturn(recipeName);
+    when(failedRepo.getName()).thenReturn(lowerCaseName);
+    when(failedRepo.getConfiguration()).thenReturn(failedRepoConfig);
+
+    // Mock the configuration store
+    when(configurationStore.list()).thenReturn(asList(failedRepoConfig));
+
+    // Mock the factory to create the repository
+    when(repositoryFactory.create(type, format)).thenReturn(failedRepo);
+
+    // Mock the failedRepositoryTracker (checks both with original case and lowercase)
+    when(failedRepositoryTracker.hasFailed(failedRepoName)).thenReturn(true);
+    when(failedRepositoryTracker.hasFailed(lowerCaseName)).thenReturn(true);
+
+    // Execute: Retry with mixed-case name
+    Optional<Repository> result = repositoryManager.retryFailedRepository(failedRepoName);
+
+    // Verify: Repository was created successfully
+    assertThat(result.isPresent(), is(true));
+    verify(failedRepo).start();
+    verify(failedRepositoryTracker).clearFailure(failedRepoName);
+  }
+
+  @Test
+  public void testDelete_failedRepository() throws Exception {
+    // Setup: A repository that failed during startup and is tracked but not in repositories map
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    String failedRepoName = "failed-repo";
+    Configuration failedRepoConfig = mock(Configuration.class);
+    when(failedRepoConfig.getRepositoryName()).thenReturn(failedRepoName);
+    when(failedRepoConfig.getRecipeName()).thenReturn(recipeName);
+
+    // Add configuration to store so it can be found
+    when(configurationStore.list()).thenReturn(List.of(failedRepoConfig));
+
+    // Mock the failedRepositoryTracker to indicate this repository has failed
+    when(failedRepositoryTracker.hasFailed(failedRepoName.toLowerCase())).thenReturn(true);
+
+    // Execute: Delete the failed repository
+    repositoryManager.delete(failedRepoName);
+
+    // Verify: Configuration was removed from store and failure was cleared
+    verify(configurationStore).delete(failedRepoConfig);
+    verify(failedRepositoryTracker).clearFailure(failedRepoName);
   }
 
 }

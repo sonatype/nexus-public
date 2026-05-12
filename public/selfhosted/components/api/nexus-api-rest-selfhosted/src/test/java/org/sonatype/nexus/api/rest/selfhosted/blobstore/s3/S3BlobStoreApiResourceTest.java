@@ -17,7 +17,6 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConfigurationMapper;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiModelMapper;
@@ -41,6 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -55,10 +55,10 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class S3BlobStoreApiResourceTest
-    extends Test5Support
 {
   private static final String BLOBSTORE_NAME = "test-blobstore";
 
@@ -99,8 +99,8 @@ class S3BlobStoreApiResourceTest
     S3BlobStoreApiModel request = simpleApiModel();
     try (MockedStatic<S3BlobStoreApiModelMapper> modelMapper = mockStatic(S3BlobStoreApiModelMapper.class)) {
       modelMapper.when(
-              () -> S3BlobStoreApiModelMapper.map(any(BlobStoreConfiguration.class), any(S3BlobStoreApiModel.class), any(
-                  ApplicationVersion.class)))
+          () -> S3BlobStoreApiModelMapper.map(any(BlobStoreConfiguration.class), any(S3BlobStoreApiModel.class), any(
+              ApplicationVersion.class)))
           .thenReturn(blobStoreConfiguration);
 
       try (Response response = underTest.createBlobStore(request)) {
@@ -122,8 +122,8 @@ class S3BlobStoreApiResourceTest
 
     try (MockedStatic<S3BlobStoreApiModelMapper> modelMapper = mockStatic(S3BlobStoreApiModelMapper.class)) {
       modelMapper.when(
-              () -> S3BlobStoreApiModelMapper.map(any(BlobStoreConfiguration.class), any(S3BlobStoreApiModel.class),
-                  any(ApplicationVersion.class)))
+          () -> S3BlobStoreApiModelMapper.map(any(BlobStoreConfiguration.class), any(S3BlobStoreApiModel.class),
+              any(ApplicationVersion.class)))
           .thenReturn(blobStoreConfiguration);
 
       underTest.updateBlobStore(request, BLOBSTORE_NAME);
@@ -147,8 +147,8 @@ class S3BlobStoreApiResourceTest
 
     try (MockedStatic<S3BlobStoreApiModelMapper> modelMapper = mockStatic(S3BlobStoreApiModelMapper.class)) {
       modelMapper.when(
-              () -> S3BlobStoreApiModelMapper.map(any(BlobStoreConfiguration.class), any(S3BlobStoreApiModel.class),
-                  any(ApplicationVersion.class)))
+          () -> S3BlobStoreApiModelMapper.map(any(BlobStoreConfiguration.class), any(S3BlobStoreApiModel.class),
+              any(ApplicationVersion.class)))
           .thenReturn(blobStoreConfiguration);
 
       underTest.updateBlobStore(request, BLOBSTORE_NAME);
@@ -172,7 +172,7 @@ class S3BlobStoreApiResourceTest
     try (MockedStatic<S3BlobStoreApiConfigurationMapper> configMapper = mockStatic(
         S3BlobStoreApiConfigurationMapper.class)) {
       configMapper.when(
-              () -> S3BlobStoreApiConfigurationMapper.map(any(BlobStoreConfiguration.class)))
+          () -> S3BlobStoreApiConfigurationMapper.map(any(BlobStoreConfiguration.class)))
           .thenReturn(authApiModel("secretAccess", "sessionToken"));
 
       S3BlobStoreApiModel response = underTest.getBlobStore(BLOBSTORE_NAME);

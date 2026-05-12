@@ -1,0 +1,279 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.task-scheduler {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  &__fields {
+    margin-top: var(--space-2);
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-3);
+  }
+
+  &__section-title {
+    margin-bottom: var(--space-2);
+    color: var(--gray-12);
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 1;
+    min-width: 0;
+
+    &--date {
+      min-width: 200px;
+    }
+
+    &--time {
+      min-width: 160px;
+    }
+  }
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-2);
+    font-weight: 500;
+    color: var(--gray-12);
+
+    svg {
+      color: var(--accent-9);
+      flex-shrink: 0;
+    }
+  }
+
+  &__input {
+    width: 100%;
+    height: 40px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-2);
+    font-family: inherit;
+    color: var(--gray-12);
+    background: var(--color-background);
+    border: 1px solid var(--gray-7);
+    border-radius: var(--radius-2);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover:not(:disabled) {
+      border-color: var(--gray-8);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-8);
+      box-shadow: 0 0 0 2px var(--accent-4);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: var(--gray-3);
+    }
+
+    // Ensure consistent sizing for date and time inputs
+    &[type="date"],
+    &[type="time"] {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      line-height: 1.2;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    // Webkit date/time picker styling
+    &::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      padding: var(--space-1);
+      margin-left: var(--space-1);
+      opacity: 0.7;
+      transition: opacity 0.15s ease;
+      filter: var(--calendar-icon-filter, none);
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    // Firefox date/time inputs
+    &::-moz-focus-inner {
+      border: 0;
+    }
+  }
+
+  &__error {
+    color: var(--red-11);
+    margin-top: var(--space-1);
+  }
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    color: var(--gray-11);
+    background: var(--gray-3);
+    border-radius: var(--radius-2);
+
+    svg {
+      color: var(--accent-9);
+      flex-shrink: 0;
+    }
+  }
+
+  &__days {
+    margin-top: var(--space-2);
+  }
+
+  &__days-grid {
+    margin-top: var(--space-2);
+  }
+
+  &__day-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--gray-3);
+    border-radius: var(--radius-2);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: var(--gray-4);
+    }
+
+    [data-state="checked"] {
+      background: var(--accent-9);
+      border-color: var(--accent-9);
+    }
+  }
+
+  &__month-grid {
+    margin-top: var(--space-2);
+  }
+
+  &__month-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    min-width: 48px;
+    background: var(--gray-3);
+    border-radius: var(--radius-2);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    user-select: none;
+
+    &:hover {
+      background: var(--gray-4);
+    }
+
+    &--selected {
+      background: var(--accent-4);
+      color: var(--accent-11);
+
+      &:hover {
+        background: var(--accent-5);
+      }
+    }
+  }
+
+  &__month-checkbox {
+    // Hide checkbox, use label styling instead
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  &__cron-help {
+    margin-top: var(--space-2);
+    padding: var(--space-3);
+    background: var(--gray-3);
+    border-radius: var(--radius-2);
+  }
+
+  &__cron-examples {
+    color: var(--gray-11);
+    line-height: 1.6;
+
+    code {
+      display: inline-block;
+      padding: 0 var(--space-1);
+      font-family: var(--font-mono);
+      font-size: var(--font-size-1);
+      background: var(--gray-4);
+      border-radius: var(--radius-1);
+      color: var(--accent-11);
+    }
+
+    strong {
+      color: var(--gray-12);
+    }
+  }
+}
+
+// Dark mode adjustments
+:root[data-theme="dark"] {
+  .task-scheduler {
+    --calendar-icon-filter: invert(1);
+
+    &__fields {
+      background: var(--gray-2);
+    }
+
+    &__input {
+      background: var(--gray-3);
+
+      &:disabled {
+        background: var(--gray-4);
+      }
+    }
+
+    &__info {
+      background: var(--gray-4);
+    }
+
+    &__day-checkbox,
+    &__month-day {
+      background: var(--gray-4);
+
+      &:hover {
+        background: var(--gray-5);
+      }
+    }
+
+    &__month-day--selected {
+      background: var(--accent-5);
+
+      &:hover {
+        background: var(--accent-6);
+      }
+    }
+
+    &__cron-help {
+      background: var(--gray-4);
+    }
+  }
+}
+
+

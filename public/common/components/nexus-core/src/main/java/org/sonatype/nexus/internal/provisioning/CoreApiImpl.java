@@ -16,7 +16,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.CoreApi;
 import org.sonatype.nexus.capability.CapabilityRegistry;
@@ -36,6 +35,8 @@ import org.sonatype.nexus.internal.capability.DefaultCapabilityReference;
 import org.sonatype.nexus.security.UserIdHelper;
 
 import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -48,9 +49,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class CoreApiImpl
-    extends ComponentSupport
     implements CoreApi
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final CapabilityRegistry capabilityRegistry;
 
   private final HttpClientManager httpClientManager;

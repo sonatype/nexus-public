@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.app;
 
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,7 +24,6 @@ import static org.hamcrest.Matchers.equalTo;
  * Tests for {@link ApplicationVersionSupport}.
  */
 public class ApplicationVersionSupportTest
-    extends TestSupport
 {
   private ApplicationVersionSupport underTest;
 

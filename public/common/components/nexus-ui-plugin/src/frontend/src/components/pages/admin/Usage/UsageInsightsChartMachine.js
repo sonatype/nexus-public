@@ -123,8 +123,9 @@ export default createMachine(
           const metricsMap = new Map();
           const appendToMetrics = (item, key) => {
             const date = item.date;
-            const value = metricsMap.get(date) || {metricDate: date};
+            const value = metricsMap.get(date) || {metricDate: date, [KEY_EGRESS]: 0, [KEY_STORAGE]: 0, _available: {}};
             value[key] = Number(item.bytes) || 0;
+            value._available[key] = true;
             metricsMap.set(date, value);
           };
 

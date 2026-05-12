@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.data.AptKeyValueFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.proxy.metadata.AptProxyMetadataFacet;
@@ -30,6 +29,8 @@ import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handler for serving APT proxy metadata.
@@ -49,9 +50,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AptProxyMetadataHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final Pattern DISTS_PATH_PATTERN = Pattern.compile("^/?dists/([^/]+)/(.*)$");
 
   // Metadata files that are generated (Release, InRelease, Release.gpg, Packages*)

@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 import org.mockito.InjectMocks;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 
@@ -29,8 +29,9 @@ import static org.sonatype.nexus.logging.task.SeparateTaskLogTaskLogger.TASK_LOG
 import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TaskLogOnlyTaskLoggerTest
-    extends TestSupport
+
 {
   @Mock
   private Logger log;

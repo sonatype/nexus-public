@@ -18,7 +18,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup;
@@ -42,9 +41,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.condition.MappedCondition.mappedCondition;
 import static org.assertj.db.api.Assertions.assertThat;
@@ -58,8 +59,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 @Category(PostgresTestGroup.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SearchCapabilityStep_2_16Test
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule =

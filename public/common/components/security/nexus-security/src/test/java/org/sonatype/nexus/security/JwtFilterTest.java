@@ -17,13 +17,14 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.jwt.JwtVerificationException;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -33,8 +34,8 @@ import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 /**
  * Test for {@link JwtFilter}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class JwtFilterTest
-    extends TestSupport
 {
   private static final String OLD_JWT = "old-jwt";
 

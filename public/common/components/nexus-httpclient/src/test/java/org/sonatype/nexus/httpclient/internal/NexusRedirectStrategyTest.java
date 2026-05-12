@@ -14,8 +14,6 @@ package org.sonatype.nexus.httpclient.internal;
 
 import java.net.URI;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.RedirectStrategy;
@@ -35,12 +33,14 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 import static org.sonatype.nexus.httpclient.internal.NexusRedirectStrategy.CONTENT_RETRIEVAL_MARKER_KEY;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link NexusRedirectStrategy}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NexusRedirectStrategyTest
-    extends TestSupport
 {
   @Mock
   private HttpResponse response;

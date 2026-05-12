@@ -16,7 +16,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -29,7 +28,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 
 public class StoreDataTest
-    extends TestSupport
 {
   private AssetBlobData assetBlob;
 

@@ -19,7 +19,6 @@ import java.util.List;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
@@ -37,13 +36,15 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link QuartzTaskJob} focusing on the isTrulyBlocking method
  * which enables concurrent execution of blob store compact tasks for different blob stores.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class QuartzTaskJobTest
-    extends TestSupport
 {
   @Mock
   private Task task;

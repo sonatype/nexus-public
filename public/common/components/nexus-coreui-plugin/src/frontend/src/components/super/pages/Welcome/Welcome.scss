@@ -1,0 +1,52 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Preview UI Welcome page - pure Radix, no RSC
+.nxrm-welcome-radix {
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-background);
+  color: var(--color-text);
+
+  // Dashboard cards: border radius rt-r-size-3 (var(--radius-3))
+  // Inner Box p="3" provides padding; remove Card default to avoid double padding
+  .nxrm-quick-action-card,
+  .nxrm-metric-card,
+  .nxrm-malware-status-card,
+  .repos-by-format-panel {
+    border-radius: var(--radius-3) !important;
+    padding: 0 !important;
+  }
+
+  // Tabs: Radix blue accent for active indicator
+  .nxrm-welcome-tabs {
+    margin-bottom: 0;
+
+    [data-state="active"] {
+      color: var(--accent-11);
+      box-shadow: inset 0 -2px 0 0 var(--accent-9);
+    }
+  }
+
+  // Ensure iframe takes full width
+  iframe {
+    width: 100% !important;
+    max-width: 100%;
+    min-height: 400px;
+    background-color: var(--color-surface);
+    // Force pointer events to ensure interaction isn't blocked by layout
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
+  }
+}

@@ -17,7 +17,6 @@ import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
@@ -32,6 +31,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -45,9 +46,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Singleton
 class DefaultCapabilityFactoryRegistry
-    extends ComponentSupport
     implements CapabilityFactoryRegistry, ApplicationContextAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final Map<String, CapabilityFactory> factories;
 

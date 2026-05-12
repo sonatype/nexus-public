@@ -16,6 +16,7 @@
  */
 
 import './App';
+import { enforceHashRouting } from './hashEnforcement';
 import S3BlobStoreSettings from './components/pages/admin/BlobStores/S3/S3BlobStoreSettings';
 import S3BlobStoreWarning from './components/pages/admin/BlobStores/S3/S3BlobStoreWarning';
 import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobStoreActions';
@@ -27,6 +28,13 @@ import FileBlobStoreWarning from './components/pages/admin/BlobStores/File/FileB
 import CommunityEulaOnboarding from './components/pages/onboarding/CommunityEulaOnboarding';
 import CommunityDiscoverOnboarding from './components/pages/onboarding/CommunityDiscoverOnboarding';
 import './styles/extjs.scss';
+import { configureAxios, configureDebugLogging, exposeCreateRoot } from '@sonatype/nexus-ui-plugin';
+
+enforceHashRouting();
+
+configureAxios();
+configureDebugLogging();
+exposeCreateRoot();
 
 window.BlobStoreTypes = {
   ...window.BlobStoreTypes,

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.event.EventManager;
@@ -55,7 +54,9 @@ import org.sonatype.nexus.scheduling.schedule.Once;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -70,8 +71,9 @@ import static org.mockito.Mockito.when;
 /**
  * Test for {@link AptMetadataRebuildSchedulerFacet}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AptMetadataRebuildSchedulerFacetTest
-    extends TestSupport
+
 {
   private static final String REPO_NAME = "apt-hosted";
 

@@ -82,7 +82,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ExtJS: {
     useState: jest.fn(),
     state: jest.fn(),
-    waitForNextPermissionChange: jest.fn().mockResolvedValue()
+    waitForNextPermissionChange: jest.fn().mockResolvedValue(),
+    urlOf: jest.fn().mockImplementation((_path) => `/static/rapture/resources/favicon.svg`)
   }
 }));
 
@@ -192,6 +193,20 @@ describe('LoginPage', () => {
   });
 
   describe('cloud environment', () => {
+    beforeEach(() => {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { hostname: 'cloud.nexus.sonatype.example' },
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: { hostname: 'localhost' },
+      });
+    });
+
     it('does not render login form in cloud environment without SSO', () => {
       setupStates(false, false, true);
 
@@ -558,6 +573,20 @@ describe('LoginPage', () => {
     });
 
     describe('cloud environment', () => {
+      beforeEach(() => {
+        Object.defineProperty(window, 'location', {
+          configurable: true,
+          value: { hostname: 'cloud.nexus.sonatype.example' },
+        });
+      });
+
+      afterEach(() => {
+        Object.defineProperty(window, 'location', {
+          configurable: true,
+          value: { hostname: 'localhost' },
+        });
+      });
+
       it('hides local login in cloud even when all realms are enabled', () => {
         setupStates(false, false, true, null, true, true, true); // cloud, all realms enabled
 

@@ -15,7 +15,6 @@ package org.sonatype.nexus.coreui.internal.capability;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
@@ -35,6 +34,7 @@ import com.google.common.base.Predicate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -55,11 +55,11 @@ import static org.mockito.Mockito.when;
 /**
  * Tests {@link CapabilityComponent}.
  */
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class CapabilityComponentTest
-    extends Test5Support
 {
   @Mock
   private CapabilityDescriptorRegistry capabilityDescriptorRegistry;

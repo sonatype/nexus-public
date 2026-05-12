@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.security.secrets.upgrade;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.internal.security.secrets.SecretsDAO;
 import org.sonatype.nexus.internal.security.secrets.task.SecretsMigrationTaskDescriptor;
@@ -30,9 +29,11 @@ import org.mockito.Mock;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecretsMigrationStep_2_2Test
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME)

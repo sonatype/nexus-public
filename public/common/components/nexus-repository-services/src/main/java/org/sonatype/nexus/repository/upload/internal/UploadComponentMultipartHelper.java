@@ -25,7 +25,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.upload.TempBlobFactory;
@@ -41,6 +40,8 @@ import org.apache.commons.fileupload.RequestContext;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -54,8 +55,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class UploadComponentMultipartHelper
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final AntiCsrfHelper antiCsrfHelper;
 
   private final TempBlobFactory tempBlobFactory;

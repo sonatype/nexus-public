@@ -16,17 +16,18 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Method;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import static org.mockito.Mockito.*;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class GuardedAspectTest
-    extends TestSupport
+
 {
 
   private GuardedAspect guardedAspect;

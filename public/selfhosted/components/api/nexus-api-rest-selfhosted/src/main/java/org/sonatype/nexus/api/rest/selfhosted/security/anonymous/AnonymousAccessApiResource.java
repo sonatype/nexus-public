@@ -19,7 +19,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.selfhosted.security.anonymous.model.AnonymousAccessSettingsXO;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -30,6 +29,8 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -40,9 +41,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 public class AnonymousAccessApiResource
-    extends ComponentSupport
     implements Resource, AnonymousAccessApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final AnonymousManager anonymousManager;
 
   private final RealmSecurityManager realmSecurityManager;

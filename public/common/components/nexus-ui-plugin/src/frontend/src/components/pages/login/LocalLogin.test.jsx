@@ -106,15 +106,15 @@ describe('LocalLogin', () => {
     it('uses primary button styling by default', () => {
       renderComponent();
 
-      expect(selectors.loginButton()).toHaveClass('nx-btn--primary');
+      expect(selectors.loginButton()).toHaveClass('rt-variant-solid');
     });
 
-    it('switches to default button styling when primary=false', () => {
+    it('switches to outline button styling when primary=false', () => {
       renderComponent({ primaryButton: false });
 
       const loginButton = selectors.loginButton();
-      expect(loginButton).not.toHaveClass('nx-btn--primary');
-      expect(loginButton).toHaveClass('nx-btn');
+      expect(loginButton).not.toHaveClass('rt-variant-solid');
+      expect(loginButton).toHaveClass('rt-variant-outline');
     });
 
     it('adds analytics ids to form controls', () => {

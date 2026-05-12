@@ -15,23 +15,21 @@ package org.sonatype.nexus.repository.apt.internal;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.mime.internal.DefaultMimeSupport;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 class AptContentValidatorTest
-    extends Test5Support
 {
-  private AptContentValidator underTest;
+  private static AptContentValidator underTest;
 
-  @BeforeEach
-  void setUp() {
+  @BeforeAll
+  static void setUp() {
     // Use real DefaultContentValidator with real DefaultMimeSupport
     underTest = new AptContentValidator(new DefaultContentValidator(new DefaultMimeSupport()));
   }

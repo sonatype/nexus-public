@@ -26,7 +26,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.api.rest.common.blobstore.BlobStoreResourceUtil;
@@ -47,6 +46,8 @@ import org.sonatype.nexus.validation.Validate;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -61,9 +62,10 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class BlobStoreResource
-    extends ComponentSupport
     implements Resource, BlobStoreResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final BlobStoreManager blobStoreManager;
 
   private final BlobStoreConfigurationStore store;

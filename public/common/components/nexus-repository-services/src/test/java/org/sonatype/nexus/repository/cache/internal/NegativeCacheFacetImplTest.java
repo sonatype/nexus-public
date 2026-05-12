@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import javax.cache.Cache;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
@@ -43,9 +42,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.reset;
 import static org.mockito.ArgumentMatchers.eq;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NegativeCacheFacetImplTest
-    extends TestSupport
 {
   @Mock
   private NegativeCacheKey key;

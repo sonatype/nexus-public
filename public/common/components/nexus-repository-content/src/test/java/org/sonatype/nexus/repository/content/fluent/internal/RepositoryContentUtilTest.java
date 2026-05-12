@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.HashSet;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -23,7 +22,9 @@ import org.sonatype.nexus.repository.types.HostedType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -38,8 +39,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getRepositoryIds;
 import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.isGroupRepository;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RepositoryContentUtilTest
-    extends TestSupport
 {
   @Mock
   private Repository repository;

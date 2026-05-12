@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.blobstore;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 
 import org.junit.Before;
@@ -26,7 +25,6 @@ import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PAT
  * Tests for {@link DirectPathLocationStrategy}.
  */
 public class DirectPathLocationStrategyTest
-    extends TestSupport
 {
   private static final String CORRECT_PATH = "/healthCheckSummary/maven-central/current/summary.html";
 

@@ -12,6 +12,9 @@
  */
 
 .nxrm-system-notices {
+  grid-area: notices;
+  min-width: 0;
+
   .nx-alert {
     margin: 0;
     width: 100%;
@@ -21,7 +24,7 @@
   }
 
   .nx-system-notice {
-    white-space: wrap;
+    white-space: normal;
   }
 
   .nx-system-notice.nx-system-notice--alert {
@@ -34,20 +37,20 @@
   }
 
   .banner-header {
-    color: var(--nx-swatch-white);
+    color: var(--color-text-contrast);
     margin-bottom: var(--nx-spacing-2x);
   }
 
-  // overrides for community edition error alerts -- makes background a deeper raed and text white
+  // overrides for community edition error alerts -- uses design tokens for dark mode
   .ce-banner-over-limit-in-grace-period,
   .ce-banner-over-limit-grace-period-ended,
   .ce-banner-over-limit-non-admin {
-    background-color: var(--nx-swatch-red-40);
+    background-color: var(--color-error-background);
 
-    color: var(--nx-swatch-white);
+    color: var(--color-text-contrast);
 
     .nx-icon, .nx-h3, a, button.nx-text-link {
-      color: var(--nx-swatch-white);
+      color: var(--color-text-contrast);
     }
 
     a, button.nx-text-link {
@@ -56,16 +59,16 @@
     }
   }
 
-  // overrides for community edition warning alerts, makes background a deeper yellow and text black
+  // overrides for community edition warning alerts - uses design tokens for dark mode
   .ce-banner-under-limit-grace-period-ended,
   .ce-banner-nearing-limit-non-admin,
   .ce-banner-near-limit-never-in-grace-period {
-    background-color: var(--nx-swatch-yellow-50);
+    background-color: var(--color-warning-background);
 
-    color: var(--nx-swatch-black);
+    color: var(--color-text);
 
     .nx-icon, a, button.nx-text-link {
-      color: var(--nx-swatch-black);
+      color: var(--color-text);
     }
 
     a, button.nx-text-link {
@@ -77,7 +80,19 @@
   // create appropriate space between text and finalize button in finalize upgrade message
   .nxrm-upgrade-alert-needs-upgrade {
     display: flex;
+    align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--nx-spacing-4x);
+
+    > :first-child {
+      flex: 1 1 320px;
+      min-width: 0;
+    }
+
+    .nx-btn {
+      flex-shrink: 0;
+    }
   }
 
   // create appropriate space between text and view details button in recovery mode message

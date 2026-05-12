@@ -17,10 +17,11 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.security.UserIdHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,9 +29,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Support for {@link SecretsMigrator} implementations.
  */
 public abstract class SecretsMigratorSupport
-    extends ComponentSupport
     implements SecretsMigrator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected final SecretsService secretsService;
 
   protected SecretsMigratorSupport(final SecretsService secretsService) {

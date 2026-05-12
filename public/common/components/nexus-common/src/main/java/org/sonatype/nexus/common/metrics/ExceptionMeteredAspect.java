@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.metrics;
 
 import java.lang.reflect.Method;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
@@ -24,20 +22,31 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.sonatype.nexus.common.app.FeatureFlags.METRICS_INTERNAL_ENABLED;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
 /**
  * Aspect to handle {@link ExceptionMetered} annotation and register exception meters in the metrics registry.
  */
 @Aspect
 public class ExceptionMeteredAspect
-    extends ComponentSupport
 {
-  private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate("nexus");
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
+  private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
+
+  private static final boolean EXCEPTION_METERED_ENABLED =
+      Boolean.parseBoolean(System.getProperty(METRICS_INTERNAL_ENABLED, "true"));
 
   @Around("@annotation(exceptionMetered) && execution(* *(..))")
   public Object around(final ProceedingJoinPoint joinPoint, final ExceptionMetered exceptionMetered) throws Throwable {
+    if (!EXCEPTION_METERED_ENABLED) {
+      return joinPoint.proceed();
+    }
     Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
     try {
       return joinPoint.proceed();

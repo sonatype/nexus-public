@@ -116,7 +116,7 @@ export default function CleanupPoliciesPreview({policyData}) {
           </div>
         </div>
         {isAlertShown &&
-            <NxWarningAlert onClose={() => sendToForm({type: 'HIDE_ALERT'})}>
+            <NxWarningAlert onClose={() => sendToList({type: 'HIDE_ALERT'})}>
               <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.SAMPLE_WARNING}</p>
               <p className="nx-p">{UIStrings.CLEANUP_POLICIES.PREVIEW.COMPONENT_COUNT(data.length, total)}</p>
             </NxWarningAlert>}

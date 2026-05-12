@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.view;
 
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 
 import org.junit.Before;
@@ -25,9 +24,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.sonatype.nexus.repository.view.Router.LOCAL_ATTRIBUTE_PREFIX;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RouterTest
-    extends TestSupport
 {
   private Router underTest;
 

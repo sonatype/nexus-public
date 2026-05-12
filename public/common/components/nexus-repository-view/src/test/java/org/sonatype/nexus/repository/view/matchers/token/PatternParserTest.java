@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.view.matchers.token;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
@@ -27,7 +25,6 @@ import static org.hamcrest.Matchers.is;
  * Tests for {@link PatternParser}.
  */
 public class PatternParserTest
-    extends TestSupport
 {
   public static final String DEFAULT = PatternParser.DEFAULT_VARIABLE_REGEXP;
 

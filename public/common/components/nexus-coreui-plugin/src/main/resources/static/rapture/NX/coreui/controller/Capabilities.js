@@ -643,7 +643,9 @@ Ext.define('NX.coreui.controller.Capabilities', {
   },
 
   onNavigate: function() {
-    if (NX.Bookmarks.getBookmark().getToken().includes('system/capabilities')) {
+    var bookmark = NX.Bookmarks.getBookmark && NX.Bookmarks.getBookmark();
+    var token = bookmark && bookmark.getToken && bookmark.getToken();
+    if (token && typeof token === 'string' && token.indexOf('system/capabilities') !== -1) {
       this.reselect();
     }
   },

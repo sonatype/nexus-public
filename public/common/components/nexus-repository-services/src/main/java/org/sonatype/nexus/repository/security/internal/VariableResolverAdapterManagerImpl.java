@@ -18,12 +18,13 @@ import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -36,9 +37,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class VariableResolverAdapterManagerImpl
-    extends ComponentSupport
     implements VariableResolverAdapterManager
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @VisibleForTesting
   static final String DEFAULT_ADAPTER_NAME = "simple";
 

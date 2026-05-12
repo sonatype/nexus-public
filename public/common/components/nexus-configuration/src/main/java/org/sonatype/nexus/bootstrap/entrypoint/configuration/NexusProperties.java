@@ -62,6 +62,16 @@ public class NexusProperties
 
   private static final Logger LOG = LoggerFactory.getLogger(NexusProperties.class);
 
+  @VisibleForTesting
+  static final String REDACTED = "**REDACTED**";
+
+  private static final Set<String> SENSITIVE_PROPERTY_PATTERNS = Set.of(
+      "password",
+      "secret",
+      "token",
+      "cipher",
+      "credential");
+
   private static PropertyMap nexusProperties;
 
   private final NexusPropertiesVerifier nexusPropertiesVerifier = new NexusPropertiesVerifier();
@@ -145,13 +155,44 @@ public class NexusProperties
 
       nexusPropertiesVerifier.verify(this);
 
-      LOG.info("nexus.properties: {}", nexusProperties);
+      LOG.info("nexus.properties: {}", redactSensitiveProperties(nexusProperties));
 
       nexusProperties.forEach(System::setProperty);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  /**
+   * Creates a redacted copy of properties for logging purposes.
+   * Replaces sensitive values (passwords, secrets, tokens, etc.) with REDACTED placeholder.
+   *
+   * @param properties the original properties map
+   * @return a new map with sensitive values redacted
+   */
+  @VisibleForTesting
+  static Map<String, String> redactSensitiveProperties(final PropertyMap properties) {
+    return properties.entrySet()
+        .stream()
+        .collect(Collectors.toMap(
+            Entry::getKey,
+            entry -> isSensitiveProperty(entry.getKey()) ? REDACTED : entry.getValue()));
+  }
+
+  /**
+   * Checks if a property key indicates sensitive data that should not be logged.
+   *
+   * @param key the property key to check
+   * @return true if the property is sensitive, false otherwise
+   */
+  @VisibleForTesting
+  static boolean isSensitiveProperty(final String key) {
+    if (key == null) {
+      return false;
+    }
+    String lowerKey = key.toLowerCase();
+    return SENSITIVE_PROPERTY_PATTERNS.stream().anyMatch(lowerKey::contains);
   }
 
   private void applyClasspathProperties(final PropertyMap nexusProperties) throws IOException {

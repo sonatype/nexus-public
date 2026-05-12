@@ -17,11 +17,11 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.net.HttpHeaders.SET_COOKIE;
 import static java.util.Arrays.asList;
@@ -34,8 +34,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link CookieFilter}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CookieFilterTest
-    extends TestSupport
 {
   private static String COOKIE_1_INSECURE = "JSESSIONID=98a766bc-bc33-4b3c-9d9f-d3bb85b0cf00; Path=/nexus; HttpOnly";
 

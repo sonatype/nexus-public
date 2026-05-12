@@ -216,6 +216,20 @@ export default {
         }
       }
     },
+    PUB: {
+      MENU: {
+        text: 'Pub',
+        description: 'Search for components in Pub repositories',
+        icon: faSearch
+      },
+      CRITERIA: {
+        GROUP: 'Pub Repositories',
+        FIELD_LABEL: {
+          NAME: 'Name',
+          VERSION: 'Version',
+        }
+      }
+    },
     R: {
       MENU: {
         text: 'R',

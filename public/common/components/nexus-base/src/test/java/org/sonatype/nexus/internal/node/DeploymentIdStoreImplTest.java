@@ -14,20 +14,21 @@ package org.sonatype.nexus.internal.node;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DeploymentIdStoreImplTest
-    extends TestSupport
 {
   private static final String DEPLOYMENT_ID = "ipuaeycw934r";
 

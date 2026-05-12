@@ -12,19 +12,20 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.search.sql;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.search.sql.SearchRecord;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.class)
 public class AptSearchCustomFieldContributorTest
-    extends TestSupport
 {
   @Mock
   private Asset asset;

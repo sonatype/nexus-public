@@ -18,7 +18,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Locale;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
@@ -26,7 +25,9 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,8 +35,8 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CreateComponentIndexServiceTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME);

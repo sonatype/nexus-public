@@ -15,8 +15,6 @@ package org.sonatype.nexus.common.metrics;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
@@ -26,20 +24,31 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.sonatype.nexus.common.app.FeatureFlags.METRICS_INTERNAL_ENABLED;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
 /**
  * Aspect to handle {@link Timed} annotation and register timers in the metrics registry.
  */
 @Aspect
 public class TimedAspect
-    extends ComponentSupport
 {
-  private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate("nexus");
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
+  private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
+
+  private static final boolean TIMED_ENABLED =
+      Boolean.parseBoolean(System.getProperty(METRICS_INTERNAL_ENABLED, "true"));
 
   @Around("@annotation(timed) && execution(* *(..))")
   public Object around(final ProceedingJoinPoint joinPoint, final Timed timed) throws Throwable {
+    if (!TIMED_ENABLED) {
+      return joinPoint.proceed();
+    }
     Optional<Context> context = getContext(joinPoint, timed);
     try {
       return joinPoint.proceed();

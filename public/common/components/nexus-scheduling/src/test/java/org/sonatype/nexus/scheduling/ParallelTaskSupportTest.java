@@ -18,8 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException;
-import org.sonatype.goodies.testsupport.Test5Support;
+import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresException;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 
 import org.apache.shiro.mgt.SecurityManager;
@@ -27,7 +26,9 @@ import org.apache.shiro.util.ThreadContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -39,8 +40,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * Tests for {@link ParallelTaskSupport}
  */
+@ExtendWith(MockitoExtension.class)
 class ParallelTaskSupportTest
-    extends Test5Support
+
 {
   @Mock
   SecurityManager securityManager;
@@ -50,6 +52,7 @@ class ParallelTaskSupportTest
   @BeforeEach
   void setup() {
     ThreadContext.bind(securityManager);
+    counter.set(0);
   }
 
   @AfterEach
@@ -59,7 +62,7 @@ class ParallelTaskSupportTest
 
   @Test
   void testExecute() throws Exception {
-    TestParallelTask task = new TestParallelTask(5, 10, 10, false);
+    TestParallelTask task = new TestParallelTask(5, 10, false);
 
     Object result = task.execute();
 
@@ -69,7 +72,7 @@ class ParallelTaskSupportTest
 
   @Test
   void testExecute_singleException() {
-    TestParallelTask task = new TestParallelTask(5, 10, 5, true, 2);
+    TestParallelTask task = new TestParallelTask(5, 5, true, 2);
 
     MultipleFailuresException exception = assertThrows(MultipleFailuresException.class, task::execute);
 
@@ -82,7 +85,7 @@ class ParallelTaskSupportTest
 
   @Test
   void testExecute_multipleExceptions() {
-    TestParallelTask task = new TestParallelTask(5, 20, 10, true, 2, 4, 6);
+    TestParallelTask task = new TestParallelTask(5, 10, true, 2, 4, 6);
 
     MultipleFailuresException exception = assertThrows(MultipleFailuresException.class, task::execute);
 
@@ -96,12 +99,26 @@ class ParallelTaskSupportTest
   void testExecute_max20Exceptions() {
     // Create 25 jobs that all throw exceptions
     int[] failingJobs = IntStream.range(0, 25).toArray();
-    TestParallelTask task = new TestParallelTask(5, 30, 25, true, failingJobs);
+    TestParallelTask task = new TestParallelTask(10, 25, true, failingJobs);
 
     MultipleFailuresException exception = assertThrows(MultipleFailuresException.class, task::execute);
 
     // Should only collect 20 exceptions, rest should be logged
     assertThat(exception.getFailures(), hasSize(20));
+  }
+
+  @Test
+  void testExecute_resultExceptionPropagates() {
+    TestParallelTask task = new TestParallelTask(5, 5, false)
+    {
+      @Override
+      protected Object result() {
+        throw new RuntimeException("result() failed");
+      }
+    };
+
+    RuntimeException exception = assertThrows(RuntimeException.class, task::execute);
+    assertThat(exception.getMessage(), containsString("result() failed"));
   }
 
   private class TestParallelTask
@@ -115,12 +132,11 @@ class ParallelTaskSupportTest
 
     TestParallelTask(
         final int concurrencyLimit,
-        final int queueCapacity,
         final int jobCount,
         final boolean throwExceptions,
         final int... failingJobIndexes)
     {
-      super(concurrencyLimit, queueCapacity);
+      super(concurrencyLimit);
       this.jobCount = jobCount;
       this.throwExceptions = throwExceptions;
       this.failingJobIndexes = new ArrayList<>();

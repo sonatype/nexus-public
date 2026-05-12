@@ -14,9 +14,10 @@ package org.sonatype.nexus.repository;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.recipe.RouterBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -26,9 +27,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public abstract class RecipeSupport
-    extends ComponentSupport
     implements Recipe
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Format format;
 
   private final Type type;

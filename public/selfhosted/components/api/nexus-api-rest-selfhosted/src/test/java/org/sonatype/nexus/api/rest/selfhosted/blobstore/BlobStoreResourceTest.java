@@ -19,7 +19,6 @@ import java.util.Map;
 
 import javax.ws.rs.WebApplicationException;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreConnectionXO;
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreQuotaResultXO;
 import org.sonatype.nexus.blobstore.ConnectionChecker;
@@ -38,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -46,11 +46,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class BlobStoreResourceTest
-    extends Test5Support
 {
   @Mock
   BlobStoreManager manager;

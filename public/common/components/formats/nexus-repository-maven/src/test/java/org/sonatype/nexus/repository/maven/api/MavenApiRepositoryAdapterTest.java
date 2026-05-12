@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven.api;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
@@ -36,7 +35,9 @@ import org.sonatype.nexus.repository.types.ProxyType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mockito;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -49,8 +50,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenApiRepositoryAdapterTest
-    extends TestSupport
+
 {
   private MavenApiRepositoryAdapter underTest;
 
@@ -147,6 +149,35 @@ public class MavenApiRepositoryAdapterTest
     maven.set("layoutPolicy", layoutPolicy.toString());
     maven.set("versionPolicy", versionPolicy.toString());
     maven.set("contentDisposition", contentDisposition.toString());
+    when(configuration.attributes("maven")).thenReturn(maven);
+    repository.init(configuration);
+    return repository;
+  }
+
+  @Test
+  public void testAdapt_hostedRepository_normalizesNullContentDispositionToInline() throws Exception {
+    Repository repository = createRepositoryWithNullContentDisposition(new HostedType());
+
+    MavenHostedApiRepository hostedRepository = (MavenHostedApiRepository) underTest.adapt(repository);
+    assertThat(hostedRepository.getMaven().getContentDisposition(), is("INLINE"));
+  }
+
+  @Test
+  public void testAdapt_proxyRepository_normalizesNullContentDispositionToInline() throws Exception {
+    Repository repository = createRepositoryWithNullContentDisposition(new ProxyType());
+
+    MavenProxyApiRepository proxyRepository = (MavenProxyApiRepository) underTest.adapt(repository);
+    assertThat(proxyRepository.getMaven().getContentDisposition(), is("INLINE"));
+  }
+
+  private static Repository createRepositoryWithNullContentDisposition(final Type type) throws Exception {
+    Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new Maven2Format());
+
+    Configuration configuration = config("my-repo");
+    NestedAttributesMap maven = new NestedAttributesMap("maven", newHashMap());
+    maven.set("layoutPolicy", "STRICT");
+    maven.set("versionPolicy", "MIXED");
+    // Intentionally NOT setting contentDisposition - it will be null
     when(configuration.attributes("maven")).thenReturn(maven);
     repository.init(configuration);
     return repository;

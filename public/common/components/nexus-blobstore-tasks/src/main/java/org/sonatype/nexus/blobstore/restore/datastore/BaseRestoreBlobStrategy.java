@@ -22,7 +22,6 @@ import java.util.Properties;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -36,6 +35,8 @@ import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHan
 
 import jakarta.inject.Inject;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
@@ -47,9 +48,10 @@ import static org.apache.commons.lang3.StringUtils.prependIfMissing;
  * @since 3.29
  */
 public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData>
-    extends ComponentSupport
     implements RestoreBlobStrategy
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String ASSET_PATH_PREFIX = "/";
 
   private final DryRunPrefix dryRunPrefix;

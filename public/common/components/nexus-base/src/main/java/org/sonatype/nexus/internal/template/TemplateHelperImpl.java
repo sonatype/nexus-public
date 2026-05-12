@@ -21,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.EscapeHelper;
@@ -31,6 +30,8 @@ import org.sonatype.nexus.common.template.TemplateParameters;
 import com.google.common.base.Throwables;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -43,9 +44,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class TemplateHelperImpl
-    extends ComponentSupport
     implements TemplateHelper
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ApplicationVersion applicationVersion;
 
   private final VelocityEngine velocityEngine;

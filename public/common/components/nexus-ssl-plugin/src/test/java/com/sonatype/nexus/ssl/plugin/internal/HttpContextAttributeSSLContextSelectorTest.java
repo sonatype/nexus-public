@@ -14,7 +14,6 @@ package com.sonatype.nexus.ssl.plugin.internal;
 
 import javax.net.ssl.SSLContext;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
 import org.sonatype.nexus.ssl.TrustStore;
 
@@ -28,9 +27,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class HttpContextAttributeSSLContextSelectorTest
-    extends TestSupport
 {
   @Mock
   private TrustStore trustStore;

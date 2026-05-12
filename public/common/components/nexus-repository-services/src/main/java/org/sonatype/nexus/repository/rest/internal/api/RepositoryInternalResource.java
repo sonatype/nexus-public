@@ -17,6 +17,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -27,7 +30,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
@@ -45,6 +47,8 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
@@ -55,6 +59,9 @@ import static org.sonatype.nexus.security.BreadActions.READ;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
+
 /**
  * @since 3.29
  */
@@ -64,9 +71,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Produces(APPLICATION_JSON)
 @Path(RepositoryInternalResource.RESOURCE_PATH)
 public class RepositoryInternalResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String RESOURCE_PATH = "internal/ui/repositories";
 
   static final RepositoryXO ALL_REFERENCE = new RepositoryXO(
@@ -91,6 +99,8 @@ public class RepositoryInternalResource
 
   private final ApiRepositoryAdapter defaultAdapter;
 
+  private final RepositoryMetricsService repositoryMetricsService;
+
   @Inject
   public RepositoryInternalResource(
       final List<Format> formats,
@@ -100,7 +110,8 @@ public class RepositoryInternalResource
       final List<Recipe> recipes,
       final AuthorizingRepositoryManager authorizingRepositoryManager,
       final List<ApiRepositoryAdapter> convertersByFormatList,
-      @Qualifier("default") final ApiRepositoryAdapter defaultAdapter)
+      @Qualifier("default") final ApiRepositoryAdapter defaultAdapter,
+      final RepositoryMetricsService repositoryMetricsService)
   {
     this.formats = checkNotNull(formats);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -110,6 +121,7 @@ public class RepositoryInternalResource
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
     this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(convertersByFormatList));
     this.defaultAdapter = checkNotNull(defaultAdapter);
+    this.repositoryMetricsService = checkNotNull(repositoryMetricsService);
   }
 
   @GET
@@ -160,10 +172,145 @@ public class RepositoryInternalResource
   @GET
   @Path("/details")
   public List<RepositoryDetailXO> getRepositoryDetails() {
+    Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService.list()
+        .stream()
+        .collect(Collectors.toMap(RepositoryMetricsDTO::getName, m -> m));
+
     return stream(repositoryManager.browse())
         .filter(repository -> repositoryPermissionChecker.userHasRepositoryAdminPermission(repository, READ))
-        .map(this::asRepositoryDetail)
+        .map(repository -> asRepositoryDetail(repository, metricsByName.get(repository.getName())))
         .collect(toList());
+  }
+
+  /**
+   * Get repository details with server-side filtering, sorting, and pagination.
+   * This endpoint is optimized for enterprise-scale deployments with many repositories.
+   *
+   * @param formats Comma-separated list of formats to filter by (e.g., "maven2,npm")
+   * @param types Comma-separated list of types to filter by (e.g., "hosted,proxy")
+   * @param statuses Comma-separated list of statuses to filter by ("online" or "offline")
+   * @param nameFilter Text to filter repository names (case-insensitive substring match)
+   * @param sortField Field to sort by: "name", "format", "type", or "status"
+   * @param sortDirection Sort direction: "asc" or "desc"
+   * @param page Page number (1-indexed)
+   * @param pageSize Number of items per page (default 50, max 200)
+   * @return Paginated list of repository details with total count
+   */
+  @GET
+  @Path("/details/filtered")
+  public RepositoryDetailPageXO getRepositoryDetailsFiltered(
+      @QueryParam("formats") final String formats,
+      @QueryParam("types") final String types,
+      @QueryParam("statuses") final String statuses,
+      @QueryParam("nameFilter") final String nameFilter,
+      @QueryParam("sortField") final String sortField,
+      @QueryParam("sortDirection") final String sortDirection,
+      @QueryParam("page") final Integer page,
+      @QueryParam("pageSize") final Integer pageSize)
+  {
+    // Parse filter parameters
+    List<String> formatList = parseCommaSeparated(formats);
+    List<String> typeList = parseCommaSeparated(types);
+    List<String> statusList = parseCommaSeparated(statuses);
+
+    Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService.list()
+        .stream()
+        .collect(Collectors.toMap(RepositoryMetricsDTO::getName, m -> m));
+
+    // Build filtered stream - use userCanBrowseRepositories to allow anonymous access
+    List<RepositoryDetailXO> allRepos =
+        repositoryPermissionChecker.userCanBrowseRepositories(repositoryManager.browse())
+            .stream()
+            .map(repo -> asRepositoryDetail(repo, metricsByName.get(repo.getName())))
+            .filter(repo -> filterByFormats(repo, formatList))
+            .filter(repo -> filterByTypes(repo, typeList))
+            .filter(repo -> filterByStatuses(repo, statusList))
+            .filter(repo -> filterByName(repo, nameFilter))
+            .collect(toList());
+
+    // Sort
+    Comparator<RepositoryDetailXO> comparator = getComparator(sortField, sortDirection);
+    allRepos.sort(comparator);
+
+    // Calculate pagination
+    int totalCount = allRepos.size();
+    int actualPage = (page != null && page > 0) ? page : 1;
+    int actualPageSize = Math.min((pageSize != null && pageSize > 0) ? pageSize : 50, 200);
+    int fromIndex = (actualPage - 1) * actualPageSize;
+    int toIndex = Math.min(fromIndex + actualPageSize, totalCount);
+
+    // Extract page
+    List<RepositoryDetailXO> pageData = (fromIndex < totalCount)
+        ? allRepos.subList(fromIndex, toIndex)
+        : new ArrayList<>();
+
+    return new RepositoryDetailPageXO(pageData, totalCount, actualPage, actualPageSize);
+  }
+
+  private List<String> parseCommaSeparated(String value) {
+    if (isBlank(value)) {
+      return new ArrayList<>();
+    }
+    List<String> result = new ArrayList<>();
+    for (String part : value.split(",")) {
+      String trimmed = part.trim().toLowerCase();
+      if (!trimmed.isEmpty()) {
+        result.add(trimmed);
+      }
+    }
+    return result;
+  }
+
+  private boolean filterByFormats(RepositoryDetailXO repo, List<String> formats) {
+    if (formats.isEmpty()) {
+      return true;
+    }
+    return formats.contains(repo.getFormat().toLowerCase());
+  }
+
+  private boolean filterByTypes(RepositoryDetailXO repo, List<String> types) {
+    if (types.isEmpty()) {
+      return true;
+    }
+    return types.contains(repo.getType().toLowerCase());
+  }
+
+  private boolean filterByStatuses(RepositoryDetailXO repo, List<String> statuses) {
+    if (statuses.isEmpty()) {
+      return true;
+    }
+    boolean isOnline = repo.getStatus() != null && repo.getStatus().isOnline();
+    String statusStr = isOnline ? "online" : "offline";
+    return statuses.contains(statusStr);
+  }
+
+  private boolean filterByName(RepositoryDetailXO repo, String nameFilter) {
+    if (isBlank(nameFilter)) {
+      return true;
+    }
+    return repo.getName().toLowerCase().contains(nameFilter.toLowerCase().trim());
+  }
+
+  private Comparator<RepositoryDetailXO> getComparator(String sortField, String sortDirection) {
+    boolean ascending = !"desc".equalsIgnoreCase(sortDirection);
+
+    Comparator<RepositoryDetailXO> comparator;
+    if ("format".equalsIgnoreCase(sortField)) {
+      comparator = Comparator.comparing(RepositoryDetailXO::getFormat, String.CASE_INSENSITIVE_ORDER);
+    }
+    else if ("type".equalsIgnoreCase(sortField)) {
+      comparator = Comparator.comparing(RepositoryDetailXO::getType, String.CASE_INSENSITIVE_ORDER);
+    }
+    else if ("status".equalsIgnoreCase(sortField)) {
+      comparator =
+          Comparator.comparing(repo -> repo.getStatus() != null && repo.getStatus().isOnline() ? "online" : "offline");
+    }
+    else {
+      // Default: sort by name
+      comparator = Comparator.comparing(RepositoryDetailXO::getName, String.CASE_INSENSITIVE_ORDER);
+    }
+
+    return ascending ? comparator : comparator.reversed();
   }
 
   @GET
@@ -175,16 +322,26 @@ public class RepositoryInternalResource
         .collect(toList());
   }
 
-  private RepositoryDetailXO asRepositoryDetail(final Repository repository) {
+  private RepositoryDetailXO asRepositoryDetail(
+      final Repository repository,
+      @Nullable final RepositoryMetricsDTO metrics)
+  {
     String name = repository.getName();
     String type = repository.getType().toString();
     String format = repository.getFormat().toString();
     String url = repository.getUrl();
     RepositoryStatusXO statusXO = getStatusXO(repository);
 
-    return format.equals("nuget")
+    RepositoryDetailXO detailXO = format.equals("nuget")
         ? asNugetRepository(repository)
         : new RepositoryDetailXO(name, type, format, url, statusXO);
+
+    if (metrics != null) {
+      detailXO.setSize(metrics.totalSize);
+      detailXO.setAssetCount(metrics.blobCount);
+    }
+
+    return detailXO;
   }
 
   @SuppressWarnings("unchecked")

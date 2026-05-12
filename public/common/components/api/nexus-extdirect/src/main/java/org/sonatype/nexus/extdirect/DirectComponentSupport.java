@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.extdirect;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Support for {@link DirectComponent} implementations.
@@ -20,8 +21,9 @@ import org.sonatype.goodies.common.ComponentSupport;
  * @since 3.0
  */
 public abstract class DirectComponentSupport
-    extends ComponentSupport
     implements DirectComponent
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   // empty
 }

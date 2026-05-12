@@ -16,7 +16,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.ByteSize;
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.HttpDefaultsCustomizer;
@@ -27,6 +26,8 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -39,9 +40,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Singleton
 public class DefaultsCustomizer
-    extends ComponentSupport
     implements HttpDefaultsCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final UserAgentGenerator userAgentGenerator;
 
   private final Time requestTimeout;

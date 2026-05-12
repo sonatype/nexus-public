@@ -127,7 +127,7 @@ public class ComponentAuditor
     if (attributesEvent != null) {
       attributes.put("attribute.change", attributesEvent.getChange());
       attributes.put("attribute.key", attributesEvent.getKey());
-      attributes.put("attribute.value", attributesEvent.getValue());
+      attributesEvent.getValue().ifPresent(v -> attributes.put("attribute.value", v));
     }
     return data;
   }

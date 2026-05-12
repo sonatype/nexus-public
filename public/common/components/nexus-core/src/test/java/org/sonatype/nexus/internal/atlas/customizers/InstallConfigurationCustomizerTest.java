@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.sonatype.nexus.supportzip.SupportBundle;
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.internal.atlas.customizers.InstallConfigurationCustomizer.SanitizedJettyFileSource;
 
 import org.junit.Rule;
@@ -47,7 +46,6 @@ import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CON
  * Tests for {@link InstallConfigurationCustomizer}.
  */
 public class InstallConfigurationCustomizerTest
-    extends TestSupport
 {
   @Rule
   public TemporaryFolder tempFolder = new TemporaryFolder();

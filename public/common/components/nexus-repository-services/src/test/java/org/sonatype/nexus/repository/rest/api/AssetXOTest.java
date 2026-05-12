@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Format;
@@ -45,7 +44,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
 
 class AssetXOTest
-    extends Test5Support
 {
 
   @BeforeEach

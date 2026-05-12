@@ -1,4 +1,4 @@
- /*
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -21,7 +21,7 @@ export default {
     },
     ACTIONS: {
       SYSTEM_HEALTH: {
-        title: 'System Health',
+        title: 'System Health Check',
         subTitle: 'View system status checks',
       },
       CLEANUP_POLICIES: {

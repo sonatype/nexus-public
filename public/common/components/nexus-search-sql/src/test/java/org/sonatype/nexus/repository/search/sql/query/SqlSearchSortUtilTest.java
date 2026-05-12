@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.sql.query;
 
 import java.util.Arrays;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
@@ -32,7 +31,6 @@ import static org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings.
 import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
 
 public class SqlSearchSortUtilTest
-    extends TestSupport
 {
   private SqlSearchSortUtil underTest;
 

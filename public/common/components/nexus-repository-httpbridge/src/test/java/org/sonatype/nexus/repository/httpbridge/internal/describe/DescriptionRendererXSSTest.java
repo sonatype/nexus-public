@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.httpbridge.internal.describe;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -37,7 +36,6 @@ import static org.mockito.Mockito.mock;
  * Tests for XSS protection in {@link DescriptionRendererImpl} and describeHtml.vm template.
  */
 public class DescriptionRendererXSSTest
-    extends TestSupport
 {
   private DescriptionRenderer descriptionRenderer;
 

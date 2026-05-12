@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.transaction;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.transaction.ExampleMethods.ExampleNestedStore;
 
 import com.google.common.base.Suppliers;
@@ -22,7 +21,7 @@ import org.junit.Test;
  * Test unit-of-work behaviour.
  */
 public class UnitOfWorkTest
-    extends TestSupport
+
 {
   @Test(expected = NullPointerException.class)
   public void testCannotBeginNullWork() {

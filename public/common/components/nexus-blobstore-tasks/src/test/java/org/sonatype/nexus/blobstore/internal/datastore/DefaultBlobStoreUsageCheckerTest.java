@@ -15,7 +15,6 @@ package org.sonatype.nexus.blobstore.internal.datastore;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -32,7 +31,9 @@ import org.sonatype.nexus.test.util.Whitebox;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
@@ -43,8 +44,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultBlobStoreUsageCheckerTest
-    extends TestSupport
+
 {
   private static final String REPO_NAME = "repoName";
 

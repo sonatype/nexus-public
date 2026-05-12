@@ -15,14 +15,15 @@ package org.sonatype.nexus.repository.content.upgrades;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,8 +31,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetBlobMigrationStep_2_18_1Test
-    extends TestSupport
 {
   private static final String TEST_FORMAT = "test";
 

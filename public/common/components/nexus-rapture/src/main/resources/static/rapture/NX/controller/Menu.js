@@ -286,7 +286,7 @@ Ext.define('NX.controller.Menu', {
    */
   navigateTo: function (bookmark) {
     var me = this,
-        node, mode, feature, menuBookmark, queryIndex;
+        node, mode, feature, menuBookmark, queryIndex, featureMenu;
 
     if (bookmark) {
       // Get the path (minus an optional filter string)
@@ -332,6 +332,15 @@ Ext.define('NX.controller.Menu', {
         }
         //</if>
       }
+
+        // Visually select the matching menu item so the tree highlight tracks URL-driven navigation
+        // (back/forward, direct URL entry, drilldown bookmark updates).
+        if (node) {
+          featureMenu = me.getFeatureMenu();
+          if (featureMenu) {
+            featureMenu.getSelectionModel().select([node]);
+          }
+        }
 
         delete me.currentSelectedPath;
         // if the feature to navigate to is not available in menu check out if is hidden (probably no permissions)
@@ -852,9 +861,10 @@ Ext.define('NX.controller.Menu', {
       content: content,
       callback: function() {
         // User confirmed/discarded changes
+        // Note: clearFormDirty is called in the onConfirm callback chain
+        // and handles resetting all forms, clearing window.dirty, and
+        // resetting the discardUnsavedChanges flag
         if (onConfirm) onConfirm();
-        content.resetUnsavedChangesFlag();
-        window.dirty = [];
       },
       listeners: {
         close: function() {

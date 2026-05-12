@@ -612,6 +612,21 @@ describe('SettingsSidebar', () => {
       });
 
 
+      describe('API link', () => {
+        it('should render if user has permission', async () => {
+          givenUserLoggedIn();
+          givenPermissions({ 'nexus:settings:read': true });
+          renderComponent();
+          await assertLinkVisible('API', '/#admin/system/api', 'System');
+        });
+
+        it('should not render if user has no permission', async () => {
+          givenUserLoggedIn();
+          renderComponent();
+          await assertLinkNotVisible('API', 'System');
+        });
+      });
+
       describe('email server link', () => {
         it('should render if user has permission and has active bundles', async () => {
           givenUserLoggedIn();
@@ -641,22 +656,6 @@ describe('SettingsSidebar', () => {
           givenUserLoggedIn();
           renderComponent();
           await assertLinkNotVisible('Tasks', 'System');
-        });
-      });
-
-      describe('API link', () => {
-        it('should render if user has permissions', async () => {
-          givenUserLoggedIn();
-          givenPermissions({ 'nexus:settings:read': true });
-          renderComponent();
-
-          await assertLinkVisible('API', '/#admin/system/api', 'System');
-        });
-
-        it('should not render if user has no settings read permission', async () => {
-          givenUserLoggedIn();
-          renderComponent();
-          await assertLinkNotVisible('API', 'System');
         });
       });
 

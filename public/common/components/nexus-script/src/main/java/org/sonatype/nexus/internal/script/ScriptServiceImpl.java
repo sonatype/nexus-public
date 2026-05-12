@@ -26,13 +26,14 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.nexus.common.script.ScriptApi;
 import org.sonatype.nexus.common.script.ScriptCleanupHandler;
 import org.sonatype.nexus.common.script.ScriptService;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -46,9 +47,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ScriptServiceImpl
-    extends ComponentSupport
     implements ScriptService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String SCRIPT_CLEANUP_HANDLER = "scriptCleanupHandler";
 
   private final ScriptEngineManager engineManager;

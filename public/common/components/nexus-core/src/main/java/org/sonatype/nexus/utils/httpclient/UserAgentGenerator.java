@@ -15,9 +15,10 @@ package org.sonatype.nexus.utils.httpclient;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.common.app.ApplicationVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -30,8 +31,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class UserAgentGenerator
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String PAU = "; pau)";
 
   private static final String PAE = "; pae)";

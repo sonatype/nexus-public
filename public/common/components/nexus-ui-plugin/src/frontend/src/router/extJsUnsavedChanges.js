@@ -24,11 +24,20 @@ import { useEffect } from 'react';
  * @returns {boolean} true if no modal was shown (proceed immediately), false if modal was shown
  */
 export function handleExtJsUnsavedChanges(menuCtrl, onProceed, onCancel) {
-  if (!menuCtrl || typeof menuCtrl.hasDirt !== 'function' || !menuCtrl.hasDirt()) {
+  if (!menuCtrl || typeof menuCtrl.hasDirt !== 'function') {
+    // No menuCtrl available, proceed immediately
+    onProceed();
+    return true;
+  }
+
+  const hasDirt = menuCtrl.hasDirt();
+
+  if (!hasDirt) {
     // No unsaved changes, proceed immediately
     onProceed();
     return true;
   }
+
   // Show modal, only proceed if user confirms
   menuCtrl.warnBeforeNavigate(() => {
     clearFormDirty(menuCtrl);
@@ -116,6 +125,7 @@ export function useExtJsUnsavedChangesGuard(extContainerRef) {
           window.location.hash = previousHash;
         },
         () => {
+          window.__extjsHandledUnsaved__ = false;
           isHandlingUnsaved = false;
         }
       );
@@ -133,7 +143,24 @@ export function useExtJsUnsavedChangesGuard(extContainerRef) {
 
 function clearFormDirty(menuCtrl) {
   const content = menuCtrl.getFeatureContent();
-  const formPanel = content.down('form') || content;
-  const basicForm = formPanel.getForm();
-  basicForm.reset();
+
+  // Reset all forms marked with settingsForm=true, not just the first one
+  // Check Ext and ComponentQuery exist (may not be available in tests)
+  if (window.Ext && window.Ext.ComponentQuery) {
+    const forms = window.Ext.ComponentQuery.query('form[settingsForm=true]');
+    forms.forEach(form => {
+      const basicForm = form.getForm();
+      if (basicForm) {
+        basicForm.reset();
+      }
+    });
+  }
+
+  // Also clear the React dirty state
+  window.dirty = [];
+
+  // Reset the content flag to prevent duplicate modals
+  if (content && content.resetUnsavedChangesFlag) {
+    content.resetUnsavedChangesFlag();
+  }
 }

@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.verification.VerificationMode;
@@ -32,12 +30,14 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 import static org.sonatype.nexus.repository.http.HttpStatus.BAD_REQUEST;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link ExhaustRequestFilter}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ExhaustRequestFilterTest
-    extends TestSupport
 {
   private static final String PIPE_DELIMITED_MATCHING_PATTERN = "Apache-Maven.*|Apache Ivy.*";
 

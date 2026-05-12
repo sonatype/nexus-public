@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui.internal.welcome;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 
 import org.junit.Before;
@@ -25,9 +24,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.coreui.internal.welcome.WelcomeStateContributor.NODE_ID;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class WelcomeStateContributorTest
-    extends TestSupport
 {
   @Mock
   private NodeAccess nodeAccess;

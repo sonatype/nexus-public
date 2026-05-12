@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven.internal;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -28,7 +27,10 @@ import org.sonatype.nexus.repository.view.Response;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
@@ -53,8 +55,10 @@ import static org.sonatype.nexus.repository.maven.VersionPolicy.SNAPSHOT;
  */
 @RunWith(Parameterized.class)
 public class VersionPolicyHandlerTest
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   @Mock
   private Context context;
 

@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.content.maven.store.GAV;
@@ -48,7 +47,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 
 public class Maven2ComponentDAOTest
-    extends TestSupport
+
 {
   private ContentRepositoryData contentRepository;
 

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.datastore.mybatis;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.ibatis.session.Configuration;
 import org.junit.Test;
 
@@ -27,7 +25,6 @@ import static org.sonatype.nexus.datastore.mybatis.PlaceholderTypes.configurePla
  * Test {@link PlaceholderTypes}.
  */
 public class PlaceholderTypesTest
-    extends TestSupport
 {
   @Test
   public void hasBuiltInDefaultsForH2() {

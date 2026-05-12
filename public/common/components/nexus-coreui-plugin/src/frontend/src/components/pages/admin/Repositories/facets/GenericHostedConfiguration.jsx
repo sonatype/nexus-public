@@ -18,6 +18,7 @@ import {NxFormGroup, NxCheckbox, NxFieldset, NxFormSelect} from '@sonatype/react
 
 import UIStrings from '../../../../../constants/UIStrings';
 import DockerRedeployLatesConfiguration from './DockerRedeployLatesConfiguration';
+import EvaluationConfiguration from './EvaluationConfiguration';
 
 const {EDITOR} = UIStrings.REPOSITORIES;
 
@@ -70,6 +71,8 @@ export default function GenericHostedConfiguration({parentMachine}) {
       )}
 
       {format === 'docker' && <DockerRedeployLatesConfiguration parentMachine={parentMachine} />}
+
+      <EvaluationConfiguration parentMachine={parentMachine} />
     </>
   );
 }

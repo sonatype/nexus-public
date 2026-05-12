@@ -19,6 +19,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.QualifierUtil;
+import org.sonatype.nexus.crypto.internal.error.CipherException;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.distributed.event.service.api.common.RepositoryRemoteConnectionStatusEvent;
@@ -191,7 +192,15 @@ public class HttpClientFacetImpl
       UsernameAuthenticationConfiguration userAuth = (UsernameAuthenticationConfiguration) config.authentication;
 
       if (unencryptedPassword == null) {
-        unencryptedPassword = new String(userAuth.getPassword().decrypt());
+        try {
+          unencryptedPassword = new String(userAuth.getPassword().decrypt());
+        }
+        catch (CipherException e) {
+          log.error("Cannot create Basic Auth header for repository '{}': password decryption failed. " +
+              "Update the repository configuration with valid credentials.",
+              getRepository().getName(), e);
+          return null;
+        }
       }
 
       String auth = format("%1$s:%2$s", userAuth.getUsername(), unencryptedPassword);
@@ -392,8 +401,15 @@ public class HttpClientFacetImpl
   private void resetPasswordCache() {
     if (config.authentication instanceof UsernameAuthenticationConfiguration) {
       UsernameAuthenticationConfiguration userAuth = (UsernameAuthenticationConfiguration) config.authentication;
-      unencryptedPassword = new String(userAuth.getPassword().decrypt());
-
+      try {
+        unencryptedPassword = new String(userAuth.getPassword().decrypt());
+      }
+      catch (CipherException e) {
+        log.warn("Failed to decrypt password for repository '{}': {}. " +
+            "Repository will start but authentication will not work until password is updated.",
+            getRepository().getName(), e.getMessage());
+        unencryptedPassword = null;
+      }
     }
     else {
       unencryptedPassword = null;

@@ -26,7 +26,6 @@ import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.repository.search.sql.query.security.SqlSearchPermissionBuilder;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.rest.SearchMapping.FilterType;
 import org.sonatype.nexus.repository.rest.SearchMappings;
@@ -37,6 +36,8 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
@@ -50,8 +51,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ExpressionBuilder
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SqlSearchPermissionBuilder permissionBuilder;
 
   private final Map<String, SqlSearchQueryContribution> handlers;

@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
@@ -32,12 +31,15 @@ import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @Singleton
 public class CsvCleanupPreviewContentWriter
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public void write(
       final Repository repository,
       final Stream<ComponentXO> components,

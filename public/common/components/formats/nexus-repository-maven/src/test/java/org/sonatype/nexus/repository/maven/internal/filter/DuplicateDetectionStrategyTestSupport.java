@@ -12,10 +12,11 @@
  */
 package org.sonatype.nexus.repository.maven.internal.filter;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.collect.ImmutableMap;
 import org.apache.maven.index.reader.Record;
+import org.junit.Rule;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static org.apache.maven.index.reader.Record.ARTIFACT_ID;
 import static org.apache.maven.index.reader.Record.CLASSIFIER;
@@ -27,8 +28,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class DuplicateDetectionStrategyTestSupport
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   public void verifyDuplicateDetection(final DuplicateDetectionStrategy<Record> strategy) throws Exception {
     int expectedUnique = 3;
 

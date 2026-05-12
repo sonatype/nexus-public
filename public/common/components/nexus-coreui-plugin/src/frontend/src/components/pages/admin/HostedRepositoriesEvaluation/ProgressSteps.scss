@@ -50,14 +50,14 @@
     .step-label {
       font-size: 14px;
       font-weight: 700;
-      color: #666;
+      color: var(--nx-color-text);
       letter-spacing: 0.5px;
       text-transform: uppercase;
     }
 
     &.active .step-label,
     &.completed .step-label {
-      color: #0091da;
+      color: var(--nx-color-interactive-border);
     }
   }
 }

@@ -1,0 +1,63 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Success icon animation
+@keyframes copy-url-success-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Copy URL Button
+.nxrm-copy-url-button {
+  // Base icon styling
+  .nxrm-copy-url-button__icon {
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  // Hover effect
+  &:hover:not(:disabled) {
+    .nxrm-copy-url-button__icon {
+      transform: scale(1.1);
+    }
+  }
+
+  // Focus visible styling
+  &:focus-visible {
+    outline: 2px solid var(--color-primary, #2563eb);
+    outline-offset: 2px;
+  }
+
+  // Disabled state
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Copied state
+.nxrm-copy-url-button--copied {
+  .nxrm-copy-url-button__icon--success {
+    animation: copy-url-success-pop 200ms ease-out;
+    color: var(--color-success, #16a34a);
+  }
+}
+

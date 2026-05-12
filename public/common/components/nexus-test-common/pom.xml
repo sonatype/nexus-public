@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-test-common</artifactId>
@@ -56,11 +56,6 @@
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-validation</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.goodies</groupId>
-      <artifactId>goodies-httpfixture</artifactId>
     </dependency>
 
     <dependency>

@@ -16,9 +16,10 @@ import java.security.SecureRandom;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.RandomBytesGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -34,9 +35,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RandomBytesGeneratorImpl
-    extends ComponentSupport
     implements RandomBytesGenerator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SecureRandom random;
 
   @Inject

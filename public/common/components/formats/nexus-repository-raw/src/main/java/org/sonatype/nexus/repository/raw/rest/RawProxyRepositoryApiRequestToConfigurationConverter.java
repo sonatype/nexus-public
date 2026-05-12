@@ -12,13 +12,15 @@
  */
 package org.sonatype.nexus.repository.raw.rest;
 
-import jakarta.inject.Inject;
-
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigurationConverter;
+import org.sonatype.nexus.repository.rest.api.ContentDispositionHelper;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
 import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -31,15 +33,34 @@ import org.springframework.stereotype.Component;
 public class RawProxyRepositoryApiRequestToConfigurationConverter
     extends ProxyRepositoryApiRequestToConfigurationConverter<RawProxyRepositoryApiRequest>
 {
-  @Inject
+  private RepositoryManager repositoryManager;
+
+  @Autowired
   public RawProxyRepositoryApiRequestToConfigurationConverter(final RoutingRuleStore routingRuleStore) {
     super(routingRuleStore);
+  }
+
+  @Autowired
+  public void setRepositoryManager(final RepositoryManager repositoryManager) {
+    this.repositoryManager = repositoryManager;
   }
 
   @Override
   public Configuration convert(final RawProxyRepositoryApiRequest request) {
     Configuration configuration = super.convert(request);
-    configuration.attributes("raw").set(CONTENT_DISPOSITION, request.getRaw().getContentDisposition().name());
+
+    String requestedDisposition = null;
+    if (request.getRaw() != null && request.getRaw().getContentDisposition() != null) {
+      requestedDisposition = request.getRaw().getContentDisposition().name();
+    }
+
+    String contentDisposition = ContentDispositionHelper.resolveContentDisposition(
+        requestedDisposition,
+        repositoryManager,
+        request.getName(),
+        "raw");
+
+    configuration.attributes("raw").set(CONTENT_DISPOSITION, contentDisposition);
     return configuration;
   }
 }

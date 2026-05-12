@@ -15,8 +15,6 @@ package org.sonatype.nexus.coreui.internal.branding;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,7 +27,6 @@ import static org.junit.Assert.assertThrows;
  * Tests for {@link BrandingCapabilityConfiguration}.
  */
 public class BrandingCapabilityConfigurationTest
-    extends TestSupport
 {
   @Test
   public void testConstructor_allPropertiesSet() {

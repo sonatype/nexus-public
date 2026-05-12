@@ -1,0 +1,64 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.firewall-pro-summary {
+  padding: var(--space-4);
+
+  &__metric-card {
+    flex: 1;
+    min-width: 180px;
+    max-width: 250px;
+  }
+
+  &__metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-3);
+    background: var(--gray-3);
+
+    &--gray {
+      background: var(--gray-3);
+      color: var(--gray-9);
+    }
+
+    &--green {
+      background: var(--green-3);
+      color: var(--green-9);
+    }
+
+    &--red {
+      background: var(--red-3);
+      color: var(--red-9);
+    }
+
+    &--amber {
+      background: var(--amber-3);
+      color: var(--amber-9);
+    }
+  }
+
+  &__metric-value {
+    line-height: 1.2;
+  }
+
+  code {
+    font-family: var(--code-font-family);
+    font-size: 0.85em;
+    background: var(--gray-3);
+    padding: 2px 6px;
+    border-radius: var(--radius-2);
+  }
+}

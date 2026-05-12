@@ -14,23 +14,29 @@ package org.sonatype.nexus.self.hosted.node;
 
 import java.io.File;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FileKeyStoreStorageFactoryTest
-    extends TestSupport
 {
-  private File keyStoreDir = util.createTempDir("keystores");
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private File keyStoreDir;
 
   @Mock
   private ApplicationDirectories appDirs;
@@ -38,7 +44,8 @@ public class FileKeyStoreStorageFactoryTest
   private FileKeyStoreStorageFactory storageManager;
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
+    keyStoreDir = temporaryFolder.newFolder("keystores");
     when(appDirs.getWorkDirectory("keystores")).thenReturn(keyStoreDir);
     storageManager = new FileKeyStoreStorageFactory(appDirs);
   }

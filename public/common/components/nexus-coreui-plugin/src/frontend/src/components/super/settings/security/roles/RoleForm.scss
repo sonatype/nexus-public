@@ -1,0 +1,85 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.role-form {
+  &__loading {
+    padding: var(--space-6, 24px);
+    gap: var(--space-2, 8px);
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  &__section-help {
+    display: block;
+    margin-bottom: var(--space-3, 12px);
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__error {
+    display: block;
+    margin-top: var(--space-2, 8px);
+    color: var(--red-11, #cd2b31);
+
+    [data-theme='dark'] & {
+      color: var(--red-11, #ff9592);
+    }
+  }
+
+  &__filter-count {
+    display: block;
+    margin-bottom: var(--space-2, 8px);
+  }
+
+  &__privilege-warning {
+    margin: var(--space-2, 8px) 0;
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+    border-radius: var(--radius-2, 6px);
+    background-color: var(--amber-3, #fff3cd);
+    color: var(--amber-11, #946800);
+    border: 1px solid var(--amber-6, #e8c468);
+
+    [data-theme='dark'] & {
+      background-color: var(--amber-3, #332800);
+      color: var(--amber-11, #f5d047);
+      border-color: var(--amber-6, #584000);
+    }
+  }
+
+  &__actions {
+    margin-top: var(--space-4, 16px);
+    padding-top: var(--space-4, 16px);
+    border-top: 1px solid var(--gray-6, #e4e4e7);
+
+    [data-theme='dark'] & {
+      border-top-color: var(--gray-6, #3d3d43);
+    }
+  }
+}
+
+

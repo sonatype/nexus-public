@@ -16,11 +16,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 import org.mockito.InOrder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 
 import static org.mockito.Mockito.inOrder;
@@ -31,8 +31,9 @@ import static org.sonatype.nexus.common.log.ExceptionSummarizer.warn;
 /**
  * Tests for {@link ExceptionSummarizer}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ExceptionSummarizerTest
-    extends TestSupport
+
 {
   @Mock
   private Logger log;

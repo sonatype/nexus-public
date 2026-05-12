@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
@@ -29,9 +28,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.READ;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecurityFacetSupportTest
-    extends TestSupport
 {
   private static final class TestSecurityFacetSupport
       extends SecurityFacetSupport

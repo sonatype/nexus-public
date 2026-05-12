@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.security.privilege;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -25,8 +25,8 @@ import static org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport.h
 /**
  * Tests for {@link PrivilegeDescriptorSupport}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class PrivilegeDescriptorSupportTest
-    extends TestSupport
 {
   @Test
   public void humanizeNameTest() throws Exception {

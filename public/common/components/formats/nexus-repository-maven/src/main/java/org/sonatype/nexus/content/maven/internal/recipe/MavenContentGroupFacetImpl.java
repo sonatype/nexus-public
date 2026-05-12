@@ -433,7 +433,8 @@ public class MavenContentGroupFacetImpl
   public void onComponentDeletedEvent(final ComponentDeletedEvent event) {
     org.sonatype.nexus.repository.content.Component component = event.getComponent();
     event.getRepository().ifPresent(repository -> {
-      if (member(repository) && !ProxyType.NAME.equals(repository.getType().getValue())) {
+      if (isMemberDirectlyOrTransitively(repository)
+          && !ProxyType.NAME.equals(repository.getType().getValue())) {
         log.debug("Component deleted from member repository {}: {}", repository.getName(),
             component.toStringExternal());
         invalidateMetadataForComponent(component);
@@ -508,9 +509,18 @@ public class MavenContentGroupFacetImpl
     });
   }
 
+  /**
+   * Checks whether the given repository is a member of this group repository, either directly or transitively
+   * through nested groups.
+   */
+  private boolean isMemberDirectlyOrTransitively(final Repository repository) {
+    return repositoryManager.findContainingGroups(repository.getName())
+        .contains(getRepository().getName());
+  }
+
   private void maybeEvict(final Repository repository, final Asset asset, final boolean delete) {
     log.trace("Maybe evicting memberRepo:{} assetPath:{} shouldDelete:{}", repository.getName(), asset.path(), delete);
-    if (!asset.component().isPresent() && member(repository)) {
+    if (!asset.component().isPresent() && isMemberDirectlyOrTransitively(repository)) {
       final String path = asset.path();
       final MavenPath mavenPath = getRepository().facet(MavenContentFacet.class).getMavenPathParser().parsePath(path);
       // only trigger eviction on a fresh main metadata artifact (which may go on to evict its hashes)

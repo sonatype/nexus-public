@@ -20,7 +20,6 @@ import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -43,7 +42,9 @@ import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static java.util.Collections.emptyMap;
@@ -59,8 +60,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DatastoreOrphanedBlobFinderTest
-    extends TestSupport
 {
   private static final String REPOSITORY_NAME = "repository";
 
@@ -191,10 +192,12 @@ public class DatastoreOrphanedBlobFinderTest
 
   private void setupOrphanedBlob(final BlobStore blobStore, final boolean deleted) {
     when(blobStore.getBlobIdStream())
-        .thenAnswer(i -> Stream.of(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF), new BlobId(USED_BLOB_ID, BLOB_CREATED_REF)));
+        .thenAnswer(
+            i -> Stream.of(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF), new BlobId(USED_BLOB_ID, BLOB_CREATED_REF)));
     when(blobStore.getBlobAttributes(new BlobId(ORPHANED_BLOB_ID, BLOB_CREATED_REF)))
         .thenReturn(new TestBlobAttributes(deleted));
-    when(blobStore.getBlobAttributes(new BlobId(USED_BLOB_ID, BLOB_CREATED_REF))).thenReturn(new TestBlobAttributes(deleted));
+    when(blobStore.getBlobAttributes(new BlobId(USED_BLOB_ID, BLOB_CREATED_REF)))
+        .thenReturn(new TestBlobAttributes(deleted));
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
 

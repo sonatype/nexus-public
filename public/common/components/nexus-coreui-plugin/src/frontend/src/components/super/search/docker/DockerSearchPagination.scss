@@ -1,0 +1,50 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.docker-search-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--nx-spacing-4x, 16px);
+  gap: var(--nx-spacing-2x, 8px);
+  border-top: 1px solid var(--nx-color-border, #e0e0e0);
+
+  &__info {
+    color: var(--nx-color-text-dark, #666);
+    font-size: 0.875rem;
+  }
+
+  &__button {
+    padding: var(--nx-spacing-2x, 8px) var(--nx-spacing-6x, 24px);
+    background-color: var(--nx-color-component-background, #fff);
+    color: var(--nx-color-primary-button-background, #0066cc);
+    border: 1px solid var(--nx-color-primary-button-background, #0066cc);
+    border-radius: var(--nx-border-radius, 4px);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--nx-color-primary-button-background, #0066cc);
+      color: var(--nx-color-primary-button-text, #fff);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+

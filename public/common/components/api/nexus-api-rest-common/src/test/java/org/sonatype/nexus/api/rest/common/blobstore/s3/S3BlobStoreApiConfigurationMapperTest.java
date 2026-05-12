@@ -16,7 +16,6 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
@@ -54,9 +53,11 @@ import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUC
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.PRE_SIGNED_URL_ENABLED;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class S3BlobStoreApiConfigurationMapperTest
-    extends TestSupport
 {
   private static final String BLOB_STORE_NAME = "anS3BlobStore";
 

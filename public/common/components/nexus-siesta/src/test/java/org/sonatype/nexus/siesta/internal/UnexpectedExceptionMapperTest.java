@@ -14,8 +14,6 @@ package org.sonatype.nexus.siesta.internal;
 
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +22,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 class UnexpectedExceptionMapperTest
-    extends Test5Support
 {
   private UnexpectedExceptionMapper mapper;
 

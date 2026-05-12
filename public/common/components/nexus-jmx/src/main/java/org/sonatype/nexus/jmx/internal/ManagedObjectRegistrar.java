@@ -24,7 +24,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.jmx.MBean;
@@ -43,6 +42,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -54,9 +55,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ManagedObjectRegistrar
-    extends ComponentSupport
     implements ApplicationContextAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private MBeanServer server;
 
   @Inject

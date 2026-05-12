@@ -14,7 +14,6 @@ package org.sonatype.nexus.datastore.mybatis;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
@@ -36,9 +35,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MyBatisCipherTest
-    extends TestSupport
 {
   private static final String PASSWORD = "test-password";
 

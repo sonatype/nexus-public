@@ -14,7 +14,6 @@ package org.sonatype.nexus.quartz.internal.task;
 
 import java.util.Date;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.schedule.Manual;
@@ -28,9 +27,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class QuartzTaskFutureTest
-    extends TestSupport
 {
   @Mock
   private QuartzSchedulerSPI scheduler;

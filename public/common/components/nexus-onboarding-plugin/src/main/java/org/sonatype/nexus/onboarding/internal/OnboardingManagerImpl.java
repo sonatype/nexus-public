@@ -21,10 +21,11 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.onboarding.OnboardingConfiguration;
 import org.sonatype.nexus.onboarding.OnboardingItem;
 import org.sonatype.nexus.onboarding.OnboardingManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -35,9 +36,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class OnboardingManagerImpl
-    extends ComponentSupport
     implements OnboardingManager
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final OnboardingConfiguration onboardingConfiguration;
 
   private final Set<OnboardingItem> onboardingItems;

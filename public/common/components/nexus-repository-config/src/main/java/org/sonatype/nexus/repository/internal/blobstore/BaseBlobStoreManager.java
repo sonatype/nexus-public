@@ -514,15 +514,34 @@ public abstract class BaseBlobStoreManager
 
     switch (eventType) {
       case CREATED:
+        // Handle null configuration - may happen if config not yet replicated
+        if (configuration == null) {
+          log.warn("Received CREATED event for blob store '{}' but configuration not found in store. "
+              + "This may indicate a replication timing issue.", blobStoreName);
+          return;
+        }
         validateConfiguration(configuration, true);
         doCreate(getBlobStoreForCreate(configuration), configuration);
         break;
       case UPDATED:
+        // Handle null configuration - may happen if config not yet replicated
+        if (configuration == null) {
+          log.warn("Received UPDATED event for blob store '{}' but configuration not found in store. "
+              + "This may indicate a replication timing issue.", blobStoreName);
+          return;
+        }
         doUpdate(getBlobStoreForUpdate(configuration), configuration);
         break;
       case DELETED:
-        BlobStore deletedBlobStore = doForceDelete(blobStoreName);
-        eventManager.post(new BlobStoreDeletedEvent(deletedBlobStore));
+        BlobStore existingBlobStore = stores.get(blobStoreName);
+        if (existingBlobStore != null) {
+          BlobStore deletedBlobStore = doForceDelete(blobStoreName);
+          eventManager.post(new BlobStoreDeletedEvent(deletedBlobStore));
+        }
+        else {
+          log.debug("Received DELETED event for blob store '{}' but it is not tracked locally. "
+              + "May have been already deleted or never created on this node.", blobStoreName);
+        }
         break;
       default:
         log.error("Unknown event type {}", eventType);

@@ -10,8 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState} from 'react';
-import {useRouter} from '@uirouter/react';
+import React, {useState, useEffect} from 'react';
+import {useRouter, useCurrentStateAndParams} from '@uirouter/react';
+import {useMachine} from '@xstate/react';
 import {Page, PageHeader, ContentBody, Section} from '@sonatype/nexus-ui-plugin';
 import {
   NxH1,
@@ -19,12 +20,19 @@ import {
   NxModal,
   NxButton,
   NxWarningAlert,
-  NxCloseButton
+  NxCloseButton,
+  NxTabs,
+  NxTabList,
+  NxTab,
+  NxTabPanel,
+  NxCounter
 } from '@sonatype/react-shared-components';
 
 import SettingsTab from './HostedRepositoriesEvaluationSettingsTab';
 import RepositoriesTab from './HostedRepositoriesEvaluationRepositoriesTab';
 import ProgressSteps from '../HostedRepositoriesEvaluation/ProgressSteps';
+import HostedRepositoriesEvaluationMachine
+  from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/HostedRepositoriesEvaluationMachine';
 import UIStrings from '../../../../constants/UIStrings';
 import {ROUTE_NAMES} from '../../../../routerConfig/routeNames/routeNames';
 
@@ -32,7 +40,18 @@ import './HostedRepositoriesEvaluation.scss';
 
 export default function HostedRepositoriesEvaluation() {
   const router = useRouter();
-  const [activeTabId, setActiveTabId] = useState(0);
+  // Parent machine instance - creates fresh instance on mount.
+  // When user returns from Lifecycle page after PATCH, this component remounts,
+  // creating a new machine instance that fetches latest numberOfMonitoredRepositories.
+  // This ensures the badge always shows the current count when visible.
+  const {params} = useCurrentStateAndParams();
+  const [current] = useMachine(HostedRepositoriesEvaluationMachine);
+
+  const rawTab = parseInt(params?.activeTab, 10);
+  const initialTabIndex = rawTab === 1 ? 1 : 0;
+
+  const [activeTabIndex, setActiveTabIndex] = useState(initialTabIndex);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [settingsData, setSettingsData] = useState({
     activityTimeFrame: '',
     artifactLatestVersions: '',
@@ -43,6 +62,28 @@ export default function HostedRepositoriesEvaluation() {
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigationRoute, setPendingNavigationRoute] = useState(null);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  const hasSelections = current.context.hasSelections || false;
+  const globalConfigAvailable = current.context.globalConfigAvailable || false;
+  // Badge count is fetched fresh on component mount (when user navigates to this page)
+  const numberOfMonitoredRepositories = current.context.numberOfMonitoredRepositories || 0;
+  const existingSettings = current.context.existingSettings;
+
+  useEffect(() => {
+    if (globalConfigAvailable && existingSettings && !settingsLoaded) {
+      const policyStage = existingSettings.policyEvaluationStage
+        ? existingSettings.policyEvaluationStage.toLowerCase().replace(/_/g, '-')
+        : '';
+      setSettingsData({
+        activityTimeFrame: existingSettings.activityTimeFrame || '',
+        artifactLatestVersions: existingSettings.artifactLatestVersions || '',
+        policyEvaluationStage: policyStage,
+        applyToNewRepos: existingSettings.autoEnrollNewRepos || false
+      });
+      setSettingsLoaded(true);
+    }
+  }, [globalConfigAvailable, existingSettings, settingsLoaded]);
 
   function navigateBack() {
     if (isFormDirty || settingsData.activityTimeFrame || selectedRepositories.length > 0) {
@@ -55,12 +96,20 @@ export default function HostedRepositoriesEvaluation() {
 
   function handleNext(formData) {
     setSettingsData(formData);
-    setActiveTabId(1);
+    if (!globalConfigAvailable) {
+      setActiveStepIndex(1);
+    } else {
+      setActiveTabIndex(1);
+    }
     setIsFormDirty(false);
   }
 
   function handleBackToSettings() {
-    setActiveTabId(0);
+    if (!globalConfigAvailable) {
+      setActiveStepIndex(0);
+    } else {
+      setActiveTabIndex(0);
+    }
   }
 
   function handleRepositorySelectionChange(newSelection) {
@@ -127,28 +176,66 @@ export default function HostedRepositoriesEvaluation() {
 
       <ContentBody>
         <Section>
-          <ProgressSteps
-            steps={[
-              UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.settings,
-              UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.repositories
-            ]}
-            currentStep={activeTabId}
-          />
-          {activeTabId === 0 && (
-            <SettingsTab
-              initialData={settingsData}
-              onNext={handleNext}
-              onCancel={navigateBack}
-              onFormChange={() => setIsFormDirty(true)}
-            />
-          )}
-          {activeTabId === 1 && (
-            <RepositoriesTab
-              settingsData={settingsData}
-              onBack={handleBackToSettings}
-              initialSelectedRepositories={selectedRepositories}
-              onSelectionChange={handleRepositorySelectionChange}
-            />
+          {!globalConfigAvailable ? (
+            <>
+              <ProgressSteps
+                steps={[
+                  UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.settings,
+                  UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.repositories
+                ]}
+                currentStep={activeStepIndex}
+              />
+              {activeStepIndex === 0 && (
+                <SettingsTab
+                  initialData={settingsData}
+                  onNext={handleNext}
+                  onCancel={navigateBack}
+                  onFormChange={() => setIsFormDirty(true)}
+                />
+              )}
+              {activeStepIndex === 1 && (
+                <RepositoriesTab
+                  settingsData={settingsData}
+                  onBack={handleBackToSettings}
+                  initialSelectedRepositories={selectedRepositories}
+                  onSelectionChange={handleRepositorySelectionChange}
+                  globalConfigAvailable={globalConfigAvailable}
+                />
+              )}
+            </>
+          ) : (
+            <NxTabs activeTab={activeTabIndex} onTabSelect={setActiveTabIndex}>
+              <NxTabList>
+                <NxTab>
+                  {UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.monitoringSettings}
+                </NxTab>
+                <NxTab>
+                  {UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.tabs.monitoredRepositories}
+                  {numberOfMonitoredRepositories > 0 && (
+                    <NxCounter className={activeTabIndex === 1 ? 'nx-counter--active' : ''}>
+                      {numberOfMonitoredRepositories}
+                    </NxCounter>
+                  )}
+                </NxTab>
+              </NxTabList>
+              <NxTabPanel>
+                <SettingsTab
+                  initialData={settingsData}
+                  onNext={handleNext}
+                  onCancel={navigateBack}
+                  onFormChange={() => setIsFormDirty(true)}
+                />
+              </NxTabPanel>
+              <NxTabPanel>
+                <RepositoriesTab
+                  settingsData={settingsData}
+                  onBack={handleBackToSettings}
+                  initialSelectedRepositories={selectedRepositories}
+                  onSelectionChange={handleRepositorySelectionChange}
+                  globalConfigAvailable={globalConfigAvailable}
+                />
+              </NxTabPanel>
+            </NxTabs>
           )}
         </Section>
       </ContentBody>

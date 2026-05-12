@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import {NxButton} from '@sonatype/react-shared-components';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, handleExtJsUnsavedChanges, showUnsavedChangesModal} from '@sonatype/nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import SystemNotice from '../SystemNotice';
@@ -27,7 +27,28 @@ export default function RecoveryModeAlert() {
     const recoveryModeEnabled = ExtJS.useState(() => ExtJS.state().getValue('recovery.mode.enabled'));
     const router = useRouter();
 
-    const onClick = () => router.stateService.go(supportRecoveryIdentifier);
+    const onClick = async () => {
+      if (ExtJS.isExtJsRendered()) {
+        const menuCtrl =
+          window.Ext && Ext.getApplication && Ext.getApplication().getController
+            ? Ext.getApplication().getController("Menu")
+            : null;
+        handleExtJsUnsavedChanges(menuCtrl, () => {
+          router.stateService.go(supportRecoveryIdentifier);
+        });
+      } else {
+        const hasReactDirty = window.dirty && window.dirty.length > 0;
+        if (hasReactDirty) {
+          const confirm = await showUnsavedChangesModal();
+          if (confirm) {
+            window.dirty = [];
+            router.stateService.go(supportRecoveryIdentifier);
+          }
+        } else {
+          router.stateService.go(supportRecoveryIdentifier);
+        }
+      }
+    };
 
     if (!isAdmin || !recoveryModeEnabled) {
         return null;

@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.httpclient;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretDeserializer;
@@ -28,6 +27,8 @@ import org.sonatype.nexus.repository.config.ConfigurationObjectMapperCustomizer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -41,9 +42,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class HttpClientConfigurationObjectMapperCustomizer
-    extends ComponentSupport
     implements ConfigurationObjectMapperCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SecretsService secretsService;
 
   private final KeyValueStore keyValueStore;

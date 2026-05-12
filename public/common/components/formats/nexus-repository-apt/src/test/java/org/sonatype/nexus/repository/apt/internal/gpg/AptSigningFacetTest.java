@@ -12,15 +12,15 @@
  */
 package org.sonatype.nexus.repository.apt.internal.gpg;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.types.ProxyType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -31,8 +31,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link AptSigningFacet}.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class AptSigningFacetTest
-    extends TestSupport
 {
   @Mock
   private Repository repository;
@@ -43,9 +43,6 @@ public class AptSigningFacetTest
   @Mock
   private Configuration configuration;
 
-  @Mock
-  private ProxyType proxyType;
-
   private AptSigningFacet underTest;
 
   @Before
@@ -54,8 +51,6 @@ public class AptSigningFacetTest
     underTest.attach(repository);
 
     when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
-    when(repository.getType()).thenReturn(proxyType);
-    when(proxyType.getValidationGroup()).thenAnswer(invocation -> ProxyType.ValidationGroup.class);
   }
 
   @Test

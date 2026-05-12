@@ -16,13 +16,13 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -34,8 +34,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DetachingSetTest
-    extends TestSupport
+
 {
   @Mock
   private Set<String> backing;

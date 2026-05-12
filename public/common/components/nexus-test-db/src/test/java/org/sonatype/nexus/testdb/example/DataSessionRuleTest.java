@@ -18,7 +18,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -49,7 +48,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
  * Test the {@link DataSessionRule}.
  */
 public class DataSessionRuleTest
-    extends TestSupport
 {
   /**
    * Intercepts MyBatis commits so we can arbitrarily fail them.

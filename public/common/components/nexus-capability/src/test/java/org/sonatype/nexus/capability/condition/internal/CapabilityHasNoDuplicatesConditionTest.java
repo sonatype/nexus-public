@@ -114,11 +114,11 @@ public class CapabilityHasNoDuplicatesConditionTest
     when(descriptor.isDuplicated(context.id(), context.properties())).thenReturn(true);
     assertThat(underTest.isSatisfied(), is(true));
     // different type, shouldn't trigger change
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, unrelatedRef));
+    underTest.handle(new CapabilityEvent.Created(unrelatedRef));
     assertThat(underTest.isSatisfied(), is(true));
 
     // same type, condition should check for dups
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, duplicateRef));
+    underTest.handle(new CapabilityEvent.Created(duplicateRef));
 
     assertThat(underTest.isSatisfied(), is(false));
 
@@ -126,11 +126,11 @@ public class CapabilityHasNoDuplicatesConditionTest
     when(descriptor.isDuplicated(context.id(), context.properties())).thenReturn(false);
     assertThat(underTest.isSatisfied(), is(false));
     // different type, shouldn't trigger change
-    underTest.handle(new CapabilityEvent.AfterRemove(capabilityRegistry, unrelatedRef));
+    underTest.handle(new CapabilityEvent.AfterRemove(unrelatedRef));
     assertThat(underTest.isSatisfied(), is(false));
 
     // same type, condition should check for dups
-    underTest.handle(new CapabilityEvent.AfterRemove(capabilityRegistry, duplicateRef));
+    underTest.handle(new CapabilityEvent.AfterRemove(duplicateRef));
 
     assertThat(underTest.isSatisfied(), is(true));
 

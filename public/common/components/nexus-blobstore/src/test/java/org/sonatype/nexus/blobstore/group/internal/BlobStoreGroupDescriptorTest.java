@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobStoreUtil;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -48,9 +47,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BlobStoreGroupDescriptorTest
-    extends TestSupport
 {
   private static final String FILE = "File";
 
@@ -81,7 +82,7 @@ public class BlobStoreGroupDescriptorTest
         blobStoreUtil,
         provider,
         quotaService,
-        List.of(new RoundRobinFillPolicy(),  new WriteToFirstMemberFillPolicy()));
+        List.of(new RoundRobinFillPolicy(), new WriteToFirstMemberFillPolicy()));
 
     blobStores = new HashMap<>();
 

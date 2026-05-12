@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal.filter;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 
 import org.junit.Rule;
 import org.junit.Test;

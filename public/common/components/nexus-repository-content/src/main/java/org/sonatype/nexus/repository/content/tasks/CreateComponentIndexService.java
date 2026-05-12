@@ -18,10 +18,11 @@ import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -34,8 +35,9 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Component
 public class CreateComponentIndexService
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final String TABLE_NAME = "{format}_component";
 
   private final String OLD_INDEX_NAME = "idx_{format}_component_set";

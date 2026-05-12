@@ -44,7 +44,8 @@ import UIStrings from '../../../../constants/UIStrings';
 import {
   isIqServerEnabled,
   canReadFirewallStatus,
-  canUpdateHealthCheck
+  canUpdateHealthCheck,
+  hasFirewall
 } from './IQServerColumns/IQServerHelpers';
 
 import RepositoryStatus from './RepositoryStatus';
@@ -57,9 +58,29 @@ const {COLUMNS} = REPOSITORIES.LIST;
 
 export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}) {
   const [state, send] = useRepositoriesService();
+  // clmState exists solely to trigger re-renders when IQ/Firewall config changes.
+  // The actual state value is not used directly; we call helper functions instead.
+  const [clmState, setClmState] = useState(ExtJS.state().getValue('clm', {}));
 
   useEffect(() => {
     send({type: 'LOAD'});
+  }, []);
+
+  // Listen for clm state changes to re-render when IQ/Firewall config changes
+  useEffect(() => {
+    const state = ExtJS.state();
+    // Only set up listeners if ExtJS.state() supports events (not in test environment)
+    if (state && typeof state.on === 'function') {
+      const handleClmChange = () => {
+        setClmState(state.getValue('clm', {}));
+      };
+
+      state.on('clmchanged', handleClmChange);
+
+      return () => {
+        state.un('clmchanged', handleClmChange);
+      };
+    }
   }, []);
 
   const isLoading = state.matches('loading');
@@ -78,7 +99,11 @@ export default function RepositoriesList({onCreate, onEdit, copyUrl = doCopyUrl}
 
   const canCreate = ExtJS.checkPermission('nexus:repository-admin:*:*:add');
 
-  const showHealthCheckColumn = canUpdateHealthCheck();
+  // Show Health Check column only if user has permission AND NOT (IQ enabled AND Firewall enabled)
+  // Health Check should show when: IQ is disabled OR IQ doesn't have Firewall
+  // clmState is used to trigger re-renders when IQ/Firewall config changes via 'clmchanged' event
+  // We call helper functions directly for the logic (so tests work with mocked helpers)
+  const showHealthCheckColumn = canUpdateHealthCheck() && !(isIqServerEnabled() && hasFirewall());
   const showIqPolicyViolationsColumn = isIqServerEnabled() && canReadFirewallStatus();
 
   function create() {

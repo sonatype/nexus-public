@@ -40,16 +40,22 @@ public abstract class BlobStoreParallelTaskSupport
 
   protected BlobStoreManager blobStoreManager;
 
-  protected BlobStoreParallelTaskSupport(final int concurrencyLimit, final int queueCapacity) {
-    super(concurrencyLimit, queueCapacity);
+  /**
+   * @param concurrencyLimit the number of concurrent threads processing the queue allowed.
+   */
+  protected BlobStoreParallelTaskSupport(final int concurrencyLimit) {
+    super(concurrencyLimit);
   }
 
+  /**
+   * @param taskLoggingEnabled whether task logging should be enabled
+   * @param concurrencyLimit the number of concurrent threads processing the queue allowed.
+   */
   protected BlobStoreParallelTaskSupport(
       final boolean taskLoggingEnabled,
-      final int concurrencyLimit,
-      final int queueCapacity)
+      final int concurrencyLimit)
   {
-    super(taskLoggingEnabled, concurrencyLimit, queueCapacity);
+    super(taskLoggingEnabled, concurrencyLimit);
   }
 
   @Autowired
@@ -94,5 +100,5 @@ public abstract class BlobStoreParallelTaskSupport
    */
   protected String getBlobStoreField() {
     return getConfiguration().getString(BLOBSTORE_NAME_FIELD_ID);
-  };
+  }
 }

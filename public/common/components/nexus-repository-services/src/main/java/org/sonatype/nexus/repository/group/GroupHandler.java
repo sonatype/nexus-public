@@ -19,7 +19,6 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -35,6 +34,8 @@ import com.google.common.collect.Sets;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.unmodifiableSet;
@@ -54,9 +55,10 @@ import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_THROTT
 @Qualifier("default")
 @Singleton
 public class GroupHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String USE_DISPATCHED_RESPONSE = "USE_DISPATCHED_RESPONSE";
 
   public static final String INSUFFICIENT_LICENSE =

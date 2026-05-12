@@ -25,6 +25,7 @@ import {
   ExtAPIUtils,
   APIConstants,
 } from '@sonatype/nexus-ui-plugin';
+import {restClient} from '@/utils/api';
 
 import {INITIAL_DATA, URLs, canDeleteTask, canRunTask, canStopTask} from './TasksHelper';
 
@@ -185,7 +186,8 @@ export default FormUtils.buildFormMachine({
     }),
 
     delete: ({data}) => ExtAPIUtils.extAPIRequest(ACTION, METHODS.DELETE, {data: [data.id]}).then(ExtAPIUtils.checkForError),
-    run: ({data}) => Axios.post(runTaskUrl(data.id)),
-    stop: ({data}) => Axios.post(stopTaskUrl(data.id)),
+    // Use restClient for CSRF protection (includes NX-ANTI-CSRF-TOKEN header)
+    run: ({data}) => restClient.post(runTaskUrl(data.id)),
+    stop: ({data}) => restClient.post(stopTaskUrl(data.id)),
   }
 });

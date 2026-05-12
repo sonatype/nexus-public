@@ -17,7 +17,6 @@ import java.util.Optional;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -27,6 +26,8 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides some post processing capabilities for assets that could have hash files that need blobUpdated date to match
@@ -38,9 +39,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Component
 @Qualifier(Maven2Format.NAME)
 public class MavenImportPostProcessor
-    extends ComponentSupport
     implements ImportPostProcessor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public void attributePostProcessing(
       final Repository repository,

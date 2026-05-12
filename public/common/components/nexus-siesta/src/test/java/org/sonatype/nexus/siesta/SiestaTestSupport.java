@@ -17,7 +17,6 @@ import java.util.Map;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.bootstrap.siesta.SiestaConfiguration;
 import org.sonatype.nexus.siesta.SiestaTestSupport.SiestaTestSupportConfiguration;
 
@@ -37,7 +36,6 @@ import org.springframework.test.context.ContextConfiguration;
 @SpringBootTest
 @ContextConfiguration(classes = {SiestaTestSupportConfiguration.class, SiestaConfiguration.class})
 public abstract class SiestaTestSupport
-    extends Test5Support
 {
   public static final String MOUNT_POINT = "/siesta";
 

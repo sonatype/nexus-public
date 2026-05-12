@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.internal.utils;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 
 import org.junit.Test;
@@ -26,7 +25,7 @@ import static org.sonatype.nexus.repository.maven.MavenPath.SignatureType.GPG;
 import static org.sonatype.nexus.repository.maven.internal.utils.MavenVariableResolverAdapterUtil.createCoordinateMap;
 
 public class MavenVariableResolverAdapterUtilTest
-    extends TestSupport
+
 {
   @Test
   public void shouldCopyCoordinatesToMap() {

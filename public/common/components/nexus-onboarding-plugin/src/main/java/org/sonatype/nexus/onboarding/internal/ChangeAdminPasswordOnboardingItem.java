@@ -15,7 +15,6 @@ package org.sonatype.nexus.onboarding.internal;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.onboarding.OnboardingItem;
 import org.sonatype.nexus.onboarding.OnboardingItemPriority;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -24,6 +23,8 @@ import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -34,9 +35,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ChangeAdminPasswordOnboardingItem
-    extends ComponentSupport
     implements OnboardingItem
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SecuritySystem securitySystem;
 
   @Inject

@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.webhooks;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
@@ -29,12 +28,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link GlobalWebhookCapability.Configuration} secret handling.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class GlobalWebhookCapabilityConfigurationTest
-    extends TestSupport
 {
   @Mock
   private SecretsService secretsService;

@@ -19,7 +19,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -28,6 +27,8 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.collect.ImmutableList;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Should be used to hide sensitive data like password in the {@link Map}.
@@ -37,8 +38,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class PasswordSanitizing<T extends Map<String, ?>>
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final List<String> SENSITIVE_FIELD_NAMES = ImmutableList.of(
       "applicationPassword",
       "password",
@@ -53,6 +55,7 @@ public class PasswordSanitizing<T extends Map<String, ?>>
       "bearerToken",
       "bearerTokenId",
       "yumSigning",
+      "terraformSigning",
       "accountKey",
       "destinationInstancePassword",
       "NEXUS_DATASTORE_NEXUS_PASSWORD",

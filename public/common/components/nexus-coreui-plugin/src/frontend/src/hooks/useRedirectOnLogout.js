@@ -18,6 +18,7 @@
 import { useCurrentStateAndParams, useRouter } from "@uirouter/react";
 import { useEffect, useState } from "react";
 import { ExtJS, isVisible } from '@sonatype/nexus-ui-plugin';
+import { isExtJSLoaded, onExtJSLoad } from '../utils/extJsLoader';
 
 const PERMISSIONS_UPDATE_DELAY_MS = 100;
 
@@ -43,13 +44,27 @@ function clearUnsavedChanges() {
  */
 export function useRedirectOnLogout() {
   const router = useRouter();
+  // Always call the hook; ExtJS.useUser is now guarded internally.
   const userIsAuthenticated = !!ExtJS.useUser();
   const { state } = useCurrentStateAndParams();
   const visibilityRequirements = state.data?.visibilityRequirements;
   const [lastAuthenticationChange, setLastAuthenticationChange] = useState(null);
 
   useEffect(() => {
-    const permissionsController = Ext.getApplication().getController("Permissions");
+    // Only set up ExtJS listeners after ExtJS is loaded
+    if (!isExtJSLoaded()) {
+      // Wait for ExtJS to load, then set up listeners
+      onExtJSLoad(() => {
+        if (window.Ext?.getApplication) {
+          const permissionsController = window.Ext.getApplication().getController("Permissions");
+          const handleChange = () => setLastAuthenticationChange(new Date());
+          permissionsController.on("changed", handleChange);
+        }
+      });
+      return;
+    }
+
+    const permissionsController = window.Ext.getApplication().getController("Permissions");
     const handleChange = () => setLastAuthenticationChange(new Date());
     permissionsController.on("changed", handleChange);
 
@@ -62,13 +77,17 @@ export function useRedirectOnLogout() {
     const shouldRedirect = !isVisible(visibilityRequirements) && !userIsAuthenticated;
     const timer = setTimeout(() => {
       if (shouldRedirect) {
-        console.debug("Redirecting to welcome page. Not enough permissions");
+        console.debug("Redirecting to login page with return URL. Not enough permissions");
         clearUnsavedChanges();
-        router.stateService.go("browse.welcome");
+
+        // Pass returnTo so user returns to current page after re-login
+        const url = router.urlService.url();
+        const returnTo = btoa(`#${url}`);
+        router.stateService.go('login', { returnTo });
       }
     }, PERMISSIONS_UPDATE_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [lastAuthenticationChange, userIsAuthenticated, visibilityRequirements]);
+  }, [lastAuthenticationChange, userIsAuthenticated, visibilityRequirements, state?.name, router]);
 }
 

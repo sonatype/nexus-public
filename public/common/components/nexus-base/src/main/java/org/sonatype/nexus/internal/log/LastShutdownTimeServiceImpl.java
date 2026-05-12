@@ -25,13 +25,14 @@ import java.util.regex.Pattern;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.log.LogManager;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER;
 import org.springframework.stereotype.Component;
@@ -44,9 +45,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class LastShutdownTimeServiceImpl
-    extends ComponentSupport
     implements LastShutdownTimeService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String NEXUS_LOG_PATTERN = "(?<time>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})";
 
   private static final String NEXUS_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";

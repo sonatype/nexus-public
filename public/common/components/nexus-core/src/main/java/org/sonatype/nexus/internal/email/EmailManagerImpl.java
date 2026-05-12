@@ -22,7 +22,6 @@ import jakarta.inject.Singleton;
 import javax.mail.Session;
 import javax.net.ssl.SSLContext;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityReference;
@@ -48,6 +47,8 @@ import org.apache.commons.mail.EmailConstants;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
 import org.springframework.context.annotation.Lazy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -61,9 +62,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Component
 @Singleton
 public class EmailManagerImpl
-    extends ComponentSupport
     implements EmailManager, EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String PASSWORD_PLACEHOLDER = "#~NXRM~PLACEHOLDER~PASSWORD~#";
 
   public static final String EMAIL_CONFIGURATION_SOURCE = "email-configuration";

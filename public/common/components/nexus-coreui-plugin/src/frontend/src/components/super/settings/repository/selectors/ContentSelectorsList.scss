@@ -1,0 +1,114 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.content-selectors-list {
+  &__help {
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+    background-color: var(--gray-a2);
+    border-radius: var(--radius-3);
+    border: 1px solid var(--gray-a5);
+  }
+
+  &__help-icon {
+    color: var(--accent-9);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &__help-title {
+    margin-bottom: var(--space-1);
+    color: var(--gray-12);
+  }
+
+  &__help-text {
+    color: var(--gray-11);
+    line-height: 1.5;
+  }
+
+  &__help-link {
+    color: var(--accent-11);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__toolbar {
+    margin-bottom: var(--space-4);
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__search {
+    width: 300px;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  &__sortable-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--gray-a3);
+    }
+
+    .sort-icon {
+      color: var(--gray-11);
+    }
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--gray-a3);
+    }
+  }
+
+  &__description {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--gray-11);
+  }
+
+  &__chevron {
+    color: var(--gray-9);
+  }
+
+  &__loading,
+  &__error,
+  &__empty {
+    padding: var(--space-6);
+    text-align: center;
+  }
+
+  &__error {
+    color: var(--red-11);
+  }
+}
+
+

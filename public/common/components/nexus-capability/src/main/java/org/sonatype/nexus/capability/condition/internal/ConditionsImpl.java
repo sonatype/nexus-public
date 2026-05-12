@@ -18,7 +18,6 @@ import jakarta.inject.Singleton;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.CapabilityConditions;
 import org.sonatype.nexus.capability.condition.Conditions;
-import org.sonatype.nexus.capability.condition.CryptoConditions;
 import org.sonatype.nexus.capability.condition.LogicalConditions;
 import org.sonatype.nexus.capability.condition.NexusConditions;
 
@@ -44,19 +43,15 @@ public class ConditionsImpl
 
   private final NexusConditions nexusConditions;
 
-  private final CryptoConditions cryptoConditions;
-
   @Inject
   public ConditionsImpl(
       @Lazy final LogicalConditions logicalConditions,
       @Lazy final CapabilityConditions capabilityConditions,
-      @Lazy final NexusConditions nexusConditions,
-      @Lazy final CryptoConditions cryptoConditions)
+      @Lazy final NexusConditions nexusConditions)
   {
     this.logicalConditions = checkNotNull(logicalConditions);
     this.capabilityConditions = checkNotNull(capabilityConditions);
     this.nexusConditions = checkNotNull(nexusConditions);
-    this.cryptoConditions = checkNotNull(cryptoConditions);
   }
 
   @Override
@@ -72,11 +67,6 @@ public class ConditionsImpl
   @Override
   public NexusConditions nexus() {
     return nexusConditions;
-  }
-
-  @Override
-  public CryptoConditions crypto() {
-    return cryptoConditions;
   }
 
   @Override

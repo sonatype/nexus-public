@@ -23,7 +23,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
@@ -36,6 +35,8 @@ import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.coreui.internal.atlas.SecurityDiagnosticResource.RESOURCE_URI;
@@ -49,9 +50,10 @@ import org.springframework.stereotype.Component;
 @Path(RESOURCE_URI)
 @Produces(MediaType.APPLICATION_JSON)
 public class SecurityDiagnosticResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = "/atlas/security-diagnostic";
 
   private static final String USER_FIELD = "user";

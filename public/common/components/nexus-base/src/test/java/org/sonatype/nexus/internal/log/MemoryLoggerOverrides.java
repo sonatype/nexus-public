@@ -19,16 +19,18 @@ import java.util.Map.Entry;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LoggerLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * In-memory {@link LoggerOverrides}.
  */
 public class MemoryLoggerOverrides
-    extends ComponentSupport
     implements LoggerOverrides
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, LoggerLevel> backing = new HashMap<>();
 
   public Map<String, LoggerLevel> getBacking() {

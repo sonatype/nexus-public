@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.security.secrets.upgrade;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.internal.security.secrets.SecretsDAO;
 import org.sonatype.nexus.internal.security.secrets.task.RepositoriesBearerTokenConfigMigrationTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
@@ -24,13 +23,15 @@ import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@ExtendWith(MockitoExtension.class)
 class RepositoriesBearerTokenMigrationStep_2_75Test
-    extends Test5Support
 {
   @DataSessionConfiguration(daos = SecretsDAO.class)
   TestDataSessionSupplier dataSession;

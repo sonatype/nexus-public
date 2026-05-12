@@ -16,7 +16,6 @@ import java.sql.Connection;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
@@ -35,7 +34,7 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class MavenDefaultReposUpgrade_1_17Test
-    extends TestSupport
+
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME)

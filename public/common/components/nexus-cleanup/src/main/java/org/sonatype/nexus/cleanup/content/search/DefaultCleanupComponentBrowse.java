@@ -25,7 +25,6 @@ import java.util.stream.StreamSupport;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.datastore.search.criteria.AssetCleanupEvaluator;
 import org.sonatype.nexus.cleanup.datastore.search.criteria.ComponentCleanupEvaluator;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -41,6 +40,8 @@ import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import org.springframework.context.annotation.Primary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -51,9 +52,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Primary
 @Singleton
 public class DefaultCleanupComponentBrowse
-    extends ComponentSupport
     implements CleanupComponentBrowse
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, AssetCleanupEvaluator> assetCriteria;
 
   private final Map<String, ComponentCleanupEvaluator> componentCriteria;

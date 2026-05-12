@@ -17,8 +17,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 import javax.management.Descriptor;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.hamcrest.CustomTypeSafeMatcher;
 import org.junit.Test;
 
@@ -28,7 +26,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertThrows;
 
 public class DescriptorHelperTest
-    extends TestSupport
 {
 
   @TestAuthor("jason")

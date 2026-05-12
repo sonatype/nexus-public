@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.search.sql.store.upgrade.task;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -34,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.event.Level;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,9 +58,9 @@ import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReInde
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.formattedMessage;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.logLevel;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(LoggingExtension.class)
 class ReIndexSearchFilterByPatternTaskTest
-    extends Test5Support
 {
   private static final int BATCH_SIZE = 500;
 

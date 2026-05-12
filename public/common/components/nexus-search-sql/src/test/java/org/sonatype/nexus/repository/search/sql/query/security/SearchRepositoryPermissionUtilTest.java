@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -43,9 +42,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 import static org.sonatype.nexus.selector.SelectorConfiguration.EXPRESSION;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SearchRepositoryPermissionUtilTest
-    extends TestSupport
 {
   private static final String SELECTOR_EXPRESSION_1 = "format=\"raw\" and path^=\"/awesome-raw-file.txt\"";
 

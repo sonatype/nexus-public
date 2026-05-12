@@ -155,6 +155,10 @@ export default {
       ROOT: 'admin.system.upgrade',
       TITLE: 'Upgrade',
     },
+    PREVIEWUI: {
+      ROOT: 'admin.system.previewui',
+      TITLE: 'Nexus One UI',
+    },
   },
   SUPPORT: {
     DIRECTORY: 'admin.support',

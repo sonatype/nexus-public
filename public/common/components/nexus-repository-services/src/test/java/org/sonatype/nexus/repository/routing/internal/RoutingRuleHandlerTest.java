@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.routing.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
@@ -36,9 +35,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RoutingRuleHandlerTest
-    extends TestSupport
 {
   private static final String SOME_PATH = "/some/path";
 

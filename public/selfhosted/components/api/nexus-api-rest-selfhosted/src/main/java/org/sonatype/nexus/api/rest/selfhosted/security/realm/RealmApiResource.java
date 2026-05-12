@@ -26,7 +26,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.selfhosted.security.realm.model.RealmApiXO;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -36,6 +35,8 @@ import org.sonatype.nexus.security.realm.SecurityRealm;
 import com.google.common.base.Predicates;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -47,9 +48,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class RealmApiResource
-    extends ComponentSupport
     implements RealmApiResourceDoc, Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final RealmManager realmManager;
 
   @Inject

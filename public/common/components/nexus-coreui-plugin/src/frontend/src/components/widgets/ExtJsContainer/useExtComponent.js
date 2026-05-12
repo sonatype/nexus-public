@@ -19,12 +19,18 @@ import {useEffect, useState} from "react";
 
 function renderExtComponent(extContainerRef, extView, extParams, currentTitle, currentIcon) {
   const page = document.getElementsByClassName("nxrm-ext-js-wrapper")[0];
+  // Use viewport height minus wrapper's top offset for the initial height.
+  // page.offsetHeight can reflect a stale/overflowed value if the wrapper has already grown;
+  // viewport-relative calculation gives the true available space.
+  const top = page ? page.getBoundingClientRect().top : 0;
+  const initialHeight = page ? Math.max(0, window.innerHeight - top) : 0;
+  const initialWidth = page ? page.offsetWidth : 0;
 
   return Ext.create('NX.view.feature.Content', {
     itemId: 'feature-content',
     renderTo: extContainerRef.current,
-    height: page.offsetHeight,
-    width: page.offsetWidth,
+    height: initialHeight,
+    width: initialWidth,
     autoScroll: true,
     cls: 'nx-feature-content',
     currentTitle,

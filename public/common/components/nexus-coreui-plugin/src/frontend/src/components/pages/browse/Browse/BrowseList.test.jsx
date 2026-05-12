@@ -21,7 +21,7 @@ import {when} from 'jest-when';
 
 import RepositoriesContextProvider from '../../admin/Repositories/RepositoriesContextProvider';
 import RepositoriesListMachine from '../../admin/Repositories/RepositoriesListMachine';
-import {canReadFirewallStatus, canUpdateHealthCheck} from '../../admin/Repositories/IQServerColumns/IQServerHelpers';
+import {canReadFirewallStatus, canUpdateHealthCheck, hasFirewall} from '../../admin/Repositories/IQServerColumns/IQServerHelpers';
 import BrowseList from './BrowseList';
 import UIStrings from '../../../../constants/UIStrings';
 import {
@@ -39,7 +39,8 @@ jest.mock('../../admin/Repositories/IQServerColumns/IQServerHelpers', () => ({
   canUpdateHealthCheck: jest.fn().mockReturnValue(true),
   canReadFirewallStatus: jest.fn().mockReturnValue(true),
   canReadHealthCheckSummary: jest.fn().mockReturnValue(true),
-  canReadHealthCheckDetail: jest.fn().mockReturnValue(true)
+  canReadHealthCheckDetail: jest.fn().mockReturnValue(true),
+  hasFirewall: jest.fn().mockReturnValue(false)
 }));
 
 describe('BrowseList', function() {
@@ -308,6 +309,20 @@ describe('BrowseList', function() {
         expect.objectContaining({action: 'healthcheck_Status', method: 'read'})
       );
       expect(selectors.healthCheck.columnHeader()).not.toBeInTheDocument();
+    });
+
+    it('does not display health-check column when firewall is enabled', async function() {
+      hasFirewall.mockReturnValue(true);
+      await renderView({data:REPOS});
+
+      expect(axios.post).not.toHaveBeenCalledWith(
+        'service/extdirect',
+        expect.objectContaining({action: 'healthcheck_Status', method: 'read'})
+      );
+      expect(selectors.healthCheck.columnHeader()).not.toBeInTheDocument();
+
+      // Reset for other tests
+      hasFirewall.mockReturnValue(false);
     });
 
     it('renders analyze button when repository supports health check', async function() {

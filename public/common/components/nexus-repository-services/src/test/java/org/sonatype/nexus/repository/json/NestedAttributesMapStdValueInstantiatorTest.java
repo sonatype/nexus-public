@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.json;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -27,9 +26,11 @@ import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NestedAttributesMapStdValueInstantiatorTest
-    extends TestSupport
 {
   @Mock
   private StdValueInstantiator stdValueInstantiator;

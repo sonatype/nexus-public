@@ -15,9 +15,6 @@ package org.sonatype.nexus.bootstrap.entrypoint.configuration;
 import java.io.File;
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.goodies.testsupport.hamcrest.FileMatchers;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,11 +23,11 @@ import org.junit.rules.TemporaryFolder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ApplicationDirectoriesImplTest
-    extends TestSupport
 {
   @Rule
   public TemporaryFolder temporaryFolder = TemporaryFolder.builder().assureDeletion().build();
@@ -62,33 +59,33 @@ public class ApplicationDirectoriesImplTest
     File dir = underTest.getWorkDirectory();
     assertThat(dir, notNullValue());
     assertThat(dir.getCanonicalFile(), is(workDir.getCanonicalFile()));
-    assertThat(dir, FileMatchers.exists());
+    assertTrue(dir.exists());
   }
 
   @Test
   public void ensureWorkDir_childExists() {
     File dir = underTest.getWorkDirectory("child");
     assertThat(dir, notNullValue());
-    assertThat(dir, FileMatchers.exists());
+    assertTrue(dir.exists());
   }
 
   @Test
   public void ensureWorkDir_childWithCreateExists() {
     File dir = underTest.getWorkDirectory("child", true);
     assertThat(dir, notNullValue());
-    assertThat(dir, FileMatchers.exists());
+    assertTrue(dir.exists());
   }
 
   @Test
   public void ensureWorkDir_childNoCreateNotExists() {
     File dir = underTest.getWorkDirectory("child", false);
     assertThat(dir, notNullValue());
-    assertThat(dir, not(FileMatchers.exists()));
+    assertFalse(dir.exists());
   }
 
   @Test
   public void ensureWorkDir_referencesSonatypeWorkFolderUnlessAbsolute() throws IOException {
-    File tempDir = util.createTempDir("temp");
+    File tempDir = temporaryFolder.newFolder("temp");
 
     File relative = underTest.getWorkDirectory(".");
     File absolute = underTest.getWorkDirectory(tempDir.getAbsolutePath());

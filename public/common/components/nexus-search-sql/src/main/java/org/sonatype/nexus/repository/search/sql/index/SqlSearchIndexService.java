@@ -20,7 +20,6 @@ import java.util.Set;
 import org.sonatype.nexus.repository.search.sql.store.SearchRecordData;
 import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -32,6 +31,8 @@ import org.sonatype.nexus.repository.search.sql.SearchAssetRecord;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -55,8 +56,9 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toInternal
 @Component
 @Singleton
 public class SqlSearchIndexService
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SearchRecordProducer searchRecordProducer;
 
   private final SearchStore searchStore;

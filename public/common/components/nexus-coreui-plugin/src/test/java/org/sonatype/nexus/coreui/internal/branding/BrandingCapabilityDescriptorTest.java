@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.formfields.FormField;
@@ -35,7 +34,6 @@ import static org.hamcrest.Matchers.notNullValue;
  * Tests for {@link BrandingCapabilityDescriptor}.
  */
 public class BrandingCapabilityDescriptorTest
-    extends TestSupport
 {
   private BrandingCapabilityDescriptor underTest;
 

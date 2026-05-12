@@ -1,0 +1,126 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.blob-stores-form {
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    color: var(--color-text-secondary, #5f6368);
+
+    .dark-mode & {
+      color: var(--color-text-secondary-dark, #9aa0a6);
+    }
+  }
+
+  &__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border, #dadce0);
+    border-top-color: var(--color-primary, #1a73e8);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+
+    .dark-mode & {
+      border-color: var(--color-border-dark, #5f6368);
+      border-top-color: var(--color-primary, #8ab4f8);
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // Modal styles
+  &__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.15s ease;
+  }
+
+  &__modal {
+    background: var(--color-bg-primary, #fff);
+    border-radius: var(--border-radius-lg, 8px);
+    padding: 24px;
+    max-width: 480px;
+    width: calc(100% - 48px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.2s ease;
+
+    .dark-mode & {
+      background: var(--color-bg-secondary-dark, #292a2d);
+    }
+
+    h3 {
+      font-size: var(--font-size-lg, 18px);
+      font-weight: var(--font-weight-semibold, 600);
+      color: var(--color-text-primary, #202124);
+      margin: 0 0 12px;
+
+      .dark-mode & {
+        color: var(--color-text-primary-dark, #e8eaed);
+      }
+    }
+
+    p {
+      font-size: var(--font-size-sm, 14px);
+      color: var(--color-text-secondary, #5f6368);
+      margin: 0 0 24px;
+      line-height: 1.6;
+
+      .dark-mode & {
+        color: var(--color-text-secondary-dark, #9aa0a6);
+      }
+    }
+  }
+
+  &__modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+

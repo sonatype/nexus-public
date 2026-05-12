@@ -1,0 +1,107 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/**
+ * EntityTable Styles
+ * 
+ * Generic sortable table component.
+ */
+
+.entity-table {
+  width: 100%;
+
+  &__header {
+    background-color: var(--color-surface-secondary);
+    user-select: none;
+
+    &--sortable {
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+
+      &:hover {
+        background-color: var(--color-surface-hover);
+      }
+    }
+  }
+
+  &__row {
+    transition: background-color var(--transition-fast);
+
+    &--clickable {
+      cursor: pointer;
+
+      &:hover {
+        background-color: var(--color-surface-hover);
+      }
+
+      &:focus {
+        outline: 2px solid var(--color-primary);
+        outline-offset: -2px;
+      }
+
+      &:focus:not(:focus-visible) {
+        outline: none;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: -2px;
+      }
+    }
+  }
+
+  &__cell {
+    vertical-align: middle;
+    padding: var(--space-3);
+
+    &--arrow {
+      text-align: right;
+      width: 48px;
+      padding-right: 16px; // Extra space for scrollbar
+    }
+  }
+
+  &__arrow {
+    color: var(--color-text-tertiary);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+
+    .entity-table__row--clickable:hover & {
+      color: var(--color-text-secondary);
+      transform: translateX(2px);
+    }
+  }
+
+  // States
+  &--loading,
+  &--error,
+  &--empty {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// Dark mode adjustments
+[data-theme="dark"] {
+  .entity-table {
+    &__header {
+      background-color: var(--color-surface-secondary);
+    }
+
+    &__row--clickable:hover {
+      background-color: var(--color-surface-hover);
+    }
+  }
+}
+

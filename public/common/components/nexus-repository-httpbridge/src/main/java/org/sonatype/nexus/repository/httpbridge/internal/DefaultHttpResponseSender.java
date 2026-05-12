@@ -22,7 +22,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
 import org.sonatype.nexus.repository.view.Payload;
@@ -33,6 +32,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default {@link HttpResponseSender}.
@@ -43,9 +44,10 @@ import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
 @Qualifier(DefaultHttpResponseSender.NEXUS_HTTP_RESPONSE_SENDER)
 @Singleton
 public class DefaultHttpResponseSender
-    extends ComponentSupport
     implements HttpResponseSender
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String NEXUS_HTTP_RESPONSE_SENDER = "NexusHttpResponseSender";
 
   @Override

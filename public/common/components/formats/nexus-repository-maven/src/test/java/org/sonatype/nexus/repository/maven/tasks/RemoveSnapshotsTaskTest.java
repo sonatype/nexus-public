@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven.tasks;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
@@ -30,7 +29,9 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.CoreMatchers.is;
@@ -43,8 +44,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RemoveSnapshotsTaskTest
-    extends TestSupport
+
 {
   @Mock
   private RepositoryManager repositoryManager;

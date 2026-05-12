@@ -15,19 +15,20 @@ package org.sonatype.nexus.blobstore.api;
 import java.util.List;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreConsumer;
 import org.sonatype.nexus.blobstore.api.tasks.BlobStoreTaskService;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BlobStoreTaskServiceImpl
-    extends ComponentSupport
     implements BlobStoreTaskService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   final List<BlobStoreConsumer> blobStoreConsumers;
 

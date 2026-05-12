@@ -1,0 +1,103 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.blob-type-selector {
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-width: 560px;
+  }
+
+  &__card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-surface);
+    border: 2px solid var(--gray-5);
+    border-radius: var(--radius-4);
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    appearance: none;
+    font: inherit;
+    color: inherit;
+
+    &:hover:not(:disabled) {
+      border-color: var(--gray-7);
+      background: var(--gray-2);
+      transform: translateX(4px);
+      box-shadow: var(--shadow-2);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateX(2px);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    &--selected {
+      border-color: var(--accent-9);
+      background: var(--accent-2);
+      box-shadow: 0 0 0 1px var(--accent-9);
+    }
+
+    &--file .blob-type-selector__icon-wrap {
+      background: var(--green-3);
+      color: var(--green-11);
+    }
+    &--s3 .blob-type-selector__icon-wrap,
+    &--azure .blob-type-selector__icon-wrap,
+    &--google .blob-type-selector__icon-wrap {
+      /* Neutral background so branded SVG icons stand out */
+      background: var(--gray-2);
+    }
+    &--group .blob-type-selector__icon-wrap {
+      background: var(--violet-3);
+      color: var(--violet-11);
+    }
+  }
+
+  &__icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-3);
+    flex-shrink: 0;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+  }
+
+  &__chevron {
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    color: var(--accent-9);
+
+    &--visible {
+      opacity: 1;
+    }
+  }
+}
+
+.blob-type-selector__card:hover .blob-type-selector__chevron,
+.blob-type-selector__card--selected .blob-type-selector__chevron {
+  opacity: 1;
+}

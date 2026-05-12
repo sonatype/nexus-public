@@ -15,12 +15,13 @@ package org.sonatype.nexus.security.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.SecurityContributor;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
 
@@ -31,17 +32,12 @@ import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link SecurityContributorMediator}.
- *
- * Tests the lifecycle-managed registration of security contributors and duplicate prevention.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecurityContributorMediatorTest
-    extends TestSupport
 {
   @Mock
   private SecurityConfigurationManagerImpl securityConfigurationManager;
-
-  @Mock
-  private ApplicationContext applicationContext;
 
   @Mock
   private SecurityContributor contributor1;
@@ -53,105 +49,37 @@ public class SecurityContributorMediatorTest
 
   @Before
   public void setUp() {
-    underTest = new SecurityContributorMediator(securityConfigurationManager, applicationContext);
+    underTest = new SecurityContributorMediator(securityConfigurationManager);
   }
 
   @Test
-  public void testDoStart_registersAllContributors() throws Exception {
-    // Setup: Mock application context to return two contributors
+  public void testEventListener_registersContributors() {
     Map<String, SecurityContributor> contributors = new HashMap<>();
     contributors.put("contributor1", contributor1);
     contributors.put("contributor2", contributor2);
-    when(applicationContext.getBeansOfType(SecurityContributor.class)).thenReturn(contributors);
 
-    // Execute: Call doStart (simulates SECURITY phase startup)
-    underTest.doStart();
+    ApplicationContext eventContext = mock(ApplicationContext.class);
+    when(eventContext.getBeansOfType(SecurityContributor.class)).thenReturn(contributors);
 
-    // Verify: Both contributors were registered
+    ContextRefreshedEvent event = mock(ContextRefreshedEvent.class);
+    when(event.getApplicationContext()).thenReturn(eventContext);
+
+    underTest.on(event);
+
     verify(securityConfigurationManager, times(1)).addContributor(contributor1);
     verify(securityConfigurationManager, times(1)).addContributor(contributor2);
   }
 
   @Test
-  public void testEventListener_registersNewContributors() {
-    // Setup: Mock application context to return one contributor
-    Map<String, SecurityContributor> contributors = new HashMap<>();
-    contributors.put("contributor1", contributor1);
-
+  public void testEventListener_withNoContributors() {
     ApplicationContext eventContext = mock(ApplicationContext.class);
-    when(eventContext.getBeansOfType(SecurityContributor.class)).thenReturn(contributors);
+    when(eventContext.getBeansOfType(SecurityContributor.class)).thenReturn(new HashMap<>());
 
     ContextRefreshedEvent event = mock(ContextRefreshedEvent.class);
     when(event.getApplicationContext()).thenReturn(eventContext);
 
-    // Execute: Trigger the event listener
     underTest.on(event);
 
-    // Verify: Contributor was registered
-    verify(securityConfigurationManager, times(1)).addContributor(contributor1);
-  }
-
-  @Test
-  public void testDuplicatePrevention_doesNotRegisterTwice() throws Exception {
-    // Setup: Mock application context to return the same contributor
-    Map<String, SecurityContributor> contributors = new HashMap<>();
-    contributors.put("contributor1", contributor1);
-    when(applicationContext.getBeansOfType(SecurityContributor.class)).thenReturn(contributors);
-
-    // Execute: Call doStart first
-    underTest.doStart();
-
-    // Setup event with same contributor
-    ApplicationContext eventContext = mock(ApplicationContext.class);
-    when(eventContext.getBeansOfType(SecurityContributor.class)).thenReturn(contributors);
-
-    ContextRefreshedEvent event = mock(ContextRefreshedEvent.class);
-    when(event.getApplicationContext()).thenReturn(eventContext);
-
-    // Execute: Trigger event listener with same contributor
-    underTest.on(event);
-
-    // Verify: Contributor was only registered once (duplicate prevented)
-    verify(securityConfigurationManager, times(1)).addContributor(contributor1);
-  }
-
-  @Test
-  public void testDoStart_withNoContributors() throws Exception {
-    // Setup: Mock application context to return empty map
-    when(applicationContext.getBeansOfType(SecurityContributor.class)).thenReturn(new HashMap<>());
-
-    // Execute: Call doStart
-    underTest.doStart();
-
-    // Verify: No contributors were registered (no exception thrown)
     verify(securityConfigurationManager, times(0)).addContributor(contributor1);
-    verify(securityConfigurationManager, times(0)).addContributor(contributor2);
-  }
-
-  @Test
-  public void testMultipleEventListener_callsWithDifferentContributors() throws Exception {
-    // Setup: First call with contributor1
-    Map<String, SecurityContributor> contributors1 = new HashMap<>();
-    contributors1.put("contributor1", contributor1);
-    when(applicationContext.getBeansOfType(SecurityContributor.class)).thenReturn(contributors1);
-
-    underTest.doStart();
-
-    // Setup: Second event with contributor2 (simulates plugin loaded after startup)
-    Map<String, SecurityContributor> contributors2 = new HashMap<>();
-    contributors2.put("contributor2", contributor2);
-
-    ApplicationContext eventContext = mock(ApplicationContext.class);
-    when(eventContext.getBeansOfType(SecurityContributor.class)).thenReturn(contributors2);
-
-    ContextRefreshedEvent event = mock(ContextRefreshedEvent.class);
-    when(event.getApplicationContext()).thenReturn(eventContext);
-
-    // Execute: Trigger event listener
-    underTest.on(event);
-
-    // Verify: Both contributors were registered (once each)
-    verify(securityConfigurationManager, times(1)).addContributor(contributor1);
-    verify(securityConfigurationManager, times(1)).addContributor(contributor2);
   }
 }

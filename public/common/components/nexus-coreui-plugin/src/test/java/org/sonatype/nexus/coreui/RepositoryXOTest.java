@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension.ValidationExecutor;
@@ -38,7 +37,6 @@ import static org.hamcrest.Matchers.is;
 
 @ExtendWith(ValidationExtension.class)
 class RepositoryXOTest
-    extends Test5Support
 {
   @ValidationExecutor
   private final Validator validator =

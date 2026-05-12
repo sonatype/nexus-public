@@ -1,0 +1,248 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/**
+ * Descriptions for all task types.
+ * Used by TaskTypeSelector to display helpful context about each task type.
+ */
+export const TASK_TYPE_DESCRIPTIONS: Record<string, string> = {
+  // Admin tasks
+  'db.backup': 'Creates a backup of the embedded database to the specified location on the server filesystem.',
+  'blobstore.compact': 'Reclaims disk space by permanently removing soft-deleted blobs from the selected blob store.',
+  'blobstore.rebuildComponentDB': 'Rebuilds the component database from blob store contents. Use after data recovery.',
+  'blobstore.move': 'Moves all repository data from one blob store to another. Requires repository to be offline.',
+  'blobstore.removeMemberFromGroup': 'Removes a member blob store from a blob store group.',
+  'security.purge-api-keys': 'Removes expired or orphaned API keys from the system to maintain security.',
+  'usertoken.flush': 'Invalidates all active user tokens, forcing users to re-authenticate.',
+  'h2.backup': 'Creates a backup of the H2 embedded database for disaster recovery purposes.',
+
+  // Repository tasks
+  'repository.cleanup': 'Removes components matching cleanup policy criteria from the selected repository.',
+  'repository.rebuild-index': 'Rebuilds the search index for the selected repository to fix search inconsistencies.',
+  'repository.delete-incomplete-uploads': 'Removes partially uploaded files that were never completed.',
+  'repository.purge-unused': 'Removes proxy repository components that have not been downloaded recently.',
+
+  // Cleanup tasks
+  'assetBlob.cleanup': 'Removes orphaned asset blobs that are no longer referenced by any component.',
+
+  // Maven tasks
+  'repository.maven.rebuild-metadata': 'Regenerates Maven metadata files (maven-metadata.xml) for the repository.',
+  'repository.maven.remove-snapshots': 'Removes old SNAPSHOT versions based on age and retention policies.',
+  'repository.maven.unpublish-dotIndex': 'Removes legacy .index files from Maven repositories.',
+  'repository.maven.publish-dotindex': 'Publishes Maven index files for repository indexing clients.',
+  'repository.maven.purge-unused-snapshots': 'Removes SNAPSHOT versions that have not been downloaded recently.',
+
+  // Docker tasks
+  'repository.docker.gc': 'Runs garbage collection to remove unreferenced Docker image layers.',
+  'repository.docker.upload-purge': 'Removes incomplete Docker layer uploads older than the specified threshold.',
+
+  // npm tasks
+  'repository.npm.rebuild-metadata': 'Regenerates npm package metadata to fix inconsistencies.',
+
+  // Health Check tasks
+  'healthcheck.vulnerabilityReport': 'Generates a vulnerability report for components in the selected repository.',
+  'healthcheck.eula': 'Accepts the Health Check EULA to enable vulnerability scanning features.',
+  'malicious.components.report': 'Scans repositories for known malicious components and generates a report.',
+  'malicious.components.cleanup': 'Automatically removes components identified as malicious from repositories.',
+
+  // Tags tasks
+  'tags.cleanup': 'Removes tags matching the specified pattern from components.',
+
+  // Yum tasks
+  'repository.yum.rebuild.metadata': 'Regenerates Yum repository metadata (repodata) for RPM package management.',
+
+  // APT tasks
+  'repository.apt.rebuild.metadata': 'Regenerates APT repository metadata for Debian/Ubuntu package management.',
+
+  // Helm tasks
+  'repository.helm.rebuild.metadata': 'Regenerates Helm chart repository index for Kubernetes package management.',
+
+  // R tasks
+  'repository.r.rebuild.metadata': 'Regenerates R/CRAN repository PACKAGES files.',
+
+  // PyPI tasks
+  'repository.pypi.repair': 'Repairs PyPI repository metadata and index files.',
+
+  // Conda tasks
+  'repository.conda.repair': 'Repairs Conda repository metadata and repodata.json files.',
+
+  // RubyGems tasks
+  'repository.rubygems.repair': 'Repairs RubyGems repository specifications and metadata.',
+
+  // Go tasks
+  'repository.go.repair': 'Repairs Go module proxy metadata and module files.',
+
+  // P2 tasks
+  'repository.p2.rebuild.metadata': 'Regenerates Eclipse P2 repository metadata.',
+
+  // Conan tasks
+  'repository.conan.repair': 'Repairs Conan C/C++ package repository metadata.',
+
+  // NuGet tasks
+  'repository.nuget.repair': 'Repairs NuGet .NET package repository metadata.',
+
+  // Cocoapods tasks
+  'repository.cocoapods.repair': 'Repairs CocoaPods iOS/macOS package repository metadata.',
+
+  // Raw tasks
+  'repository.raw.repair': 'Repairs raw repository structure and metadata.',
+
+  // Generic/Other tasks
+  'script': 'Executes a custom Groovy script on the server.',
+  'statisticsCollection': 'Collects and aggregates repository usage statistics.',
+  'storage.facet.cleanup': 'Cleans up orphaned storage facet data.',
+  'storage.facet.reconciliation': 'Reconciles storage facet data with actual blob contents.',
+};
+
+/**
+ * Category assignments for task types.
+ * Groups tasks by functional area in the type selector.
+ */
+export const TASK_TYPE_CATEGORIES: Record<string, string> = {
+  // Admin
+  'db.backup': 'Admin',
+  'blobstore.compact': 'Admin',
+  'blobstore.rebuildComponentDB': 'Admin',
+  'blobstore.move': 'Admin',
+  'blobstore.removeMemberFromGroup': 'Admin',
+  'security.purge-api-keys': 'Admin',
+  'usertoken.flush': 'Admin',
+  'h2.backup': 'Admin',
+
+  // Repository
+  'repository.cleanup': 'Repository',
+  'repository.rebuild-index': 'Repository',
+  'repository.delete-incomplete-uploads': 'Repository',
+  'repository.purge-unused': 'Repository',
+
+  // Cleanup
+  'assetBlob.cleanup': 'Cleanup',
+
+  // Maven
+  'repository.maven.rebuild-metadata': 'Maven',
+  'repository.maven.remove-snapshots': 'Maven',
+  'repository.maven.unpublish-dotIndex': 'Maven',
+  'repository.maven.publish-dotindex': 'Maven',
+  'repository.maven.purge-unused-snapshots': 'Maven',
+
+  // Docker
+  'repository.docker.gc': 'Docker',
+  'repository.docker.upload-purge': 'Docker',
+
+  // npm
+  'repository.npm.rebuild-metadata': 'npm',
+
+  // Health Check
+  'healthcheck.vulnerabilityReport': 'Health Check',
+  'healthcheck.eula': 'Health Check',
+  'malicious.components.report': 'Health Check',
+  'malicious.components.cleanup': 'Health Check',
+
+  // Tags
+  'tags.cleanup': 'Tags',
+
+  // Format-specific
+  'repository.yum.rebuild.metadata': 'Yum',
+  'repository.apt.rebuild.metadata': 'APT',
+  'repository.helm.rebuild.metadata': 'Helm',
+  'repository.r.rebuild.metadata': 'R',
+  'repository.pypi.repair': 'PyPI',
+  'repository.conda.repair': 'Conda',
+  'repository.rubygems.repair': 'RubyGems',
+  'repository.go.repair': 'Go',
+  'repository.p2.rebuild.metadata': 'P2',
+  'repository.conan.repair': 'Conan',
+  'repository.nuget.repair': 'NuGet',
+  'repository.cocoapods.repair': 'CocoaPods',
+  'repository.raw.repair': 'Raw',
+
+  // Other
+  'script': 'Other',
+  'statisticsCollection': 'Other',
+  'storage.facet.cleanup': 'Other',
+  'storage.facet.reconciliation': 'Other',
+};
+
+/**
+ * Icons for task type categories.
+ * Maps category names to Lucide icon names.
+ */
+export const CATEGORY_ICONS: Record<string, string> = {
+  Admin: 'Settings',
+  Repository: 'Database',
+  Cleanup: 'Trash2',
+  Maven: 'Package',
+  Docker: 'Container',
+  npm: 'Package',
+  'Health Check': 'HeartPulse',
+  Tags: 'Tag',
+  Yum: 'Package',
+  APT: 'Package',
+  Helm: 'Ship',
+  R: 'BarChart',
+  PyPI: 'Package',
+  Conda: 'Package',
+  RubyGems: 'Gem',
+  Go: 'Code',
+  P2: 'Eclipse',
+  Conan: 'Package',
+  NuGet: 'Package',
+  CocoaPods: 'Apple',
+  Raw: 'File',
+  Other: 'MoreHorizontal',
+};
+
+/**
+ * Get description for a task type by ID.
+ * Returns a default message if not found.
+ */
+export function getTaskTypeDescription(typeId: string): string {
+  return TASK_TYPE_DESCRIPTIONS[typeId] || 'Configure and schedule this task type.';
+}
+
+/**
+ * Get category for a task type by ID.
+ * Uses pattern matching as fallback if not explicitly mapped.
+ */
+export function getTaskTypeCategory(typeId: string): string {
+  // Check explicit mapping first
+  if (TASK_TYPE_CATEGORIES[typeId]) {
+    return TASK_TYPE_CATEGORIES[typeId];
+  }
+
+  // Pattern-based fallback
+  if (typeId.startsWith('repository.maven')) return 'Maven';
+  if (typeId.startsWith('repository.docker')) return 'Docker';
+  if (typeId.startsWith('repository.npm')) return 'npm';
+  if (typeId.startsWith('repository.yum')) return 'Yum';
+  if (typeId.startsWith('repository.apt')) return 'APT';
+  if (typeId.startsWith('repository.helm')) return 'Helm';
+  if (typeId.startsWith('repository.r.')) return 'R';
+  if (typeId.startsWith('repository.pypi')) return 'PyPI';
+  if (typeId.startsWith('repository.conda')) return 'Conda';
+  if (typeId.startsWith('repository.rubygems')) return 'RubyGems';
+  if (typeId.startsWith('repository.go')) return 'Go';
+  if (typeId.startsWith('repository.p2')) return 'P2';
+  if (typeId.startsWith('repository.conan')) return 'Conan';
+  if (typeId.startsWith('repository.nuget')) return 'NuGet';
+  if (typeId.startsWith('repository.cocoapods')) return 'CocoaPods';
+  if (typeId.startsWith('repository.raw')) return 'Raw';
+  if (typeId.startsWith('repository.')) return 'Repository';
+  if (typeId.startsWith('blobstore.') || typeId.startsWith('db.') || typeId.startsWith('h2.') ||
+      typeId.startsWith('security.') || typeId.startsWith('usertoken.')) return 'Admin';
+  if (typeId.startsWith('healthcheck') || typeId.startsWith('malicious')) return 'Health Check';
+  if (typeId.startsWith('assetBlob.')) return 'Cleanup';
+  if (typeId.startsWith('tags.')) return 'Tags';
+
+  return 'Other';
+}

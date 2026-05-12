@@ -23,10 +23,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.sonatype.nexus.upgrade.datastore.DependsOn;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -38,8 +39,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * 3. RepeatableSteps based on their depends on ordering
  */
 class SimpleDependencyResolver
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Collection<DatabaseMigrationStep> steps;
 
   SimpleDependencyResolver(final Collection<DatabaseMigrationStep> steps) {

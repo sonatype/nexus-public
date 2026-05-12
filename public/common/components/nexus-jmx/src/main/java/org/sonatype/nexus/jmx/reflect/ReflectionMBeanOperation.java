@@ -22,12 +22,13 @@ import javax.management.Descriptor;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanParameterInfo;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.jmx.MBeanOperation;
 import org.sonatype.nexus.jmx.OperationKey;
 
 import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 import com.thoughtworks.paranamer.Paranamer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -38,9 +39,10 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.0
  */
 public class ReflectionMBeanOperation
-    extends ComponentSupport
     implements MBeanOperation
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final MBeanOperationInfo info;
 
   private final String name;
@@ -117,8 +119,9 @@ public class ReflectionMBeanOperation
    * {@link ReflectionMBeanOperation} builder.
    */
   public static class Builder
-      extends ComponentSupport
   {
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
     private String name;
 
     private String description;

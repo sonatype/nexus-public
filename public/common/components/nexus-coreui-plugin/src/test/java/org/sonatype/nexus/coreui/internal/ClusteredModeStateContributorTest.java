@@ -14,8 +14,6 @@ package org.sonatype.nexus.coreui.internal;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +22,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.CLUSTERED_ZERO_DOWNTIME
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED;
 
 public class ClusteredModeStateContributorTest
-    extends TestSupport
 {
   @Test
   public void shouldReturnBothFlagsEnabled() {

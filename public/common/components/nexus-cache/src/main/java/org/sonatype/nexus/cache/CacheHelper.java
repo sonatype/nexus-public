@@ -22,9 +22,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -35,8 +35,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Singleton
 public class CacheHelper
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Provider<CacheManager> cacheManagerProvider;
 
   private final Provider<CacheBuilder> cacheBuilderProvider;

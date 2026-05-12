@@ -19,8 +19,6 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +33,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Validates that proxy repositories have optional distribution fields while hosted repositories require it.
  */
 class AptRepositoriesAttributesValidationTest
-    extends Test5Support
 {
   private static Validator validator;
 

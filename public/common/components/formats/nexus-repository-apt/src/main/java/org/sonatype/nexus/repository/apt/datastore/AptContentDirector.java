@@ -21,7 +21,6 @@ import java.util.Set;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptHostedMetadataFacet;
@@ -37,6 +36,8 @@ import org.sonatype.nexus.repository.types.HostedType;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Allow staging functionality for Apt,
@@ -49,9 +50,10 @@ import org.springframework.stereotype.Component;
 @Qualifier(AptFormat.NAME)
 @Singleton
 public class AptContentDirector
-    extends ComponentSupport
     implements ContentDirector
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final RepositoryManager repositoryManager;
 
   // Thread-local tracking of source repositories that need metadata rebuild after staging moves

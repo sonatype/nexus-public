@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sonatype.nexus.audit.internal.store.AuditEventDAO">
+
+  <insert id="createSchema" databaseId="PostgreSQL">
+    CREATE TABLE IF NOT EXISTS audit_events (
+      id BIGSERIAL PRIMARY KEY,
+      domain VARCHAR(255) NOT NULL,
+      type VARCHAR(255) NOT NULL,
+      context VARCHAR(500),
+      timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+      initiator VARCHAR(255),
+      node_id VARCHAR(100),
+      attributes JSONB
+    );
+
+<!-- 
+    CREATE INDEX IF NOT EXISTS idx_audit_events_domain_timestamp
+      ON audit_events (domain, timestamp DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_audit_events_type
+      ON audit_events (type);
+
+    CREATE INDEX IF NOT EXISTS idx_audit_events_initiator
+      ON audit_events (initiator);
+
+    CREATE INDEX IF NOT EXISTS idx_audit_events_context
+      ON audit_events (context);
+-->
+  </insert>
+
+  <insert id="createSchema" databaseId="H2">
+    CREATE TABLE IF NOT EXISTS audit_events (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      domain VARCHAR(255) NOT NULL,
+      type VARCHAR(255) NOT NULL,
+      context VARCHAR(500),
+      timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+      initiator VARCHAR(255),
+      node_id VARCHAR(100),
+      attributes JSON
+    );
+
+<!-- 
+    CREATE INDEX IF NOT EXISTS idx_audit_events_domain_timestamp
+      ON audit_events (domain, timestamp DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_audit_events_type
+      ON audit_events (type);
+
+    CREATE INDEX IF NOT EXISTS idx_audit_events_initiator
+      ON audit_events (initiator);
+
+    CREATE INDEX IF NOT EXISTS idx_audit_events_context
+      ON audit_events (context);
+ -->
+  </insert>
+
+  <resultMap id="auditEventResult" type="org.sonatype.nexus.audit.internal.store.AuditEventData">
+    <id property="id" column="id"/>
+    <result property="domain" column="domain"/>
+    <result property="type" column="type"/>
+    <result property="context" column="context"/>
+    <result property="timestamp" column="timestamp"/>
+    <result property="initiator" column="initiator"/>
+    <result property="nodeId" column="node_id"/>
+    <result property="attributes" column="attributes" typeHandler="org.sonatype.nexus.datastore.mybatis.handlers.AttributesTypeHandler"/>
+  </resultMap>
+
+  <sql id="whereClause">
+    <where>
+      <if test="domain != null">
+        AND domain = #{domain}
+      </if>
+      <if test="type != null">
+        AND type = #{type}
+      </if>
+      <if test="initiator != null">
+        AND initiator = #{initiator}
+      </if>
+      <if test="startDate != null">
+        AND timestamp &gt;= #{startDate}
+      </if>
+      <if test="endDate != null">
+        AND timestamp &lt;= #{endDate}
+      </if>
+      <if test="repositoryName != null">
+        AND (context = #{repositoryName} OR context LIKE #{repositoryName} || ':%')
+      </if>
+    </where>
+  </sql>
+
+  <select id="findAll" resultMap="auditEventResult">
+    SELECT id, domain, type, context, timestamp, initiator, node_id, attributes
+    FROM audit_events
+    <include refid="whereClause"/>
+    ORDER BY timestamp DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="count" resultType="int">
+    SELECT COUNT(*)
+    FROM audit_events
+    <include refid="whereClause"/>
+  </select>
+
+  <insert id="insert" parameterType="org.sonatype.nexus.audit.internal.store.AuditEventData" databaseId="PostgreSQL">
+    INSERT INTO audit_events (domain, type, context, timestamp, initiator, node_id, attributes)
+    VALUES (#{domain}, #{type}, #{context}, #{timestamp}, #{initiator}, #{nodeId},
+            #{attributes, typeHandler=org.sonatype.nexus.datastore.mybatis.handlers.AttributesTypeHandler}::jsonb)
+  </insert>
+
+  <insert id="insert" parameterType="org.sonatype.nexus.audit.internal.store.AuditEventData" databaseId="H2">
+    INSERT INTO audit_events (domain, type, context, timestamp, initiator, node_id, attributes)
+    VALUES (#{domain}, #{type}, #{context}, #{timestamp}, #{initiator}, #{nodeId},
+            #{attributes, typeHandler=org.sonatype.nexus.datastore.mybatis.handlers.AttributesTypeHandler})
+  </insert>
+
+  <sql id="whereClauseMultipleDomains">
+    <where>
+      <if test="domains != null and domains.size() > 0">
+        AND domain IN
+        <foreach item="d" collection="domains" open="(" separator="," close=")">
+          #{d}
+        </foreach>
+      </if>
+      <if test="type != null">
+        AND type = #{type}
+      </if>
+      <if test="initiator != null">
+        AND initiator = #{initiator}
+      </if>
+      <if test="startDate != null">
+        AND timestamp &gt;= #{startDate}
+      </if>
+      <if test="endDate != null">
+        AND timestamp &lt;= #{endDate}
+      </if>
+      <if test="repositoryName != null">
+        AND (context = #{repositoryName} OR context LIKE #{repositoryName} || ':%')
+      </if>
+    </where>
+  </sql>
+
+  <select id="findByDomains" resultMap="auditEventResult">
+    SELECT id, domain, type, context, timestamp, initiator, node_id, attributes
+    FROM audit_events
+    <include refid="whereClauseMultipleDomains"/>
+    ORDER BY timestamp DESC
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="countByDomains" resultType="int">
+    SELECT COUNT(*)
+    FROM audit_events
+    <include refid="whereClauseMultipleDomains"/>
+  </select>
+
+</mapper>

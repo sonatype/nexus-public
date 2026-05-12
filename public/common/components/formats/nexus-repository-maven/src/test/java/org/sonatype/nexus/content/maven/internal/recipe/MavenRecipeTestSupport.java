@@ -14,7 +14,6 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.maven.MavenArchetypeCatalogFacet;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
@@ -40,14 +39,19 @@ import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 
 import com.google.common.collect.ImmutableList;
+import org.junit.Rule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public abstract class MavenRecipeTestSupport
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   @Mock
   private SecurityHandler securityHandler;
 

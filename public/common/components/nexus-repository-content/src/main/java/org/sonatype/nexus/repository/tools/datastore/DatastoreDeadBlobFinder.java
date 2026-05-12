@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 import jakarta.inject.Inject;
 import javax.validation.constraints.NotNull;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
@@ -46,6 +45,8 @@ import org.sonatype.nexus.repository.tools.DeadBlobResult;
 import org.sonatype.nexus.repository.tools.MismatchedSHA1Exception;
 
 import com.google.common.base.Stopwatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.entity.Continuations.streamOf;
@@ -69,9 +70,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DatastoreDeadBlobFinder
-    extends ComponentSupport
     implements DeadBlobFinder<Asset>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private BlobStoreManager blobStoreManager;
 
   @Inject

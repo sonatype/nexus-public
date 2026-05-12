@@ -92,6 +92,7 @@ import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CON
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENCRYPTION_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENCRYPTION_TYPE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.FORCE_PATH_STYLE_KEY;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
 public class EncryptingS3Client
     implements AutoCloseable
@@ -128,7 +129,7 @@ public class EncryptingS3Client
 
     encrypter = getEncrypter(blobStoreConfig);
 
-    MetricRegistry registry = SharedMetricRegistries.getOrCreate("nexus");
+    MetricRegistry registry = SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
     getTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "get"));
     putTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "put"));
     copyTimer = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "copy"));

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 
 import org.junit.Before;
@@ -22,12 +21,14 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests {@link UniqueBlobStoreNameValidator}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UniqueBlobStoreNameValidatorTest
-    extends TestSupport
 {
   @Mock
   private BlobStoreManager blobStoreManager;

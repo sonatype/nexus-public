@@ -15,7 +15,6 @@ package org.sonatype.nexus.blobstore.s3;
 import java.util.Collections;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
@@ -36,7 +35,6 @@ import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.get
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.getConfiguredRegion;
 
 public class S3BlobStoreConfigurationHelperTest
-    extends TestSupport
 {
   @Test
   public void testGetConfiguredBucket() {

@@ -15,20 +15,21 @@ package org.sonatype.nexus.common.stateguard;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 @Aspect
 public class TransitionsAspect
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Around("@annotation(config) && execution(* *(..))")
   public Object aroundTransitionsMethod(
       final ProceedingJoinPoint joinPoint,

@@ -17,7 +17,6 @@ import java.util.Date;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.audit.AuditRecorder;
@@ -41,9 +40,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AuditRecorderImpl
-    extends ComponentSupport
     implements AuditRecorder
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final EventManager eventManager;
 
   private final NodeAccess nodeAccess;

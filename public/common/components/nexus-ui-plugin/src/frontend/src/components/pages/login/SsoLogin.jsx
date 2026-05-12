@@ -12,20 +12,23 @@
  */
 
 import React, { useState } from 'react';
-import { NxButton, NxLoadingSpinner } from '@sonatype/react-shared-components';
+import { Button } from '@radix-ui/themes';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import PropTypes from 'prop-types';
 import UIStrings from '../../../constants/UIStrings';
 import { useRouter } from '@uirouter/react';
-import {RouteNames} from "../../../constants/RouteNames";
+import { RouteNames } from "../../../constants/RouteNames";
 
 const { SSO_BUTTON, SSO_BUTTON_CLOUD, SSO_BUTTON_LOADING } = UIStrings;
 
 /**
  * SSO Login Button component that redirects to the appropriate authentication endpoint
  * based on the configured SSO method (SAML or OAuth2/OIDC)
- * The button always receives focus on mount to prioritize SSO login when available.
+ *
+ * @param {Object} props - Component props
+ * @param {boolean} props.autoFocus - If true, button receives focus on mount (default: true)
  */
-export default function SsoLogin() {
+export default function SsoLogin({ autoFocus = true }) {
   const samlEnabled = ExtJS.useState(() => ExtJS.state().getValue('samlEnabled', false));
   const oauth2Enabled = ExtJS.useState(() => ExtJS.state().getValue('oauth2Enabled', false));
   const contextPath = ExtJS.useState(() => ExtJS.state().getValue('nexus-context-path', ''));
@@ -59,24 +62,24 @@ export default function SsoLogin() {
     }
   };
 
+  const buttonText = isCloud ? SSO_BUTTON_CLOUD : SSO_BUTTON;
+
   return (
-    <NxButton
+    <Button
       type="button"
-      variant="primary"
+      size="3"
+      variant="solid"
       onClick={handleSsoLogin}
       disabled={isRedirecting}
-      className="sso-login-button"
+      className="login-submit"
       data-analytics-id="nxrm-login-sso"
-      autoFocus={true}
+      autoFocus={autoFocus}
     >
-      {isRedirecting ? (
-        <NxLoadingSpinner>
-          {SSO_BUTTON_LOADING}
-        </NxLoadingSpinner>
-      ) : (
-        isCloud ? SSO_BUTTON_CLOUD : SSO_BUTTON
-      )}
-    </NxButton>
+      {isRedirecting ? SSO_BUTTON_LOADING : buttonText}
+    </Button>
   );
 }
 
+SsoLogin.propTypes = {
+  autoFocus: PropTypes.bool
+};

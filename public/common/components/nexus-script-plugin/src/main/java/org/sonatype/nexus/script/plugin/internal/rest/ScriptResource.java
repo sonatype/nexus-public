@@ -24,7 +24,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.script.ScriptService;
 import org.sonatype.nexus.rest.Resource;
@@ -47,6 +46,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -72,9 +72,10 @@ import org.springframework.stereotype.Component;
 @Consumes(APPLICATION_JSON)
 @Api("Script")
 public class ScriptResource
-    extends ComponentSupport
     implements ScriptClient, Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = "/v1/script";
 
   private final ScriptManager scriptManager;

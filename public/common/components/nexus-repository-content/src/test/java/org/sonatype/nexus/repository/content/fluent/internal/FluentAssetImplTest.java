@@ -20,7 +20,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -58,7 +57,9 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -81,8 +82,8 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_PCCS_HASH;
 
+@ExtendWith(MockitoExtension.class)
 class FluentAssetImplTest
-    extends Test5Support
 {
   @Mock
   private ContentFacetSupport contentFacet;

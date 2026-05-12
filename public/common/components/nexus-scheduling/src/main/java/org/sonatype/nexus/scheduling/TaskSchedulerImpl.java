@@ -23,7 +23,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.scheduling.events.TaskScheduledEvent;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
@@ -31,6 +30,8 @@ import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -48,9 +49,9 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Component
 public class TaskSchedulerImpl
-    extends ComponentSupport
     implements TaskScheduler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   protected static final String REPO_MOVE_TYPE_ID = "repository.move";
 

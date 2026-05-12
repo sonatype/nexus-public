@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui.internal.ldap;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.realm.RealmManager;
 
 import org.junit.Before;
@@ -26,9 +25,11 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LdapStateContributorTest
-    extends TestSupport
 {
   private static final String LDAP_REALM_NAME = "LdapRealm";
 

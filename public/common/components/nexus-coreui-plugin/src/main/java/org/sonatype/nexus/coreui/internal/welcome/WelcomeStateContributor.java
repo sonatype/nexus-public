@@ -17,12 +17,13 @@ import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -30,9 +31,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class WelcomeStateContributor
-    extends ComponentSupport
     implements StateContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String NODE_ID = "nexus.node.id";
 
   private final NodeAccess nodeAccess;

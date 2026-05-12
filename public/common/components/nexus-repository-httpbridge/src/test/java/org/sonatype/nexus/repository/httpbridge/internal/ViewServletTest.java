@@ -19,7 +19,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.httpbridge.internal.describe.Description;
@@ -41,6 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.event.Level;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
@@ -63,9 +63,9 @@ import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.logLevel;
 /**
  * Tests for describe functionality of {@link ViewServlet}.
  */
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(LoggingExtension.class)
 class ViewServletTest
-    extends Test5Support
 {
   @CaptureLogsFor(ViewServlet.class)
   TestLogAccessor log;

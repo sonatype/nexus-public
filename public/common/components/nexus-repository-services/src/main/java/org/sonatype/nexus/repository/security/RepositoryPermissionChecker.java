@@ -24,7 +24,6 @@ import java.util.stream.StreamSupport;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -41,6 +40,8 @@ import com.google.common.collect.Iterables;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
@@ -57,8 +58,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class RepositoryPermissionChecker
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SecurityHelper securityHelper;
 
   private final SelectorManager selectorManager;

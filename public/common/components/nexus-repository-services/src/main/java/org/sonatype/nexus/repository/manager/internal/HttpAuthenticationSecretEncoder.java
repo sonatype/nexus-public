@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
@@ -24,6 +23,8 @@ import org.sonatype.nexus.kv.KeyValueStore;
 import org.sonatype.nexus.security.UserIdHelper;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -38,8 +39,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class HttpAuthenticationSecretEncoder
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String BEARER_TOKEN_MIGRATION_STARTED = "bearer.token.migration.started";
 
   private static final String PASSWORD = "password";

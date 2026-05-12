@@ -14,11 +14,12 @@ package org.sonatype.nexus.internal.wonderland;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.RandomBytesGenerator;
 
 import com.google.common.io.BaseEncoding;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -33,8 +34,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AuthTicketGenerator
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String CPREFIX = "${wonderland.authTicketGenerator";
 
   private final RandomBytesGenerator randomBytes;

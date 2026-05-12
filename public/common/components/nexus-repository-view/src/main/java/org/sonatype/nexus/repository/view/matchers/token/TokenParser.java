@@ -23,8 +23,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
-
-import org.sonatype.goodies.common.ComponentSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Parses path-like strings against a template pattern, a literal string with embedded variables. e.g. {@code
@@ -46,8 +46,9 @@ import org.sonatype.goodies.common.ComponentSupport;
  * @since 3.0
  */
 public class TokenParser
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final List<VariableToken> variables;
 
   private final Pattern pattern;

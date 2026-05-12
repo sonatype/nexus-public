@@ -18,10 +18,10 @@ import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -32,8 +32,8 @@ import static org.mockito.Mockito.when;
  * Tests for {@link HeaderPatternFilter}
  *
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class HeaderPatternFilterTest
-    extends TestSupport
 {
 
   @Mock

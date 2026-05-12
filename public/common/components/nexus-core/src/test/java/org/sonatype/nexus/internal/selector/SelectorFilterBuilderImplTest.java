@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.selector.CselSelector;
@@ -38,9 +37,11 @@ import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SelectorFilterBuilderImplTest
-    extends TestSupport
 {
   @Mock
   private SelectorConfigurationStore selectorConfigurationStore;

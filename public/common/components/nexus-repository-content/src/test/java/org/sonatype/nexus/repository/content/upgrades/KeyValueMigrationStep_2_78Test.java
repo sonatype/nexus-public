@@ -18,7 +18,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
@@ -31,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class KeyValueMigrationStep_2_78Test
-    extends Test5Support
 {
   private static final List<String> FORMATS = List.of("apt", "helm", "yum");
 

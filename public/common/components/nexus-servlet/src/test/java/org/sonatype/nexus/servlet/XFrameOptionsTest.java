@@ -15,8 +15,6 @@ package org.sonatype.nexus.servlet;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -31,7 +29,6 @@ import static org.hamcrest.Matchers.is;
  */
 @RunWith(Parameterized.class)
 public class XFrameOptionsTest
-    extends TestSupport
 {
   @Parameters
   public static Collection<Object[]> data() {

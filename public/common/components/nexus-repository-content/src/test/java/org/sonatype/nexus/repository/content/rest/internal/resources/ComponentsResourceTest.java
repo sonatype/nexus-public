@@ -22,7 +22,6 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Format;
@@ -56,11 +55,14 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Base64.getUrlEncoder;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
@@ -80,8 +82,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ComponentsResourceTest
-    extends TestSupport
 {
   private static final String REPOSITORY_NAME = "test-repo";
 
@@ -167,7 +169,7 @@ public class ComponentsResourceTest
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
     when(contentAuthHelper.checkPathPermissions(any(), eq(FORMAT_VALUE), eq(REPOSITORY_NAME))).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     List<FluentComponent> componentList = List.of(aFluentComponent());
     when(componentContinuation.isEmpty()).thenReturn(false).thenReturn(true);
@@ -190,7 +192,7 @@ public class ComponentsResourceTest
   public void getComponents_continuationTokenIsNullWhenFewerThanPageLimit() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(any(), eq(FORMAT_VALUE), eq(REPOSITORY_NAME))).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     List<FluentComponent> componentList = List.of(aFluentComponent());
     when(componentContinuation.isEmpty()).thenReturn(false).thenReturn(true);
@@ -206,7 +208,7 @@ public class ComponentsResourceTest
   public void getComponents_continuationTokenIsSetWhenExactlyPageLimit() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(any(), eq(FORMAT_VALUE), eq(REPOSITORY_NAME))).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     // Create exactly PAGE_SIZE_LIMIT components
     List<FluentComponent> componentList =
@@ -225,7 +227,7 @@ public class ComponentsResourceTest
   public void getComponents_invokesExtensions() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(any(), eq(FORMAT_VALUE), eq(REPOSITORY_NAME))).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     List<FluentComponent> componentList = List.of(aFluentComponent());
     when(componentContinuation.isEmpty()).thenReturn(false).thenReturn(true);
@@ -245,7 +247,7 @@ public class ComponentsResourceTest
     // But allow component-level permission
     when(contentAuthHelper.checkPathPermissions(eq(COMPONENT_NAME), eq(FORMAT_VALUE), eq(REPOSITORY_NAME)))
         .thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     FluentComponent componentWithAsset = aFluentComponentWithAsset();
     List<FluentComponent> componentList = List.of(componentWithAsset);
@@ -265,7 +267,7 @@ public class ComponentsResourceTest
   public void getComponentById_returnsComponent() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))
@@ -328,7 +330,7 @@ public class ComponentsResourceTest
   public void getComponentById_setsIdCorrectly() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))
@@ -495,7 +497,7 @@ public class ComponentsResourceTest
   public void fromComponent_populatesAllFieldsCorrectly() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))
@@ -531,7 +533,7 @@ public class ComponentsResourceTest
 
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))
@@ -558,7 +560,7 @@ public class ComponentsResourceTest
 
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
-    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptyList());
+    when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
 
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))

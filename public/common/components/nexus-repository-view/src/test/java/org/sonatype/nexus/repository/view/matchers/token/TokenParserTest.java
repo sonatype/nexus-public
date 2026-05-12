@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.view.matchers.token;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -24,19 +22,22 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test for {@link TokenParser}.
  */
 public class TokenParserTest
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(TokenParserTest.class);
+
   @Test
   public void simplePattern() {
     String pattern = "/{a}/{b}/{c}";
 
     final TokenParser parser = new TokenParser(pattern);
-    log(parser);
+    log.info("{}", parser);
 
     final Map<String, String> tokens = parser.parse("/yes/no/false");
 
@@ -52,7 +53,7 @@ public class TokenParserTest
   public void mavenLikeTemplate() {
     final String pattern = "/{group}/{module}/{version}/{name}-{version}.{ext}";
     final TokenParser parser = new TokenParser(pattern);
-    log(parser);
+    log.info("{}", parser);
 
     final Map<String, String> tokens = parser.parse("/foo/bar/1234/bar-1234.zip");
 
@@ -70,7 +71,7 @@ public class TokenParserTest
   public void mavenGroupsHaveMultiplePathSegments() {
     final String pattern = "/{group:.+}/{module}/{version}/{name}-{version}.{ext}";
     final TokenParser parser = new TokenParser(pattern);
-    log(parser);
+    log.info("{}", parser);
 
     final Map<String, String> tokens = parser.parse("/org/sonatype/nexus/components/1234/bar-1234.zip");
 
@@ -88,7 +89,7 @@ public class TokenParserTest
   public void testNugetOperations() {
     final String pattern = "/{operation}({paramString:.*})";
     final TokenParser parser = new TokenParser(pattern);
-    log(parser);
+    log.info("{}", parser);
 
     final Map<String, String> tokens = parser.parse("/Packages()");
 
@@ -103,7 +104,7 @@ public class TokenParserTest
   public void testOptionalParens() {
     final String pattern = "/{operation:[^/()]+}{parens:\\\\Q()\\\\E|}";
     final TokenParser parser = new TokenParser(pattern);
-    log(parser);
+    log.info("{}", parser);
 
     {
       final Map<String, String> tokens = parser.parse("/Packages");
@@ -135,7 +136,7 @@ public class TokenParserTest
   public void slashesInTheSecondGroup() {
     final String pattern = "/{singleSegment}/{manySegments:.+}";
     final TokenParser parser = new TokenParser(pattern);
-    log(parser);
+    log.info("{}", parser);
 
     final Map<String, String> tokens = parser.parse("/1/2/3/4/5");
 
@@ -150,7 +151,7 @@ public class TokenParserTest
   public void sameNamedVariables() {
     final String pattern = "/{group:.+}/{name}/{version}/{name}-{version}.{ext}";
     final TokenParser parser = new TokenParser(pattern);
-    log(parser);
+    log.info("{}", parser);
 
     Map<String, String> tokens;
 

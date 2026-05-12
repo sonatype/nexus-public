@@ -16,8 +16,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,7 +28,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Tests for {@link UploadFieldDefinition}
  */
 public class UploadFieldDefinitionTest
-    extends TestSupport
 {
 
   @Test

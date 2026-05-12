@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.browse.capability;
 import java.util.Map;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Tag;
 
@@ -31,7 +30,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertTrue;
 
 public class BrowseTrimCapabilityDescriptorTest
-    extends TestSupport
 {
   private BrowseTrimCapabilityDescriptor underTest;
 

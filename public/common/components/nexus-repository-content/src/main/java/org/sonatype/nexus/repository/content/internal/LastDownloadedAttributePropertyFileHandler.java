@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -30,6 +29,8 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -40,9 +41,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class LastDownloadedAttributePropertyFileHandler
-    extends ComponentSupport
     implements LastDownloadedAttributeHandler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final BlobStoreManager blobStoreManager;
 
   @Inject

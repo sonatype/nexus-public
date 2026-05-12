@@ -21,7 +21,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -52,6 +51,8 @@ import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.distributed.event.service.api.EventType.CREATED;
@@ -68,9 +69,10 @@ import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT
 @Singleton
 @Primary
 public class AuthorizationManagerImpl
-    extends ComponentSupport
     implements AuthorizationManager, EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String SOURCE = DEFAULT_USER_SOURCE;
 
   private final SecurityConfigurationManager configuration;

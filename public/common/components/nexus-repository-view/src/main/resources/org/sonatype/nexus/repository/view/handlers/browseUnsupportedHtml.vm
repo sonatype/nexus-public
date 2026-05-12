@@ -56,7 +56,7 @@
   <div class="content-header">
     <img src="$relativePath/static/rapture/resources/icons/x32/database.png?$urlSuffix" alt="Repository image"/>
     <span class="title">Repository</span>
-    <span class="description">${repository.name}</span>
+    <span class="description">$esc.html(${repository.name})</span>
   </div>
 
   <div class="content-body">
@@ -66,8 +66,8 @@
       </p>
 
       <p>
-        Please use the <a href="$relativePath/#browse/browse:${repository.name}">browse</a>
-        or <a href="$relativePath/service/rest/repository/browse/${repository.name}/">HTML index</a>
+        Please use the <a href="$relativePath/#browse/browse:$esc.html(${repository.name})">browse</a>
+        or <a href="$relativePath/service/rest/repository/browse/$esc.html(${repository.name})/">HTML index</a>
         views to inspect the contents of this repository.
       </p>
     </div>

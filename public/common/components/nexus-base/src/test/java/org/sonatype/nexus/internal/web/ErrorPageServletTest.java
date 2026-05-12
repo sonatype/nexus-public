@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -63,7 +62,6 @@ import static org.mockito.Mockito.mock;
  */
 @ExtendWith(LoggingExtension.class)
 class ErrorPageServletTest
-    extends Test5Support
 {
   @CaptureLogsFor(value = ErrorPageServlet.class, level = Level.TRACE)
   TestLogAccessor log;

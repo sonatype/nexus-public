@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Singleton
 public class ApplicationDirectoriesImpl
-    implements ApplicationDirectories, org.sonatype.nexus.common.app.ApplicationDirectories
+    implements ApplicationDirectories
 {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationDirectoriesImpl.class);
 

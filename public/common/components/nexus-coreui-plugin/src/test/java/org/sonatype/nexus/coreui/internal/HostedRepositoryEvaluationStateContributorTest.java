@@ -12,23 +12,21 @@
  */
 package org.sonatype.nexus.coreui.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.sonatype.nexus.common.app.FeatureFlags.HOSTED_REPOSITORY_EVALUATION_ENABLED;
 
 public class HostedRepositoryEvaluationStateContributorTest
-    extends TestSupport
 {
+  private static final String STATE_KEY = "hostedRepositoryEvaluationEnabled";
+
   @Test
   public void shouldReturnEnabledWhenFeatureFlagIsTrue() {
     HostedRepositoryEvaluationStateContributor underTest =
         new HostedRepositoryEvaluationStateContributor(true);
 
-    assertThat(underTest.getState().get(HOSTED_REPOSITORY_EVALUATION_ENABLED), is(true));
+    assertThat(underTest.getState().get(STATE_KEY), is(true));
   }
 
   @Test
@@ -36,6 +34,6 @@ public class HostedRepositoryEvaluationStateContributorTest
     HostedRepositoryEvaluationStateContributor underTest =
         new HostedRepositoryEvaluationStateContributor(false);
 
-    assertThat(underTest.getState().get(HOSTED_REPOSITORY_EVALUATION_ENABLED), is(false));
+    assertThat(underTest.getState().get(STATE_KEY), is(false));
   }
 }

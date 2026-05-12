@@ -18,13 +18,13 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.hash.HashCode;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -36,8 +36,9 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MultiHashingOutputStreamTest
-    extends TestSupport
+
 {
   List<HashAlgorithm> hashes;
 

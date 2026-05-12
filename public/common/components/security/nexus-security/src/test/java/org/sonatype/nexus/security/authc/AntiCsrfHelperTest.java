@@ -19,8 +19,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.HttpMethod;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import com.google.common.net.HttpHeaders;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.mgt.SecurityManager;
@@ -30,7 +28,9 @@ import org.apache.shiro.util.ThreadContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -47,8 +47,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class AntiCsrfHelperTest
-    extends Test5Support
 {
   private AntiCsrfHelper underTest;
 
@@ -222,7 +222,7 @@ class AntiCsrfHelperTest
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
     setupBrowserSubject();
     when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
-    when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue") });
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[]{new Cookie("NX-ANTI-CSRF-TOKEN", "avalue")});
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
 

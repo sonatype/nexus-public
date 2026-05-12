@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.view.handlers;
 import javax.annotation.Nonnull;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.ETagHeaderUtils;
 import org.sonatype.nexus.repository.http.NxrmHttpHeaders;
 import org.sonatype.nexus.repository.view.Content;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.repository.view.Response;
 
 import com.google.common.net.HttpHeaders;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.date.DateTimeUtils.formatDateTime;
 import org.springframework.stereotype.Component;
@@ -38,9 +39,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Component
 public class ContentHeadersHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {

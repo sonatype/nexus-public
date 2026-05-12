@@ -15,8 +15,6 @@ package org.sonatype.nexus.blobstore;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static com.google.common.io.ByteStreams.copy;
@@ -30,7 +28,6 @@ import static org.hamcrest.Matchers.not;
  * Tests for {@link MetricsInputStream}.
  */
 public class MetricsInputStreamTest
-    extends TestSupport
 {
   @Test
   public void testLength() throws Exception {

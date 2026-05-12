@@ -69,6 +69,17 @@ public class AttributesHelper
       @Nullable final Object value)
   {
     switch (change) {
+      case OVERLAY:
+        Object oldMap = attributes.get(key);
+        if (oldMap != null) {
+          Object newMap = overlay(oldMap, checkNotNull(value));
+          if (!newMap.equals(oldMap)) {
+            attributes.set(key, newMap);
+            return true;
+          }
+          return false;
+        }
+        // fall through to set as there was no existing value
       case SET:
         return !value.equals(attributes.set(key, checkNotNull(value)));
       case REMOVE:
@@ -79,14 +90,6 @@ public class AttributesHelper
       case PREPEND:
         attributes.compute(key, v -> prepend(v, checkNotNull(value)));
         return true;
-      case OVERLAY:
-        Object oldMap = attributes.get(key);
-        Object newMap = overlay(oldMap, checkNotNull(value));
-        if (!newMap.equals(oldMap)) {
-          attributes.set(key, newMap);
-          return true;
-        }
-        return false;
       default:
         throw new IllegalArgumentException("Unknown request");
     }

@@ -16,7 +16,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -43,7 +42,6 @@ import org.mockito.Mock;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -51,9 +49,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenContentGroupFacetImplTest
-    extends TestSupport
 {
   private MavenContentGroupFacetImpl underTest;
 
@@ -88,18 +88,23 @@ public class MavenContentGroupFacetImplTest
     MavenContentFacet contentFacet = mock(MavenContentFacet.class);
     when(contentFacet.getMavenPathParser()).thenReturn(new Maven2MavenPathParser());
     when(contentFacet.assets()).thenReturn(assets);
-    Repository repository = mock(Repository.class);
-    when(repository.getName()).thenReturn("repo1");
-    when(repository.facet(MavenContentFacet.class)).thenReturn(contentFacet);
-    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
-    doReturn(true).when(underTest).member(repository);
-    underTest.attach(repository);
+    Repository memberRepo = mock(Repository.class);
+    when(memberRepo.getName()).thenReturn("repo1");
+
+    Repository groupRepo = mock(Repository.class);
+    when(groupRepo.getName()).thenReturn("group-repo");
+    when(groupRepo.facet(MavenContentFacet.class)).thenReturn(contentFacet);
+    when(groupRepo.facet(ContentFacet.class)).thenReturn(contentFacet);
+
+    when(repositoryManager.findContainingGroups("repo1")).thenReturn(Set.of("group-repo"));
+    underTest.attach(groupRepo);
+
     Asset asset = mock(Asset.class);
     when(asset.path()).thenReturn("/com/example/foo/1.0-SNAPSHOT/maven-metadata.xml");
     when(asset.component()).thenReturn(Optional.empty());
     AssetUploadedEvent event = mock(AssetUploadedEvent.class);
     when(event.getAsset()).thenReturn(asset);
-    when(event.getRepository()).thenReturn(Optional.of(repository));
+    when(event.getRepository()).thenReturn(Optional.of(memberRepo));
     underTest.onAssetUploadedEvent(event);
     verify(assets).path("/com/example/foo/1.0-SNAPSHOT/maven-metadata.xml");
   }
@@ -254,7 +259,7 @@ public class MavenContentGroupFacetImplTest
 
     Repository memberRepo = mock(Repository.class);
     when(memberRepo.getName()).thenReturn("hosted-repo");
-    when(memberRepo.getType()).thenReturn(hostedType); // This was missing!
+    when(memberRepo.getType()).thenReturn(hostedType);
     when(memberRepo.facet(MavenContentFacet.class)).thenReturn(contentFacet);
 
     Repository groupRepo = mock(Repository.class);
@@ -262,7 +267,7 @@ public class MavenContentGroupFacetImplTest
     when(groupRepo.facet(MavenContentFacet.class)).thenReturn(contentFacet);
     when(groupRepo.facet(ContentFacet.class)).thenReturn(contentFacet);
 
-    doReturn(true).when(underTest).member(memberRepo);
+    when(repositoryManager.findContainingGroups("hosted-repo")).thenReturn(Set.of("group-repo"));
     underTest.attach(groupRepo);
 
     // Create a mock component with Maven coordinates
@@ -309,7 +314,7 @@ public class MavenContentGroupFacetImplTest
     when(groupRepo.getName()).thenReturn("group-repo");
     when(groupRepo.facet(ContentFacet.class)).thenReturn(contentFacet);
 
-    doReturn(true).when(underTest).member(proxyRepo); // It's a member but proxy type
+    when(repositoryManager.findContainingGroups("proxy-repo")).thenReturn(Set.of("group-repo"));
     underTest.attach(groupRepo);
 
     Component component = mock(Component.class);
@@ -325,6 +330,134 @@ public class MavenContentGroupFacetImplTest
     // Verify no metadata invalidation occurred (proxy repos shouldn't trigger invalidation)
     verify(component, never()).namespace();
     verify(component, never()).name();
+    verify(assets, never()).path(any());
+  }
+
+  /**
+   * Test that maybeEvict handles transitive members in nested groups.
+   * Scenario: GroupB -> GroupA -> hosted. Upload to hosted should invalidate GroupB's cache.
+   */
+  @Test
+  public void testMaybeEvict_transitiveMember_marksAsStale() throws Exception {
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    FluentAsset fluentAsset = mock(FluentAsset.class);
+    when(assetBuilder.find()).thenReturn(Optional.of(fluentAsset));
+
+    FluentAssets assets = mock(FluentAssets.class);
+    when(assets.path(any())).thenReturn(assetBuilder);
+
+    MavenContentFacet contentFacet = mock(MavenContentFacet.class);
+    when(contentFacet.getMavenPathParser()).thenReturn(new Maven2MavenPathParser());
+    when(contentFacet.assets()).thenReturn(assets);
+
+    // hosted repo is a transitive member of groupB (via groupA)
+    Repository hostedRepo = mock(Repository.class);
+    when(hostedRepo.getName()).thenReturn("test-hosted");
+
+    Repository groupBRepo = mock(Repository.class);
+    when(groupBRepo.getName()).thenReturn("test-groupb");
+    when(groupBRepo.facet(MavenContentFacet.class)).thenReturn(contentFacet);
+    when(groupBRepo.facet(ContentFacet.class)).thenReturn(contentFacet);
+
+    when(repositoryManager.findContainingGroups("test-hosted"))
+        .thenReturn(Set.of("test-groupa", "test-groupb"));
+    underTest.attach(groupBRepo);
+
+    Asset asset = mock(Asset.class);
+    when(asset.path()).thenReturn("/com/example/foo/1.0-SNAPSHOT/maven-metadata.xml");
+    when(asset.component()).thenReturn(Optional.empty());
+
+    AssetUploadedEvent event = mock(AssetUploadedEvent.class);
+    when(event.getAsset()).thenReturn(asset);
+    when(event.getRepository()).thenReturn(Optional.of(hostedRepo));
+
+    underTest.onAssetUploadedEvent(event);
+
+    verify(assets).path("/com/example/foo/1.0-SNAPSHOT/maven-metadata.xml");
+    verify(fluentAsset).markAsStale();
+  }
+
+  /**
+   * Test that ComponentDeletedEvent from a transitive member invalidates metadata.
+   */
+  @Test
+  public void testComponentDeletedEvent_transitiveMember_invalidatesMetadata() throws Exception {
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    FluentAsset fluentAsset = mock(FluentAsset.class);
+    when(assetBuilder.find()).thenReturn(Optional.of(fluentAsset));
+
+    FluentAssets assets = mock(FluentAssets.class);
+    when(assets.path(any())).thenReturn(assetBuilder);
+
+    MavenContentFacet contentFacet = mock(MavenContentFacet.class);
+    when(contentFacet.assets()).thenReturn(assets);
+
+    Type hostedType = mock(Type.class);
+    when(hostedType.getValue()).thenReturn("hosted");
+
+    // hosted repo is a transitive member of groupB (via groupA)
+    Repository hostedRepo = mock(Repository.class);
+    when(hostedRepo.getName()).thenReturn("test-hosted");
+    when(hostedRepo.getType()).thenReturn(hostedType);
+
+    Repository groupBRepo = mock(Repository.class);
+    when(groupBRepo.getName()).thenReturn("test-groupb");
+    when(groupBRepo.facet(ContentFacet.class)).thenReturn(contentFacet);
+
+    when(repositoryManager.findContainingGroups("test-hosted"))
+        .thenReturn(Set.of("test-groupa", "test-groupb"));
+    underTest.attach(groupBRepo);
+
+    Component component = mock(Component.class);
+    when(component.namespace()).thenReturn("com.example");
+    when(component.name()).thenReturn("myartifact");
+    NestedAttributesMap attributes = mock(NestedAttributesMap.class);
+    when(component.attributes(Maven2Format.NAME)).thenReturn(attributes);
+    when(attributes.get(P_BASE_VERSION, String.class)).thenReturn("1.0.0");
+    when(component.toStringExternal()).thenReturn("namespace=com.example, name=myartifact, version=1.0.0");
+
+    ComponentDeletedEvent event = mock(ComponentDeletedEvent.class);
+    when(event.getComponent()).thenReturn(component);
+    when(event.getRepository()).thenReturn(Optional.of(hostedRepo));
+
+    underTest.onComponentDeletedEvent(event);
+
+    verify(assets).path("/com/example/myartifact/maven-metadata.xml");
+    verify(fluentAsset).markAsStale();
+  }
+
+  /**
+   * Test that events from non-member repositories (neither direct nor transitive) are ignored.
+   */
+  @Test
+  public void testMaybeEvict_nonMember_doesNotEvict() throws Exception {
+    FluentAssets assets = mock(FluentAssets.class);
+    MavenContentFacet contentFacet = mock(MavenContentFacet.class);
+    when(contentFacet.getMavenPathParser()).thenReturn(new Maven2MavenPathParser());
+    when(contentFacet.assets()).thenReturn(assets);
+
+    Repository unrelatedRepo = mock(Repository.class);
+    when(unrelatedRepo.getName()).thenReturn("unrelated-repo");
+
+    Repository groupRepo = mock(Repository.class);
+    when(groupRepo.getName()).thenReturn("test-group");
+    when(groupRepo.facet(MavenContentFacet.class)).thenReturn(contentFacet);
+    when(groupRepo.facet(ContentFacet.class)).thenReturn(contentFacet);
+
+    when(repositoryManager.findContainingGroups("unrelated-repo"))
+        .thenReturn(new HashSet<>(Set.of("some-other-group"))); // in a group, but not this one
+    underTest.attach(groupRepo);
+
+    Asset asset = mock(Asset.class);
+    when(asset.path()).thenReturn("/com/example/foo/maven-metadata.xml");
+    when(asset.component()).thenReturn(Optional.empty());
+
+    AssetUploadedEvent event = mock(AssetUploadedEvent.class);
+    when(event.getAsset()).thenReturn(asset);
+    when(event.getRepository()).thenReturn(Optional.of(unrelatedRepo));
+
+    underTest.onAssetUploadedEvent(event);
+
     verify(assets, never()).path(any());
   }
 }

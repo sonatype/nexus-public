@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory;
 import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
@@ -36,11 +35,14 @@ import org.sonatype.nexus.repository.types.GroupType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Arrays.asList;
@@ -64,8 +66,10 @@ import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.streamContain
 
 @RunWith(Parameterized.class)
 public class CleanupServiceImplTest
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   @Parameters
   public static Collection<Boolean> data() {
     return ImmutableList.of(Boolean.TRUE, Boolean.FALSE);
@@ -143,7 +147,8 @@ public class CleanupServiceImplTest
     when(cleanupPolicy1.getCriteria()).thenReturn(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1"));
     when(cleanupPolicy2.getCriteria()).thenReturn(ImmutableMap.of(LAST_DOWNLOADED_KEY, "2"));
 
-    when(browseService.browse(cleanupPolicy1, repository1)).thenReturn(ImmutableList.of(component1, component2).stream());
+    when(browseService.browse(cleanupPolicy1, repository1))
+        .thenReturn(ImmutableList.of(component1, component2).stream());
     when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(ImmutableList.of(component3).stream());
 
     when(cancelledCheck.getAsBoolean()).thenReturn(false);
@@ -187,7 +192,7 @@ public class CleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod).run(eq(repository1), argThat(streamContains(component1, component2)), eq(cancelledCheck));
   }
 
   @Test
@@ -272,7 +277,8 @@ public class CleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, never()).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, never()).run(eq(repository1), argThat(streamContains(component1, component2)),
+        eq(cancelledCheck));
     verify(cleanupMethod, never()).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
@@ -283,7 +289,8 @@ public class CleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, never()).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, never()).run(eq(repository1), argThat(streamContains(component1, component2)),
+        eq(cancelledCheck));
     verify(cleanupMethod, never()).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
@@ -312,11 +319,13 @@ public class CleanupServiceImplTest
   @Test
   public void cleanupRetriedOnScrollTimeout() {
     when(cleanupMethod.run(any(), any(), any()))
-        .thenThrow(new RuntimeException()).thenReturn(deletionProgress);
+        .thenThrow(new RuntimeException())
+        .thenReturn(deletionProgress);
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, times(2)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, times(2)).run(eq(repository1), argThat(streamContains(component1, component2)),
+        eq(cancelledCheck));
     verify(cleanupMethod).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
@@ -326,7 +335,8 @@ public class CleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1, component2)),
+        eq(cancelledCheck));
     verify(cleanupMethod, times(3)).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 
@@ -336,7 +346,8 @@ public class CleanupServiceImplTest
         .thenThrow(new RuntimeException());
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1,  component2)), eq(cancelledCheck));
+    verify(cleanupMethod, times(3)).run(eq(repository1), argThat(streamContains(component1, component2)),
+        eq(cancelledCheck));
     verify(cleanupMethod, times(3)).run(eq(repository2), argThat(streamContains(component3)), eq(cancelledCheck));
   }
 

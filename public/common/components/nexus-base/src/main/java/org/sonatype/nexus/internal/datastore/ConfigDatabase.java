@@ -22,13 +22,14 @@ import java.util.Map.Entry;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.supportzip.ExportConfigData;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -41,9 +42,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ConfigDatabase
-    extends ComponentSupport
     implements SupportBundleCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String WORK_PATH = "db";
 
   private static final Path PATH = Paths.get("work", WORK_PATH);

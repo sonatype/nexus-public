@@ -17,14 +17,15 @@ import java.util.Collections;
 
 import javax.validation.ConstraintValidatorContext;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.Roles;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -35,8 +36,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link RoleNotContainSelfValidatorTest}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RoleNotContainSelfValidatorTest
-    extends TestSupport
 {
   @Mock
   SecuritySystem securitySystem;

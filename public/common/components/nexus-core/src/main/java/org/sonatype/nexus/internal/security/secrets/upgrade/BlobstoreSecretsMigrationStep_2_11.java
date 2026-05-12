@@ -17,10 +17,11 @@ import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.internal.security.secrets.task.SecretsMigrationTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -31,9 +32,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class BlobstoreSecretsMigrationStep_2_11
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final UpgradeTaskScheduler startupScheduler;
 
   @Inject

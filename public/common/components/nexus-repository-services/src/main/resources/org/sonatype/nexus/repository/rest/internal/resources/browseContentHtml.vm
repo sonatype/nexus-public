@@ -14,7 +14,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Index of ${requestPath}</title>
+    <title>Index of $esc.html(${requestPath})</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 
 #* START favicon links and meta
@@ -68,17 +68,17 @@
                 #if( $listItem.collection )
                     &nbsp;
                 #else
-                    $listItem.lastModified
+                    $esc.html($listItem.lastModified)
                 #end
             </td>
             <td align="right">
                 #if( $listItem.collection )
                     &nbsp;
                 #else
-                    $listItem.size
+                    $esc.html($listItem.size)
                 #end
             </td>
-            <td>$listItem.description</td>
+            <td>$esc.html($listItem.description)</td>
         </tr>
     #end
 </table>

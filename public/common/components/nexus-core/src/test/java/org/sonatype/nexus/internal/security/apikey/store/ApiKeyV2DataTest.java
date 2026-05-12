@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.security.apikey.store;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 
 import org.junit.Test;
@@ -21,9 +20,11 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ApiKeyV2DataTest
-    extends TestSupport
 {
   @Mock
   private Secret secret;

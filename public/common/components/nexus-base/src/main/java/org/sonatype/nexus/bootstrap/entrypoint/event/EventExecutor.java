@@ -27,7 +27,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.HasAffinity;

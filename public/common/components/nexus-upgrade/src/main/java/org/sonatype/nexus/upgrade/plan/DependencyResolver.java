@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.OID;
 import org.sonatype.nexus.common.text.Plural;
 import org.sonatype.nexus.upgrade.plan.DependencySource.DependsOnAware;
@@ -30,6 +29,8 @@ import com.google.common.collect.Multimap;
 import org.codehaus.plexus.util.dag.CycleDetectedException;
 import org.codehaus.plexus.util.dag.DAG;
 import org.codehaus.plexus.util.dag.TopologicalSorter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -40,8 +41,9 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.1
  */
 public class DependencyResolver<T extends DependencySource<T>>
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   boolean warnOnMissingDependencies;
 
   /**

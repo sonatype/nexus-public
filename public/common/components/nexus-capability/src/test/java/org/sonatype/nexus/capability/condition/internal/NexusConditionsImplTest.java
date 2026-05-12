@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.capability.condition.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.Condition;
 
 import org.hamcrest.Matchers;
@@ -28,7 +27,6 @@ import static org.mockito.Mockito.mock;
  * @since capabilities 2.0
  */
 public class NexusConditionsImplTest
-    extends TestSupport
 {
 
   /**

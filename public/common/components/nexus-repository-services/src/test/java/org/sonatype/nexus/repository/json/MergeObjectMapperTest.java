@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 
@@ -36,7 +35,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 public class MergeObjectMapperTest
-    extends TestSupport
 {
   private MergeObjectMapper underTest;
 

@@ -229,6 +229,10 @@ Ext.define('NX.controller.SettingsForm', {
               return enabled = validatable.isValid();
             });
           }
+          // Protect against components mid-destruction
+          if (bindable.destroying || bindable.isDestroying || bindable.isDestroyed) {
+            return;
+          }
           if (enabled) {
             bindable.enable();
           }

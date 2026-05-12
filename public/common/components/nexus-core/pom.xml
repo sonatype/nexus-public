@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-core</artifactId>
@@ -112,14 +112,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.goodies</groupId>
-      <artifactId>goodies-httpfixture</artifactId>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-test-db</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus.common.components</groupId>
-      <artifactId>nexus-test-db</artifactId>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
 

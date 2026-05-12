@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
@@ -29,12 +27,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Test for {@link NexusConnectionKeepAliveStrategy}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NexusConnectionKeepAliveStrategyTest
-    extends TestSupport
 {
 
   @Mock

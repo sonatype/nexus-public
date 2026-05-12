@@ -12,17 +12,18 @@
  */
 package org.sonatype.nexus.coreui;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer.Configuration;
 import org.sonatype.nexus.common.log.LoggerLevel;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class LogConfigurationCustomizerImplTest
-    extends Test5Support
 {
   @Mock
   Configuration configuration;

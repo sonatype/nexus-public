@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
@@ -35,7 +34,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
 public class WriteToFirstMemberFillPolicyTest
-    extends TestSupport
 {
   @Parameter
   public boolean available;

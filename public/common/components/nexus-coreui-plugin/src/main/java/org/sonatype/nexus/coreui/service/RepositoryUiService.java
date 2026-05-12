@@ -31,7 +31,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
@@ -48,6 +47,7 @@ import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -56,7 +56,11 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
+import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager;
+import org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker;
+import org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.search.index.RebuildIndexTask;
 import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
@@ -81,6 +85,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.coreui.internal.RepositoryCleanupAttributesUtil.initializeCleanupAttributes;
@@ -88,9 +94,10 @@ import static org.sonatype.nexus.coreui.internal.RepositoryCleanupAttributesUtil
 @Component
 @Singleton
 public class RepositoryUiService
-    extends ComponentSupport
     implements StateContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final RepositoryCacheInvalidationService repositoryCacheInvalidationService;
 
   private final RepositoryManager repositoryManager;
@@ -111,6 +118,10 @@ public class RepositoryUiService
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
+  private final FailedRepositoryTracker failedRepositoryTracker;
+
+  private final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
+
   public static final String INVALID_BLOBSTORENAME_EXCEPTION_MESSAGE =
       "Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.";
 
@@ -125,7 +136,9 @@ public class RepositoryUiService
       final TaskScheduler taskScheduler,
       final GlobalComponentLookupHelper typeLookup,
       final List<Format> formats,
-      final RepositoryPermissionChecker repositoryPermissionChecker)
+      final RepositoryPermissionChecker repositoryPermissionChecker,
+      final FailedRepositoryTracker failedRepositoryTracker,
+      final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder)
   {
     this.repositoryCacheInvalidationService = checkNotNull(repositoryCacheInvalidationService);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -137,6 +150,8 @@ public class RepositoryUiService
     this.typeLookup = checkNotNull(typeLookup);
     this.formats = checkNotNull(formats);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.failedRepositoryTracker = checkNotNull(failedRepositoryTracker);
+    this.httpAuthenticationSecretEncoder = checkNotNull(httpAuthenticationSecretEncoder);
   }
 
   public List<RepositoryXO> read() {
@@ -279,7 +294,14 @@ public class RepositoryUiService
   @RequiresAuthentication
   @Validate(groups = {Update.class, Default.class})
   public RepositoryXO update(final @NotNull @Valid RepositoryXO repositoryXO) throws Exception {
-    Repository repository = safelyGetRepository(repositoryXO.getName(), BreadActions.EDIT);
+    String name = repositoryXO.getName();
+
+    // Check if repository exists but failed to load (NEXUS-51389)
+    if (failedRepositoryTracker.hasFailed(name)) {
+      return updateFailedRepository(repositoryXO);
+    }
+
+    Repository repository = safelyGetRepository(name, BreadActions.EDIT);
 
     // Replace stored password and bearerTokenId if placeholders are used
     Optional.of(repositoryXO)
@@ -300,6 +322,57 @@ public class RepositoryUiService
     updatedConfiguration.setAttributes(repositoryXO.getAttributes());
 
     return asRepository(repositoryManager.update(updatedConfiguration));
+  }
+
+  /**
+   * Updates a repository that failed to load by updating its configuration directly
+   * and attempting to retry loading it.
+   */
+  private RepositoryXO updateFailedRepository(final RepositoryXO repositoryXO) throws Exception {
+    String name = repositoryXO.getName();
+    log.warn("Updating failed repository '{}' directly via configuration store", name);
+
+    // Get configuration from store
+    Configuration configuration = configurationStore.list()
+        .stream()
+        .filter(c -> c.getRepositoryName().equalsIgnoreCase(name))
+        .findFirst()
+        .orElseThrow(() -> new BadRequestException("Repository configuration not found: " + name));
+
+    // Check permissions using configuration-based permission
+    Recipe recipe = recipes.get(configuration.getRecipeName());
+    if (recipe == null) {
+      throw new BadRequestException("Recipe not found for repository: " + name);
+    }
+    securityHelper.ensurePermitted(new RepositoryAdminPermission(
+        recipe.getFormat().getValue(), name, Collections.singletonList(BreadActions.EDIT)));
+
+    initializeCleanupAttributes(repositoryXO);
+
+    // Update configuration
+    Configuration updatedConfiguration = configuration.copy();
+    updatedConfiguration.setOnline(repositoryXO.getOnline());
+    updatedConfiguration.setRoutingRuleId(toDetachedEntityId(repositoryXO.getRoutingRuleId()));
+    updatedConfiguration.setAttributes(repositoryXO.getAttributes());
+
+    // Encode authentication secrets before saving (normally done by RepositoryManager.update)
+    httpAuthenticationSecretEncoder.encodeHttpAuthPassword(
+        configuration.getAttributes(), updatedConfiguration.getAttributes());
+
+    configurationStore.update(updatedConfiguration);
+
+    // Try to load the repository now that configuration is updated
+    if (repositoryManager instanceof BaseRepositoryManager) {
+      Optional<Repository> retried = ((BaseRepositoryManager<?>) repositoryManager).retryFailedRepository(name);
+      if (retried.isPresent()) {
+        log.info("Repository '{}' recovered after configuration update", name);
+        return asRepository(retried.get());
+      }
+    }
+
+    // Still failed - return config-based representation
+    log.warn("Repository '{}' still cannot load after configuration update", name);
+    return asRepository(updatedConfiguration);
   }
 
   private static final String BEARER_TOKEN = "bearerToken";
@@ -450,7 +523,33 @@ public class RepositoryUiService
           replaceSecretWithPlaceholder(authentication, BEARER_TOKEN_ID);
           putPlaceholderForOldBearerTokenKey(authentication);
         });
+
+    // Normalize contentDisposition null to INLINE for repositories without content disposition
+    normalizeContentDisposition(attributes, "maven");
+    normalizeContentDisposition(attributes, "raw");
+
     return attributes;
+  }
+
+  private static void normalizeContentDisposition(
+      final Map<String, Map<String, Object>> attributes,
+      final String format)
+  {
+    if (attributes == null) {
+      return;
+    }
+
+    Map<String, Object> formatAttrs = attributes.get(format);
+    if (formatAttrs == null) {
+      // format attributes don't exist -> create them with INLINE
+      formatAttrs = new HashMap<>();
+      formatAttrs.put("contentDisposition", "INLINE");
+      attributes.put(format, formatAttrs);
+    }
+    else if (!formatAttrs.containsKey("contentDisposition") || formatAttrs.get("contentDisposition") == null) {
+      // no key or key exists with null value -> set INLINE
+      formatAttrs.put("contentDisposition", "INLINE");
+    }
   }
 
   private static void putPlaceholderForOldBearerTokenKey(final Map<String, Object> authentication) {
@@ -499,6 +598,10 @@ public class RepositoryUiService
       catch (MissingFacetException e) {
         // no http client facet (usually on proxies), no remote status
       }
+      catch (InvalidStateException e) {
+        // repository is not in STARTED state (e.g., being deleted), skip status query
+        log.debug("Cannot get status for repository {} - invalid state: {}", repository.getName(), e.getMessage());
+      }
     }
     return statusXO;
   }
@@ -506,18 +609,26 @@ public class RepositoryUiService
   private RepositoryStatusXO buildStatus(final Configuration configuration) {
     RepositoryStatusXO statusXO = new RepositoryStatusXO();
     statusXO.setRepositoryName(configuration.getRepositoryName());
+
+    // Check if repository failed to load (NEXUS-51389)
+    Optional<FailedRepositoryTracker.RepositoryFailure> failure =
+        failedRepositoryTracker.getFailure(configuration.getRepositoryName());
+    if (failure.isPresent()) {
+      statusXO.setOnline(false);
+      statusXO.setDescription(RemoteConnectionStatusType.FAILED.getDescription());
+      statusXO.setReason(failure.get().getReason());
+      return statusXO;
+    }
+
     statusXO.setOnline(configuration.isOnline());
 
     Recipe recipe = recipes.get(configuration.getRecipeName());
     // TODO - should we try to aggregate status from group members?
     if (recipe.getType() instanceof ProxyType) {
       try {
-        boolean loaded = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
-            .anyMatch(repo -> configuration.getRepositoryName().equals(repo.getName()));
-        if (loaded) {
-          RemoteConnectionStatus remoteStatus = repositoryManager.get(configuration.getRepositoryName())
-              .facet(HttpClientFacet.class)
-              .getStatus();
+        Repository repository = repositoryManager.get(configuration.getRepositoryName());
+        if (repository != null) {
+          RemoteConnectionStatus remoteStatus = repository.facet(HttpClientFacet.class).getStatus();
           statusXO.setDescription(remoteStatus.getDescription());
           if (remoteStatus.getReason() != null) {
             statusXO.setReason(remoteStatus.getReason());
@@ -526,6 +637,11 @@ public class RepositoryUiService
       }
       catch (MissingFacetException e) {
         // no http client facet (usually on proxies), no remote status
+      }
+      catch (InvalidStateException e) {
+        // repository is not in STARTED state (e.g., being deleted), skip status query
+        log.debug("Cannot get status for repository {} - invalid state: {}",
+            configuration.getRepositoryName(), e.getMessage());
       }
     }
     return statusXO;

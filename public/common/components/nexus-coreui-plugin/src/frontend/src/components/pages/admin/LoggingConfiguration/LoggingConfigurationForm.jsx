@@ -37,9 +37,9 @@ import UIStrings from '../../../../constants/UIStrings';
 import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
 import { ROUTE_NAMES } from '../../../../routerConfig/routeNames/routeNames';
 
-export default function LoggingConfigurationForm({itemId, onDone}) {
+export default function LoggingConfigurationForm() {
   const router = useRouter();
-  const onDone = useCallback(() => router.stateService.go(ROUTE_NAMES.ADMIN.SUPPORT.LOGGING.LIST));
+  const onDone = useCallback(() => router.stateService.go(ROUTE_NAMES.ADMIN.SUPPORT.LOGGING.LIST), [router]);
   const { params } = useCurrentStateAndParams();
   const itemId = params?.itemId;
 

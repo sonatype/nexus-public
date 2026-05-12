@@ -15,7 +15,6 @@ package org.sonatype.nexus.onboarding.internal;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
@@ -28,9 +27,11 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CommunityEulaOnboardingItemTest
-    extends TestSupport
 {
   @Mock
   private ApplicationVersion mockApplicationVersion;

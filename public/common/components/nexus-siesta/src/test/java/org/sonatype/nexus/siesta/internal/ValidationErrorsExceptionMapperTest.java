@@ -15,7 +15,6 @@ package org.sonatype.nexus.siesta.internal;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
@@ -27,7 +26,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 class ValidationErrorsExceptionMapperTest
-    extends Test5Support
 {
   private ValidationErrorsExceptionMapper mapper;
 

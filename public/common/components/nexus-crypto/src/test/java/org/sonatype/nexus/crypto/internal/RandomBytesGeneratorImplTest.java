@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.crypto.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,7 +19,6 @@ import org.junit.Test;
  * Tests for {@link RandomBytesGeneratorImpl}.
  */
 public class RandomBytesGeneratorImplTest
-    extends TestSupport
 {
   private RandomBytesGeneratorImpl generator;
 

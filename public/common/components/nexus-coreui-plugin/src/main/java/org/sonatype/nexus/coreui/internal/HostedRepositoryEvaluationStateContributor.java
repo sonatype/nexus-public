@@ -21,7 +21,6 @@ import org.sonatype.nexus.rapture.StateContributor;
 import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Value;
 
-import static org.sonatype.nexus.common.app.FeatureFlags.HOSTED_REPOSITORY_EVALUATION_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.HOSTED_REPOSITORY_EVALUATION_ENABLED_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +40,6 @@ public class HostedRepositoryEvaluationStateContributor
 
   @Override
   public Map<String, Object> getState() {
-    return ImmutableMap.of(HOSTED_REPOSITORY_EVALUATION_ENABLED, isHostedRepositoryEvaluationEnabled);
+    return ImmutableMap.of("hostedRepositoryEvaluationEnabled", isHostedRepositoryEvaluationEnabled);
   }
 }

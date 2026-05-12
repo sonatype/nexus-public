@@ -27,7 +27,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Payload;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.annotation.ElementType.TYPE;
@@ -42,8 +43,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ConstraintViolationFactory
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Provider<Validator> validatorProvider;
 
   @Inject

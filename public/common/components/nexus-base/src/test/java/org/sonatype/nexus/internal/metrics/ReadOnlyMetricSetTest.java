@@ -15,8 +15,6 @@ package org.sonatype.nexus.internal.metrics;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.codahale.metrics.Metric;
 import org.junit.Test;
 
@@ -24,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class ReadOnlyMetricSetTest
-    extends TestSupport
 {
   @Test
   public void testMetrics_alwaysReturnDefaults() throws Exception {

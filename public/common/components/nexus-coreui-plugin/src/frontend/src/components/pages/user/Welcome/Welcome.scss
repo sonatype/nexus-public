@@ -25,6 +25,11 @@
   &__outreach-frame {
     border-style: none;
     width: 100%;
+    min-height: 400px;
+    background-color: var(--nx-background-default, #fff);
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
   }
 
   .risk-on-disk-container {

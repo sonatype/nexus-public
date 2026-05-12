@@ -374,37 +374,37 @@ const repositoryFormats = {
       ...genericValidators.group(data)
     })
   },
-    terraform_hosted: {
-        facets: [TerraformSigningConfiguration, ...genericFacets.hosted],
-        defaultValues: {
-            ...genericDefaultValues.hosted,
-            terraformSigning: null
-        },
-        validators: (data) => {
-            const baseValidators = genericValidators.hosted(data);
-
-            // Only validate signing fields if terraformSigning exists (signing is enabled)
-            if (data.terraformSigning) {
-                return {
-                    ...baseValidators,
-                    terraformSigning: {
-                        keypair: ValidationUtils.validateNotBlank(data.terraformSigning?.keypair)
-                    }
-                };
-            }
-
-            return baseValidators;
-        }
+  terraform_hosted: {
+    facets: [TerraformSigningConfiguration, ...genericFacets.hosted],
+    defaultValues: {
+      ...genericDefaultValues.hosted,
+      terraformSigning: null
     },
-    terraform_group: {
-        facets: [...genericFacets.group],
-        defaultValues: {
-            ...genericDefaultValues.group
-        },
-        validators: (data) => ({
-            ...genericValidators.group(data)
-        })
+    validators: (data) => {
+      const baseValidators = genericValidators.hosted(data);
+
+      // Only validate signing fields if terraformSigning exists (signing is enabled)
+      if (data.terraformSigning) {
+        return {
+          ...baseValidators,
+          terraformSigning: {
+            keypair: ValidationUtils.validateNotBlank(data.terraformSigning?.keypair)
+          }
+        };
+      }
+
+      return baseValidators;
+    }
+  },
+  terraform_group: {
+    facets: [...genericFacets.group],
+    defaultValues: {
+      ...genericDefaultValues.group
     },
+    validators: (data) => ({
+      ...genericValidators.group(data)
+    })
+  },
   conda_hosted: {
     facets: [...genericFacets.hosted],
     defaultValues: {
@@ -415,7 +415,34 @@ const repositoryFormats = {
     validators: (data) => ({
       ...genericValidators.hosted(data)
     })
-  }
+  },
+    pub_hosted: {
+        facets: [...genericFacets.hosted],
+        defaultValues: {
+            ...genericDefaultValues.hosted
+        },
+        validators: (data) => ({
+            ...genericValidators.hosted(data)
+        })
+    },
+    pub_proxy: {
+        facets: [...genericFacets.proxy],
+        defaultValues: {
+            ...genericDefaultValues.proxy
+        },
+        validators: (data) => ({
+            ...genericValidators.proxy(data)
+        })
+    },
+    pub_group: {
+        facets: [...genericFacets.group],
+        defaultValues: {
+            ...genericDefaultValues.group
+        },
+        validators: (data) => ({
+            ...genericValidators.group(data)
+        })
+    }
 };
 
 export const getFacets = (format, type) =>

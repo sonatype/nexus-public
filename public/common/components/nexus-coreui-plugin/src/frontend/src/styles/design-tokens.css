@@ -1,0 +1,189 @@
+/**
+ * Design Tokens for Nexus Repository UI
+ *
+ * Foundation for Radix UI components with light/dark mode support.
+ * Color tokens reference theme-variables.css (ux-standards). Non-color tokens defined here.
+ */
+
+:root {
+  /* ===== Semantic Colors - from theme-variables (ux-standards) ===== */
+  --color-primary: var(--blue-9);
+  --color-primary-hover: var(--blue-10);
+  --color-primary-active: var(--blue-11);
+
+  /* Neutral palette - aliases to theme-variables gray scale */
+  --color-neutral-50: var(--gray-1);
+  --color-neutral-100: var(--gray-2);
+  --color-neutral-200: var(--gray-3);
+  --color-neutral-300: var(--gray-4);
+  --color-neutral-400: var(--gray-6);
+  --color-neutral-500: var(--gray-8);
+  --color-neutral-600: var(--gray-9);
+  --color-neutral-700: var(--gray-10);
+  --color-neutral-800: var(--gray-11);
+  --color-neutral-900: var(--gray-12);
+
+  /* Semantic colors - from theme-variables */
+  --color-surface-secondary: var(--gray-2);
+  --color-surface-hover: var(--gray-3);
+  --color-border: var(--gray-6);
+  --color-text-secondary: var(--gray-11);
+  --color-text-tertiary: var(--gray-9);
+  --color-text-contrast: var(--white);
+  --color-selection: var(--blue-3);
+
+  /* Status colors - from Radix/theme-variables */
+  --color-success: var(--green-9);
+  --color-success-bg: var(--green-2);
+  --color-success-background: var(--green-2);
+  --color-warning: var(--amber-9);
+  --color-warning-bg: var(--amber-2);
+  --color-warning-background: var(--amber-2);
+  --color-error: var(--red-9);
+  --color-error-bg: var(--red-2);
+  --color-error-background: var(--red-2);
+  --color-info: var(--blue-9);
+  --color-info-bg: var(--blue-2);
+  --color-info-background: var(--blue-2);
+
+  /* ===== Spacing Scale ===== */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+
+  /* ===== Typography Scale ===== */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-family-mono: 'Menlo', 'Monaco', 'Courier New', monospace;
+
+  --font-size-xs: 0.75rem;   /* 12px */
+  --font-size-sm: 0.875rem;  /* 14px */
+  --font-size-base: 1rem;    /* 16px */
+  --font-size-lg: 1.125rem;  /* 18px */
+  --font-size-xl: 1.25rem;   /* 20px */
+  --font-size-2xl: 1.5rem;   /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ===== Border Radius ===== */
+  --radius-sm: 0.25rem;  /* 4px */
+  --radius-md: 0.375rem; /* 6px */
+  --radius-lg: 0.5rem;   /* 8px */
+  --radius-xl: 0.75rem;  /* 12px */
+  --radius-full: 9999px;
+
+  /* ===== Shadows ===== */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* ===== Transitions ===== */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* ===== Z-Index Scale ===== */
+  --z-dropdown: 1000;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* ===== Component-Specific Tokens ===== */
+
+/* Card */
+:root {
+  --card-background: var(--color-surface);
+  --card-border: var(--color-border);
+  --card-padding: var(--space-6);
+  --card-radius: var(--radius-lg);
+  --card-shadow: var(--shadow-sm);
+}
+
+/* Button */
+:root {
+  --button-height-sm: 2rem;
+  --button-height-md: 2.5rem;
+  --button-height-lg: 3rem;
+  --button-padding-x-sm: var(--space-3);
+  --button-padding-x-md: var(--space-4);
+  --button-padding-x-lg: var(--space-6);
+  --button-radius: var(--radius-md);
+}
+
+/* Dialog */
+:root {
+  --dialog-background: var(--color-surface);
+  --dialog-overlay-bg: rgb(0 0 0 / 0.5);
+  --dialog-padding: var(--space-6);
+  --dialog-radius: var(--radius-xl);
+  --dialog-shadow: var(--shadow-xl);
+}
+
+/* Loading Spinner */
+:root {
+  --spinner-size-sm: 1rem;
+  --spinner-size-md: 1.5rem;
+  --spinner-size-lg: 2rem;
+  --spinner-border-width: 2px;
+}
+
+/* ===== Global Dark Mode Dropdown Fix (Sprint 15) ===== */
+/* Ensures ALL dropdown/listbox/option-list elements have solid opaque backgrounds
+   in dark mode, using theme-variables for colors. */
+[data-theme="dark"] [role="listbox"],
+[data-theme="dark"] .settings-combobox__listbox,
+[data-theme="dark"] .searchable-select__dropdown,
+[data-theme="dark"] .searchable-select__search,
+[data-theme="dark"] .jdbc-param-editor__dropdown,
+[data-theme="dark"] .routing-rule-matcher__dropdown,
+.dark [role="listbox"],
+.dark .settings-combobox__listbox,
+.dark .searchable-select__dropdown,
+.dark .searchable-select__search,
+.dark .jdbc-param-editor__dropdown,
+.dark .routing-rule-matcher__dropdown {
+  background-color: var(--gray-2) !important;
+  border-color: var(--gray-6) !important;
+  color: var(--gray-12) !important;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.08) !important;
+}
+
+[data-theme="dark"] [role="option"],
+[data-theme="dark"] .settings-combobox__option,
+[data-theme="dark"] .searchable-select__option,
+.dark [role="option"],
+.dark .settings-combobox__option,
+.dark .searchable-select__option {
+  color: var(--gray-12) !important;
+}
+
+[data-theme="dark"] [role="option"]:hover,
+[data-theme="dark"] [role="option"][aria-selected="true"],
+[data-theme="dark"] .settings-combobox__option:hover,
+[data-theme="dark"] .settings-combobox__option--highlighted,
+[data-theme="dark"] .searchable-select__option:hover,
+[data-theme="dark"] .searchable-select__option--highlighted,
+.dark [role="option"]:hover,
+.dark [role="option"][aria-selected="true"],
+.dark .settings-combobox__option:hover,
+.dark .settings-combobox__option--highlighted,
+.dark .searchable-select__option:hover,
+.dark .searchable-select__option--highlighted {
+  background-color: var(--gray-3) !important;
+}

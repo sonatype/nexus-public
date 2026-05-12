@@ -31,17 +31,18 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Iso8601Date;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusProperties;
 import org.sonatype.nexus.common.QualifierUtil;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.SystemInformationHelper;
 import org.sonatype.nexus.common.atlas.SystemInformationGenerator;
 import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.text.Strings2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.text.Strings2.MASK;
@@ -55,9 +56,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class SystemInformationGeneratorImpl
-    extends ComponentSupport
     implements SystemInformationGenerator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ApplicationDirectories applicationDirectories;
 
   private final ApplicationVersion applicationVersion;

@@ -23,7 +23,6 @@ import javax.validation.ConstraintViolationException;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
-import org.sonatype.nexus.repository.ETagHeaderUtils;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -40,8 +39,6 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HttpHeaders;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -146,64 +143,8 @@ public class MavenProxyFacet
     return removePrefixingSlash(context.getRequest().getPath());
   }
 
-  /**
-   * Override to support ETag-based blob reuse for 200 OK responses.
-   * When a remote server returns 200 OK but the ETag matches the cached content,
-   * we treat it as "not modified" to avoid recreating blobs unnecessarily.
-   * This is especially important for cloud deployments using S3 blob stores.
-   */
-  @Override
-  protected boolean isNotModified(final HttpResponse response, @Nullable final Content stale) {
-    boolean parent = super.isNotModified(response, stale);
-
-    // If already not modified (304), or no stale content, use default behavior
-    if (parent) {
-      return true;
-    }
-
-    if (stale == null) {
-      return false;
-    }
-
-    // Extract status code only when needed (after early returns)
-    int statusCode = response.getStatusLine().getStatusCode();
-
-    if (statusCode != 200) {
-      return false;
-    }
-
-    // Check for ETag header only after confirming 200 OK
-    // Azure Blob Storage, CDNs may return "etag" (lowercase) or "ETag" (standard)
-    // HTTP header names are case-insensitive per RFC 7230, but Apache HttpClient lookup is case-sensitive
-    boolean hasETagHeader = response.containsHeader(HttpHeaders.ETAG) || response.containsHeader("etag");
-
-    if (!hasETagHeader) {
-      return false;
-    }
-
-    // For 200 OK responses, compare ETags
-    // Try standard case first, then lowercase
-    Header etagHeader = response.getFirstHeader(HttpHeaders.ETAG);
-    if (etagHeader == null) {
-      etagHeader = response.getFirstHeader("etag");
-    }
-    String etag = etagHeader != null ? ETagHeaderUtils.extract(etagHeader.getValue()) : null;
-    String staleEtag = stale.getAttributes().get(Content.CONTENT_ETAG, String.class);
-    boolean etagsMatch = staleEtag != null && Objects.equals(etag, staleEtag);
-
-    // Single comprehensive log statement
-    log.debug(
-        "Maven: isNotModified - status={}, hasStale={}, hasETag={}, responseETag={}, cachedETag={}, match={}, result={}",
-        statusCode,
-        true,
-        hasETagHeader,
-        etag,
-        staleEtag,
-        etagsMatch,
-        (etagsMatch ? "REUSE_BLOB" : "DOWNLOAD_AND_CHECK_CHECKSUM"));
-
-    return etagsMatch;
-  }
+  // NOTE: isNotModified() with ETag-based blob reuse is now handled by ContentProxyFacetSupport
+  // The logic was moved there to benefit ALL content-based proxy formats automatically.
 
   @Override
   protected void indicateVerified(

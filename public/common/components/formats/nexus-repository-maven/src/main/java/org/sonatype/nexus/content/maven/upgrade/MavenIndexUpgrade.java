@@ -22,12 +22,13 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEARCH_INDEX_OUTDATED;
@@ -41,9 +42,10 @@ import static org.sonatype.nexus.repository.search.index.SearchUpdateService.SEA
  */
 @Deprecated
 public abstract class MavenIndexUpgrade
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String SELECT_MAVEN_REPOSITORIES =
       "select id from repository where recipe_name in ('maven2-hosted', 'maven2-proxy')";
 

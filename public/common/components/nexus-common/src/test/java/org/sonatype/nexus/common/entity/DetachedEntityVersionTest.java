@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.entity;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -22,7 +20,7 @@ import static org.junit.Assert.*;
  * Tests for {@link DetachedEntityVersion}
  */
 public class DetachedEntityVersionTest
-    extends TestSupport
+
 {
   @Test
   public void testDetachedEquality() {

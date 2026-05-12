@@ -14,7 +14,6 @@ package org.sonatype.nexus.upgrade.internal;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
@@ -24,7 +23,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 class DistributedEventsUpgradeTest
-    extends Test5Support
 {
   @DataSessionConfiguration(daos = {})
   TestDataSessionSupplier supplier;

@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
@@ -30,6 +29,8 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
 
 import org.springframework.context.annotation.Primary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -45,9 +46,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class LastDownloadedHandler
-    extends ComponentSupport
     implements org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final GlobalRepositorySettings globalSettings;
 
   private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;

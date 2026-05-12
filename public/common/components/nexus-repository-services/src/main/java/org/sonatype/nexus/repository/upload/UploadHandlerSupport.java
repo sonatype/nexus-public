@@ -15,8 +15,9 @@ package org.sonatype.nexus.repository.upload;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
@@ -31,9 +32,10 @@ import static java.util.stream.Stream.concat;
  * @since 3.10
  */
 public abstract class UploadHandlerSupport
-    extends ComponentSupport
     implements UploadHandler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Set<UploadDefinitionExtension> uploadDefinitionExtensions;
 
   public UploadHandlerSupport(final Set<UploadDefinitionExtension> uploadDefinitionExtensions) {

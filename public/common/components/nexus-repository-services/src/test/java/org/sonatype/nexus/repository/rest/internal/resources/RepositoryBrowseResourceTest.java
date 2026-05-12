@@ -22,7 +22,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
@@ -51,10 +50,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("unchecked")
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RepositoryBrowseResourceTest
-    extends TestSupport
 {
   private static final String URL_PREFIX = "http://localhost:8888/service/rest/repository/browse/";
 
@@ -91,9 +92,11 @@ public class RepositoryBrowseResourceTest
 
     when(securityHelper.allPermitted(any())).thenReturn(true);
     when(templateHelper.parameters()).thenReturn(new TemplateParameters());
-    when(templateHelper.render(any(),any())).thenReturn("something");
+    when(templateHelper.render(any(), any())).thenReturn("something");
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
-    when(repository.getFormat()).thenReturn(new Format("format") {});
+    when(repository.getFormat()).thenReturn(new Format("format")
+    {
+    });
     when(repository.getType()).thenReturn(new ProxyType());
 
     when(repository.optionalFacet(GroupFacet.class)).thenReturn(Optional.empty());
@@ -110,8 +113,9 @@ public class RepositoryBrowseResourceTest
         .thenReturn(Collections.singletonList(orgListItem));
 
     BrowseNode sonatypeBrowseNode = browseNode("sonatype");
-    when(browseNodeQueryService.getByPath(repository, Collections.singletonList("org"), configuration.getMaxHtmlNodes()))
-        .thenReturn(Collections.singleton(sonatypeBrowseNode));
+    when(
+        browseNodeQueryService.getByPath(repository, Collections.singletonList("org"), configuration.getMaxHtmlNodes()))
+            .thenReturn(Collections.singleton(sonatypeBrowseNode));
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
 
     BrowseListItem sonatypeListItem = mock(BrowseListItem.class);
@@ -134,7 +138,7 @@ public class RepositoryBrowseResourceTest
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
     assertThat(argument.getValue().get().get("requestPath"), is("/"));
-    assertThat(((Collection<BrowseListItem>)argument.getValue().get().get("listItems")).size(), is(1));
+    assertThat(((Collection<BrowseListItem>) argument.getValue().get().get("listItems")).size(), is(1));
     assertThat(((Collection<BrowseListItem>) argument.getValue().get().get("listItems")).iterator().next().getName(),
         is("org"));
     assertThat(
@@ -154,7 +158,7 @@ public class RepositoryBrowseResourceTest
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
     assertThat(argument.getValue().get().get("requestPath"), is("/org/"));
-    assertThat(((Collection<BrowseListItem>)argument.getValue().get().get("listItems")).size(), is(1));
+    assertThat(((Collection<BrowseListItem>) argument.getValue().get().get("listItems")).size(), is(1));
     assertThat(((Collection<BrowseListItem>) argument.getValue().get().get("listItems")).iterator().next().getName(),
         is("sonatype"));
     assertThat(
@@ -214,7 +218,7 @@ public class RepositoryBrowseResourceTest
   public void validateRepositoryNotAuthorizedRequest() throws Exception {
     when(browseNodeQueryService.getByPath(repository, Collections.singletonList("org"),
         configuration.getMaxHtmlNodes()))
-        .thenReturn(Collections.emptyList());
+            .thenReturn(Collections.emptyList());
     when(securityHelper.allPermitted(any())).thenReturn(false);
     expectedException.expect(WebApplicationException.class);
     expectedException.expectMessage("Repository not found");
@@ -226,26 +230,26 @@ public class RepositoryBrowseResourceTest
   public void validateRepositoryWithNoBrowseNodesRequest() throws Exception {
     when(browseNodeQueryService.getByPath(repository, Collections.emptyList(),
         configuration.getMaxHtmlNodes()))
-        .thenReturn(Collections.emptyList());
+            .thenReturn(Collections.emptyList());
 
     underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
-    assertThat(((Collection<BrowseListItem>)argument.getValue().get().get("listItems")).size(), is(0));
+    assertThat(((Collection<BrowseListItem>) argument.getValue().get().get("listItems")).size(), is(0));
   }
 
   @Test
   public void validateRepositoryWithNoBrowseNodesRequest_nullResponseFromGetChildrenByPath() throws Exception {
     when(browseNodeQueryService.getByPath(repository, Collections.emptyList(),
         configuration.getMaxHtmlNodes()))
-        .thenReturn(null);
+            .thenReturn(null);
 
     underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
-    assertThat(((Collection<BrowseListItem>)argument.getValue().get().get("listItems")).size(), is(0));
+    assertThat(((Collection<BrowseListItem>) argument.getValue().get().get("listItems")).size(), is(0));
   }
 
   @Test

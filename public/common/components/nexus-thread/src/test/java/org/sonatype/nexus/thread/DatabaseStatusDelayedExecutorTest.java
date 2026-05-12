@@ -14,8 +14,6 @@ package org.sonatype.nexus.thread;
 
 import java.util.concurrent.Future;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +23,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class DatabaseStatusDelayedExecutorTest
-    extends TestSupport
 {
   private static final int THREAD_POOL_SIZE = 1;
 

@@ -16,7 +16,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import org.junit.Test;
@@ -28,7 +27,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 public class AbstractRepositoryContentTest
-    extends TestSupport
 {
   // Concrete subclass for testing
   private static class TestRepositoryContent

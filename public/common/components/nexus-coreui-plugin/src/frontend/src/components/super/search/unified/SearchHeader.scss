@@ -1,0 +1,120 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.search-header {
+  width: 100%;
+  padding: 16px 0;
+
+  &__container {
+    width: 100%;
+  }
+
+  // Format dropdown styling
+  &__format-dropdown {
+    flex-shrink: 0;
+    min-width: 160px;
+  }
+
+  &__format-trigger {
+    min-width: 160px;
+    background-color: var(--color-panel-solid);
+    border: 1px solid var(--gray-6);
+    border-radius: 6px;
+    font-size: 14px;
+    
+    &:hover {
+      border-color: var(--gray-8);
+    }
+    
+    &:focus {
+      outline: 2px solid var(--accent-8);
+      outline-offset: -1px;
+    }
+  }
+
+  &__format-content {
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: var(--color-panel-solid);
+    border: 1px solid var(--gray-6);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+  }
+
+  &__format-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--gray-12);
+
+    &:hover {
+      background-color: var(--gray-a3);
+    }
+
+    &[data-highlighted] {
+      background-color: var(--accent-a3);
+      color: var(--accent-11);
+    }
+
+    &[data-state="checked"] {
+      background-color: var(--accent-a4);
+      color: var(--accent-11);
+      font-weight: 500;
+    }
+  }
+
+  // Search input styling
+  &__search-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__input {
+    width: 100%;
+
+    input {
+      font-size: 14px;
+      
+      &::placeholder {
+        color: var(--gray-9);
+      }
+    }
+  }
+
+  &__search-icon {
+    color: var(--gray-9);
+    flex-shrink: 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 640px) {
+  .search-header {
+    &__container {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    &__format-dropdown {
+      width: 100%;
+    }
+
+    &__format-trigger {
+      width: 100%;
+    }
+  }
+}
+
+

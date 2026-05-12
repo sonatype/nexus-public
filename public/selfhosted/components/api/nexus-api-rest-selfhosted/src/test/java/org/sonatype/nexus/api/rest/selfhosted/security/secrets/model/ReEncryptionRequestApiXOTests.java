@@ -17,14 +17,11 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ReEncryptionRequestApiXOTests
-    extends TestSupport
 {
   private static Validator validator;
 

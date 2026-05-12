@@ -21,7 +21,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.coreui.AssetXO;
 import org.sonatype.nexus.coreui.ComponentHelper;
 import org.sonatype.nexus.repository.Repository;
@@ -36,6 +35,8 @@ import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.annotation.Logical;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
@@ -53,9 +54,10 @@ import org.springframework.stereotype.Component;
 @Produces(APPLICATION_JSON)
 @Path(SelectorPreviewResource.RESOURCE_PATH)
 public class SelectorPreviewResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String RESOURCE_PATH = "internal/ui/content-selectors";
 
   private final ComponentHelper componentHelper;

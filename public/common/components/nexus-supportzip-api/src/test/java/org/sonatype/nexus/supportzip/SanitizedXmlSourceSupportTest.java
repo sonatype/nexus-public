@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type;
 
@@ -34,7 +33,6 @@ import static org.junit.Assert.assertFalse;
  * @since 3.0
  */
 public class SanitizedXmlSourceSupportTest
-    extends TestSupport
 {
   /**
    * Tests that a sanitizer correctly sanitizes basic content based on a provided XSLT.

@@ -1,0 +1,311 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.api-page {
+  padding: var(--space-4);
+  max-width: 100%;
+  overflow-x: hidden;
+
+  .api-layout {
+    margin-top: var(--space-3);
+    align-items: stretch;
+
+    &__left {
+      width: min(380px, 38vw);
+      min-width: 260px;
+      border: 1px solid var(--gray-4);
+      border-radius: var(--radius-3);
+      padding: var(--space-3);
+      background: var(--gray-1);
+    }
+
+    &__toggle-col {
+      flex-shrink: 0;
+    }
+  }
+
+  .api-endpoint-list {
+    &__row {
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: var(--radius-2);
+      padding: var(--space-2);
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+
+      &:hover {
+        background: var(--gray-3);
+      }
+
+      &--selected {
+        border-color: var(--accent-7);
+        background: var(--accent-3);
+      }
+    }
+
+    &__path {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .api-endpoint-detail__sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--color-background);
+    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-2);
+    border-bottom: 1px solid var(--gray-5);
+  }
+
+  .api-grant-wizard {
+    &__form {
+      .settings-form__action-bar {
+        position: static;
+        margin: 0 calc(-1 * var(--space-6));
+        padding: var(--space-3) var(--space-6);
+      }
+
+      .settings-form__inner {
+        padding: var(--space-4) 0;
+        max-width: none;
+      }
+
+      .wizard-form__content {
+        min-height: 200px;
+      }
+    }
+  }
+
+  .api-who-has-access-tab {
+    &__banner {
+      border-radius: var(--radius-2);
+      border: 1px solid var(--blue-6);
+      background: var(--blue-2);
+      color: var(--blue-11);
+    }
+
+    &__link {
+      color: var(--accent-9);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .api-try-it-tab {
+    &__banner {
+      border-radius: var(--radius-2);
+      border: 1px solid var(--amber-6);
+      background: var(--amber-2);
+      color: var(--amber-11);
+    }
+
+    .swagger-ui .info .title {
+      display: block;
+    }
+  }
+
+  // Header
+  &__header {
+    margin-bottom: var(--space-4);
+  }
+
+  &__icon {
+    color: var(--accent-9);
+    flex-shrink: 0;
+  }
+
+  &__description {
+    color: var(--gray-11);
+  }
+
+  // Alerts
+  &__alerts {
+    margin-bottom: var(--space-4);
+  }
+
+  // Search Section
+  &__search-section {
+    margin-bottom: var(--space-4);
+    padding: var(--space-4);
+    background: var(--gray-2);
+    border-radius: var(--radius-3);
+    border: 1px solid var(--gray-4);
+  }
+
+  &__search-row {
+    flex-wrap: wrap;
+  }
+
+  &__search-input-wrapper {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+  }
+
+  &__clear-button {
+    margin-bottom: var(--space-3); // Align with input field
+  }
+
+  &__search-feedback {
+    margin-top: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: var(--blue-3);
+    border-radius: var(--radius-2);
+    color: var(--blue-11);
+    border: 1px solid var(--blue-6);
+    font-size: var(--font-size-1);
+  }
+
+  // Loading State
+  &__loading {
+    padding: var(--space-6);
+    gap: var(--space-3);
+    color: var(--gray-11);
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // Swagger Container
+  &__swagger-container {
+    .swagger-ui {
+      // Hide default title since we have our own header
+      .info {
+        margin: 0;
+
+        .title {
+          display: none;
+        }
+      }
+
+      // Remove default wrapper padding
+      .wrapper {
+        padding: 0;
+      }
+
+      // Hide filtered operations
+      .opblock.api-page__hidden {
+        display: none !important;
+      }
+    }
+  }
+
+  // Hidden class for filtered operations
+  &__hidden {
+    display: none !important;
+  }
+
+  // Help Section
+  &__help {
+    margin-top: var(--space-5);
+    padding: var(--space-4);
+    background: var(--gray-2);
+    border-radius: var(--radius-3);
+    border: 1px solid var(--gray-4);
+  }
+
+  &__help-header {
+    margin-bottom: var(--space-2);
+    color: var(--gray-12);
+  }
+
+  &__help-text {
+    color: var(--gray-11);
+    line-height: 1.5;
+
+    & + & {
+      margin-top: var(--space-2);
+    }
+  }
+
+  &__help-link {
+    color: var(--accent-9);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--accent-10);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+}
+
+// Dark Mode Support
+[data-theme='dark'],
+.nx-html--dark-mode {
+  .api-page {
+    .api-layout__left {
+      background: var(--gray-2);
+      border-color: var(--gray-5);
+    }
+
+    .api-endpoint-list__row--selected {
+      background: var(--accent-4);
+    }
+
+    &__search-section {
+      background: var(--gray-3);
+      border-color: var(--gray-5);
+    }
+
+    &__search-feedback {
+      background: var(--blue-4);
+      border-color: var(--blue-7);
+    }
+
+    &__help {
+      background: var(--gray-3);
+      border-color: var(--gray-5);
+    }
+
+    // Dark mode for Swagger UI using invert filter
+    .swagger-ui {
+      filter: invert(88%) hue-rotate(180deg);
+
+      // Restore code blocks from double inversion
+      .microlight {
+        filter: invert(100%) hue-rotate(180deg);
+      }
+
+      // Restore images from double inversion
+      img {
+        filter: invert(100%) hue-rotate(180deg);
+      }
+    }
+  }
+}

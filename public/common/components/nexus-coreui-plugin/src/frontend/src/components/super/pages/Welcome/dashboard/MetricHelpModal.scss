@@ -1,0 +1,69 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the Eclipse Foundation.
+ * All other trademarks are the property of their respective owners.
+ */
+
+/* Opaque overlay when metric help modal is open */
+body.nxrm-metric-help-open .rt-BaseDialogOverlay::before {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.nxrm-metric-help-modal {
+  width: 50vw;
+  min-width: 420px;
+  max-width: 560px;
+  border-radius: var(--radius-4);
+  box-shadow: var(--shadow-5);
+  /* Opaque panel - never transparent */
+  background: var(--color-panel-solid, var(--gray-1));
+  background-color: var(--color-panel-solid, var(--gray-1));
+  padding: var(--space-5);
+  animation: nxrm-metric-help-modal-in 200ms ease-out;
+
+  &__header {
+    margin-bottom: var(--space-4);
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__section {
+    margin-bottom: var(--space-4);
+
+    &:last-of-type {
+      margin-bottom: 0;
+    }
+  }
+
+  &__label {
+    margin-bottom: var(--space-1);
+    color: var(--gray-12);
+  }
+
+  &__footer {
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--gray-5);
+  }
+}
+
+@keyframes nxrm-metric-help-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

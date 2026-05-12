@@ -14,13 +14,14 @@ package org.sonatype.nexus.blobstore.s3.internal;
 
 import java.util.concurrent.ExecutionException;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.s3.internal.BucketValidationCacheService.BucketValidationResult;
 
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.services.s3.model.GetBucketPolicyResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -43,8 +44,8 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.NO_S
 /**
  * {@link BucketValidationCacheService} tests.
  */
+@ExtendWith(MockitoExtension.class)
 class BucketValidationCacheServiceTest
-    extends Test5Support
 {
   @Mock
   private EncryptingS3Client s3;

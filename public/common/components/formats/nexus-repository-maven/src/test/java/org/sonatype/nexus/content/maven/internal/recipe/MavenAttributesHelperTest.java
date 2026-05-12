@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
@@ -30,7 +29,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
@@ -54,8 +55,9 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenAttributesHelperTest
-    extends TestSupport
+
 {
   private static final String PACKAGING = "PACKAGING";
 

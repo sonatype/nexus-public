@@ -51,7 +51,8 @@ export default {
       AXIS_DAYS: 'Days',
       AXIS_EGRESS_STORAGE: "Egress and Storage",
       TITLE: "Usage insights",
-      SUB_TITLE: "Month"
+      SUB_TITLE: "Month",
+      DATA_NOT_AVAILABLE: 'Data not available'
     }
   }
 };

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.selfhosted.components</groupId>
     <artifactId>nexus-selfhosted-components-api-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-api-rest-selfhosted</artifactId>
@@ -67,6 +67,11 @@
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-blobstore-s3</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-validation</artifactId>
     </dependency>
 
   </dependencies>

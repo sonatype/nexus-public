@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.audit.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 
@@ -27,12 +26,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link InitiatorProviderImpl}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class InitiatorProviderImplTest
-    extends TestSupport
 {
 
   @Mock

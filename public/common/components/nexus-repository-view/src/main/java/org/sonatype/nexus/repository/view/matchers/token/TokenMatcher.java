@@ -15,10 +15,11 @@ package org.sonatype.nexus.repository.view.matchers.token;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Matcher;
 import org.sonatype.nexus.repository.view.Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,9 +32,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class TokenMatcher
-    extends ComponentSupport
     implements Matcher
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public interface State
   {
     String pattern();

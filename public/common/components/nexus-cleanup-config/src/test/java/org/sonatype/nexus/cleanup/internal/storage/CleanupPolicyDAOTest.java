@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -37,7 +36,7 @@ import static org.junit.Assert.assertFalse;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class CleanupPolicyDAOTest
-    extends TestSupport
+
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(CleanupPolicyDAO.class);

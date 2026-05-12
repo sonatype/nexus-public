@@ -18,7 +18,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.event.EventExecutor;
 import org.sonatype.nexus.bootstrap.entrypoint.event.EventManagerImpl;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
@@ -38,7 +37,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 
 public class EventManagerImplTest
-    extends TestSupport
 {
   @Test
   public void dispatchOrder() {

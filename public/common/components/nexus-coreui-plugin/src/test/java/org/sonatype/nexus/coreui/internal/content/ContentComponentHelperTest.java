@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.coreui.AssetXO;
@@ -46,9 +45,11 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ContentComponentHelperTest
-    extends TestSupport
 {
   @Mock
   MaintenanceService maintenanceService;
@@ -99,15 +100,13 @@ public class ContentComponentHelperTest
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
-        repositoryManager
-    );
+        repositoryManager);
 
     AssetXO assetXO = underTest.toAssetXO(
         "maven-hosted",
         "maven-hosted",
         "maven2",
-        createAsset()
-    );
+        createAsset());
     assertThat(((Map) assetXO.getAttributes().get("content")).containsKey("last_modified"), is(false));
   }
 
@@ -122,16 +121,14 @@ public class ContentComponentHelperTest
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
-        repositoryManager
-    );
+        repositoryManager);
 
     AssetXO assetXO = underTest.toAssetXO(
         "maven-hosted",
         "maven-hosted",
         "maven2",
-        createAsset()
-    );
-    Map<String, Object> contentMap =(Map<String, Object>) assetXO.getAttributes().get("content");
+        createAsset());
+    Map<String, Object> contentMap = (Map<String, Object>) assetXO.getAttributes().get("content");
     assertThat(contentMap.containsKey("last_modified"), is(true));
     assertThat(contentMap.get("last_modified"), is("2023-11-13T16:00:20.450+02:00"));
   }

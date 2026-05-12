@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.search.sql.index;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.event.EventManager;
@@ -26,14 +25,16 @@ import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class SqlSearchFacetImplTest
-    extends Test5Support
 {
 
   @Mock

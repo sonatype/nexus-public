@@ -18,7 +18,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -33,9 +32,11 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RaptureWebResourceBundleTest
-    extends TestSupport
 {
   @Mock
   private ApplicationVersion applicationVersion;

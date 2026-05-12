@@ -1,0 +1,494 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Premium Dashboard Styles
+// Inspired by Vercel / Linear dashboards: clean, spacious, numbers as hero
+
+.nxrm-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 24px);
+  animation: nxrm-dashboard-fade-in 300ms ease;
+
+  // =========================================================
+  // Hero Banner
+  // =========================================================
+
+  &__hero {
+    padding-bottom: var(--space-6, 24px);
+    border-bottom: 1px solid var(--color-border, #e5e5e5);
+  }
+
+  &__hero-accent {
+    height: 3px;
+    background: linear-gradient(90deg, #00bb6c, #6366f1, #f59e0b);
+    border-radius: 2px;
+    margin-bottom: var(--space-5, 20px);
+  }
+
+  &__hero-heading {
+    color: var(--color-text, #171717);
+    letter-spacing: -0.025em;
+  }
+
+  &__hero-version {
+    color: var(--color-text-tertiary, #737373);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // =========================================================
+  // Section Layout
+  // =========================================================
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 16px);
+  }
+
+  &__section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    color: var(--color-text, #171717);
+
+    svg {
+      color: var(--color-text-secondary, #525252);
+    }
+  }
+
+  // =========================================================
+  // Metrics Grid
+  // =========================================================
+
+  &__metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4, 16px);
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__metric-card {
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border, #e5e5e5);
+    border-radius: var(--radius-xl, 12px);
+    padding: var(--space-5, 20px);
+    transition: box-shadow var(--transition-fast, 150ms ease),
+      border-color var(--transition-fast, 150ms ease),
+      transform var(--transition-fast, 150ms ease);
+    animation: nxrm-card-fade-in 400ms ease both;
+
+    &:hover {
+      box-shadow: var(
+        --shadow-md,
+        0 4px 6px -1px rgb(0 0 0 / 0.1)
+      );
+      border-color: var(--color-neutral-300, #d4d4d4);
+      transform: translateY(-1px);
+    }
+  }
+
+  &__metric-card-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4, 16px);
+  }
+
+  &__metric-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg, 8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__metric-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__metric-value-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 12px);
+    margin-bottom: 2px;
+  }
+
+  &__metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text, #171717);
+  }
+
+  &__metric-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-text-secondary, #525252);
+  }
+
+  &__metric-sublabel {
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--color-text-tertiary, #737373);
+    margin-top: 1px;
+  }
+
+  &__metrics-loading,
+  &__metrics-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3, 12px);
+    padding: var(--space-10, 40px) 0;
+    color: var(--color-text-tertiary, #737373);
+  }
+
+  // =========================================================
+  // Usage Trends
+  // =========================================================
+
+  &__trends-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4, 16px);
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__trend-card {
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border, #e5e5e5);
+    border-radius: var(--radius-xl, 12px);
+    padding: var(--space-5, 20px);
+    animation: nxrm-card-fade-in 400ms ease both;
+    animation-delay: 200ms;
+  }
+
+  &__trend-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    margin-bottom: var(--space-4, 16px);
+    color: var(--color-text-secondary, #525252);
+  }
+
+  &__trend-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-secondary, #525252);
+  }
+
+  &__trend-chart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+
+    .sparkline {
+      width: 100%;
+
+      &__chart {
+        width: 100%;
+        height: auto;
+      }
+    }
+  }
+
+  &__trend-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    color: var(--color-text-tertiary, #737373);
+    font-size: 0.8125rem;
+    padding: var(--space-6, 24px) 0;
+  }
+
+  &__trends-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3, 12px);
+    padding: var(--space-10, 40px) 0;
+  }
+
+  &__trends-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3, 12px);
+    padding: var(--space-8, 32px) 0;
+    color: var(--color-text-secondary, #525252);
+  }
+
+  // =========================================================
+  // Bottom Row (Health + Notifications)
+  // =========================================================
+
+  &__bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: var(--space-4, 16px);
+    animation: nxrm-card-fade-in 400ms ease both;
+    animation-delay: 250ms;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__health-card,
+  &__notifications-card {
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border, #e5e5e5);
+    border-radius: var(--radius-xl, 12px);
+    padding: var(--space-5, 20px);
+  }
+
+  &__card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    margin-bottom: var(--space-4, 16px);
+    color: var(--color-text-secondary, #525252);
+  }
+
+  &__card-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text, #171717);
+  }
+
+  // =========================================================
+  // System Health
+  // =========================================================
+
+  &__health-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    margin-bottom: var(--space-3, 12px);
+  }
+
+  &__health-icon--ok {
+    color: var(--color-success, #16a34a);
+  }
+
+  &__health-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text, #171717);
+  }
+
+  &__health-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-primary, #00bb6c);
+    text-decoration: none;
+    transition: color var(--transition-fast, 150ms ease);
+
+    &:hover {
+      color: var(--color-primary-hover, #009955);
+      text-decoration: underline;
+    }
+  }
+
+  // =========================================================
+  // Notifications
+  // =========================================================
+
+  &__notifications-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2, 8px);
+  }
+
+  &__notification {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2, 8px);
+    padding: var(--space-3, 12px);
+    border-radius: var(--radius-lg, 8px);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+
+    svg {
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    &--warning {
+      background: var(--color-warning-bg, #fefce8);
+      color: var(--color-warning, #ca8a04);
+      border: 1px solid currentColor;
+      border-color: color-mix(in srgb, var(--color-warning, #ca8a04) 25%, transparent);
+    }
+
+    &--error {
+      background: var(--color-error-bg, #fef2f2);
+      color: var(--color-error, #dc2626);
+      border: 1px solid currentColor;
+      border-color: color-mix(in srgb, var(--color-error, #dc2626) 25%, transparent);
+    }
+
+    &--empty {
+      padding: var(--space-3, 12px) 0;
+    }
+  }
+
+  // =========================================================
+  // Retry Button
+  // =========================================================
+
+  &__retry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-text, #171717);
+    background: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border, #e5e5e5);
+    border-radius: var(--radius-md, 6px);
+    cursor: pointer;
+    transition: all var(--transition-fast, 150ms ease);
+
+    &:hover {
+      background: var(--color-surface-hover, #f5f5f5);
+      border-color: var(--color-neutral-400, #a3a3a3);
+    }
+  }
+
+  // =========================================================
+  // Spinner Animation
+  // =========================================================
+
+  &__spinner {
+    animation: nxrm-spin 1s linear infinite;
+    color: var(--color-text-tertiary, #737373);
+  }
+}
+
+// =========================================================
+// Keyframe Animations
+// =========================================================
+
+@keyframes nxrm-dashboard-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nxrm-card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nxrm-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// =========================================================
+// Dark Mode
+// =========================================================
+
+[data-theme='dark'] {
+  .nxrm-dashboard {
+    &__metric-card,
+    &__trend-card,
+    &__health-card,
+    &__notifications-card {
+      background: var(--color-surface, #171717);
+      border-color: var(--color-border, #404040);
+    }
+
+    &__metric-card:hover {
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
+      border-color: var(--color-neutral-500, #737373);
+    }
+
+    &__retry-btn {
+      background: var(--color-surface, #171717);
+      border-color: var(--color-border, #404040);
+      color: var(--color-text, #fafafa);
+
+      &:hover {
+        background: var(--color-surface-hover, #262626);
+      }
+    }
+
+    &__notification {
+      &--warning {
+        background: var(--color-warning-bg, #422006);
+      }
+
+      &--error {
+        background: var(--color-error-bg, #450a0a);
+      }
+    }
+  }
+}
+
+// =========================================================
+// Reduced Motion
+// =========================================================
+
+@media (prefers-reduced-motion: reduce) {
+  .nxrm-dashboard,
+  .nxrm-dashboard__metric-card,
+  .nxrm-dashboard__trend-card,
+  .nxrm-dashboard__bottom-row {
+    animation: none !important;
+  }
+
+  .nxrm-dashboard__metric-card:hover {
+    transform: none;
+  }
+
+  .nxrm-dashboard__spinner {
+    animation-duration: 2s;
+  }
+}

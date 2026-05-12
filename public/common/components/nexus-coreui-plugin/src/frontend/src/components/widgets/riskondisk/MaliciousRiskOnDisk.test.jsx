@@ -64,12 +64,11 @@ const selectors = {
 
 describe('MaliciousRiskOnDisk', () => {
   beforeEach(() => {
-    when(ExtJS.useState)
-        .calledWith(useThrottlingStatusValue)
-        .mockReturnValue('Under limits');
-    when(ExtJS.useState)
-        .calledWith(useGracePeriodEndsDate)
-        .mockReturnValue(new Date(''));
+    ExtJS.useState.mockImplementation((fn) => {
+      if (fn === useThrottlingStatusValue) return 'Under limits';
+      if (fn === useGracePeriodEndsDate) return new Date('');
+      try { return fn(); } catch { return undefined; }
+    });
     when(ExtJS.state().getValue)
         .calledWith(MALWARE_RISK_ENABLED)
         .mockReturnValue(true);
@@ -148,7 +147,7 @@ describe('MaliciousRiskOnDisk', () => {
   });
 
   it('renders correctly when admin user and pro edition with IQ and FF enabled', async () => {
-    when(ExtJS.state().getValue).calledWith(CLM).mockReturnValue({enabled: true});
+    when(ExtJS.state().getValue).calledWith(CLM).mockReturnValue({enabled: true, hasFirewall: true});
     when(ExtJS.state().getValue).calledWith(MALWARE_RISK_ENABLED).mockReturnValue(true);
     const isAdmin = true;
     const isProEdition = true;
@@ -239,27 +238,15 @@ describe('MaliciousRiskOnDisk', () => {
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
-  async function expectAlertToRender(count, isAdmin, isProEdition, isIqServerEnabled = null, isMalwareRiskEnabled = null) {
+  async function expectAlertToRender(count, isAdmin) {
     expect(selectors.getHeading(count + ' ' + RISK_ON_DISK.TITLE_PLURAL)).toBeInTheDocument();
     expect(selectors.queryAlert()).toHaveTextContent(RISK_ON_DISK.DESCRIPTION.CONTENT);
 
     if (isAdmin) {
-      if (isProEdition && isIqServerEnabled && isMalwareRiskEnabled) {
-        expect(selectors.queryLink('View Malware Risk')).toBeInTheDocument();
-        expect(selectors.queryLink('View Malware Risk')).toHaveAttribute('href', '#browse/malwarerisk');
-      } else if (isProEdition) {
-        expect(selectors.queryLink('Contact Sonatype to Resolve')).toBeInTheDocument();
-        expect(selectors.queryLink('Contact Sonatype to Resolve'))
-            .toHaveAttribute('href',
-                'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more');
-      } else {
-        expect(selectors.queryLink('Contact Sonatype to Resolve')).toBeInTheDocument();
-        expect(selectors.queryLink('Contact Sonatype to Resolve'))
-            .toHaveAttribute('href',
-                'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/oss-admin-learn-more');
-      }
+      expect(selectors.queryLink(RISK_ON_DISK.VIEW_MALWARE_RISK)).toBeInTheDocument();
+      expect(selectors.queryLink(RISK_ON_DISK.VIEW_MALWARE_RISK)).toHaveAttribute('href', '#browse/malwarerisk');
     } else {
-      expect(selectors.queryLink('Contact Sonatype to Resolve')).not.toBeInTheDocument();
+      expect(selectors.queryLink(RISK_ON_DISK.VIEW_MALWARE_RISK)).not.toBeInTheDocument();
       expect(selectors.queryText('Contact your instance administrator to resolve.')).toBeInTheDocument();
     }
   }

@@ -19,7 +19,6 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.validation.Validate;
 
@@ -27,14 +26,17 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link Aspect} that validates method arguments and return values.
  */
 @Aspect
 public class ValidationAspect
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Around("@annotation(validate) && execution(* *(..))")
   public Object validateMethod(final ProceedingJoinPoint joinPoint, final Validate validate) throws Throwable {
     final ClassLoader tccl = Thread.currentThread().getContextClassLoader();

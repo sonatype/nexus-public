@@ -13,6 +13,7 @@
 import React from 'react';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {useMachine} from '@xstate/react';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import Axios from 'axios';
 
@@ -24,6 +25,18 @@ const {SONATYPE_LIFECYCLE, IQ_SERVER} = UIStrings;
 const mockRouterGo = jest.fn();
 
 jest.mock('axios');
+
+jest.mock('@xstate/react', () => ({
+  useMachine: jest.fn(() => [
+    {
+      matches: jest.fn(() => false),
+      context: {
+        data: null
+      }
+    },
+    jest.fn()
+  ])
+}));
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   return {
@@ -46,6 +59,20 @@ describe('SonatypeLifecycle', () => {
   beforeEach(() => {
     mockRouterGo.mockClear();
     Axios.get.mockResolvedValue({data: null});
+
+    // Reset ExtJS.useUser to return a valid user
+    ExtJS.useUser.mockReturnValue({name: 'test-user'});
+
+    // Default machine state - loaded with no data
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loaded'),
+        context: {
+          data: null
+        }
+      },
+      jest.fn()
+    ]);
   });
 
   it('renders the breadcrumb navigation', () => {
@@ -106,11 +133,11 @@ describe('SonatypeLifecycle', () => {
     expect(tileCard).toBeInTheDocument();
   });
 
-  it('renders the chevron icon in the card arrow', () => {
+  it('renders the card arrow element', () => {
     render(<SonatypeLifecycle/>);
 
-    const chevronIcon = document.querySelector('.card-arrow svg');
-    expect(chevronIcon).toBeInTheDocument();
+    const cardArrow = document.querySelector('.card-arrow');
+    expect(cardArrow).toBeInTheDocument();
   });
 
   it('uses NxH1 for page title', () => {
@@ -158,7 +185,8 @@ describe('SonatypeLifecycle', () => {
   });
 
   it('returns null when user is not authenticated', () => {
-    ExtJS.useUser.mockReturnValueOnce(null);
+    ExtJS.useUser.mockReturnValue(null);
+    Axios.get.mockResolvedValue({data: null});
 
     const {container} = render(<SonatypeLifecycle/>);
 
@@ -180,10 +208,20 @@ describe('SonatypeLifecycle', () => {
       activityTimeFrame: 60,
       artifactLatestVersions: 10,
       policyEvaluationStage: 'BUILD',
-      autoEnrollNewRepos: true
+      autoEnrollNewRepos: true,
+      monitoredRepoCount: 5,
+      totalRepoCount: 10
     };
 
-    Axios.get.mockResolvedValue({data: mockSettings});
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loaded'),
+        context: {
+          data: mockSettings
+        }
+      },
+      jest.fn()
+    ]);
 
     render(<SonatypeLifecycle/>);
 
@@ -191,12 +229,20 @@ describe('SonatypeLifecycle', () => {
       expect(screen.getByText(/Last 60 Days/)).toBeInTheDocument();
       expect(screen.getByText(/10 Artifact Latest Versions/)).toBeInTheDocument();
       expect(screen.getByText(/BUILD/)).toBeInTheDocument();
-      expect(screen.getByText(/Monitored : x\/x/)).toBeInTheDocument();
+      expect(screen.getByText(/Monitored: 5\/10/)).toBeInTheDocument();
     });
   });
 
   it('displays static text when API call fails', async () => {
-    Axios.get.mockRejectedValue(new Error('API Error'));
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loaded'),
+        context: {
+          data: null
+        }
+      },
+      jest.fn()
+    ]);
 
     render(<SonatypeLifecycle/>);
 
@@ -206,7 +252,15 @@ describe('SonatypeLifecycle', () => {
   });
 
   it('displays loading text while fetching settings', () => {
-    Axios.get.mockImplementation(() => new Promise(() => {})); // Never resolves
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loading'),
+        context: {
+          data: null
+        }
+      },
+      jest.fn()
+    ]);
 
     render(<SonatypeLifecycle/>);
 

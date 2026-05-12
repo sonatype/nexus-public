@@ -20,7 +20,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.rest.Resource;
@@ -28,6 +27,8 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -44,9 +45,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ManagedLifecycleResource
-    extends ComponentSupport
     implements Resource, ManagedLifecycleResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = V1_API_PREFIX + "/lifecycle";
 
   private final ManagedLifecycleManager lifecycleManager;

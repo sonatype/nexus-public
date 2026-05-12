@@ -19,10 +19,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 
 import com.codahale.metrics.annotation.Timed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.ok;
@@ -38,9 +39,10 @@ import org.springframework.stereotype.Component;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class StatusResource
-    extends ComponentSupport
     implements Resource, StatusResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = V1_API_PREFIX + "/status";
 
   @GET

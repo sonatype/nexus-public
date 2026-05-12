@@ -18,12 +18,13 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -36,9 +37,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AuthTicketServiceImpl
-    extends ComponentSupport
     implements AuthTicketService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final AuthTicketGenerator authTicketGenerator;
 
   private final AuthTicketCache authTicketCache;

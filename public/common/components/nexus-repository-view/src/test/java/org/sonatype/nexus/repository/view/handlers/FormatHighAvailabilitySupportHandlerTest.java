@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.view.handlers;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
@@ -29,14 +28,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * UT for {@link FormatHighAvailabilitySupportHandler}
  *
  * @since 3.17
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FormatHighAvailabilitySupportHandlerTest
-    extends TestSupport
 {
   private final String FORMAT_NAME = "dummyFormat";
 

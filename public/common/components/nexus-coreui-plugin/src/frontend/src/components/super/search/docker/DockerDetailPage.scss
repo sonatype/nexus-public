@@ -1,0 +1,226 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.docker-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--nx-spacing-4x, 16px);
+
+  &__header {
+    margin-bottom: var(--nx-spacing-6x, 24px);
+  }
+
+  &__back-link {
+    background: none;
+    border: none;
+    color: var(--nx-color-primary-button-background, #0066cc);
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: var(--nx-spacing-3x, 12px);
+    font-size: 0.875rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__title {
+    margin: 0 0 var(--nx-spacing-1x, 4px) 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--nx-color-text-dark, #333);
+  }
+
+  &__image-name {
+    margin: 0 0 var(--nx-spacing-2x, 8px) 0;
+    color: var(--nx-color-text-dark, #666);
+    font-family: monospace;
+    font-size: 0.875rem;
+  }
+
+  &__description {
+    margin: 0;
+    color: var(--nx-color-text-dark, #666);
+    font-size: 0.875rem;
+  }
+
+  &__info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--nx-spacing-6x, 24px);
+    margin-bottom: var(--nx-spacing-6x, 24px);
+    padding: var(--nx-spacing-4x, 16px);
+    background-color: var(--nx-color-component-background, #fff);
+    border: 1px solid var(--nx-color-border, #e0e0e0);
+    border-radius: var(--nx-border-radius, 4px);
+  }
+
+  &__info-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nx-spacing-1x, 4px);
+  }
+
+  &__info-label {
+    font-size: 0.75rem;
+    color: var(--nx-color-text-dark, #666);
+    text-transform: uppercase;
+  }
+
+  &__info-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--nx-color-text-dark, #333);
+  }
+
+  &__section-title {
+    margin: 0 0 var(--nx-spacing-3x, 12px) 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--nx-color-text-dark, #333);
+  }
+
+  &__pull-command {
+    margin-bottom: var(--nx-spacing-6x, 24px);
+  }
+
+  &__command {
+    display: flex;
+    align-items: center;
+    gap: var(--nx-spacing-2x, 8px);
+    padding: var(--nx-spacing-3x, 12px);
+    background-color: var(--nx-color-component-background-hover, #f5f5f5);
+    border: 1px solid var(--nx-color-border, #e0e0e0);
+    border-radius: var(--nx-border-radius, 4px);
+
+    code {
+      flex: 1;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+  }
+
+  &__copy-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--nx-spacing-1x, 4px);
+    border-radius: var(--nx-border-radius, 4px);
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--nx-color-component-background, #fff);
+    }
+
+    &--small {
+      font-size: 0.875rem;
+    }
+  }
+
+  &__tags {
+    margin-bottom: var(--nx-spacing-6x, 24px);
+  }
+
+  &__tags-table-wrapper {
+    overflow-x: auto;
+  }
+
+  &__tags-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--nx-color-component-background, #fff);
+    border: 1px solid var(--nx-color-border, #e0e0e0);
+    border-radius: var(--nx-border-radius, 4px);
+
+    th,
+    td {
+      padding: var(--nx-spacing-2x, 8px) var(--nx-spacing-3x, 12px);
+      text-align: left;
+      border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+    }
+
+    th {
+      background-color: var(--nx-color-component-background-hover, #f5f5f5);
+      font-weight: 600;
+      color: var(--nx-color-text-dark, #333);
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+  }
+
+  &__tag-name {
+    font-family: monospace;
+    background-color: var(--nx-color-component-background-hover, #f0f0f0);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  &__digest {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--nx-color-text-dark, #666);
+  }
+
+  // States
+  &--loading,
+  &--error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+  }
+
+  &__loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--nx-color-border, #e0e0e0);
+    border-top-color: var(--nx-color-primary-button-background, #0066cc);
+    border-radius: 50%;
+    animation: docker-detail-spin 0.8s linear infinite;
+  }
+
+  &__loading-text {
+    margin-top: var(--nx-spacing-3x, 12px);
+    color: var(--nx-color-text-dark, #666);
+  }
+
+  &__error-text {
+    color: var(--nx-color-error-text, #c00);
+    margin-bottom: var(--nx-spacing-4x, 16px);
+  }
+
+  &__back-button {
+    padding: var(--nx-spacing-2x, 8px) var(--nx-spacing-4x, 16px);
+    background-color: var(--nx-color-primary-button-background, #0066cc);
+    color: var(--nx-color-primary-button-text, #fff);
+    border: none;
+    border-radius: var(--nx-border-radius, 4px);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--nx-color-primary-button-background-hover, #0052a3);
+    }
+  }
+}
+
+@keyframes docker-detail-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+

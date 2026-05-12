@@ -16,10 +16,11 @@ import java.util.Base64;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -28,9 +29,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class EncryptDecryptService
-    extends ComponentSupport
     implements EncryptDecrypt<String, String, String>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final PbeCipherFactory pbeCipherFactory;
 
   private String secret = "changeme";

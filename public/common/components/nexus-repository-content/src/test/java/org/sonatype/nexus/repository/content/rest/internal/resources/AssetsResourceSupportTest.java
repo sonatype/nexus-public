@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.rest.internal.resources;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -35,7 +34,9 @@ import org.sonatype.nexus.repository.types.HostedType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.IntStream.range;
@@ -54,8 +55,8 @@ import static org.sonatype.nexus.repository.content.rest.internal.resources.Asse
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.toInternalToken;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.trim;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetsResourceSupportTest
-    extends TestSupport
 {
   private static final String A_FORMAT = "A_Format";
 

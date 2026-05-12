@@ -1,0 +1,172 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.settings-combobox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  &__label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  &__required {
+    color: var(--color-error);
+  }
+
+  &__wrapper {
+    position: relative;
+    width: 100%;
+    display: block;
+  }
+
+  &__input {
+    width: 100%;
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    padding-right: 40px !important;
+    font-size: var(--font-size-sm, 14px);
+    font-family: var(--font-family-base, inherit);
+    color: var(--color-text, #171717);
+    background-color: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border, #d4d4d4);
+    border-radius: var(--radius-md, 6px);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &::placeholder {
+      color: var(--color-text-tertiary);
+    }
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-neutral-400);
+    }
+
+    &:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px var(--color-selection);
+    }
+
+    &:disabled {
+      background-color: var(--color-surface-secondary);
+      color: var(--color-text-tertiary);
+      cursor: not-allowed;
+    }
+  }
+
+  &__chevron {
+    position: absolute !important;
+    right: 12px !important;
+    left: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: var(--color-text-secondary);
+    pointer-events: none;
+    transition: transform var(--transition-fast);
+    z-index: 2;
+
+    &--open {
+      transform: translateY(-50%) rotate(180deg) !important;
+    }
+  }
+
+  &__listbox {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin: var(--space-1) 0 0 0;
+    padding: var(--space-1) 0;
+    list-style: none;
+    background-color: var(--color-surface, #ffffff);
+    border: 1px solid var(--color-border, #d4d4d4);
+    border-radius: var(--radius-md, 6px);
+    box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
+    max-height: 200px;
+    overflow-y: auto;
+
+    // Open upward when near the bottom of the viewport
+    &--upward {
+      top: auto;
+      bottom: 100%;
+      margin: 0 0 var(--space-1) 0;
+    }
+
+    // Ensure dark mode has solid, opaque background with clear separation
+    [data-theme="dark"] &,
+    .dark & {
+      background-color: var(--color-surface, #171717);
+      border-color: var(--color-border, #404040);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  &__option {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    font-size: var(--font-size-sm, 14px);
+    color: var(--color-text, #171717);
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+
+    &:hover,
+    &--highlighted {
+      background-color: var(--color-surface-hover, #f5f5f5);
+    }
+
+    &--selected {
+      color: var(--color-primary, #0969da);
+      font-weight: 500;
+    }
+
+    // Dark mode option styling
+    [data-theme="dark"] &,
+    .dark & {
+      color: var(--color-text, #e5e5e5);
+
+      &:hover,
+      &--highlighted {
+        background-color: var(--color-surface-hover, #262626);
+      }
+    }
+  }
+
+  &--error &__input {
+    border-color: var(--color-error);
+
+    &:focus {
+      box-shadow: 0 0 0 2px var(--color-error-bg);
+    }
+  }
+
+  &__help {
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  &__error-text {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-error);
+    margin: 0;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+}

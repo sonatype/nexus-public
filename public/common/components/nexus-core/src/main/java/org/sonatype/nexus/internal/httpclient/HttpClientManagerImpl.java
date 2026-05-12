@@ -329,14 +329,12 @@ public class HttpClientManagerImpl
         statusCode,
         responseLength,
         stopwatch.elapsed(TimeUnit.MILLISECONDS),
-        "---",
+        "-",
         Thread.currentThread().getName());
     outboundReqLog.info(OUTBOUND_REQUESTS_LOG_ONLY, "{}", logMessage);
   }
 
   private void printOutboundLogTwoHundredStatusCode(final HttpResponse httpResponse, final HttpContext httpContext) {
-    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
-
     HttpRequest request = ((HttpClientContext) httpContext).getRequest();
     int statusCode = httpResponse.getStatusLine().getStatusCode();
     long responseLength = 0;
@@ -346,7 +344,7 @@ public class HttpClientManagerImpl
     String requestUri = getRequestURI(httpContext).toString();
 
     String logMessage = String.format("[%s] %s \"%s %s %s\" %d %d %s %s [%s]",
-        dateFormat.format(new Date()),
+        OutboundRequestContext.TIMESTAMP_PLACEHOLDER,
         getAuthUser(httpContext),
         request.getRequestLine().getMethod(),
         requestUri,
@@ -354,7 +352,7 @@ public class HttpClientManagerImpl
         statusCode,
         responseLength,
         stopwatch.elapsed(TimeUnit.MILLISECONDS),
-        "---",
+        OutboundRequestContext.ELAPSED_TIME_PLACEHOLDER,
         Thread.currentThread().getName());
 
     OutboundRequestContext.setFormattedString(logMessage);

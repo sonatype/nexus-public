@@ -19,7 +19,6 @@ import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -30,6 +29,8 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
@@ -37,9 +38,9 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 @Component
 @Singleton
 public class DefaultRoleStateContributor
-    extends ComponentSupport
     implements StateContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final DefaultRoleRealm defaultRoleRealm;
 

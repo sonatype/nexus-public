@@ -23,8 +23,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
@@ -44,7 +42,6 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 import org.mockito.internal.stubbing.defaultanswers.ReturnsMocks;
 
@@ -64,10 +61,11 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 import static org.sonatype.nexus.internal.security.apikey.store.ApiKeyStoreV2Impl.accessKey;
 import static org.sonatype.nexus.internal.security.apikey.store.ApiKeyStoreV2Impl.secret;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@Category(SQLTestGroup.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ApiKeyV2DAOTest
-    extends TestSupport
 {
   private static final String DOMAIN = "a domain";
 

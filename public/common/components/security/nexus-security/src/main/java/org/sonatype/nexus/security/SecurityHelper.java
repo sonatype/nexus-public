@@ -17,7 +17,6 @@ import java.util.stream.StreamSupport;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 
 import org.apache.shiro.SecurityUtils;
@@ -25,6 +24,8 @@ import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -42,8 +43,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class SecurityHelper
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Returns current security manager.
    */

@@ -18,7 +18,6 @@ import java.util.Map;
 
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.Description;
 import org.sonatype.nexus.security.realm.RealmManager;
@@ -35,6 +34,7 @@ import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintVa
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import org.springframework.context.ApplicationContext;
 
@@ -49,11 +49,11 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link RealmSettingsComponent}.
  */
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class RealmSettingsComponentTest
-    extends Test5Support
 {
   @ValidationExecutor
   private final Validator validator =

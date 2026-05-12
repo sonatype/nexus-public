@@ -13,7 +13,11 @@
 package org.sonatype.nexus.repository.maven.rest;
 
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.ContentDispositionHelper;
 import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -28,12 +32,27 @@ public class MavenHostedRepositoryApiRequestToConfigurationConverter
 {
   private static final String MAVEN = "maven";
 
+  private RepositoryManager repositoryManager;
+
+  @Autowired
+  public void setRepositoryManager(final RepositoryManager repositoryManager) {
+    this.repositoryManager = repositoryManager;
+  }
+
   @Override
   public Configuration convert(final MavenHostedRepositoryApiRequest request) {
     Configuration configuration = super.convert(request);
     configuration.attributes(MAVEN).set("versionPolicy", request.getMaven().getVersionPolicy());
     configuration.attributes(MAVEN).set("layoutPolicy", request.getMaven().getLayoutPolicy());
-    configuration.attributes(MAVEN).set("contentDisposition", request.getMaven().getContentDisposition());
+
+    String contentDisposition = ContentDispositionHelper.resolveContentDisposition(
+        request.getMaven().getContentDisposition(),
+        repositoryManager,
+        request.getName(),
+        MAVEN);
+
+    configuration.attributes(MAVEN).set("contentDisposition", contentDisposition);
+
     return configuration;
   }
 }

@@ -19,7 +19,6 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
@@ -27,6 +26,7 @@ import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.SearchUtils;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
+import org.sonatype.nexus.repository.search.query.SearchFilter.FilterOperator;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,9 +44,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SearchUtilsTest
-    extends TestSupport
 {
   static final String VALID_SHA1_ATTRIBUTE_NAME = "assets.attributes.checksum.sha1";
 
@@ -241,6 +243,26 @@ public class SearchUtilsTest
         .orElse(null);
     assertThat("Format filter should exist", formatFilter != null);
     assertThat("Format value should be 'maven'", formatFilter.getValue().equals("maven2"));
+  }
+
+  @Test
+  public void testMultipleFormatParamsUseExplicitOr() {
+    UriInfo uriInfo = mock(UriInfo.class);
+    MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
+    queryParams.add("format", "maven2");
+    queryParams.add("format", "npm");
+
+    when(uriInfo.getQueryParameters()).thenReturn(queryParams);
+
+    List<SearchFilter> filters = underTest.getSearchFilters(uriInfo);
+
+    List<SearchFilter> formatFilters = filters.stream()
+        .filter(f -> "format".equals(f.getProperty()))
+        .collect(toList());
+    assertThat("Should have two format filters", formatFilters, hasSize(2));
+    for (SearchFilter f : formatFilters) {
+      assertTrue("Format filter should use OR operator", f.getOperator().orElse(null) == FilterOperator.OR);
+    }
   }
 
   private static class SearchMappingTest

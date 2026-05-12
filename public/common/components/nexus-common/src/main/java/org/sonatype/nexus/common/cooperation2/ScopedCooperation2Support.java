@@ -19,9 +19,10 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.cooperation2.datastore.internal.CooperatingFuture;
 import org.sonatype.nexus.common.cooperation2.internal.Cooperation2Builder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toMap;
@@ -32,9 +33,10 @@ import static java.util.stream.Collectors.toMap;
  * @since 3.41
  */
 public abstract class ScopedCooperation2Support
-    extends ComponentSupport
     implements Cooperation2
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ConcurrentMap<String, CooperatingFuture<?>> localFutures = new ConcurrentHashMap<>();
 
   protected final Config config;

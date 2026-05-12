@@ -1,0 +1,36 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+@import '../core/searchTheme.scss';
+
+/* Content container - responsive, prevents overflow (matches ux-lab filter-results) */
+.unified-search-page {
+  overflow-x: hidden;
+}
+
+/* Right content area: fill width so scrollbar sits at far right edge of viewport */
+.unified-search-page .page-content {
+  width: 100%;
+  min-width: 0;
+}
+
+/* =============================================================================
+   LAYOUT NAMING - Clear structure for styling and accessibility
+   =============================================================================
+   - .filter-bar      : Left sidebar with Format + Repository filters
+   - .page-content    : Main area (everything except filter bar)
+   - .header          : Title "Components" + component count (inside page-content)
+   - .actions-bar     : Search input, sort dropdown, filter button (inside header)
+   - .cards-results   : Section with result cards + pagination
+   - .pagination      : Pagination controls (inside cards-results)
+   ============================================================================= */

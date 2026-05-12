@@ -15,12 +15,13 @@ package org.sonatype.nexus.repository.search.sql.store.upgrade;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Changes the paths column type from VARCHAR to JSON in H2 database for the search_components table.
@@ -28,9 +29,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SearchTablePathsColumnJsonMigrationStep_2_102
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String SEARCH_COMPONENTS_TABLE = "search_components";
 
   private static final String ALTER_PATHS_COLUMN_H2 =

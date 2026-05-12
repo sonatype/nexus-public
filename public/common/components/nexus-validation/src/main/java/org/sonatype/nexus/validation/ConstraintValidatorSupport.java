@@ -16,8 +16,9 @@ import java.lang.annotation.Annotation;
 
 import javax.validation.ConstraintValidator;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.template.EscapeHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Support for {@link ConstraintValidator} implementations.
@@ -25,9 +26,10 @@ import org.sonatype.nexus.common.template.EscapeHelper;
  * @since 3.0
  */
 public abstract class ConstraintValidatorSupport<A extends Annotation, T>
-    extends ComponentSupport
     implements ConstraintValidator<A, T>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final EscapeHelper escapeHelper = new EscapeHelper();
 
   @Override

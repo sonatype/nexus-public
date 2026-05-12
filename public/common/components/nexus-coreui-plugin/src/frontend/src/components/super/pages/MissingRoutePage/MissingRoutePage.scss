@@ -1,0 +1,92 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.nxrm-missing-route-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-6);
+  background: var(--color-background);
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 500px;
+  }
+
+  &__ghost-icon {
+    margin-bottom: var(--space-6);
+    color: var(--gray-8);
+  }
+
+  &__code {
+    font-size: 6rem;
+    font-weight: 800;
+    color: var(--gray-9);
+    line-height: 1;
+    margin-bottom: var(--space-2);
+  }
+
+  &__title {
+    margin-bottom: var(--space-4);
+    color: var(--gray-11);
+  }
+
+  &__divider {
+    width: 60px;
+    height: 3px;
+    background: var(--accent-9);
+    border-radius: var(--radius-1);
+    margin: var(--space-4) 0;
+  }
+
+  &__message {
+    margin-bottom: var(--space-6);
+    color: var(--gray-10);
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: center;
+  }
+
+  &__actions-message {
+    color: var(--gray-9);
+  }
+
+  &__buttons {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+// Dark mode adjustments
+.dark, .dark-theme, [data-theme="dark"] {
+  .nxrm-missing-route-page {
+    &__code {
+      color: var(--gray-8);
+    }
+
+    &__ghost-icon {
+      color: var(--gray-7);
+    }
+  }
+}

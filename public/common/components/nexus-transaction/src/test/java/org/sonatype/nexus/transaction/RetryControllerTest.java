@@ -14,8 +14,6 @@ package org.sonatype.nexus.transaction;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -33,7 +31,7 @@ import static org.mockito.Mockito.spy;
  * Test retry controller behaviour.
  */
 public class RetryControllerTest
-    extends TestSupport
+
 {
   private static final Exception MINOR_CAUSE = new IllegalStateException();
 

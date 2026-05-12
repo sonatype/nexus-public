@@ -12,6 +12,7 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
+import DOMPurify from 'dompurify';
 
 import {
   faCheckCircle,
@@ -120,7 +121,8 @@ export default function MetricHealthDetails({itemId, onDone}) {
                   </NxTable.Cell>
                   <NxTable.Cell>{metric.name}</NxTable.Cell>
                   <NxTable.Cell>
-                    <span dangerouslySetInnerHTML={{__html: metric.message}} />
+                    {/* SECURITY FIX: Sanitize HTML to prevent XSS attacks */}
+                    <span dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(metric.message)}} />
                   </NxTable.Cell>
                   <NxTable.Cell>
                     {metric.error ? metric.error.message : ''}

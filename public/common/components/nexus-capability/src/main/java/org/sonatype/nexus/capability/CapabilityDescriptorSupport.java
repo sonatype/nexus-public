@@ -27,12 +27,13 @@ import javax.validation.ValidationException;
 import javax.validation.Validator;
 import javax.validation.groups.Default;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.validation.ConstraintViolations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -48,9 +49,10 @@ import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.cap
  * @since 2.7
  */
 public abstract class CapabilityDescriptorSupport<ConfigT>
-    extends ComponentSupport
     implements CapabilityDescriptor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private Provider<CapabilityRegistry> capabilityRegistry;
 
   private boolean exposed = true;

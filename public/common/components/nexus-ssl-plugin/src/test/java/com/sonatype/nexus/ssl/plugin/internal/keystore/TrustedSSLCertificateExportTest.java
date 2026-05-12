@@ -17,8 +17,6 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -26,6 +24,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -38,8 +38,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link TrustedSSLCertificateExport}
  */
+@ExtendWith(MockitoExtension.class)
 class TrustedSSLCertificateExportTest
-    extends Test5Support
 {
   @Mock
   private TrustedSSLCertificateStore trustedSSLCertificateStore;

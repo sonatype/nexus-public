@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.kv.KeyValueStore;
 import org.sonatype.nexus.node.datastore.NodeHeartbeatManager;
@@ -31,6 +30,8 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -43,8 +44,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder.BEARER_TOKEN_MIGRATION_STARTED;
 
+@ExtendWith(MockitoExtension.class)
 class RepositoriesBearerTokenConfigMigrationTaskTest
-    extends Test5Support
 {
   @Mock
   private NodeHeartbeatManager nodeHeartbeatManager;

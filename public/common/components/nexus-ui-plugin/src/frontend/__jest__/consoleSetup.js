@@ -18,6 +18,11 @@
 // Console filtering setup - runs before all other setup files
 // This ensures console calls from imported modules are properly filtered
 
+// In CI, suppress all console output to reduce build log noise.
+// Locally, apply pattern-based filtering to suppress known noisy messages.
+// CI=true is set via frontend-maven-plugin environmentVariables in the root pom.xml.
+const IS_CI = process.env.CI === 'true';
+
 const original = {
   error: console.error,
   warn: console.warn,
@@ -60,6 +65,8 @@ const IGNORED = {
 
 function makeFiltered(level) {
   return (...args) => {
+    if (IS_CI) return;
+
     // Convert all args to string and join with spaces, handling objects/arrays
     const text = args.map(arg => {
       if (typeof arg === 'object') {

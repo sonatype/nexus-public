@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.cache;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
@@ -37,9 +36,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NegativeCacheHandlerTest
-    extends TestSupport
 {
   @Mock
   private NegativeCacheFacet mockNegativeCacheFacet;
@@ -82,9 +83,9 @@ public class NegativeCacheHandlerTest
    * Given:
    * - request is not a GET/HEAD request
    * Then:
-   *  - context is asked to proceed
-   *  - response from context is passed on
-   *  - no other actions (checked by no interactions with repository)
+   * - context is asked to proceed
+   * - response from context is passed on
+   * - no other actions (checked by no interactions with repository)
    */
   @Test
   public void directlyProceedOnNonGetOrHeadRequests() throws Exception {
@@ -148,7 +149,7 @@ public class NegativeCacheHandlerTest
    * - no cached key present
    * - a 404 response from context for GET
    * Then:
-   *  - 404 response is cached
+   * - 404 response is cached
    */
   @Test
   public void a404ResponseGetsCachedForGet() throws Exception {
@@ -187,7 +188,7 @@ public class NegativeCacheHandlerTest
    * - no cached key present
    * - a 404 response from context for HEAD
    * Then:
-   *  - 404 response is cached
+   * - 404 response is cached
    */
   @Test
   public void a404ResponseGetsCachedForHead() throws Exception {

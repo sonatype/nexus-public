@@ -15,8 +15,7 @@ package org.sonatype.nexus.repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException;
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresException;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -32,9 +31,11 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RepositoryTaskSupportTest
-    extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;

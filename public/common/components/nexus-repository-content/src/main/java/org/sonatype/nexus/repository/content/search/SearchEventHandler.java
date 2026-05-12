@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;

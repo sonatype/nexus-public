@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {useRouter} from '@uirouter/react';
 import {useMachine} from '@xstate/react';
 import {faChevronRight} from '@fortawesome/free-solid-svg-icons';
@@ -61,15 +61,14 @@ export default function SonatypeLifecycle() {
   const router = useRouter();
   const isDarkMode = useDarkMode();
   const lifecycleLogo = isDarkMode ? lifecycleLogoDark : lifecycleLogoLight;
-
-  if (!ExtJS.useUser()) {
-    return null;
-  }
-
   const [state] = useMachine(GlobalEvaluationSettingsMachine, {devTools: true});
 
   const loading = state.matches('loading');
   const globalSettings = state.context.data;
+
+  if (!ExtJS.useUser()) {
+    return null;
+  }
 
   function navigateToIqServer(e) {
     e.preventDefault();
@@ -80,7 +79,7 @@ export default function SonatypeLifecycle() {
     router.stateService.go(ROUTE_NAMES.ADMIN.IQ.HOSTED_REPOS_EVAL.ROOT);
   }
 
-  function getSettingsDescription() {
+  const settingsDescription = useMemo(() => {
     if (loading) {
       return UIStrings.LOADING;
     }
@@ -89,9 +88,12 @@ export default function SonatypeLifecycle() {
       return UIStrings.SONATYPE_LIFECYCLE.GLOBAL_EVALUATION_SETTINGS.description;
     }
 
-    const {activityTimeFrame, artifactLatestVersions, policyEvaluationStage} = globalSettings;
-    return `Last ${activityTimeFrame} Days | ${artifactLatestVersions} Artifact Latest Versions | ${policyEvaluationStage} | Monitored : x/x`;
-  }
+    const {activityTimeFrame, artifactLatestVersions, policyEvaluationStage, monitoredRepoCount, totalRepoCount} = globalSettings;
+    const monitoredText = (monitoredRepoCount !== null && monitoredRepoCount !== undefined && totalRepoCount !== null && totalRepoCount !== undefined)
+      ? `${monitoredRepoCount}/${totalRepoCount}`
+      : 'N/A';
+    return `Last ${activityTimeFrame} Days | ${artifactLatestVersions} Artifact Latest Versions | ${policyEvaluationStage} | Monitored: ${monitoredText}`;
+  }, [loading, globalSettings]);
 
   return <Page>
     <PageHeader>
@@ -122,7 +124,7 @@ export default function SonatypeLifecycle() {
           <NxTile.Content className="lifecycle-card-content">
             <div className="card-text">
               <NxH3>{UIStrings.SONATYPE_LIFECYCLE.GLOBAL_EVALUATION_SETTINGS.title}</NxH3>
-              <NxP>{getSettingsDescription()}</NxP>
+              <NxP>{settingsDescription}</NxP>
             </div>
             <div className="card-arrow">
               <FontAwesomeIcon icon={faChevronRight} />

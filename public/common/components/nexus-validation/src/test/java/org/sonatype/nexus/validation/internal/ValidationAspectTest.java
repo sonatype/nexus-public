@@ -15,7 +15,6 @@ package org.sonatype.nexus.validation.internal;
 import javax.validation.ConstraintViolation;
 import javax.validation.executable.ExecutableValidator;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.validation.Validate;
 
@@ -24,13 +23,16 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ValidationAspectTest
-    extends TestSupport
+
 {
   private ValidationAspect validationAspect = new ValidationAspect();;
 

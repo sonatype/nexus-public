@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.logging;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.logging.task.TaskLogger;
 import org.sonatype.nexus.logging.task.TaskLoggerHelper;
 import org.sonatype.nexus.logging.task.TaskLoggingEvent;
@@ -23,7 +22,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 
@@ -38,8 +39,9 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRE
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TaskLogsFilterTest
-    extends TestSupport
+
 {
   private static final String TEST_MESSAGE = "test message";
 

@@ -14,14 +14,15 @@ package org.sonatype.nexus.scheduling;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.spi.TaskResultState;
 import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static org.mockito.Mockito.mock;
@@ -30,8 +31,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TaskUtilsTest
-    extends TestSupport
+
 {
   @Mock
   private TaskScheduler taskScheduler;

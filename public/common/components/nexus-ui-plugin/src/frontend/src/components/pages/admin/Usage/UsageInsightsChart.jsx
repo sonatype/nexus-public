@@ -55,7 +55,8 @@ export function UsageInsightsChart() {
     () => sorted.map(item => ({
         metricDate: item.metricDate,
         [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_EGRESS]: item[KEY_EGRESS],
-        [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_STORAGE]: item[KEY_STORAGE]
+        [UIStrings.HISTORICAL_USAGE.CHART.LEGEND_STORAGE]: item[KEY_STORAGE],
+        _available: item._available
       }))
     ,
     [sorted]

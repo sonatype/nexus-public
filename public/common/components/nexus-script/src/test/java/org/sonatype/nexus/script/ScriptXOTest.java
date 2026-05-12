@@ -19,15 +19,12 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class ScriptXOTest
-    extends TestSupport
 {
 
   private static final String NAME_FIELD_PATTERN_MESSAGE =

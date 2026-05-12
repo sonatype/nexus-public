@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { within } from '@testing-library/react';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 import WelcomeStrings from '../../../constants/pages/user/WelcomeStrings';
 import {
   assertCanDismissTheBanner,
@@ -24,24 +24,27 @@ jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
-  ExtJS: {
-    isProEdition: jest.fn().mockReturnValue(false),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn(),
-      getEdition: jest.fn().mockReturnValue('COMMUNITY')
-    }),
-    useState: jest.fn(),
-    usePermission: jest.fn(),
-    useUser: jest.fn().mockReturnValue({ administrator: true })
-  },
-}));
-
+// Note: Using global mock from setup.js and configuring in beforeEach
 describe('SystemNotices -- CEHardLimitAlert', () => {
   beforeEach(() => {
     const date = new Date('2024-12-02T00:00:00');
     jest.useFakeTimers().setSystemTime(date);
+    
+    // Configure ExtJS for Community Edition mode using spyOn
+    jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(false);
+    jest.spyOn(ExtJS, 'useUser').mockReturnValue({ administrator: true });
+    jest.spyOn(ExtJS, 'useState').mockImplementation(() => undefined);
+    jest.spyOn(ExtJS, 'usePermission').mockReturnValue(true);
+    
+    // Configure state mock for Community Edition
+    jest.spyOn(ExtJS, 'state').mockReturnValue({
+      getValue: jest.fn(),
+      getEdition: jest.fn().mockReturnValue('COMMUNITY'),
+    });
+  });
+  
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should render the nearing limits banner (NEAR_LIMITS_NEVER_IN_GRACE)', async () => {

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.s3.internal;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,8 @@ import java.util.stream.Stream;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import javax.validation.ValidationException;
+
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
@@ -42,8 +45,7 @@ import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper.SsrfValidationResult;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import software.amazon.awssdk.regions.Region;
 import com.google.common.collect.ImmutableList;
@@ -84,7 +86,7 @@ public class S3BlobStoreDescriptor
 
   private final Provider<CapabilityRegistry> capabilityRegistryProvider;
 
-  private final AntiSsrfHelper antiSsrfHelper;
+  private final AntiSsrfService antiSsrfService;
 
   private interface Messages
       extends MessageBundle
@@ -102,12 +104,12 @@ public class S3BlobStoreDescriptor
       final BlobStoreQuotaService quotaService,
       @Lazy final BlobStoreManager blobStoreManager,
       final Provider<CapabilityRegistry> capabilityRegistryProvider,
-      final AntiSsrfHelper antiSsrfHelper)
+      final AntiSsrfService antiSsrfService)
   {
     super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.capabilityRegistryProvider = checkNotNull(capabilityRegistryProvider);
-    this.antiSsrfHelper = checkNotNull(antiSsrfHelper);
+    this.antiSsrfService = checkNotNull(antiSsrfService);
   }
 
   @Override
@@ -246,20 +248,11 @@ public class S3BlobStoreDescriptor
       URI endpointUri = new URI(endpoint);
       String host = endpointUri.getHost();
       if (host != null) {
-        SsrfValidationResult result = antiSsrfHelper.validateHostForConfiguration(host);
-        if (!result.isValid()) {
-          throw new ValidationException(
-              "S3 endpoint blocked: " + result.getErrorMessage() + ". To allow connections, set " +
-                  "nexus.proxy.allowPrivateNetworks=true to allow all private networks, or configure specific " +
-                  "hosts using nexus.proxy.privateNetworks.allowedIPs or nexus.proxy.privateNetworks.allowedDomains.");
-        }
+        antiSsrfService.validateHostWithoutCache(host);
       }
     }
-    catch (Exception e) {
-      if (e instanceof ValidationException ve) {
-        throw ve;
-      }
-      throw new ValidationException("Invalid S3 endpoint URL format: " + endpoint);
+    catch (URISyntaxException e) {
+      throw new ValidationErrorsException("Invalid S3 endpoint URL format: " + endpoint);
     }
   }
 

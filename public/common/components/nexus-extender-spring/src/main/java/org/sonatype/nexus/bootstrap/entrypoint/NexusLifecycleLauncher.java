@@ -17,7 +17,6 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.bootstrap.entrypoint.jvm.ShutdownDelegate;
 import org.sonatype.nexus.bootstrap.spring.NexusComponentScanCompleteEvent;
@@ -35,6 +34,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
@@ -48,8 +49,9 @@ import static org.sonatype.nexus.common.time.DateHelper.toDurationString;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class NexusLifecycleLauncher
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final NexusEditionSelector nexusEditionSelector;
 
   private final ShutdownDelegate shutdownDelegate;

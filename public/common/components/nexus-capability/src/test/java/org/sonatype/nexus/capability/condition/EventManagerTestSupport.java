@@ -15,7 +15,6 @@ package org.sonatype.nexus.capability.condition;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent.Satisfied;
 import org.sonatype.nexus.capability.ConditionEvent.Unsatisfied;
@@ -36,14 +35,16 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Support for tests using event bus.
  *
  * @since capabilities 2.0
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class EventManagerTestSupport
-    extends TestSupport
 {
 
   @Mock

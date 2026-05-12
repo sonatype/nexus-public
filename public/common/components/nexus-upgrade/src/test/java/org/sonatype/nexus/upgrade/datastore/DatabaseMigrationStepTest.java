@@ -15,7 +15,6 @@ package org.sonatype.nexus.upgrade.datastore;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
@@ -29,7 +28,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 
 @Category(PostgresTestGroup.class)
 public class DatabaseMigrationStepTest
-    extends TestSupport
 {
 
   private static final String CUSTOM_SQL = "CREATE TABLE IF NOT EXISTS custom.test (\n"

@@ -12,5 +12,5 @@
  *###
 
 <div>
-<pre>$detail</pre>
+<pre>$esc.html($detail)</pre>
 </div>

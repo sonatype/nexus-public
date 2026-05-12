@@ -41,6 +41,24 @@ export function LeftNavigationMenuItem({ name, text, icon, selectedState, params
     console.warn(`LeftNavigationMenuItem -> failed to resolve link information from route name "${name}"`);
   }
 
+  // Phase 4.0: Context-aware navigation - preserve preview/default mode
+  const currentPath = typeof window !== 'undefined' ? window.location.hash : '';
+  const isPreviewUI = currentPath.startsWith('#preview'); // No slash after #
+  
+  let contextAwareHref = href;
+  if (isPreviewUI && href && !href.includes('preview')) {
+    // Extract path after # (e.g., "#browse/upload" -> "browse/upload")
+    let path = href;
+    if (href.includes('#')) {
+      path = href.substring(href.indexOf('#') + 1);
+    }
+    // Remove leading / if present
+    path = path.replace(/^\//, '');
+    // Add preview/ prefix (creates "#preview/browse/upload")
+    contextAwareHref = '#preview/' + path;
+    console.log('[LeftNav] Preview UI - stay in preview:', href, '->', contextAwareHref);
+  }
+
   const classNames = classnames('nxrm-left-nav__link', {
     'nxrm-left-nav__link--no-icon': !icon
   });
@@ -49,7 +67,7 @@ export function LeftNavigationMenuItem({ name, text, icon, selectedState, params
       className={classNames}
       text={text}
       isSelected={isSelected}
-      href={href}
+      href={contextAwareHref}
       icon={icon || faLink}
       {...props}
     />

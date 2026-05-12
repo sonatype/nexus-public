@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiFailoverBucket;
@@ -49,9 +48,11 @@ import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiCons
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.FAILOVER_DEFAULT_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.MATCHES_PRIMARY_ERROR_MESSAGE;
 import static org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiConstants.NON_EXISTENT_BLOB_STORE_ERROR_MESSAGE_FORMAT;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class S3BlobStoreApiUpdateValidationTest
-    extends TestSupport
 {
   private static final String BLOB_STORE_NAME = "super_blobstore";
 
@@ -112,10 +113,11 @@ public class S3BlobStoreApiUpdateValidationTest
     mockBlobStoreType(FILE_BLOB_STORE_TYPE);
 
     S3BlobStoreApiModel model = anS3BlobStoreApiModel(ANOTHER_BLOB_STORE_NAME);
-    ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () ->
-        underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
 
-    List<String> messages = exception.getValidationErrors().stream()
+    List<String> messages = exception.getValidationErrors()
+        .stream()
         .map(ValidationErrorXO::getMessage)
         .collect(Collectors.toList());
 
@@ -150,10 +152,11 @@ public class S3BlobStoreApiUpdateValidationTest
         s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null, null);
     S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig);
 
-    ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () ->
-        underTest.validateCreateRequest(model));
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateCreateRequest(model));
 
-    List<String> messages = exception.getValidationErrors().stream()
+    List<String> messages = exception.getValidationErrors()
+        .stream()
         .map(ValidationErrorXO::getMessage)
         .collect(Collectors.toList());
 
@@ -171,10 +174,11 @@ public class S3BlobStoreApiUpdateValidationTest
         s3BlobStoreApiFailoverBuckets("us-east-1", "us-east-1", "default"), null, null);
     S3BlobStoreApiModel model = new S3BlobStoreApiModel(BLOB_STORE_NAME, null, bucketConfig);
 
-    ValidationErrorsException exception = assertThrows(ValidationErrorsException.class, () ->
-        underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
+    ValidationErrorsException exception =
+        assertThrows(ValidationErrorsException.class, () -> underTest.validateUpdateRequest(model, BLOB_STORE_NAME));
 
-    List<String> messages = exception.getValidationErrors().stream()
+    List<String> messages = exception.getValidationErrors()
+        .stream()
         .map(ValidationErrorXO::getMessage)
         .collect(Collectors.toList());
 

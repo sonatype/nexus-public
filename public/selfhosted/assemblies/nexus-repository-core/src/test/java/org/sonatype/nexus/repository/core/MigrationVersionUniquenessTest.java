@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.junit.Test;
@@ -42,7 +41,6 @@ import static org.hamcrest.Matchers.empty;
  * included in the nexus-repository-core (OSS) distribution.
  */
 public class MigrationVersionUniquenessTest
-    extends TestSupport
 {
   @Test
   public void testNoMigrationVersionDuplicates() throws Exception {

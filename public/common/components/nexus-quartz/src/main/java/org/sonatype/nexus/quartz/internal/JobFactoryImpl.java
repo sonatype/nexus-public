@@ -14,8 +14,6 @@ package org.sonatype.nexus.quartz.internal;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import jakarta.inject.Singleton;
 import org.quartz.Job;
 import org.quartz.Scheduler;
@@ -27,6 +25,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Spring-aware {@link JobFactory}.
@@ -36,9 +36,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class JobFactoryImpl
-    extends ComponentSupport
     implements JobFactory, ApplicationContextAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private ApplicationContext applicationContext;
 
   @Override

@@ -17,8 +17,6 @@ import java.text.StringCharacterIterator;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
@@ -28,7 +26,6 @@ import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.repository.view.matchers.token.PatternParser.readFragment;
 
 public class PatternParserFragmentReadingTest
-    extends TestSupport
 {
   public static final String WILD = ".+";
 

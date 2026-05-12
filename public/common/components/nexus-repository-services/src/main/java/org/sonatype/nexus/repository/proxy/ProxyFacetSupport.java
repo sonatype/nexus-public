@@ -17,9 +17,11 @@ import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.validation.ValidationException;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
@@ -60,8 +63,7 @@ import org.sonatype.nexus.repository.view.payloads.HeaderOnlyPayload;
 import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
 import org.sonatype.nexus.transaction.RetryDeniedException;
 import org.sonatype.nexus.validation.constraint.Url;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper.SsrfValidationResult;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
@@ -152,6 +154,12 @@ public abstract class ProxyFacetSupport
      */
     @NotNull
     public boolean preserveEncodedCharacters = false;
+
+    /**
+     * Enable Yellowfin proxy routing for Firewall Pro.
+     * When true, requests are routed through the Yellowfin proxy service.
+     */
+    public boolean yellowfinEnabled = false;
 
     /**
      * Content max-age.
@@ -277,11 +285,11 @@ public abstract class ProxyFacetSupport
   @Nullable
   private FirewallHeaderProvider firewallHeaderProvider;
 
-  private AntiSsrfHelper antiSsrfHelper;
+  private AntiSsrfService antiSsrfService;
 
   @Inject
-  protected void configureAntiSsrfHelper(final AntiSsrfHelper ssrfProtectionHelper) {
-    this.antiSsrfHelper = checkNotNull(ssrfProtectionHelper);
+  protected void configureAntiSsrfService(final AntiSsrfService antiSsrfService) {
+    this.antiSsrfService = checkNotNull(antiSsrfService);
   }
 
   @VisibleForTesting
@@ -470,7 +478,7 @@ public abstract class ProxyFacetSupport
       remote = fetch(context, content);
       if (remote != null) {
         // HEAD requests return metadata immediately without storing/caching
-        if (isHeadRequest(context)) {
+        if (isHeadRequest(context) && shouldSkipStoreForHead()) {
           log.debug("HEAD request - returning remote metadata without caching");
           content = remote;
         }
@@ -500,15 +508,18 @@ public abstract class ProxyFacetSupport
       if (remote != null && !remote.equals(content)) {
         Closeables.close(remote, true);
       }
+      printOutboundLogging(context);
     }
-    printOutboundLogging(context);
     return content;
   }
 
   private void printOutboundLogging(final Context context) {
     try {
-
       Stopwatch stopwatch = context.getAttribute(CTX_REQ_STOPWATCH, Stopwatch.class);
+      if (stopwatch == null) {
+        return;
+      }
+
       HttpContext httpContext = context.getAttribute(HTTP_CONTEXT, HttpContext.class);
 
       String requestUri = context.getRequest().getPath();
@@ -525,9 +536,12 @@ public abstract class ProxyFacetSupport
         return;
       }
 
+      SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
       String formattedString = OutboundRequestContext.getFormattedString();
       String newFormattedString =
-          formattedString.replace("---", String.valueOf(stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+          formattedString.replace(OutboundRequestContext.ELAPSED_TIME_PLACEHOLDER,
+              String.valueOf(stopwatch.elapsed(TimeUnit.MILLISECONDS)))
+              .replace(OutboundRequestContext.TIMESTAMP_PLACEHOLDER, dateFormat.format(new Date()));
       outboundReqLog.info(OUTBOUND_REQUESTS_LOG_ONLY, "{}", newFormattedString);
     }
     finally {
@@ -1132,14 +1146,13 @@ public abstract class ProxyFacetSupport
       return;
     }
 
-    SsrfValidationResult result = antiSsrfHelper.validateHost(host);
-    if (!result.isValid()) {
-      String message = ("Access to remote %s blocked: %s. To allow connections, set " +
-          "nexus.proxy.allowPrivateNetworks=true to allow all private networks, or configure specific " +
-          "hosts using nexus.proxy.privateNetworks.allowedIPs or nexus.proxy.privateNetworks.allowedDomains.")
-              .formatted(uri, result.getErrorMessage());
+    try {
+      antiSsrfService.validateHost(host);
+    }
+    catch (ValidationException e) {
+      String message = "Access to remote %s blocked: %s".formatted(uri, e.getMessage());
       log.debug("Blocked outbound request to local/private network URL: {} (repository: {}, reason: {})",
-          uri, getRepository().getName(), result.getErrorMessage());
+          uri, getRepository().getName(), e.getMessage());
       throw new RemoteBlockedIOException(message);
     }
   }
@@ -1149,6 +1162,10 @@ public abstract class ProxyFacetSupport
     if (!event.isLocal() && getRepository().getName().equals(event.getRepositoryName())) {
       cacheControllerHolder.getMetadataCacheController().setCache(event.getToken());
     }
+  }
+
+  protected boolean shouldSkipStoreForHead() {
+    return true;
   }
 
   /**

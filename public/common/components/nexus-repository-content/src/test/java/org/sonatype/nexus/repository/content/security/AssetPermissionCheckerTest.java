@@ -12,15 +12,14 @@
  */
 package org.sonatype.nexus.repository.content.security;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
@@ -32,7 +31,9 @@ import org.sonatype.nexus.selector.VariableSource;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -42,8 +43,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetPermissionCheckerTest
-    extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;
@@ -90,7 +91,7 @@ public class AssetPermissionCheckerTest
     when(asset.path()).thenReturn("/com/example/artifact-1.0.jar");
 
     when(contentFacetFinder.findRepository(eq("maven2"), any())).thenReturn(Optional.of(repository));
-    when(repositoryManager.findContainingGroups("test-repo")).thenReturn(new ArrayList<>());
+    when(repositoryManager.findContainingGroups("test-repo")).thenReturn(Set.of());
     when(contentPermissionChecker.isPermitted(eq("test-repo"), eq("maven2"), eq("read"), any()))
         .thenReturn(true);
 
@@ -109,7 +110,7 @@ public class AssetPermissionCheckerTest
     when(asset.path()).thenReturn("/com/example/artifact-1.0.jar");
 
     when(contentFacetFinder.findRepository(eq("maven2"), any())).thenReturn(Optional.of(repository));
-    when(repositoryManager.findContainingGroups("test-repo")).thenReturn(new ArrayList<>());
+    when(repositoryManager.findContainingGroups("test-repo")).thenReturn(Set.of());
     when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(), any()))
         .thenReturn(false);
 
@@ -140,7 +141,7 @@ public class AssetPermissionCheckerTest
     when(asset.path()).thenReturn("/path/to/asset");
 
     when(contentFacetFinder.findRepository(eq("maven2"), any())).thenReturn(Optional.of(repository));
-    when(repositoryManager.findContainingGroups("test-repo")).thenReturn(new ArrayList<>());
+    when(repositoryManager.findContainingGroups("test-repo")).thenReturn(Set.of());
     when(contentPermissionChecker.isPermitted(eq("test-repo"), eq("maven2"), eq("read"), any()))
         .thenReturn(true);
 
@@ -155,7 +156,7 @@ public class AssetPermissionCheckerTest
     when(asset.path()).thenReturn("/path/to/asset");
 
     when(contentFacetFinder.findRepository(eq("maven2"), any())).thenReturn(Optional.of(repository));
-    when(repositoryManager.findContainingGroups("test-repo")).thenReturn(new ArrayList<>());
+    when(repositoryManager.findContainingGroups("test-repo")).thenReturn(Set.of());
     when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(), any()))
         .thenReturn(false);
 
@@ -169,8 +170,7 @@ public class AssetPermissionCheckerTest
     when(asset.path()).thenReturn("/path/to/asset");
 
     when(contentFacetFinder.findRepository(eq("maven2"), any())).thenReturn(Optional.of(repository));
-    ArrayList<String> groups = new ArrayList<>();
-    groups.add("maven-group");
+    Set<String> groups = Set.of("maven-group");
     when(repositoryManager.findContainingGroups("test-repo")).thenReturn(groups);
 
     // Deny direct repo but allow group

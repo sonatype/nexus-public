@@ -26,13 +26,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.repository.BadRequestException;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toSet;
@@ -45,9 +46,10 @@ import org.springframework.stereotype.Component;
 @Produces(APPLICATION_JSON)
 @Path(LoggingConfigurationResource.RESOURCE_PATH)
 public class LoggingConfigurationResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String RESOURCE_PATH = "internal/ui/loggingConfiguration";
 
   private static final String ROOT = "ROOT";

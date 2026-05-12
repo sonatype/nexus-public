@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.cleanup.storage.config;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.storage.config.RegexCriteriaValidator.InvalidExpressionException;
 
 import org.junit.Test;
@@ -21,7 +20,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class RegexCriteriaValidatorTest
-    extends TestSupport
+
 {
   private static final String EXPRESSION = "org/sonatype";
 

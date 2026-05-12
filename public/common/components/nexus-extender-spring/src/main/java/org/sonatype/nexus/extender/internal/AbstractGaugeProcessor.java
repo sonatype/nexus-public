@@ -15,23 +15,26 @@ package org.sonatype.nexus.extender.internal;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.annotation.CachedGauge;
 import com.codahale.metrics.annotation.Gauge;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
 /**
  * base class to process metrics of methods annotated with {@link Gauge} or {@link CachedGauge} annotations.
  */
 public abstract class AbstractGaugeProcessor<A extends Annotation>
-    extends ComponentSupport
     implements BeanPostProcessor
 {
-  protected final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate("nexus");
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
+  protected final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
 
   /**
    * Scans all methods of a bean (including superclasses) and processes them.

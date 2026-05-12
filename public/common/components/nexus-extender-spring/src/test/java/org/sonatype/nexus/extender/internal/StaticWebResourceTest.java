@@ -17,7 +17,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.webresources.WebResource;
 
@@ -41,7 +40,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class StaticWebResourceTest
-    extends Test5Support
 {
   @Mock
   private ApplicationContext applicationContext;

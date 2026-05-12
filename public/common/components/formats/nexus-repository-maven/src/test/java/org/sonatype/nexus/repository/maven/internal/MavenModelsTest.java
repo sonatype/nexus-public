@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.maven.internal;
 
 import java.io.ByteArrayInputStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.model.Model;
 import org.junit.Test;
@@ -24,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 
 public class MavenModelsTest
-    extends TestSupport
+
 {
   String notXml = "not xml";
 

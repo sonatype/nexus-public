@@ -82,7 +82,7 @@ export default function IqServerConnected() {
   }
 
   function navigateToConnectionSettings() {
-    router.stateService.go(ROUTE_NAMES.ADMIN.IQ.ROOT);
+    router.stateService.go(ROUTE_NAMES.ADMIN.IQ.ROOT, {fromConnected: true});
   }
 
   function navigateToLifecycle() {
@@ -93,27 +93,29 @@ export default function IqServerConnected() {
 
   return <Page>
     <PageHeader>
-      <div className="nxrm-iq-page-title-wrapper">
-        <PageTitle
-          icon={faShieldAlt}
-          text={UIStrings.IQ_SERVER.CONNECTED.TITLE}
-        />
-        {!isLoading && (
-          <div className="nxrm-iq-page-description">
-            {isConnected ? (
-              <NxPositiveStatusIndicator>{UIStrings.IQ_SERVER.CONNECTED.STATUS}</NxPositiveStatusIndicator>
-            ) : (
-              <NxErrorStatusIndicator>{UIStrings.IQ_SERVER.CONNECTED.CONNECTION_ERROR}</NxErrorStatusIndicator>
-            )}
-            <span className="nxrm-iq-subtitle">{UIStrings.IQ_SERVER.CONNECTED.SUBTITLE}</span>
-          </div>
-        )}
+      <div className="nxrm-iq-header-layout">
+        <div className="nxrm-iq-page-title-wrapper">
+          <PageTitle
+            icon={faShieldAlt}
+            text={UIStrings.IQ_SERVER.CONNECTED.TITLE}
+          />
+          {!isLoading && (
+            <div className="nxrm-iq-page-description">
+              {isConnected ? (
+                <NxPositiveStatusIndicator>{UIStrings.IQ_SERVER.CONNECTED.STATUS}</NxPositiveStatusIndicator>
+              ) : (
+                <NxErrorStatusIndicator>{UIStrings.IQ_SERVER.CONNECTED.CONNECTION_ERROR}</NxErrorStatusIndicator>
+              )}
+              <span className="nxrm-iq-subtitle">{UIStrings.IQ_SERVER.CONNECTED.SUBTITLE}</span>
+            </div>
+          )}
+        </div>
+        <PageActions>
+          <NxButton variant="tertiary" onClick={navigateToConnectionSettings}>
+            {UIStrings.IQ_SERVER.CONNECTED.CONNECTION_SETTINGS_BUTTON}
+          </NxButton>
+        </PageActions>
       </div>
-      <PageActions>
-        <NxButton variant="tertiary" onClick={navigateToConnectionSettings}>
-          {UIStrings.IQ_SERVER.CONNECTED.CONNECTION_SETTINGS_BUTTON}
-        </NxButton>
-      </PageActions>
     </PageHeader>
     <ContentBody className="nxrm-iq-server-connected">
       <Section>
@@ -145,21 +147,29 @@ export default function IqServerConnected() {
                 {hasLifecycle ? UIStrings.IQ_SERVER.CONNECTED.LIFECYCLE.ENABLED : UIStrings.IQ_SERVER.CONNECTED.LIFECYCLE.NOT_AVAILABLE}
               </div>
               {!hasLifecycle && (
-                <NxTextLink className="nxrm-iq-explore-link" external href="https://www.sonatype.com/products/sonatype-lifecycle" rel="noopener noreferrer">
-                  {UIStrings.IQ_SERVER.CONNECTED.LIFECYCLE.EXPLORE_LINK}
-                </NxTextLink>
+                <>
+                  <div className="nxrm-iq-tile-error-message">
+                    {UIStrings.IQ_SERVER.CONNECTED.LIFECYCLE.LICENSE_NOT_AVAILABLE}
+                  </div>
+                  <NxTextLink className="nxrm-iq-explore-link" external href="https://links.sonatype.com/products/nxrm3/browse/lc-learn" rel="noopener noreferrer">
+                    {UIStrings.IQ_SERVER.CONNECTED.LIFECYCLE.EXPLORE_LINK}
+                  </NxTextLink>
+                </>
               )}
             </div>
-            <div className="nxrm-iq-tile-arrow" aria-hidden="true">
-              <FontAwesomeIcon icon={faChevronRight} />
-            </div>
+            {hasLifecycle && (
+              <div className="nxrm-iq-tile-arrow" aria-hidden="true">
+                <FontAwesomeIcon icon={faChevronRight} />
+              </div>
+            )}
           </div>
 
           <div
             className={`nxrm-iq-tile ${hasFirewall ? 'enabled' : 'disabled'}`}
             role="listitem"
             aria-label={`Repository Firewall - ${hasFirewall ? 'Enabled' : 'Not Available'}`}
-            tabIndex={hasFirewall ? 0 : -1}
+            tabIndex={-1}
+            style={{cursor: 'default'}}
           >
             <div className="nxrm-iq-tile-content">
               <div className="nxrm-iq-tile-header">
@@ -173,13 +183,15 @@ export default function IqServerConnected() {
                 {hasFirewall ? UIStrings.IQ_SERVER.CONNECTED.FIREWALL.ENABLED : UIStrings.IQ_SERVER.CONNECTED.FIREWALL.NOT_AVAILABLE}
               </div>
               {!hasFirewall && (
-                <NxTextLink className="nxrm-iq-explore-link" external href="https://www.sonatype.com/products/firewall" rel="noopener noreferrer">
-                  {UIStrings.IQ_SERVER.CONNECTED.FIREWALL.EXPLORE_LINK}
-                </NxTextLink>
+                <>
+                  <div className="nxrm-iq-tile-error-message">
+                    {UIStrings.IQ_SERVER.CONNECTED.FIREWALL.LICENSE_NOT_AVAILABLE}
+                  </div>
+                  <NxTextLink className="nxrm-iq-explore-link" external href="https://links.sonatype.com/nexus-repository-firewall" rel="noopener noreferrer">
+                    {UIStrings.IQ_SERVER.CONNECTED.FIREWALL.EXPLORE_LINK}
+                  </NxTextLink>
+                </>
               )}
-            </div>
-            <div className="nxrm-iq-tile-arrow" aria-hidden="true">
-              <FontAwesomeIcon icon={faChevronRight} />
             </div>
           </div>
         </div>

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.browse;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -29,7 +28,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class BrowseTestSupport
-    extends TestSupport
 {
   protected void assertPaths(List<String> expectedPaths, List<BrowsePath> paths) {
     assertPaths(expectedPaths, paths, false);

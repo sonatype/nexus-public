@@ -17,8 +17,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Selector;
@@ -78,7 +77,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
     "nexus.quartz.jobstore.jdbc=true"
 })
 public abstract class TaskSchedulerTestSupport
-    extends Test5Support
 {
   @Autowired
   private SchedulerSPI scheduler;

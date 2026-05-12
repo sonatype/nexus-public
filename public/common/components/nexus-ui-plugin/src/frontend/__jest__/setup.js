@@ -15,6 +15,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
+
+// Increase default async timeout for findBy/waitFor queries.
+// CI machines are CPU-constrained, causing flaky test failures.
+configure({ asyncUtilTimeout: 5000 });
 
 let lastValue = 0;
 

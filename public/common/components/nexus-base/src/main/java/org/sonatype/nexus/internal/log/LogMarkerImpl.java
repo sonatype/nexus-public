@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.log;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LogMarkInsertedEvent;
@@ -23,6 +22,8 @@ import org.sonatype.nexus.common.log.LogMarker;
 import org.sonatype.nexus.common.log.LoggerLevel;
 
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -35,9 +36,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class LogMarkerImpl
-    extends ComponentSupport
     implements LogMarker
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final LogManager logManager;
 
   private final EventManager eventManager;

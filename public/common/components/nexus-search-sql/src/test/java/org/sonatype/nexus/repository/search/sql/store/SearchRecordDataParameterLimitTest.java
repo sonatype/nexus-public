@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.search.sql.store;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +25,6 @@ import static org.sonatype.nexus.repository.search.sql.store.SearchRecordData.MA
  * Test for NEXUS-50251 - Verify parameter limit enforcement
  */
 public class SearchRecordDataParameterLimitTest
-    extends Test5Support
 {
   private SearchRecordData underTest;
 

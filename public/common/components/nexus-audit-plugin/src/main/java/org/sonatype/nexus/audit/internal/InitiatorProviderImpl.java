@@ -15,12 +15,13 @@ package org.sonatype.nexus.audit.internal;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.security.UserIdHelper;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default {@link InitiatorProvider} implementation.
@@ -30,9 +31,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class InitiatorProviderImpl
-    extends ComponentSupport
     implements InitiatorProvider
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ClientInfoProvider clientInfoProvider;
 
   @Inject

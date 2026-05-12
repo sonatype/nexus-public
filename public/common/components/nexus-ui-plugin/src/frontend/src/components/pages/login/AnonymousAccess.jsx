@@ -12,28 +12,32 @@
  */
 
 import React from 'react';
-import { NxButton, NxFontAwesomeIcon } from '@sonatype/react-shared-components';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { Flex, Link } from '@radix-ui/themes';
 import { useRouter } from '@uirouter/react';
 import UIStrings from '../../../constants/UIStrings';
-import './AnonymousAccess.scss';
 import { RouteNames } from "../../../constants/RouteNames";
 
 const { CONTINUE_WITHOUT_LOGIN } = UIStrings;
 
 /**
- * Button component that allows users to continue without logging in when anonymous access is enabled.
+ * Link component that allows users to continue without logging in when anonymous access is enabled.
+ * Properly handles returnTo parameter for redirect after anonymous navigation.
  */
 export default function AnonymousAccess() {
   const router = useRouter();
 
-  const handleContinueWithoutLogin = () => {
+  const handleContinueWithoutLogin = (e) => {
+    e.preventDefault();
     try {
       const returnTo = router.globals.params.returnTo;
       if (returnTo) {
-       const originalReturnTo = atob(returnTo);
-        // `router.urlService.url` does set and navigate to the returnTo url
-        router.urlService.url(originalReturnTo);
+        const decodedReturnTo = atob(returnTo);
+        // Validate decoded URL is a safe relative path (prevents open redirect)
+        if (decodedReturnTo.startsWith('/') || decodedReturnTo.startsWith('#')) {
+          router.urlService.url(decodedReturnTo);
+        } else {
+          router.stateService.go(RouteNames.MISSING_ROUTE);
+        }
       } else {
         router.stateService.go('browse.welcome');
       }
@@ -44,20 +48,17 @@ export default function AnonymousAccess() {
   };
 
   return (
-    <>
-      <hr className="nx-divider" />
-      <NxButton
-        variant="secondary"
-        className="continue-without-login-button"
+    <Flex justify="center" pt="3" className="login-footer">
+      <Link
+        href="#browse/welcome"
         onClick={handleContinueWithoutLogin}
+        className="login-continue"
+        size="2"
         data-testid="continue-without-login-button"
         data-analytics-id="nxrm-login-anonymous"
       >
-        <span>{CONTINUE_WITHOUT_LOGIN}</span>
-        <NxFontAwesomeIcon icon={faArrowRight} />
-      </NxButton>
-    </>
+        {CONTINUE_WITHOUT_LOGIN}
+      </Link>
+    </Flex>
   );
 }
-
-

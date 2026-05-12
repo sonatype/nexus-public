@@ -16,19 +16,20 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Method;
-
-import org.sonatype.goodies.testsupport.TestSupport;
 
 import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardTest.State.INITIALISED;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TransitionsAspectTest
-    extends TestSupport
+
 {
 
   private TransitionsAspect transitionsAspect;

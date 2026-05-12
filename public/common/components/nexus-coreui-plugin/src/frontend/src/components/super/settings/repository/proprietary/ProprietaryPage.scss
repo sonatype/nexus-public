@@ -1,0 +1,94 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.proprietary-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-6, 24px);
+  background: var(--color-background, #fff);
+
+  [data-theme='dark'] & {
+    background: var(--gray-1, #111113);
+  }
+
+  &__alerts {
+    margin-top: var(--space-4, 16px);
+    margin-bottom: var(--space-4, 16px);
+    flex-shrink: 0;
+  }
+
+  &__content {
+    flex: 1;
+    overflow: auto;
+    margin-top: var(--space-4, 16px);
+  }
+
+  &__actions {
+    margin-top: var(--space-6, 24px);
+    padding-top: var(--space-4, 16px);
+    border-top: 1px solid var(--gray-4, #ebebef);
+
+    [data-theme='dark'] & {
+      border-top-color: var(--gray-4, #27272b);
+    }
+  }
+
+  &__read-only {
+    padding: var(--space-4, 16px);
+    background: var(--gray-2, #f9f9fb);
+    border-radius: var(--radius-2, 6px);
+
+    [data-theme='dark'] & {
+      background: var(--gray-2, #19191b);
+    }
+  }
+
+  &__read-only-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: var(--space-3, 12px);
+    color: var(--color-text-primary, #1a1a1a);
+
+    [data-theme='dark'] & {
+      color: var(--gray-12, #edeef0);
+    }
+  }
+
+  &__read-only-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2, 8px);
+  }
+
+  &__read-only-item {
+    padding: var(--space-1, 4px) var(--space-2, 8px);
+    background: var(--gray-4, #ebebef);
+    border-radius: var(--radius-1, 4px);
+    color: var(--color-text-primary, #1a1a1a);
+
+    [data-theme='dark'] & {
+      background: var(--gray-4, #27272b);
+      color: var(--gray-12, #edeef0);
+    }
+  }
+
+  &__read-only-empty {
+    color: var(--gray-11, #6f6f78);
+    font-style: italic;
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+}

@@ -14,12 +14,13 @@ package org.sonatype.nexus.repository.view.matchers.logic;
 
 import java.util.List;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Matcher;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,9 +32,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @see LogicMatchers
  */
 public class OrMatcher
-    extends ComponentSupport
     implements Matcher
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final List<Matcher> matchers;
 
   @VisibleForTesting

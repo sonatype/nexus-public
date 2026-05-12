@@ -14,14 +14,15 @@ package org.sonatype.nexus.repository.content.fluent.constraints;
 
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.group.GroupFacet;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,8 +32,8 @@ import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepo
 import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.LOCAL;
 import static org.sonatype.nexus.repository.content.fluent.constraints.GroupRepositoryConstraint.GroupRepositoryLocation.MEMBERS;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class GroupRepositoryConstraintTest
-    extends TestSupport
 {
   @Mock
   private Repository repository;

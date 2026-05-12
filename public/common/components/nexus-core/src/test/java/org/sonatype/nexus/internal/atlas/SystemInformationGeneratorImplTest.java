@@ -22,9 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusProperties;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.SystemInformationHelper;
 import org.sonatype.nexus.common.node.DeploymentAccess;
@@ -46,12 +45,14 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Unit tests for {@link SystemInformationGeneratorImpl}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SystemInformationGeneratorImplTest
-    extends TestSupport
 {
 
   public static final Map<String, Object> UNAVAILABLE = SystemInformationGeneratorImpl.UNAVAILABLE;

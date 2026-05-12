@@ -19,11 +19,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -40,9 +41,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class ObjectMapperResolver
-    extends ComponentSupport
     implements ContextResolver<ObjectMapper>, Component
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final jakarta.inject.Provider<ObjectMapper> mapperProvider;
 
   @Inject

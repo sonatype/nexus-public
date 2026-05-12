@@ -280,6 +280,7 @@ public class AssetXO
       exposedAttributes.putAll(formatAttributes.entrySet()
           .stream()
           .filter(e -> exposedAttributeKeys.contains(e.getKey()))
+          .filter(e -> e.getValue() != null)
           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 

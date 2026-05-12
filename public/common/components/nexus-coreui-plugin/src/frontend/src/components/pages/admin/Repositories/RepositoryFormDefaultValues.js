@@ -57,7 +57,11 @@ export const genericDefaultValues = {
     component: {
       proprietaryComponents: false
     },
-    cleanup: null
+    cleanup: null,
+    // TODO: CLM-38706 - Add evaluation field integration with backend API
+    evaluation: {
+      mode: 'INHERIT'
+    }
   },
   group: {
     type: 'group',

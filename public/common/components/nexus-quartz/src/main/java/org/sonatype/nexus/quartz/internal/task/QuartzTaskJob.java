@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Mutex;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.common.event.EventManager;
@@ -45,6 +44,8 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.PersistJobDataAfterExecution;
 import org.quartz.UnableToInterruptJobException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -69,9 +70,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QuartzTaskJob
-    extends ComponentSupport
     implements InterruptableJob
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final Mutex MUTEX = new Mutex();
 
   private final EventManager eventManager;
@@ -121,12 +123,18 @@ public class QuartzTaskJob
   private void doExecute() throws Exception {
     Exception failure = null;
     try {
+      // NEXUS-51042: Check if listener initialization failed before proceeding
+      Exception initError = (Exception) context.get(QuartzTaskJobListener.INIT_ERROR_KEY);
+      if (initError != null) {
+        throw new IllegalStateException("Job context initialization failed in listener", initError);
+      }
+
       // init all the needed members: context already set, taskInfo and future (to set thread)
       taskInfo = (QuartzTaskInfo) context.get(QuartzTaskInfo.TASK_INFO_KEY);
-      checkState(taskInfo != null);
+      checkState(taskInfo != null, "TaskInfo not found in context - listener may have failed");
 
       taskFuture = (QuartzTaskFuture) context.get(QuartzTaskFuture.FUTURE_KEY);
-      checkState(taskFuture != null);
+      checkState(taskFuture != null, "TaskFuture not found in context - listener may have failed");
 
       taskFuture.setJobExecutingThread(Thread.currentThread());
 

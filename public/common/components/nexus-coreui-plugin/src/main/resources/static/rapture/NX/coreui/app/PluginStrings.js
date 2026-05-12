@@ -229,6 +229,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchHelm_Text: 'Helm',
     SearchHelm_Description: 'Search for components in Helm repositories',
     SearchHelm_Group: 'Helm Repositories',
+    SearchHelm_Name_FieldLabel: 'Name',
+    SearchHelm_Version_FieldLabel: 'Version',
     Repository_Facet_HelmFacet_Title: 'Helm Settings',
 
     // Browse -> Search -> npm
@@ -295,6 +297,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchConda_Description: 'Search for components in Conda repositories',
     SearchConda_Group: 'Conda Repositories',
     SearchConda_License_FieldLabel: 'License',
+
+    // Browse -> Search -> Pub
+    SearchPub_Text: 'Pub',
+    SearchPub_Description: 'Search for components in Pub (pub.dev) repositories',
+    SearchPub_Group: 'Pub Repositories',
 
     // Browse -> Browse
     FeatureGroups_Browse_Text: 'Browse',
@@ -457,6 +464,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_Raw_ContentDisposition_HelpText: 'Add Content-Disposition header as \'Attachment\' to disable some content from being inline in a browser.',
     Repository_Facet_Raw_ContentDisposition_Inline: 'Inline',
     Repository_Facet_Raw_ContentDisposition_Attachment: 'Attachment',
+    Repository_Facet_Raw_ContentDisposition_Warning: 'Serving content inline allows uploaded HTML to render on a trusted Nexus URL, which can be exploited for phishing attacks against other users.',
     Repository_Facet_YumSigningFacet_Title: 'Yum Settings',
     Repository_Facet_YumSigningFacet_Hint: '<em style="font-size: 12px">Verifying of Yum repodata files can use GPG keys. ' +
         'Read our <a href="http://links.sonatype.com/products/nxrm3/docs/gpg-signatures-for-yum-proxy-group" target="_blank">documentation</a>' +
@@ -521,6 +529,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_SwiftFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://github.com/',
     Repository_Facet_ComposerFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo.packagist.org',
     Repository_Facet_ProxyFacet_Conan_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://center.conan.io',
+    Repository_Facet_PubFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://pub.dev',
     Ssl_SslUseTrustStore_BoxLabel: 'Use the Nexus Repository truststore',
     Ssl_SslUseTrustStore_Certificate_Button: 'View certificate',
     Ssl_SslUseTrustStore_Certificate_HelpText: 'Use certificates stored in the Nexus Repository truststore to connect to external systems',
@@ -534,6 +543,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_Maven2Facet_ContentDisposition_HelpText: 'Add Content-Disposition header as \'Attachment\' to disable some content from being inline in a browser.',
     Repository_Facet_Maven2Facet_ContentDisposition_Inline: 'Inline',
     Repository_Facet_Maven2Facet_ContentDisposition_Attachment: 'Attachment',
+    Repository_Facet_Maven2Facet_ContentDisposition_Warning: 'Serving content inline allows uploaded HTML to render on a trusted Nexus URL, which can be exploited for phishing attacks against other users.',
     Repository_Facet_Maven2Facet_LayoutPolicy_FieldLabel: 'Layout policy',
     Repository_Facet_Maven2Facet_LayoutPolicy_HelpText: 'Validate that all paths are maven artifact or metadata paths',
     Repository_Facet_Maven2Facet_LayoutPolicy_EmptyText: 'Select a policy',
@@ -1065,6 +1075,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Api_Text: 'API',
     Api_Description: 'Learn how to interact with Sonatype Nexus Repository programmatically',
 
+    // Admin -> System -> Nexus One UI
+    PreviewUiSettings_Text: 'Nexus One UI',
+    PreviewUiSettings_Description: 'Configure access to the Nexus One UI experience',
+
     // Admin -> System -> Capabilities
     Capabilities_Text: 'Capabilities',
     Capabilities_Description: 'Manage capabilities',
@@ -1210,22 +1224,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     System_HttpSettings_HttpsProxyAuthentication_Title: 'Authentication',
 
     // Admin -> System -> Nodes
-    Nodes_Toggling_read_only_mode: 'Toggling read-only mode',
-    Nodes_Disable_read_only_mode: 'Disable read-only mode',
-    Nodes_Disable_read_only_mode_dialog: 'Disable read-only mode?',
-    Nodes_Enable_read_only_mode: 'Enable read-only mode',
-    Nodes_Enable_read_only_mode_dialog: 'Enable read-only mode?',
-    Nodes_Read_only_mode_warning: 'Nexus Repository is in read-only mode',
-    Nodes_force_release_dialog: 'Forcibly disable read-only mode?',
-    Nodes_force_release: 'Force disable read-only mode',
     Nodes_Quorum_lost_warning: 'Not enough Nexus Repository Manager nodes in the cluster are reachable so quorum cannot be achieved; database is read only. <a href="#admin/system/nodes/clusterreset">Troubleshoot</a>',
     Nodes_OSS_Message: 'You are running a single-node instance of Nexus Repository Manager.',
-    Nodes_enable_read_only_mode_dialog_description: 'Are you sure you want to reject additions of new' +
-        ' components and changes to configuration?',
-    Nodes_disable_read_only_mode_dialog_description: 'Are you sure you want to stop rejecting additions of new' +
-        ' components and changes to configuration?',
-    Nodes_force_release_warning: 'Warning: read-only mode has been enabled by system tasks. Releasing read-only mode before those tasks are complete may cause them to fail and/or cause data loss.',
-    Nodes_force_release_confirmation: 'Are you sure you want to forcibly release read-only mode?',
     Nodes_NodeSettings_Title: 'Edit Node',
     Nodes_NodeSettingsForm_Update_Error: 'You do not have permission to update nodes',
     Nodes_NodeSettingsForm_Update_Success: 'Node updated, node is now named: ',
@@ -1391,7 +1391,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Clm_Dashboard_Link_Text: '<span class="x-fa fa-dashboard"></span>IQ Server Dashboard<span class="x-fa fa-external-link"></span>',
     Clm_Dashboard_Description: 'Open Dashboard for Sonatype Repository Firewall and Sonatype Lifecycle',
     Clm_Dashboard_Disabled_Tooltip: 'IQ Server must be enabled first',
-    ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank" rel="noopener">IQ Server</a> ' +
+    ClmSettings_Html: '<p><a href="https://links.sonatype.com/products/nxrm3/browse/lc-learn" target="_blank" rel="noopener">IQ Server</a> ' +
         'can evaluate application and organization policies.</p>' +
         '<p>To enable this feature configure the IQ Server URL, username and password.</p>',
 

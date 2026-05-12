@@ -16,8 +16,6 @@ import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import jakarta.inject.Provider;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,12 +25,14 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link BaseUrlManagerImpl}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BaseUrlManagerImplTest
-    extends TestSupport
 {
   static final String NUGET_QUERY = "/repository/nuget.org-proxy/Packages(Id='jQuery',Version='2.1.4')";
 

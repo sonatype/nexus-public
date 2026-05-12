@@ -21,9 +21,9 @@ import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanOperationInfo;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -33,8 +33,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class MBeanBuilder
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final String className;
 
   protected final List<MBeanAttribute> attributes = Lists.newArrayList();

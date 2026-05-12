@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.api.metrics;
 import java.io.IOException;
 import java.util.Map;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;

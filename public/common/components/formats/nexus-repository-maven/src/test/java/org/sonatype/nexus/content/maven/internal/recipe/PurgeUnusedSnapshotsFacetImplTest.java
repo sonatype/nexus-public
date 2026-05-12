@@ -15,7 +15,6 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 import java.time.LocalDate;
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
@@ -31,7 +30,9 @@ import org.sonatype.nexus.test.util.Whitebox;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mockito;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -42,8 +43,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class PurgeUnusedSnapshotsFacetImplTest
-    extends TestSupport
+
 {
   static final int FIND_UNUSED_LIMIT = 10;
 

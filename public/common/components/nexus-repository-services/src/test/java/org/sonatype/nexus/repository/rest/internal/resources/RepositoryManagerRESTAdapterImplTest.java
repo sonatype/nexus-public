@@ -15,10 +15,10 @@ package org.sonatype.nexus.repository.rest.internal.resources;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.Format;
@@ -43,9 +43,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RepositoryManagerRESTAdapterImplTest
-    extends TestSupport
 {
   private static final String REPOSITORY_NAME = "repoName";
 
@@ -164,7 +166,7 @@ public class RepositoryManagerRESTAdapterImplTest
     when(repositoryFormat3.getValue()).thenReturn(REPOSITORY_FORMAT_3);
 
     when(repositoryManager.findContainingGroups(REPOSITORY_NAME))
-        .thenReturn(Collections.singletonList(REPOSITORY_GROUP_NAME));
+        .thenReturn(Set.of(REPOSITORY_GROUP_NAME));
     List<Recipe> recipeList = List.of(recipe, recipe2, recipe3);
     Map<String, Recipe> recipes = Map.of(RECIPE_NAME, recipe, RECIPE_NAME_2, recipe2, RECIPE_NAME_3, recipe3);
     when(QualifierUtil.buildQualifierBeanMap(recipeList)).thenReturn(recipes);
@@ -307,10 +309,10 @@ public class RepositoryManagerRESTAdapterImplTest
   @Test
   public void findContainingGroupsShouldDelegateToRepositoryManager() {
     String repositoryName = "aRepository";
-    List<String> repositoryNames = asList("group1", "group2");
+    Set<String> repositoryNames = Set.of("group1", "group2");
     when(repositoryManager.findContainingGroups(repositoryName)).thenReturn(repositoryNames);
 
-    List<String> containingGroups = underTest.findContainingGroups(repositoryName);
+    Set<String> containingGroups = underTest.findContainingGroups(repositoryName);
 
     assertThat(containingGroups, is(repositoryNames));
   }

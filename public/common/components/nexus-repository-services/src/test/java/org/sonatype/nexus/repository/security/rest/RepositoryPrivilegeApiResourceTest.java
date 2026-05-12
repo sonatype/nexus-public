@@ -18,7 +18,6 @@ import java.util.Optional;
 
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -44,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -60,11 +60,11 @@ import static org.sonatype.nexus.repository.security.rest.ApiPrivilegeWithReposi
 import static org.sonatype.nexus.repository.security.rest.ApiPrivilegeWithRepository.REPOSITORY_KEY;
 import static org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWithActions.ACTIONS_KEY;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class RepositoryPrivilegeApiResourceTest
-    extends Test5Support
 {
   @Mock
   private SecuritySystem securitySystem;

@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.apikey;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -43,9 +42,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ApiKeysReEncryptServiceImplTest
-    extends TestSupport
 {
   @Mock
   private TaskScheduler taskScheduler;
@@ -148,12 +149,13 @@ public class ApiKeysReEncryptServiceImplTest
   @Test
   public void testSubmitReEncryption_OnUnsupportedVersion() {
     when(databaseCheck.isAtLeast(anyString())).thenReturn(false);
-    assertThrows(ReEncryptionNotSupportedException.class, () -> underTest.submitReEncryption("algorithmToBeUsed",  null,null));
+    assertThrows(ReEncryptionNotSupportedException.class,
+        () -> underTest.submitReEncryption("algorithmToBeUsed", null, null));
   }
 
   @Test
   public void testSubmitReEncryption_TaskAlreadySubmitted() {
     when(taskScheduler.getTaskByTypeId(ReEncryptPrincipalsTaskDescriptor.TYPE_ID)).thenReturn(taskInfo);
-    assertThrows(IllegalStateException.class, () -> underTest.submitReEncryption(null,  null,null));
+    assertThrows(IllegalStateException.class, () -> underTest.submitReEncryption(null, null, null));
   }
 }

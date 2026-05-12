@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.testdb.example;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -26,7 +25,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
  * Test the {@link Expects} annotation, used to declare access types to be registered first.
  */
 public class ExpectsTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(TestExpectsDAO.class);

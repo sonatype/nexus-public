@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.content.tasks.CreateAssetBlobIndexTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
@@ -23,9 +22,11 @@ import org.sonatype.nexus.testdb.DataSessionRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -39,8 +40,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetBlobMigrationStep_2_18_2Test
-    extends TestSupport
 {
   @Rule
   public DataSessionRule dataSessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME);

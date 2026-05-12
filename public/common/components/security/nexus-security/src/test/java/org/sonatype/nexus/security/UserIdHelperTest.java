@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.security;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.shiro.subject.Subject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,8 +26,8 @@ import static org.sonatype.nexus.security.UserIdHelper.UNKNOWN;
 /**
  * Tests for {@link UserIdHelper}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UserIdHelperTest
-    extends TestSupport
 {
   private Subject subject(final Object principal) {
     Subject subject = mock(Subject.class);

@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryStartedEvent;
@@ -30,6 +29,8 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
@@ -43,9 +44,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ContentFacetFinder
-    extends ComponentSupport
     implements EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, Repository> repositoriesByContentId = new ConcurrentHashMap<>();
 
   /**

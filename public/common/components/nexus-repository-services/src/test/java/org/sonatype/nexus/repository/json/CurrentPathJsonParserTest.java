@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.json;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +23,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CurrentPathJsonParserTest
-    extends TestSupport
 {
   private final static String SIMPLE_JSON = "{\"_id\":\"simple\",\"user\":{\"description\":\"simplestuff\"}}";
 

@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.view;
 
 import java.net.URISyntaxException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -26,7 +24,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.sonatype.nexus.repository.view.ViewUtils.buildUrlWithParameters;
 
 public class ViewUtilsTest
-    extends TestSupport
 {
   @Rule
   public final ExpectedException exception = ExpectedException.none();

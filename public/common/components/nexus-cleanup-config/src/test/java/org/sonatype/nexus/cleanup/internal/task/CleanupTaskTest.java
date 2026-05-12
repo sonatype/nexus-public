@@ -14,18 +14,20 @@ package org.sonatype.nexus.cleanup.internal.task;
 
 import java.util.function.BooleanSupplier;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.service.CleanupService;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CleanupTaskTest
-    extends TestSupport
+
 {
   @Mock
   private CleanupService cleanupService;

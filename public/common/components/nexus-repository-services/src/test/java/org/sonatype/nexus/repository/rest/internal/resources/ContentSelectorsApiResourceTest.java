@@ -27,7 +27,6 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiCreateRequest;
@@ -69,14 +68,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.selector.SelectorConfiguration.EXPRESSION;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Unit tests for {@link ContentSelectorsApiResource}
  *
  * @since 3.next
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ContentSelectorsApiResourceTest
-    extends TestSupport
 {
   @Mock
   private SelectorFactory selectorFactory;

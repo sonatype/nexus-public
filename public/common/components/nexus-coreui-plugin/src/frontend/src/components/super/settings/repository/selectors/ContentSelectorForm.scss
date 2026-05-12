@@ -1,0 +1,169 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.content-selector-form {
+  max-width: 900px;
+
+  &__card {
+    padding: var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+
+  &__readonly {
+    margin-bottom: var(--space-4);
+  }
+
+  &__label {
+    display: block;
+    margin-bottom: var(--space-1);
+    color: var(--gray-12);
+  }
+
+  &__sublabel {
+    margin-bottom: var(--space-3);
+  }
+
+  // Examples Section - Click to Insert
+  &__examples-section {
+    margin: var(--space-4) 0;
+    padding: var(--space-4);
+    background-color: var(--gray-2);
+    border-radius: var(--radius-3);
+    border: 1px solid var(--gray-5);
+  }
+
+  &__examples-title {
+    margin-bottom: var(--space-3);
+    display: flex;
+    align-items: center;
+  }
+
+  &__examples-list {
+    margin-top: var(--space-2);
+  }
+
+  &__example-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    background-color: var(--gray-3);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-2);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background-color: var(--accent-3);
+      border-color: var(--accent-7);
+    }
+
+    &--inserted {
+      background-color: var(--green-4);
+      border-color: var(--green-8);
+      animation: insert-flash 0.3s ease;
+    }
+
+    code {
+      font-size: 11px;
+      background: transparent;
+    }
+  }
+
+  &__example-icon {
+    color: var(--gray-9);
+    flex-shrink: 0;
+  }
+
+  // Collapsible Reference Documentation
+  &__reference {
+    margin: var(--space-4) 0;
+    border: 1px solid var(--gray-5);
+    border-radius: var(--radius-3);
+    overflow: hidden;
+  }
+
+  &__reference-toggle {
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--gray-2);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    user-select: none;
+
+    &:hover {
+      background-color: var(--gray-3);
+    }
+
+    svg {
+      color: var(--gray-10);
+    }
+  }
+
+  &__reference-content {
+    padding: var(--space-4);
+    background-color: var(--gray-1);
+    border-top: 1px solid var(--gray-5);
+  }
+
+  &__reference-section {
+    margin-bottom: var(--space-5);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    h4 {
+      margin-bottom: var(--space-3);
+      color: var(--gray-12);
+    }
+
+    table {
+      width: 100%;
+
+      code {
+        background-color: var(--gray-a3);
+        padding: 2px 6px;
+        border-radius: var(--radius-1);
+        font-size: 12px;
+      }
+    }
+  }
+
+  // Form Actions
+  &__actions {
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--gray-a5);
+  }
+
+  &__delete-btn {
+    margin-right: auto;
+  }
+
+  &__error {
+    margin-top: var(--space-4);
+  }
+}
+
+// Animation for insert flash
+@keyframes insert-flash {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

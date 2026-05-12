@@ -14,8 +14,6 @@ package org.sonatype.nexus.blobstore.s3.internal.encryption;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
@@ -30,9 +28,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class KMSEncrypterTest
-    extends TestSupport
 {
 
   @Mock

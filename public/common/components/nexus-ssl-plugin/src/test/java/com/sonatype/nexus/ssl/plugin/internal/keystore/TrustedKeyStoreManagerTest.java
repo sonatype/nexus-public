@@ -19,7 +19,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.ssl.CertificateUtil;
@@ -37,7 +36,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class TrustedKeyStoreManagerTest
-    extends TestSupport
 {
   private CryptoHelper crypto;
 

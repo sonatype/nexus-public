@@ -20,7 +20,6 @@ import jakarta.inject.Singleton;
 
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateStore;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyStoreManager;
@@ -29,6 +28,8 @@ import org.sonatype.nexus.ssl.KeystoreException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.sonatype.nexus.ssl.plugin.internal.TrustStoreImpl.TRUSTED_CERTIFICATES_MIGRATION_COMPLETE;
@@ -40,8 +41,9 @@ import static com.sonatype.nexus.ssl.plugin.internal.TrustStoreImpl.TRUSTED_CERT
 @Singleton
 @Component
 public class TrustedCertificateMigrationService
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final TrustedSSLCertificateStore trustedSSLCertificateStore;
 
   private final KeyStoreManager keyStoreManager;

@@ -21,7 +21,6 @@ import java.util.Set;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
@@ -33,6 +32,8 @@ import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentV
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -47,9 +48,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ComponentNormalizationIntegrityChecker
-    extends ComponentSupport
     implements DatabaseIntegrityChecker
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final String TABLE_NAME = "%s_component";
 
   private final String COLUMN_NAME = "normalized_version";

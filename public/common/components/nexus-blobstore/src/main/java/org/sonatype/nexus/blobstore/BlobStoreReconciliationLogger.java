@@ -32,7 +32,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

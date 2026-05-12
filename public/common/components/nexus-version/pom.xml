@@ -20,17 +20,13 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-version</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
-    <dependency>
-      <groupId>org.sonatype.goodies</groupId>
-      <artifactId>goodies-common</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-logging</artifactId>

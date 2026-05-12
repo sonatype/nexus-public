@@ -21,13 +21,14 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -39,9 +40,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class RepositorySettingsApiResource
-    extends ComponentSupport
     implements Resource, RepositorySettingsApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final AuthorizingRepositoryManager authorizingRepositoryManager;
 
   private final Map<String, ApiRepositoryAdapter> convertersByFormat;

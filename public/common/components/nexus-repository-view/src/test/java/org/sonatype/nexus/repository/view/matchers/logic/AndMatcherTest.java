@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.view.matchers.logic;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
@@ -29,7 +28,6 @@ import static org.mockito.Mockito.mock;
  * Tests for {@link AndMatcher}.
  */
 public class AndMatcherTest
-    extends Test5Support
 {
   private Context context(String path) {
     return new Context(mock(Repository.class), new Request.Builder().action("GET").path(path).build());

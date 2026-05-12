@@ -16,12 +16,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.systemchecks.NodeSystemCheckResult;
 import org.sonatype.nexus.systemchecks.SystemCheckService;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.google.common.collect.ImmutableMap;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -29,6 +29,8 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -37,8 +39,10 @@ import static org.sonatype.nexus.rapture.internal.state.HealthCheckStateContribu
 
 @RunWith(Parameterized.class)
 public class HealthCheckStateContributorTest
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{
@@ -70,8 +74,7 @@ public class HealthCheckStateContributorTest
     when(nodeB.getResult()).thenReturn(ImmutableMap.of(
         "a", Result.healthy(),
         "b", result,
-        "c", Result.healthy()
-    ));
+        "c", Result.healthy()));
     when(systemCheckService.getResults()).thenReturn(Arrays.asList(nodeA, nodeB).stream());
 
     assertThat(subject.getState(), hasEntry(HC_FAILED_KEY, expectedState));

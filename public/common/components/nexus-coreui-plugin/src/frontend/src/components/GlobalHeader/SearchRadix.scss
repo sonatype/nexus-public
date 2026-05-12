@@ -1,0 +1,148 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// =============================================================================
+// SEARCH AUTOCOMPLETE - Google/Guide Style
+// =============================================================================
+
+.search-radix-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+}
+
+.search-radix-input {
+  width: 100%;
+}
+
+// Suggestions dropdown
+.search-radix-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 9999; // Very high to ensure it's above everything
+  max-height: 400px;
+  overflow-y: auto;
+
+  &__footer {
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+  }
+}
+
+// Individual suggestion item
+.search-radix-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  &:hover,
+  &--selected {
+    background: #f3f4f6;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    color: #9ca3af;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__version {
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  &__format {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 12px;
+    text-transform: lowercase;
+  }
+}
+
+// =============================================================================
+// DARK MODE
+// =============================================================================
+
+:root[data-theme="dark"] {
+  .search-radix-suggestions {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+
+    &__footer {
+      background: #111827;
+      border-top-color: #374151;
+      color: #6b7280;
+    }
+  }
+
+  .search-radix-suggestion {
+    border-bottom-color: #374151;
+
+    &:hover,
+    &--selected {
+      background: #374151;
+    }
+
+    &__icon {
+      color: #6b7280;
+    }
+
+    &__name {
+      color: #f9fafb;
+    }
+
+    &__version {
+      color: #9ca3af;
+    }
+  }
+}
+

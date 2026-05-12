@@ -17,12 +17,12 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolation;
+import javax.validation.ValidationException;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.ConfigurationValidator;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper.SsrfValidationResult;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,15 +39,15 @@ public class RemoteUrlSsrfValidator
 
   private final ConstraintViolationFactory constraintViolationFactory;
 
-  private final AntiSsrfHelper antiSsrfHelper;
+  private final AntiSsrfService antiSsrfService;
 
   @Autowired
   public RemoteUrlSsrfValidator(
       final ConstraintViolationFactory constraintViolationFactory,
-      final AntiSsrfHelper antiSsrfHelper)
+      final AntiSsrfService antiSsrfService)
   {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
-    this.antiSsrfHelper = checkNotNull(antiSsrfHelper);
+    this.antiSsrfService = checkNotNull(antiSsrfService);
   }
 
   @Nullable
@@ -70,15 +70,13 @@ public class RemoteUrlSsrfValidator
 
             String host = remoteUrl.getHost();
             if (host != null) {
-              SsrfValidationResult result = antiSsrfHelper.validateHostForConfiguration(host);
-              if (!result.isValid()) {
-                return constraintViolationFactory.createViolation(
-                    PROXY + "." + REMOTE_URL,
-                    "Proxy URL blocked: " + result.getErrorMessage() + ". To allow connections, set " +
-                        "nexus.proxy.allowPrivateNetworks=true to allow all private networks, or configure specific " +
-                        "hosts using nexus.proxy.privateNetworks.allowedIPs or nexus.proxy.privateNetworks.allowedDomains.");
-              }
+              antiSsrfService.validateHostWithoutCache(host);
             }
+          }
+          catch (ValidationException e) {
+            return constraintViolationFactory.createViolation(
+                PROXY + "." + REMOTE_URL,
+                "Proxy URL blocked: " + e.getMessage());
           }
           catch (Exception e) {
             return constraintViolationFactory.createViolation(

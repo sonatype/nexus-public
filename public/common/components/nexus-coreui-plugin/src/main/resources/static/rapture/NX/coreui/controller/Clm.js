@@ -106,7 +106,8 @@ Ext.define('NX.coreui.controller.Clm', {
     NX.State.setValue('clm', Ext.apply(Ext.clone(NX.State.getValue('clm', {})), {
       enabled: action.result.data.enabled,
       url: action.result.data.url,
-      showLink: action.result.data.showLink
+      showLink: action.result.data.showLink,
+      hasFirewall: action.result.data.hasFirewall
     }));
   },
 

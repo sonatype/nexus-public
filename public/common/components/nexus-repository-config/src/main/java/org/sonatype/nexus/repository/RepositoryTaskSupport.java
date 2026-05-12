@@ -17,7 +17,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;

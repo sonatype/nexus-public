@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -31,9 +30,11 @@ import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.hamcrest.MatcherAssert.assertThat;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BlobStoreLocatorImplTest
-    extends TestSupport
 {
   private BlobStoreLocatorImpl underTest;
 
@@ -75,7 +76,7 @@ public class BlobStoreLocatorImplTest
     assertThat(blobStore, is(sourceBlobStore));
   }
 
-  @Test (expected = RepositoryDoesNotExistException.class)
+  @Test(expected = RepositoryDoesNotExistException.class)
   public void getBlobStoreRepositoryNotPresent() throws RepositoryDoesNotExistException {
     when(repositoryManager.get("repoName")).thenReturn(null);
     underTest.getBlobStore("repoName");

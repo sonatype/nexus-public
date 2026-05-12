@@ -19,8 +19,6 @@ import java.io.InputStream;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,7 +26,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class PayloadTest
-    extends TestSupport
 {
   private byte[] TEST_BYTES = "TEST CONTENT".getBytes();
 

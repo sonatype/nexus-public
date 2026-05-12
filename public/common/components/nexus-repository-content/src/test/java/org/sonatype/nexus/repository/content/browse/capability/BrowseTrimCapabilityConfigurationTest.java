@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.content.browse.capability;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,7 +21,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 public class BrowseTrimCapabilityConfigurationTest
-    extends TestSupport
 {
   @Test
   public void testDefaultConstructorHasDefaultValues() {

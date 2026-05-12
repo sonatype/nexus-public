@@ -15,7 +15,6 @@ package org.sonatype.nexus.coreui.internal.branding;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.CapabilityConditions;
 import org.sonatype.nexus.capability.condition.Conditions;
@@ -31,12 +30,14 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link BrandingCapability}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BrandingCapabilityTest
-    extends TestSupport
 {
   @Mock
   private Branding branding;

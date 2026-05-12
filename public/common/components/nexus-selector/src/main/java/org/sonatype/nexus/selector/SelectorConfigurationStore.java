@@ -14,7 +14,7 @@ package org.sonatype.nexus.selector;
 
 import java.util.List;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 
 /**

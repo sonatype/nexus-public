@@ -17,12 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
-
-import org.sonatype.goodies.common.ComponentSupport;
 
 import com.google.common.base.Throwables;
+import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility related to finding resources when {@code NEXUS_RESOURCE_DIRS} environment-variable
@@ -33,8 +33,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class DevModeResources
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String ENV_VAR = "NEXUS_RESOURCE_DIRS";
 
   private static final String SYS_PROP = "nexus.resource.dirs";

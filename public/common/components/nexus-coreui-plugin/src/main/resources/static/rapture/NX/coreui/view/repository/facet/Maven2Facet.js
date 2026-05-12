@@ -34,8 +34,8 @@ Ext.define('NX.coreui.view.repository.facet.Maven2Facet', {
     itemCls: 'required-field'
   },
 
-  // Default to inline for existing maven repos
-  contentDisposition: 'INLINE',
+  // Default to ATTACHMENT (safer default - prevents phishing via inline HTML)
+  contentDisposition: 'ATTACHMENT',
 
   /**
    * @override
@@ -93,12 +93,24 @@ Ext.define('NX.coreui.view.repository.facet.Maven2Facet', {
             ],
             value: me.contentDisposition,
             queryMode: 'local'
+          },
+          {
+            xtype: 'displayfield',
+            itemId: 'contentDispositionWarning',
+            value: '<span class="x-fa fa-exclamation-triangle"></span> ' +
+                NX.I18n.get('Repository_Facet_Maven2Facet_ContentDisposition_Warning'),
+            cls: 'nx-warning-text',
+            hidden: me.contentDisposition !== 'INLINE'
           }
         ]
       }
     ];
 
     me.callParent();
+
+    me.down('#contentDisposition').on('change', function(combo, newValue) {
+      me.down('#contentDispositionWarning').setVisible(newValue === 'INLINE');
+    });
   }
 
 });

@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.crypto;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Common support for marking and checking customized pass-phrases.
@@ -20,9 +21,10 @@ import org.sonatype.goodies.common.ComponentSupport;
  * @since 3.8
  */
 public abstract class AbstractPhraseService
-    extends ComponentSupport
     implements PhraseService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final boolean hasMasterPhrase;
 
   public AbstractPhraseService(final boolean hasMasterPhrase) {

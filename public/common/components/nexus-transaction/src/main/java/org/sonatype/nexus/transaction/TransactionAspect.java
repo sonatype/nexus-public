@@ -12,19 +12,20 @@
  */
 package org.sonatype.nexus.transaction;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.transaction.UnitOfWork.openSession;
 import static org.sonatype.nexus.transaction.UnitOfWork.peekTransaction;
 
 @Aspect
 public class TransactionAspect
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Around("@annotation(transactional) && execution(* *(..))")
   public Object invoke(final ProceedingJoinPoint mi, final Transactional transactional) throws Throwable {
     log.trace("Invoking: {}", mi);

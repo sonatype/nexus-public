@@ -21,8 +21,8 @@ import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 
 import com.google.common.annotations.VisibleForTesting;

@@ -15,8 +15,6 @@ package org.sonatype.nexus.ssl;
 import java.security.Security;
 import java.security.cert.Certificate;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +27,6 @@ import static org.hamcrest.Matchers.equalTo;
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public class CertificateUtilTest
-    extends TestSupport
 {
   private static final String NL = System.lineSeparator();
 

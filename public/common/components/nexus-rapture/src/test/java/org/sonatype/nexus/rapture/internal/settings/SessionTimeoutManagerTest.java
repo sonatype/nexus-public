@@ -14,7 +14,6 @@ package org.sonatype.nexus.rapture.internal.settings;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.JwtHelper;
 
@@ -38,7 +37,6 @@ import static org.mockito.Mockito.verify;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class SessionTimeoutManagerTest
-    extends TestSupport
 {
   @Mock
   private JwtHelper jwtHelper;

@@ -20,7 +20,6 @@ import java.util.OptionalInt;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Format;
@@ -35,6 +34,8 @@ import jakarta.inject.Singleton;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.REPOSITORY_SIZE_ENABLED;
@@ -48,9 +49,10 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 @Singleton
 @ConditionalOnProperty(name = REPOSITORY_SIZE_ENABLED, havingValue = "true", matchIfMissing = true)
 public class RepositoryNameIdMappingCache
-    extends ComponentSupport
     implements EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private volatile Map<String, Integer> nameRepositoryIdMap;
 
   private final ContentRepositoryStore<?> contentRepositoryStore;

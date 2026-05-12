@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -24,7 +25,6 @@ import jakarta.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -41,6 +41,8 @@ import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.rest.api.RepositoryXO;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.ProxyType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyMap;
@@ -62,9 +64,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RepositoryManagerRESTAdapterImpl
-    extends ComponentSupport
     implements RepositoryManagerRESTAdapter
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final RepositoryManager repositoryManager;
 
   private final ConfigurationStore configurationStore;
@@ -134,7 +137,7 @@ public class RepositoryManagerRESTAdapterImpl
     // Given - repository = raw-hosted
     // nx-repository-view-raw-raw-hosted-read - allowed
     // nx-repository-view-raw-raw-group-read(raw-group contains raw-hosted as a member) - allowed
-    List<String> repositories = new ArrayList<>(repositoryManager.findContainingGroups(repository.getName()));
+    Set<String> repositories = new HashSet<>(repositoryManager.findContainingGroups(repository.getName()));
     repositories.add(repository.getName());
 
     return repositories
@@ -159,7 +162,7 @@ public class RepositoryManagerRESTAdapterImpl
   }
 
   @Override
-  public List<String> findContainingGroups(final String repositoryName) {
+  public Set<String> findContainingGroups(final String repositoryName) {
     return repositoryManager.findContainingGroups(repositoryName);
   }
 

@@ -30,12 +30,13 @@ import {Section} from '@sonatype/nexus-ui-plugin';
 import ContentSelectorsPreview from './ContentSelectorsPreview';
 import UIStrings from '../../../../constants/UIStrings';
 import { isEmpty } from 'ramda';
+import { DeleteConfirmationModal } from '../../../shared/modals/DeleteConfirmationModal';
 
 export default function ContentSelectorsForm({service, onDone}) {
   const stateMachine = useActor(service);
   const [state, send] = stateMachine;
 
-  const {pristineData, data, loadError} = state.context;
+  const {pristineData, data, loadError, showDeleteModal} = state.context;
   const hasData = data && !isEmpty(data);
   const canDelete = ExtJS.checkPermission('nexus:selectors:delete');
   const isEdit = Boolean(pristineData.name);
@@ -103,5 +104,13 @@ export default function ContentSelectorsForm({service, onDone}) {
       </NxStatefulForm>
     </Section>
     {!loadError && <ContentSelectorsPreview type={data?.type} expression={data?.expression}/>}
+
+    <DeleteConfirmationModal
+      open={showDeleteModal}
+      onClose={() => send('HIDE_DELETE_MODAL')}
+      onConfirm={() => send('DELETE')}
+      entityType="content selector"
+      loading={state.matches('delete')}
+    />
   </>;
 }

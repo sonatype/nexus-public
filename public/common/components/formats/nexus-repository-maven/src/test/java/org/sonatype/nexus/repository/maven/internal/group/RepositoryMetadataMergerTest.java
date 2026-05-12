@@ -16,7 +16,6 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.group.RepositoryMetadataMerger.Envelope;
@@ -35,7 +34,9 @@ import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -51,8 +52,9 @@ import static org.hamcrest.Matchers.nullValue;
  *
  * @since 3.0
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RepositoryMetadataMergerTest
-    extends TestSupport
+
 {
   @Rule
   public ExpectedException exception = ExpectedException.none();

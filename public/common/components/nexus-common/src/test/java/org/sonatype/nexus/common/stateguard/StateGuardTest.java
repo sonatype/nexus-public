@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.stateguard;
 
 import java.util.function.Supplier;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +33,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardTest.State.STOPPED;
  * Tests for {@link StateGuard}.
  */
 public class StateGuardTest
-    extends TestSupport
+
 {
   private StateGuard underTest;
 

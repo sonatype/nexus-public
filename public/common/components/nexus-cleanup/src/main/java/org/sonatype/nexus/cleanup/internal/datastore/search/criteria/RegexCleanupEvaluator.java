@@ -16,10 +16,11 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.datastore.search.criteria.AssetCleanupEvaluator;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -36,9 +37,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier(REGEX_KEY)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RegexCleanupEvaluator
-    extends ComponentSupport
     implements AssetCleanupEvaluator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /*
    * Value is expected to be a regular expression which Java understands.
    */

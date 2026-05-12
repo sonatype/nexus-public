@@ -14,7 +14,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>$errorCode - Sonatype Nexus Repository</title>
+  <title>$esc.html($errorCode) - Sonatype Nexus Repository</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 
 #* START favicon links and meta
@@ -57,7 +57,7 @@
     </div>
     #if($errorCause)
       <div class="content-section">
-        <pre>${errorCause.trace}</pre>
+        <pre>$esc.html(${errorCause.trace})</pre>
       </div>
     #end
   </div>

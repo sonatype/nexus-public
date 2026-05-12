@@ -14,7 +14,6 @@ package org.sonatype.nexus.security.internal;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.TestAnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
@@ -30,10 +29,12 @@ import org.sonatype.nexus.security.user.UserStatus;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -49,8 +50,8 @@ import static org.mockito.Mockito.when;
 /**
  * @since 3.0
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecurityApiImplTest
-    extends TestSupport
 {
   @Mock
   private AnonymousManager anonymousManager;

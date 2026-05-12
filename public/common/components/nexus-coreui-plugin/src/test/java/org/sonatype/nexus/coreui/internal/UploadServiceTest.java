@@ -17,10 +17,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
@@ -41,9 +41,11 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UploadServiceTest
-    extends TestSupport
 {
   private static final String REPO_NAME = "repo";
 
@@ -222,7 +224,7 @@ public class UploadServiceTest
     Format format = mock(Format.class);
     when(repo.getFormat()).thenReturn(format);
     when(format.getValue()).thenReturn("npm");
-    when(repositoryManager.findContainingGroups(REPO_NAME)).thenReturn(List.of("npm-group"));
+    when(repositoryManager.findContainingGroups(REPO_NAME)).thenReturn(Set.of("npm-group"));
 
     Repository groupRepo = mock(Repository.class);
     when(repositoryManager.get("npm-group")).thenReturn(groupRepo);
@@ -379,5 +381,136 @@ public class UploadServiceTest
 
     // Should handle scoped npm packages
     assertThat(result, is("@scope my-package 1.0.0"));
+  }
+
+  // ========== Helm Format Tests ==========
+
+  @Test
+  public void testConvertHelmPathToName_standardChart() {
+    // Standard Helm chart with semantic version
+    String result = component.convertHelmPathToName("/nginx-1.0.0.tgz");
+    assertThat(result, is("nginx"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_preReleaseVersion() {
+    // Helm chart with pre-release version (e.g., 1.0.0-rc.1)
+    String result = component.convertHelmPathToName("/nginx-1.0.0-rc.1.tgz");
+    assertThat(result, is("nginx"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_preReleaseBeta() {
+    // Helm chart with beta pre-release version
+    String result = component.convertHelmPathToName("/myapp-2.3.4-beta.2.tgz");
+    assertThat(result, is("myapp"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_preReleaseAlpha() {
+    // Helm chart with alpha pre-release version
+    String result = component.convertHelmPathToName("/myapp-1.0.0-alpha.1.tgz");
+    assertThat(result, is("myapp"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_hyphenatedChartName() {
+    // Chart name contains hyphens
+    String result = component.convertHelmPathToName("/my-chart-1.0.0.tgz");
+    assertThat(result, is("my-chart"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_multipleHyphensInName() {
+    // Chart name contains multiple hyphens
+    String result = component.convertHelmPathToName("/my-complex-chart-name-2.5.1.tgz");
+    assertThat(result, is("my-complex-chart-name"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_tarGzExtension() {
+    // Chart with .tar.gz extension instead of .tgz
+    String result = component.convertHelmPathToName("/nginx-15.14.0.tar.gz");
+    assertThat(result, is("nginx"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_provenanceFile() {
+    // Helm provenance file (.prov extension)
+    String result = component.convertHelmPathToName("/nginx-1.0.0.tgz.prov");
+    assertThat(result, is("nginx"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_noLeadingSlash() {
+    // Path without leading slash
+    String result = component.convertHelmPathToName("nginx-1.0.0.tgz");
+    assertThat(result, is("nginx"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_snapshotVersion() {
+    // Helm chart with snapshot-like version
+    String result = component.convertHelmPathToName("/myapp-1.0.0-SNAPSHOT.tgz");
+    assertThat(result, is("myapp"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_buildMetadata() {
+    // Helm chart with build metadata (e.g., 1.0.0+20130313)
+    String result = component.convertHelmPathToName("/myapp-1.0.0+20130313.tgz");
+    assertThat(result, is("myapp"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_noVersion() {
+    // Chart name without apparent version (fallback case)
+    String result = component.convertHelmPathToName("/myapp.tgz");
+    assertThat(result, is("myapp"));
+  }
+
+  @Test
+  public void testConvertHelmPathToName_onlyName() {
+    // Chart name that ends with something that looks like it starts with digit but isn't semver
+    String result = component.convertHelmPathToName("/chart-2name.tgz");
+    assertThat(result, is("chart-2name"));
+  }
+
+  @Test
+  public void testCreateSearchTerm_helmFormat() {
+    Repository mockRepo = mock(Repository.class);
+    Format format = mock(Format.class);
+    when(mockRepo.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("helm");
+
+    String result = component.createSearchTerm(mockRepo, List.of("/nginx-1.0.0.tgz"));
+    // Helm format should extract chart name from filename
+    assertThat(result, is("nginx"));
+  }
+
+  @Test
+  public void testCreateSearchTerm_helmFormatWithPreRelease() {
+    Repository mockRepo = mock(Repository.class);
+    Format format = mock(Format.class);
+    when(mockRepo.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("helm");
+
+    String result = component.createSearchTerm(mockRepo, List.of("/nginx-1.0.0-rc.1.tgz"));
+    // Helm format should correctly handle pre-release versions
+    assertThat(result, is("nginx"));
+  }
+
+  @Test
+  public void testCreateSearchTerm_helmMultipleCharts() {
+    Repository mockRepo = mock(Repository.class);
+    Format format = mock(Format.class);
+    when(mockRepo.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("helm");
+
+    String result = component.createSearchTerm(mockRepo, Arrays.asList(
+        "/nginx-1.0.0.tgz",
+        "/nginx-1.0.0.tgz.prov"));
+    // Helm format with multiple files should extract common name
+    assertThat(result, is("nginx"));
   }
 }

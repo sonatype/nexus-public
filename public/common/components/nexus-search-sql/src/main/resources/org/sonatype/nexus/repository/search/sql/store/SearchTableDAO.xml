@@ -59,6 +59,8 @@
       );
 
     <!-- Indexes for search_components handled by SearchTableIndexesMigrationStep_2_53 to avoid lock contention (NEXUS-49154) -->
+    <!-- Indexes on format, namespace, search_component_name, version were replaced with text_pattern_ops variants -->
+    <!-- by CreateSearchTextPatternOpsIndexTask (NEXUS-51266) to support starts_with (^@) queries -->
 
     <!-- The following 6 columns are now in CREATE TABLE (lines 37-38, 48-51) -->
     <!-- SearchComponentsAdditionalColumnsMigrationStep handles adding them to existing databases -->
@@ -203,10 +205,11 @@
   </resultMap>
 
   <insert id="save" parameterType="SearchRecordData" databaseId="PostgreSQL">
-    -- Only insert if the component still exists - we achieve this by using the FROM clause below to check the existence of the component
-    -- In a multi node setup, as we can't use distributed cooperation for processing a if one node has deleted all the component records for a given repository in response to a
-    -- ContentRepositoryDeleted event, for a  then we don't want a delayed update from another node to re-introduce
-    -- any of those records.
+    <!-- Only insert if the component still exists - we achieve this by using the FROM clause below to check the existence of the component
+      In a multi node setup, as we can't use distributed cooperation for processing a if one node has deleted all the component records for a given repository in response to a
+      ContentRepositoryDeleted event, for a  then we don't want a delayed update from another node to re-introduce
+      any of those records.
+    -->
       INSERT INTO search_components(repository_id, component_id, format, namespace, search_component_name, version,
           search_repository_name, tsvector_format, tsvector_namespace, tsvector_version, tsvector_search_repository_name, component_kind,
           normalised_version, prerelease, attributes, entity_version, paths, tsvector_search_component_name, uploaders, uploader_ips, tsvector_paths,
@@ -245,8 +248,10 @@
                <when test="entityVersion == null">comp.entity_version IS NULL</when>
                <otherwise>#{entityVersion} = comp.entity_version</otherwise>
              </choose>
-        -- The WHERE clause above ensures the component still exists
-        -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
+        <!-- 
+          The WHERE clause above ensures the component still exists
+          Thereby helping us avoid the need for DELET'ing threads to lock component ids
+        -->
       ON CONFLICT ON CONSTRAINT pk_search_components
       DO
         UPDATE SET
@@ -280,8 +285,10 @@
                               <when test="entityVersion == null">entity_version IS NULL</when>
                               <otherwise>#{entityVersion} = entity_version</otherwise>
                             </choose>)
-        -- The EXISTS clause above ensures the component still exists
-        -- Thereby helping us avoid the need for DELET'ing threads to lock component ids
+        <!--
+          The EXISTS clause above ensures the component still exists
+          Thereby helping us avoid the need for DELET'ing threads to lock component ids
+        -->
   </insert>
 
   <insert id="save" parameterType="SearchRecordData" databaseId="H2">
@@ -419,12 +426,14 @@
   </resultMap>
 
   <select id="searchComponents" resultMap="searchDataMap" parameterType="SqlSearchRequest">
-    -- The prefixes 'cs' and 'ap' are used to prevent ambiguity in column names.
-    -- Be cautious when modifying them, as some classes rely on these prefixes for building filters.
-    -- IMPORTANT: When distinctNameAndNamespace=true, PostgreSQL requires that the ORDER BY clause
-    -- MUST start with cs.namespace, cs.search_component_name to match the DISTINCT ON expressions.
-    -- H2 is more lenient and does not enforce this requirement.
-    -- See NEXUS-50690 for details on the bug caused by ORDER BY mismatch.
+    <!-- 
+      The prefixes 'cs' and 'ap' are used to prevent ambiguity in column names.
+      Be cautious when modifying them, as some classes rely on these prefixes for building filters.
+      IMPORTANT: When distinctNameAndNamespace=true, PostgreSQL requires that the ORDER BY clause
+      MUST start with cs.namespace, cs.search_component_name to match the DISTINCT ON expressions.
+      H2 is more lenient and does not enforce this requirement.
+      See NEXUS-50690 for details on the bug caused by ORDER BY mismatch.
+    -->
     SELECT
         <if test="distinctNameAndNamespace == true">
           DISTINCT ON (cs.namespace, cs.search_component_name)
@@ -455,6 +464,11 @@
     </if>
     <where>
       <if test="filter != null">(${filter})</if>
+      <!-- Keyset pagination: efficiently skip to records after the cursor using index seek -->
+      <!-- This is O(log n) vs O(n) for OFFSET-based pagination -->
+      <if test="cursorFormat != null and cursorComponentId != null">
+        AND (cs.format, cs.component_id) &gt; (#{cursorFormat}, #{cursorComponentId})
+      </if>
     </where>
     ORDER BY
     <if test="distinctNameAndNamespace == true">
@@ -470,12 +484,15 @@
       ${secondDefaultSortColumnName} <if test="sortDirection != null">${sortDirection}</if>
     </if>
     <if test="limit != null">LIMIT #{limit}</if>
-    OFFSET #{offset};
+    <!-- Only use OFFSET when no keyset cursor is provided (first page or legacy tokens) -->
+    <if test="cursorFormat == null or cursorComponentId == null">OFFSET #{offset}</if>;
   </select>
 
   <select id="count" resultType="long" parameterType="SqlSearchRequest">
-    -- The prefixes 'cs' and 'ap' are used to prevent ambiguity in column names.
-    -- Be cautious when modifying them, as some classes rely on these prefixes for building filters.
+    <!-- 
+      The prefixes 'cs' and 'ap' are used to prevent ambiguity in column names.
+      Be cautious when modifying them, as some classes rely on these prefixes for building filters.
+    -->
     SELECT COUNT(cs.component_id)
     FROM search_components cs
     <if test="assetFilter != null">

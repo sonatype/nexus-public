@@ -18,7 +18,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 
 import com.codahale.metrics.health.HealthCheck.Result;
@@ -28,6 +27,8 @@ import jakarta.inject.Singleton;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -41,9 +42,10 @@ import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 @Path(HealthCheckResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 public class HealthCheckResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = INTERNAL_API_PREFIX + "/ui/status-check";
 
   private HealthCheckRegistry registry;

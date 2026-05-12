@@ -17,7 +17,6 @@ import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.Continuations;
@@ -30,6 +29,8 @@ import org.sonatype.nexus.repository.task.DeletionProgress;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.google.common.collect.Iterators;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -44,9 +45,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DeleteCleanupMethod
-    extends ComponentSupport
     implements CleanupMethod
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final DatabaseCheck databaseCheck;
 
   @Inject

@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -27,6 +26,8 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.GroupType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -40,8 +41,9 @@ import static org.sonatype.nexus.repository.content.rest.internal.resources.Asse
  * @since 3.27
  */
 abstract class ComponentsResourceSupport
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Limit the number of components returned per page. This value is aligned with AssetsResourceSupport.PAGE_SIZE_LIMIT
    * and also matches the number of component identifiers that can be passed as input to the Firewall component

@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.security.secrets;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.datastore.api.DataStore;
@@ -25,6 +24,8 @@ import org.assertj.db.type.Table;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.assertj.db.api.Assertions.assertThat;
@@ -37,8 +38,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecretsStoreImplTests
-    extends TestSupport
 {
   private static final String LDAP = "ldap";
 

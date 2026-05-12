@@ -19,8 +19,6 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import org.junit.Test;
@@ -33,7 +31,7 @@ import static org.junit.Assert.assertEquals;
  * @since 3.0
  */
 public class SanitizingJsonOutputStreamTest
-    extends TestSupport
+
 {
   private static final List<String> FIELDS = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "K", "M");
 

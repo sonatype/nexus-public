@@ -16,7 +16,6 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 
@@ -24,14 +23,16 @@ import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
 import org.sonatype.nexus.testdb.DatabaseTest;
 
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class AssetBlobSizeMigrationStep_2_107Test
-    extends Test5Support
 {
   private static final List<String> TEST_FORMATS = List.of("maven2", "npm", "raw");
 

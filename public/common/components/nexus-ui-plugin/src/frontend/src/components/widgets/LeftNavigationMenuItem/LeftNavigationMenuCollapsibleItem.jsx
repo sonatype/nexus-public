@@ -35,11 +35,21 @@ export function LeftNavigationMenuCollapsibleItem({ name, text, icon, selectedSt
     return null;
   }
 
+  // Phase 4.0: Context-aware navigation - preserve preview/default mode
+  const currentPath = typeof window !== 'undefined' ? window.location.hash : '';
+  const isPreviewUI = currentPath.startsWith('#preview'); // No slash after #
+  
+  let contextAwareHref = href;
+  if (isPreviewUI && href && !href.includes('preview')) {
+    const pathWithoutHash = href.replace(/^#\/?/, ''); // Remove # and optional /
+    contextAwareHref = '#preview/' + pathWithoutHash; // Add preview/ prefix
+  }
+
   return (
     <NavigationLinkWithCollapsibleList
       text={text}
       isSelected={isSelected}
-      href={href}
+      href={contextAwareHref}
       icon={icon}
       name={name}
       {...props}

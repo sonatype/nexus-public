@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.capability.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.capability.RepositoryConditions;
@@ -32,7 +31,6 @@ import static org.mockito.Mockito.mock;
  * @since capabilities 2.0
  */
 public class RepositoryConditionsImplTest
-    extends TestSupport
 {
 
   private RepositoryConditions underTest;

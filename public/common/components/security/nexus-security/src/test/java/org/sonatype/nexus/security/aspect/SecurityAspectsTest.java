@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.aspect;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
@@ -30,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(AuthenticationExtension.class)
 class SecurityAspectsTest
-    extends Test5Support
 {
   @Test
   @WithUser

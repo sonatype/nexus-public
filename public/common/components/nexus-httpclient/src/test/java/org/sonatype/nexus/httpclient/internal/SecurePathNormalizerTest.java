@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.httpclient.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,7 +21,6 @@ import static org.hamcrest.Matchers.is;
  * Tests for {@link SecurePathNormalizer}.
  */
 public class SecurePathNormalizerTest
-    extends TestSupport
 {
   @Test
   public void normalizePath_RemovesParentDirectoryReferences() {

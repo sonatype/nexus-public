@@ -18,7 +18,7 @@ import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.webresources.FileWebResource;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;

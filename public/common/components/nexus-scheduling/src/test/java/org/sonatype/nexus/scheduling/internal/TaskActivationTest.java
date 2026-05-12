@@ -14,7 +14,6 @@ package org.sonatype.nexus.scheduling.internal;
 
 import java.util.concurrent.Future;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
@@ -22,7 +21,9 @@ import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static org.mockito.Mockito.doReturn;
@@ -32,8 +33,9 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 import static org.sonatype.nexus.scheduling.TaskState.WAITING;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TaskActivationTest
-    extends TestSupport
+
 {
   @Mock
   private SchedulerSPI schedulerSpi;

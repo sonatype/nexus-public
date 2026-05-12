@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -35,7 +34,9 @@ import org.apache.shiro.util.ThreadContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThrows;
@@ -53,8 +54,9 @@ import static org.sonatype.nexus.blobstore.common.BlobStoreParallelTaskSupport.A
 import static org.sonatype.nexus.blobstore.common.BlobStoreParallelTaskSupport.BLOBSTORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.blobstore.compact.internal.CompactBlobStoreTaskDescriptor.TYPE_ID;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CompactBlobStoreTaskTest
-    extends TestSupport
+
 {
   private final String BLOBSTORE_NAME = "test";
 
@@ -93,7 +95,7 @@ public class CompactBlobStoreTaskTest
     configuration.setId(TASK_NAME);
 
     underTest =
-        new CompactBlobStoreTask(changeBlobstoreStore, blobStoreUsageChecker, taskUtils, recoveryModeService, 5, 20);
+        new CompactBlobStoreTask(changeBlobstoreStore, blobStoreUsageChecker, taskUtils, recoveryModeService, 5);
     underTest.install(blobStoreManager);
   }
 
@@ -229,7 +231,7 @@ public class CompactBlobStoreTaskTest
   public void testCheckForConflicts_withNullRecoveryModeService() {
     // Create task with null RecoveryModeService (CORE edition scenario)
     CompactBlobStoreTask taskWithNullRecoveryMode =
-        new CompactBlobStoreTask(changeBlobstoreStore, blobStoreUsageChecker, taskUtils, null, 5, 20);
+        new CompactBlobStoreTask(changeBlobstoreStore, blobStoreUsageChecker, taskUtils, null, 5);
     taskWithNullRecoveryMode.install(blobStoreManager);
     taskWithNullRecoveryMode.configure(configuration);
 

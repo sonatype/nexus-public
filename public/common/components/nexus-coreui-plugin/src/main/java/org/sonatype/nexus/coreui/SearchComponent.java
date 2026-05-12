@@ -13,13 +13,14 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.validation.ValidationException;
 
 import org.sonatype.nexus.common.event.EventManager;
@@ -29,6 +30,9 @@ import org.sonatype.nexus.extdirect.model.LimitedPagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Sort;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.SearchResponse;
@@ -45,14 +49,15 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
-import org.springframework.stereotype.Component;
 
 /**
  * Search {@link DirectComponent}.
@@ -65,11 +70,15 @@ import org.springframework.stereotype.Component;
 public class SearchComponent
     extends DirectComponentSupport
 {
+  private static final String REPOSITORY_NAME_FILTER = "repository_name";
+
   private final SearchService searchService;
 
   private final EventManager eventManager;
 
   private final SearchResultsGenerator searchResultsGenerator;
+
+  private final RepositoryManager repositoryManager;
 
   private int searchResultsLimit;
 
@@ -78,12 +87,14 @@ public class SearchComponent
       final SearchService searchService,
       @Value("${nexus.searchResultsLimit:1000}") final int searchResultsLimit,
       final SearchResultsGenerator searchResultsGenerator,
-      final EventManager eventManager)
+      final EventManager eventManager,
+      final RepositoryManager repositoryManager)
   {
     this.searchService = checkNotNull(searchService);
     this.searchResultsLimit = searchResultsLimit;
     this.searchResultsGenerator = checkNotNull(searchResultsGenerator);
     this.eventManager = checkNotNull(eventManager);
+    this.repositoryManager = checkNotNull(repositoryManager);
   }
 
   /**
@@ -170,10 +181,22 @@ public class SearchComponent
 
     SearchResponse response = searchService.search(request);
 
+    if (filters.stream().noneMatch(filter -> filter.getProperty().equals(REPOSITORY_NAME_FILTER))) {
+      // No repository_name filter - skip repository-specific mapping
+      List<ComponentXO> componentXOs = searchResultsGenerator.getSearchResultList(response)
+          .stream()
+          .map(componentHit -> toComponent(componentHit, identityMapper()))
+          .toList();
+
+      return new LimitedPagedResponse<>(limit, response.getTotalHits(), componentXOs, false);
+    }
+
+    UnaryOperator<String> repositoryNameMapper = tryExtractRepositoryFromSearch(filters);
+
     List<ComponentXO> componentXOs = searchResultsGenerator.getSearchResultList(response)
         .stream()
-        .map(SearchComponent::toComponent)
-        .collect(toList());
+        .map(componentHit -> toComponent(componentHit, repositoryNameMapper))
+        .toList();
 
     return new LimitedPagedResponse<>(limit, response.getTotalHits(), componentXOs, false);
   }
@@ -188,14 +211,17 @@ public class SearchComponent
     this.searchResultsLimit = searchResultsLimit;
   }
 
-  private static ComponentXO toComponent(final ComponentSearchResult componentHit) {
+  private static ComponentXO toComponent(
+      final ComponentSearchResult componentHit,
+      final UnaryOperator<String> repositoryNameMapper)
+  {
     ComponentXO componentXO = new ComponentXO();
 
     componentXO.setGroup(componentHit.getGroup());
     componentXO.setName(componentHit.getName());
     componentXO.setVersion(componentHit.getVersion());
     componentXO.setId(componentHit.getId());
-    componentXO.setRepositoryName(componentHit.getRepositoryName());
+    componentXO.setRepositoryName(repositoryNameMapper.apply(componentHit.getRepositoryName()));
     componentXO.setFormat(componentHit.getFormat());
 
     if (componentHit.getLastModified() != null) {
@@ -205,11 +231,50 @@ public class SearchComponent
     return componentXO;
   }
 
+  private UnaryOperator<String> identityMapper() {
+    return repositoryName -> repositoryName;
+  }
+
   private void fireSearchEvent(final Collection<SearchFilter> searchFilters) {
     eventManager.post(new SearchEvent(searchFilters, SearchEventSource.UI));
   }
 
   private static List<Sort> orEmpty(final List<Sort> sort) {
     return sort != null ? sort : emptyList();
+  }
+
+  private UnaryOperator<String> createRepositoryNameMapper(final List<SearchFilter> searchFilters) {
+    List<Repository> repositories = searchFilters
+        .stream()
+        .filter(filter -> filter.getProperty().equals(REPOSITORY_NAME_FILTER))
+        .findFirst()
+        .map(SearchFilter::getValue)
+        .stream()
+        .flatMap(filter -> Stream.of(filter.split(" ")))
+        .map(String::trim)
+        .filter(repositoryName -> !repositoryName.isEmpty())
+        .map(repositoryManager::get)
+        .filter(Objects::nonNull)
+        .toList();
+
+    Map<String, String> nameMap = repositories.stream()
+        .collect(Collectors.toMap(
+            Repository::getName,
+            Repository::getName,
+            (a, b) -> a,
+            HashMap::new));
+
+    // If any of the specified repositories are groups then add leaf members missing from the map referencing the group
+    for (Repository repository : repositories) {
+      repository.optionalFacet(GroupFacet.class)
+          .ifPresent(groupFacet -> groupFacet.leafMembers()
+              .forEach(member -> nameMap.putIfAbsent(member.getName(), repository.getName())));
+    }
+    return repositoryName -> nameMap.getOrDefault(repositoryName, repositoryName);
+  }
+
+  @VisibleForTesting
+  UnaryOperator<String> tryExtractRepositoryFromSearch(final List<SearchFilter> searchFilters) {
+    return createRepositoryNameMapper(searchFilters);
   }
 }

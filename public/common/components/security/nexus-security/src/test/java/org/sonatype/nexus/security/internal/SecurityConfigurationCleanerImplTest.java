@@ -15,7 +15,6 @@ package org.sonatype.nexus.security.internal;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
@@ -25,6 +24,10 @@ import org.sonatype.nexus.security.user.UserManager;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -35,9 +38,11 @@ import static org.hamcrest.Matchers.not;
  * Tests for SecurityConfigurationCleanerImpl with reverse index optimization.
  * This addresses NEXUS-49996: performance optimization for repository deletion with large role sets.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecurityConfigurationCleanerImplTest
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(SecurityConfigurationCleanerImplTest.class);
+
   private SecurityConfigurationCleanerImpl cleaner;
 
   private MemorySecurityConfiguration config;
@@ -125,7 +130,7 @@ public class SecurityConfigurationCleanerImplTest
     long endTime = System.currentTimeMillis();
 
     long duration = endTime - startTime;
-    log("Privilege cleanup with {} roles took {}ms", numRoles, duration);
+    log.info("Privilege cleanup with {} roles took {}ms", numRoles, duration);
 
     // Verify privilege removed from affected roles
     for (int i = 0; i < numRoles; i += 10) {

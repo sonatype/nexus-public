@@ -17,7 +17,6 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -39,7 +38,9 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
@@ -56,8 +57,9 @@ import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PR
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RawRestoreBlobStrategyTest
-    extends TestSupport
+
 {
   private static final String TEST_BLOB_STORE_NAME = "test";
 
@@ -173,7 +175,7 @@ public class RawRestoreBlobStrategyTest
     when(asset.component()).thenReturn(of(component));
 
     underTest.restore(properties, blob, blobStore, !DRY_RUN);
-    verify(asset,never()).delete();
+    verify(asset, never()).delete();
     verify(rawContentFacet, never()).put(eq(BLOB_PATH), any());
   }
 

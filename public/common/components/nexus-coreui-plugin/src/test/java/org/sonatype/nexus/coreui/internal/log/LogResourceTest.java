@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui.internal.log;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.log.LogMarker;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
@@ -20,16 +19,17 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class LogResourceTest
-    extends Test5Support
 {
   @Mock
   private LogMarker logMarker;

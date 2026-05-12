@@ -13,121 +13,20 @@
 package org.sonatype.nexus.repository.search.sql;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.rest.ValidationErrorsException;
-
-import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Support class for SQL search validation
  */
 public abstract class SqlSearchValidationSupport
-    extends ComponentSupport
 {
-  private static final char ZERO_OR_MORE_CHARACTERS = '*';
-
-  private static final char ANY_CHARACTER = '?';
-
-  private static final int MIN_ALLOWED_SYMBOLS_TO_SEARCH = 3;
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   /*
    * For SQL search we prohibit leading wildcards and less than 3 characters with wildcards for performance reasons.
    */
   protected Collection<String> getValidTokens(final Collection<String> tokens) {
-    ValidationErrorsException validation = new ValidationErrorsException();
-    Set<String> validTokens = new LinkedHashSet<>(tokens);
-
-    Set<String> invalidTokens = tokens.stream()
-        .filter(Objects::nonNull)
-        .filter(SqlSearchValidationSupport::hasLeadingWildcard)
-        .collect(Collectors.toSet());
-    if (!invalidTokens.isEmpty()) {
-      String errorMsg = "Leading wildcards are prohibited";
-      validation.withError(errorMsg);
-      log.debug("{} for tokens: {}", errorMsg, invalidTokens);
-      validTokens.removeAll(invalidTokens);
-    }
-
-    invalidTokens = tokens.stream()
-        .filter(Objects::nonNull)
-        .filter(SqlSearchValidationSupport::hasLeadingSpecialCharacterAndWildcard)
-        .collect(Collectors.toSet());
-    if (!invalidTokens.isEmpty()) {
-      String errorMsg = "Searches cannot begin with a special character followed by a wildcard";
-      validation.withError(errorMsg);
-      log.debug("{} for tokens: {}", errorMsg, invalidTokens);
-      validTokens.removeAll(invalidTokens);
-    }
-
-    invalidTokens = tokens.stream()
-        .filter(Objects::nonNull)
-        .filter(SqlSearchValidationSupport::notEnoughSymbols)
-        .collect(Collectors.toSet());
-    if (!invalidTokens.isEmpty()) {
-      String errorMsg = String.format("%d characters or more are required with a trailing wildcard (*)",
-          MIN_ALLOWED_SYMBOLS_TO_SEARCH);
-      validation.withError(errorMsg);
-      log.debug("{} for tokens: {}", errorMsg, invalidTokens);
-      validTokens.removeAll(invalidTokens);
-    }
-
-    if (validTokens.isEmpty()) {
-      log.debug("No valid search tokens");
-
-      throw validation;
-    }
-
-    return validTokens;
-  }
-
-  private static boolean hasLeadingWildcard(final String token) {
-    String trimmedToken = token.trim();
-    return trimmedToken.length() > 0 && isWildcard(trimmedToken.charAt(0));
-  }
-
-  private static boolean hasLeadingSpecialCharacterAndWildcard(final String token) {
-    String trimmedToken = token.trim();
-    if (trimmedToken.length() < 2) {
-      return false;
-    }
-    char firstChar = trimmedToken.charAt(0);
-    return !(firstChar == '\\' || Character.isLetterOrDigit(firstChar)) && isWildcard(trimmedToken.charAt(1));
-  }
-
-  private static boolean isWildcard(final char character) {
-    return character == ZERO_OR_MORE_CHARACTERS || character == ANY_CHARACTER;
-  }
-
-  /**
-   * Check if a given token contains trailing asterisk wildcard and returns a length of string without wildcard.
-   *
-   * @param token a token to check
-   * @return the {@code true} or {@code false} if a {@code token} contains wildcard
-   *         and a length of string without wildcard.
-   */
-  private static Pair<Boolean, Integer> checkTrailingAsterisk(final String token) {
-    // The escaped asterisk (*) is not a wildcard token.
-    String result = token.replace("\\*", "");
-
-    boolean trailingAsteriskWildcard = result.endsWith("*");
-
-    result = token.replace("*", "");
-
-    return Pair.of(trailingAsteriskWildcard, result.length());
-  }
-
-  private static boolean notEnoughSymbols(final String token) {
-    String trimmedToken = token.trim();
-    Pair<Boolean, Integer> wildcard = checkTrailingAsterisk(trimmedToken);
-    if (wildcard.getKey()) {
-      return wildcard.getValue() < MIN_ALLOWED_SYMBOLS_TO_SEARCH;
-    }
-
-    return false;
+    return SqlSearchWildcardValidator.getValidTokens(tokens);
   }
 }

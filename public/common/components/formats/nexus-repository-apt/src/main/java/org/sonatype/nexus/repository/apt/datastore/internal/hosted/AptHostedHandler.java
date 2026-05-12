@@ -18,7 +18,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.metadata.AptMetadataRebuildSchedulerFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
@@ -36,6 +35,8 @@ import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -51,9 +52,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AptHostedHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {

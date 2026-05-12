@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Path;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.siesta.internal.resteasy.ComponentContainerImpl;
 
 import org.jboss.resteasy.core.ResourceMethodInvoker;
@@ -27,14 +26,16 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class SiestaResourceMethodFinderTest
-    extends Test5Support
 {
   private SiestaResourceMethodFinder underTest;
 

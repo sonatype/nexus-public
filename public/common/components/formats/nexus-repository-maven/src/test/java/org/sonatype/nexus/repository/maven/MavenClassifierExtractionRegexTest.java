@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.maven;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,7 +28,7 @@ import static org.hamcrest.Matchers.is;
  * @see MavenUploadHandlerSupport#getDefinition()
  */
 public class MavenClassifierExtractionRegexTest
-    extends TestSupport
+
 {
   /**
    * Regex pattern that extracts classifier and extension from Maven artifact filenames.

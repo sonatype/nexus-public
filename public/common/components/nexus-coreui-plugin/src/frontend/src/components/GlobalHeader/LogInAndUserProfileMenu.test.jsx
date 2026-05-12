@@ -28,12 +28,6 @@ const mockRouter = {
   }
 };
 
-const mockExtJSState = {
-  getValue: jest.fn()
-};
-
-const mockExtJSSignOut = jest.fn();
-
 jest.mock('@uirouter/react', () => ({
   useRouter: () => mockRouter,
   useSref: (routeName) => ({
@@ -41,14 +35,25 @@ jest.mock('@uirouter/react', () => ({
   })
 }));
 
+// Mock nexus-ui-plugin with all needed exports
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ExtJS: {
-    useState: (fn) => fn(),
-    state: () => mockExtJSState,
-    signOut: () => mockExtJSSignOut()
+    signOut: jest.fn(),
+    useState: jest.fn(),
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn().mockImplementation((key) => {
+        if (key === 'user') return { id: 'admin' };
+        return undefined;
+      }),
+    }),
+    useUser: jest.fn().mockReturnValue({ name: 'admin', administrator: true }),
+    usePermission: jest.fn().mockReturnValue(true),
   },
-  useIsVisible: jest.fn()
+  useIsVisible: jest.fn().mockReturnValue(true),
 }));
+
+// Import the mocked modules
+import { ExtJS, useIsVisible } from '@sonatype/nexus-ui-plugin';
 
 jest.mock('../../hooks/useHasUser', () => ({
   __esModule: true,
@@ -56,24 +61,32 @@ jest.mock('../../hooks/useHasUser', () => ({
 }));
 
 import useHasUser from '../../hooks/useHasUser';
-import { useIsVisible } from '@sonatype/nexus-ui-plugin';
 
 describe('LogInAndUserProfileMenu', () => {
   beforeEach(() => {
     mockRouter.globals.params = {};
     mockRouter.urlService.url.mockReset();
     mockRouter.stateService.go.mockReset();
-    mockExtJSState.getValue.mockReset();
-    mockExtJSSignOut.mockReset();
     useHasUser.mockReset();
+
+    // Reset ExtJS mocks
+    ExtJS.signOut.mockClear();
+    ExtJS.useState.mockReset();
+    ExtJS.state.mockReturnValue({
+      getValue: jest.fn().mockImplementation((key) => {
+        if (key === 'user') return { id: 'admin' };
+        return undefined;
+      }),
+    });
+    
+    // Reset and configure useIsVisible mock
     useIsVisible.mockReset();
+    useIsVisible.mockReturnValue(true);
 
     // Default mock for route registry
     mockRouter.stateRegistry.get.mockReturnValue({
       data: { visibilityRequirements: {} }
     });
-
-    jest.clearAllMocks();
   });
 
   describe('Login Button (unauthenticated state)', () => {
@@ -188,7 +201,9 @@ describe('LogInAndUserProfileMenu', () => {
 
     beforeEach(() => {
       useHasUser.mockReturnValue(true);
-      mockExtJSState.getValue.mockReturnValue({ id: mockUserId });
+      // Mock ExtJS.useState to return the user ID (component calls: ExtJS.useState(() => ExtJS.state().getValue('user')?.id))
+      ExtJS.useState.mockReturnValue(mockUserId);
+      ExtJS.state().getValue.mockReturnValue({ id: mockUserId });
       useIsVisible.mockReturnValue(true);
     });
 
@@ -339,13 +354,14 @@ describe('LogInAndUserProfileMenu', () => {
         const logoutButton = screen.getByRole('button', { name: /log out/i });
         fireEvent.click(logoutButton);
 
-        expect(mockExtJSSignOut).toHaveBeenCalledTimes(1);
+        expect(ExtJS.signOut).toHaveBeenCalledTimes(1);
       });
     });
 
     describe('edge cases', () => {
       it('handles undefined user ID gracefully', () => {
-        mockExtJSState.getValue.mockReturnValue(undefined);
+        ExtJS.state().getValue.mockReturnValue(undefined);
+        ExtJS.useState.mockReturnValue(undefined);
 
         const { container } = render(<LogInAndUserProfileMenu />);
 
@@ -357,7 +373,8 @@ describe('LogInAndUserProfileMenu', () => {
       });
 
       it('handles user object without id property', () => {
-        mockExtJSState.getValue.mockReturnValue({});
+        ExtJS.state().getValue.mockReturnValue({});
+        ExtJS.useState.mockReturnValue(undefined);
 
         const { container } = render(<LogInAndUserProfileMenu />);
 
@@ -380,7 +397,8 @@ describe('LogInAndUserProfileMenu', () => {
 
       // Simulate user authentication
       useHasUser.mockReturnValue(true);
-      mockExtJSState.getValue.mockReturnValue({ id: 'testuser' });
+      ExtJS.useState.mockReturnValue('testuser');
+      ExtJS.state().getValue.mockReturnValue({ id: 'testuser' });
       useIsVisible.mockReturnValue(true);
 
       rerender(<LogInAndUserProfileMenu />);

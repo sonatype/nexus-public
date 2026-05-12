@@ -20,7 +20,6 @@ import javax.validation.constraints.NotNull;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sonatype.goodies.testsupport.TestSupport;
 
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +29,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 public class BeanValidationTrialTest
-    extends TestSupport
+
 {
 
   private ValidatorFactory factory;

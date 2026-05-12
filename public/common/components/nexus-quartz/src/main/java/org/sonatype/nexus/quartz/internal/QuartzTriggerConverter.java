@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.scheduling.schedule.Cron;
 import org.sonatype.nexus.scheduling.schedule.Daily;
 import org.sonatype.nexus.scheduling.schedule.Hourly;
@@ -38,6 +37,8 @@ import org.quartz.JobDataMap;
 import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.quartz.TriggerBuilder.newTrigger;
@@ -52,8 +53,9 @@ import static org.sonatype.nexus.scheduling.schedule.Schedule.stringToDate;
  * @since 3.0
  */
 public class QuartzTriggerConverter
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ScheduleFactory scheduleFactory;
 
   public QuartzTriggerConverter(final ScheduleFactory scheduleFactory) {

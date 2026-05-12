@@ -14,12 +14,13 @@ package org.sonatype.nexus.security.token;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyService;
 
 import org.apache.shiro.subject.PrincipalCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -30,8 +31,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.6
  */
 public abstract class BearerTokenManager
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected final ApiKeyService apiKeyService;
 
   protected final SecurityHelper securityHelper;

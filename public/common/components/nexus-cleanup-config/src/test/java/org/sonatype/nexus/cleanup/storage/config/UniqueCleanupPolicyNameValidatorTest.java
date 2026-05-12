@@ -12,19 +12,21 @@
  */
 package org.sonatype.nexus.cleanup.storage.config;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UniqueCleanupPolicyNameValidatorTest
-    extends TestSupport
+
 {
   private UniqueCleanupPolicyNameValidator underTest;
 

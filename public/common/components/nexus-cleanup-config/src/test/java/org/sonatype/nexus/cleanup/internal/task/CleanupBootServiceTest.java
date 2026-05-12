@@ -15,7 +15,6 @@ package org.sonatype.nexus.cleanup.internal.task;
 import java.util.Date;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -25,7 +24,9 @@ import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,8 +41,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.cleanup.internal.task.CleanupBootService.TASK_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CleanupBootServiceTest
-    extends TestSupport
+
 {
   private TaskConfiguration taskConfig;
 

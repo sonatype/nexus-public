@@ -108,9 +108,9 @@ describe('UsageInsightsChart', () => {
     mockState = {
       context: {
         combinedData: [
-          {metricDate: '2024-01-01', egress: 1000, storage: 500},
-          {metricDate: '2024-01-02', egress: 2000, storage: 1000},
-          {metricDate: '2024-01-03', egress: 1500, storage: 750}
+          {metricDate: '2024-01-01', egress: 1000, storage: 500, _available: {egress: true, storage: true}},
+          {metricDate: '2024-01-02', egress: 2000, storage: 1000, _available: {egress: true, storage: true}},
+          {metricDate: '2024-01-03', egress: 1500, storage: 750, _available: {egress: true, storage: true}}
         ],
         egressData: null,
         storageData: null,
@@ -180,7 +180,8 @@ describe('UsageInsightsChart', () => {
     expect(data[0]).toEqual({
       metricDate: '2024-01-01',
       'Total Egress': 1000,
-      'Peak Storage': 500
+      'Peak Storage': 500,
+      _available: {egress: true, storage: true}
     });
   });
 
@@ -219,9 +220,9 @@ describe('UsageInsightsChart', () => {
 
   it('sorts data by date in ascending order', () => {
     mockState.context.combinedData = [
-      {metricDate: '2024-01-03', egress: 1500, storage: 750},
-      {metricDate: '2024-01-01', egress: 1000, storage: 500},
-      {metricDate: '2024-01-02', egress: 2000, storage: 1000}
+      {metricDate: '2024-01-03', egress: 1500, storage: 750, _available: {egress: true, storage: true}},
+      {metricDate: '2024-01-01', egress: 1000, storage: 500, _available: {egress: true, storage: true}},
+      {metricDate: '2024-01-02', egress: 2000, storage: 1000, _available: {egress: true, storage: true}}
     ];
     useMachine.mockReturnValue([mockState, mockSend]);
 

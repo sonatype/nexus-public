@@ -20,7 +20,6 @@ import javax.annotation.Nullable;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.CooperationException;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -37,6 +36,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -53,9 +54,10 @@ import static org.sonatype.nexus.repository.proxy.ThrottlerInterceptor.PAYMENT_R
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ProxyHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Inject
   private NodeAccess nodeAccess;
 

@@ -18,7 +18,6 @@ import java.util.Collection;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
@@ -33,6 +32,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 import org.mockito.verification.VerificationMode;
 
 import static java.util.Optional.ofNullable;
@@ -48,8 +49,10 @@ import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
 public class MavenContentValidatorTest
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   private static final InputStreamSupplier DEFAULT_SUPPLIER = () -> new ByteArrayInputStream("0xDEADBEEF".getBytes());
 
   // "caff" as a header would normally be detected as 'audio/x-caf'

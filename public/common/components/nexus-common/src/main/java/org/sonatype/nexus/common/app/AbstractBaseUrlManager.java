@@ -17,18 +17,19 @@ import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.base.Strings;
 import jakarta.inject.Provider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class AbstractBaseUrlManager
-    extends ComponentSupport
     implements BaseUrlManager
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Provider<HttpServletRequest> requestProvider;
 
   protected volatile String url;

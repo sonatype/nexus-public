@@ -14,10 +14,11 @@ package org.sonatype.nexus.quartz.internal;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Quartz {@link LogConfigurationCustomizer}.
@@ -27,9 +28,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class LogConfigurationCustomizerImpl
-    extends ComponentSupport
     implements LogConfigurationCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public void customize(final LogConfigurationCustomizer.Configuration configuration) {
     configuration.setLoggerLevel("org.sonatype.nexus.quartz", LoggerLevel.DEFAULT);

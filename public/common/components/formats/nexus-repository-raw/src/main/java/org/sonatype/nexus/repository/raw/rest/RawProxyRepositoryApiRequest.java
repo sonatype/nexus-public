@@ -28,8 +28,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static org.sonatype.nexus.repository.raw.ContentDisposition.ATTACHMENT;
-
 /**
  * @since 3.24
  */
@@ -55,7 +53,7 @@ public class RawProxyRepositoryApiRequest
           content = Include.NON_NULL) final ReplicationAttributes replication)
   {
     super(name, RawFormat.NAME, online, storage, cleanup, proxy, negativeCache, httpClient, routingRule, replication);
-    this.raw = raw != null ? raw : new RawAttributes(ATTACHMENT);
+    this.raw = raw;
   }
 
   public RawAttributes getRaw() {

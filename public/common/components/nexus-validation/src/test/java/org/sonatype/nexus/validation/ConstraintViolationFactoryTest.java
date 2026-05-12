@@ -16,7 +16,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ValidatorFactory;
 import javax.validation.constraints.NotNull;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.validation.internal.SpringConstraintValidatorFactory;
 
@@ -24,7 +23,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
@@ -33,8 +34,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ConstraintViolationFactoryTest
-    extends TestSupport
+
 {
   private static final String JAVA_EL_IMMEDIATE = "${2 + 2}";
 

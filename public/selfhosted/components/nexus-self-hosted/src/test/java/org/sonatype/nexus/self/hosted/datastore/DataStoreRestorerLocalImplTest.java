@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
 import org.junit.Before;
@@ -38,12 +37,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @since 3.21
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DataStoreRestorerLocalImplTest
-    extends TestSupport
 {
 
   private static final String RESTORE_FROM_BACKUP = "restore-from-backup";

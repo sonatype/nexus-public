@@ -12,20 +12,5 @@
  *###
 <h4>Node ID</h4>
 <div>
-    <pre>$nodeId</pre>
-</div>
-
-<h4>Fingerprint</h4>
-<div>
-    <pre>$fingerprint</pre>
-</div>
-
-<h4>Certificate PEM</h4>
-<div>
-    <pre>$pem</pre>
-</div>
-
-<h4>Certificate Details</h4>
-<div>
-    <pre>$detail</pre>
+    <pre>$esc.html($nodeId)</pre>
 </div>

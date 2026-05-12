@@ -16,9 +16,12 @@ export default {
       text: 'Hosted Repositories Evaluation',
     },
     title: 'Hosted Repositories Evaluation',
+    breadcrumb: 'Hosted Repositories Evaluation',
     tabs: {
       settings: 'SETTINGS',
-      repositories: 'REPOSITORIES'
+      repositories: 'REPOSITORIES',
+      monitoringSettings: 'Monitoring Settings',
+      monitoredRepositories: 'Monitored Repositories'
     },
     monitoringSettings: {
       title: 'Monitoring Settings',
@@ -63,7 +66,53 @@ export default {
     },
     buttons: {
       cancel: 'Cancel',
-      next: 'Next'
+      next: 'Next',
+      save: 'Save',
+      update: 'Update'
+    },
+    repositoriesTable: {
+      searchPlaceholder: 'Search repositories...',
+      formatFilterLabel: 'Format',
+      monitoringFilterLabel: 'All Monitoring',
+      monitoringFilterOptions: {
+        all: 'All Monitoring',
+        enabled: 'Enabled',
+        disabled: 'Disabled',
+        custom: 'Custom'
+      },
+      showingText: 'Showing',
+      ofText: 'of',
+      repositoriesText: 'repositories',
+      columnHeaders: {
+        select: 'Select',
+        repositoryName: 'Repository Name',
+        format: 'Format',
+        size: 'Size',
+        components: 'No. Components'
+      }
+    },
+    INCOMPLETE_MODAL: {
+      TITLE: 'No Repositories Selected',
+      MESSAGE: 'Please select at least one repository to enable monitoring.',
+      CANCEL: 'Cancel',
+      CONTINUE: 'Back to Settings'
+    },
+    UNSAVED_CHANGES_MODAL: {
+      TITLE: 'Unsaved Changes',
+      MESSAGE: 'You have unsaved changes. Are you sure you want to leave this page?',
+      CANCEL: 'Stay on Page',
+      CONTINUE: 'Leave Page'
+    },
+    INCOMPLETE_MODAL: {
+      TITLE: 'No Repositories Selected',
+      MESSAGE: 'You have not selected any repositories for monitoring. Please select at least one repository or go back to modify settings.',
+      CANCEL: 'Stay on Page',
+      CONTINUE: 'Go Back to Settings'
+    },
+    ERROR_MODAL: {
+      TITLE: 'Save Failed',
+      MESSAGE: 'An error occurred while saving the settings. Please try again.',
+      CLOSE: 'Close'
     }
   }
 };

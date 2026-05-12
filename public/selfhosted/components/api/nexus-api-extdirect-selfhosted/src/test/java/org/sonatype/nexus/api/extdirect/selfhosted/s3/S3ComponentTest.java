@@ -14,7 +14,6 @@ package org.sonatype.nexus.api.extdirect.selfhosted.s3;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.api.extdirect.selfhosted.s3.model.S3EncryptionTypeXO;
 import org.sonatype.nexus.api.extdirect.selfhosted.s3.model.S3RegionXO;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
@@ -29,7 +28,6 @@ import static org.hamcrest.Matchers.is;
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 public class S3ComponentTest
-    extends Test5Support
 {
   private final S3Component underTest = new S3Component();
 

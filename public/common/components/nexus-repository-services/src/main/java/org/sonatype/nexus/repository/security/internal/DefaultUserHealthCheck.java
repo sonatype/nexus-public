@@ -33,6 +33,9 @@ import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_FIPS_ENA
 
 /**
  * Check if the default user can be used to authenticate.
+ *
+ * Returns unhealthy if the default admin user exists with unchanged default password.
+ * Returns healthy if the admin user doesn't exist or password has been changed.
  */
 @Component
 @Qualifier("Default Admin Credentials")
@@ -80,7 +83,7 @@ public class DefaultUserHealthCheck
       }
     }
     catch (UserNotFoundException e) {
-      log.warn("Default admin user not found", e);
+      log.debug("Default admin user not found: {}", e.getMessage());
     }
     return Result.healthy();
   }

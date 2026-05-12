@@ -15,10 +15,8 @@ package org.sonatype.nexus.internal.node.datastore;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -27,7 +25,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,9 +36,8 @@ import static org.hamcrest.Matchers.is;
 /**
  * Tests for local {@link NodeAccess}.
  */
-@Category(SQLTestGroup.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LocalNodeAccessTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(NodeIdDAO.class);

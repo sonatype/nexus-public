@@ -94,7 +94,7 @@ public class CapabilityOfTypeExistsConditionTest
   public void capabilityOfTypeExists01() {
     doReturn(Arrays.asList(ref1)).when(capabilityRegistry).getAll();
     when(ref1.context().isActive()).thenReturn(true);
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref1));
+    underTest.handle(new CapabilityEvent.Created(ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
     verifyEventManagerEvents(satisfied(underTest));
@@ -107,7 +107,7 @@ public class CapabilityOfTypeExistsConditionTest
   public void capabilityOfTypeExists02() {
     doReturn(Arrays.asList(ref1)).when(capabilityRegistry).getAll();
     when(ref1.context().isActive()).thenReturn(false);
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref1));
+    underTest.handle(new CapabilityEvent.Created(ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
     verifyEventManagerEvents(satisfied(underTest));
@@ -119,11 +119,11 @@ public class CapabilityOfTypeExistsConditionTest
   @Test
   public void capabilityOfTypeExists03() {
     doReturn(Arrays.asList(ref1)).when(capabilityRegistry).getAll();
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref1));
+    underTest.handle(new CapabilityEvent.Created(ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
     doReturn(Arrays.asList(ref1, ref2)).when(capabilityRegistry).getAll();
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref2));
+    underTest.handle(new CapabilityEvent.Created(ref2));
     assertThat(underTest.isSatisfied(), is(true));
 
     verifyEventManagerEvents(satisfied(underTest));
@@ -135,15 +135,15 @@ public class CapabilityOfTypeExistsConditionTest
   @Test
   public void capabilityOfTypeExists04() {
     doReturn(Arrays.asList(ref1)).when(capabilityRegistry).getAll();
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref1));
+    underTest.handle(new CapabilityEvent.Created(ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
     doReturn(Arrays.asList(ref1, ref2)).when(capabilityRegistry).getAll();
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref2));
+    underTest.handle(new CapabilityEvent.Created(ref2));
     assertThat(underTest.isSatisfied(), is(true));
 
     doReturn(Arrays.asList(ref2)).when(capabilityRegistry).getAll();
-    underTest.handle(new CapabilityEvent.AfterRemove(capabilityRegistry, ref1));
+    underTest.handle(new CapabilityEvent.AfterRemove(ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
     verifyEventManagerEvents(satisfied(underTest));
@@ -155,11 +155,11 @@ public class CapabilityOfTypeExistsConditionTest
   @Test
   public void capabilityOfTypeExists05() {
     doReturn(Arrays.asList(ref1)).when(capabilityRegistry).getAll();
-    underTest.handle(new CapabilityEvent.Created(capabilityRegistry, ref1));
+    underTest.handle(new CapabilityEvent.Created(ref1));
     assertThat(underTest.isSatisfied(), is(true));
 
     doReturn(Collections.emptyList()).when(capabilityRegistry).getAll();
-    underTest.handle(new CapabilityEvent.AfterRemove(capabilityRegistry, ref1));
+    underTest.handle(new CapabilityEvent.AfterRemove(ref1));
     assertThat(underTest.isSatisfied(), is(false));
 
     verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));

@@ -15,8 +15,6 @@ package org.sonatype.nexus.selector;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.JexlInfo;
 import org.junit.Before;
@@ -31,7 +29,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 public class JexlSelectorTest
-    extends TestSupport
 {
   private JexlEngine engine = new JexlEngine();
 

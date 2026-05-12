@@ -13,17 +13,19 @@
 package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.outbound.context.OutboundRequestContext;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
@@ -40,9 +42,9 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.transaction.RetryDeniedException;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper.SsrfValidationResult;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.net.HttpHeaders;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -53,6 +55,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.protocol.HttpContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -60,17 +63,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Spy;
+import org.slf4j.Logger;
 
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -78,16 +85,20 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_THROTTLED_ANALYTICS_MARKED;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for the abstract class {@link ProxyFacetSupport}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ProxyFacetSupportTest
-    extends TestSupport
 {
   @Mock
   ThrottlerInterceptor throttlerInterceptor;
@@ -174,13 +185,14 @@ public class ProxyFacetSupportTest
   private RepositoryAttributeService repositoryAttributeService;
 
   @Mock
-  private AntiSsrfHelper antiSsrfHelper;
+  private AntiSsrfService antiSsrfService;
 
   private final ArgumentCaptor<ProxyThrottledRequestEvent> captor =
       ArgumentCaptor.forClass(ProxyThrottledRequestEvent.class);
 
   @Before
   public void setUp() throws Exception {
+    OutboundRequestContext.remove();
     when(content.getAttributes()).thenReturn(attributesMap);
 
     when(attributesMap.get(CacheInfo.class)).thenReturn(cacheInfo);
@@ -204,15 +216,104 @@ public class ProxyFacetSupportTest
     when(cachedContext.getAttributes()).thenReturn(cachedContextAttributesMap);
     when(missingContext.getAttributes()).thenReturn(missingContextAttributesMap);
 
-    when(antiSsrfHelper.validateHost(anyString()))
-        .thenReturn(SsrfValidationResult.success());
-
     underTest.installDependencies(eventManager);
     underTest.attach(repository);
     DefaultCooperation2Factory cooperationFactory = new DefaultCooperation2Factory();
     underTest.configureCooperation(cooperationFactory, false, Duration.ofSeconds(0),
         Duration.ofSeconds(60), 10);
     underTest.buildCooperation();
+  }
+
+  @Test
+  public void printOutboundLogging_nullStopwatch_cleansUpThreadLocal() throws Exception {
+    Request request = mock(Request.class);
+    when(request.getPath()).thenReturn("/path/to/file.txt");
+
+    Logger outboundReqLog = mock(Logger.class);
+    Logger outboundLog = mock(Logger.class);
+
+    when(cachedContext.getRequest()).thenReturn(request);
+    when(cachedContext.getAttribute("request.stopwatch", Stopwatch.class)).thenReturn(null);
+
+    OutboundRequestContext.setFormattedString("should be cleaned up");
+
+    setField(underTest, "outboundReqLog", outboundReqLog);
+    setField(underTest, "outboundLog", outboundLog);
+
+    Method method = ProxyFacetSupport.class.getDeclaredMethod("printOutboundLogging", Context.class);
+    method.setAccessible(true);
+    method.invoke(underTest, cachedContext);
+
+    verifyNoInteractions(outboundReqLog);
+    verifyNoInteractions(outboundLog);
+    assertNull(OutboundRequestContext.getFormattedString());
+    assertFalse(OutboundRequestContext.getContextMapSize() > 0);
+  }
+
+  @Test
+  public void printOutboundLogging_nullFormattedString_onlyLogsDebug() throws Exception {
+    Request request = mock(Request.class);
+    when(request.getPath()).thenReturn("/path/to/file.txt");
+
+    HttpContext httpContext = mock(HttpContext.class);
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    Logger outboundReqLog = mock(Logger.class);
+    Logger outboundLog = mock(Logger.class);
+
+    when(cachedContext.getRequest()).thenReturn(request);
+    when(cachedContext.getAttribute("request.stopwatch", Stopwatch.class)).thenReturn(stopwatch);
+    when(cachedContext.getAttribute("request.http_context", HttpContext.class)).thenReturn(httpContext);
+    when(httpContext.getAttribute("request.uri")).thenReturn(URI.create("https://example.com/path/to/file.txt"));
+
+    setField(underTest, "outboundReqLog", outboundReqLog);
+    setField(underTest, "outboundLog", outboundLog);
+
+    Method method = ProxyFacetSupport.class.getDeclaredMethod("printOutboundLogging", Context.class);
+    method.setAccessible(true);
+    method.invoke(underTest, cachedContext);
+
+    verify(outboundLog).debug(eq("Request for {} took {} milliseconds"),
+        eq("https://example.com/path/to/file.txt"), any(Long.class));
+    verifyNoInteractions(outboundReqLog);
+  }
+
+  @Test
+  public void printOutboundLogging_replacesNamedPlaceholders() throws Exception {
+    Request request = mock(Request.class);
+    when(request.getPath()).thenReturn("/path/to/file.txt");
+
+    HttpContext httpContext = mock(HttpContext.class);
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    Logger outboundReqLog = mock(Logger.class);
+    ArgumentCaptor<String> loggedMessage = ArgumentCaptor.forClass(String.class);
+
+    when(cachedContext.getRequest()).thenReturn(request);
+    when(cachedContext.getAttribute("request.stopwatch", Stopwatch.class)).thenReturn(stopwatch);
+    when(cachedContext.getAttribute("request.http_context", HttpContext.class)).thenReturn(httpContext);
+    when(httpContext.getAttribute("request.uri")).thenReturn(URI.create("https://example.com/path/to/file.txt"));
+
+    OutboundRequestContext.setFormattedString(String.format("[%s] 200 %s",
+        OutboundRequestContext.TIMESTAMP_PLACEHOLDER,
+        OutboundRequestContext.ELAPSED_TIME_PLACEHOLDER));
+
+    setField(underTest, "outboundReqLog", outboundReqLog);
+
+    Method method = ProxyFacetSupport.class.getDeclaredMethod("printOutboundLogging", Context.class);
+    method.setAccessible(true);
+    method.invoke(underTest, cachedContext);
+
+    verify(outboundReqLog).info(eq(OUTBOUND_REQUESTS_LOG_ONLY), eq("{}"), loggedMessage.capture());
+    assertThat(loggedMessage.getValue(), not(containsString(OutboundRequestContext.TIMESTAMP_PLACEHOLDER)));
+    assertThat(loggedMessage.getValue(), not(containsString(OutboundRequestContext.ELAPSED_TIME_PLACEHOLDER)));
+
+    assertNull(OutboundRequestContext.getFormattedString());
+    assertFalse(OutboundRequestContext.getContextMapSize() > 0);
+  }
+
+  private static void setField(final Object target, final String fieldName, final Object value) throws Exception {
+    Field field = ProxyFacetSupport.class.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    field.set(target, value);
   }
 
   @Test
@@ -832,4 +933,47 @@ public class ProxyFacetSupportTest
     assertNull("fetch() should return null before attempting URI resolution", result);
   }
 
+  @Test
+  public void testDoGet_HeadRequest_CallsStore_WhenShouldSkipStoreForHeadReturnsFalse() throws Exception {
+    ProxyFacetSupport noSkipStore = spy(new ProxyFacetSupport()
+    {
+      @Nullable
+      @Override
+      protected Content getCachedContent(final Context context) {
+        return null;
+      }
+
+      @Override
+      protected Content store(final Context context, final Content content) {
+        return content;
+      }
+
+      @Override
+      protected void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo) {
+      }
+
+      @Override
+      protected String getUrl(@Nonnull final Context context) {
+        return null;
+      }
+
+      @Override
+      protected boolean shouldSkipStoreForHead() {
+        return false;
+      }
+    });
+
+    Request request = mock(Request.class);
+    when(request.getAction()).thenReturn(HttpMethods.HEAD);
+    when(cachedContext.getRequest()).thenReturn(request);
+
+    doReturn(null).when(noSkipStore).getCachedContent(cachedContext);
+    doReturn(reFetchedContent).when(noSkipStore).fetch(cachedContext, null);
+    doReturn(storedContent).when(noSkipStore).store(cachedContext, reFetchedContent);
+
+    Content result = noSkipStore.doGet(cachedContext, null);
+
+    assertThat(result, is(storedContent));
+    verify(noSkipStore, times(1)).store(cachedContext, reFetchedContent);
+  }
 }

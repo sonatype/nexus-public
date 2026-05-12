@@ -17,7 +17,6 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -43,7 +42,9 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Optional.empty;
 import static org.mockito.ArgumentMatchers.any;
@@ -58,8 +59,9 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenRestoreBlobStrategyTest
-    extends TestSupport
+
 {
   private static final String REPO_NAME = "test-repo";
 

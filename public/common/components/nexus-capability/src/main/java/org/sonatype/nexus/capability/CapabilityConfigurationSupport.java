@@ -17,10 +17,11 @@ import java.net.URISyntaxException;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Support for {@link Capability} configuration implementations.
@@ -28,8 +29,9 @@ import org.sonatype.nexus.crypto.secrets.SecretsStore;
  * @since 2.7
  */
 public abstract class CapabilityConfigurationSupport
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected boolean isEmpty(final String value) {
     return Strings2.isEmpty(value);
   }

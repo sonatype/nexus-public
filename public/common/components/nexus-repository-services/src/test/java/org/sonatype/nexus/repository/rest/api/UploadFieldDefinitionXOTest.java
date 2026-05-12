@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 
 import org.junit.Test;
@@ -31,7 +30,6 @@ import static org.hamcrest.Matchers.nullValue;
  * Tests for {@link UploadFieldDefinitionXO}
  */
 public class UploadFieldDefinitionXOTest
-    extends TestSupport
 {
 
   @Test

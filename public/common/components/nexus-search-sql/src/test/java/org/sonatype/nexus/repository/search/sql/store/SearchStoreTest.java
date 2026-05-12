@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.search.sql.SearchAssetRecord;
@@ -39,12 +38,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link SearchStore} focusing on asset batching functionality.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SearchStoreTest
-    extends TestSupport
 {
   @Mock
   private DataSessionSupplier sessionSupplier;

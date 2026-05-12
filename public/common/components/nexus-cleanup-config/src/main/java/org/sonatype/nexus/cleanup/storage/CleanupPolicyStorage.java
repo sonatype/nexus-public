@@ -16,7 +16,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 
 /**
  * @since 3.14

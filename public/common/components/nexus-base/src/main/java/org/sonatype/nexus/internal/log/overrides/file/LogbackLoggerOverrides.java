@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.internal.log.overrides.LogbackLoggerOverridesSupport;
 import org.sonatype.nexus.internal.log.LoggerOverrides;

@@ -15,8 +15,6 @@ package org.sonatype.nexus.internal.template;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import org.apache.velocity.app.VelocityEngine;
@@ -24,6 +22,8 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.velocity.runtime.RuntimeConstants.PARSER_POOL_SIZE;
 import static org.apache.velocity.runtime.RuntimeConstants.RESOURCE_LOADERS;
@@ -43,9 +43,10 @@ import static org.apache.velocity.runtime.RuntimeConstants.VM_PERM_INLINE_LOCAL;
 @Component
 @Singleton
 public class VelocityEngineProvider
-    extends ComponentSupport
     implements FactoryBean<VelocityEngine>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final VelocityEngine engine;
 
   private final int velocityParserPoolSize;

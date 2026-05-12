@@ -18,7 +18,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -34,7 +33,6 @@ import static org.mockito.Mockito.mock;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class EmailConfigurationDAOTest
-    extends TestSupport
 {
 
   private final SecretsFactory secretsFactory = mock(SecretsFactory.class);

@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.webresources.FileWebResource;
 import org.sonatype.nexus.webresources.WebResource;
@@ -30,6 +29,8 @@ import com.google.common.collect.Maps;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -41,9 +42,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @Component
 public class WebResourceServiceImpl
-    extends ComponentSupport
     implements WebResourceService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final DevModeResources devModeResources;
 
   private final MimeSupport mimeSupport;

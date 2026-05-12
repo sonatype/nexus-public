@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.internal.DefaultSearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.sql.SearchMappingService;
@@ -43,9 +42,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SearchContentSelectorSqlFilterGeneratorTest
-    extends TestSupport
 {
   public static final String REPOSITORY_CONDITION_FORMAT = "repositoryConditionFormat";
 

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.base;
 
-import org.sonatype.nexus.internal.metrics.InstrumentedFilter;
 import org.sonatype.nexus.security.FilterChain;
 import org.sonatype.nexus.security.JwtFilter;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
@@ -38,16 +37,6 @@ public class BaseConfiguration
   @Bean("nexus-uber")
   public ClassLoader uberClassLoader() {
     return BaseConfiguration.class.getClassLoader();
-  }
-
-  /**
-   * When we switch to jakarta namespace delete {@link InstrumentedFilter} and replace with
-   * {@link org.springframework.boot.web.servlet.FilterRegistrationBean} using the
-   * {@link com.codahale.metrics.servlet.InstrumentedFilter}
-   */
-  @Bean
-  public InstrumentedFilter instrumentedFilter() {
-    return new InstrumentedFilter();
   }
 
   @Bean

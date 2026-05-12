@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.BadRequestException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.common.time.DateHelper;
@@ -55,8 +54,11 @@ import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -68,12 +70,14 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 /**
  * {@link SearchService} implementation that uses a single search table.
  */
+@Named("sql")
 @Component
 @Singleton
 public class SqlSearchService
-    extends ComponentSupport
     implements SearchService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SearchStore searchStore;
 
   private final ExpressionBuilder expressionBuilder;

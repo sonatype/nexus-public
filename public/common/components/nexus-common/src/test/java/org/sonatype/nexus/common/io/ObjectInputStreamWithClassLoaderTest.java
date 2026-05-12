@@ -23,11 +23,12 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.io.ObjectInputStreamWithClassLoader.LoadingFunction;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -37,8 +38,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ObjectInputStreamWithClassLoaderTest
-    extends TestSupport
+
 {
   private static final String OBJECT_TO_SERIALIZE = "test";
 

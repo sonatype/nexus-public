@@ -64,6 +64,9 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.CondaHosted',
     'repository.recipe.CondaProxy',
     'repository.recipe.CondaGroup',
+    'repository.recipe.PubGroup',
+    'repository.recipe.PubHosted',
+    'repository.recipe.PubProxy',
     'repository.recipe.DockerHosted',
     'repository.recipe.DockerGroup',
     'repository.recipe.DockerProxy',
@@ -72,6 +75,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.GolangHosted',
     'repository.recipe.HelmHosted',
     'repository.recipe.HelmProxy',
+    'repository.recipe.HelmGroup',
     'repository.recipe.HuggingFaceProxy',
     'repository.recipe.Maven2Group',
     'repository.recipe.Maven2Hosted',
@@ -202,7 +206,7 @@ Ext.define('NX.coreui.controller.Repositories', {
           afterrender: me.bindIfProxyOrGroupAndEditable
         },
         'nx-coreui-repository-settings-form': {
-          submitted: me.loadStores
+          submitted: me.onFormSubmitted
         },
         'nx-coreui-repository-selectrecipe': {
           cellclick: me.showAddRepositoryPanel
@@ -259,13 +263,63 @@ Ext.define('NX.coreui.controller.Repositories', {
       me.logWarn('Could not find settings form for: ' + model.getId());
     }
     else if (Ext.isDefined(model)) {
-      // load the record after we have all stores available
-      me.loadCleanupPolicies(model.get('format'), function() {
-        Ext.suspendLayouts();
-        // Load the form
-        settingsPanel.removeAllSettingsForms();
-        settingsPanel.addSettingsForm({xtype: formCls.xtype, recipe: model});
-        settingsPanel.loadRecord(model);
+      // Force reload evaluation settings from backend to get fresh data
+      // This ensures evaluation mode reflects current state after bulk edits
+      var repositoryName = model.get('name');
+
+      Ext.Ajax.request({
+        url: '/service/rest/v1/repositories/' + encodeURIComponent(repositoryName) + '/evaluation-settings',
+        method: 'GET',
+        success: function(response) {
+          try {
+            var evaluationData = Ext.decode(response.responseText);
+            if (!evaluationData || typeof evaluationData.mode !== 'string') {
+              throw new Error('Invalid response structure');
+            }
+            // Update the attributes.evaluation with fresh data from backend
+            var currentAttributes = model.get('attributes') || {};
+            var newEvaluation = {
+              mode: evaluationData.mode,
+              activityTimeFrame: evaluationData.activityTimeFrame ? String(evaluationData.activityTimeFrame) : null,
+              artifactLatestVersions: evaluationData.artifactLatestVersions ? String(evaluationData.artifactLatestVersions) : null,
+              policyEvaluationStage: evaluationData.policyEvaluationStage || null
+            };
+
+            var updatedAttributes = Ext.apply({}, currentAttributes);
+            updatedAttributes.evaluation = newEvaluation;
+
+            model.set('attributes', updatedAttributes);
+            model.commit();
+          } catch (e) {
+            me.logWarn('Failed to parse evaluation data: ' + e.message);
+          }
+          me.loadRepositoryForm(model, formCls, settingsPanel);
+        },
+        failure: function() {
+          me.logWarn('Failed to reload evaluation data for ' + repositoryName + ', using cached data');
+          me.loadRepositoryForm(model, formCls, settingsPanel);
+        }
+      });
+    }
+  },
+
+  /**
+   * Load repository form with the given model
+   */
+  loadRepositoryForm: function(model, formCls, settingsPanel) {
+    var me = this;
+
+    // load the record after we have all stores available
+    me.loadCleanupPolicies(model.get('format'), function() {
+      // Check if settingsPanel is still valid (user may have navigated away)
+      if (!settingsPanel || settingsPanel.isDestroyed || settingsPanel.destroying) {
+        return;
+      }
+      Ext.suspendLayouts();
+      // Load the form
+      settingsPanel.removeAllSettingsForms();
+      settingsPanel.addSettingsForm({xtype: formCls.xtype, recipe: model});
+      settingsPanel.loadRecord(model);
 
         // Set immutable fields to readonly
         Ext.Array.each(settingsPanel.query('field[readOnlyOnUpdate=true]'), function(field) {
@@ -300,13 +354,16 @@ Ext.define('NX.coreui.controller.Repositories', {
 
         Ext.resumeLayouts();
       });
-    }
   },
 
   /**
    * @private
    */
   hideUnsupportedReplicationFields: function(settingsPanel, format) {
+    // Check if settingsPanel is still valid
+    if (!settingsPanel || settingsPanel.isDestroyed || settingsPanel.destroying) {
+      return;
+    }
     var supportedFormats = NX.State.getValue('replicationSupportedFormats');
 
     if (supportedFormats instanceof Array) {
@@ -800,7 +857,7 @@ Ext.define('NX.coreui.controller.Repositories', {
         var name = record.get('name');
         var type = record.get('type');
 
-        // update nuget-v3-proxy and conda-proxy repo URLs only in the model
+        // update nuget-v3-proxy repo URLs only in the model
         if (type === 'proxy') {
           var model = store.findRecord('name', name);
           if (model) {
@@ -816,13 +873,6 @@ Ext.define('NX.coreui.controller.Repositories', {
                 model.commit(true);
               }
             }
-            if (format === 'conda') {
-              if (!Ext.String.endsWith(repoUrl, 'main')) {
-                repoUrl += 'main';
-                model.set('url', repoUrl);
-                model.commit(true);
-              }
-            }
           }
         }
       });
@@ -830,9 +880,61 @@ Ext.define('NX.coreui.controller.Repositories', {
   },
 
   onNavigate: function() {
-    if (NX.Bookmarks.getBookmark().getToken().includes('repository/repositories')) {
+    var bookmark = NX.Bookmarks.getBookmark();
+    var token = bookmark && bookmark.getToken ? bookmark.getToken() : null;
+    if (token && token.includes('repository/repositories')) {
       this.reselect();
     }
   },
+
+  /**
+   * Handle form submission - save evaluation settings via API for hosted repos
+   * @private
+   */
+  onFormSubmitted: function(form) {
+    var me = this,
+        record = form.getRecord(),
+        isEnabled = NX.State.getValue('hostedRepositoryEvaluationEnabled', false);
+
+    // Only call evaluation API if feature is enabled and repo is hosted
+    if (record && record.get('type') === 'hosted' && isEnabled) {
+      var formValues = form.getValues();
+      var evaluation = formValues.attributes && formValues.attributes.evaluation ? formValues.attributes.evaluation : null;
+
+      if (evaluation && evaluation.mode) {
+        // Transform policyEvaluationStage to lowercase with hyphens (API format)
+        var policyStage = evaluation.policyEvaluationStage;
+        if (policyStage) {
+          policyStage = policyStage.toLowerCase().replace(/_/g, '-');
+        }
+
+        // For INHERIT and DISABLE modes, send null values for settings fields
+        var payload = {
+          mode: evaluation.mode,
+          activityTimeFrame: evaluation.mode === 'OVERRIDE' ? evaluation.activityTimeFrame : null,
+          artifactLatestVersions: evaluation.mode === 'OVERRIDE' ? evaluation.artifactLatestVersions : null,
+          policyEvaluationStage: evaluation.mode === 'OVERRIDE' ? policyStage : null
+        };
+
+        Ext.Ajax.request({
+          url: '/service/rest/v1/repositories/' + encodeURIComponent(record.get('name')) + '/evaluation-settings',
+          method: 'PUT',
+          jsonData: payload,
+          success: function() {
+            me.loadStores();
+          },
+          failure: function(response) {
+            me.logWarn('Failed to save evaluation settings: ' + response.status);
+            NX.Messages.error('Failed to save evaluation settings');
+            me.loadStores();
+          }
+        });
+        return;
+      }
+    }
+
+    // Default behavior for non-hosted repos or when feature is disabled
+    me.loadStores();
+  }
 
 });

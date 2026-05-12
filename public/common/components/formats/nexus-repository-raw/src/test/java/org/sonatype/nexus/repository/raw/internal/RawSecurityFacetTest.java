@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
@@ -23,7 +22,9 @@ import org.sonatype.nexus.repository.view.Request;
 import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,8 +33,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RawSecurityFacetTest
-    extends TestSupport
+
 {
   @Mock
   Request request;

@@ -12,15 +12,12 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.eula.model;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class EulaStatusTest
-    extends TestSupport
 {
   private final EulaStatus underTest = new EulaStatus();
 

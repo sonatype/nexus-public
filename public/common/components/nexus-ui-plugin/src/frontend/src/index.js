@@ -24,6 +24,7 @@ export { RouteNames } from './constants/RouteNames';
 
 export { default as ExtJS } from './interface/ExtJS';
 export { default as ExtAPIUtils } from './interface/ExtAPIUtils';
+export { bootstrapFromREST } from './interface/RestBootstrap';
 
 export { default as Utils } from './interface/Utils';
 export { default as UnitUtil } from './interface/UnitUtil';
@@ -58,6 +59,7 @@ export { default as TokenMachine } from './interface/TokenMachine';
 
 export { createRouter } from './router/createRouter';
 export { handleExtJsUnsavedChanges, useExtJsUnsavedChangesGuard } from './router/extJsUnsavedChanges';
+export { showUnsavedChangesModal } from './router/unsavedChangesDialog';
 
 export { default as RouteLoadingFallback } from './components/widgets/RouteLoadingFallback/RouteLoadingFallback';
 
@@ -93,4 +95,94 @@ export { default as CapabilitiesList } from './components/admin/Capabilities/Cap
 export { default as CapabilitiesEdit } from './components/admin/Capabilities/CapabilitiesEdit';
 export { default as CapabilitiesCreate } from './components/admin/Capabilities/CapabilitiesCreate';
 export { default as CapabilitiesListMachine } from './components/admin/Capabilities/CapabilitiesListMachine';
+export { default as TasksStrings } from './constants/admin/TasksStrings';
 export { default as GlobalEvaluationSettingsMachine } from './interface/GlobalEvaluationSettingsMachine';
+
+// Preview UI: Context Providers (Sprint 13 - Shared Library Migration)
+export { AuthProvider, useAuth } from './contexts/AuthContext';
+export { PermissionsProvider, usePermissions } from './contexts/PermissionsContext';
+export { ThemeProvider, useTheme, THEMES } from './contexts/ThemeContext';
+export { StateProvider, useAppState } from './contexts/StateContext';
+
+// Preview UI: ExtJS Loader Utility
+export { isExtJSLoaded, onExtJSLoad, loadExtJS } from './utils/extJsLoader';
+
+// Shared dev-hostname utility (used by both self-hosted and cloud UIs)
+export { isLocalDevHostname } from './utils/isLocalDevHostname';
+
+// Preview UI: Shared Components (Sprint 13 - Shared Library Migration)
+// Note: PageHeader is NOT exported here to avoid collision with Classic UI PageHeader from ./components/layout
+export {
+  FilterSidebar,
+  EntityTable,
+  EmptyState,
+  StatusBadge,
+  LoadingState,
+  ErrorState,
+  HelpSection,
+  useUnsavedChangesWarning,
+  clearDirtyState,
+  hasUnsavedChanges,
+  ToastProvider,
+  useToast,
+} from './components/preview/shared';
+
+// Preview UI: REST API Utilities
+export {
+  restClient,
+  urlBuilder,
+  API_BASE,
+  API_V1,
+  API_INTERNAL,
+  API_INTERNAL_UI,
+  ENDPOINTS,
+  NEXUS_SESSION_EXPIRED_EVENT,
+  notifySessionExpiredFromRest,
+  encodeRepositoryItemId,
+  decodeRepositoryItemId,
+  parseApiError,
+  getErrorMessage,
+  getFieldError,
+  hasFieldErrors,
+  fieldErrorsToMap,
+  isAuthError,
+  isPermissionError,
+  isNotFoundError,
+  isConflictError,
+  isValidationError,
+  isServerError,
+  isNetworkError,
+} from './interface/api';
+
+// Preview UI: XState Form Utilities
+export {
+  createFormMachine,
+  useForm,
+  hasValidationErrors,
+  extractErrorMessage,
+  toPathArray,
+} from './interface/form';
+
+// Preview UI: XState List Utilities
+export {
+  createListMachine,
+  useList,
+} from './interface/list';
+
+// Preview UI: Settings Form Components (Sprint 19 cache invalidation)
+export {
+  SettingsForm,
+  SettingsFormSection,
+  SettingsTextInput,
+  SettingsPasswordInput,
+  SettingsCheckbox,
+  SettingsCheckboxGroup,
+  SettingsCombobox,
+  SettingsSelect,
+  SettingsTextArea,
+  SettingsToggle,
+  SettingsAlert,
+  SettingsButton,
+  SettingsTransferList,
+  ConfirmDialog,
+} from './components/preview/shared';

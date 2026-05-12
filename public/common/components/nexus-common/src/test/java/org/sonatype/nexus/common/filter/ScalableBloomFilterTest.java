@@ -15,8 +15,6 @@ package org.sonatype.nexus.common.filter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static com.google.common.hash.Funnels.stringFunnel;
@@ -29,7 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ScalableBloomFilterTest
-    extends TestSupport
+
 {
   private static final double FALSE_POSITIVE_PROBABILITY = 10e-19;
 

@@ -15,7 +15,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 require('@testing-library/jest-dom');
+const { configure } = require('@testing-library/react');
 const { ExtJS } = require('@sonatype/nexus-ui-plugin');
+
+// Increase default async timeout for findBy/waitFor queries.
+// CI machines are CPU-constrained (Maven runs 3 threads), so the default
+// 1000ms timeout causes flaky failures on navigation/render-heavy tests.
+configure({ asyncUtilTimeout: 5000 });
 
 jest.mock('axios', () => ({
   ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -82,7 +88,13 @@ global.NX = {
     }
   },
   State: {
-    getValue: jest.fn(),
+    getValue: jest.fn((key) => {
+      // Default hosted repository evaluation to true
+      if (key === 'hostedRepositoryEvaluationEnabled') {
+        return true;
+      }
+      return undefined;
+    }),
     getUser: jest.fn(),
     getEdition: jest.fn()
   },
@@ -135,3 +147,10 @@ jest.spyOn(ExtJS, 'waitForExtJs');
 jest.mock('swagger-ui-react', () => {
   return jest.fn().mockReturnValue(null);
 });
+
+jest.mock('@fortawesome/react-fontawesome', () => ({
+  FontAwesomeIcon: ({icon, ...props}) => {
+    const iconName = typeof icon === 'string' ? icon : (icon?.iconName || 'icon');
+    return require('react').createElement('span', {'data-testid': `fa-icon-${iconName}`, ...props});
+  }
+}));

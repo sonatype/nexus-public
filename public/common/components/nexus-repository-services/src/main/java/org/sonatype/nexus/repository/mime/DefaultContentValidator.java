@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.mime.MimeSupport;
@@ -35,6 +34,8 @@ import com.google.common.net.MediaType;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -48,9 +49,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Qualifier(DefaultContentValidator.NAME)
 @Singleton
 public class DefaultContentValidator
-    extends ComponentSupport
     implements ContentValidator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String NAME = "default";
 
   protected MimeSupport getMimeSupport() {

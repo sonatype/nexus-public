@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsService;
 import org.sonatype.nexus.transaction.TransactionalStore;
 

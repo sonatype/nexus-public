@@ -16,13 +16,14 @@ import java.util.List;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
@@ -36,8 +37,9 @@ import static org.sonatype.nexus.scheduling.TaskSchedulerImpl.REPO_MOVE_TYPE_ID;
  * Test class for {@link TaskSchedulerImpl}.
  *
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TaskScheduleImplTest
-    extends TestSupport
+
 {
   @Mock
   private TaskScheduler taskScheduler;

@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.apt.datastore.internal.hosted;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
@@ -28,7 +27,9 @@ import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -45,8 +46,9 @@ import static org.sonatype.nexus.repository.http.HttpMethods.POST;
 /**
  * Test for {@link AptHostedHandler}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AptHostedHandlerTest
-    extends TestSupport
+
 {
   @Mock
   private Context context;

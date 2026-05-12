@@ -17,7 +17,6 @@ import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.security.user.UserNotFoundTransientException;
 import org.sonatype.nexus.security.user.UserStatus;
 
 import org.apache.shiro.subject.PrincipalCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -36,8 +37,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class UserPrincipalsHelper
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final List<UserManager> userManagers;
 
   @Inject

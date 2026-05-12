@@ -19,7 +19,6 @@ import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
@@ -27,6 +26,8 @@ import org.sonatype.nexus.repository.rest.SearchMappingsService;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -34,9 +35,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class SearchMappingsServiceImpl
-    extends ComponentSupport
     implements SearchMappingsService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String DEFAULT = "default";
 
   private final Collection<SearchMapping> searchMappings;

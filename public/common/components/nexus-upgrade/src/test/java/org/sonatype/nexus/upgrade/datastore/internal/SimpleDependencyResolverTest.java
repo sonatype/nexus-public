@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.sonatype.nexus.upgrade.datastore.DependsOn;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
@@ -31,7 +30,6 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class SimpleDependencyResolverTest
-    extends TestSupport
 {
   private final One one = new One();
 

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityUUID;
@@ -58,6 +57,7 @@ import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 import org.sonatype.nexus.repository.content.store.example.TestPlainStoreProvider;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -67,9 +67,9 @@ import com.google.common.collect.Lists;
 import jakarta.inject.Provider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.sonatype.nexus.testdb.DatabaseTest;
-
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
@@ -102,9 +102,9 @@ import static org.sonatype.nexus.repository.content.AttributeOperation.SET;
 /**
  * Test {@link FormatStoreManager}.
  */
+@ExtendWith(MockitoExtension.class)
 @SpringBootTest
 class FormatStoreManagerTest
-    extends Test5Support
 {
   private static final String NODE_ID = "ab761d55-5d9c22b6-3f38315a-75b3db34-0922a4d5";
 

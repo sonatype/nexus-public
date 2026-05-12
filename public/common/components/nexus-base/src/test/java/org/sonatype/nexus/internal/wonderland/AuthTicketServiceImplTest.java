@@ -12,11 +12,12 @@
  */
 package org.sonatype.nexus.internal.wonderland;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,8 +27,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link AuthTicketServiceImpl}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AuthTicketServiceImplTest
-    extends TestSupport
 {
   @Mock
   private AuthTicketGenerator authTicketGenerator;

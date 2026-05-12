@@ -22,25 +22,28 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.ssl.CertificateUtil;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class FileKeyStoreStorageTest
-    extends TestSupport
 {
   private static final char[] STORE_PASSWORD = "very-secret".toCharArray();
 
   private static final String CERT_ALIAS = "test-cert";
 
-  private File basedir = util.createTempDir();
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private File keyStoreFile = new File(basedir, "test.ks");
+  private File basedir;
+
+  private File keyStoreFile;
 
   private FileKeyStoreStorage storage;
 
@@ -62,7 +65,9 @@ public class FileKeyStoreStorageTest
   }
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
+    basedir = temporaryFolder.newFolder();
+    keyStoreFile = new File(basedir, "test.ks");
     storage = new FileKeyStoreStorage(keyStoreFile);
   }
 

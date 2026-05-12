@@ -13,13 +13,13 @@
 package org.sonatype.nexus.repository.manager;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.datastore.DataStoreUsageChecker;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -67,9 +67,9 @@ public interface RepositoryManager
   long blobstoreUsageCount(String blobStoreName);
 
   /**
-   * Returns a list of group repositories who directly or transitively contain the specified repository
+   * Returns a set of group repositories who directly or transitively contain the specified repository
    */
-  List<String> findContainingGroups(String repositoryName);
+  Set<String> findContainingGroups(String repositoryName);
 
   Stream<Repository> browseForCleanupPolicy(final String cleanupPolicyName);
 

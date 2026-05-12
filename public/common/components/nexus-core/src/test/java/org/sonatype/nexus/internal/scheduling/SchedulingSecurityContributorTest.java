@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.scheduling;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 
@@ -25,7 +24,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
 public class SchedulingSecurityContributorTest
-    extends TestSupport
 {
   private SchedulingSecurityContributor underTest;
 

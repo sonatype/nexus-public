@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.DefaultCooperation2Factory;
@@ -55,7 +54,9 @@ import org.apache.http.client.HttpClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -82,8 +83,9 @@ import static org.mockito.Mockito.when;
  * - Multi-component support (slice keys, separators, paths)
  * - Pagination handling in pool scanning
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AptProxyMetadataFacetTest
-    extends TestSupport
+
 {
   private static final String REPO_NAME = "apt-proxy-test";
 

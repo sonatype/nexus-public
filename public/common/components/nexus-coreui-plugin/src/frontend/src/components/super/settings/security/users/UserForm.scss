@@ -1,0 +1,164 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.user-form {
+  &__loading {
+    padding: var(--space-6, 24px);
+    gap: var(--space-3, 12px);
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+    color: var(--accent-9, #0091ff);
+  }
+
+  &__error {
+    color: var(--red-11, #cd2b31);
+    margin-top: var(--space-2, 8px);
+
+    [data-theme='dark'] & {
+      color: var(--red-11, #ff9592);
+    }
+  }
+
+  &__external-roles {
+    padding: var(--space-3, 12px);
+    background: var(--gray-2, #f7f7f8);
+    border-radius: var(--radius-2, 6px);
+    border: 1px solid var(--gray-6, #e4e4e7);
+
+    [data-theme='dark'] & {
+      background: var(--gray-2, #1a1a1d);
+      border-color: var(--gray-6, #3d3d43);
+    }
+  }
+
+  &__external-roles-text {
+    white-space: pre-wrap;
+    font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+    font-size: var(--font-size-1, 12px);
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__external-role-chip {
+    display: inline-flex;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-1);
+    background: var(--blue-3);
+    color: var(--blue-11);
+    border: 1px solid var(--blue-5);
+    border-radius: var(--radius-2);
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+
+    &:hover {
+      background: var(--blue-4);
+      border-color: var(--blue-6);
+    }
+
+    [data-theme='dark'] & {
+      background: var(--blue-4);
+      border-color: var(--blue-6);
+
+      &:hover {
+        background: var(--blue-5);
+        border-color: var(--blue-7);
+      }
+    }
+  }
+
+  &__role-inspector {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 300px; // Match transfer list panel height
+    flex: 1;
+    background-color: var(--color-surface, #fff);
+    border: 1px solid var(--color-border, var(--gray-5, #dcdce4));
+    border-radius: var(--radius-md, 8px);
+    overflow: hidden;
+
+    [data-theme='dark'] & {
+      background-color: var(--gray-2, #1a1a1d);
+      border-color: var(--gray-6, #3d3d43);
+    }
+  }
+
+  &__role-inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    background-color: var(--color-surface-secondary, var(--gray-2, #f7f7f8));
+    border-bottom: 1px solid var(--color-border, var(--gray-5, #dcdce4));
+
+    [data-theme='dark'] & {
+      background-color: var(--gray-3, #222225);
+      border-color: var(--gray-6, #3d3d43);
+    }
+  }
+
+  &__role-inspector-pane {
+    flex: 1;
+    min-height: 0; // Allow flex shrink so inner content can scroll
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .role-explorer-tree-container {
+      flex: 1;
+      min-height: 0;
+    }
+  }
+
+  &__role-inspector-placeholder {
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    border-top: 1px solid var(--gray-4);
+    background: var(--gray-2);
+
+    [data-theme='dark'] & {
+      background: var(--gray-3);
+      border-color: var(--gray-5);
+    }
+  }
+
+  &__actions {
+    margin-top: var(--space-4, 16px);
+    padding-top: var(--space-4, 16px);
+    border-top: 1px solid var(--gray-6, #e4e4e7);
+
+    [data-theme='dark'] & {
+      border-top-color: var(--gray-6, #3d3d43);
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+

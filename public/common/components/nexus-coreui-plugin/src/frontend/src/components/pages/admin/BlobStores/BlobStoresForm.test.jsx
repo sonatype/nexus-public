@@ -95,7 +95,7 @@ const selectors = {
 
   ...blobStoreFormSelectors,
 
-  queryTitle: () => screen.getByRole('heading', { level: 1 }),
+  queryTitle: () => screen.getByRole('heading', { level: 1, name: /.+/ }),
   queryPath: () => screen.getByLabelText('Path'),
   queryAvailableMembers: () => screen.getByRole('group', { name: 'Available Blob Stores' }),
   querySelectedMembers: () => screen.getByRole('group', { name: 'Selected Blob Stores' }),

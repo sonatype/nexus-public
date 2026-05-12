@@ -20,8 +20,9 @@ import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 export default function MaliciousRiskOnDiskComponentCount() {
   const { TITLE_PLURAL, TITLE_SINGULAR} = UIStrings.MALICIOUS_RISK.RISK_ON_DISK;
-  const maliciousRiskOnDisk = ExtJS.state().getValue('nexus.malware.count');
-  const riskOnDiskCount = maliciousRiskOnDisk?.totalCount ?? 0;
+  const maliciousRiskOnDisk = ExtJS.useState(() => ExtJS.state().getValue('nexus.malware.count'));
+  const testOverride = parseInt(localStorage.getItem('SONATYPE_TEST_MALWARE_BANNER') || '0', 10) || 0;
+  const riskOnDiskCount = testOverride || (maliciousRiskOnDisk?.totalCount ?? 0);
 
   return (<div className={`malware-components-count ${riskOnDiskCount === 0 ? 'zero' : ''}`}>
     {riskOnDiskCount > 0 && <NxFontAwesomeIcon icon={faExclamationTriangle}/>}

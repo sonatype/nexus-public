@@ -36,7 +36,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import org.sonatype.goodies.common.ByteSize;
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.SupportZipGeneratorRequest;
 import org.sonatype.nexus.common.wonderland.DownloadService;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -47,6 +46,8 @@ import org.sonatype.nexus.supportzip.SupportZipGenerator;
 
 import com.google.common.io.CountingOutputStream;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -61,9 +62,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class SupportZipGeneratorImpl
-    extends ComponentSupport
     implements SupportZipGenerator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final List<SupportBundleCustomizer> bundleCustomizers;
 
   private final DownloadService downloadService;

@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 
@@ -27,6 +26,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
@@ -46,9 +47,10 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
 @Component
 @Singleton
 public class BlobStoreOverrideImpl
-    extends ComponentSupport
     implements BlobStoreOverride
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String NEXUS_BLOB_STORE_OVERRIDE = "NEXUS_BLOB_STORE_OVERRIDE";
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

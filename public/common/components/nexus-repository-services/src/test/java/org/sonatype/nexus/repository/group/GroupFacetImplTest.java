@@ -17,7 +17,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
@@ -54,9 +53,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.group.GroupFacetImpl.CONFIG_KEY;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class GroupFacetImplTest
-    extends TestSupport
 {
   @Mock
   private RepositoryManager repositoryManager;

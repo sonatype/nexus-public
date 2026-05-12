@@ -50,7 +50,6 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
@@ -75,6 +74,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.ssl.KeyStoreManagerImpl.PRIVATE_KEY_ALIAS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests for {@link KeyStoreManagerImpl}.
@@ -84,8 +85,9 @@ import static org.sonatype.nexus.ssl.KeyStoreManagerImpl.PRIVATE_KEY_ALIAS;
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public class KeyStoreManagerImplTest
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(KeyStoreManagerImplTest.class);
+
   private final CryptoHelper crypto = new CryptoHelperImpl(false);
 
   private KeyStoreStorageFactory storageManager;
@@ -513,8 +515,8 @@ public class KeyStoreManagerImplTest
     SSLContext serverSslContext = SSLContext.getInstance("TLS");
     serverSslContext.init(serverKeyStoreManager.getKeyManagers(), serverKeyStoreManager.getTrustManagers(),
         new SecureRandom());
-    log("default ssl session timeout server: {}", serverSslContext.getServerSessionContext().getSessionTimeout());
-    log("default ssl session timeout client: {}", serverSslContext.getClientSessionContext().getSessionTimeout());
+    log.info("default ssl session timeout server: {}", serverSslContext.getServerSessionContext().getSessionTimeout());
+    log.info("default ssl session timeout client: {}", serverSslContext.getClientSessionContext().getSessionTimeout());
     serverSslContext.getServerSessionContext().setSessionTimeout(1);
     serverSslContext.getClientSessionContext().setSessionTimeout(1);
 
@@ -631,7 +633,7 @@ public class KeyStoreManagerImplTest
         }
       }
       catch (Exception exception) {
-        log(exception.getMessage(), exception);
+        log.info(exception.getMessage(), exception);
       }
     }
   }

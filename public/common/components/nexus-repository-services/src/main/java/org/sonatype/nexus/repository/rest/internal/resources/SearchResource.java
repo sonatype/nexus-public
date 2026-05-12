@@ -35,7 +35,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
@@ -65,6 +64,8 @@ import com.google.common.annotations.VisibleForTesting;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -85,9 +86,10 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class SearchResource
-    extends ComponentSupport
     implements Resource, SearchResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = V1_API_PREFIX + "/search";
 
   public static final String SEARCH_ASSET_URI = "/assets";

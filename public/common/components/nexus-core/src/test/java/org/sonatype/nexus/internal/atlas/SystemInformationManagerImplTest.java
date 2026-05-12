@@ -17,7 +17,6 @@ import java.util.Map;
 import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.atlas.SystemInformationGenerator;
 
@@ -36,9 +35,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SystemInformationManagerImplTest
-    extends TestSupport
 {
   private static final Map<String, Object> SYSTEM_INFO_REPORT =
       ImmutableMap.of("systemInfo", ImmutableMap.of("nodeId", "testId"));

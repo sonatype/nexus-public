@@ -24,7 +24,6 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -47,6 +46,8 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.hash.HashCode;
 import jakarta.inject.Provider;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -65,9 +66,10 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_OCTET_
  * @since 3.24
  */
 public class FluentBlobsImpl
-    extends ComponentSupport
     implements FluentBlobs
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String SYSTEM = "system";
 
   private final ContentFacetSupport facet;

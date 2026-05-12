@@ -1,0 +1,115 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Instance Totals - matches OutreachActions card style
+.nxrm-instance-totals {
+  margin-bottom: var(--space-2);
+
+  &__heading {
+    margin-bottom: var(--space-3);
+    color: var(--gray-12);
+  }
+}
+
+.nxrm-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: var(--space-4, 1rem);
+  row-gap: var(--space-6, 1.5rem);
+  width: 100%;
+  align-items: stretch;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nxrm-metric-card {
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: var(--color-surface-hover);
+  }
+
+  &__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  &__chart {
+    flex-shrink: 0;
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &__help {
+    flex-shrink: 0;
+    opacity: 0.7;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &__value {
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+  }
+
+  &__unit {
+    margin: 0;
+  }
+
+  &__change {
+    flex-shrink: 0;
+  }
+
+  &__no-data {
+    flex: 1;
+    justify-content: flex-start;
+  }
+
+  &__no-activity {
+    margin: 0;
+  }
+}
+
+// Dark mode adjustments
+:root[data-theme="dark"] {
+  .nxrm-metric-card {
+    &:hover {
+      background-color: var(--gray-3);
+    }
+
+    .nxrm-metric-body {
+      .nxrm-metric-icon-container {
+        background-image: linear-gradient(270deg, rgba(0, 100, 180, 1) 0%, rgba(0, 130, 220, 1) 100%);
+      }
+    }
+  }
+}

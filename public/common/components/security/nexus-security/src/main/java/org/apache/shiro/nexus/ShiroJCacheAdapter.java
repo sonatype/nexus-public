@@ -20,10 +20,10 @@ import java.util.Set;
 
 import javax.cache.Cache.Entry;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.collect.Iterables;
 import org.apache.shiro.cache.Cache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -33,9 +33,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class ShiroJCacheAdapter<K, V>
-    extends ComponentSupport
     implements Cache<K, V>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final javax.cache.Cache<K, V> cache;
 
   private final String name;

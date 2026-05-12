@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,7 +27,6 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.fail;
 
 public class StreamCopierTest
-    extends TestSupport
 {
   private String DEFAULT_READ_OUTPUT = "Test read";
 

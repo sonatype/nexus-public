@@ -14,7 +14,7 @@ package org.sonatype.nexus.script;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 
 /**
  * Script manager.

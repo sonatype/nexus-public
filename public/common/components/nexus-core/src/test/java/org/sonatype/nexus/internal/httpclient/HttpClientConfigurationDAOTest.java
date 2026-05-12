@@ -16,10 +16,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.sonatype.goodies.common.Time;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -47,7 +45,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
-@Category(SQLTestGroup.class)
 public class HttpClientConfigurationDAOTest
 {
   private static final String ID = "_1";

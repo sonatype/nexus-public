@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.repository.Format;
@@ -48,7 +47,6 @@ import static org.sonatype.nexus.repository.content.store.internal.migration.Ass
 
 @ExtendWith(MockitoExtension.class)
 class AssetBlobRefMigrationStep_2_109Test
-    extends Test5Support
 {
   @Mock
   private UpgradeTaskScheduler upgradeTaskScheduler;

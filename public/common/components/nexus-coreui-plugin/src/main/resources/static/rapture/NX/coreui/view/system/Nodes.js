@@ -45,8 +45,10 @@ Ext.define('NX.coreui.view.system.Nodes', {
       };
     }
     else {
-      me.masters = [{xtype: 'nx-coreui-system-nodes-disabled'}];
-      me.tabs = undefined;
+      // Nodes feature is only available in HA/clustered mode
+      // The non-clustered view has been removed as the freeze button was non-functional
+      // after NEXUS-51156 removed the freeze API
+      me.html = NX.I18n.get('Nodes_OSS_Message');
       me.skipDetail = true;
     }
 

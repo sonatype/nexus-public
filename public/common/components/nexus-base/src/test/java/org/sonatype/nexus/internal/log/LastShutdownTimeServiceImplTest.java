@@ -23,12 +23,13 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.log.LogManager;
 
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -40,8 +41,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LastShutdownTimeServiceImplTest
-    extends TestSupport
 {
 
   private static final String START_MARKER = "startMarker";
@@ -65,8 +66,6 @@ public class LastShutdownTimeServiceImplTest
 
   @Before
   public void setup() {
-    initMocks();
-
     pattern = Pattern.compile("(?<time>\\d{4}-\\d{2}-\\d{2})");
 
     when(logManager.getLogFileForLogger(DEFAULT_LOGGER)).thenReturn(Optional.of(nexusFile));
@@ -105,7 +104,8 @@ public class LastShutdownTimeServiceImplTest
 
     lastShutdownTimeService = new LastShutdownTimeServiceImpl(logManager, true);
 
-    Optional<Date> result = lastShutdownTimeService.findShutdownTimeInLog(reader, START_MARKER, pattern, 1000, GROUP_NAME, dateFormat);
+    Optional<Date> result =
+        lastShutdownTimeService.findShutdownTimeInLog(reader, START_MARKER, pattern, 1000, GROUP_NAME, dateFormat);
 
     assertThat(result.isPresent(), equalTo(true));
     assertThat(result.get(), equalTo(new SimpleDateFormat("yyyy-MM-dd").parse("2008-01-01")));
@@ -122,7 +122,8 @@ public class LastShutdownTimeServiceImplTest
 
     lastShutdownTimeService = new LastShutdownTimeServiceImpl(logManager, true);
 
-    Optional<Date> result = lastShutdownTimeService.findShutdownTimeInLog(reader, START_MARKER, pattern, 1000, GROUP_NAME, dateFormat);
+    Optional<Date> result =
+        lastShutdownTimeService.findShutdownTimeInLog(reader, START_MARKER, pattern, 1000, GROUP_NAME, dateFormat);
 
     assertThat(result.isPresent(), equalTo(false));
   }
@@ -139,7 +140,8 @@ public class LastShutdownTimeServiceImplTest
 
     lastShutdownTimeService = new LastShutdownTimeServiceImpl(logManager, true);
 
-    Optional<Date> result = lastShutdownTimeService.findShutdownTimeInLog(reader, START_MARKER, pattern, 4, GROUP_NAME, dateFormat);
+    Optional<Date> result =
+        lastShutdownTimeService.findShutdownTimeInLog(reader, START_MARKER, pattern, 4, GROUP_NAME, dateFormat);
 
     assertThat(result.isPresent(), equalTo(false));
     verify(reader, times(4)).readLine();

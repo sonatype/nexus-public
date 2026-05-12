@@ -1,0 +1,89 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.tag-detail-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--gray-1);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-background);
+    border-bottom: 1px solid var(--gray-a4);
+  }
+
+  &__back-btn {
+    color: var(--accent-11);
+
+    &:hover {
+      color: var(--accent-12);
+    }
+  }
+
+  &__content {
+    flex: 1;
+    padding: var(--space-4);
+  }
+
+  &__info-card {
+    margin-bottom: var(--space-4);
+  }
+
+  &__icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-3);
+    background: linear-gradient(135deg, var(--violet-a4), var(--violet-a3));
+    color: var(--violet-11);
+  }
+
+  &__meta-icon {
+    color: var(--gray-9);
+  }
+
+  &__components-card {
+    min-height: 400px;
+  }
+
+  &__filters {
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--gray-a4);
+  }
+
+  &__component-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: var(--gray-a2);
+    }
+  }
+}
+
+// Dark mode adjustments
+:root[class~="dark"] {
+  .tag-detail-page {
+    &__icon-wrapper {
+      background: linear-gradient(135deg, var(--violet-a5), var(--violet-a4));
+    }
+  }
+}
+
+

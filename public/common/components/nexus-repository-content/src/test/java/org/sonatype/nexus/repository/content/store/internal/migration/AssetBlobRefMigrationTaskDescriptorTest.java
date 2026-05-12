@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.store.internal.migration;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Tests for {@link AssetBlobRefMigrationTaskDescriptor}
  */
 public class AssetBlobRefMigrationTaskDescriptorTest
-    extends Test5Support
 {
   @Test
   void testTaskIsRecoverable() {

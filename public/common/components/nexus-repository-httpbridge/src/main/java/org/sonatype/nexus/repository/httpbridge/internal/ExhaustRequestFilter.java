@@ -26,7 +26,6 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.repository.http.HttpMethods;
 
@@ -37,6 +36,8 @@ import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link Filter} which exhausts request bodies for specific user-agents when errors occur.
@@ -60,9 +61,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ExhaustRequestFilter
-    extends ComponentSupport
     implements Filter
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Pattern exhaustForAgentsPattern;
 
   @Inject

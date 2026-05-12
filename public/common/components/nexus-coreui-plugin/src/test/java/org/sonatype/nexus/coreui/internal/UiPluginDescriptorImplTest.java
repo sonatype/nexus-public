@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.coreui.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +23,6 @@ import static org.hamcrest.Matchers.notNullValue;
  * Tests for {@link UiPluginDescriptorImpl}.
  */
 public class UiPluginDescriptorImplTest
-    extends TestSupport
 {
   private UiPluginDescriptorImpl underTest;
 

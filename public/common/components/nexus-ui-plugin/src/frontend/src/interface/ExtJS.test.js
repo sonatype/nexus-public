@@ -14,9 +14,167 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import { renderHook, act } from '@testing-library/react';
 import ExtJS from './ExtJS';
 
 describe('ExtJS', () => {
+  describe('useVisiblityWithChanges', () => {
+    let mockPermissionsController;
+    let mockStateController;
+    let permissionChangedHandler;
+    let stateChangedHandler;
+    let userChangedHandler;
+    let originalExt;
+    let originalNX;
+
+    beforeEach(() => {
+      permissionChangedHandler = null;
+      stateChangedHandler = null;
+      userChangedHandler = null;
+
+      mockPermissionsController = {
+        on: jest.fn((event, handler) => {
+          if (event === 'changed') {
+            permissionChangedHandler = handler;
+          }
+        }),
+        un: jest.fn()
+      };
+
+      mockStateController = {
+        on: jest.fn((event, handler) => {
+          if (event === 'changed') {
+            stateChangedHandler = handler;
+          } else if (event === 'userchanged') {
+            userChangedHandler = handler;
+          }
+        }),
+        un: jest.fn()
+      };
+
+      originalExt = global.Ext;
+      originalNX = global.NX;
+
+      global.Ext = {
+        getApplication: jest.fn(() => ({
+          getController: jest.fn((name) => {
+            if (name === 'Permissions') return mockPermissionsController;
+            if (name === 'State') return mockStateController;
+            return null;
+          })
+        }))
+      };
+
+      global.NX = {
+        State: {},
+        Permissions: {},
+        Security: {}
+      };
+    });
+
+    afterEach(() => {
+      global.Ext = originalExt;
+      global.NX = originalNX;
+    });
+
+    it('returns initial visibility value', () => {
+      const isVisibleMethod = jest.fn(() => true);
+      const { result } = renderHook(() => ExtJS.useVisiblityWithChanges(isVisibleMethod));
+
+      expect(result.current).toBe(true);
+      expect(isVisibleMethod).toHaveBeenCalled();
+    });
+
+    it('returns false initially when ExtJS is not ready', () => {
+      global.Ext = undefined;
+      global.NX = undefined;
+
+      const isVisibleMethod = jest.fn(() => {
+        throw new Error('ExtJS not ready');
+      });
+      const { result } = renderHook(() => ExtJS.useVisiblityWithChanges(isVisibleMethod));
+
+      expect(result.current).toBe(false);
+    });
+
+    it('re-evaluates visibility on Permissions#changed event', () => {
+      let isVisible = false;
+      const isVisibleMethod = jest.fn(() => isVisible);
+
+      const { result } = renderHook(() => ExtJS.useVisiblityWithChanges(isVisibleMethod));
+
+      expect(result.current).toBe(false);
+
+      // Simulate permission change
+      isVisible = true;
+      act(() => {
+        permissionChangedHandler();
+      });
+
+      expect(result.current).toBe(true);
+    });
+
+    it('re-evaluates visibility on State#changed event', () => {
+      let isVisible = false;
+      const isVisibleMethod = jest.fn(() => isVisible);
+
+      const { result } = renderHook(() => ExtJS.useVisiblityWithChanges(isVisibleMethod));
+
+      expect(result.current).toBe(false);
+
+      // Simulate state change
+      isVisible = true;
+      act(() => {
+        stateChangedHandler();
+      });
+
+      expect(result.current).toBe(true);
+    });
+
+    it('re-evaluates visibility on State#userchanged event', () => {
+      let isVisible = false;
+      const isVisibleMethod = jest.fn(() => isVisible);
+
+      const { result } = renderHook(() => ExtJS.useVisiblityWithChanges(isVisibleMethod));
+
+      expect(result.current).toBe(false);
+
+      // Simulate user change (login/logout)
+      isVisible = true;
+      act(() => {
+        userChangedHandler();
+      });
+
+      expect(result.current).toBe(true);
+    });
+
+    it('cleans up event listeners on unmount', () => {
+      const isVisibleMethod = jest.fn(() => true);
+      const { unmount } = renderHook(() => ExtJS.useVisiblityWithChanges(isVisibleMethod));
+
+      unmount();
+
+      expect(mockPermissionsController.un).toHaveBeenCalledWith('changed', expect.any(Function));
+      expect(mockStateController.un).toHaveBeenCalledWith('changed', expect.any(Function));
+      expect(mockStateController.un).toHaveBeenCalledWith('userchanged', expect.any(Function));
+    });
+
+    it('does not update state when visibility value is unchanged', () => {
+      const isVisibleMethod = jest.fn(() => true);
+      const { result } = renderHook(() => ExtJS.useVisiblityWithChanges(isVisibleMethod));
+
+      const initialResult = result.current;
+
+      // Trigger event but value stays same
+      act(() => {
+        permissionChangedHandler();
+      });
+
+      expect(result.current).toBe(initialResult);
+    });
+  });
+
+
   describe('setDirtyStatus', () => {
     it('sets the dirty status correctly', () => {
       ExtJS.setDirtyStatus('key', true);

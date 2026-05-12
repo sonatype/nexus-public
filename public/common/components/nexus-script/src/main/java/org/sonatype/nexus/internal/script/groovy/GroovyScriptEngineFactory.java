@@ -22,7 +22,7 @@ import jakarta.inject.Singleton;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.script.ScriptCleanupHandler;
 import org.sonatype.nexus.internal.script.ScriptTask;
 

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.upgrade;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 
 /**
  * Upgrade service.

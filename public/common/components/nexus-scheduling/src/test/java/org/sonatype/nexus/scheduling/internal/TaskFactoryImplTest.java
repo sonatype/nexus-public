@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -25,7 +24,9 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
 
@@ -42,8 +43,9 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link TaskFactoryImpl}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TaskFactoryImplTest
-    extends TestSupport
+
 {
   @Mock
   private ApplicationContext applicationContext;

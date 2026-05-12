@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -33,6 +32,8 @@ import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @since 3.16
@@ -40,8 +41,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AntiCsrfHelper
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String ENABLED = "nexus.security.anticsrftoken.enabled";
 
   public static final String SEC_FETCH_SITE_HEADER_ENABLED = "nexus.security.anticsrftoken.secFetchSite.enabled";

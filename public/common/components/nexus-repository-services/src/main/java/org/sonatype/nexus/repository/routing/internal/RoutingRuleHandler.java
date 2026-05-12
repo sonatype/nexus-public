@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.routing.internal;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
@@ -23,6 +22,8 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -35,9 +36,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class RoutingRuleHandler
-    extends ComponentSupport
     implements Handler, org.sonatype.nexus.repository.routing.RoutingRuleHandler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String PATH_IS_BLOCKED = "Routing rules block the requested item from this repository";
 
   private final RoutingRuleHelper routingRuleHelper;

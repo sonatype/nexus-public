@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataAccessException;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
@@ -23,7 +22,9 @@ import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -35,8 +36,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AuthenticatingRealmImplTest
-    extends TestSupport
 {
   private static final String TEST_USERNAME = "testUser";
 

@@ -20,18 +20,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import com.codahale.metrics.health.HealthCheck.Result;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mockito;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,8 +42,9 @@ import static org.sonatype.nexus.blobstore.file.FileBlobStore.BASEDIR;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FileBlobStorePathValidatorTest
-    extends TestSupport
+
 {
   @Mock
   private BlobStoreManager blobStoreManager;

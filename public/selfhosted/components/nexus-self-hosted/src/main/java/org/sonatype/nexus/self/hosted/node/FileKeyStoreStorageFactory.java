@@ -17,7 +17,7 @@ import java.io.File;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.ssl.KeyStoreStorageFactory;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
 

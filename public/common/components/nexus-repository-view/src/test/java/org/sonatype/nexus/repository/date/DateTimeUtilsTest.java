@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.date;
 
 import java.util.regex.Pattern;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -26,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.date.DateTimeUtils.formatDateTime;
 
 public class DateTimeUtilsTest
-    extends TestSupport
 {
   private Pattern rfc1123 = compile("[a-zA-Z]{3}, \\d{2} [a-zA-Z]{3} \\d{4} \\d{2}:\\d{2}:\\d{2} [a-zA-Z]{3}");
 

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-goodies</artifactId>
@@ -48,19 +48,7 @@
 
       <dependency>
         <groupId>org.sonatype.goodies</groupId>
-        <artifactId>goodies-httpfixture</artifactId>
-        <version>${goodies.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.goodies</groupId>
         <artifactId>goodies-i18n</artifactId>
-        <version>${goodies.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.goodies</groupId>
-        <artifactId>goodies-lifecycle</artifactId>
         <version>${goodies.version}</version>
       </dependency>
 

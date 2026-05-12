@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal.matcher;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.google.common.base.Predicate;
 import org.junit.Test;
 
@@ -26,7 +24,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
  * @since 3.0
  */
 public class MavenMatcherSupportTest
-    extends TestSupport
+
 {
   @Test
   public void equalsWithHashes() {

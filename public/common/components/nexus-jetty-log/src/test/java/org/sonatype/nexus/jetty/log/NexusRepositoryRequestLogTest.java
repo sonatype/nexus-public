@@ -21,8 +21,6 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.TimeZone;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.server.ConnectionMetaData;
@@ -38,9 +36,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class NexusRepositoryRequestLogTest
-    extends Test5Support
 {
   private static final String EXPECTED_FORMAT =
       "%{client}a - %{nexus.user.id}attr [%{responseTimestamp}attr] \"%r\" %s %{Content-Length}i %O %T %{User-Agent}i [%{threadName}attr]";

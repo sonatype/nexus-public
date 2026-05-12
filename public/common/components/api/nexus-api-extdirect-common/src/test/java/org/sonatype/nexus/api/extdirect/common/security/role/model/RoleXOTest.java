@@ -22,7 +22,6 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import javax.validation.groups.Default;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.security.privilege.PrivilegesExist;
 import org.sonatype.nexus.security.role.RoleNotContainSelf;
 import org.sonatype.nexus.security.role.RolesExist;
@@ -57,7 +56,6 @@ import static org.mockito.Mockito.when;
  */
 @SpringBootTest(classes = RoleXOTest.TestConfig.class)
 class RoleXOTest
-    extends Test5Support
 {
   @Autowired
   private Validator validator;

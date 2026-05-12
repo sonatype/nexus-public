@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.capability;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.CapabilityContextAware;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
@@ -22,6 +21,8 @@ import org.sonatype.nexus.common.event.EventManager;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,8 +32,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since capabilities 2.0
  */
 public class ActivationConditionHandler
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final EventManager eventManager;
 

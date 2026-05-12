@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.capability.storage;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.common.entity.EntityId;
 

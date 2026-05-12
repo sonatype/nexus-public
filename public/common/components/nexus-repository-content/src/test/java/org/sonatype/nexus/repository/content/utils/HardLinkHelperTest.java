@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -28,8 +27,10 @@ import com.google.common.hash.HashCode;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -46,8 +47,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class HardLinkHelperTest
-    extends TestSupport
 {
   @Rule
   public org.junit.rules.TemporaryFolder temporaryFolder = new org.junit.rules.TemporaryFolder();

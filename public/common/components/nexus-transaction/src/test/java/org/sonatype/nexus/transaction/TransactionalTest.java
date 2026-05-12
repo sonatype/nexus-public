@@ -15,7 +15,6 @@ package org.sonatype.nexus.transaction;
 import java.io.IOException;
 import java.util.ConcurrentModificationException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.transaction.ExampleMethods.ExampleNestedStore;
 
 import com.google.common.base.Suppliers;
@@ -23,7 +22,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -39,8 +40,9 @@ import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
  * Test transactional behaviour.
  */
 @SuppressWarnings("boxing")
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TransactionalTest
-    extends TestSupport
+
 {
   ExampleMethods methods = new ExampleMethods(new ExampleNestedStore());
 

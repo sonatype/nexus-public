@@ -70,8 +70,8 @@ import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
@@ -179,6 +179,8 @@ public class FileBlobStore
 
   private final ApplicationDirectories applicationDirectories;
 
+  private final DirectoryHelper directoryHelper;
+
   private Path basedir;
 
   private BlobStoreMetricsService<FileBlobStore> metricsService;
@@ -206,6 +208,7 @@ public class FileBlobStore
       final BlobIdLocationResolver blobIdLocationResolver,
       final FileOperations fileOperations,
       final ApplicationDirectories applicationDirectories,
+      final DirectoryHelper directoryHelper,
       @Qualifier(FileBlobStore.TYPE) final BlobStoreMetricsService<FileBlobStore> metricsService,
       final NodeAccess nodeAccess,
       final DryRunPrefix dryRunPrefix,
@@ -217,6 +220,7 @@ public class FileBlobStore
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
     this.applicationDirectories = checkNotNull(applicationDirectories);
+    this.directoryHelper = checkNotNull(directoryHelper);
     this.metricsService = checkNotNull(metricsService);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.supportsHardLinkCopy = true;
@@ -232,9 +236,10 @@ public class FileBlobStore
       final Path contentDir, // NOSONAR
       final BlobIdLocationResolver blobIdLocationResolver,
       final FileOperations fileOperations,
+      final ApplicationDirectories directories,
+      final DirectoryHelper directoryHelper,
       final BlobStoreMetricsService<FileBlobStore> metricsService,
       final BlobStoreConfiguration configuration,
-      final ApplicationDirectories directories,
       final NodeAccess nodeAccess,
       final DryRunPrefix dryRunPrefix,
       final BlobStoreReconciliationLogger reconciliationLogger,
@@ -243,7 +248,7 @@ public class FileBlobStore
       final FileBlobDeletionIndex blobDeletionIndex)
 
   {
-    this(blobIdLocationResolver, fileOperations, directories, metricsService, nodeAccess, dryRunPrefix,
+    this(blobIdLocationResolver, fileOperations, directories, directoryHelper, metricsService, nodeAccess, dryRunPrefix,
         reconciliationLogger, pruneEmptyDirectoryAge, blobStoreQuotaUsageChecker, blobDeletionIndex);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
@@ -785,10 +790,10 @@ public class FileBlobStore
     try {
       Path blobDir = getAbsoluteBlobDir();
       Path content = blobDir.resolve(CONTENT_PREFIX);
-      DirectoryHelper.mkdir(content);
+      directoryHelper.mkdir(content);
       this.contentDir = content;
       Path reconciliationLogDir = blobDir.resolve("reconciliation");
-      DirectoryHelper.mkdir(reconciliationLogDir);
+      directoryHelper.mkdir(reconciliationLogDir);
       this.reconciliationLogDir = reconciliationLogDir;
 
       setConfiguredBlobStorePath(getRelativeBlobDir());
@@ -1149,7 +1154,7 @@ public class FileBlobStore
         absolutePath,
         DateTimeFormat.forPattern("kk' hours 'mm' minutes 'ss.SSS' seconds'").print(timestamp));
     try {
-      int count = DirectoryHelper.deleteIfEmptyRecursively(directPathDir, timestamp);
+      int count = directoryHelper.deleteIfEmptyRecursively(directPathDir, timestamp);
       progressLogger.info("Removed {} empty directories from {}", count, absolutePath);
     }
     catch (IOException e) {
@@ -1507,6 +1512,15 @@ public class FileBlobStore
         return;
       }
       catch (Exception e) {
+        // NEXUS-51247: Handle benign race condition on write side
+        // If file doesn't exist during write, another thread is likely updating the same blob
+        if (e instanceof NoSuchFileException || e.getCause() instanceof NoSuchFileException) {
+          log.debug(
+              "Blob attributes temporarily unavailable for blob id: {} during concurrent write access (attempt {})",
+              blobId, attempt);
+          return;
+        }
+
         if (attempt < blobAttributesMaxRetries) {
           log.warn("Failed to set BlobAttributes for {} on attempt {}, retrying after {}ms",
               blobId, attempt, blobAttributesRetryDelayMs);

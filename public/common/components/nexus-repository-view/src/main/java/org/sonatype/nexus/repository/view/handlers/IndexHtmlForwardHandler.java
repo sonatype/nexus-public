@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.view.handlers;
 import javax.annotation.Nonnull;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.view.Context;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.repository.view.ViewFacet;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handler which will forward current request to {@code {request.path}/index.html} or {@code {request.path}/index.htm}.
@@ -36,9 +37,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class IndexHtmlForwardHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String[] INDEX_FILES = {
       "index.html",
       "index.htm"

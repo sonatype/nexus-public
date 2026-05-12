@@ -27,7 +27,6 @@ import jakarta.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory;
 import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
@@ -49,6 +48,8 @@ import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import org.sonatype.nexus.common.time.DateHelper;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -62,9 +63,9 @@ import static org.sonatype.nexus.common.time.DateHelper.optionalOffsetToDate;
 @org.springframework.stereotype.Component
 @Singleton
 public class CleanupPreviewHelperImpl
-    extends ComponentSupport
     implements CleanupPreviewHelper
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 

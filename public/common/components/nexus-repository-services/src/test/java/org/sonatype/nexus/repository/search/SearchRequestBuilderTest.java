@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.search;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.query.SearchFilter.FilterOperator;
 
@@ -28,7 +27,6 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link SearchRequest.Builder} including new andFilter/orFilter methods.
  */
 public class SearchRequestBuilderTest
-    extends TestSupport
 {
   @Test
   public void testAndFilter_createsFilterWithAndOperator() {

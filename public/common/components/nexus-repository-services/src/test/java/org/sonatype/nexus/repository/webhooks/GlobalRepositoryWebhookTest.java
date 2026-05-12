@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.webhooks;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -37,10 +36,12 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.goodies.testsupport.hamcrest.DiffMatchers.equalTo;
+import static org.hamcrest.Matchers.equalTo;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class GlobalRepositoryWebhookTest
-    extends TestSupport
 {
   @Mock
   private EventManager eventManager;

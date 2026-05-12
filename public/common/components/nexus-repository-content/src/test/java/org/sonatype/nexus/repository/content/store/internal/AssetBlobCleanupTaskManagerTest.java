@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.store.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -27,9 +26,11 @@ import org.sonatype.nexus.scheduling.schedule.ScheduleFactoryImpl;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
@@ -50,8 +51,8 @@ import static org.sonatype.nexus.repository.content.store.internal.AssetBlobClea
 /**
  * Test {@link AssetBlobCleanupTaskManager}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AssetBlobCleanupTaskManagerTest
-    extends TestSupport
 {
   @Mock
   private TaskScheduler taskScheduler;

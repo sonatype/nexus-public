@@ -29,6 +29,13 @@
   }
 }
 
+.nxrm-iq-header-layout {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
 .nxrm-iq-page-title-wrapper {
   display: flex;
   flex-direction: column;
@@ -40,6 +47,7 @@
   align-items: center;
   gap: 12px;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .nxrm-iq-subtitle {
@@ -150,6 +158,11 @@
       }
     }
 
+    .nxrm-iq-tile-error-message {
+      font-size: 14px;
+      color: var(--nx-swatch-red-50);
+    }
+
     .nxrm-iq-explore-link {
       font-size: 14px;
     }
@@ -183,7 +196,8 @@
       font-weight: 500;
     }
 
-    a {
+    a, .nx-text-link {
+      color: #0061fe !important;
       text-decoration: none;
 
       &:hover {

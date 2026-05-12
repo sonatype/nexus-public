@@ -14,7 +14,6 @@ package org.sonatype.nexus.security.internal;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
@@ -27,15 +26,17 @@ import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RealmManagerImplTest
-    extends Test5Support
 {
   @Mock
   private Provider<RealmConfiguration> initialRealmConfigurationProvider;

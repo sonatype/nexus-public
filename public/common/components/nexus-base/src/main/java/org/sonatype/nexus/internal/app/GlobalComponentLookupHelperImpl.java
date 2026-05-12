@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.app;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 
 import org.springframework.beans.BeansException;
@@ -23,6 +22,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,9 +33,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class GlobalComponentLookupHelperImpl
-    extends ComponentSupport
     implements ApplicationContextAware, GlobalComponentLookupHelper
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private ApplicationContext applicationContext;
 
   @Override

@@ -12,18 +12,19 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TaskLoggerHelperTest
-    extends TestSupport
+
 {
   @Mock
   private Logger logger;

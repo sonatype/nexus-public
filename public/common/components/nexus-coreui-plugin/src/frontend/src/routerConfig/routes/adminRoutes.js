@@ -49,6 +49,7 @@ const Api = lazyLoad(() => import('../../components/pages/admin/Api/Api'));
 const HTTP = lazyLoad(() => import('../../components/pages/admin/Http/Http'));
 const Licensing = lazyLoad(() => import('../../components/pages/admin/Licensing/Licensing'));
 const Upgrade = lazyLoad(() => import('../../components/pages/admin/Upgrade/Upgrade'));
+const PreviewUiSettings = lazyLoad(() => import('../../components/pages/admin/PreviewUiSettings/PreviewUiSettings'));
 const NodesExt = lazyLoad(() => import('../../components/pages/admin/Nodes/NodesExt'));
 const TasksExtJSWrapper = lazyLoad(() => import('../../components/pages/admin/Tasks/TasksExtJSWrapper'));
 const Capabilities = lazyLoad(() => import('../../components/pages/admin/Capabilities/Capabilities'));
@@ -59,6 +60,7 @@ const AdminRepositoriesDirectoryPage = lazyLoad(() => import('../../components/p
 const AdminSecurityDirectoryPage = lazyLoad(() => import('../../components/pages/AdminSecurity/AdminSecurityDirectoryPage'));
 const AdminSystemDirectoryPage = lazyLoad(() => import('../../components/pages/AdminSystem/AdminSystemDirectoryPage'));
 const AdminSupportDirectoryPage = lazyLoad(() => import('../../components/pages/AdminSupport/AdminSupportDirectoryPage'));
+const SettingsHubClassicPage = lazyLoad(() => import('../../components/pages/admin/SettingsHub/SettingsHubClassicPage'));
 const SettingsPageLayout = lazyLoad(() => import('../../components/LeftNavigationMenu/SettingsPageLayout/SettingsPageLayout'));
 const PrivilegesList = lazyLoad(() => import('../../components/pages/admin/Privileges/PrivilegesList'));
 const PrivilegesDetails = lazyLoad(() => import('../../components/pages/admin/Privileges/PrivilegesDetails'));
@@ -104,6 +106,18 @@ export const adminRoutes = [
           Permissions.MIGRATION.READ,
         ],
       },
+    },
+  },
+
+  {
+    name: ADMIN.DIRECTORY + '.hub',
+    url: '',
+    component: SettingsHubClassicPage,
+    data: {
+      visibilityRequirements: {
+        requiresUser: true,
+      },
+      title: 'Settings',
     },
   },
 
@@ -849,11 +863,29 @@ export const adminRoutes = [
     },
   },
 
+  {
+    name: ADMIN.SYSTEM.PREVIEWUI.ROOT,
+    url: '/previewui',
+    component: PreviewUiSettings,
+    data: {
+      visibilityRequirements: {
+        permissions: [Permissions.SETTINGS.READ],
+      },
+      title: ADMIN.SYSTEM.PREVIEWUI.TITLE,
+    },
+  },
+
   // === iq ===
   {
     name: ADMIN.IQ.ROOT,
-    url: '/iq',
+    url: '/iq?fromConnected',
     component: IqServer,
+    params: {
+      fromConnected: {
+        value: null,
+        squash: true,
+      },
+    },
     data: {
       visibilityRequirements: {
         permissions: [Permissions.SETTINGS.READ],
@@ -871,7 +903,7 @@ export const adminRoutes = [
         permissions: [Permissions.SETTINGS.READ],
         statesEnabled: [
           {
-            key: 'nexus.hosted.repository.evaluation.enabled',
+            key: 'hostedRepositoryEvaluationEnabled',
             defaultValue: false,
           },
         ],
@@ -889,7 +921,7 @@ export const adminRoutes = [
         permissions: [Permissions.SETTINGS.READ],
         statesEnabled: [
           {
-            key: 'nexus.hosted.repository.evaluation.enabled',
+            key: 'hostedRepositoryEvaluationEnabled',
             defaultValue: true,
           },
         ],
@@ -900,14 +932,21 @@ export const adminRoutes = [
 
   {
     name: ADMIN.IQ.HOSTED_REPOS_EVAL.ROOT,
-    url: '/iq/sonatype-lifecycle/hosted-repos-eval',
+    url: '/iq/sonatype-lifecycle/hosted-repos-eval?activeTab',
     component: HostedRepositoryEvaluationGroup,
+    params: {
+      activeTab: {
+        value: null,
+        squash: true,
+        dynamic: true,
+      },
+    },
     data: {
       visibilityRequirements: {
         permissions: [Permissions.SETTINGS.READ],
         statesEnabled: [
           {
-            key: 'nexus.hosted.repository.evaluation.enabled',
+            key: 'hostedRepositoryEvaluationEnabled',
             defaultValue: false,
           },
         ],

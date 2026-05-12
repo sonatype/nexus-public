@@ -1,0 +1,99 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.preview-ui-settings-page {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  background-color: var(--color-background);
+  overflow: hidden;
+
+  &--loading {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  &__header {
+    padding: var(--space-6) var(--space-6) var(--space-4);
+    flex-shrink: 0;
+  }
+
+  &__action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    flex-shrink: 0;
+    min-height: 52px;
+    box-sizing: border-box;
+  }
+
+  &__action-bar-extra {
+    min-width: 0;
+  }
+
+  &__action-bar-error {
+    color: var(--red-11, #cd2b31);
+    font-size: 13px;
+    max-width: 600px;
+    white-space: normal;
+    line-height: 1.4;
+
+    svg {
+      flex-shrink: 0;
+      color: var(--red-9, #e5484d);
+    }
+  }
+
+  &__unsaved {
+    color: var(--amber-9, #d97706);
+    font-style: italic;
+    font-size: 13px;
+  }
+
+  &__scroll {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  &__inner {
+    padding: var(--space-6);
+    max-width: 800px;
+  }
+
+  &__intro {
+    margin-bottom: var(--space-5);
+  }
+
+  &__info-banner {
+    margin-bottom: var(--space-5);
+    background-color: var(--blue-2);
+    border-radius: 8px;
+    border: 1px solid var(--blue-6);
+  }
+
+  &__card--danger {
+    border: 1px solid var(--orange-6);
+  }
+
+  &__card--muted {
+    opacity: 0.6;
+  }
+
+  &__loading {
+    padding: var(--space-6);
+  }
+}

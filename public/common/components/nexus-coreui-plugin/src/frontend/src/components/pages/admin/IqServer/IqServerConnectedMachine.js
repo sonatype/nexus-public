@@ -18,19 +18,23 @@ import {assign, createMachine} from 'xstate';
 import Axios from 'axios';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
-const LICENSE_URL = 'service/rest/v1/system/license';
 const IQ_CONFIG_URL = 'service/rest/v1/iq';
-const VERIFY_CONNECTION_URL = 'service/rest/internal/ui/iq/verify-connection';
+const VERIFY_CONNECTION_URL = 'service/rest/v1/iq/verify-connection';
 
-function getClmState() {
-  return ExtJS.state().getValue('clm');
-}
+function parseLicensedSolutions(iqConfig) {
+  if (!iqConfig) {
+    return {
+      lifecycle: false,
+      firewall: false
+    };
+  }
 
-function parseFeatures(data) {
-  const features = data?.data?.features?.split(',').map(f => f.trim()) || [];
+  const solutions = iqConfig.licensedSolutions || [];
+  const solutionIds = solutions.map(s => s.id);
+
   return {
-    lifecycle: features.includes('SonatypeCLM'),
-    firewall: features.includes('Firewall')
+    lifecycle: solutionIds.includes('lifecycle'),
+    firewall: solutionIds.includes('firewall')
   };
 }
 
@@ -81,11 +85,15 @@ export default createMachine(
   },
   {
     actions: {
-      setData: assign({
-        data: (_, {data}) => parseFeatures({data: data.license}),
-        pristineData: (_, {data}) => parseFeatures({data: data.license}),
-        iqServerUrl: (_, {data}) => data.iqConfig?.url || '',
-        error: () => null
+      setData: assign((_, {data}) => {
+        const parsed = parseLicensedSolutions(data);
+        return {
+          data: parsed,
+          pristineData: parsed,
+          iqServerUrl: data?.url || '',
+          rawData: data,
+          error: null
+        };
       }),
 
       setError: assign({
@@ -116,21 +124,13 @@ export default createMachine(
 
     services: {
       fetchData: async () => {
-        const [license, iqConfig] = await Promise.all([
-          Axios.get(LICENSE_URL),
-          Axios.get(IQ_CONFIG_URL)
-        ]);
-        return {
-          license: license.data,
-          iqConfig: iqConfig.data
-        };
+        const iqConfig = await Axios.get(IQ_CONFIG_URL);
+        return iqConfig.data;
       },
       verifyConnection: async () => {
-        const config = await Axios.get(IQ_CONFIG_URL);
-        if (config?.data?.enabled) {
-          return Axios.post(VERIFY_CONNECTION_URL, config.data);
-        }
-        throw new Error('IQ Server is not enabled');
+        // Verify connection regardless of enabled status
+        // The Connected page shows actual connection health, not whether IQ is enabled
+        return Axios.post(VERIFY_CONNECTION_URL);
       }
     }
   }

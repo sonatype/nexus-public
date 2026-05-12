@@ -26,7 +26,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.datastore.mybatis.MyBatisDataStore;
 
@@ -36,6 +35,8 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.junit.platform.commons.support.ReflectionSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -44,9 +45,10 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
  * An internal JUnit5 extension which is used by {@link DatabaseExtension} when synthesizing database-specific tests
  */
 class DatabaseSpecificExtension
-    extends ComponentSupport
     implements BeforeEachCallback, AfterEachCallback
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String REGEX_SCHEMA = "currentSchema=([^&]+)$";
 
   private static final Pattern SCHEMA = Pattern.compile(".*" + REGEX_SCHEMA);

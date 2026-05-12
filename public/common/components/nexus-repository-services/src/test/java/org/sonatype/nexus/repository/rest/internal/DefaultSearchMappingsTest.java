@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.rest.internal;
 
 import java.util.stream.StreamSupport;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 
@@ -30,7 +29,6 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link DefaultSearchMappings}.
  */
 public class DefaultSearchMappingsTest
-    extends TestSupport
 {
   private DefaultSearchMappings underTest;
 

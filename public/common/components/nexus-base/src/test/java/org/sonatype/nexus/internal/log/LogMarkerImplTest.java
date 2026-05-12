@@ -14,7 +14,6 @@ package org.sonatype.nexus.internal.log;
 
 import java.util.EnumSet;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.common.log.LogMarkInsertedEvent;
@@ -22,6 +21,8 @@ import org.sonatype.nexus.common.log.LoggerLevel;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
@@ -36,8 +37,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests {@link LogMarkerImpl}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LogMarkerImplTest
-    extends TestSupport
 {
   private static final String LOG_NAME = LogMarkerImpl.class.getName();
 

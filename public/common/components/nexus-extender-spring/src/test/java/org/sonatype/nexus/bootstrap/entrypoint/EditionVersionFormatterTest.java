@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.common.app.ApplicationVersion;
@@ -33,12 +32,14 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link EditionVersionFormatter}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class EditionVersionFormatterTest
-    extends TestSupport
 {
   @Mock
   private NexusEditionSelector nexusEditionSelector;
@@ -108,11 +109,9 @@ public class EditionVersionFormatterTest
 
     // Verify warning log
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Unable to determine edition ID"))
-    ));
+        hasProperty("formattedMessage", containsString("Unable to determine edition ID"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("level", is(Level.WARN))
-    ));
+        hasProperty("level", is(Level.WARN))));
   }
 
   @Test
@@ -128,11 +127,9 @@ public class EditionVersionFormatterTest
 
     // Verify warning log
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Unable to determine edition ID"))
-    ));
+        hasProperty("formattedMessage", containsString("Unable to determine edition ID"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("level", is(Level.WARN))
-    ));
+        hasProperty("level", is(Level.WARN))));
   }
 
   @Test

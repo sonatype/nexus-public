@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -51,12 +50,16 @@ import org.sonatype.nexus.selector.SelectorManager;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.sql.SqlSearchWildcardValidator.containsWildcards;
+import static org.sonatype.nexus.repository.search.sql.SqlSearchWildcardValidator.validateToken;
 
 /**
  * Appends the query parameters necessary for permission
@@ -64,8 +67,9 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSIT
 @Component
 @Singleton
 public class SqlSearchPermissionBuilder
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final RepositoryManager repositoryManager;
 
   private final SecurityHelper securityHelper;
@@ -244,15 +248,16 @@ public class SqlSearchPermissionBuilder
   }
 
   /*
-   * Given a repository name from a user, expands wildcards to matching repository names, and filters non-wildcard
+   * Given a repository name from a user, validate it, expands wildcards to matching repository names,
+   * and filters non-wildcard
    * repositories if they are unknown
    */
   private Stream<Repository> expandWildcards(final String repositoryName) {
-    Stream<Repository> repositories = StreamSupport.stream(repositoryManager.browse().spliterator(), false);
+    validateToken(repositoryName);
 
     if (containsWildcards(repositoryName)) {
       Pattern repoNamePatterns = createPattern(repositoryName);
-
+      Stream<Repository> repositories = StreamSupport.stream(repositoryManager.browse().spliterator(), false);
       return repositories.filter(repository -> repoNamePatterns.matcher(repository.getName()).matches());
     }
     return Optional.ofNullable(repositoryManager.get(repositoryName))
@@ -305,10 +310,6 @@ public class SqlSearchPermissionBuilder
    */
   private static Pattern createPattern(final String filter) {
     return Pattern.compile(filter.replace("?", ".").replace("*", ".*"));
-  }
-
-  private static boolean containsWildcards(final String filter) {
-    return filter.contains("*") || filter.contains("?");
   }
 
   /*

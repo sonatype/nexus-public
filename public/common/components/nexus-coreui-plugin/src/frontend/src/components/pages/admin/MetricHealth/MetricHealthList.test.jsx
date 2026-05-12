@@ -157,4 +157,50 @@ describe('MetricHealthList', () => {
       await expectProperOrder(fields.MESSAGE, LABELS.MESSAGE_HEADER, DESC);
     });
   });
+
+  describe('XSS sanitization (z8s8)', () => {
+    it('strips script tags from message HTML before rendering', async () => {
+      // Node with a single unhealthy result whose message contains an XSS payload
+      const xssNodes = [
+        {
+          nodeId: 'node-xss',
+          hostname: 'xss-host',
+          results: {
+            'XSS Check': {
+              healthy: false,
+              message: '<b>safe</b><script>window.__XSS__=true</script>',
+            },
+          },
+        },
+      ];
+      axios.get.mockReturnValue(Promise.resolve({ data: xssNodes }));
+
+      await renderView();
+
+      // Safe bold text survives sanitization
+      expect(screen.getByText('safe')).toBeInTheDocument();
+      // Script tag must not execute
+      expect(window.__XSS__).toBeUndefined();
+    });
+
+    it('passes safe HTML through unchanged', async () => {
+      const safeNodes = [
+        {
+          nodeId: 'node-safe',
+          hostname: 'safe-host',
+          results: {
+            'Safe Check': {
+              healthy: false,
+              message: '<b>bold text</b>',
+            },
+          },
+        },
+      ];
+      axios.get.mockReturnValue(Promise.resolve({ data: safeNodes }));
+
+      await renderView();
+
+      expect(screen.getByText('bold text')).toBeInTheDocument();
+    });
+  });
 });

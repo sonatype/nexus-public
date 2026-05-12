@@ -14,7 +14,6 @@ package org.sonatype.nexus.upgrade.datastore.internal.steps;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Rule;
@@ -25,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class RemoveFreezeMigrationStep_2_111Test
-    extends TestSupport
 {
   @Rule
   public DataSessionRule dataSessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME);

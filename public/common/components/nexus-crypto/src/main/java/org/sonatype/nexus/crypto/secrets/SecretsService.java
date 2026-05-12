@@ -100,4 +100,28 @@ public interface SecretsService
       String encryptedValue,
       String userId,
       @Nullable String decryptionCipherPassword) throws CipherException;
+
+  /**
+   * Exports a secret re-encrypted with a custom password for migration purposes.
+   * Decrypts the secret using the instance key, then re-encrypts with the provided password.
+   * This is the inverse of importEncrypted(password) - enabling cross-instance migration.
+   *
+   * @param secretId the secret ID token (e.g., "_123" or legacy encrypted string)
+   * @param customPassword the password to use for export encryption
+   * @return PHC format encrypted string suitable for import on another instance
+   * @throws CipherException if the secret cannot be found or export fails
+   */
+  String exportEncryptedWithPassword(String secretId, String customPassword) throws CipherException;
+
+  /**
+   * Encrypts plaintext with a custom password for migration purposes.
+   * This is useful for encrypting raw values that aren't stored as Secret objects yet.
+   * Mirrors importEncrypted() which can accept plaintext encrypted values.
+   *
+   * @param plaintext the plaintext value to encrypt
+   * @param customPassword the password to use for encryption
+   * @return PHC format encrypted string
+   * @throws CipherException if encryption fails
+   */
+  String encryptPlaintextWithPassword(String plaintext, String customPassword) throws CipherException;
 }

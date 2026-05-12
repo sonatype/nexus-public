@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.AssetData;
@@ -31,7 +30,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class Maven2BrowseNodeGeneratorTest
-    extends TestSupport
+
 {
   private static final String BASE_VERSION = "1.3";
 

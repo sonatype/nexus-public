@@ -63,6 +63,51 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
           assetName = assetModel.get('name');
       return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + encodePath(assetName), assetName);
     },
+    pub: function (me, assetModel) {
+      var repositoryName = assetModel.get('repositoryName'),
+          assetName = assetModel.get('name'),
+          downloadPath,
+          displayName;
+
+      // Pub storage paths and their browse/display equivalents:
+      // 1. Package tarballs: /packages/{name}/{version}/{name}-{version}.tar.gz
+      //    -> Display: {name}/{version}/{name}-{version}.tar.gz
+      //    -> Download: /api/archives/{name}-{version}.tar.gz
+      // 2. Package metadata: /api/packages/{name}
+      //    -> Display: {name}
+      //    -> Download: /api/packages/{name}
+      // 3. Version metadata: /api/packages/{name}/versions/{version}
+      //    -> Display: {name}/{version}
+      //    -> Download: /api/packages/{name}/versions/{version}
+
+      if (assetName.startsWith('/packages/') && assetName.endsWith('.tar.gz')) {
+        // For tarballs stored at /packages/{name}/{version}/{filename}
+        // Display as: {name}/{version}/{filename}
+        var pathWithoutPrefix = assetName.substring('/packages/'.length);
+        var parts = pathWithoutPrefix.split('/');
+        var filename = parts[parts.length - 1];
+        downloadPath = '/api/archives/' + filename;
+        displayName = pathWithoutPrefix;
+      } else if (assetName.startsWith('/api/packages/') && assetName.indexOf('/versions/') > 0) {
+        // For version metadata: /api/packages/{name}/versions/{version}
+        // Display as: {name}/{version}
+        var versionPath = assetName.substring('/api/packages/'.length);
+        var versionParts = versionPath.split('/versions/');
+        displayName = versionParts[0] + '/' + versionParts[1];
+        downloadPath = assetName;
+      } else if (assetName.startsWith('/api/packages/')) {
+        // For package metadata: /api/packages/{name}
+        // Display as: {name}
+        displayName = assetName.substring('/api/packages/'.length);
+        downloadPath = assetName;
+      } else {
+        // Fallback for any other assets
+        downloadPath = encodePath(assetName);
+        displayName = assetName;
+      }
+
+      return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + downloadPath, displayName);
+    },
     npm: function (me, assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = assetModel.get('name');

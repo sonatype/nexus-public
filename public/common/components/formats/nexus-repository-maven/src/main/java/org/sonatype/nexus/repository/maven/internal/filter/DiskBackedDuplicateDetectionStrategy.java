@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.maven.internal.filter;
 
 import java.util.UUID;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 
 import org.apache.maven.index.reader.Record;
 import org.ehcache.Cache;

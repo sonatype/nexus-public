@@ -18,8 +18,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
@@ -30,7 +28,6 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-@Category(SQLTestGroup.class)
 public class CapabilityStorageItemDAOTest
 {
 

@@ -18,14 +18,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.annotations.VisibleForTesting;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Path;
 import io.swagger.models.Swagger;
 import io.swagger.models.parameters.AbstractSerializableParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -38,9 +38,10 @@ import static java.util.stream.Collectors.toMap;
  * @since 3.7
  */
 public abstract class ParameterContributor<T extends AbstractSerializableParameter>
-    extends ComponentSupport
     implements SwaggerContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Collection<HttpMethod> httpMethods;
 
   private final Collection<String> paths;

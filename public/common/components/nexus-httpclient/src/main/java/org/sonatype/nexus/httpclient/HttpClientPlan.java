@@ -17,8 +17,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.client.CredentialsProvider;
@@ -28,6 +26,8 @@ import org.apache.http.config.ConnectionConfig;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Plan for how to build a {@link HttpClient} instance.
@@ -35,8 +35,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
  * @since 3.0
  */
 public class HttpClientPlan
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final HttpClientBuilder client;
 
   private final ConnectionConfig.Builder connection;

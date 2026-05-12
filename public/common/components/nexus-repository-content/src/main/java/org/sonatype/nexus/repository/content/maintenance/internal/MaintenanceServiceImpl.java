@@ -21,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.MissingFacetException;
@@ -44,6 +43,8 @@ import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.authz.AuthorizationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -59,9 +60,10 @@ import static org.sonatype.nexus.thread.NexusExecutorService.forCurrentSubject;
 @org.springframework.stereotype.Component
 @Singleton
 public class MaintenanceServiceImpl
-    extends ComponentSupport
     implements MaintenanceService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ContentPermissionChecker contentPermissionChecker;
 
   private final VariableResolverAdapterManager variableResolverAdapterManager;

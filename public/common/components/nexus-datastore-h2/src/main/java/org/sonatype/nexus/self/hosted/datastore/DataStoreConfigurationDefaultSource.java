@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.self.hosted.datastore;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.datastore.DataStoreConfigurationSource;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
@@ -22,6 +21,8 @@ import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -37,9 +38,10 @@ import static org.sonatype.nexus.self.hosted.datastore.DataStoreConfigurationDef
 @Order(DataStoreConfigurationSource.ORDER_DEFAULT_SOURCE)
 @Singleton
 public class DataStoreConfigurationDefaultSource
-    extends ComponentSupport
     implements DataStoreConfigurationSource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String DEFAULT = "default";
 
   private static final String JDBC_TEMPLATE_URL =

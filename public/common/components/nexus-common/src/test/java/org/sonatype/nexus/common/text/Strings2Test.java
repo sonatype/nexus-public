@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.text;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,7 +25,7 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link Strings2}
  */
 public class Strings2Test
-    extends TestSupport
+
 {
   @Test
   public void testIsBlank() {

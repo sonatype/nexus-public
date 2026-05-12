@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.security.internal;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -22,15 +21,17 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSource;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SimpleVariableResolverAdapterTest
-    extends TestSupport
 {
   private static final String FORMAT_VARIABLE = "format";
 
@@ -58,7 +59,9 @@ public class SimpleVariableResolverAdapterTest
   public void testFromRequest() throws Exception {
     when(request.getPath()).thenReturn(TEST_PATH_WITH_SLASH);
     when(repository.getName()).thenReturn("SimpleVariableResolverAdapterTest");
-    when(repository.getFormat()).thenReturn(new Format(TEST_FORMAT) { });
+    when(repository.getFormat()).thenReturn(new Format(TEST_FORMAT)
+    {
+    });
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
     VariableSource source = simpleVariableResolverAdapter.fromRequest(request, repository);
 
@@ -71,7 +74,9 @@ public class SimpleVariableResolverAdapterTest
   public void testFromAsset() throws Exception {
     when(asset.path()).thenReturn(TEST_PATH_WITH_SLASH);
     when(asset.repository()).thenReturn(repository);
-    when(repository.getFormat()).thenReturn(new Format(TEST_FORMAT) { });
+    when(repository.getFormat()).thenReturn(new Format(TEST_FORMAT)
+    {
+    });
 
     SimpleVariableResolverAdapter simpleVariableResolverAdapter = new SimpleVariableResolverAdapter();
     VariableSource source = simpleVariableResolverAdapter.fromAsset(asset);

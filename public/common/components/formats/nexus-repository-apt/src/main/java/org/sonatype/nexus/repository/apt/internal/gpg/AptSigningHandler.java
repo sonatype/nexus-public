@@ -14,12 +14,13 @@ package org.sonatype.nexus.repository.apt.internal.gpg;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import org.springframework.stereotype.Component;
@@ -30,9 +31,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class AptSigningHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public Response handle(final Context context) throws Exception {
     String path = assetPath(context);

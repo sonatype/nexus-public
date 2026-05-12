@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobSession;
@@ -41,12 +40,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link MemoryBlobSession}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MemoryBlobSessionTest
-    extends TestSupport
 {
   private static final long TEST_BLOB_SIZE = 1024;
 
@@ -188,7 +189,7 @@ public class MemoryBlobSessionTest
       session.getTransaction().commit();
     }
     catch (Throwable t) {
-      //explictly having an assertion pleases sonar
+      // explictly having an assertion pleases sonar
       fail("transaction commit not reached");
     }
 
@@ -199,7 +200,7 @@ public class MemoryBlobSessionTest
       session.getTransaction().commit();
     }
     catch (Throwable t) {
-      //explictly having an assertion pleases sonar
+      // explictly having an assertion pleases sonar
       fail("transaction commit not reached");
     }
   }
@@ -213,7 +214,7 @@ public class MemoryBlobSessionTest
       session.getTransaction().rollback();
     }
     catch (Throwable t) {
-      //explictly having an assertion pleases sonar
+      // explictly having an assertion pleases sonar
       fail("rollback may have failed");
     }
 
@@ -224,7 +225,7 @@ public class MemoryBlobSessionTest
       session.getTransaction().rollback();
     }
     catch (Throwable t) {
-      //explictly having an assertion pleases sonar
+      // explictly having an assertion pleases sonar
       fail("rollback may have failed");
     }
   }

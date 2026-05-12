@@ -21,60 +21,75 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 import org.sonatype.nexus.thread.internal.MDCAwareRunnable;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Support class for tasks which uses an executor to parallelize parts of the work
+ * Support class for tasks which uses an executor to parallelize parts of the work.
+ * The queue capacity is automatically set to 3 times the concurrency limit.
  */
 public abstract class ParallelTaskSupport
     extends TaskSupport
 {
+  private static final int QUEUE_CAPACITY_MULTIPLIER = 3;
+
   private final int concurrencyLimit;
 
   private final int queueCapacity;
 
   private final List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
 
+  private final AtomicInteger droppedExceptions = new AtomicInteger(0);
+
   /**
-   * @param concurrencyLimit the number of concurrent threads processing the queue allowed
-   * @param queueCapacity the number of queued jobs allowed
+   * @param concurrencyLimit the number of concurrent threads processing the queue allowed.
    */
-  protected ParallelTaskSupport(final int concurrencyLimit, final int queueCapacity) {
-    validate(concurrencyLimit, queueCapacity);
+  protected ParallelTaskSupport(final int concurrencyLimit) {
+    validate(concurrencyLimit);
     this.concurrencyLimit = concurrencyLimit;
-    this.queueCapacity = queueCapacity;
+    this.queueCapacity = concurrencyLimit * QUEUE_CAPACITY_MULTIPLIER;
   }
 
   /**
-   * @param concurrencyLimit the number of concurrent threads processing the queue allowed
-   * @param queueCapacity the number of queued jobs allowed
+   * @param taskLoggingEnabled whether task logging should be enabled
+   * @param concurrencyLimit the number of concurrent threads processing the queue allowed.
    */
-  protected ParallelTaskSupport(final boolean taskLoggingEnabled, final int concurrencyLimit, final int queueCapacity) {
+  protected ParallelTaskSupport(final boolean taskLoggingEnabled, final int concurrencyLimit) {
     super(taskLoggingEnabled);
-    validate(concurrencyLimit, queueCapacity);
+    validate(concurrencyLimit);
     this.concurrencyLimit = concurrencyLimit;
-    this.queueCapacity = queueCapacity;
+    this.queueCapacity = concurrencyLimit * QUEUE_CAPACITY_MULTIPLIER;
   }
 
   @Override
   protected final Object execute() throws Exception {
     String name = getClass().getSimpleName();
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(0, concurrencyLimit, 500L, TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<>(queueCapacity), new NexusThreadFactory(name, name), new CallerRunsPolicy());
-
-    try (ProgressLogIntervalHelper progress = new ProgressLogIntervalHelper(log, 60)) {
-      List<Future<Object>> futures = jobStream(progress).map(runnable -> {
-        // check cancellation before scheduling job so the primary thread throws an exception and stops queuing jobs
-        CancelableHelper.checkCancellation();
-        return executor.submit(new MDCAwareRunnable(exceptionHandler(runnable)), new Object());
-      })
+    try (ThreadPoolExecutor executor = new ThreadPoolExecutor(
+        0,
+        concurrencyLimit,
+        60L,
+        TimeUnit.SECONDS,
+        new LinkedBlockingQueue<>(queueCapacity),
+        new NexusThreadFactory(name, name),
+        new CallerRunsPolicy());
+        ProgressLogIntervalHelper progress = new ProgressLogIntervalHelper(
+            log,
+            60)) {
+      List<Future<Object>> futures = jobStream(progress)
+          .map(runnable -> {
+            // check cancellation before scheduling job so the primary thread throws an exception and stops queuing jobs
+            CancelableHelper.checkCancellation();
+            return executor.submit(new MDCAwareRunnable(exceptionHandler(runnable)), new Object());
+          })
           .toList();
 
       for (Future<Object> future : futures) {
@@ -90,7 +105,7 @@ public abstract class ParallelTaskSupport
         }
       }
 
-      if (exceptions.size() > 0) {
+      if (!exceptions.isEmpty()) {
         MultipleFailures failures = new MultipleFailures();
         exceptions.forEach(failures::add);
         failures.maybePropagate();
@@ -102,9 +117,6 @@ public abstract class ParallelTaskSupport
       Thread.currentThread().interrupt();
       CancelableHelper.checkCancellation();
       throw new RuntimeException(e);
-    }
-    finally {
-      executor.shutdownNow();
     }
   }
 
@@ -118,7 +130,10 @@ public abstract class ParallelTaskSupport
           exceptions.add(e);
         }
         else {
-          log.warn("Too many exceptions, {}", e.getMessage(), log.isDebugEnabled() ? e : null);
+          int dropped = droppedExceptions.incrementAndGet();
+          if (dropped % 100 == 0) {
+            log.warn("Too many exceptions, {} exceptions dropped (last: {})", dropped, e.getMessage());
+          }
         }
       }
     };
@@ -126,10 +141,27 @@ public abstract class ParallelTaskSupport
 
   protected abstract Object result();
 
+  /**
+   * Returns the concurrency limit used by this task.
+   * For testing purposes only.
+   */
+  @VisibleForTesting
+  public int concurrencyLimit() {
+    return concurrencyLimit;
+  }
+
+  /**
+   * Returns the number of exceptions that were dropped (exceeded the 20 exception limit).
+   * For testing purposes only.
+   */
+  @VisibleForTesting
+  public int getDroppedExceptions() {
+    return droppedExceptions.get();
+  }
+
   protected abstract Stream<Runnable> jobStream(ProgressLogIntervalHelper progress);
 
-  private static void validate(final int concurrencyLimit, final int queueCapacity) {
+  private static void validate(final int concurrencyLimit) {
     checkArgument(concurrencyLimit > 0, "concurrencyLimit must be larger than 0");
-    checkArgument(queueCapacity > 0, "queueCapacity must be larger than 0");
   }
 }

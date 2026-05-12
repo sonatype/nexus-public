@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.httpclient;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.http.HttpStatus.PROXY_AUTHENTICATION_REQUIRED;
 
 public class DefaultAutoBlockConfigurationTest
-    extends TestSupport
 {
   private DefaultAutoBlockConfiguration underTest;
 

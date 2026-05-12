@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.internal;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -33,7 +32,9 @@ import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHan
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -46,8 +47,8 @@ import static org.mockito.Mockito.when;
 /**
  * Test cases for {@link LastDownloadedAttributePropertyFileHandler}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LastDownloadedAttributePropertyFileHandlerTest
-    extends TestSupport
 {
   @Mock
   private BlobStoreManager blobStoreManager;

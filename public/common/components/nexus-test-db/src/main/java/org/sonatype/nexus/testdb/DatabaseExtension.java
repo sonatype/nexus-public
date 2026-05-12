@@ -25,8 +25,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.Extension;
@@ -37,6 +35,8 @@ import org.junit.platform.commons.support.AnnotationSupport;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.utility.DockerImageName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -63,9 +63,10 @@ import static org.slf4j.LoggerFactory.getLogger;
  * </pre>
  */
 public class DatabaseExtension
-    extends ComponentSupport
     implements Extension, BeforeAllCallback, AfterAllCallback, TestTemplateInvocationContextProvider
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String JDBC_URL = System.getProperty("test.jdbcUrl");
 
   private PostgreSQLContainer<?> postgres;

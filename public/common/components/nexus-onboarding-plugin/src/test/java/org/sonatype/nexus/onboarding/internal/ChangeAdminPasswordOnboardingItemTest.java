@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
@@ -26,9 +25,11 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ChangeAdminPasswordOnboardingItemTest
-    extends TestSupport
 {
   @Mock
   private SecuritySystem securitySystem;

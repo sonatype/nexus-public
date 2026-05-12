@@ -34,7 +34,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.common.QualifierUtil;
@@ -56,6 +55,8 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -71,9 +72,10 @@ import static org.sonatype.nexus.rest.ApiDocConstants.BLOBSTORE_NOT_FOUND;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public abstract class AbstractRepositoriesApiResource<T extends AbstractRepositoryApiRequest>
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private AuthorizingRepositoryManager authorizingRepositoryManager;
 
   protected RepositoryManager repositoryManager;

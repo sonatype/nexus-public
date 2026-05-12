@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.internal;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
@@ -38,7 +37,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 @RunWith(Parameterized.class)
 public class Maven2MavenPathParserMxTest
-    extends TestSupport
+
 {
   public static String[] GROUP_IDS = {"single", "multiple.group.elements"};
 

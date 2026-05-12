@@ -16,7 +16,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Path;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.CselToSql;
@@ -36,6 +35,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 
@@ -57,11 +57,11 @@ import static org.mockito.Mockito.when;
 /**
  * Tests {@link SelectorComponent}.
  */
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class SelectorComponentTest
-    extends Test5Support
 {
   @Mock
   private ConstraintViolation constraintViolation;

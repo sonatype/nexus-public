@@ -14,7 +14,6 @@ package org.sonatype.nexus.content.raw.internal.recipe;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.maintenance.SingleAssetMaintenanceFacet;
@@ -32,11 +31,16 @@ import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 
+import org.junit.Rule;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 public abstract class RawRecipeTestSupport
-    extends TestSupport
 {
+  @Rule
+  public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
+
   @Mock
   private ExceptionHandler exceptionHandler;
 

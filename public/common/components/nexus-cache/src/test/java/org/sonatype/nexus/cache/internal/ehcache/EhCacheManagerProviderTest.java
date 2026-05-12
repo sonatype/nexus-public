@@ -14,8 +14,6 @@ package org.sonatype.nexus.cache.internal.ehcache;
 
 import javax.cache.CacheManager;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +27,6 @@ import static org.junit.Assert.fail;
  * Tests for {@link EhCacheManagerProvider}.
  */
 public class EhCacheManagerProviderTest
-    extends TestSupport
 {
   private EhCacheManagerProvider underTest;
 

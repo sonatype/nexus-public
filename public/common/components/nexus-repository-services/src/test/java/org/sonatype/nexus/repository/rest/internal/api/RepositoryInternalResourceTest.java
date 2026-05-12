@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.rest.internal.api;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
@@ -27,6 +26,7 @@ import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
+import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -48,11 +49,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class RepositoryInternalResourceTest
-    extends Test5Support
 {
   @Mock
   private List<Format> formats;
@@ -75,6 +76,9 @@ class RepositoryInternalResourceTest
   @Mock
   private ApiRepositoryAdapter defaultAdapter;
 
+  @Mock
+  private RepositoryMetricsService repositoryMetricsService;
+
   private final ProxyType proxyType = new ProxyType();
 
   private final GroupType groupType = new GroupType();
@@ -85,6 +89,7 @@ class RepositoryInternalResourceTest
 
   @BeforeEach
   void setup() {
+    lenient().when(repositoryMetricsService.list()).thenReturn(java.util.Collections.emptyList());
     underTest = new RepositoryInternalResource(
         formats,
         repositoryManager,
@@ -93,7 +98,8 @@ class RepositoryInternalResourceTest
         recipes,
         authorizingRepositoryManager,
         convertersByFormat,
-        defaultAdapter);
+        defaultAdapter,
+        repositoryMetricsService);
   }
 
   @Test

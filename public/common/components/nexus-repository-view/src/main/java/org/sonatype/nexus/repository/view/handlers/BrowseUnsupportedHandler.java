@@ -18,7 +18,6 @@ import javax.annotation.Nonnull;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.text.Strings2;
@@ -32,6 +31,8 @@ import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -45,9 +46,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class BrowseUnsupportedHandler
-    extends ComponentSupport
     implements Handler, org.sonatype.nexus.repository.BrowseUnsupportedHandler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String TEMPLATE_RESOURCE = "browseUnsupportedHtml.vm";
 
   private final TemplateHelper templateHelper;
@@ -93,9 +95,10 @@ public class BrowseUnsupportedHandler
    * "/index.htm"
    */
   private static class MatcherImpl
-      extends ComponentSupport
       implements Matcher
   {
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
     @Override
     public boolean matches(final Context context) {
       checkNotNull(context);

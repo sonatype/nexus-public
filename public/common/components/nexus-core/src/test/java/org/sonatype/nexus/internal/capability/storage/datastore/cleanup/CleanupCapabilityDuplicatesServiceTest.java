@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageImpl;
@@ -41,12 +40,14 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link CleanupCapabilityDuplicatesService}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CleanupCapabilityDuplicatesServiceTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(CapabilityStorageItemDAO.class);

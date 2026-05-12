@@ -1,0 +1,95 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/**
+ * In-Repository Search Styles
+ *
+ * Scoped search within a repository with dropdown results.
+ * Distinct from global search - uses repository-specific styling.
+ */
+
+.in-repo-search {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+
+  // Dropdown positioning
+  &__dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    margin-top: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+    background-color: var(--color-background);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-2);
+    box-shadow: var(--shadow-3);
+
+    &--empty,
+    &--error {
+      text-align: center;
+    }
+  }
+
+  // Result item
+  &__result-item {
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--gray-3);
+    }
+
+    &--selected {
+      background-color: var(--accent-3);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__result-icon {
+    color: var(--gray-9);
+    flex-shrink: 0;
+  }
+
+  &__result-name {
+    color: var(--gray-12);
+  }
+
+  &__result-version {
+    color: var(--gray-10);
+  }
+}
+
+// Dark mode support
+:root[data-theme="dark"] {
+  .in-repo-search {
+    &__dropdown {
+      border-color: var(--gray-7);
+    }
+
+    &__result-item {
+      &:hover {
+        background-color: var(--gray-4);
+      }
+
+      &--selected {
+        background-color: var(--accent-4);
+      }
+    }
+  }
+}

@@ -46,7 +46,7 @@ export default function EmailServer() {
       <PageHeader>
         <PageTitle
             icon={UIStrings.EMAIL_SERVER.MENU.icon}
-            title={UIStrings.EMAIL_SERVER.MENU.title}
+            text={UIStrings.EMAIL_SERVER.MENU.text}
             description={UIStrings.EMAIL_SERVER.MENU.description}
         />
       </PageHeader>

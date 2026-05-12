@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.security;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.shiro.authz.permission.DomainPermission;
 import org.apache.shiro.authz.permission.WildcardPermission;
 import org.junit.Test;
@@ -21,7 +19,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
 public class SecurityTrialTest
-    extends TestSupport
 {
   @Test
   public void wildcardPermissionString() {

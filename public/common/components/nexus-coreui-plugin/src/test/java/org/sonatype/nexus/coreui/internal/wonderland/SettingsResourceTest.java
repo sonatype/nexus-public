@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui.internal.wonderland;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
@@ -31,7 +30,6 @@ import static org.hamcrest.Matchers.notNullValue;
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class SettingsResourceTest
-    extends Test5Support
 {
   @Test
   void getReturnsKeepAliveProperty() {

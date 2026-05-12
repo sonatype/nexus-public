@@ -21,7 +21,7 @@ describe('UnsavedChangesModal', () => {
     cancelButton: () => screen.queryByRole('button', { name: 'Cancel' }),
     continueButton: () => screen.queryByRole('button', { name: 'Continue' }),
     modalTitle: () => screen.queryByRole('heading', { name: 'Unsaved Changes' }),
-    modalContent: () => screen.queryByText('The page may contain unsaved changes; continuing will discard them.')
+    modalContent: () => screen.queryByText('You have unsaved changes. Continuing will discard them.')
   };
 
   let handleCancelSpy;

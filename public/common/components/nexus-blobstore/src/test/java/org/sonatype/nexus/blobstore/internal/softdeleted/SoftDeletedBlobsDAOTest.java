@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.softdeleted.BlobLocationUpdate;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlob;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -38,7 +37,6 @@ import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class SoftDeletedBlobsDAOTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(SoftDeletedBlobsDAO.class);

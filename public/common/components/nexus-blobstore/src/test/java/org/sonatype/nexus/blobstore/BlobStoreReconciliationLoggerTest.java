@@ -22,11 +22,10 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,12 +45,15 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BlobStoreReconciliationLoggerTest
-    extends TestSupport
 {
   public static final String RECONCILIATION_LOG_DIRECTORY = "reconciliationLogDirectory";
 
@@ -70,7 +72,6 @@ public class BlobStoreReconciliationLoggerTest
   @Mock
   private Logger logger;
 
-  @Mock
   private MockedStatic<LoggerFactory> mockedStatic;
 
   @Mock
@@ -80,6 +81,8 @@ public class BlobStoreReconciliationLoggerTest
 
   @Before
   public void setUp() throws IOException {
+    mockedStatic = mockStatic(LoggerFactory.class);
+
     // mock blob store and its configuration
     BlobStoreConfiguration blobStoreConfiguration = mock(BlobStoreConfiguration.class);
     when(blobStoreConfiguration.getName()).thenReturn("blob-store-name");
@@ -117,7 +120,7 @@ public class BlobStoreReconciliationLoggerTest
   public void shouldReadBlobIdsLoggedOnAndAfterRequestedDate() throws IOException {
     when(applicationDirectories
         .getWorkDirectory(RECONCILIATION_LOG_DIRECTORY))
-        .thenReturn(temporaryFolder.getRoot());
+            .thenReturn(temporaryFolder.getRoot());
     Files.write(temporaryFolder.newFile("2021-04-13").toPath(),
         "2021-04-13 00:00:00,00000000-0000-0000-0000-000000000001".getBytes(StandardCharsets.UTF_8),
         StandardOpenOption.CREATE);
@@ -169,17 +172,18 @@ public class BlobStoreReconciliationLoggerTest
   public void testDateBasedLayoutFlag() throws IOException {
     when(applicationDirectories
         .getWorkDirectory(RECONCILIATION_LOG_DIRECTORY))
-        .thenReturn(temporaryFolder.getRoot());
+            .thenReturn(temporaryFolder.getRoot());
 
     Files.write(temporaryFolder.newFile("2024-05-01").toPath(),
         ("2024-05-01 01:00:00,00000000-0000-0000-0000-000000000001,true\n" +
             "2024-05-01 02:00:00,00000000-0000-0000-0000-000000000002,false\n" +
             "2024-05-01 03:00:00,00000000-0000-0000-0000-000000000003,true\n")
-            .getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+                .getBytes(StandardCharsets.UTF_8),
+        StandardOpenOption.CREATE);
 
     List<String> result = underTest.getBlobsCreatedSince(
-            Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2024-05-01T00:00:00"),
-            LocalDateTime.parse("2024-05-01T23:59:59.999999999"), emptyMap())
+        Paths.get(RECONCILIATION_LOG_DIRECTORY), LocalDateTime.parse("2024-05-01T00:00:00"),
+        LocalDateTime.parse("2024-05-01T23:59:59.999999999"), emptyMap())
         .map(BlobId::asUniqueString)
         .collect(toList());
 

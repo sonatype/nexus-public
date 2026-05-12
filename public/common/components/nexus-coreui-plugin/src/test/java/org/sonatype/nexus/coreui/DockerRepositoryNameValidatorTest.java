@@ -21,7 +21,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.junit.Before;
@@ -35,14 +34,16 @@ import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for Docker repository name validation in RepositoryXO.
  * Includes both Bean Validation API tests and unit tests with mocked RepositoryManager
  * for testing the existing repository exemption logic.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DockerRepositoryNameValidatorTest
-    extends TestSupport
 {
   private Validator validator;
 

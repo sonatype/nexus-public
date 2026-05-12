@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.node;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
 
 /**
  * Provides access to managing deployment identity.

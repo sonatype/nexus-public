@@ -19,7 +19,8 @@ import javax.management.AttributeNotFoundException;
 import javax.management.Descriptor;
 import javax.management.MBeanAttributeInfo;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -30,9 +31,10 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.0
  */
 public class SuppliedMBeanAttribute
-    extends ComponentSupport
     implements MBeanAttribute
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final MBeanAttributeInfo info;
 
   private final String name;
@@ -87,8 +89,9 @@ public class SuppliedMBeanAttribute
    * {@link SuppliedMBeanAttribute} builder.
    */
   public static class Builder
-      extends ComponentSupport
   {
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
     private String name;
 
     private String description;

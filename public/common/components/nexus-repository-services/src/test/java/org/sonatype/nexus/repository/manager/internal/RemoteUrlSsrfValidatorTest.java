@@ -14,13 +14,13 @@ package org.sonatype.nexus.repository.manager.internal;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
+import javax.validation.ValidationException;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper;
-import org.sonatype.nexus.validation.ssrf.AntiSsrfHelper.SsrfValidationResult;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,18 +28,19 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
-
-import java.util.stream.Stream;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RemoteUrlSsrfValidatorTest
-    extends Test5Support
 {
   @Mock
   private ConstraintViolationFactory constraintViolationFactory;
@@ -48,13 +49,13 @@ class RemoteUrlSsrfValidatorTest
   private Configuration configuration;
 
   @Mock
-  private AntiSsrfHelper antiSsrfHelper;
+  private AntiSsrfService antiSsrfService;
 
   private RemoteUrlSsrfValidator validator;
 
   @BeforeEach
   void setup() {
-    validator = new RemoteUrlSsrfValidator(constraintViolationFactory, antiSsrfHelper);
+    validator = new RemoteUrlSsrfValidator(constraintViolationFactory, antiSsrfService);
   }
 
   @Test
@@ -65,7 +66,6 @@ class RemoteUrlSsrfValidatorTest
     attributes.put("proxy", proxyAttributes);
 
     when(configuration.getAttributes()).thenReturn(attributes);
-    when(antiSsrfHelper.validateHostForConfiguration("repo1.maven.org")).thenReturn(SsrfValidationResult.success());
 
     ConstraintViolation<?> result = validator.validate(configuration);
 
@@ -82,9 +82,7 @@ class RemoteUrlSsrfValidatorTest
   @ParameterizedTest
   @MethodSource("blockedUrlTestData")
   void shouldBlockRestrictedUrls(String url, String host, String errorMessage) {
-    String expectedMessage = "Proxy URL blocked: " + errorMessage + ". To allow connections, set " +
-        "nexus.proxy.allowPrivateNetworks=true to allow all private networks, or configure specific " +
-        "hosts using nexus.proxy.privateNetworks.allowedIPs or nexus.proxy.privateNetworks.allowedDomains.";
+    String expectedMessage = "Proxy URL blocked: " + errorMessage;
     ConstraintViolation<?> mockViolation = mock(ConstraintViolation.class);
     when(mockViolation.getMessage()).thenReturn(expectedMessage);
     when(constraintViolationFactory.createViolation("proxy.remoteUrl", expectedMessage))
@@ -96,7 +94,9 @@ class RemoteUrlSsrfValidatorTest
     attributes.put("proxy", proxyAttributes);
 
     when(configuration.getAttributes()).thenReturn(attributes);
-    when(antiSsrfHelper.validateHostForConfiguration(host)).thenReturn(SsrfValidationResult.failure(errorMessage));
+    doThrow(new ValidationException(errorMessage))
+        .when(antiSsrfService)
+        .validateHostWithoutCache(host);
 
     ConstraintViolation<?> result = validator.validate(configuration);
 

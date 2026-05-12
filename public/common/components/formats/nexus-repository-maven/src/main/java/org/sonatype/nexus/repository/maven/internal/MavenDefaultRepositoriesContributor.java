@@ -121,7 +121,7 @@ public class MavenDefaultRepositoriesContributor
     return map(
         "versionPolicy", versionPolicy.toString(),
         "layoutPolicy", layout.toString(),
-        "contentDisposition", ContentDisposition.INLINE);
+        "contentDisposition", ContentDisposition.ATTACHMENT);
   }
 
   private static Map<String, Object> storage(final String blobstoreName, final WritePolicy policy) {

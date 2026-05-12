@@ -16,13 +16,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertThrows;
@@ -32,8 +33,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DatabaseIntegrityCheckServiceTest
-    extends TestSupport
 {
   @Mock
   private DataSessionSupplier dataSessionSupplier;

@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.BlobStoreReconciliationLogger;
 import org.sonatype.nexus.blobstore.DateBasedLocationStrategy;
@@ -58,7 +57,8 @@ import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.file.internal.datastore.metrics.DatastoreFileBlobStoreMetricsService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
@@ -76,8 +76,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.write;
@@ -105,8 +107,9 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 /**
  * Tests {@link FileBlobStore}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FileBlobStoreTest
-    extends TestSupport
+
 {
   private static final byte[] VALID_BLOB_STORE_PROPERTIES = ("@BlobStore.created-by = admin\n" +
       "size = 40\n" +
@@ -122,11 +125,13 @@ public class FileBlobStoreTest
 
   private AtomicBoolean cancelled = new AtomicBoolean(false);
 
+  private final DirectoryHelper directoryHelper = new DirectoryHelper();
+
   @Mock
   private BlobIdLocationResolver blobIdLocationResolver;
 
   @Spy
-  private FileOperations fileOperations = new SimpleFileOperations();
+  private FileOperations fileOperations = new SimpleFileOperations(directoryHelper);
 
   @Mock
   private ApplicationDirectories appDirs;
@@ -182,7 +187,7 @@ public class FileBlobStoreTest
     CancelableHelper.set(cancelled);
     when(nodeAccess.getId()).thenReturn("test");
     when(dryRunPrefix.get()).thenReturn("");
-    when(appDirs.getWorkDirectory(any())).thenReturn(util.createTempDir());
+    when(appDirs.getWorkDirectory(any())).thenReturn(temporaryFolder.newFolder());
     when(attributes.isDeleted()).thenReturn(true);
 
     Properties properties = new Properties();
@@ -198,9 +203,9 @@ public class FileBlobStoreTest
 
     configuration.setAttributes(attributes);
 
-    underTest = new FileBlobStore(util.createTempDir().toPath(), blobIdLocationResolver, fileOperations, metrics,
-        configuration, appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker,
-        fileBlobDeletionIndex);
+    underTest = new FileBlobStore(temporaryFolder.newFolder().toPath(), blobIdLocationResolver, fileOperations, appDirs,
+        directoryHelper, metrics, configuration, nodeAccess, dryRunPrefix, reconciliationLogger, 0L,
+        blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
 
     when(loadingCache.getUnchecked(any())).thenReturn(underTest.new FileBlob(new BlobId("fakeid")));
 
@@ -244,7 +249,7 @@ public class FileBlobStoreTest
   @Test
   public void impossibleHardLinkThrowsBlobStoreException() throws Exception {
 
-    Path path = util.createTempFile().toPath();
+    Path path = temporaryFolder.newFile().toPath();
 
     doThrow(new FileSystemException(null)).when(fileOperations).hardLink(any(), any());
 
@@ -259,7 +264,7 @@ public class FileBlobStoreTest
 
     long size = 100L;
     HashCode sha1 = HashCode.fromString("356a192b7913b04c54574d18c28d46e6395428ab");
-    Path path = util.createTempFile().toPath();
+    Path path = temporaryFolder.newFile().toPath();
 
     Blob blob = underTest.create(path, TEST_HEADERS, size, sha1);
 
@@ -272,7 +277,7 @@ public class FileBlobStoreTest
   public void blobIdCollisionCausesRetry() throws Exception {
     long size = 100L;
     HashCode sha1 = HashCode.fromString("356a192b7913b04c54574d18c28d46e6395428ab");
-    Path path = util.createTempFile().toPath();
+    Path path = temporaryFolder.newFile().toPath();
 
     doReturn(true, true, true, false).when(fileOperations).exists(any());
 
@@ -289,7 +294,7 @@ public class FileBlobStoreTest
     long size = 100L;
     HashCode sha1 = HashCode.fromString("356a192b7913b04c54574d18c28d46e6395428ab");
 
-    Path path = util.createTempFile().toPath();
+    Path path = temporaryFolder.newFile().toPath();
 
     doReturn(true).when(fileOperations).exists(any());
 
@@ -678,7 +683,7 @@ public class FileBlobStoreTest
     assertThat(underTest.isOwner(blob), is(true));
   }
 
-  private TestFileBlobStore createFixture() {
+  private TestFileBlobStore createFixture() throws IOException {
     BlobStoreConfiguration configuration = new MockBlobStoreConfiguration();
 
     Map<String, Map<String, Object>> attributes1 = new HashMap<>();
@@ -689,8 +694,9 @@ public class FileBlobStoreTest
     configuration.setAttributes(attributes1);
 
     TestFileBlobStore underTest = spy(new TestFileBlobStore(
-        util.createTempDir().toPath(), blobIdLocationResolver, fileOperations, metrics, configuration, appDirs,
-        nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex));
+        temporaryFolder.newFolder().toPath(), blobIdLocationResolver, fileOperations, appDirs, directoryHelper, metrics,
+        configuration, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker,
+        fileBlobDeletionIndex));
 
     underTest.init(configuration);
     try {
@@ -711,9 +717,9 @@ public class FileBlobStoreTest
   }
 
   private FileBlobStore createBlobStore(final BlobStoreConfiguration configuration) throws Exception {
-    FileBlobStore blobstore = new FileBlobStore(util.createTempDir().toPath(), blobIdLocationResolver, fileOperations,
-        metrics, configuration, appDirs, nodeAccess, dryRunPrefix, reconciliationLogger, 0L, blobStoreQuotaUsageChecker,
-        fileBlobDeletionIndex);
+    FileBlobStore blobstore = new FileBlobStore(temporaryFolder.newFolder().toPath(), blobIdLocationResolver,
+        fileOperations, appDirs, directoryHelper, metrics, configuration, nodeAccess, dryRunPrefix,
+        reconciliationLogger, 0L, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     blobstore.init(configuration);
     blobstore.setLiveBlobs(loadingCache);
     blobstore.start();
@@ -729,9 +735,10 @@ public class FileBlobStoreTest
         final Path root,
         final BlobIdLocationResolver blobIdLocationResolver,
         final FileOperations fileOperations,
+        final ApplicationDirectories appDirs,
+        final DirectoryHelper directoryHelper,
         final DatastoreFileBlobStoreMetricsService metrics,
         final BlobStoreConfiguration configuration,
-        final ApplicationDirectories appDirs,
         final NodeAccess nodeAccess,
         final DryRunPrefix dryRunPrefix,
         final BlobStoreReconciliationLogger reconciliationLogger,
@@ -739,8 +746,8 @@ public class FileBlobStoreTest
         final BlobStoreQuotaUsageChecker blobStoreQuotaUsageChecker,
         final FileBlobDeletionIndex fileBlobDeletionIndex)
     {
-      super(root, blobIdLocationResolver, fileOperations, metrics, configuration, appDirs, nodeAccess, dryRunPrefix,
-          reconciliationLogger, blobStoreQuota, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
+      super(root, blobIdLocationResolver, fileOperations, appDirs, directoryHelper, metrics, configuration, nodeAccess,
+          dryRunPrefix, reconciliationLogger, blobStoreQuota, blobStoreQuotaUsageChecker, fileBlobDeletionIndex);
     }
   }
 
@@ -968,6 +975,25 @@ public class FileBlobStoreTest
 
     spyUnderTest.setBlobAttributes(blobId, blobAttributes);
 
+    verify(fileBlobAttributes, times(1)).updateFrom(blobAttributes);
+    verify(fileBlobAttributes, times(1)).store();
+  }
+
+  @Test
+  public void testSetBlobAttributes_HandlesNoSuchFileExceptionGracefully() throws Exception {
+    // Test for NEXUS-51247: NoSuchFileException during concurrent writes should not log ERROR
+    BlobId blobId = new BlobId("concurrent-write-blob");
+    BlobAttributes blobAttributes = mock(BlobAttributes.class);
+    FileBlobAttributes fileBlobAttributes = mock(FileBlobAttributes.class);
+
+    FileBlobStore spyUnderTest = spy(underTest);
+    when(spyUnderTest.getFileBlobAttributes(blobId)).thenReturn(fileBlobAttributes);
+    doThrow(new java.nio.file.NoSuchFileException("blob.properties")).when(fileBlobAttributes).store();
+
+    // Should not throw exception, should return gracefully
+    spyUnderTest.setBlobAttributes(blobId, blobAttributes);
+
+    // Verify it attempted to update but didn't retry (returned early due to race condition)
     verify(fileBlobAttributes, times(1)).updateFrom(blobAttributes);
     verify(fileBlobAttributes, times(1)).store();
   }

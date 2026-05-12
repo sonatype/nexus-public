@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.content.error;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,7 +23,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class MissingAssetExceptionTest
-    extends TestSupport
 {
   @Test
   public void testBasicMessageContainsPath() {

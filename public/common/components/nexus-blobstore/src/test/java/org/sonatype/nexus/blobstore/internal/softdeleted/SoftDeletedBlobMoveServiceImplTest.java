@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.softdeleted.BlobLocationUpdate;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobsStore;
@@ -32,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.event.Level;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -50,9 +50,9 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.formattedMessage;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.logLevel;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(LoggingExtension.class)
 class SoftDeletedBlobMoveServiceImplTest
-    extends Test5Support
 {
   private static final String OLD_BLOB_STORE = "oldBlobStore";
 

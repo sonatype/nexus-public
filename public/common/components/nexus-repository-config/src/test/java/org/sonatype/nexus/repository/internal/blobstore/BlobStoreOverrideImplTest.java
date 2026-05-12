@@ -26,7 +26,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.goodies.testsupport.hamcrest.DiffMatchers.equalTo;
+import static org.hamcrest.Matchers.equalTo;
 import static org.sonatype.nexus.repository.internal.blobstore.BlobStoreOverrideImpl.NEXUS_BLOB_STORE_OVERRIDE;
 
 /**

@@ -28,7 +28,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -47,6 +46,8 @@ import com.google.common.annotations.VisibleForTesting;
 import jakarta.inject.Inject;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.security.user.UserSearchCriteria.FALL_BACK_USER_LIMIT_TO_AVOID_OOM;
@@ -59,9 +60,10 @@ import static org.sonatype.nexus.security.user.UserSearchCriteria.FALL_BACK_USER
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class UserApiResource
-    extends ComponentSupport
     implements Resource, UserApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String SAML_SOURCE = "SAML";
 
   private static final String OAUTH2_SOURCE = "OAuth2";

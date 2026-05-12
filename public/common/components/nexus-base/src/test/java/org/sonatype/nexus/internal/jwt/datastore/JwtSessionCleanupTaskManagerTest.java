@@ -14,13 +14,14 @@ package org.sonatype.nexus.internal.jwt.datastore;
 
 import java.time.Duration;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.security.jwt.JwtSessionRevocationService;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -29,8 +30,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class JwtSessionCleanupTaskManagerTest
-    extends TestSupport
 {
   @Mock
   private PeriodicJobService periodicJobService;

@@ -23,7 +23,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.selfhosted.security.usersource.model.ApiUserSource;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.rest.Resource;
@@ -32,15 +31,18 @@ import org.sonatype.nexus.security.user.UserManager;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @since 3.17
  */
 @Produces(MediaType.APPLICATION_JSON)
 public class SecurityApiResource
-    extends ComponentSupport
     implements Resource, SecurityApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, UserManager> userManagers;
 
   @Inject

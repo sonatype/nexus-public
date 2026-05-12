@@ -15,7 +15,6 @@ package org.sonatype.nexus.internal.security.apikey.upgrade;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
@@ -34,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * - Compatibility with both H2 and PostgreSQL
  */
 class ApiKeyCreatorTrackingMigrationStep_2_108Test
-    extends Test5Support
 {
   private static final String TABLE_NAME = "api_key_v2";
 

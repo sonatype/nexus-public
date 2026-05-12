@@ -12,8 +12,6 @@
  */
 package com.sonatype.nexus.ssl.plugin.tasks;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -21,9 +19,11 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TrustedCertificatesMigrationTaskTest
-    extends TestSupport
 {
   @Mock
   private TrustedCertificateMigrationService trustedCertificateMigrationService;

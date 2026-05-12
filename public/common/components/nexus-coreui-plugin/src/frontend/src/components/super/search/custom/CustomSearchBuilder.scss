@@ -1,0 +1,155 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.custom-search-builder {
+  background: var(--search-bg-card, #1f2937);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+
+  &__header {
+    margin-bottom: 16px;
+  }
+
+  &__title {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--search-text-primary, #f3f4f6);
+  }
+
+  &__description {
+    margin: 0;
+    font-size: 14px;
+    color: var(--search-text-secondary, #9ca3af);
+  }
+
+  &__filters {
+    border-top: 1px solid var(--search-border, #374151);
+    padding-top: 12px;
+  }
+
+  &__add-row {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--search-border, #374151);
+  }
+
+  &__add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px dashed var(--search-border, #4b5563);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--search-accent, #3b82f6);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled) {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: var(--search-accent, #3b82f6);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 16px;
+  }
+
+  &__search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background: var(--search-accent, #3b82f6);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s;
+
+    &:hover:not(:disabled) {
+      background: var(--search-accent-hover, #2563eb);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  &__clear-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: 1px solid var(--search-border, #4b5563);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--search-text-secondary, #9ca3af);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled) {
+      border-color: var(--search-text-secondary, #9ca3af);
+      color: var(--search-text-primary, #f3f4f6);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -26,11 +26,11 @@ import org.mockito.Mock;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BlobStoreUtilImplTest
-    extends TestSupport
 {
 
   private static final int MAX_NAME_LENGTH = 255;

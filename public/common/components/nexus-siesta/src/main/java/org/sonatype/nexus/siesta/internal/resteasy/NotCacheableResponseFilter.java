@@ -19,8 +19,9 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.core.CacheControl;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.NotCacheable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.EXPIRES;
@@ -30,9 +31,10 @@ import static javax.ws.rs.core.HttpHeaders.EXPIRES;
  */
 @NotCacheable
 public class NotCacheableResponseFilter
-    extends ComponentSupport
     implements ContainerResponseFilter
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String PRAGMA = "Pragma";
 
   private static final String NO_CACHE = "no-cache";

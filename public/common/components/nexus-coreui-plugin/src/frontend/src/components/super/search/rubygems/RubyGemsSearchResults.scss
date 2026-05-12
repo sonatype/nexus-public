@@ -1,0 +1,127 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.rubygems-search-results {
+  &--loading,
+  &--error,
+  &--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--nx-spacing-8x, 32px);
+    text-align: center;
+  }
+
+  &__loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--nx-color-border, #e0e0e0);
+    border-top-color: #cc342d;
+    border-radius: 50%;
+    animation: rubygems-spin 0.8s linear infinite;
+  }
+
+  @keyframes rubygems-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  &__loading-text,
+  &__empty-text,
+  &__error-text {
+    margin-top: var(--nx-spacing-4x, 16px);
+    color: var(--nx-color-text-dark, #666);
+    font-size: 0.875rem;
+  }
+
+  &__error-text {
+    color: var(--nx-color-error, #d32f2f);
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--nx-spacing-3x, 12px) var(--nx-spacing-4x, 16px);
+    background-color: var(--nx-color-section-background, #f9f9f9);
+    border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+  }
+
+  &__count {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--nx-color-text-dark, #555);
+  }
+
+  &__table-wrapper {
+    overflow-x: auto;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  &__th {
+    text-align: left;
+    padding: var(--nx-spacing-3x, 12px) var(--nx-spacing-4x, 16px);
+    font-weight: 600;
+    color: var(--nx-color-text-dark, #555);
+    background-color: var(--nx-color-section-background, #f9f9f9);
+    border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+    white-space: nowrap;
+
+    &--name {
+      width: 30%;
+    }
+
+    &--version {
+      width: 12%;
+    }
+
+    &--versions {
+      width: 8%;
+    }
+
+    &--platform {
+      width: 10%;
+    }
+
+    &--authors {
+      width: 20%;
+    }
+
+    &--updated {
+      width: 15%;
+    }
+
+    &--chevron {
+      width: 5%;
+    }
+  }
+
+  &__loading-more {
+    display: flex;
+    justify-content: center;
+    padding: var(--nx-spacing-3x, 12px);
+    font-size: 0.875rem;
+    color: var(--nx-color-text-dark, #666);
+    border-top: 1px solid var(--nx-color-border, #e0e0e0);
+    background-color: var(--nx-color-section-background, #f9f9f9);
+  }
+}
+
+

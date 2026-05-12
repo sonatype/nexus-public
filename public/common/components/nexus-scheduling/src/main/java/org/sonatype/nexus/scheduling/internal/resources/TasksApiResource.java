@@ -27,7 +27,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -37,6 +36,8 @@ import org.sonatype.nexus.scheduling.internal.resources.doc.TasksApiResourceDoc;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -56,9 +57,10 @@ import org.springframework.stereotype.Component;
 @Path(TasksApiResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 public class TasksApiResource
-    extends ComponentSupport
     implements Resource, TasksApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = V1_API_PREFIX + "/tasks";
 
   private static final String TRIGGER_SOURCE = "REST API";

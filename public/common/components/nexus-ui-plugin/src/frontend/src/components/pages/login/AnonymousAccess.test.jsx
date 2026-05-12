@@ -37,51 +37,36 @@ describe('AnonymousAccess', () => {
   });
 
   describe('rendering', () => {
-    it('renders the button with correct text', () => {
+    it('renders the link with correct text', () => {
       render(<AnonymousAccess />);
 
       expect(screen.getByText(UIStrings.CONTINUE_WITHOUT_LOGIN)).toBeInTheDocument();
     });
-
-    it('renders a divider line', () => {
-      const { container } = render(<AnonymousAccess />);
-
-      const divider = container.querySelector('hr.nx-divider');
-      expect(divider).toBeInTheDocument();
-    });
-
-    it('renders an arrow icon', () => {
-      const { container } = render(<AnonymousAccess />);
-
-      const icon = container.querySelector('svg');
-      expect(icon).toBeInTheDocument();
-    });
   });
 
-  describe('button properties', () => {
+  describe('link properties', () => {
     it('has correct attributes', () => {
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      expect(button).toHaveAttribute('data-analytics-id', 'nxrm-login-anonymous');
-      expect(button).toHaveClass('continue-without-login-button');
+      expect(link).toHaveAttribute('data-analytics-id', 'nxrm-login-anonymous');
+      expect(link).toHaveAttribute('href', '#browse/welcome');
     });
 
-    it('has secondary variant', () => {
+    it('is a link element', () => {
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      // NxButton with variant="secondary" adds specific classes
-      expect(button).toHaveClass('nx-btn--secondary');
+      expect(link.tagName).toBe('A');
     });
   });
 
-  describe('button interaction', () => {
+  describe('link interaction', () => {
     it('navigates to browse.welcome when clicked and no returnTo param', () => {
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      fireEvent.click(button);
+      fireEvent.click(link);
 
       expect(mockRouter.stateService.go).toHaveBeenCalledWith('browse.welcome');
       expect(mockRouter.urlService.url).not.toHaveBeenCalled();
@@ -91,9 +76,9 @@ describe('AnonymousAccess', () => {
       const returnToUrl = '/some/path';
       mockRouter.globals.params.returnTo = btoa(returnToUrl);
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      fireEvent.click(button);
+      fireEvent.click(link);
 
       expect(mockRouter.urlService.url).toHaveBeenCalledWith(returnToUrl);
       expect(mockRouter.stateService.go).not.toHaveBeenCalled();
@@ -102,9 +87,9 @@ describe('AnonymousAccess', () => {
     it('navigates to missing route when returnTo decoding fails', () => {
       mockRouter.globals.params.returnTo = 'invalid-base64';
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      fireEvent.click(button);
+      fireEvent.click(link);
 
       expect(mockRouter.stateService.go).toHaveBeenCalledWith('missing_route');
       expect(mockRouter.urlService.url).not.toHaveBeenCalled();
@@ -117,9 +102,9 @@ describe('AnonymousAccess', () => {
       });
 
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      fireEvent.click(button);
+      fireEvent.click(link);
 
       expect(mockRouter.stateService.go).toHaveBeenCalledWith('missing_route');
       expect(mockRouter.urlService.url).toHaveBeenCalled();
@@ -129,49 +114,36 @@ describe('AnonymousAccess', () => {
   describe('accessibility', () => {
     it('is keyboard accessible', () => {
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      expect(button).not.toHaveAttribute('disabled');
-      expect(button.tagName).toBe('BUTTON');
+      expect(link).not.toHaveAttribute('disabled');
+      expect(link.tagName).toBe('A');
     });
 
     it('can be focused with keyboard', () => {
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      button.focus();
-      expect(button).toHaveFocus();
+      link.focus();
+      expect(link).toHaveFocus();
     });
   });
 
   describe('analytics', () => {
     it('has analytics tracking attribute', () => {
       render(<AnonymousAccess />);
-      const button = screen.getByTestId('continue-without-login-button');
+      const link = screen.getByTestId('continue-without-login-button');
 
-      expect(button).toHaveAttribute('data-analytics-id', 'nxrm-login-anonymous');
+      expect(link).toHaveAttribute('data-analytics-id', 'nxrm-login-anonymous');
     });
   });
 
   describe('visual structure', () => {
-    it('renders divider before button', () => {
-      const { container } = render(<AnonymousAccess />);
-
-      const divider = container.querySelector('hr.nx-divider');
-      const button = container.querySelector('button');
-
-      expect(divider).toBeInTheDocument();
-      expect(button).toBeInTheDocument();
-
-      // Verify divider appears before button in DOM
-      expect(divider.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    });
-
-    it('contains button text and icon', () => {
+    it('contains link text in footer', () => {
       const { container } = render(<AnonymousAccess />);
 
       expect(screen.getByText(UIStrings.CONTINUE_WITHOUT_LOGIN)).toBeInTheDocument();
-      expect(container.querySelector('svg')).toBeInTheDocument();
+      expect(container.querySelector('.login-footer')).toBeInTheDocument();
     });
   });
 });

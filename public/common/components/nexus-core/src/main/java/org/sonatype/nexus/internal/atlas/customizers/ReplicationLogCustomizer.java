@@ -22,13 +22,14 @@ import java.util.List;
 import java.util.Optional;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.logging.task.TaskLogHome;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.time.Instant.ofEpochMilli;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT;
@@ -41,9 +42,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ReplicationLogCustomizer
-    extends ComponentSupport
     implements SupportBundleCustomizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public void customize(final SupportBundle supportBundle) {
     Instant cutOff = ZonedDateTime.now().minusHours(24).toInstant();

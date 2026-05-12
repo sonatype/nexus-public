@@ -11,6 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {useEffect, useRef, useState} from 'react';
+import {Box} from '@radix-ui/themes';
 import {useMachine} from '@xstate/react';
 import {ExtJS, toURIParams, getVersionMajorMinor} from '@sonatype/nexus-ui-plugin';
 import {
@@ -22,6 +23,7 @@ import OutreachActions from './OutreachActions';
 import UsageCenter from './UsageCenter/UsageCenter';
 import MaliciousRiskOnDisk from '../../../widgets/riskondisk/MaliciousRiskOnDisk';
 import CEHardLimitAlerts from './CEHardLimitAlerts/CEHardLimitAlerts';
+import UsageCenter from './UsageCenter/UsageCenter';
 
 import './Welcome.scss';
 
@@ -47,7 +49,7 @@ const iframeDefaultHeight = 1000;
 const iframePadding = 48;
 
 export default function Welcome() {
-  const [state, send] = useMachine(welcomeMachine, {devtools: true}),
+  const [state, send] = useMachine(welcomeMachine, {devtools: false}),
       [iframeHeight, setIframeHeight] = useState(iframeDefaultHeight),
       ref = useRef(),
       loading = state.matches('loading'),
@@ -72,9 +74,15 @@ export default function Welcome() {
 
   const onLoad = () => {
     if (ref.current?.contentWindow) {
-      setIframeHeight(
-          ref.current.contentWindow.document.body.scrollHeight + iframePadding * 4
-      )
+      try {
+        setIframeHeight(
+            ref.current.contentWindow.document.body.scrollHeight + iframePadding * 4
+        )
+      } catch (e) {
+        // Cross-origin iframe - cannot access contentWindow.document.
+        // Use a reasonable default height instead.
+        setIframeHeight(800);
+      }
     }
   };
 
@@ -108,17 +116,26 @@ export default function Welcome() {
               {isAdmin && <UsageCenter />}
               <OutreachActions/>
               {state.context.data?.showOutreachIframe &&
-                  <iframe
-                      id="nxrm-welcome-outreach-frame"
-                      role="document"
-                      height={iframeHeight}
-                      ref={ref}
-                      scrolling="no"
-                      onLoad={onLoad}
-                      aria-label="Outreach Frame"
-                      src={`${iframeUrlPath}?${toURIParams(iframeProps)}${proxyDownloadNumberParams ?? ''}`}
-                      className="nxrm-welcome__outreach-frame"
-                  />
+                  <Box style={{ width: '100%', minHeight: '400px' }}>
+                    <iframe
+                        id="nxrm-welcome-outreach-frame"
+                        role="document"
+                        height={iframeHeight}
+                        ref={ref}
+                        scrolling="no"
+                        onLoad={onLoad}
+                        aria-label="Outreach Frame"
+                        src={`${iframeUrlPath}?${toURIParams(iframeProps)}${proxyDownloadNumberParams ?? ''}`}
+                        className="nxrm-welcome__outreach-frame"
+                        style={{
+                          width: '100%',
+                          height: iframeHeight,
+                          border: 'none',
+                          display: 'block',
+                          backgroundColor: 'var(--nx-background-default, #fff)'
+                        }}
+                    />
+                  </Box>
               }
             </div>
           </NxLoadWrapper>

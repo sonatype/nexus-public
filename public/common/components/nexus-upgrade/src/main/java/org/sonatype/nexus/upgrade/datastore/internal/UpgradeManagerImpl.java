@@ -25,7 +25,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
 import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
 import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
@@ -44,6 +43,8 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.migration.JavaMigration;
 import org.flywaydb.core.api.output.MigrateResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -56,9 +57,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class UpgradeManagerImpl
-    extends ComponentSupport
     implements UpgradeManager
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final List<DatabaseMigrationStep> migrations;
 
   private final PostStartupUpgradeAuditor auditor;

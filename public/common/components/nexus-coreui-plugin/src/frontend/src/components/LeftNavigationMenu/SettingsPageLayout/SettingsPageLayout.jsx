@@ -18,11 +18,11 @@ import SettingsSidebar from './SettingsSidebar';
 
 export default function SettingsPageLayout() {
   return (
-    <>
+    <div className="nxrm-settings-layout">
       <SettingsSidebar />
       <Suspense fallback={<RouteLoadingFallback />}>
         <UIView />
       </Suspense>
-    </>
+    </div>
   );
 }

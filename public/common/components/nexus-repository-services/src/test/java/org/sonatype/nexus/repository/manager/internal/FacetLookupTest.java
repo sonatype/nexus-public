@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.FacetSupport;
 
@@ -25,7 +24,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 
 public class FacetLookupTest
-    extends TestSupport
 {
   private FacetLookup underTest;
 

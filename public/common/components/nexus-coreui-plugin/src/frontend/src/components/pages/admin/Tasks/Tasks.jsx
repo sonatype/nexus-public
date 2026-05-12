@@ -17,13 +17,18 @@ import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 import TasksList from './TasksList';
 import TasksDetails from './TasksDetails';
 
+import './Tasks.scss';
+
+// Always render the React Tasks experience (ExtJS wrapper removed as part of migration)
 export default function Tasks() {
-  return <MasterDetail path="admin/system/tasks">
-    <Master>
-      <TasksList/>
-    </Master>
-    <Detail>
-      <TasksDetails/>
-    </Detail>
-  </MasterDetail>;
-};
+  return (
+    <MasterDetail path="admin/system/tasks">
+      <Master>
+        <TasksList />
+      </Master>
+      <Detail>
+        <TasksDetails />
+      </Detail>
+    </MasterDetail>
+  );
+}

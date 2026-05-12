@@ -1,0 +1,81 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.cleanup-policy-form {
+  max-width: 800px;
+
+  &__card {
+    padding: var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+
+  &__description {
+    margin-bottom: var(--space-5);
+    padding: var(--space-4);
+    background-color: var(--gray-a2);
+    border-radius: var(--radius-2);
+    border-left: 3px solid var(--accent-9);
+  }
+
+  &__criteria-error {
+    margin-bottom: var(--space-4);
+  }
+
+  &__criteria-item {
+    padding: var(--space-4);
+    margin-bottom: var(--space-3);
+    background-color: var(--gray-a2);
+    border-radius: var(--radius-2);
+    border: 1px solid var(--gray-a5);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__criteria-content {
+    flex: 1;
+  }
+
+  &__criteria-input {
+    margin-top: var(--space-3);
+    max-width: 200px;
+  }
+
+  &__exclusion {
+    background-color: var(--blue-a2);
+    border-color: var(--blue-a5);
+  }
+
+  &__exclusion-header {
+    color: var(--blue-11);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--blue-a5);
+  }
+
+  &__actions {
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--gray-a5);
+  }
+
+  &__delete-btn {
+    margin-right: auto;
+  }
+
+  &__error {
+    margin-top: var(--space-4);
+  }
+}
+
+

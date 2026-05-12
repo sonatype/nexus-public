@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.internal.debian.Release;
@@ -53,8 +52,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
 public class AptSnapshotFacetSupportTest
-    extends Test5Support
 {
   @Mock
   private Repository repository;
@@ -124,7 +126,8 @@ public class AptSnapshotFacetSupportTest
     assertThat("Should have arm64 main paths", capturedPaths, hasItem(containsString("main/binary-arm64")));
 
     // Verify by-hash paths exist for multiple combinations
-    assertThat("Should have by-hash paths for multi-arch/component setup", capturedPaths, hasItem(containsString("by-hash")));
+    assertThat("Should have by-hash paths for multi-arch/component setup", capturedPaths,
+        hasItem(containsString("by-hash")));
 
     // Verify specific hash algorithms are present
     assertThat("Should have SHA256 by-hash paths", capturedPaths, hasItem(containsString("by-hash/SHA256")));
@@ -143,9 +146,8 @@ public class AptSnapshotFacetSupportTest
     List<String> capturedPaths = pathCaptor.getAllValues();
 
     // Verify all paths start with the snapshot prefix
-    capturedPaths.forEach(path ->
-        assertThat("Path should start with snapshot prefix", path, startsWith("/snapshots/my-snapshot-id/"))
-    );
+    capturedPaths.forEach(
+        path -> assertThat("Path should start with snapshot prefix", path, startsWith("/snapshots/my-snapshot-id/")));
   }
 
   private static class TestableAptSnapshotFacetSupport

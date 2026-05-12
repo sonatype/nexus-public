@@ -73,8 +73,8 @@ export const userRoutes = [
         bundle: 'nexus-usertoken-plugin',
         statesEnabled: [
           {
-            key: 'usertoken',
-            defaultValue: { enabled: false },
+            key: 'userTokenRealmEnabled',
+            defaultValue: false,
           },
         ],
         permissions: ['nexus:usertoken-current:read'],

@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -38,10 +37,12 @@ import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -54,8 +55,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ComponentAuditorTest
-    extends TestSupport
 {
   private static final String REPO_NAME = "test-repo";
 
@@ -327,7 +328,7 @@ public class ComponentAuditorTest
     assertThat(attributes.get("kind"), is(COMPONENT_KIND));
     assertThat(attributes.get("attribute.change"), is(AttributeOperation.SET));
     assertThat(attributes.get("attribute.key"), is("testKey"));
-    assertThat(attributes.get("attribute.value"), is(Optional.of("testValue")));
+    assertThat(attributes.get("attribute.value"), is("testValue"));
   }
 
   @Test
@@ -354,7 +355,7 @@ public class ComponentAuditorTest
     Map<String, Object> attributes = auditData.getAttributes();
     assertThat(attributes.get("attribute.change"), is(AttributeOperation.REMOVE));
     assertThat(attributes.get("attribute.key"), is("removedKey"));
-    assertThat(attributes.get("attribute.value"), is(Optional.empty()));
+    assertThat(attributes.containsKey("attribute.value"), is(false));
   }
 
   @Test

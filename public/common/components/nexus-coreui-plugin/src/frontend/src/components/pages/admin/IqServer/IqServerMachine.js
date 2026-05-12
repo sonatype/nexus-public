@@ -16,8 +16,8 @@
  */
 import {assign} from 'xstate';
 import Axios from 'axios';
-import {mergeDeepRight} from 'ramda';
-import {FormUtils, ValidationUtils} from '@sonatype/nexus-ui-plugin';
+import {equals, mergeDeepRight} from 'ramda';
+import {FormUtils, ValidationUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 const IQ_API = 'service/rest/v1/iq';
@@ -27,9 +27,12 @@ const PASSWORD_PLACEHOLDER = '#~NXRM~PLACEHOLDER~PASSWORD~#';
 export default FormUtils.buildFormMachine({
   id: 'IQServerMachine',
   context: {
-    data: {}
+    data: {
+      enabled: true
+    }
   },
-  stateAfterSave: 'loading',
+  stateAfterSave: 'loaded',
+  onSaveSuccess: 'updateExtJsState',
   config: (config) => mergeDeepRight(config, {
     states: {
       loaded: {
@@ -86,6 +89,11 @@ export default FormUtils.buildFormMachine({
   })
 }).withConfig({
   actions: {
+    setIsPristine: assign({
+      isPristine: ({data, pristineData}) => {
+        return equals(data, pristineData);
+      }
+    }),
     validate: assign({
       validationErrors: ({data, pristineData}) => ({
         url: ValidationUtils.validateIsUrl(data.url),
@@ -121,27 +129,60 @@ export default FormUtils.buildFormMachine({
     }),
     setVerifyConnectionError: assign({
       verifyConnectionError: (_, event) => {
-        return event.data?.response?.data;
+        const error = event.data?.response?.data?.message || event.data?.message;
+        return typeof error === 'string' ? error : 'Connection verification failed';
       }
     }),
     setVerifyConnectionSuccessMessage: assign({
       verifyConnectionSuccessMessage: (_, event) => {
-        return event.data?.data?.reason;
-      }
+        return event.data?.data;
+      },
+      data: (context) => ({
+        ...context.data,
+        enabled: true
+      })
     }),
     clearVerifyConnectionError: assign({
       verifyConnectionError: () => null
     }),
-    onLoadedEntry: assign({
-      data: ({data}) => {
-        const useTrustStoreForUrl = data.useTrustStoreForUrl && ValidationUtils.isSecureUrl(data.url);
-        const newData = {
-          ...data,
-          useTrustStoreForUrl
-        };
-        return newData;
-      }
+    onLoadedEntry: assign((context) => {
+      const useTrustStoreForUrl = context.data.useTrustStoreForUrl && ValidationUtils.isSecureUrl(context.data.url);
+      const transformedData = {
+        ...context.data,
+        useTrustStoreForUrl
+      };
+      const transformedPristineData = {
+        ...context.pristineData,
+        useTrustStoreForUrl
+      };
+
+      // Ensure isPristine is set correctly after transformations
+      const areSame = equals(transformedData, transformedPristineData);
+
+      return {
+        data: transformedData,
+        pristineData: transformedPristineData,
+        isPristine: areSame
+      };
     }),
+    setSavedData: assign({
+      data: ({data}, event) => event.data?.data ?? data,
+      pristineData: ({data}, event) => event.data?.data ?? data,
+      isTouched: () => ({})
+    }),
+    updateExtJsState: (_, event) => {
+      // Update ExtJS state with the saved data, including hasFirewall
+      const savedData = event.data?.data;
+      if (savedData) {
+        ExtJS.state().setValue('clm', {
+          ...ExtJS.state().getValue('clm', {}),
+          enabled: savedData.enabled,
+          url: savedData.url,
+          showLink: savedData.showLink,
+          hasFirewall: savedData.hasFirewall
+        });
+      }
+    },
   },
   guards: {
     isValidUrl: (context) => ValidationUtils.isSecureUrl(context.data.url)
@@ -149,7 +190,23 @@ export default FormUtils.buildFormMachine({
   services: {
     fetchData: () => Axios.get(IQ_API),
     saveData: ({data}) => Axios.put(IQ_API, data),
-    verifyConnection: ({data}) => Axios.post('service/rest/internal/ui/iq/verify-connection', data)
+    verifyConnection: async ({data}) => {
+      const response = await Axios.post(IQ_API + '/test-new-connection', data);
+
+      // Check if the response has success: false even though HTTP status is 200
+      if (response.data && response.data.success === false) {
+        const error = new Error(response.data.reason || 'Connection verification failed');
+        error.response = {
+          ...response,
+          data: {
+            message: response.data.reason || 'Connection verification failed'
+          }
+        };
+        throw error;
+      }
+
+      return response;
+    }
   }
 });
 

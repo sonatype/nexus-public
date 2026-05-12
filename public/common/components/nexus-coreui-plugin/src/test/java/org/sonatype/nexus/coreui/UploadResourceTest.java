@@ -17,7 +17,6 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.coreui.UploadResource.ErrorPacket;
 import org.sonatype.nexus.coreui.UploadResource.Packet;
@@ -32,6 +31,7 @@ import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintVa
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,11 +40,11 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class UploadResourceTest
-    extends Test5Support
 {
   @ValidationExecutor
   private final Validator validator =

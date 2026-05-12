@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LastShutdownTimeService;
@@ -87,9 +86,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.quartz.JobKey.jobKey;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class DatastoreQuartzSchedulerSPITest
-    extends Test5Support
 {
 
   @Mock

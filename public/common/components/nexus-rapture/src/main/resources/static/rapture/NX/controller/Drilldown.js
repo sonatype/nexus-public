@@ -678,10 +678,20 @@ Ext.define('NX.controller.Drilldown', {
    */
   refreshBreadcrumb: function() {
     var me = this,
-      content = me.getDrilldown().up('#feature-content'),
-      breadcrumb = content.down('#breadcrumb'),
-      items = me.getDrilldownItems(),
-      objs = [];
+      drilldown = me.getDrilldown(),
+      content = drilldown ? drilldown.up('#feature-content') : undefined,
+      breadcrumb, items, objs;
+
+    if (!content) {
+      return;
+    }
+
+    breadcrumb = content.down('#breadcrumb');
+    if (!breadcrumb) {
+      return;
+    }
+    items = me.getDrilldownItems();
+    objs = [];
 
     if (me.currentIndex == 0) {
       // Feature's home page, no breadcrumb required

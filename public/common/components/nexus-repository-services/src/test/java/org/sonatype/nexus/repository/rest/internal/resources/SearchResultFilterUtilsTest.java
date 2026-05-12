@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
@@ -46,9 +45,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.rest.internal.resources.SearchResultFilterUtils.getValueFromAssetMap;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SearchResultFilterUtilsTest
-    extends TestSupport
 {
   private static final String CLASSIFIER_ATTRIBUTE_NAME = "assets.attributes.maven2.classifier";
 
@@ -152,7 +153,7 @@ public class SearchResultFilterUtilsTest
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    Map<String, String>  assetParams = new HashMap<>();
+    Map<String, String> assetParams = new HashMap<>();
     assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "sources");
 
     assertTrue(underTest.filterAsset(assetWithClassifier, assetParams));
@@ -161,7 +162,7 @@ public class SearchResultFilterUtilsTest
   @Test
   public void testFilterAsset_AssetMapNoClassifier_AssetParamNoClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(EXTENSION_ATTRIBUTE_NAME);
-    Map<String, String>  assetParams = new HashMap<>();
+    Map<String, String> assetParams = new HashMap<>();
     assetParams.put(EXTENSION_ATTRIBUTE_NAME, "jar");
 
     assertTrue(underTest.filterAsset(asset, assetParams));
@@ -170,7 +171,7 @@ public class SearchResultFilterUtilsTest
   @Test
   public void testFilterAsset_AssetMapNoClassifier_AssetParamClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    Map<String, String>  assetParams = new HashMap<>();
+    Map<String, String> assetParams = new HashMap<>();
     assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "sources");
 
     assertFalse(underTest.filterAsset(asset, assetParams));
@@ -179,7 +180,7 @@ public class SearchResultFilterUtilsTest
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamNoClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(EXTENSION_ATTRIBUTE_NAME);
-    Map<String, String>  assetParams = new HashMap<>();
+    Map<String, String> assetParams = new HashMap<>();
     assetParams.put(EXTENSION_ATTRIBUTE_NAME, "sources");
 
     assertFalse(underTest.filterAsset(assetWithClassifier, assetParams));
@@ -188,7 +189,7 @@ public class SearchResultFilterUtilsTest
   @Test
   public void testFilterComponent_AssetMapNoClassifier_AssetParamEmptyClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    MultivaluedMap<String, String>  assetParams = new MultivaluedHashMap<>();
+    MultivaluedMap<String, String> assetParams = new MultivaluedHashMap<>();
     assetParams.add(CLASSIFIER_ATTRIBUTE_NAME, "");
 
     List<?> assets = underTest.filterComponentAssets(component, assetParams).collect(Collectors.toList());
@@ -198,7 +199,7 @@ public class SearchResultFilterUtilsTest
   @Test
   public void testFilterAsset_AssetMapClassifier_AssetParamEmptyClassifier() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    Map<String, String>  assetParams = new HashMap<>();
+    Map<String, String> assetParams = new HashMap<>();
     assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "");
 
     assertFalse(underTest.filterAsset(assetWithClassifier, assetParams));
@@ -207,7 +208,7 @@ public class SearchResultFilterUtilsTest
   @Test
   public void testFilterAsset_AssetMapClassifier_EmptyAssetParam() {
     when(searchUtils.getFullAssetAttributeName(any(String.class))).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
-    Map<String, String>  assetParams = new HashMap<>();
+    Map<String, String> assetParams = new HashMap<>();
 
     assertTrue(underTest.filterAsset(assetWithClassifier, assetParams));
   }
@@ -216,7 +217,7 @@ public class SearchResultFilterUtilsTest
   public void testFilterAsset_MultipleAssetParams() {
     when(searchUtils.getFullAssetAttributeName(CLASSIFIER_ATTRIBUTE_NAME)).thenReturn(CLASSIFIER_ATTRIBUTE_NAME);
     when(searchUtils.getFullAssetAttributeName(EXTENSION_ATTRIBUTE_NAME)).thenReturn(EXTENSION_ATTRIBUTE_NAME);
-    Map<String, String>  assetParams = new HashMap<>();
+    Map<String, String> assetParams = new HashMap<>();
     assetParams.put(CLASSIFIER_ATTRIBUTE_NAME, "sources");
     assetParams.put(EXTENSION_ATTRIBUTE_NAME, "jar");
 

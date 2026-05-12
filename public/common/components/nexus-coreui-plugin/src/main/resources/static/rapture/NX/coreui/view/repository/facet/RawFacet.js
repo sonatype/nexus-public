@@ -32,19 +32,14 @@ Ext.define('NX.coreui.view.repository.facet.RawFacet', {
     itemCls: 'required-field'
   },
 
-  // Default to inline for existing raw repos
-  contentDisposition: 'INLINE',
+  // Default to ATTACHMENT (safer default - prevents phishing via inline HTML)
+  contentDisposition: 'ATTACHMENT',
 
   /**
    * @override
    */
   initComponent: function() {
     var me = this;
-
-    // Newly added repos should default to being Attachment
-    if (me.up("nx-coreui-repository-add") != null) {
-      me.contentDisposition = 'ATTACHMENT';
-    }
 
     me.items = [
       {
@@ -67,12 +62,24 @@ Ext.define('NX.coreui.view.repository.facet.RawFacet', {
             ],
             value: me.contentDisposition,
             queryMode: 'local'
+          },
+          {
+            xtype: 'displayfield',
+            itemId: 'contentDispositionWarning',
+            value: '<span class="x-fa fa-exclamation-triangle"></span> ' +
+                NX.I18n.get('Repository_Facet_Raw_ContentDisposition_Warning'),
+            cls: 'nx-warning-text',
+            hidden: me.contentDisposition !== 'INLINE'
           }
         ]
       }
     ];
 
     me.callParent();
+
+    me.down('#contentDisposition').on('change', function(combo, newValue) {
+      me.down('#contentDispositionWarning').setVisible(newValue === 'INLINE');
+    });
   }
 
 });

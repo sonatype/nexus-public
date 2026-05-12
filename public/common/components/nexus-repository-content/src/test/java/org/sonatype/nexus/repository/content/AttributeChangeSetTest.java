@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.content.AttributeChangeSet.AttributeChange;
 
 import org.junit.Test;
@@ -25,7 +24,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 public class AttributeChangeSetTest
-    extends TestSupport
 {
   @Test
   public void testEmptyConstructor() {

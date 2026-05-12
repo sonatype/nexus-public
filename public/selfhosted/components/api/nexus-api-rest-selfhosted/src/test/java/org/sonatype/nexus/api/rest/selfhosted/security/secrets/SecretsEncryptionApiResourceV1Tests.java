@@ -15,7 +15,6 @@ package org.sonatype.nexus.api.rest.selfhosted.security.secrets;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.api.rest.selfhosted.security.secrets.model.ReEncryptionRequestApiXO;
 import org.sonatype.nexus.crypto.secrets.MissingKeyException;
 import org.sonatype.nexus.crypto.secrets.ReEncryptService;
@@ -30,9 +29,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecretsEncryptionApiResourceV1Tests
-    extends TestSupport
 {
   @Mock
   private ReEncryptService reEncryptService;

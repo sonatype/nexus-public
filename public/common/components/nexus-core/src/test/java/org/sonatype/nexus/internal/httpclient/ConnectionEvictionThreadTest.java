@@ -14,8 +14,6 @@ package org.sonatype.nexus.internal.httpclient;
 
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.junit.Test;
 
@@ -29,7 +27,6 @@ import static org.mockito.Mockito.verify;
  * Tests for {@link ConnectionEvictionThread}.
  */
 public class ConnectionEvictionThreadTest
-    extends TestSupport
 {
   /**
    * Verify that ClientConnectionManager are called.

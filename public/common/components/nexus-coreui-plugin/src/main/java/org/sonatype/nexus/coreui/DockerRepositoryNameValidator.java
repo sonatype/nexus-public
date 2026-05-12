@@ -53,14 +53,14 @@ public class DockerRepositoryNameValidator
     this.repositoryManager = repositoryManager;
   }
 
-  // Constants matching org.sonatype.nexus.repository.docker.internal.DockerFormat.NAME
+  // Constants matching com.sonatype.nexus.repository.docker.internal.DockerFormat.NAME
   // the coreui plugin doesn't have a dependency on the docker plugin, so we can't import this constant directly
   private static final String DOCKER_FORMAT = "docker";
 
   // Recipe name prefixes matching:
-  // - org.sonatype.nexus.repository.docker.internal.datastore.recipe.DockerHostedRecipe.NAME = "docker-hosted"
-  // - org.sonatype.nexus.repository.docker.internal.datastore.recipe.DockerProxyRecipe.NAME = "docker-proxy"
-  // - org.sonatype.nexus.repository.docker.internal.datastore.recipe.DockerGroupRecipe.NAME = "docker-group"
+  // - com.sonatype.nexus.repository.docker.internal.datastore.recipe.DockerHostedRecipe.NAME = "docker-hosted"
+  // - com.sonatype.nexus.repository.docker.internal.datastore.recipe.DockerProxyRecipe.NAME = "docker-proxy"
+  // - com.sonatype.nexus.repository.docker.internal.datastore.recipe.DockerGroupRecipe.NAME = "docker-group"
   // the coreui plugin doesn't have a dependency on the docker plugin, so we can't import these constants directly
   private static final String DOCKER_RECIPE_PREFIX = "docker-";
 

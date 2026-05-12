@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import com.google.common.base.Charsets;
@@ -32,6 +31,8 @@ import com.google.common.collect.Maps;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.io.output.CountingOutputStream;
 import org.bouncycastle.util.io.TeeOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stores a set of temp files, automatically compressing each into a GZIP, BZ2 and plain format.
@@ -39,9 +40,10 @@ import org.bouncycastle.util.io.TeeOutputStream;
  * @since 3.17
  */
 public class CompressingTempFileStore
-    extends ComponentSupport
     implements AutoCloseable
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, FileHolder> holdersByKey = new HashMap<>();
 
   public Writer openOutput(final String key) {

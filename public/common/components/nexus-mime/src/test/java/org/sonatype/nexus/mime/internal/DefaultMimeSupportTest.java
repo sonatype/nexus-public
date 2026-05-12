@@ -17,7 +17,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.mime.MimeRule;
 import org.sonatype.nexus.mime.MimeRulesSource;
 
@@ -30,12 +29,14 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link DefaultMimeSupport}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultMimeSupportTest
-    extends TestSupport
 {
   private DefaultMimeSupport underTest = new DefaultMimeSupport();
 
@@ -133,9 +134,9 @@ public class DefaultMimeSupportTest
 
   @Test
   public void verifyBasicFileMimeTypeMatching() throws Exception {
-    assertFileMimeType(util.resolveFile("src/test/resources/mime/file.gif"), "image/gif");
-    assertFileMimeType(util.resolveFile("src/test/resources/mime/file.zip"), "application/zip");
-    assertFileMimeType(util.resolveFile("src/test/resources/mime/empty.zip"), "application/zip");
-    assertFileMimeType(util.resolveFile("src/test/resources/mime/file.jar"), "application/java-archive");
+    assertFileMimeType(new File("src/test/resources/mime/file.gif"), "image/gif");
+    assertFileMimeType(new File("src/test/resources/mime/file.zip"), "application/zip");
+    assertFileMimeType(new File("src/test/resources/mime/empty.zip"), "application/zip");
+    assertFileMimeType(new File("src/test/resources/mime/file.jar"), "application/java-archive");
   }
 }

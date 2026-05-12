@@ -30,11 +30,8 @@ const mockState = {
 
 const defaultLogoConfig = {
   proLight: "/logos/pro-light.svg",
-  proDark: "/logos/pro-dark.svg",
   ceLight: "/logos/ce-light.svg",
-  ceDark: "/logos/ce-dark.svg",
   coreLight: "/logos/core-light.svg",
-  coreDark: "/logos/core-dark.svg",
 };
 
 describe("LoginLayout", () => {
@@ -54,25 +51,24 @@ describe("LoginLayout", () => {
         </LoginLayout>
     );
 
-    // verify structure rendered
-    expect(container.querySelector(".login-header")).toBeInTheDocument();
-    expect(container.querySelector(".nxrm-login-page-main")).toBeInTheDocument();
+    // verify structure rendered (light-only theme)
+    expect(container.querySelector(".nxrm-login-header")).toBeInTheDocument();
+    expect(container.querySelector(".nxrm-login-main")).toBeInTheDocument();
     expect(screen.getByText("Test Content")).toBeInTheDocument();
 
-    // verify context path is / by default
-    expect(container.querySelector(".login-header a[href]")).toHaveAttribute("href", "/");
+    // verify home link
+    expect(container.querySelector(".nxrm-login-header a[href]")).toHaveAttribute("href", "/#browse/welcome");
 
-    // verify logo images are rendered
-    const images = container
-        .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Professional"]');
-    expect(images).toHaveLength(2);
-    expect(images[0]).toHaveAttribute("src", "/logos/pro-light.svg");
-    expect(images[1]).toHaveAttribute("src", "/logos/pro-dark.svg");
+    // verify logo image is rendered (light-only, single image)
+    const image = container.querySelector('.nxrm-login-header img');
+    expect(image).toBeInTheDocument();
+    expect(image).toHaveAttribute("src", "/logos/pro-light.svg");
+    expect(image).toHaveAttribute("alt", "Sonatype Nexus Repository Professional");
     expect(mockState.getEdition).toHaveBeenCalled();
   });
 
   describe("logo selection", () => {
-    it("falls back when PRO style is not available", () => {
+    it("handles missing logo gracefully when PRO style is not available", () => {
       const { container } = render(
         <LoginLayout logoConfig={{}}>
           <div>Test Content</div>
@@ -80,12 +76,11 @@ describe("LoginLayout", () => {
       );
 
       expect(screen.getByText("Test Content")).toBeInTheDocument();
-      const images = container
-          .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Professional"]');
-      expect(images).toHaveLength(2);
-      expect(images[0]).toHaveAttribute("src", "path/to/asset.png");
-      expect(images[1]).toHaveAttribute("src", "path/to/asset.png");
-      expect(mockState.getEdition).toHaveBeenCalled();    });
+      // No logo shown when proLight is not available
+      const image = container.querySelector('.nxrm-login-header__logo');
+      expect(image).toBeInTheDocument();
+      expect(mockState.getEdition).toHaveBeenCalled();
+    });
 
     describe("logo selection - Community edition", () => {
       it("uses ceLight logo when available", () => {
@@ -98,20 +93,17 @@ describe("LoginLayout", () => {
         );
 
         expect(screen.getByText("Test Content")).toBeInTheDocument();
-        const images = container
-            .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Community"]');
-        expect(images).toHaveLength(2);
-        expect(images[0]).toHaveAttribute("src", "/logos/ce-light.svg");
-        expect(images[1]).toHaveAttribute("src", "/logos/ce-dark.svg");
+        const image = container.querySelector('.nxrm-login-header img');
+        expect(image).toHaveAttribute("src", "/logos/ce-light.svg");
+        expect(image).toHaveAttribute("alt", "Sonatype Nexus Repository Community");
         expect(mockState.getEdition).toHaveBeenCalled();
       });
 
-      it("falls back to proLight and proDark when Community style is not available", () => {
+      it("falls back to proLight when Community style is not available", () => {
         mockState.getEdition.mockReturnValue("COMMUNITY");
 
         const logoConfigWithoutCE = {
           proLight: "/logos/pro-light.svg",
-          proDark: "/logos/pro-dark.svg",
         };
 
         const { container } = render(
@@ -121,11 +113,8 @@ describe("LoginLayout", () => {
         );
 
         expect(screen.getByText("Test Content")).toBeInTheDocument();
-        const images = container
-            .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Community"]');
-        expect(images).toHaveLength(2);
-        expect(images[0]).toHaveAttribute("src", "/logos/pro-light.svg");
-        expect(images[1]).toHaveAttribute("src", "/logos/pro-dark.svg");
+        const image = container.querySelector('.nxrm-login-header img');
+        expect(image).toHaveAttribute("src", "/logos/pro-light.svg");
         expect(mockState.getEdition).toHaveBeenCalled();
       });
     });
@@ -143,18 +132,15 @@ describe("LoginLayout", () => {
         );
 
         expect(screen.getByText("Test Content")).toBeInTheDocument();
-        const images = container
-            .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Core"]');
-        expect(images).toHaveLength(2);
-        expect(images[0]).toHaveAttribute("src", "/logos/core-light.svg");
-        expect(images[1]).toHaveAttribute("src", "/logos/core-dark.svg");
+        const image = container.querySelector('.nxrm-login-header img');
+        expect(image).toHaveAttribute("src", "/logos/core-light.svg");
+        expect(image).toHaveAttribute("alt", "Sonatype Nexus Repository Core");
         expect(mockState.getEdition).toHaveBeenCalled();
       });
 
-      it("falls back to proLight and proDark when Core style is not available", () => {
+      it("falls back to proLight when Core style is not available", () => {
         const logoConfigWithoutCore = {
           proLight: "/logos/pro-light.svg",
-          proDark: "/logos/pro-dark.svg",
         };
 
         const { container } = render(
@@ -164,11 +150,8 @@ describe("LoginLayout", () => {
         );
 
         expect(screen.getByText("Test Content")).toBeInTheDocument();
-        const images = container
-            .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Core"]');
-        expect(images).toHaveLength(2);
-        expect(images[0]).toHaveAttribute("src", "/logos/pro-light.svg");
-        expect(images[1]).toHaveAttribute("src", "/logos/pro-dark.svg");
+        const image = container.querySelector('.nxrm-login-header img');
+        expect(image).toHaveAttribute("src", "/logos/pro-light.svg");
         expect(mockState.getEdition).toHaveBeenCalled();
       });
     });
@@ -184,8 +167,8 @@ describe("LoginLayout", () => {
     );
 
     expect(screen.getByText("Test Content")).toBeInTheDocument();
-    const homeLink = container.querySelector(".login-header a[href]");
-    expect(homeLink).toHaveAttribute("href", "/nexus-context");
+    const homeLink = container.querySelector(".nxrm-login-header a[href]");
+    expect(homeLink).toHaveAttribute("href", "/nexus-context/#browse/welcome");
   });
 
   describe("edge cases", () => {
@@ -197,9 +180,9 @@ describe("LoginLayout", () => {
       );
 
       expect(screen.getByText("Test Content")).toBeInTheDocument();
-      const images = container
-          .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Core"]');
-      expect(images).toHaveLength(0);
+      // Image element exists but has no src
+      const image = container.querySelector('.nxrm-login-header__logo');
+      expect(image).toBeInTheDocument();
       expect(mockState.getEdition).toHaveBeenCalled();
     });
 
@@ -211,9 +194,8 @@ describe("LoginLayout", () => {
       );
 
       expect(screen.getByText("Test Content")).toBeInTheDocument();
-      const images = container
-          .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Core"]');
-      expect(images).toHaveLength(0);
+      const image = container.querySelector('.nxrm-login-header__logo');
+      expect(image).toBeInTheDocument();
       expect(mockState.getEdition).toHaveBeenCalled();
     });
 
@@ -225,9 +207,8 @@ describe("LoginLayout", () => {
       );
 
       expect(screen.getByText("Test Content")).toBeInTheDocument();
-      const images = container
-          .querySelectorAll('.login-header img[alt="Sonatype Nexus Repository Core"]');
-      expect(images).toHaveLength(0);
+      const image = container.querySelector('.nxrm-login-header__logo');
+      expect(image).toBeInTheDocument();
       expect(mockState.getEdition).toHaveBeenCalled();
     });
   });

@@ -16,12 +16,13 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.CooperationKey;
 import org.sonatype.nexus.common.cooperation2.IOCall;
 
 import com.google.common.base.Stopwatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of {@link Cooperation2} which doesn't use any concurrency control and each thread proceeds
@@ -30,9 +31,10 @@ import com.google.common.base.Stopwatch;
  * @since 3.41
  */
 public class DisabledCooperation2
-    extends ComponentSupport
     implements Cooperation2
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final String scope;
 
   public DisabledCooperation2(final String scope) {

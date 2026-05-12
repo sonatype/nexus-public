@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal.encryption;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
@@ -23,9 +21,11 @@ import org.mockito.Mock;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class S3ManagedEncrypterTest
-    extends TestSupport
 {
 
   @Mock

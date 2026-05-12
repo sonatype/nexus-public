@@ -34,7 +34,6 @@ import javax.crypto.SecretKeyFactory;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 
 import jakarta.inject.Inject;
@@ -43,6 +42,8 @@ import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_FIPS_ENABLED_NAMED_VALUE;
@@ -55,9 +56,10 @@ import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_FIPS_ENA
 @Component
 @Singleton
 public class CryptoHelperImpl
-    extends ComponentSupport
     implements CryptoHelper
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Provider provider;
 
   @Inject

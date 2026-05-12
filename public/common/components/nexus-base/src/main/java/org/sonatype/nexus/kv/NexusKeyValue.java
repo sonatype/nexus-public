@@ -17,14 +17,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NexusKeyValue
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String VALUE_NESTED_KEY = "value";
 
   private String key;

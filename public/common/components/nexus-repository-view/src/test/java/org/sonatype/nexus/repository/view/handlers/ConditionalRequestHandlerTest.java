@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.view.handlers;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.view.ContentTypes;
@@ -43,7 +42,6 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ConditionalRequestHandlerTest
-    extends TestSupport
 {
   @Mock
   private Context context;

@@ -1,0 +1,191 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/* Minimum width at which the full table fits without horizontal scroll (panel-local, not viewport). */
+$repos-by-format-fit: 780px;
+
+/* Box container - surface background for visual consistency with dashboard cards */
+.repos-by-format-panel {
+  background-color: var(--color-surface);
+  max-width: 100%;
+  container-type: inline-size;
+  container-name: repos-by-format;
+}
+
+.repos-by-format-panel__table-scroll {
+  width: 100%;
+  max-width: 100%;
+}
+
+.repos-by-format-panel__online-cell {
+  white-space: nowrap;
+}
+
+/* --- Wide panel: fluid table, no horizontal scrollbar --- */
+@container repos-by-format (min-width: #{$repos-by-format-fit}) {
+  .repos-by-format-panel__table-scroll {
+    overflow-x: visible;
+  }
+
+  .repos-by-format-panel__table.rt-TableRoot {
+    min-width: 0;
+
+    .rt-ScrollAreaRoot {
+      overflow-x: visible;
+    }
+
+    .rt-ScrollAreaViewport {
+      overflow-x: visible !important;
+    }
+
+    table.rt-TableRootTable {
+      table-layout: fixed;
+      width: 100%;
+      min-width: 0;
+    }
+
+    thead th:nth-child(1),
+    tbody td:nth-child(1) {
+      width: 20%;
+    }
+
+    thead th:nth-child(2),
+    tbody td:nth-child(2),
+    thead th:nth-child(3),
+    tbody td:nth-child(3),
+    thead th:nth-child(4),
+    tbody td:nth-child(4) {
+      width: 10%;
+    }
+
+    thead th:nth-child(5),
+    tbody td:nth-child(5) {
+      width: 10%;
+    }
+
+    thead th:nth-child(6),
+    tbody td:nth-child(6) {
+      width: 12%;
+    }
+
+    thead th:nth-child(7),
+    tbody td:nth-child(7) {
+      width: 18%;
+    }
+
+    thead th {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+  }
+}
+
+/* --- Narrow panel: horizontal scrollbar (acceptable below design minimum) --- */
+@container repos-by-format (max-width: #{$repos-by-format-fit - 1px}) {
+  .repos-by-format-panel__table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .repos-by-format-panel__table.rt-TableRoot {
+    min-width: max-content;
+    width: 100%;
+
+    .rt-ScrollAreaRoot {
+      overflow-x: auto;
+    }
+
+    .rt-ScrollAreaViewport {
+      overflow-x: auto !important;
+      max-width: 100%;
+    }
+  }
+}
+
+/* Fallback when container queries are not supported: use viewport width */
+@supports not (container-type: inline-size) {
+  @media (min-width: #{$repos-by-format-fit}) {
+    .repos-by-format-panel__table-scroll {
+      overflow-x: visible;
+    }
+
+    .repos-by-format-panel__table.rt-TableRoot {
+      min-width: 0;
+
+      .rt-ScrollAreaRoot {
+        overflow-x: visible;
+      }
+
+      .rt-ScrollAreaViewport {
+        overflow-x: visible !important;
+      }
+
+      table.rt-TableRootTable {
+        table-layout: fixed;
+        width: 100%;
+        min-width: 0;
+      }
+
+      thead th:nth-child(1),
+      tbody td:nth-child(1) {
+        width: 20%;
+      }
+
+      thead th:nth-child(2),
+      tbody td:nth-child(2),
+      thead th:nth-child(3),
+      tbody td:nth-child(3),
+      thead th:nth-child(4),
+      tbody td:nth-child(4) {
+        width: 10%;
+      }
+
+      thead th:nth-child(5),
+      tbody td:nth-child(5) {
+        width: 10%;
+      }
+
+      thead th:nth-child(6),
+      tbody td:nth-child(6) {
+        width: 12%;
+      }
+
+      thead th:nth-child(7),
+      tbody td:nth-child(7) {
+        width: 18%;
+      }
+
+      thead th {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+    }
+  }
+
+  @media (max-width: #{$repos-by-format-fit - 1px}) {
+    .repos-by-format-panel__table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .repos-by-format-panel__table.rt-TableRoot {
+      min-width: max-content;
+
+      .rt-ScrollAreaViewport {
+        overflow-x: auto !important;
+        max-width: 100%;
+      }
+    }
+  }
+}

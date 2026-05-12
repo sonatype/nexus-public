@@ -22,14 +22,15 @@ import java.util.zip.ZipFile;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.datastore.DataStoreRestorer;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -44,9 +45,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Qualifier("default")
 @Singleton
 public class DataStoreRestorerLocalImpl
-    extends ComponentSupport
     implements DataStoreRestorer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ApplicationDirectories applicationDirectories;
 
   @Inject

@@ -16,7 +16,6 @@ import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
 
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
@@ -30,7 +29,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 class UpgradeTaskDAOTest
-    extends Test5Support
+
 {
   @DataSessionConfiguration(daos = UpgradeTaskDAO.class)
   TestDataSessionSupplier dataSession;

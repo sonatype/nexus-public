@@ -14,7 +14,6 @@ package org.sonatype.nexus.blobstore.internal.metrics;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -28,7 +27,9 @@ import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -39,8 +40,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class BlobStoreMetricsMigrationTaskTest
-    extends Test5Support
 {
   private static final String BEAN_NAME = "MockBlobStoreMetricsPropertiesReader";
 

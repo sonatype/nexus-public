@@ -17,7 +17,6 @@ import java.util.Set;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
@@ -25,6 +24,8 @@ import org.sonatype.nexus.security.config.SecurityConfigurationCleaner;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default {@link SecurityConfigurationCleaner}.
@@ -38,9 +39,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class SecurityConfigurationCleanerImpl
-    extends ComponentSupport
     implements SecurityConfigurationCleaner
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public void privilegeRemoved(SecurityConfiguration configuration, String privilegeId) {
     log.debug("Cleaning privilege id {} from roles.", privilegeId);
 

@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.maven.api;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.maven.ContentDisposition;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.rest.HttpClientAttributesWithPreemptiveAuth;
 import org.sonatype.nexus.repository.maven.rest.HttpClientConnectionAuthenticationAttributesWithPreemptive;
@@ -81,6 +82,10 @@ public class MavenApiRepositoryAdapter
     String versionPolicy = repository.getConfiguration().attributes(MAVEN).get("versionPolicy", String.class);
     String layoutPolicy = repository.getConfiguration().attributes(MAVEN).get("layoutPolicy", String.class);
     String contentDisposition = repository.getConfiguration().attributes(MAVEN).get("contentDisposition", String.class);
+    // Normalize null to INLINE - legacy repos with null serve inline at handler level
+    if (contentDisposition == null) {
+      contentDisposition = ContentDisposition.INLINE.name();
+    }
     return new MavenAttributes(versionPolicy, layoutPolicy, contentDisposition);
   }
 

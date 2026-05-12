@@ -190,6 +190,12 @@ public abstract class SqlSearchQueryContributionSupport
 
     create(exact, terminalWildcard, token.toString().trim()).ifPresent(tokens::add);
 
+    if (tokens.stream().anyMatch(WildcardTerm.class::isInstance)) {
+      tokens = tokens.stream()
+          .map(t -> t instanceof ExactTerm exactTerm ? new LenientTerm(exactTerm.get()) : t)
+          .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
     return tokens;
   }
 

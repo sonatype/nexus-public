@@ -21,6 +21,7 @@ import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.collect.ImmutableList;
 import org.apache.ibatis.type.TypeHandler;
 
@@ -40,6 +41,7 @@ public class AbstractJsonWithSecretsTypeHandler<T>
     mapper.get()
         .setAnnotationIntrospector(new OverrideIgnoreTypeIntrospector(
             ImmutableList.of(Secret.class)))
+        .registerModule(new Jdk8Module())
         .registerModule(new SimpleModule()
             .addSerializer(
                 Secret.class,

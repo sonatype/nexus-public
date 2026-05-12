@@ -13,8 +13,8 @@
 package org.sonatype.nexus.common.cluster;
 
 import java.time.Duration;
-
-import org.sonatype.goodies.common.ComponentSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link ClusterCoordinationService} for single-node deployments.
@@ -28,9 +28,10 @@ import org.sonatype.goodies.common.ComponentSupport;
  * @since 3.87
  */
 public class LocalClusterCoordinationService
-    extends ComponentSupport
     implements ClusterCoordinationService
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String LOCAL_NODE_ID = "local";
 
   @Override

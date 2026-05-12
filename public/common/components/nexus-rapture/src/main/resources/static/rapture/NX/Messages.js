@@ -46,6 +46,12 @@ Ext.define('NX.Messages', {
 
   /** @private */
   toast: function(message, type, iconCls) {
+    // When the React shell is active, delegate to the React toast bridge so the
+    // message is visible. The React shell suppresses .x-toast elements via CSS.
+    if (typeof window !== 'undefined' && window.__nexusToast && typeof window.__nexusToast[type] === 'function') {
+      window.__nexusToast[type](message);
+      return;
+    }
     const isFirst = !document.querySelector('.x-toast');
     const extraStyle = isFirst ? 'position: absolute; transform: translate(-24px, 70px);' : 'transform: translateY(70px)';
     setTimeout(function delay() {

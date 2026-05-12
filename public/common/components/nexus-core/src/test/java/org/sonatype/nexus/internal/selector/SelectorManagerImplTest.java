@@ -24,7 +24,6 @@ import javax.cache.Cache;
 import javax.cache.configuration.Factory;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -72,9 +71,11 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor.P_REPOSITORY;
 import static org.sonatype.nexus.repository.security.RepositorySelector.ALL;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SelectorManagerImplTest
-    extends TestSupport
 {
   @Mock
   private SelectorConfigurationStore store;

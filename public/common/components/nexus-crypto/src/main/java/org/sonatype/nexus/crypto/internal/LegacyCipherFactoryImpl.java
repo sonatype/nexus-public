@@ -25,12 +25,13 @@ import javax.crypto.spec.SecretKeySpec;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.LegacyCipherFactory;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -45,9 +46,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Deprecated
 public class LegacyCipherFactoryImpl
-    extends ComponentSupport
     implements LegacyCipherFactory
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final CryptoHelper cryptoHelper;
 
   @Inject

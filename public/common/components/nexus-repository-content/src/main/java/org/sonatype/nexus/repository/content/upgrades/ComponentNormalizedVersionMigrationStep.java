@@ -20,7 +20,6 @@ import java.util.Objects;
 
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
@@ -29,6 +28,8 @@ import org.sonatype.nexus.repository.content.tasks.normalize.NormalizeComponentV
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -41,9 +42,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ComponentNormalizedVersionMigrationStep
-    extends ComponentSupport
     implements RepeatableDatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final String TABLE_NAME = "{format}_component";
 
   private final String COLUMN_NAME = "normalized_version";

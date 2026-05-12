@@ -15,12 +15,12 @@ package org.sonatype.nexus.transaction;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -35,8 +35,9 @@ import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
 /**
  * Test {@link TransactionSupport}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TransactionSupportTest
-    extends TestSupport
+
 {
   @Mock
   private Transactional spec;

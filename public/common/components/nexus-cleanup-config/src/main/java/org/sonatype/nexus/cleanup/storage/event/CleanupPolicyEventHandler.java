@@ -20,7 +20,6 @@ import java.util.Set;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
@@ -29,6 +28,8 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
@@ -44,9 +45,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Component
 public class CleanupPolicyEventHandler
-    extends ComponentSupport
     implements EventAware, Asynchronous
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final RepositoryManager repositoryManager;
 
   @Inject

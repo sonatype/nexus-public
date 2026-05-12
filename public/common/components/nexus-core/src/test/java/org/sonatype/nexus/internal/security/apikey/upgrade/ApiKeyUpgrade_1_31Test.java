@@ -14,22 +14,17 @@ package org.sonatype.nexus.internal.security.apikey.upgrade;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.internal.security.apikey.store.ApiKeyDAO;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-@Category(SQLTestGroup.class)
 public class ApiKeyUpgrade_1_31Test
-    extends TestSupport
 {
   private static final String NEW_INDEX_NAME = "pk_api_key_primaryprincipal_domain_principals";
 

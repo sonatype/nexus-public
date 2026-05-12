@@ -16,7 +16,6 @@ import java.util.Optional;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.content.example.ExampleContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -26,6 +25,8 @@ import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.http.HttpMethods.DELETE;
@@ -42,9 +43,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class ExampleContentHandler
-    extends ComponentSupport
     implements Handler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public Response handle(final Context context) throws Exception {
 

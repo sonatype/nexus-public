@@ -14,7 +14,6 @@ package org.sonatype.nexus.rapture.internal.state;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.realm.RealmManager;
 
 import org.junit.Test;
@@ -27,9 +26,11 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT_REALM_NAME;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LocalAuthStateContributorTest
-    extends TestSupport
 {
   @Mock
   private RealmManager realmManager;

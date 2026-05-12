@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {screen, waitFor, render, waitForElementToBeRemoved} from '@testing-library/react';
+import {screen, waitFor, render, waitForElementToBeRemoved, fireEvent} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {when} from 'jest-when';
 import {act} from 'react-dom/test-utils';
@@ -296,10 +296,28 @@ describe('ContentSelectorsForm', function() {
 
     axios.put.mockReturnValue(Promise.resolve());
 
-    ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     userEvent.click(deleteButton());
 
-    expect(selectors.queryFormError()).not.toBeInTheDocument();
+    // Modal should appear
+    await waitFor(() => {
+      expect(screen.getByText('Delete content selector?')).toBeInTheDocument();
+    });
+
+    // Type DELETE to confirm
+    const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
+    fireEvent.change(input, { target: { value: 'DELETE' } });
+
+    // Click modal's delete button
+    await waitFor(() => {
+      const deleteButtons = screen.getAllByRole('button', { name: /^delete$/i });
+      const modalDeleteButton = deleteButtons.find(btn => btn.textContent === 'Delete' && !btn.disabled);
+      expect(modalDeleteButton).toBeDefined();
+    });
+
+    const deleteButtons = screen.getAllByRole('button', { name: /^delete$/i });
+    const modalDeleteButton = deleteButtons.find(btn => btn.textContent === 'Delete' && !btn.disabled);
+    fireEvent.click(modalDeleteButton);
+
     await waitFor(() => expect(axios.delete).toBeCalledWith(`service/rest/v1/security/content-selectors/${itemId}`));
 
     // expect onDone is called

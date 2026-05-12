@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.bootstrap.jetty;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.METRICS_INTERNAL_ENABLED;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
 /**
  * Extension of {@link io.dropwizard.metrics.jetty12.AbstractInstrumentedHandler} that restores the delegate
@@ -26,12 +29,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class InstrumentedHandler // NOSONAR
     extends io.dropwizard.metrics.jetty12.AbstractInstrumentedHandler
 {
+  private static final MetricRegistry NOOP_REGISTRY = new MetricRegistry();
+
   private final ServletContextHandler delegate;
 
   public InstrumentedHandler(final ServletContextHandler delegate) {
-    super(SharedMetricRegistries.getOrCreate("nexus"));
+    super(resolveRegistry());
     setHandler(delegate);
     this.delegate = checkNotNull(delegate);
+  }
+
+  private static MetricRegistry resolveRegistry() {
+    if (Boolean.parseBoolean(System.getProperty(METRICS_INTERNAL_ENABLED, "true"))) {
+      return SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME);
+    }
+    return NOOP_REGISTRY;
   }
 
   public ServletContextHandler getDelegate() {

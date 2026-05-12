@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.91.1-04</version>
+    <version>3.92.1-05</version>
   </parent>
 
   <artifactId>nexus-capability</artifactId>
@@ -61,6 +61,11 @@
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-security</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-thread</artifactId>
     </dependency>
 
     <dependency>

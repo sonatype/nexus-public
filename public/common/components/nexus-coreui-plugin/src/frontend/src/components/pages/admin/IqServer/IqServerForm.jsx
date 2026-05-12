@@ -49,7 +49,12 @@ export default function IqServerForm() {
   const isInvalid = FormUtils.isInvalid(validationErrors);
   const canOpenIqServerDashboard = pristineData.enabled && ValidationUtils.isUrl(pristineData.url);
 
+  // Check if navigated from Connected page
+  const fromConnected = router.stateService.params.fromConnected === true ||
+                        router.stateService.params.fromConnected === 'true';
+
   // Navigate to Connected page after successful save if IQ Server is enabled
+  // Also skip form page on initial load if IQ Server is already configured (unless coming from Connected page)
   useEffect(() => {
     if (state.matches('saving')) {
       hasSavedRef.current = true;
@@ -59,18 +64,26 @@ export default function IqServerForm() {
 
     if (previousState) {
       const wasLoading = previousState.matches('loading');
+      const wasSaving = previousState.matches('saving');
       const isNowLoaded = state.matches('loaded');
-      const featureFlagValue = ExtJS.state()?.getValue('nexus.hosted.repository.evaluation.enabled');
+      const featureFlagValue = ExtJS.state()?.getValue('hostedRepositoryEvaluationEnabled');
       const isFeatureEnabled = featureFlagValue !== undefined ? featureFlagValue : false;
 
-      if (hasSavedRef.current && wasLoading && isNowLoaded && pristineData.enabled && isFeatureEnabled) {
+      // Skip form page if IQ Server is already configured on initial load (unless coming from Connected page)
+      if (!hasSavedRef.current && wasLoading && isNowLoaded && pristineData.enabled && isFeatureEnabled && !fromConnected) {
+        router.stateService.go(ROUTE_NAMES.ADMIN.IQ.CONNECTED);
+        return;
+      }
+
+      // Navigate to Connected page after save (saving → loaded)
+      if (hasSavedRef.current && wasSaving && isNowLoaded && pristineData.enabled && isFeatureEnabled) {
         hasSavedRef.current = false;
         router.stateService.go(ROUTE_NAMES.ADMIN.IQ.CONNECTED);
       }
     }
 
     previousStateRef.current = state;
-  }, [state, pristineData.enabled]);
+  }, [state, pristineData.enabled, fromConnected]);
 
   function verifyConnection() {
     send({type: 'VERIFY_CONNECTION'});
@@ -78,6 +91,10 @@ export default function IqServerForm() {
 
   function discard() {
     send({type: 'RESET'});
+  }
+
+  function goBack() {
+    router.stateService.go(ROUTE_NAMES.ADMIN.IQ.CONNECTED);
   }
 
   function handleUrlChange(url) {
@@ -104,9 +121,23 @@ export default function IqServerForm() {
     });
   }
 
+  const isNextDisabled = isPristine || isInvalid;
+  const formProps = FormUtils.formProps(state, send);
+
   return <NxStatefulForm
-      {...FormUtils.formProps(state, send)}
+      {...formProps}
+      submitBtnText={UIStrings.SETTINGS.NEXT_BUTTON_LABEL}
+      submitBtnClasses={isNextDisabled ? 'disabled' : ''}
+      validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
+      onSubmit={() => {
+        if (!isNextDisabled) {
+          send({type: 'SAVE'});
+        }
+      }}
       additionalFooterBtns={<>
+        <NxButton type="button" variant="tertiary" disabled={!fromConnected} onClick={goBack}>
+          {UIStrings.SETTINGS.BACK_BUTTON_LABEL}
+        </NxButton>
         <NxButton type="button" variant="tertiary" disabled={isInvalid} onClick={verifyConnection}>
           {UIStrings.IQ_SERVER.VERIFY_CONNECTION_BUTTON_LABEL}
         </NxButton>
@@ -122,7 +153,7 @@ export default function IqServerForm() {
         {UIStrings.IQ_SERVER.OPEN_DASHBOARD}
       </NxTextLink>}
       <p>
-        <NxTextLink external href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle">
+        <NxTextLink external href="https://links.sonatype.com/products/nxrm3/browse/lc-learn">
           {UIStrings.IQ_SERVER.MENU.text}
         </NxTextLink>
         {' '}{UIStrings.IQ_SERVER.FORM_NOTES}

@@ -16,11 +16,11 @@ import java.util.HashMap;
 import java.util.Map;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.util.Collections.emptyMap;
 import org.springframework.stereotype.Component;
@@ -33,9 +33,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier(ConanAttributeTransformer.CONAN_FORMAT)
 @Singleton
 public class ConanAttributeTransformer
-    extends ComponentSupport
     implements AssetAttributeTransformer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   static final String CONAN_FORMAT = "conan";
 
   static final String INFO_BINARY_ATTRIBUTE = "infoBinary";

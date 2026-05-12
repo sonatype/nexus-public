@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretDeserializer;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
@@ -33,13 +32,18 @@ import org.sonatype.nexus.kv.KeyValueStore;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link AuthenticationConfigurationDeserializer}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AuthenticationConfigurationDeserializerTest
-    extends TestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(AuthenticationConfigurationDeserializerTest.class);
 
   private ObjectMapper objectMapper;
 
@@ -89,16 +93,15 @@ public class AuthenticationConfigurationDeserializerTest
     original.setPassword(secret);
     example.auth = original;
 
-
     String json = objectMapper.writeValueAsString(example);
-    log(json);
+    log.info(json);
 
     assertTrue(json.contains("username"));
     assertTrue(json.contains("admin"));
     assertTrue(json.contains("password"));
 
     AuthContainer obj = objectMapper.readValue(json, AuthContainer.class);
-    log(obj);
+    log.info("{}", obj);
 
     assertNotNull(obj);
     assertNotNull(obj.auth);

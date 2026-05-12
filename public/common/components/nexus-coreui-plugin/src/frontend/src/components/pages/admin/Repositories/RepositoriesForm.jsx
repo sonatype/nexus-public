@@ -33,6 +33,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import './Repositories.scss';
 
 import RepositoriesFormMachine from './RepositoriesFormMachine';
+import {DeleteConfirmationModal} from '../../../shared/modals/DeleteConfirmationModal';
 
 import {getFacets} from './RepositoryFormConfig';
 
@@ -57,7 +58,8 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
   const [current, send] = stateMachine;
 
   const {
-    data: {format, type}
+    data: {format, type, name},
+    showDeleteModal
   } = current.context;
 
   const {EDITOR} = UIStrings.REPOSITORIES;
@@ -107,6 +109,15 @@ export default function RepositoriesForm({itemId, onDone = () => {}}) {
           </NxStatefulForm>
         </Section>
       </ContentBody>
+
+      <DeleteConfirmationModal
+        open={showDeleteModal}
+        onClose={() => send('HIDE_DELETE_MODAL')}
+        onConfirm={() => send('DELETE')}
+        entityName={name}
+        entityType="repository"
+        loading={current.matches('delete')}
+      />
     </div>
   );
 }

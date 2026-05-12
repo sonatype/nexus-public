@@ -16,11 +16,12 @@ import java.util.List;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 
 import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.rest.sql.SearchField.FORMAT_FIELD_1;
 import static org.sonatype.nexus.repository.rest.sql.SearchField.FORMAT_FIELD_2;
@@ -38,9 +39,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier("maven2")
 @Singleton
 public class MavenSearchMappings
-    extends ComponentSupport
     implements SearchMappings
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String GAVEC = "gavec";
 
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(

@@ -1,0 +1,215 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.repositories-list {
+  display: flex;
+  flex-direction: row !important; // Override Radix Flex default (column)
+  gap: 24px;
+  width: 100%;
+  min-width: 0; // Prevent overflow in nested flex containers
+
+  // ==========================================================================
+  // Sidebar (FilterSidebar)
+  // ==========================================================================
+  &__sidebar {
+    flex-shrink: 0;
+    width: 240px;
+  }
+
+  // ==========================================================================
+  // Main Content Area
+  // ==========================================================================
+  &__main {
+    flex: 1;
+    min-width: 0; // Prevent flex item from overflowing
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  // ==========================================================================
+  // Search Container
+  // ==========================================================================
+  &__search-container {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  &__search-input {
+    width: 100%;
+  }
+
+  // ==========================================================================
+  // Table (EntityTable customizations)
+  // ==========================================================================
+  &__table {
+    width: 100%;
+    overflow-x: auto; // Horizontal scroll when Health Check + Firewall columns are added
+    min-width: 0; // Allow shrinking in flex container
+
+    // Ensure table doesn't get overlapped by scrollbar
+    // Add padding to the right side for the actions column
+    .entity-table__cell--arrow {
+      padding-right: 16px;
+    }
+  }
+
+  // ==========================================================================
+  // Type Badges
+  // ==========================================================================
+  &__type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+
+    &--hosted {
+      background: var(--blue-a3);
+      color: var(--blue-11);
+    }
+
+    &--proxy {
+      background: var(--orange-a3);
+      color: var(--orange-11);
+    }
+
+    &--group {
+      background: var(--purple-a3);
+      color: var(--purple-11);
+    }
+  }
+
+  // ==========================================================================
+  // Status Column
+  // ==========================================================================
+  &__status {
+    flex-wrap: nowrap;
+  }
+
+  &__status-text {
+    font-size: 13px;
+    color: var(--gray-11);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // ==========================================================================
+  // Copy Button
+  // ==========================================================================
+  &__copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--gray-a9);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: var(--gray-a4);
+      color: var(--gray-12);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-a6);
+    }
+  }
+
+  &__copy-icon {
+    &--success {
+      color: var(--green-9);
+    }
+  }
+
+  // ==========================================================================
+  // Summary
+  // ==========================================================================
+  &__summary {
+    padding: 8px 0;
+  }
+
+  // ==========================================================================
+  // Help Section (using shared HelpSection component)
+  // ==========================================================================
+  &__help {
+    margin-top: 8px;
+  }
+
+  // ==========================================================================
+  // Action Buttons (Edit/Delete)
+  // ==========================================================================
+  &__actions {
+    justify-content: flex-end;
+  }
+
+  &__action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &--profile {
+      color: var(--gray-9);
+
+      &:hover {
+        background: var(--accent-a3);
+        color: var(--accent-11);
+      }
+    }
+
+    &--edit {
+      color: var(--blue-9);
+
+      &:hover {
+        background: var(--blue-a3);
+        color: var(--blue-11);
+      }
+    }
+
+    &--delete {
+      color: var(--gray-9);
+
+      &:hover {
+        background: var(--red-a3);
+        color: var(--red-11);
+      }
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-a6);
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 2px var(--accent-a6);
+    }
+  }
+
+}

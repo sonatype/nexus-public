@@ -15,13 +15,12 @@ package org.sonatype.nexus.bootstrap.entrypoint.configuration;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
@@ -38,9 +37,9 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirectoryConfiguration.BASEDIR_SYS_PROP;
 import static org.sonatype.nexus.common.app.FeatureFlags.*;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith({SystemStubsExtension.class})
 class NexusPropertiesVerifierTest
-    extends Test5Support
 {
   private static final String TRUE = Boolean.TRUE.toString();
 

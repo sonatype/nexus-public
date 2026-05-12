@@ -36,7 +36,7 @@ public class AvailableCpuHealthCheck
   /**
    * Minimum recommended CPU Count
    */
-  static final int MIN_RECOMMENDED_CPU_COUNT = 4;
+  static final int MIN_RECOMMENDED_CPU_COUNT = 2;
 
   private static final String HEALTHY_MESSAGE =
       "The host system is allocating a maximum of %d cores to the application.";

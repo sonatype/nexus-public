@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusProperties;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
@@ -35,7 +34,6 @@ import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropert
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationLauncherTest
-    extends Test5Support
 {
   private static final String PRO_EDITION_ID = "nexus-professional-edition";
 

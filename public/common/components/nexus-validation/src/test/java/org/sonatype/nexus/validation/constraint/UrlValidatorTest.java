@@ -17,8 +17,6 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +29,7 @@ import static org.hamcrest.core.Is.is;
 
 @RunWith(Parameterized.class)
 public class UrlValidatorTest
-    extends TestSupport
+
 {
   private final UrlValidator urlValidator = new UrlValidator();
 

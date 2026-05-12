@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
@@ -41,7 +40,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 import static org.sonatype.nexus.repository.routing.RoutingMode.ALLOW;
 
 public class ConfigurationDAOTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule =

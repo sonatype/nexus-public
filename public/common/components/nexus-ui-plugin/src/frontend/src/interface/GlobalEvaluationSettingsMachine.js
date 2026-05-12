@@ -18,6 +18,8 @@ import {assign, Machine} from 'xstate';
 import Axios from 'axios';
 import {APIConstants} from '@sonatype/nexus-ui-plugin';
 
+const getPublicAPI = () => APIConstants?.REST?.PUBLIC || {};
+
 export default Machine(
   {
     id: 'GlobalEvaluationSettings',
@@ -60,7 +62,10 @@ export default Machine(
       })
     },
     services: {
-      fetchData: () => Axios.get(APIConstants.REST.PUBLIC.EVALUATION_SETTINGS)
+      fetchData: () => {
+        const PUBLIC = getPublicAPI();
+        return Axios.get(PUBLIC.EVALUATION_SETTINGS);
+      }
     }
   }
 );

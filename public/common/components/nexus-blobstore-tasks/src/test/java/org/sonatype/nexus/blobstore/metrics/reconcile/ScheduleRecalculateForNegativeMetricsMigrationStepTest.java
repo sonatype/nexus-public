@@ -14,7 +14,6 @@ package org.sonatype.nexus.blobstore.metrics.reconcile;
 
 import java.sql.Connection;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.repository.content.blobstore.metrics.BlobStoreMetricsDAO;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -24,7 +23,9 @@ import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
 import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -34,8 +35,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@ExtendWith(MockitoExtension.class)
 class ScheduleRecalculateForNegativeMetricsMigrationStepTest
-    extends Test5Support
+
 {
   @DataSessionConfiguration(daos = {})
   TestDataSessionSupplier dataSessionSupplier;

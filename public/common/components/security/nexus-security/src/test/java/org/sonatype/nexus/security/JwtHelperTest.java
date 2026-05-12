@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.Cookie;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.jwt.JwtVerificationException;
 import org.sonatype.nexus.security.jwt.SecretStore;
 
@@ -32,7 +31,9 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -46,8 +47,8 @@ import static org.sonatype.nexus.security.JwtHelper.REALM;
 import static org.sonatype.nexus.security.JwtHelper.USER;
 import static org.sonatype.nexus.security.JwtHelper.USER_SESSION_ID;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class JwtHelperTest
-    extends TestSupport
 {
   private static final String VALID_JWT_TOKEN =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30";

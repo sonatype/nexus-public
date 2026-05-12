@@ -15,7 +15,6 @@ package org.sonatype.nexus.rapture.internal.settings;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.rapture.UiSettingsManager;
 import org.sonatype.nexus.rapture.settings.RaptureSettings;
 
@@ -32,7 +31,6 @@ import static org.mockito.Mockito.verify;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class SettingsCapabilityTest
-    extends TestSupport
 {
   @Mock
   private UiSettingsManager uiSettingsManager;

@@ -77,10 +77,9 @@ public class CompactBlobStoreTask
       final BlobStoreUsageChecker blobStoreUsageChecker,
       final TaskUtils taskUtils,
       @Nullable final RecoveryModeService recoveryModeService,
-      @Value("${nexus.compact.blobstore.concurrencyLimit:5}") final int concurrencyLimit,
-      @Value("${nexus.compact.blobstore.queueCapacity:5}") final int queueCapacity)
+      @Value("${nexus.compact.blobstore.concurrencyLimit:5}") final int concurrencyLimit)
   {
-    super(concurrencyLimit, queueCapacity);
+    super(concurrencyLimit);
     this.changeBlobstoreStore = Optional.ofNullable(changeBlobstoreStore);
     this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
     this.taskUtils = checkNotNull(taskUtils);

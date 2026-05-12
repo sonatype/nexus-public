@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.rest.api;
 import java.io.IOException;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -34,9 +32,11 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.decorator.DecoratorUtils.getDecoratedEntity;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ComponentXODeserializerTest
-    extends TestSupport
 {
   @Mock
   private ComponentXOFactory componentXOFactory;

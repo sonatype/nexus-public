@@ -25,7 +25,6 @@ import java.util.regex.PatternSyntaxException;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
@@ -47,6 +46,8 @@ import org.apache.http.client.AuthenticationStrategy;
 import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -64,9 +65,10 @@ import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS;
  * @since 3.0
  */
 public class ConfigurationCustomizer
-    extends ComponentSupport
     implements HttpClientPlan.Customizer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Simple reusable function that converts "glob-like" expressions to regexp.
    */

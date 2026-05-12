@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.bootstrap.entrypoint.jvm.ShutdownDelegate;
@@ -38,12 +37,14 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link NexusLifecycleLauncher}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NexusLifecycleLauncherTest
-    extends TestSupport
 {
   @Mock
   private NexusEditionSelector nexusEditionSelector;
@@ -101,14 +102,11 @@ public class NexusLifecycleLauncherTest
 
     // Verify - check log message contains edition and version
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("PRO/3.75.0-01"))
-    ));
+        hasProperty("formattedMessage", containsString("PRO/3.75.0-01"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Stopping Nexus"))
-    ));
+        hasProperty("formattedMessage", containsString("Stopping Nexus"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("level", is(Level.INFO))
-    ));
+        hasProperty("level", is(Level.INFO))));
 
     // nexusLifecycleManager is null, so it should not be called
     verifyNoInteractions(nexusLifecycleManager);
@@ -148,18 +146,14 @@ public class NexusLifecycleLauncherTest
 
     // Verify - check log message contains "unknown" for edition with version
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("unknown/3.75.0-01"))
-    ));
+        hasProperty("formattedMessage", containsString("unknown/3.75.0-01"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Stopping Nexus"))
-    ));
+        hasProperty("formattedMessage", containsString("Stopping Nexus"))));
     // Verify warning log about unable to determine edition
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Unable to determine edition ID"))
-    ));
+        hasProperty("formattedMessage", containsString("Unable to determine edition ID"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("level", is(Level.WARN))
-    ));
+        hasProperty("level", is(Level.WARN))));
   }
 
   @Test
@@ -207,11 +201,9 @@ public class NexusLifecycleLauncherTest
 
     // Verify log message
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("OSS/3.75.0-01"))
-    ));
+        hasProperty("formattedMessage", containsString("OSS/3.75.0-01"))));
     assertThat(logAppender.list, hasItem(
-        hasProperty("formattedMessage", containsString("Stopping Nexus"))
-    ));
+        hasProperty("formattedMessage", containsString("Stopping Nexus"))));
   }
 
   @Test

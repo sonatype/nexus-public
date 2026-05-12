@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.content.maven.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -27,7 +26,9 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,8 +40,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.maven.MavenPath.SignatureType.GPG;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenVariableResolverAdapterTest
-    extends TestSupport
+
 {
   private static final String ARTIFACT_PATH = "group/artifact/version/artifact-version.jar";
 

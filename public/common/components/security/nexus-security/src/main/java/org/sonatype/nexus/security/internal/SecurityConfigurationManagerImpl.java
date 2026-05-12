@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
@@ -60,6 +59,8 @@ import org.apache.shiro.authc.credential.PasswordService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -71,9 +72,10 @@ import static com.google.common.base.Preconditions.checkState;
 @Qualifier("default")
 @Singleton
 public class SecurityConfigurationManagerImpl
-    extends ComponentSupport
     implements SecurityConfigurationManager, EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SecurityConfigurationSource configurationSource;
 
   private final SecurityConfigurationCleaner configCleaner;

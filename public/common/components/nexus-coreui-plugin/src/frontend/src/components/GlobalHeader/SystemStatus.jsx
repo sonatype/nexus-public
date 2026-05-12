@@ -29,10 +29,8 @@ export default function SystemStatus() {
 
   const isVisibleValue = useIsVisible(visibilityRequirements);
 
-  if (!visibilityRequirements) {
-    console.warn(`expected visibility requirements for ${supportStatusStateIdentifier} but found none`);
-    return null;
-  } else if (!isVisibleValue) {
+  // Cloud / preview may not register admin.support.status; avoid console noise and render nothing.
+  if (!visibilityRequirements || !isVisibleValue) {
     return null;
   }
 

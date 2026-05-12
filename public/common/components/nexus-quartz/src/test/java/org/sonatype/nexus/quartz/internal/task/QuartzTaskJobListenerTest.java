@@ -14,7 +14,6 @@ package org.sonatype.nexus.quartz.internal.task;
 
 import java.util.Date;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.quartz.internal.QuartzTriggerConverter;
@@ -36,11 +35,16 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.INIT_ERROR_KEY;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class QuartzTaskJobListenerTest
-    extends TestSupport
 {
   @Mock
   private EventManager eventManager;
@@ -170,5 +174,43 @@ public class QuartzTaskJobListenerTest
 
     // Allow small time difference due to execution time
     assertThat(timeDiff, lessThan(10L));
+  }
+
+  @Test
+  public void testJobToBeExecuted_capturesInitializationError() {
+    // Simulate an exception during initialization by making triggerConverter throw
+    RuntimeException expectedException = new RuntimeException("Simulated initialization failure");
+    when(scheduler.triggerConverter()).thenThrow(expectedException);
+
+    QuartzTaskJobListener listener = new QuartzTaskJobListener(
+        "test-listener",
+        eventManager,
+        scheduler,
+        taskInfo);
+
+    // Call jobToBeExecuted - should not throw, but should capture the error
+    listener.jobToBeExecuted(context);
+
+    // Verify the error was stored in context
+    verify(context).put(eq(INIT_ERROR_KEY), eq(expectedException));
+  }
+
+  @Test
+  public void testJobToBeExecuted_storesContextOnSuccess() throws Exception {
+    // Setup for successful initialization
+    when(context.getFireTime()).thenReturn(new Date());
+    when(context.getTrigger()).thenReturn(trigger);
+
+    QuartzTaskJobListener listener = new QuartzTaskJobListener(
+        "test-listener",
+        eventManager,
+        scheduler,
+        taskInfo);
+
+    listener.jobToBeExecuted(context);
+
+    // Verify context was populated with future and task info
+    verify(context).put(eq(QuartzTaskFuture.FUTURE_KEY), any(QuartzTaskFuture.class));
+    verify(context).put(eq(QuartzTaskInfo.TASK_INFO_KEY), eq(taskInfo));
   }
 }

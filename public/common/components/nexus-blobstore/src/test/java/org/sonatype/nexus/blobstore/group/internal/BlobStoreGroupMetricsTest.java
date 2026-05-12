@@ -14,7 +14,6 @@ package org.sonatype.nexus.blobstore.group.internal;
 
 import java.util.Arrays;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 
 import org.junit.Test;
@@ -27,7 +26,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class BlobStoreGroupMetricsTest
-    extends TestSupport
 {
 
   @Test

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.tasks.normalize;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -21,7 +19,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 public class NormalizeComponentVersionTaskDescriptorTest
-    extends TestSupport
 {
   @Test
   public void testTypeId() {

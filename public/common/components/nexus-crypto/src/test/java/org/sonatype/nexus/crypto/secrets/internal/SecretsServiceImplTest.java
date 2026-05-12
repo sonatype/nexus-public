@@ -15,7 +15,6 @@ package org.sonatype.nexus.crypto.secrets.internal;
 import java.util.Optional;
 import java.util.Random;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.LegacyCipherFactory;
@@ -48,7 +47,9 @@ import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
@@ -63,9 +64,11 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecretsServiceImplTest
-    extends TestSupport
 {
   @Mock
   private SecretsStore secretsStore;
@@ -740,6 +743,114 @@ public class SecretsServiceImplTest
     verify(secretsStore).create(eq("email"), eq(null), anyString(), eq(null));
   }
 
+  @Test
+  public void testExportEncryptedWithPassword() {
+    setupDatabaseMocks();
+
+    // Create and store a secret with mocked reading
+    Object[] result = createAndMockSecret("mypassword");
+    Secret secret = (Secret) result[0];
+
+    // Export with custom password
+    String exported = underTestSha256.exportEncryptedWithPassword(secret.getId(), "custom-password-123");
+
+    // Verify format starts with algorithm identifier
+    assertThat(exported, startsWith("$PBKDF2"));
+
+    // Verify can be imported with same password
+    int newId = random.nextInt() + 1000;
+    when(secretsStore.create(eq("test"), any(), anyString(), eq(null))).thenReturn(newId);
+    Secret imported = underTestSha256.importEncrypted("test", exported, null, "custom-password-123");
+
+    // Capture and mock reading the imported secret
+    verify(secretsStore, atLeastOnce()).create(eq("test"), any(), encryptedValue.capture(), eq(null));
+    mockSecretRead(newId, encryptedValue.getValue());
+
+    assertThat(new String(imported.decrypt()), is("mypassword"));
+  }
+
+  @Test
+  public void testExportEncryptedWithPassword_nullSecretId_throwsException() {
+    assertThrows(NullPointerException.class,
+        () -> underTestSha256.exportEncryptedWithPassword(null, "password"));
+  }
+
+  @Test
+  public void testExportEncryptedWithPassword_emptyPassword_throwsException() {
+    setupDatabaseMocks();
+
+    Object[] result = createAndMockSecret("mypassword");
+    Secret secret = (Secret) result[0];
+
+    assertThrows(CipherException.class,
+        () -> underTestSha256.exportEncryptedWithPassword(secret.getId(), ""));
+  }
+
+  @Test
+  public void testExportEncryptedWithPassword_secretNotFound_throwsException() {
+    when(secretsStore.read(999999)).thenReturn(Optional.empty());
+    assertThrows(CipherException.class,
+        () -> underTestSha256.exportEncryptedWithPassword("_999999", "password"));
+  }
+
+  @Test
+  public void testEncryptPlaintextWithPassword() {
+    setupDatabaseMocks();
+
+    // Encrypt plaintext with custom password
+    String encrypted = underTestSha256.encryptPlaintextWithPassword("my-bearer-token", "custom-password-123");
+
+    // Verify format starts with algorithm identifier
+    assertThat(encrypted, startsWith("$PBKDF2"));
+
+    // Verify can be decrypted via import
+    int newId = random.nextInt();
+    when(secretsStore.create(eq("test"), any(), anyString(), eq(null))).thenReturn(newId);
+    Secret imported = underTestSha256.importEncrypted("test", encrypted, null, "custom-password-123");
+
+    // Capture and mock reading the imported secret
+    verify(secretsStore).create(eq("test"), any(), encryptedValue.capture(), eq(null));
+    mockSecretRead(newId, encryptedValue.getValue());
+
+    assertThat(new String(imported.decrypt()), is("my-bearer-token"));
+  }
+
+  @Test
+  public void testEncryptPlaintextWithPassword_nullPlaintext_throwsException() {
+    assertThrows(NullPointerException.class,
+        () -> underTestSha256.encryptPlaintextWithPassword(null, "password"));
+  }
+
+  @Test
+  public void testEncryptPlaintextWithPassword_emptyPassword_throwsException() {
+    assertThrows(CipherException.class,
+        () -> underTestSha256.encryptPlaintextWithPassword("plaintext", ""));
+  }
+
+  @Test
+  public void testExportImportRoundTrip_withCustomPassword() {
+    setupDatabaseMocks();
+
+    // Create original secret with mocked reading
+    Object[] result = createAndMockSecret("original-secret");
+    Secret original = (Secret) result[0];
+
+    // Export with custom password
+    String exported = underTestSha256.exportEncryptedWithPassword(original.getId(), "migration-pwd");
+
+    // Import with same password
+    int newId = random.nextInt() + 1000;
+    when(secretsStore.create(eq("test"), any(), anyString(), eq(null))).thenReturn(newId);
+    Secret imported = underTestSha256.importEncrypted("test", exported, null, "migration-pwd");
+
+    // Capture and mock reading the imported secret
+    verify(secretsStore, atLeastOnce()).create(eq("test"), any(), encryptedValue.capture(), eq(null));
+    mockSecretRead(newId, encryptedValue.getValue());
+
+    assertThat(new String(imported.decrypt()), is("original-secret"));
+    assertThat(imported.getId(), not(is(original.getId()))); // New ID after import
+  }
+
   /**
    * Helper method to convert char[] to byte[] for encryption.
    */
@@ -748,5 +859,47 @@ public class SecretsServiceImplTest
     byte[] bytes = new byte[byteBuffer.limit()];
     byteBuffer.get(bytes);
     return bytes;
+  }
+
+  /**
+   * Sets up common mocks for database migration tests.
+   */
+  private void setupDatabaseMocks() {
+    when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
+    when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
+  }
+
+  /**
+   * Mocks SecretData for reading from the secrets store.
+   *
+   * @param secretId the ID of the secret
+   * @param encryptedValue the encrypted value to store
+   */
+  private void mockSecretRead(final int secretId, final String encryptedValue) {
+    SecretData secretData = new SecretData();
+    secretData.setId(secretId);
+    secretData.setSecret(encryptedValue);
+    secretData.setKeyId(null);
+    when(secretsStore.read(secretId)).thenReturn(Optional.of(secretData));
+  }
+
+  /**
+   * Creates a secret and sets up mocks for reading it back.
+   * Returns both the created secret and the secret ID for further testing.
+   *
+   * @param plaintext the plaintext to encrypt
+   * @return array with [Secret, secretId] for use in tests
+   */
+  private Object[] createAndMockSecret(final String plaintext) {
+    int secretId = random.nextInt();
+    when(secretsStore.create(anyString(), any(), anyString(), any())).thenReturn(secretId);
+
+    Secret secret = underTestSha256.encrypt("test", plaintext.toCharArray(), null);
+
+    // Capture and mock the stored value for reading
+    verify(secretsStore).create(anyString(), any(), encryptedValue.capture(), any());
+    mockSecretRead(secretId, encryptedValue.getValue());
+
+    return new Object[]{secret, secretId};
   }
 }

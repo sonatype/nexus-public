@@ -1,0 +1,211 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.anonymous-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &__alerts {
+    margin-bottom: var(--space-4);
+  }
+
+  &__loading {
+    flex: 1;
+    gap: var(--space-3);
+    color: var(--gray-11);
+  }
+
+  &__spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  &__section-description {
+    color: var(--gray-11);
+    margin-bottom: var(--space-4);
+    line-height: 1.5;
+  }
+
+  &__readonly {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--gray-2);
+    border-radius: var(--radius-2);
+  }
+
+  &__row {
+    display: flex;
+    gap: var(--space-4);
+  }
+
+  &__label {
+    min-width: 150px;
+    color: var(--gray-11);
+  }
+
+  &__help {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    background: var(--gray-2);
+    border: 1px solid var(--gray-5);
+    border-radius: var(--radius-2);
+  }
+
+  &__help-header {
+    margin-bottom: var(--space-2);
+    color: var(--gray-12);
+
+    svg {
+      color: var(--accent-9);
+    }
+  }
+
+  &__help-text {
+    color: var(--gray-11);
+    line-height: 1.5;
+
+    & + & {
+      margin-top: var(--space-2);
+    }
+  }
+
+  &__help-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--accent-11);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Modal styles for disable confirmation dialog
+.anonymous-page {
+  &__modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    animation: fadeIn 150ms ease-out;
+  }
+
+  &__modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--color-background, #fff);
+    border-radius: var(--radius-3, 8px);
+    box-shadow: 0 10px 38px -10px rgba(22, 23, 24, 0.35),
+                0 10px 20px -15px rgba(22, 23, 24, 0.2);
+    padding: var(--space-5, 24px);
+    width: 90vw;
+    max-width: 450px;
+    max-height: 85vh;
+    z-index: 1001;
+    animation: scaleIn 150ms ease-out;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__modal-title {
+    font-size: var(--font-size-4, 18px);
+    font-weight: 600;
+    color: var(--gray-12, #1a1a1a);
+    margin: 0 0 var(--space-3, 12px) 0;
+  }
+
+  &__modal-icon {
+    color: var(--amber-9, #f5a623);
+  }
+
+  &__modal-description {
+    font-size: var(--font-size-2, 14px);
+    color: var(--gray-11, #6f6f6f);
+    line-height: 1.5;
+    margin-bottom: var(--space-4, 16px);
+  }
+
+  &__modal-actions {
+    margin-top: var(--space-4, 16px);
+    padding-top: var(--space-4, 16px);
+    border-top: 1px solid var(--gray-5, #e5e5e5);
+  }
+
+  &__modal-close {
+    position: absolute;
+    top: var(--space-3, 12px);
+    right: var(--space-3, 12px);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-2, 4px);
+    color: var(--gray-11, #6f6f6f);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--gray-4, #f0f0f0);
+    }
+
+    &:focus {
+      outline: 2px solid var(--accent-8, #0070f3);
+      outline-offset: 2px;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+

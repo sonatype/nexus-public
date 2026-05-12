@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMapping.FilterType;
@@ -56,9 +55,11 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.rest.sql.SearchField.ASSET_FORMAT_VALUE_1;
 import static org.sonatype.nexus.repository.rest.sql.SearchField.ASSET_FORMAT_VALUE_2;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ExpressionBuilderTest
-    extends TestSupport
 {
   @Mock
   private SqlSearchQueryContribution defaultHandler;

@@ -14,6 +14,7 @@
 .sonatype-lifecycle-header {
   .nx-breadcrumb {
     .nx-breadcrumb__link {
+      color: #0061fe !important;
       text-decoration: none;
 
       &:hover {
@@ -23,6 +24,7 @@
 
     .nx-breadcrumb__list-item:last-child {
       .nx-breadcrumb__link {
+        color: var(--nx-color-text) !important;
         pointer-events: none;
         cursor: default;
 
@@ -32,6 +34,30 @@
       }
     }
   }
+}
+
+.nx-page-main .nx-tabs {
+  .nx-tab {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+
+    .nx-counter {
+      margin-left: var(--nx-spacing-2x);
+    }
+  }
+}
+
+.nx-page-main .nx-tabs .nx-tab .nx-counter.nx-counter.nx-counter--active {
+  background-color: var(--nx-color-interactive-border-focus);
+  border-color: var(--nx-color-interactive-border-focus);
+  color: white;
+}
+
+[data-theme="dark"] .nx-page-main .nx-tabs .nx-tab .nx-counter.nx-counter.nx-counter--active {
+  background-color: var(--nx-swatch-blue-60);
+  border-color: var(--nx-swatch-blue-60);
+  color: var(--nx-color-text-dark);
 }
 
 .hosted-repositories-stepper {

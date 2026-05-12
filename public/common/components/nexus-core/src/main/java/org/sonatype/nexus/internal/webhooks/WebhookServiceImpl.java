@@ -28,7 +28,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.InternalAccessible;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.thread.NexusThreadFactory;
@@ -57,6 +56,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -72,9 +73,10 @@ import org.springframework.stereotype.Component;
 @Component
 @Singleton
 public class WebhookServiceImpl
-    extends ComponentSupport
     implements WebhookService, EventAware, EventAware.Asynchronous
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String WEBHOOK_ID_HEADER = "X-Nexus-Webhook-ID";
 
   private static final String WEBHOOK_DELIVERY_HEADER = "X-Nexus-Webhook-Delivery";

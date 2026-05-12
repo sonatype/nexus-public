@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.config;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
 
 import org.junit.Before;
@@ -27,7 +26,6 @@ import static org.hamcrest.Matchers.is;
 
 @RunWith(Parameterized.class)
 public class MemorySecurityConfigurationTest
-    extends TestSupport
 {
   @Parameters(name = "userRoleMappings for source: '{0}' read isFound: {1}")
   public static Object[][] params() {

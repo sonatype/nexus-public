@@ -16,7 +16,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.schedule.Hourly;
 import org.sonatype.nexus.scheduling.schedule.Monthly;
 import org.sonatype.nexus.scheduling.schedule.Monthly.CalendarDay;
@@ -41,7 +40,6 @@ import static org.sonatype.nexus.quartz.internal.QuartzTriggerConverter.cronTime
  * Tests for {@link QuartzTriggerConverter}
  */
 public class QuartzTriggerConverterTest
-    extends TestSupport
 {
   private QuartzTriggerConverter underTest;
 

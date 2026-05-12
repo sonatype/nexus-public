@@ -14,8 +14,6 @@ package org.sonatype.nexus.coreui.internal.capability;
 
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +22,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.EXTJS_CAPABILITIES_ENAB
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_CAPABILITIES_ENABLED;
 
 public class CapabilitiesPagesStateContributorTest
-    extends TestSupport
 {
   @Test
   public void shouldReturnBothFlagsEnabled() {

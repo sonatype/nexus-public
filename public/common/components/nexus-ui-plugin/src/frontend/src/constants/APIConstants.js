@@ -241,6 +241,9 @@ export default {
       get PRIVILEGES_TYPES() {
         return `${this.BASE_URL}privileges/types`;
       },
+      get PREVIEW_UI_SETTINGS() {
+        return `${this.BASE_URL}preview-ui-settings`;
+      },
       get RECOVERY_MODE() {
         return `${this.BASE_URL}recovery-mode`;
       },
@@ -313,6 +316,9 @@ export default {
       get MALWARE_COMPONENTS_CSV() {
         return `${this.BASE_URL}malicious-risk/malware-components-csv`;
       },
+      get SAML() {
+        return `${this.BASE_URL}security/saml`;
+      },
       get RECOVERY_MODE() {
         return `${this.BASE_URL}recovery-mode`;
       },
@@ -322,11 +328,11 @@ export default {
       get REPOSITORY_DASHBOARD_FORMATS() {
         return `${this.BASE_URL}repository-dashboard/formats`;
       },
-      get HOSTED_REPO_EVALUATION_MONITOR() {
-        return `${this.BASE_URL}hosted-repo-evaluation/monitor`;
-      },
       get EVALUATION_SETTINGS() {
         return `${this.BASE_URL}evaluation/settings`;
+      },
+      get EVALUATION_SETTINGS_WITH_REPOS() {
+        return `${this.BASE_URL}evaluation/settings-with-repos`;
       },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',

@@ -20,8 +20,7 @@ import java.io.InputStreamReader;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource;
@@ -30,16 +29,20 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.common.io.DirectoryHelper.mkdir;
 
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
+
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class JvmLogCustomizerTest
-    extends TestSupport
 {
   @Rule
   public TemporaryFolder temporaryWorkDirectory = new TemporaryFolder();
@@ -50,12 +53,14 @@ public class JvmLogCustomizerTest
   @Mock
   private ApplicationDirectories mockApplicationDirectories;
 
+  private final DirectoryHelper directoryHelper = new DirectoryHelper();
+
   private JvmLogCustomizer underTest;
 
   @Before
   public void setup() throws IOException {
     when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory.getRoot());
-    mkdir(temporaryWorkDirectory.getRoot(), "log");
+    directoryHelper.mkdir(temporaryWorkDirectory.getRoot(), "log");
     underTest = new JvmLogCustomizer(mockLogManager, mockApplicationDirectories);
   }
 

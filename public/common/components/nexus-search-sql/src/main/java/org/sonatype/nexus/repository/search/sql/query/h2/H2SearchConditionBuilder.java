@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 import org.sonatype.nexus.repository.search.sql.query.syntax.NullTerm;
@@ -32,6 +31,8 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.replace;
@@ -41,8 +42,9 @@ import static org.apache.commons.lang3.StringUtils.replace;
  * Uses LIKE queries instead of PostgreSQL's full-text search operators.
  */
 abstract class H2SearchConditionBuilder
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected static final String BRACKET_CLOSE = ")";
 
   protected static final String BRACKET_OPEN = "(";

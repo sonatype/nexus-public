@@ -13,6 +13,7 @@
 package org.sonatype.nexus.common;
 
 import java.lang.reflect.Field;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -107,10 +108,11 @@ public final class QualifierUtil
 
   /**
    * Builds map with keys as the @Qualifier annotation value.
+   * The map preserves order based on @Order annotation (lower values first).
    *
    * @param listOfDeps The list of dependencies provided by DI.
    * @param <T> The type of the values in the map.
-   * @return A new map with keys as the @Qualifier value if present.
+   * @return A new LinkedHashMap with keys as the @Qualifier value if present, ordered by @Order.
    */
   public static <T> Map<String, T> buildQualifierBeanMap(final List<T> listOfDeps) {
     if (listOfDeps == null) {
@@ -118,9 +120,12 @@ public final class QualifierUtil
     }
     return listOfDeps
         .stream()
+        .sorted(QualifierUtil::compareByOrder)
         .collect(Collectors.toMap(
             dep -> value(dep).orElse(dep.getClass().toString()),
-            Function.identity()));
+            Function.identity(),
+            (existing, replacement) -> existing,
+            LinkedHashMap::new));
   }
 
   private QualifierUtil() {

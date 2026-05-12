@@ -98,7 +98,7 @@ describe('SsoLogin', () => {
 
       expect(button).toHaveAttribute('type', 'button');
       expect(button).toHaveAttribute('data-analytics-id', 'nxrm-login-sso');
-      expect(button).toHaveClass('sso-login-button');
+      expect(button).toHaveClass('login-submit');
     });
 
     it('displays correct text when not loading (self-hosted)', () => {

@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -23,12 +24,12 @@ import java.util.Random;
 import javax.validation.ValidationException;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityDescriptor.ValidationMode;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityEvent;
+import org.sonatype.nexus.capability.CapabilityEventQueue;
 import org.sonatype.nexus.capability.CapabilityFactory;
 import org.sonatype.nexus.capability.CapabilityFactoryRegistry;
 import org.sonatype.nexus.capability.CapabilityIdentity;
@@ -59,6 +60,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -79,14 +81,16 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 import static org.sonatype.nexus.capability.CapabilityIdentity.capabilityIdentity;
 import static org.sonatype.nexus.capability.CapabilityType.capabilityType;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * {@link DefaultCapabilityRegistry} UTs.
  *
  * @since capabilities 2.0
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultCapabilityRegistryTest
-    extends TestSupport
 {
 
   static final CapabilityType CAPABILITY_TYPE = capabilityType("test");
@@ -98,6 +102,9 @@ public class DefaultCapabilityRegistryTest
 
   @Mock
   private EventManager eventManager;
+
+  @Mock
+  private CapabilityEventQueue eventQueue;
 
   @Mock
   private CapabilityStorage capabilityStorage;
@@ -116,6 +123,7 @@ public class DefaultCapabilityRegistryTest
 
   private DefaultCapabilityRegistry underTest;
 
+  @Captor
   private ArgumentCaptor<CapabilityEvent> rec;
 
   private Map<Integer, Secret> secrets = new HashMap<>();
@@ -158,6 +166,24 @@ public class DefaultCapabilityRegistryTest
     when(vchf.create(Mockito.<DefaultCapabilityReference>any())).thenReturn(
         mock(ValidityConditionHandler.class));
 
+    ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.get()).thenReturn(mock(Validator.class));
+
+    underTest = new DefaultCapabilityRegistry(
+        capabilityStorage,
+        capabilityFactoryRegistry,
+        capabilityDescriptorRegistry,
+        eventManager,
+        eventQueue,
+        achf,
+        vchf,
+        secretsService,
+        secretsStore,
+        validatorProvider);
+    underTest.start();
+
+    reset(capabilityStorage);
+
     when(capabilityStorage.add(Mockito.<CapabilityStorageItem>any())).thenAnswer(
         (Answer<CapabilityIdentity>) invocationOnMock -> capabilityIdentity(String.valueOf(random.nextLong())));
 
@@ -173,22 +199,6 @@ public class DefaultCapabilityRegistryTest
 
           return item;
         });
-
-    ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
-    when(validatorProvider.get()).thenReturn(mock(Validator.class));
-
-    underTest = new DefaultCapabilityRegistry(
-        capabilityStorage,
-        capabilityFactoryRegistry,
-        capabilityDescriptorRegistry,
-        eventManager,
-        achf,
-        vchf,
-        secretsService,
-        secretsStore,
-        validatorProvider);
-
-    rec = ArgumentCaptor.forClass(CapabilityEvent.class);
   }
 
   @After
@@ -206,7 +216,7 @@ public class DefaultCapabilityRegistryTest
     final CapabilityReference reference = underTest.add(CAPABILITY_TYPE, true, null, null);
     assertThat(reference, is(not(nullValue())));
 
-    verify(eventManager, atLeastOnce()).post(rec.capture());
+    verify(eventQueue).post(rec.capture());
     assertThat(rec.getValue(), is(instanceOf(CapabilityEvent.Created.class)));
     assertThat(rec.getValue().getReference(), is(equalTo(reference)));
   }
@@ -223,7 +233,7 @@ public class DefaultCapabilityRegistryTest
 
     assertThat(reference1, is(equalTo(reference)));
 
-    verify(eventManager, atLeastOnce()).post(rec.capture());
+    verify(eventQueue, times(2)).post(rec.capture());
     assertThat(rec.getAllValues().get(0), is(instanceOf(CapabilityEvent.Created.class)));
     assertThat(rec.getAllValues().get(0).getReference(), is(equalTo(reference1)));
     assertThat(rec.getAllValues().get(1), is(instanceOf(CapabilityEvent.AfterRemove.class)));
@@ -460,13 +470,17 @@ public class DefaultCapabilityRegistryTest
 
     underTest.load();
 
-    ArgumentCaptor<Object> ebRec = ArgumentCaptor.forClass(Object.class);
+    ArgumentCaptor<CapabilityEvent> ebRec = ArgumentCaptor.forClass(CapabilityEvent.class);
 
-    verify(eventManager, atLeastOnce()).post(ebRec.capture());
+    verify(eventQueue, atLeastOnce()).post(ebRec.capture());
     // Properties should contain encrypted value, NOT decrypted
-    assertThat(
-        ((CapabilityEvent) ebRec.getAllValues().get(0)).getReference().context().properties().get("foo"),
-        is(encryptedValue));
+    List<CapabilityEvent> events = ebRec.getAllValues()
+        .stream()
+        .filter(CapabilityEvent.class::isInstance)
+        .map(CapabilityEvent.class::cast)
+        .toList();
+
+    assertThat(events.get(0).getReference().context().properties().get("foo"), is(encryptedValue));
   }
 
   /**

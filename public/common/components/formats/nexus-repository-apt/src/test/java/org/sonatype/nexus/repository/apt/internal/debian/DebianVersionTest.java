@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.internal.debian;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +22,6 @@ import static org.hamcrest.Matchers.is;
  * @since 3.17
  */
 public class DebianVersionTest
-    extends TestSupport
 {
   private final static String LOWER_EPOCH_UPSTREAM_DEBIAN = "2:7.3.429-2ubuntu2.1";
 

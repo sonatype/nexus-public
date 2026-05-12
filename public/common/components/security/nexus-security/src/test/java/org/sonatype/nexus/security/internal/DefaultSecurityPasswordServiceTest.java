@@ -14,7 +14,6 @@ package org.sonatype.nexus.security.internal;
 
 import java.security.spec.InvalidKeySpecException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.HashingHandler;
 import org.sonatype.nexus.crypto.internal.HashingHandlerFactory;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
@@ -22,7 +21,9 @@ import org.sonatype.nexus.crypto.internal.error.CipherException;
 import org.apache.shiro.crypto.hash.Hash;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -33,8 +34,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link DefaultSecurityPasswordService}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultSecurityPasswordServiceTest
-    extends TestSupport
 {
   private DefaultSecurityPasswordService underTest;
 

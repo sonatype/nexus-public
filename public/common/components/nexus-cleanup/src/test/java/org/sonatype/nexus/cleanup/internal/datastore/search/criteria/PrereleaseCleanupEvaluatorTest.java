@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -29,7 +28,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -40,8 +41,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class PrereleaseCleanupEvaluatorTest
-    extends Test5Support
+
 {
   @Mock
   private Repository repository;

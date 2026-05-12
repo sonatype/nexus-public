@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 import org.slf4j.Logger;
 
@@ -27,7 +25,7 @@ import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY_WITH_PROGRESS;
 
 public class TaskLoggerFactoryTest
-    extends TestSupport
+
 {
   @Test
   public void testBoth() {

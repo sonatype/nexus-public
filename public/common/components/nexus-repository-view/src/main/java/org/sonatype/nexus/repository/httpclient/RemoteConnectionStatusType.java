@@ -25,7 +25,8 @@ public enum RemoteConnectionStatusType
   BLOCKED("Remote Manually Blocked"),
   AUTO_BLOCKED_UNAVAILABLE("Remote Auto Blocked and Unavailable"),
   UNAVAILABLE("Remote Unavailable"),
-  OFFLINE("Repository Offline");
+  OFFLINE("Repository Offline"),
+  FAILED("Failed to Initialize");
 
   private final String description;
 

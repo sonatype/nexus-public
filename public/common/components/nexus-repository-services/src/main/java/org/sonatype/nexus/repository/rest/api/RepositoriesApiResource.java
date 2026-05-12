@@ -21,11 +21,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -39,9 +40,10 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class RepositoriesApiResource
-    extends ComponentSupport
     implements Resource, RepositoriesApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final AuthorizingRepositoryManager authorizingRepositoryManager;
 
   @Inject

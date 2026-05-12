@@ -12,7 +12,7 @@
  */
 
 import { useTransitionHook } from '@uirouter/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ROUTE_NAMES } from '../routerConfig/routeNames/routeNames';
 
 export default function useSideNavbarCollapsedState(initState) {
@@ -23,6 +23,20 @@ export default function useSideNavbarCollapsedState(initState) {
     setSavedOpenState(!isOpen);
     setIsOpen(!isOpen);
   };
+
+  useEffect(() => {
+    const handleGlobalToggle = (e) => {
+      const shouldOpen = e.detail?.open;
+      if (shouldOpen !== undefined) {
+        setIsOpen(shouldOpen);
+      } else {
+        setIsOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('nx-sidebar-toggle', handleGlobalToggle);
+    return () => window.removeEventListener('nx-sidebar-toggle', handleGlobalToggle);
+  }, []);
 
   useTransitionHook('onSuccess', {}, transition => {
     const prevState = transition.from().name;

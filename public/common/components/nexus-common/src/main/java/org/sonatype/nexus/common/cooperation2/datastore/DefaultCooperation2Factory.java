@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.internal.LocalCooperation2;
@@ -25,6 +24,8 @@ import org.sonatype.nexus.common.cooperation2.internal.DisabledCooperation2;
 import org.sonatype.nexus.common.cooperation2.internal.MutableConfigSupport;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @since 3.41
@@ -33,9 +34,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier("local")
 @Singleton
 public class DefaultCooperation2Factory
-    extends ComponentSupport
     implements Cooperation2Factory
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public Builder configure() {
     return new DefaultCooperation2Builder();

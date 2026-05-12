@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.event;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.content.AttributeChangeSet;
 import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
@@ -33,7 +32,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class StoreEventTest
-    extends TestSupport
 {
   private AssetData asset;
 

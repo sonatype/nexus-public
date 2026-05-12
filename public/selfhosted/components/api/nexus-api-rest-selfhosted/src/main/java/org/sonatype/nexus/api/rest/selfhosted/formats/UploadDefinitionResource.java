@@ -22,12 +22,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.api.rest.selfhosted.formats.model.UploadDefinitionXO;
 import org.sonatype.nexus.repository.rest.api.UploadFieldDefinitionXO;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.rest.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -45,9 +46,10 @@ import org.springframework.stereotype.Component;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class UploadDefinitionResource
-    extends ComponentSupport
     implements Resource, UploadDefinitionResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String BASE_PATH = V1_API_PREFIX + "/formats";
 
   private final UploadManager uploadManager;

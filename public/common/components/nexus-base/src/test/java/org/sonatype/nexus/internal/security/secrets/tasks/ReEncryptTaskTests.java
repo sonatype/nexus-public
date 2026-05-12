@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
@@ -25,6 +24,8 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,8 +41,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ReEncryptTaskTests
-    extends TestSupport
 {
   private static final String TEST_KEY_ID = "test-key";
 

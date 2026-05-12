@@ -18,13 +18,14 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LogMarker;
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.rest.Resource;
 
 import com.google.common.base.Strings;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -39,9 +40,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Path(LogResource.RESOURCE_URI)
 public class LogResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String RESOURCE_URI = APIConstants.INTERNAL_API_PREFIX + "/logging/log";
 
   public static final String DEFAULT_MARK = "MARK";

@@ -15,7 +15,8 @@ package org.sonatype.nexus.ui;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -25,9 +26,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.20
  */
 public abstract class UiPluginDescriptorSupport
-    extends ComponentSupport
     implements UiPluginDescriptor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final String name;
 
   public UiPluginDescriptorSupport(final String name) {

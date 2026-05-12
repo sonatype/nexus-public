@@ -1,0 +1,103 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.ga-result-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--search-border, #374151);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: rgba(59, 130, 246, 0.05);
+  }
+
+  &:focus {
+    outline: 2px solid var(--search-accent, #3b82f6);
+    outline-offset: -2px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__icon-tile {
+    flex-shrink: 0;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  &__name-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--search-text-primary, #f3f4f6);
+  }
+
+  &__verified {
+    color: #22c55e;
+    flex-shrink: 0;
+  }
+
+  &__namespace {
+    font-size: 14px;
+    color: var(--search-text-secondary, #9ca3af);
+    margin-bottom: 8px;
+    font-family: var(--nx-font-family-monospace, 'JetBrains Mono', monospace);
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+
+  &__badge {
+    // Standard NOSC FormatBadge handles most of this
+  }
+
+  &__info {
+    font-size: 13px;
+    color: var(--search-text-muted, #6b7280);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__date {
+    font-size: 13px;
+    color: var(--search-text-muted, #6b7280);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  &__chevron {
+    color: var(--search-text-muted, #6b7280);
+    flex-shrink: 0;
+    margin-top: 14px;
+  }
+}
+
+

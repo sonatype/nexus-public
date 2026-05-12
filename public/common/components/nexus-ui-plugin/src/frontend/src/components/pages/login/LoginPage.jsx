@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, { useState } from 'react';
+import { Theme, Card, Flex, Heading, Text, Box } from '@radix-ui/themes';
 import { ExtJS } from "@sonatype/nexus-ui-plugin";
-import { NxTile, NxErrorAlert, NxH2 } from "@sonatype/react-shared-components";
 import UIStrings from "../../../constants/UIStrings";
 import LoginLayout from "../../layout/LoginLayout";
 import AnonymousAccess from "./AnonymousAccess";
@@ -23,6 +23,15 @@ import SsoLogin from "./SsoLogin";
 const { LOGIN_TITLE, LOGIN_SUBTITLE, SSO_DIVIDER_LABEL } = UIStrings;
 
 import "./LoginPage.scss";
+import '@radix-ui/themes/styles.css';
+
+function getMarkOnlyLogoUrl() {
+  try {
+    return ExtJS.urlOf('static/rapture/resources/favicon.svg');
+  } catch {
+    return '/static/rapture/resources/favicon.svg';
+  }
+}
 
 const localAuthenticationRealms = [
   "ldapRealmEnabled",
@@ -40,63 +49,108 @@ const ssoAuthenticationRealms = ["samlEnabled", "oauth2Enabled"];
 export default function LoginPage({ logoConfig }) {
   const [generalError, setGeneralError] = useState(null);
 
-  const isCloudEnvironment = ExtJS.state().getValue("isCloud", false);
-  const showContinueWithoutLogin =
-    !!ExtJS.state().getValue("anonymousUsername");
+  const extStateReady = !!(window.NX?.State?.getValue);
+  const getState = (key, fallback = null) => {
+    try {
+      return ExtJS.state().getValue?.(key, fallback) ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
 
-  const showSSOLogin = ssoAuthenticationRealms.some((realm) =>
-    ExtJS.state().getValue(realm, false)
+  const isCloudEnvironment = !!getState("isCloud", false);
+  // Allow local dev to test cloud deployments without SSO infrastructure
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const showContinueWithoutLogin = !!getState("anonymousUsername", false);
+
+  const showSSOLogin = extStateReady
+    ? ssoAuthenticationRealms.some((realm) => getState(realm, false))
+    : false;
+
+  const showLocalLogin = (!isCloudEnvironment || isLocalDev) && (
+    extStateReady
+      ? localAuthenticationRealms.some((realm) => getState(realm, false))
+      : true // default to showing local login when ExtJS state isn't ready yet
   );
 
-  const showLocalLogin =
-    !isCloudEnvironment &&
-    localAuthenticationRealms.some((realm) =>
-      ExtJS.state().getValue(realm, false)
-    );
-  const adminPasswordFilePath = ExtJS.state().getValue("admin.password.file");
-  const onboardingRequired = ExtJS.state().getValue("onboarding.required");
+  const adminPasswordFilePath = getState("admin.password.file");
+  const onboardingRequired = getState("onboarding.required", false);
 
   const showInitialPasswordPathInfo =
     !!adminPasswordFilePath && !isCloudEnvironment && onboardingRequired;
 
+  const markOnlyLogoUrl = getMarkOnlyLogoUrl();
+
   return (
     <LoginLayout logoConfig={logoConfig}>
-      {generalError && (
-        <NxErrorAlert onClose={() => setGeneralError(null)}>
-          {generalError}
-        </NxErrorAlert>
-      )}
-      <div className="login-page">
-        <NxTile className="login-tile" data-testid="login-tile">
-          <NxTile.Header>
-            <NxTile.HeaderTitle>
-              <NxH2>
-                {LOGIN_TITLE}
-              </NxH2>
-            </NxTile.HeaderTitle>
-            <NxTile.HeaderSubtitle>{LOGIN_SUBTITLE}</NxTile.HeaderSubtitle>
-          </NxTile.Header>
-          <NxTile.Content>
-            <div className="login-content">
-              {showInitialPasswordPathInfo && (
-                <InitialPasswordInfo passwordFilePath={adminPasswordFilePath} />
-              )}
-              {showSSOLogin && (
-                <>
-                  <SsoLogin />
-                  {showLocalLogin && (
-                    <div className="login-divider" aria-hidden="true">
-                      <span>{SSO_DIVIDER_LABEL}</span>
-                    </div>
-                  )}
-                </>
-              )}
-              {showLocalLogin && <LocalLogin primaryButton={!showSSOLogin} onError={setGeneralError} />}
-              {showContinueWithoutLogin && <AnonymousAccess />}
-            </div>
-          </NxTile.Content>
-        </NxTile>
-      </div>
+      <Theme appearance="light" accentColor="blue" hasBackground={false} className="login-theme-wrapper">
+        <Card className="login-card" data-testid="login-tile" size="4">
+        <Flex direction="column" gap="5" className="login-card__content">
+          {/* Header with mark logo */}
+          <Flex direction="column" align="center" gap="4" className="login-card__header">
+            <img
+              src={markOnlyLogoUrl}
+              alt=""
+              className="login-card__mark"
+              width={48}
+              height={48}
+              decoding="async"
+            />
+            <Heading as="h1" size="6" weight="medium" className="login-card__title">
+              {LOGIN_TITLE}
+            </Heading>
+            <Text size="3" color="gray" className="login-card__subtitle">
+              {LOGIN_SUBTITLE}
+            </Text>
+          </Flex>
+
+          {/* Error Message */}
+          {generalError && (
+            <Flex role="alert" className="login-error" align="center" justify="between" gap="2">
+              <Text size="2" color="red">{generalError}</Text>
+              <button
+                type="button"
+                aria-label="Close"
+                className="login-error__close"
+                onClick={() => setGeneralError(null)}
+              >
+                ×
+              </button>
+            </Flex>
+          )}
+
+          {/* Initial Password Info */}
+          {showInitialPasswordPathInfo && (
+            <InitialPasswordInfo passwordFilePath={adminPasswordFilePath} />
+          )}
+
+          {/* SSO Login */}
+          {showSSOLogin && <SsoLogin autoFocus={!showLocalLogin} />}
+
+          {/* Divider - only when both SSO and local login are visible */}
+          {showSSOLogin && showLocalLogin && (
+            <Flex align="center" gap="3" className="login-divider">
+              <Box className="login-divider__line" style={{flex: 1}} />
+              <Text size="2" color="gray">{SSO_DIVIDER_LABEL}</Text>
+              <Box className="login-divider__line" style={{flex: 1}} />
+            </Flex>
+          )}
+
+          {/* Local Login */}
+          {showLocalLogin && (
+            <LocalLogin primaryButton={!showSSOLogin} onError={setGeneralError} />
+          )}
+
+          {/* Anonymous Access */}
+          {showContinueWithoutLogin && (
+            <>
+              <Box className="login-divider__line" mt="2" style={{width: '100%'}} />
+              <AnonymousAccess />
+            </>
+          )}
+        </Flex>
+      </Card>
+      </Theme>
     </LoginLayout>
   );
 }

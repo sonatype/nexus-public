@@ -15,13 +15,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { ROUTE_NAMES } from '../routeNames/routeNames';
-import CoreUILoginPageWrapper from '../../components/login/CoreUILoginPageWrapper';
+import SelfHostedLoginPageWrapper from '../../components/login/SelfHostedLoginPageWrapper';
 
 export const loginRoutes = [
   {
     name: ROUTE_NAMES.LOGIN,
-    url: 'login?returnTo',
-    component: CoreUILoginPageWrapper,
+    url: '/login?returnTo',
+    component: SelfHostedLoginPageWrapper,
     params: {
       returnTo: {
         type: 'string',

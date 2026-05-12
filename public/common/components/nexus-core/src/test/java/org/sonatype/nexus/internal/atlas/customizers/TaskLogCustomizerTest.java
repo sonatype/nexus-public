@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 import org.sonatype.nexus.supportzip.ContentSourceSupport;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -40,12 +40,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.sonatype.nexus.common.io.DirectoryHelper.mkdir;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG;
 
 public class TaskLogCustomizerTest
-    extends TestSupport
 {
   private static final long ONE_HOUR = HOURS.toMinutes(1);
 
@@ -63,6 +61,8 @@ public class TaskLogCustomizerTest
 
   @Rule
   public TemporaryFolder temporaryWorkDirectory = new TemporaryFolder();
+
+  private final DirectoryHelper directoryHelper = new DirectoryHelper();
 
   private File tasksHome;
 
@@ -118,9 +118,9 @@ public class TaskLogCustomizerTest
   }
 
   private void setupTestDirectories() throws IOException {
-    File logDir = mkdir(temporaryWorkDirectory.getRoot(), "log");
-    tasksHome = mkdir(logDir, "tasks");
-    mkdir(tasksHome, "extrasubfolder");
+    File logDir = directoryHelper.mkdir(temporaryWorkDirectory.getRoot(), "log");
+    tasksHome = directoryHelper.mkdir(logDir, "tasks");
+    directoryHelper.mkdir(tasksHome, "extrasubfolder");
   }
 
   private void initializeSystemUnderTest() {

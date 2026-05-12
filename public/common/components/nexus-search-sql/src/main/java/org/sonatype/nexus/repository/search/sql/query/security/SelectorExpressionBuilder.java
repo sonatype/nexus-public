@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.sql.SearchMappingService;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
@@ -27,6 +26,8 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Term;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -36,8 +37,9 @@ import static com.google.common.base.Preconditions.checkState;
  * searches
  */
 public class SelectorExpressionBuilder
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private List<Object> elements = new ArrayList<>();
 
   private final SearchMappingService mappingService;

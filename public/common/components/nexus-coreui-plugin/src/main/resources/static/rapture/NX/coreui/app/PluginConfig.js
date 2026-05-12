@@ -52,6 +52,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.PreviewUiSettings',
+      active: function() {
+        return NX.app.Application.bundleActive('nexus-coreui-plugin');
+      }
+    },
+    {
       id: 'NX.coreui.controller.ComponentAssetTree',
       active: function () {
         return NX.app.Application.bundleActive('nexus-coreui-plugin') &&
@@ -165,6 +171,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       id: 'NX.coreui.controller.SearchConda',
       active: function () {
         return NX.app.Application.bundleActive('nexus-repository-conda');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.SearchPub',
+      active: function () {
+        return NX.app.Application.bundleActive('nexus-repository-pub');
       }
     },
     {

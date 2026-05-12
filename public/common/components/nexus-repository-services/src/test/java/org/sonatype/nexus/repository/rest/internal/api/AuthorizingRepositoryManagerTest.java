@@ -13,7 +13,6 @@
 
 package org.sonatype.nexus.repository.rest.internal.api;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
@@ -47,9 +46,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.EDIT;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AuthorizingRepositoryManagerTest
-    extends TestSupport
 {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();

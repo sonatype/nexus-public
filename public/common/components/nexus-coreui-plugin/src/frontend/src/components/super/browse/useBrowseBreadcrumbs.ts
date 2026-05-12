@@ -1,0 +1,34 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+import { useMemo } from 'react';
+import type { BreadcrumbItem } from '../search/details/Breadcrumbs';
+
+/**
+ * Builds breadcrumb items for the Browse tree view.
+ *
+ * Returns a single item: Browse (clickable, goes back to repository list).
+ * Path navigation is handled via the tree; the header shows selectedRepository
+ * and selectedNode as non-clickable context.
+ */
+export function useBrowseBreadcrumbs(
+  selectedRepository: string | null,
+  onBackToList: () => void
+): BreadcrumbItem[] {
+  return useMemo(() => {
+    if (!selectedRepository) {
+      return [];
+    }
+    return [{ label: 'Browse', onClick: onBackToList }];
+  }, [selectedRepository, onBackToList]);
+}

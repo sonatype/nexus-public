@@ -17,16 +17,18 @@ import java.sql.Connection;
 import java.util.Optional;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @Singleton
 public class RemoveLog4JVisualizer_2_15
-    extends ComponentSupport
     implements DatabaseMigrationStep
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String DELETE_CAPABILITY_ENTRIES = """
       DELETE FROM capability_storage_item
       WHERE type='log4j-visualizer';

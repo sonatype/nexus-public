@@ -20,17 +20,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
-import org.sonatype.goodies.testsupport.concurrent.ConcurrentTask;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.CooperationException;
@@ -63,12 +66,14 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Concurrent {@link ProxyFacetSupport} tests.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ConcurrentProxyTest
-    extends TestSupport
 {
   private static final int NUM_CLIENTS = 100;
 
@@ -497,5 +502,75 @@ public class ConcurrentProxyTest
 
     // majority of requests should have been cancelled to maintain thread limit
     assertThat(cooperationExceptionCount.get(), is(NUM_CLIENTS - threadLimit));
+  }
+
+  @FunctionalInterface
+  private interface ConcurrentTask
+  {
+    void run() throws Exception;
+  }
+
+  private static class ConcurrentRunner
+  {
+    private final int iterations;
+
+    private final long timeoutSeconds;
+
+    private final java.util.List<ConcurrentTask> allTasks = new ArrayList<>();
+
+    private int taskCount;
+
+    private int runInvocations;
+
+    ConcurrentRunner(final int iterations, final long timeoutSeconds) {
+      this.iterations = iterations;
+      this.timeoutSeconds = timeoutSeconds;
+    }
+
+    void addTask(final ConcurrentTask task) {
+      addTask(1, task);
+    }
+
+    void addTask(final int threads, final ConcurrentTask task) {
+      for (int i = 0; i < threads; i++) {
+        allTasks.add(task);
+      }
+      taskCount += threads;
+    }
+
+    int getTaskCount() {
+      return taskCount;
+    }
+
+    int getIterations() {
+      return iterations;
+    }
+
+    int getRunInvocations() {
+      return runInvocations;
+    }
+
+    void go() throws Exception {
+      ExecutorService executor = Executors.newFixedThreadPool(taskCount);
+      try {
+        for (int i = 0; i < iterations; i++) {
+          List<Callable<Void>> callables = new ArrayList<>();
+          for (ConcurrentTask task : allTasks) {
+            callables.add(() -> {
+              task.run();
+              return null;
+            });
+          }
+          List<Future<Void>> futures = executor.invokeAll(callables, timeoutSeconds, TimeUnit.SECONDS);
+          for (Future<Void> f : futures) {
+            f.get();
+            runInvocations++;
+          }
+        }
+      }
+      finally {
+        executor.shutdownNow();
+      }
+    }
   }
 }

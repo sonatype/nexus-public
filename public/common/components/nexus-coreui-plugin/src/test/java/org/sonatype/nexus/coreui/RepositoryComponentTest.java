@@ -18,7 +18,6 @@ import java.util.Map;
 
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.coreui.search.BrowseableFormatXO;
 import org.sonatype.nexus.coreui.service.RepositoryUiService;
@@ -34,6 +33,7 @@ import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintVa
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,11 +49,11 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link RepositoryComponent}.
  */
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class RepositoryComponentTest
-    extends Test5Support
 {
   @ValidationExecutor
   private final Validator validator =

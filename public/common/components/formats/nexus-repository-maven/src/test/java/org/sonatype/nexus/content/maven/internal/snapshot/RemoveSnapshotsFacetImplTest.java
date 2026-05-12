@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.store.GAV;
@@ -34,7 +33,9 @@ import org.sonatype.nexus.repository.types.GroupType;
 import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -52,8 +53,9 @@ import static org.sonatype.nexus.content.maven.internal.recipe.MavenProxyFacet.P
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RemoveSnapshotsFacetImplTest
-    extends TestSupport
+
 {
   @Mock
   private Repository repository;

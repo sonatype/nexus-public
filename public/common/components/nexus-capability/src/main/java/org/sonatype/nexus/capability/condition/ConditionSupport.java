@@ -14,11 +14,12 @@ package org.sonatype.nexus.capability.condition;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.ConditionEvent;
 import org.sonatype.nexus.common.event.EventBus;
 import org.sonatype.nexus.common.event.EventManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,9 +29,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since capabilities 2.0
  */
 public abstract class ConditionSupport
-    extends ComponentSupport
     implements Condition
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final Provider<EventManager> eventManagerProvider;
 

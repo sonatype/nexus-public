@@ -13,6 +13,7 @@
 
 package org.sonatype.nexus.api.rest.selfhosted.user;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -25,7 +26,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -49,6 +49,8 @@ import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -60,9 +62,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class UserApiResource
-    extends ComponentSupport
     implements Resource, UserApiResourceDoc
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String ADMIN_USER_ID = "admin";
 
   private final SecuritySystem securitySystem;
@@ -87,6 +90,7 @@ public class UserApiResource
     if (Strings2.isBlank(createUser.getPassword())) {
       throw createWebException(Status.BAD_REQUEST, "A non-empty password is required.");
     }
+    validateRoles(createUser.getRoles());
     try {
       User user = securitySystem.addUser(createUser.toUser(), createUser.getPassword());
       return fromUser(user);
@@ -120,7 +124,8 @@ public class UserApiResource
         // Ensure user exists
         securitySystem.getUser(userId, apiUser.getSource());
 
-        Set<RoleIdentifier> roleIdentifiers = apiUser.getRoles()
+        Set<String> roleIds = apiUser.getRoles();
+        Set<RoleIdentifier> roleIdentifiers = (roleIds == null ? Collections.<String>emptySet() : roleIds)
             .stream()
             .map(roleId -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, roleId))
             .collect(Collectors.toSet());
@@ -187,6 +192,10 @@ public class UserApiResource
   private void validateRoles(final Set<String> roleIds) {
     ValidationErrorsException errors = new ValidationErrorsException();
 
+    if (roleIds == null || roleIds.isEmpty()) {
+      return;
+    }
+
     Set<String> localRoles;
     try {
       localRoles = securitySystem.listRoles(UserManager.DEFAULT_SOURCE)
@@ -194,6 +203,10 @@ public class UserApiResource
           .map(Role::getRoleId)
           .collect(Collectors.toSet());
       for (String roleId : roleIds) {
+        if (roleId == null || roleId.isBlank()) {
+          errors.withError("roles", "Role ID must not be null or blank");
+          continue;
+        }
         if (!localRoles.contains(roleId)) {
           errors.withError("roles", "Unable to locate roleId: " + roleId);
         }

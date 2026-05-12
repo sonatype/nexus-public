@@ -1,0 +1,250 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.ldap-form {
+  &__tabs {
+    display: flex;
+    gap: var(--space-1);
+    padding: var(--space-1);
+    margin-bottom: var(--space-4);
+    background: var(--gray-3);
+    border-radius: var(--radius-2);
+  }
+
+  &__tab {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-2);
+    font-weight: 500;
+    color: var(--gray-11);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-2);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+
+    &:hover:not(:disabled) {
+      background: var(--gray-4);
+    }
+
+    &[data-state="active"] {
+      background: var(--color-background);
+      color: var(--gray-12);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__tab-check {
+    color: var(--green-9);
+  }
+
+  &__content {
+    padding: var(--space-2) 0;
+  }
+
+  &__template {
+    margin-bottom: var(--space-4);
+    padding: var(--space-4);
+    background: var(--accent-2);
+    border: 1px solid var(--accent-5);
+    border-radius: var(--radius-2);
+  }
+
+  &__verification {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    background: var(--gray-2);
+    border: 1px solid var(--gray-5);
+    border-radius: var(--radius-2);
+  }
+
+  &__verification-error {
+    margin-top: var(--space-3);
+  }
+
+  &__success {
+    color: var(--green-11);
+
+    svg {
+      color: var(--green-9);
+    }
+  }
+
+  &__user-results {
+    margin-top: var(--space-4);
+  }
+
+  &__user-results-title {
+    margin-bottom: var(--space-2);
+    color: var(--gray-12);
+  }
+
+  &__user-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: var(--space-2);
+    background: var(--color-background);
+    border: 1px solid var(--gray-5);
+    border-radius: var(--radius-2);
+  }
+
+  &__user-item {
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--gray-4);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__user-detail {
+    color: var(--gray-10);
+    margin-left: var(--space-2);
+  }
+
+  &__user-more {
+    padding: var(--space-2);
+    color: var(--gray-10);
+    font-style: italic;
+  }
+
+  &__actions {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--gray-5);
+  }
+
+  &__modal-result {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-2);
+    margin-bottom: var(--space-4);
+
+    &--success {
+      background: var(--green-3);
+      color: var(--green-11);
+
+      svg {
+        color: var(--green-9);
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+    }
+
+    &--error {
+      background: var(--red-3);
+      color: var(--red-11);
+
+      svg {
+        color: var(--red-9);
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+    }
+  }
+}
+
+@keyframes ldapFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ldap-form {
+  &__step-indicator {
+    gap: var(--space-2, 8px);
+    user-select: none;
+  }
+
+  &__step-line {
+    width: 24px;
+    height: 2px;
+    background-color: var(--gray-6, #e4e4e7);
+    border-radius: 1px;
+
+    &--complete {
+      background-color: var(--green-9, #30a46c);
+    }
+
+    [data-theme='dark'] & {
+      background-color: var(--gray-6, #3d3d43);
+
+      &--complete {
+        background-color: var(--green-9, #30a46c);
+      }
+    }
+  }
+
+  &__step {
+    color: var(--gray-9, #8d8d95);
+    white-space: nowrap;
+
+    &--current {
+      color: var(--accent-11, #0969da);
+    }
+
+    &--complete {
+      color: var(--green-11, #18794e);
+    }
+
+    [data-theme='dark'] & {
+      &--current {
+        color: var(--accent-11, #6eb4f7);
+      }
+      &--complete {
+        color: var(--green-11, #4cc38a);
+      }
+    }
+  }
+
+  &__step-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 600;
+    background-color: var(--gray-4, #e8e8eb);
+    color: var(--gray-11, #6f6f78);
+
+    .ldap-form__step--current & {
+      background-color: var(--accent-9, #0969da);
+      color: white;
+    }
+
+    .ldap-form__step--complete & {
+      background-color: var(--green-9, #30a46c);
+      color: white;
+      font-size: 10px;
+    }
+
+    [data-theme='dark'] & {
+      background-color: var(--gray-4, #27272b);
+      color: var(--gray-11, #9898a1);
+    }
+  }
+}

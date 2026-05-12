@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.collect;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,7 +22,7 @@ import static org.hamcrest.Matchers.is;
  * Tests for {@link StringMultimap}.
  */
 public class StringMultimapTest
-    extends TestSupport
+
 {
   private StringMultimap underTest;
 

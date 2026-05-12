@@ -14,17 +14,18 @@ package org.sonatype.nexus.common.stateguard;
 
 import java.lang.reflect.Method;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Aspect
 public class GuardedAspect
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Around("@annotation(guarded) && execution(* *(..))")
   public Object around(final ProceedingJoinPoint joinPoint, final Guarded guarded) throws Throwable {
     Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();

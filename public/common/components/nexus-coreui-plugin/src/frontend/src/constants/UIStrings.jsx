@@ -56,6 +56,7 @@ import RecoveryModeAlertStrings from './RecoveryModeAlertStrings';
 import MaliciousRiskStrings  from "./pages/maliciousrisk/MaliciousRiskStrings";
 import SearchStrings from './pages/browse/search/SearchStrings';
 import UpgradeStrings from "./pages/admin/system/UpgradeStrings";
+import PreviewUiStrings from "./pages/admin/system/PreviewUiStrings";
 import RepositoryDirectoryStrings from './pages/admin/repository/RepositoryDirectoryStrings';
 import AdminSecurityDirectoryStrings from './pages/admin/repository/AdminSecurityDirectoryStrings';
 import AdminSystemDirectoryStrings from './pages/admin/system/AdminSystemDirectoryStrings';
@@ -115,6 +116,7 @@ export default {
   ...HttpStrings,
   ...LicensingStrings,
   ...NodesStrings,
+  ...PreviewUiStrings,
   ...SystemInformationStrings,
 
   // admin/riskvisualizer

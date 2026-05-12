@@ -1,0 +1,71 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+import React, { createContext, useContext, useRef, useState, useEffect } from 'react';
+import { Tooltip as RadixTooltip } from '@radix-ui/themes';
+
+const TooltipContainerContext = createContext(null);
+
+/**
+ * Provider that renders a portal container div inside the Radix Theme subtree.
+ * Tooltips rendered to this container inherit theme variables (--gray-12, --gray-1)
+ * instead of losing them when portaled to body.
+ */
+export function TooltipContainerProvider({ children }) {
+  const containerRef = useRef(null);
+  const [container, setContainer] = useState(null);
+
+  useEffect(() => {
+    setContainer(containerRef.current);
+  }, []);
+
+  return (
+    <TooltipContainerContext.Provider value={container}>
+      <div
+        ref={containerRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: 0,
+          height: 0,
+          overflow: 'visible',
+          pointerEvents: 'none',
+          // Z-index 14999: Above ExtJS animating components (10000) but below masks (20000+)
+          // This ensures header dropdowns, tooltips, and popovers appear above ExtJS grids
+          // while still allowing modals and loading overlays to cover them.
+          zIndex: 14999,
+        }}
+        aria-hidden
+      />
+      {children}
+    </TooltipContainerContext.Provider>
+  );
+}
+
+/**
+ * Hook to get the portal container. Use for DropdownMenu.Content, Select.Content, etc.
+ * so they render above the top nav (same z-index layer as tooltips).
+ */
+export function usePortalContainer() {
+  return useContext(TooltipContainerContext);
+}
+
+/**
+ * Tooltip that renders inside the Theme subtree so it inherits Radix theme variables.
+ * Falls back to body when used outside TooltipContainerProvider.
+ */
+export function Tooltip(props) {
+  const container = useContext(TooltipContainerContext);
+  return <RadixTooltip container={container} {...props} />;
+}

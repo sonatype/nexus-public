@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { screen, within } from '@testing-library/react'
+import { screen } from '@testing-library/react';
 import React from 'react';
 import { renderComponentRoute } from '../../../testUtils/renderUtils';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
@@ -32,17 +32,15 @@ describe('MissingRoutePage', () => {
   });
 
   async function assertMissingRoutePageRendered() {
-    const main = await screen.findByRole('main');
-    expect(within(main).getByRole('heading', { name: '404', level: 1 })).toBeVisible();
-    expect(within(main).getByRole('heading', {name: 'RESOURCE NOT FOUND', level: 2})).toBeVisible();
+    expect(screen.getByText('404')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Resource Not Found' })).toBeVisible();
 
-    const dashboardLink = within(main).getByRole('link', { name: 'Return to Dashboard'});
+    const dashboardLink = screen.getByRole('link', { name: 'Return to Dashboard' });
     expect(dashboardLink).toBeVisible();
-    expect(dashboardLink.href).toContain('browse/welcome')
+    expect(dashboardLink.getAttribute('href')).toContain('browse/welcome');
 
-    const helpCenterLink = within(main).getByRole('link', { name: 'Visit Documentation'});
-    expect(helpCenterLink).toBeVisible()
-    expect(helpCenterLink.href)
-        .toEqual("https://links.sonatype.com/products/nexus/docs?utm_medium=product&utm_source=nexus_repo&utm_campaign=menu-docs")
+    const helpCenterLink = screen.getByRole('link', { name: 'Visit Documentation' });
+    expect(helpCenterLink).toBeVisible();
+    expect(helpCenterLink.href).toBe('https://links.sonatype.com/products/nexus/docs');
   }
 });

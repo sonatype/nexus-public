@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.internal.matcher;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -20,6 +19,8 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Matcher;
 
 import com.google.common.base.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -29,9 +30,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class MavenMatcherSupport
-    extends ComponentSupport
     implements Matcher
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Returns a {@link Predicate} that will match for given path whenever passed in predicate matches, plus, for Maven2
    * layout defined extensions like ".sha1" and ".md5".

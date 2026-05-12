@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.coreui.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -21,7 +19,6 @@ import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ROLES_MODAL_ENABLED;
 
 public class RolesModalStateContributorTest
-    extends TestSupport
 {
   @Test
   public void shouldReturnEnabledWhenFeatureFlagIsTrue() {

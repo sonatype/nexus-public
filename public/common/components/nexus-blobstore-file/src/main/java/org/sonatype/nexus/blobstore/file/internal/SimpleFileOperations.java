@@ -25,15 +25,17 @@ import java.nio.file.attribute.FileTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.MetricsInputStream;
 import org.sonatype.nexus.blobstore.StreamMetrics;
-import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 
 import com.google.common.io.ByteStreams;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,10 +48,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SimpleFileOperations
-    extends ComponentSupport
     implements FileOperations
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final int MAX_RETRIES = 3;
+
+  private final DirectoryHelper directoryHelper;
+
+  @Autowired
+  public SimpleFileOperations(final DirectoryHelper directoryHelper) {
+    this.directoryHelper = checkNotNull(directoryHelper);
+  }
 
   @Override
   public StreamMetrics create(final Path path, final InputStream data) throws IOException {
@@ -60,7 +70,7 @@ public class SimpleFileOperations
     Path dir = path.getParent();
     checkNotNull(dir, "Null parent for path: %s", path);
     if (!Files.isDirectory(dir)) {
-      DirectoryHelper.mkdir(dir);
+      directoryHelper.mkdir(dir);
     }
 
     final MetricsInputStream input = new MetricsInputStream(data);
@@ -84,7 +94,7 @@ public class SimpleFileOperations
       try {
         Path parent = path.getParent();
         if (parent != null) {
-          DirectoryHelper.mkdir(parent);
+          directoryHelper.mkdir(parent);
         }
         return Files.newOutputStream(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
       }
@@ -100,7 +110,7 @@ public class SimpleFileOperations
 
   @Override
   public void hardLink(final Path source, final Path newLink) throws IOException {
-    DirectoryHelper.mkdir(newLink.getParent());
+    directoryHelper.mkdir(newLink.getParent());
     try {
       Files.createLink(newLink, source);
     }
@@ -116,7 +126,7 @@ public class SimpleFileOperations
   public void copy(final Path source, final Path target) throws IOException {
     checkNotNull(source);
     checkNotNull(target);
-    DirectoryHelper.mkdir(target.getParent());
+    directoryHelper.mkdir(target.getParent());
     Files.copy(source, target);
   }
 
@@ -124,7 +134,7 @@ public class SimpleFileOperations
   public void move(final Path source, final Path target) throws IOException {
     checkNotNull(source);
     checkNotNull(target);
-    DirectoryHelper.mkdir(target.getParent());
+    directoryHelper.mkdir(target.getParent());
     Files.move(source, target);
   }
 
@@ -132,7 +142,7 @@ public class SimpleFileOperations
   public void moveAtomic(final Path source, final Path target) throws IOException {
     checkNotNull(source);
     checkNotNull(target);
-    DirectoryHelper.mkdir(target.getParent());
+    directoryHelper.mkdir(target.getParent());
     try {
       Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
     }
@@ -145,7 +155,7 @@ public class SimpleFileOperations
   public void overwrite(final Path source, final Path target) throws IOException {
     checkNotNull(source);
     checkNotNull(target);
-    DirectoryHelper.mkdir(target.getParent());
+    directoryHelper.mkdir(target.getParent());
     Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
   }
 
@@ -153,7 +163,7 @@ public class SimpleFileOperations
   public void overwriteAtomic(final Path source, final Path target) throws IOException {
     checkNotNull(source);
     checkNotNull(target);
-    DirectoryHelper.mkdir(target.getParent());
+    directoryHelper.mkdir(target.getParent());
     try {
       Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
@@ -249,7 +259,7 @@ public class SimpleFileOperations
    */
   @Override
   public void deleteDirectory(final Path directory) throws IOException {
-    DirectoryHelper.emptyIfExists(directory);
+    directoryHelper.emptyIfExists(directory);
     Files.deleteIfExists(directory);
   }
 

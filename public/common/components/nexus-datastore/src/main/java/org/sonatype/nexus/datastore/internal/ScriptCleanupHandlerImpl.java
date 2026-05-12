@@ -14,10 +14,11 @@ package org.sonatype.nexus.datastore.internal;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.script.ScriptCleanupHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stub DataStore implementation of {@link ScriptCleanupHandler}.
@@ -28,9 +29,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier("datastore")
 @Singleton
 public class ScriptCleanupHandlerImpl
-    extends ComponentSupport
     implements ScriptCleanupHandler
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   public void cleanup(final String context) {
     log.debug("Currently does nothing");

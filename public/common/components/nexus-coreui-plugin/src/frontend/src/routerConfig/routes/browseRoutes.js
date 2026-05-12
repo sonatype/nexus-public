@@ -41,6 +41,7 @@ const SearchMavenExt = lazyLoad(() => import('../../components/pages/browse/Sear
 const SearchNpmExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchNpmExt'));
 const SearchNugetExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchNugetExt'));
 const SearchP2Ext = lazyLoad(() => import('../../components/pages/browse/Search/SearchP2Ext'));
+const SearchPubExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchPubExt'));
 const SearchPypiExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchPypiExt'));
 const SearchRExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchRExt'));
 const SearchRawExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchRawExt'));
@@ -434,6 +435,25 @@ export const browseRoutes = [
     },
   },
   {
+    name: BROWSE.SEARCH.PUB,
+    url: '/pub/:keyword',
+    component: SearchPubExt,
+    data: {
+      visibilityRequirements: {
+        permissions: ['nexus:search:read'],
+        browseableFormat: 'pub',
+      },
+      title: BROWSE.SEARCH.TITLE,
+    },
+    params: {
+      keyword: {
+        value: null,
+        raw: true,
+        dynamic: true,
+      },
+    },
+  },
+  {
     name: BROWSE.SEARCH.R,
     url: '/r/:keyword',
     component: SearchRExt,
@@ -620,13 +640,8 @@ export const browseRoutes = [
     data: {
       visibilityRequirements: {
         permissions: [Permissions.ADMIN],
-        statesEnabled: [
-          {
-            key: MALWARE_RISK_ENABLED,
-            defaultValue: false,
-          },
-        ],
-        editions: ['PRO'],
+        // RHC available to ALL editions (CE, Pro, Enterprise, Nexus One)
+        // Protect is marketing/education module - always visible to admins
       },
       title: BROWSE.MALWARERISK.TITLE,
     },

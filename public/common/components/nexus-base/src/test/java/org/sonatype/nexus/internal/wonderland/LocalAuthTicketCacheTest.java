@@ -15,8 +15,6 @@ package org.sonatype.nexus.internal.wonderland;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,7 +24,6 @@ import static org.hamcrest.Matchers.is;
  * Tests for {@link LocalAuthTicketCache}.
  */
 public class LocalAuthTicketCacheTest
-    extends TestSupport
 {
   @Test
   public void addRemoveIsRemoved() {

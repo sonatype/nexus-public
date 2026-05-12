@@ -77,7 +77,17 @@ export default {
     },
 
     VERIFY_CONNECTION_BUTTON_LABEL: 'Verify Connection',
-    VERIFY_CONNECTION_SUCCESSFUL: (msg) => `Connection Successful! Applications: ${msg}`,
+    VERIFY_CONNECTION_SUCCESSFUL: (data) => {
+      // data is the verification response object with { success, reason, applicationCount }
+      // Use the applicationCount field directly from the backend response
+      const count = data?.applicationCount || 0;
+
+      if (count > 0) {
+        return `Connection Successful — ${count} application${count !== 1 ? 's' : ''} found`;
+      }
+      // If no applications configured
+      return `Connection Successful — No applications configured yet.`;
+    },
     VERIFY_CONNECTION_ERROR: (msg) => `Connection Failed: ${msg}`,
     FORM_NOTES: 'can evaluate application and organizing policies',
     HELP_TEXT: 'To enable this feature configure the IQ Server URL, username and password',
@@ -95,6 +105,7 @@ export default {
         DESCRIPTION: 'Identify and remediate policy violations',
         ENABLED: 'Enabled',
         NOT_AVAILABLE: 'Not Available',
+        LICENSE_NOT_AVAILABLE: 'Purchase license or contact Administrator',
         EXPLORE_LINK: 'Explore Sonatype Lifecycle'
       },
 
@@ -103,17 +114,17 @@ export default {
         DESCRIPTION: 'Intercept malicious open source at the door',
         ENABLED: 'Enabled',
         NOT_AVAILABLE: 'Not Available',
+        LICENSE_NOT_AVAILABLE: 'Purchase license or contact Administrator',
         EXPLORE_LINK: 'Explore Repository Firewall'
       }
     }
   },
 
-SONATYPE_LIFECYCLE: {
+  SONATYPE_LIFECYCLE: {
     MENU: {
       text: 'Sonatype Lifecycle',
     },
     HOSTED_REPOSITORIES_EVALUATION: {
-      ...HostedRepositoriesEvaluationStrings.HOSTED_REPOSITORIES_EVALUATION,
       title: 'Hosted Repositories Evaluation',
       breadcrumb: 'Hosted Repositories Evaluation Group',
       description: 'Configure global evaluation settings to provide policy coverage for your hosted repositories.',
@@ -121,12 +132,7 @@ SONATYPE_LIFECYCLE: {
         settings: 'Settings',
         repositories: 'Repositories'
       },
-      INCOMPLETE_MODAL: {
-        TITLE: 'Incomplete Configuration',
-        MESSAGE: 'Some steps are incomplete. Continuing will discard unsaved changes.',
-        CANCEL: 'Cancel',
-        CONTINUE: 'Continue'
-      },
+      ...HostedRepositoriesEvaluationStrings.HOSTED_REPOSITORIES_EVALUATION,
       UNSAVED_CHANGES_MODAL: {
         TITLE: 'Unsaved Changes',
         MESSAGE: 'You have unsaved changes. Are you sure you want to leave? All changes will be lost.',

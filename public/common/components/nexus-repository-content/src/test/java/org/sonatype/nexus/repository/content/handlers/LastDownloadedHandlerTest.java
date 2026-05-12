@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.handlers;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.Repository;
@@ -28,7 +27,9 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.time.Duration.ofDays;
 import static java.util.Optional.empty;
@@ -46,8 +47,8 @@ import static org.sonatype.nexus.repository.http.HttpMethods.OPTIONS;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LastDownloadedHandlerTest
-    extends TestSupport
 {
   @Mock
   private Context context;

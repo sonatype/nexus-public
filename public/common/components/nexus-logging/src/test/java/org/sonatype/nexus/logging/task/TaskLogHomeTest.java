@@ -14,8 +14,6 @@ package org.sonatype.nexus.logging.task;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -31,7 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TaskLogHomeTest
-    extends TestSupport
+
 {
   @Test
   public void getTaskLogsHome() {

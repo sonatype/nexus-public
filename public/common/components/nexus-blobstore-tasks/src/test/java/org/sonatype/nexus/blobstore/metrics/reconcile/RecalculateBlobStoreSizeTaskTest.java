@@ -17,8 +17,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.common.MultipleFailures.MultipleFailuresException;
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.failure.MultipleFailures.MultipleFailuresException;
 import org.sonatype.nexus.blobstore.BlobAttributesSupport;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
@@ -35,7 +34,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,8 +50,9 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.common.BlobStoreTaskSupport.ALL;
 import static org.sonatype.nexus.blobstore.common.BlobStoreTaskSupport.BLOBSTORE_NAME_FIELD_ID;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RecalculateBlobStoreSizeTaskTest
-    extends TestSupport
+
 {
   @Mock
   private BlobStoreManager blobStoreManager;

@@ -16,18 +16,19 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
@@ -39,10 +40,12 @@ import static org.mockito.Mockito.when;
  * {@link FileBlobStoreMetricsPropertiesReader} integration tests.
  */
 @SuppressWarnings("deprecation")
-@Category(SQLTestGroup.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FileBlobStoreMetricsPropertiesReaderIT
-    extends TestSupport
 {
+  @Rule
+  public TemporaryFolder tmpDir = new TemporaryFolder();
+
   private FileBlobStoreMetricsPropertiesReader underTest;
 
   private Path blobStoreDirectory;
@@ -59,9 +62,9 @@ public class FileBlobStoreMetricsPropertiesReaderIT
   FileOperations fileOperations;
 
   @Before
-  public void setUp() {
+  public void setUp() throws java.io.IOException {
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
-    blobStoreDirectory = util.createTempDir().toPath();
+    blobStoreDirectory = tmpDir.newFolder().toPath();
   }
 
   @After

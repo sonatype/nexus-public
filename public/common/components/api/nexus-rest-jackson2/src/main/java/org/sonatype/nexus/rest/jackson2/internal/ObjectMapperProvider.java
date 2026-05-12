@@ -15,7 +15,6 @@ package org.sonatype.nexus.rest.jackson2.internal;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapDeserializer;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapSerializer;
@@ -30,6 +29,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Jackson {@link ObjectMapper} provider for use with Siesta.
@@ -40,9 +41,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier("siesta")
 @Singleton
 public class ObjectMapperProvider
-    extends ComponentSupport
     implements Provider<ObjectMapper>, FactoryBean<ObjectMapper>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ObjectMapper mapper;
 
   public ObjectMapperProvider() {

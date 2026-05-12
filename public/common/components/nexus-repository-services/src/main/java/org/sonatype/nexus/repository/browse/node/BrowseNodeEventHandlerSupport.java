@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.browse.node;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 
 /**
  * Manages common tasks for the BrowseNodeEventHandler

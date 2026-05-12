@@ -1,0 +1,61 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.s3-blob-store-settings {
+  &__link {
+    display: inline-block;
+    margin-left: 8px;
+    color: var(--color-primary, #1a73e8);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium, 500);
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    .dark-mode & {
+      color: var(--color-primary-dark, #8ab4f8);
+    }
+  }
+
+  &__failover-bucket {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 16px;
+    background: var(--color-bg-secondary, #f8f9fa);
+    border-radius: var(--border-radius-md, 6px);
+    margin-bottom: 16px;
+
+    .dark-mode & {
+      background: var(--color-bg-tertiary-dark, #35363a);
+    }
+  }
+
+  &__failover-fields {
+    flex: 1;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr 1fr;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__remove-btn {
+    flex-shrink: 0;
+    margin-top: 28px; // Align with form fields
+  }
+}
+

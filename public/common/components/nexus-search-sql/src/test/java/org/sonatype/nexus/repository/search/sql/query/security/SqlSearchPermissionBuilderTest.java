@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -37,6 +36,7 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
 import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
@@ -63,9 +63,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.sql.query.syntax.Operand.IN;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SqlSearchPermissionBuilderTest
-    extends TestSupport
 {
   private static final String REPO1 = "repo1";
 
@@ -250,6 +252,24 @@ public class SqlSearchPermissionBuilderTest
 
     assertThat(exp.get(), is(new SqlPredicate(IN, SearchField.REPOSITORY_NAME,
         TermCollection.create(new ExactTerm("repo1"), new ExactTerm("repo2"), new ExactTerm("repo3")))));
+  }
+
+  @Test(expected = ValidationErrorsException.class)
+  public void shouldThrowExceptionForLeadingWildcard() {
+    Set<String> repositories = of("maven-re*", "maven-s*", "*maven");
+    mockRepositoryManager(repositories);
+    mockBrowsableRepositories(repositories);
+
+    underTest.build(searchRequest(repositories));
+  }
+
+  @Test(expected = ValidationErrorsException.class)
+  public void shouldThrowExceptionForShortTrailingWildcard() {
+    Set<String> repositories = of("maven-re*", "maven-s*", "1.*");
+    mockRepositoryManager(repositories);
+    mockBrowsableRepositories(repositories);
+
+    underTest.build(searchRequest(repositories));
   }
 
   private void assertQueryCondition(final Optional<Expression> expression, final Expression expected) {

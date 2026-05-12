@@ -1,0 +1,240 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/**
+ * Browse Page Layout Styles
+ *
+ * Two-step flow:
+ * - Step 1 (--list): Sidebar + Repository List
+ * - Step 2 (--tree): Tree + Detail view
+ *
+ * Layout matches Search preview: px/py, Grid 250px 1fr gap-6, search-sidebar for filter.
+ */
+@import '../search/unified/SearchSidebar.scss';
+
+.browse-page {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background);
+
+  // =========================================================================
+  // STEP 1: Repository List — Reference Table Layout (Grid)
+  // Page scrolls like Search; no internal ScrollArea for table
+  // =========================================================================
+  &--list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    /* List wrapper: matches UnifiedSearchPage px/py, Grid 250px 1fr gap-6 */
+    .browse-page__list-wrapper {
+      width: 100%;
+      overflow: visible !important;
+    }
+
+    .page-content {
+      width: 100%;
+      min-width: 0;
+      overflow: visible !important;
+    }
+
+    .browse-page__main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: visible !important;
+    }
+
+    .browse-page__list-content {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      overflow: visible !important;
+
+      // --sticky-table-header-offset is set dynamically via ResizeObserver
+      // in BrowsePage.tsx to match the actual sticky header height
+    }
+
+    // Override EVERY Radix wrapper between scroll container and <th>.
+    // Radix Themes Table/Card render nested divs with overflow:hidden
+    // that break position:sticky. This is a known issue (radix-ui/themes#767).
+    // The nuclear option: override overflow on all descendants of the card.
+    .repository-list-table__card {
+      overflow: visible !important;
+
+      *:not(thead):not(th):not(td):not(tbody):not(tr) {
+        overflow: visible !important;
+      }
+    }
+
+    .browse-page__sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background-color: var(--color-background);
+      margin-top: calc(-1 * var(--space-4));
+      padding-top: var(--space-4);
+      padding-bottom: var(--space-4);
+    }
+
+    /* header and actions-bar class names match Search structure */
+    .header {
+      flex-shrink: 0;
+    }
+
+    /* Card: match header alignment — same left padding as header content */
+    .browse-page__list-content .rt-Card {
+      padding-left: var(--card-padding);
+      padding-right: var(--card-padding);
+    }
+
+  }
+
+  // =========================================================================
+  // STEP 2: Tree + Detail Mode
+  // Grid 250px 1fr, match Search layout; tree uses search-sidebar (250px)
+  // Sticky detail panel keeps detail visible when scrolling tree
+  // =========================================================================
+  &--tree {
+    .browse-page__tree-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+
+      // Tree sidebar scrolls independently
+      .browse-page__tree {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+      }
+
+      // Detail panel stays sticky when scrolling
+      .browse-page__detail {
+        position: sticky;
+        top: 80px;
+        align-self: start;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+      }
+    }
+  }
+
+  // =========================================================================
+  // Header (Tree mode only)
+  // =========================================================================
+  &__header {
+    flex-shrink: 0;
+    background-color: var(--color-background);
+
+    button[aria-label] {
+      &:hover {
+        background-color: var(--gray-4);
+      }
+    }
+  }
+
+  // =========================================================================
+  // Tree Panel — 250px via search-sidebar (SearchSidebar.scss)
+  // =========================================================================
+  &__tree {
+    &.search-sidebar {
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-background);
+    }
+  }
+
+  // =========================================================================
+  // Detail Panel - Sticky positioning so it stays visible when scrolling tree
+  // =========================================================================
+  &__detail {
+    min-width: 0;
+    overflow: hidden;
+    background-color: var(--color-background);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    max-height: calc(100vh - 200px); // Leave room for header/breadcrumbs
+  }
+
+  // =========================================================================
+  // Pagination Controls
+  // =========================================================================
+  &__pagination {
+    flex-shrink: 0;
+    border-top: 1px solid var(--gray-6);
+    background-color: var(--color-background);
+
+    button {
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &:not(:disabled):hover {
+        background-color: var(--gray-4);
+      }
+    }
+  }
+}
+
+// =============================================================================
+// Scrollbar — tree and detail use ScrollArea
+// =============================================================================
+.browse-page--tree {
+  .rt-ScrollAreaViewport {
+    scrollbar-gutter: stable;
+  }
+
+  .rt-ScrollAreaScrollbar[data-orientation="vertical"] {
+    width: 8px;
+    padding: 2px;
+    opacity: 1;
+  }
+
+  .rt-ScrollAreaThumb {
+    background: var(--gray-7);
+    border-radius: 4px;
+
+    &:hover {
+      background: var(--gray-9);
+    }
+  }
+}
+
+// =============================================================================
+// Responsive adjustments — tree hidden on mobile, shown in drawer
+// =============================================================================
+
+// =============================================================================
+// Dark mode support
+// =============================================================================
+:root[data-theme="dark"] {
+  .browse-page {
+    &__header {
+      border-color: var(--gray-7);
+    }
+
+    &--list .header {
+      border-color: var(--gray-7);
+    }
+
+    &__pagination {
+      border-color: var(--gray-7);
+    }
+  }
+}

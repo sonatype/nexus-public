@@ -21,9 +21,8 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.Statement;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.io.DirectoryHelper;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationDAO;
 import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationData;
@@ -35,7 +34,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -55,8 +56,8 @@ import static org.sonatype.nexus.repository.content.upgrades.DatastoreBlobReconc
 import static org.sonatype.nexus.repository.content.upgrades.DatastoreBlobReconciliationLogMigrator_1_11.RECONCILIATION_DIRECTORY_NAME;
 import static org.sonatype.nexus.repository.content.upgrades.DatastoreBlobReconciliationLogMigrator_1_11.TABLE_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DatastoreBlobReconciliationLogMigrator_1_11_Test
-    extends TestSupport
 {
   private static final String BLOBSTORE_1 = "blobstore-1";
 
@@ -79,12 +80,14 @@ public class DatastoreBlobReconciliationLogMigrator_1_11_Test
 
   private DataSession<?> session;
 
+  private final DirectoryHelper directoryHelper = new DirectoryHelper();
+
   private DatastoreBlobReconciliationLogMigrator_1_11 underTest;
 
   @Before
   public void setup() throws Exception {
     currentReconciliationLogBaseDir = Paths.get(sourceReconciliationLogFolder.getRoot().toString(), BLOBSTORE);
-    DirectoryHelper.mkdir(currentReconciliationLogBaseDir.toFile());
+    directoryHelper.mkdir(currentReconciliationLogBaseDir.toFile());
 
     underTest = new DatastoreBlobReconciliationLogMigrator_1_11(appDirs);
     session = sessionRule.openSession(DEFAULT_DATASTORE_NAME);
@@ -189,7 +192,7 @@ public class DatastoreBlobReconciliationLogMigrator_1_11_Test
   }
 
   private void makeBlobStoreDirectory(final String blobStoreName) throws IOException {
-    DirectoryHelper.mkdir(Paths.get(currentReconciliationLogBaseDir.toString(), blobStoreName).toFile());
+    directoryHelper.mkdir(Paths.get(currentReconciliationLogBaseDir.toString(), blobStoreName).toFile());
   }
 
   private BlobStoreConfigurationData aBlobStoreConfiguration(final String path) {

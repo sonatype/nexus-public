@@ -1,0 +1,216 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.rubygems-detail-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--nx-spacing-4x, 16px);
+
+  &--loading,
+  &--error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-align: center;
+  }
+
+  &__spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--nx-color-border, #e0e0e0);
+    border-top-color: #cc342d;
+    border-radius: 50%;
+    animation: rubygems-detail-spin 0.8s linear infinite;
+    margin-bottom: var(--nx-spacing-4x, 16px);
+  }
+
+  @keyframes rubygems-detail-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  &__error {
+    color: var(--nx-color-error, #d32f2f);
+    margin-bottom: var(--nx-spacing-4x, 16px);
+  }
+
+  &__header {
+    margin-bottom: var(--nx-spacing-6x, 24px);
+  }
+
+  &__back-btn {
+    background: none;
+    border: none;
+    color: #cc342d;
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 0;
+    margin-bottom: var(--nx-spacing-3x, 12px);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__title {
+    margin: 0 0 var(--nx-spacing-2x, 8px) 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--nx-color-text-dark, #333);
+  }
+
+  &__summary {
+    margin: 0;
+    color: var(--nx-color-text-dark, #666);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nx-spacing-6x, 24px);
+  }
+
+  &__section {
+    background-color: var(--nx-color-component-background, #fff);
+    border: 1px solid var(--nx-color-border, #e0e0e0);
+    border-radius: var(--nx-border-radius, 4px);
+    overflow: hidden;
+  }
+
+  &__section-title {
+    margin: 0;
+    padding: var(--nx-spacing-3x, 12px) var(--nx-spacing-4x, 16px);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--nx-color-text-dark, #333);
+    background-color: var(--nx-color-section-background, #f9f9f9);
+    border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+  }
+
+  &__metadata {
+    margin: 0;
+    padding: var(--nx-spacing-4x, 16px);
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: var(--nx-spacing-2x, 8px) var(--nx-spacing-4x, 16px);
+
+    dt {
+      font-weight: 600;
+      color: var(--nx-color-text-dark, #555);
+      font-size: 0.8125rem;
+    }
+
+    dd {
+      margin: 0;
+      color: var(--nx-color-text-dark, #333);
+      font-size: 0.875rem;
+
+      a {
+        color: #cc342d;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  &__versions-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+
+    th,
+    td {
+      text-align: left;
+      padding: var(--nx-spacing-3x, 12px) var(--nx-spacing-4x, 16px);
+      border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+    }
+
+    th {
+      font-weight: 600;
+      color: var(--nx-color-text-dark, #555);
+      background-color: var(--nx-color-section-background, #f9f9f9);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+  }
+
+  &__version-cell {
+    font-family: monospace;
+    color: #cc342d;
+  }
+
+  &__platform-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    border-radius: 10px;
+    text-transform: lowercase;
+
+    &--ruby {
+      background-color: #fde8e7;
+      color: #cc342d;
+    }
+
+    &--java {
+      background-color: #e8f4fd;
+      color: #007396;
+    }
+
+    &--jruby {
+      background-color: #fff3e0;
+      color: #e65100;
+    }
+  }
+
+  &__repos-list {
+    margin: 0;
+    padding: var(--nx-spacing-4x, 16px);
+    list-style-type: none;
+
+    li {
+      padding: var(--nx-spacing-2x, 8px) 0;
+      border-bottom: 1px solid var(--nx-color-border, #e0e0e0);
+      font-size: 0.875rem;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+
+  &__description {
+    padding: var(--nx-spacing-4x, 16px);
+
+    pre {
+      margin: 0;
+      font-family: inherit;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  }
+}
+
+

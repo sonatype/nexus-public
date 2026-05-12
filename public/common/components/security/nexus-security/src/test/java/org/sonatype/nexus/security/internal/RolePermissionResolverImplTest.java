@@ -14,7 +14,6 @@ package org.sonatype.nexus.security.internal;
 
 import java.util.Collections;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
@@ -22,7 +21,9 @@ import org.sonatype.nexus.security.role.NoSuchRoleException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -33,8 +34,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link RolePermissionResolverImpl}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RolePermissionResolverImplTest
-    extends TestSupport
 {
   private RolePermissionResolverImpl underTest;
 

@@ -251,6 +251,9 @@ describe('Welcome', function() {
 
     it('shows "Browse", "Search" and "Connect" for anonymous user', async function() {
       const {quickAction, loadingStatus} = selectors;
+      // Anonymous user in Nexus is still a user object (with limited permissions)
+      // The Search quick action requires ExtJS.state().getUser() to return truthy
+      user = { administrator: false };
 
       when(ExtJS.checkPermission).calledWith(Permissions.SEARCH.READ).mockReturnValue(true);
       when(ExtJS.state().getValue).calledWith('browseableformats').mockReturnValue(browseableFormats);
@@ -320,6 +323,15 @@ describe('Welcome', function() {
       await waitForElementToBeRemoved(selectors.loadingStatus());
 
       expect(selectors.queryAllCards().length).toBe(3);
+    });
+
+    it("renders the UsageCenter component when an administrator", async () => {
+      user = {administrator: true};
+
+      render(<Welcome />);
+      await waitForElementToBeRemoved(selectors.loadingStatus());
+
+      expect(screen.getByText('Usage Center')).toBeInTheDocument();
     });
 
     it("does not render any card when not an administrator", async () => {

@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.Base64Variant;
 import com.fasterxml.jackson.core.Base64Variants;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
@@ -67,7 +68,8 @@ public abstract class AbstractJsonTypeHandler<T>
    */
   protected ObjectMapper buildObjectMapper(final Supplier<ObjectMapper> mapperFactory) {
     return mapperFactory.get()
-        .registerModule(new JavaTimeModule());
+        .registerModule(new JavaTimeModule())
+        .registerModule(new Jdk8Module());
   }
 
   /**

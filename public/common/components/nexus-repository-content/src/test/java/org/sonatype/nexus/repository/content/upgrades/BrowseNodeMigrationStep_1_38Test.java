@@ -29,8 +29,10 @@ import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.sonatype.nexus.testdb.DatabaseTest;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,6 +40,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@ExtendWith(MockitoExtension.class)
 class BrowseNodeMigrationStep_1_38Test
     extends ExampleContentTestSupport
 {

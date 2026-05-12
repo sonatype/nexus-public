@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.security;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 
@@ -26,7 +25,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 public class NexusSecurityContributorTest
-    extends TestSupport
 {
   private NexusSecurityContributor underTest;
 

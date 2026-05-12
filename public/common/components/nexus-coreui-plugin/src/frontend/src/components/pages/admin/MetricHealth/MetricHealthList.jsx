@@ -11,6 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
+import DOMPurify from 'dompurify';
 import {useMachine} from '@xstate/react';
 import {isEmpty} from 'ramda';
 import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
@@ -119,7 +120,7 @@ export default function MetricHealthList({onEdit}) {
                   <NxTable.Cell>
                     <p
                       dangerouslySetInnerHTML={{
-                        __html: message,
+                        __html: DOMPurify.sanitize(message),
                       }}
                     />
                   </NxTable.Cell>

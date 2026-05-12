@@ -16,10 +16,10 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -30,9 +30,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Qualifier("memory")
 public class MemoryRealmConfigurationStore
-    extends ComponentSupport
     implements RealmConfigurationStore
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private RealmConfiguration model;
 
   @Override

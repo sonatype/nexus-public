@@ -19,10 +19,11 @@ import javax.annotation.Nonnull;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -35,8 +36,9 @@ import org.springframework.stereotype.Component;
 @Singleton
 @Component
 class HttpResponseSenderSelector
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final Map<String, HttpResponseSender> responseSenders;
 
   private final DefaultHttpResponseSender defaultHttpResponseSender;

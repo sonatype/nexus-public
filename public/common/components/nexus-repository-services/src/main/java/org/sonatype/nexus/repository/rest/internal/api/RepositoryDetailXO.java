@@ -29,6 +29,12 @@ public class RepositoryDetailXO
 
   private final RepositoryStatusXO status;
 
+  private Long size;
+
+  private Long componentCount;
+
+  private Long assetCount;
+
   public RepositoryDetailXO(
       final String name,
       final String type,
@@ -61,5 +67,29 @@ public class RepositoryDetailXO
 
   public RepositoryStatusXO getStatus() {
     return status;
+  }
+
+  public Long getSize() {
+    return size;
+  }
+
+  public void setSize(final Long size) {
+    this.size = size;
+  }
+
+  public Long getComponentCount() {
+    return componentCount;
+  }
+
+  public void setComponentCount(final Long componentCount) {
+    this.componentCount = componentCount;
+  }
+
+  public Long getAssetCount() {
+    return assetCount;
+  }
+
+  public void setAssetCount(final Long assetCount) {
+    this.assetCount = assetCount;
   }
 }

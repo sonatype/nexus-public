@@ -12,12 +12,13 @@
  */
 package org.sonatype.nexus.internal.security.secrets;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -25,8 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ReEncryptionRequiredHealthCheckTests
-    extends TestSupport
 {
   @Mock
   private SecretsService secretsService;

@@ -19,12 +19,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Locks;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.internal.SecurityContributionChangedEvent;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -35,9 +36,10 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.1
  */
 public class MutableSecurityContributor
-    extends ComponentSupport
     implements SecurityContributor
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SecurityConfiguration model = new MemorySecurityConfiguration();
 
   private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();

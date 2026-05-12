@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.httpbridge.legacy;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
@@ -30,9 +29,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LegacyUrlEnabledHelperTest
-    extends TestSupport
 {
   private static final String LEGACY_ENABLED =
       "org.sonatype.nexus.repository.httpbridge.internal.HttpBridgeModule.legacy";

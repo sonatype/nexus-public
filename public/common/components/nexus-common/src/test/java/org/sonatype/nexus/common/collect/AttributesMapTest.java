@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.collect;
 
 import java.util.Date;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,7 +28,6 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link org.sonatype.nexus.common.collect.AttributesMap}.
  */
 public class AttributesMapTest
-    extends TestSupport
 {
   private AttributesMap underTest;
 
@@ -69,15 +66,15 @@ public class AttributesMapTest
     assertEquals(0, underTest.size());
 
     underTest.set("foo", "bar");
-    log(underTest);
+
     assertEquals(1, underTest.size());
 
     underTest.set("baz", "ick");
-    log(underTest);
+
     assertEquals(2, underTest.size());
 
     underTest.clear();
-    log(underTest);
+
     assertTrue(underTest.isEmpty());
     assertEquals(0, underTest.size());
   }

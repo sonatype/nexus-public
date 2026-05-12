@@ -20,12 +20,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.coreui.RepositoryReferenceXO;
+import org.sonatype.nexus.coreui.RepositoryStatusXO;
 import org.sonatype.nexus.coreui.RepositoryXO;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.repository.Format;
@@ -40,7 +40,10 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
@@ -52,6 +55,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -73,11 +77,11 @@ import static org.mockito.Mockito.when;
  * Test for {@link RepositoryUiService}
  */
 @MockitoSettings(strictness = Strictness.LENIENT)
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class RepositoryUiServiceTest
-    extends Test5Support
 {
   @Mock
   private RepositoryCacheInvalidationService repositoryCacheInvalidationService;
@@ -111,6 +115,12 @@ class RepositoryUiServiceTest
 
   @Mock
   private RepositoryPermissionChecker repositoryPermissionChecker;
+
+  @Mock
+  private org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker failedRepositoryTracker;
+
+  @Mock
+  private org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder;
 
   @Mock
   private Format format;
@@ -151,7 +161,8 @@ class RepositoryUiServiceTest
 
     underTest = Mockito.spy(new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager,
         repositoryMetricsService,
-        configurationStore, securityHelper, recipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker)
+        configurationStore, securityHelper, recipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker,
+        failedRepositoryTracker, httpAuthenticationSecretEncoder)
     {
       @Override
       RepositoryXO asRepository(final Repository input) {
@@ -462,7 +473,9 @@ class RepositoryUiServiceTest
 
   private void mockRecipes() {
     when(recipe.getType()).thenReturn(new HostedType());
-    when(recipe.getFormat()).thenReturn(new Format("maven2") { });
+    when(recipe.getFormat()).thenReturn(new Format("maven2")
+    {
+    });
     recipes = new HashMap<>();
     recipes.put("testRecipe", recipe);
   }
@@ -487,5 +500,206 @@ class RepositoryUiServiceTest
     }
 
     return currentValue;
+  }
+
+  @Test
+  void testUpdateFailedRepository_successfulRecovery() throws Exception {
+    // Setup: Repository has failed and is being updated
+    String repoName = "failed-repo";
+    Type type = mock(Type.class);
+    when(repositoryXO.getName()).thenReturn(repoName);
+    when(repositoryXO.getFormat()).thenReturn("format");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    Map<String, Map<String, Object>> testAttributes = new HashMap<>();
+    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+
+    // Mock configuration
+    Configuration storedConfiguration = mock(Configuration.class);
+    when(storedConfiguration.getRepositoryName()).thenReturn(repoName);
+    when(storedConfiguration.getRecipeName()).thenReturn("mockRecipe");
+    when(storedConfiguration.getAttributes()).thenReturn(new HashMap<>());
+    when(storedConfiguration.copy()).thenReturn(storedConfiguration);
+    when(storedConfiguration.isOnline()).thenReturn(true);
+
+    // Mock configuration store
+    when(configurationStore.list()).thenReturn(Collections.singletonList(storedConfiguration));
+
+    // Setup recipe for QualifierUtil
+    Recipe testRecipe = mock(Recipe.class);
+    when(testRecipe.getFormat()).thenReturn(format);
+    when(testRecipe.getType()).thenReturn(type);
+    when(format.getValue()).thenReturn("format");
+
+    // Create recipe list and mock QualifierUtil to return recipe map
+    List<Recipe> testRecipeList = Collections.singletonList(testRecipe);
+    Map<String, Recipe> testRecipesMap = new HashMap<>();
+    testRecipesMap.put("mockRecipe", testRecipe);
+    when(QualifierUtil.buildQualifierBeanMap(testRecipeList)).thenReturn(testRecipesMap);
+
+    // Mock failed repository tracker
+    when(failedRepositoryTracker.hasFailed(repoName)).thenReturn(true);
+
+    // Mock BaseRepositoryManager with successful retry
+    org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager baseRepositoryManager =
+        mock(org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.class);
+    Repository recoveredRepo = mock(Repository.class);
+    when(recoveredRepo.getName()).thenReturn(repoName);
+    when(recoveredRepo.getType()).thenReturn(type);
+    when(recoveredRepo.getFormat()).thenReturn(format);
+    when(recoveredRepo.getConfiguration()).thenReturn(storedConfiguration);
+    when(baseRepositoryManager.retryFailedRepository(repoName)).thenReturn(Optional.of(recoveredRepo));
+
+    // Use real RepositoryUiService instance for this test
+    RepositoryUiService testService = new RepositoryUiService(repositoryCacheInvalidationService,
+        baseRepositoryManager, repositoryMetricsService, configurationStore, securityHelper,
+        testRecipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker,
+        failedRepositoryTracker, httpAuthenticationSecretEncoder);
+
+    // Execute: Update the failed repository
+    RepositoryXO result = testService.update(repositoryXO);
+
+    // Verify: Configuration was updated
+    verify(storedConfiguration).setOnline(true);
+    verify(storedConfiguration).setAttributes(testAttributes);
+    verify(configurationStore).update(storedConfiguration);
+
+    // Verify: Retry was attempted
+    verify(baseRepositoryManager).retryFailedRepository(repoName);
+  }
+
+  @Test
+  void testUpdateFailedRepository_stillFailing() throws Exception {
+    // Setup: Repository has failed and update doesn't fix it
+    String repoName = "failed-repo";
+    Type type = mock(Type.class);
+    when(repositoryXO.getName()).thenReturn(repoName);
+    when(repositoryXO.getFormat()).thenReturn("format");
+    when(repositoryXO.getOnline()).thenReturn(false);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    Map<String, Map<String, Object>> testAttributes = new HashMap<>();
+    when(repositoryXO.getAttributes()).thenReturn(testAttributes);
+
+    // Mock configuration
+    Configuration storedConfiguration = mock(Configuration.class);
+    when(storedConfiguration.getRepositoryName()).thenReturn(repoName);
+    when(storedConfiguration.getRecipeName()).thenReturn("mockRecipe");
+    when(storedConfiguration.getAttributes()).thenReturn(new HashMap<>());
+    when(storedConfiguration.copy()).thenReturn(storedConfiguration);
+    when(storedConfiguration.isOnline()).thenReturn(false);
+
+    // Mock configuration store
+    when(configurationStore.list()).thenReturn(Collections.singletonList(storedConfiguration));
+
+    // Setup recipe for QualifierUtil
+    Recipe testRecipe = mock(Recipe.class);
+    when(testRecipe.getFormat()).thenReturn(format);
+    when(testRecipe.getType()).thenReturn(type);
+    when(format.getValue()).thenReturn("format");
+
+    // Create recipe list and mock QualifierUtil to return recipe map
+    List<Recipe> testRecipeList = Collections.singletonList(testRecipe);
+    Map<String, Recipe> testRecipesMap = new HashMap<>();
+    testRecipesMap.put("mockRecipe", testRecipe);
+    when(QualifierUtil.buildQualifierBeanMap(testRecipeList)).thenReturn(testRecipesMap);
+
+    // Mock failed repository tracker
+    when(failedRepositoryTracker.hasFailed(repoName)).thenReturn(true);
+
+    // Mock BaseRepositoryManager with failed retry (returns empty)
+    org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager baseRepositoryManager =
+        mock(org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.class);
+    when(baseRepositoryManager.retryFailedRepository(repoName)).thenReturn(Optional.empty());
+
+    // Use real RepositoryUiService instance for this test
+    RepositoryUiService testService = new RepositoryUiService(repositoryCacheInvalidationService,
+        baseRepositoryManager, repositoryMetricsService, configurationStore, securityHelper,
+        testRecipeList, taskScheduler, typeLookup, formats, repositoryPermissionChecker,
+        failedRepositoryTracker, httpAuthenticationSecretEncoder);
+
+    // Execute: Update the failed repository
+    RepositoryXO result = testService.update(repositoryXO);
+
+    // Verify: Configuration was updated
+    verify(storedConfiguration).setOnline(false);
+    verify(storedConfiguration).setAttributes(testAttributes);
+    verify(configurationStore).update(storedConfiguration);
+
+    // Verify: Retry was attempted but failed
+    verify(baseRepositoryManager).retryFailedRepository(repoName);
+  }
+
+  @Test
+  void testBuildStatusForConfigurationHandlesInvalidStateException() throws Exception {
+    when(recipe.getType()).thenReturn(new ProxyType());
+    when(configuration.getRecipeName()).thenReturn("testRecipe");
+    when(configuration.getRepositoryName()).thenReturn("proxy-repo");
+    when(configuration.isOnline()).thenReturn(true);
+    when(failedRepositoryTracker.getFailure(anyString())).thenReturn(Optional.empty());
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermissionFor(any(Iterable.class), anyString()))
+        .thenReturn(Collections.singletonList(configuration));
+    HttpClientFacet httpClientFacet = mock(HttpClientFacet.class);
+    doReturn(httpClientFacet).when(repository).facet(HttpClientFacet.class);
+    when(httpClientFacet.getStatus()).thenThrow(new InvalidStateException("STOPPED", new String[]{"STARTED"}));
+
+    List<RepositoryStatusXO> result = underTest.readStatus(Collections.emptyMap());
+
+    assertThat(result, hasSize(1));
+    assertThat(result.get(0).getRepositoryName(), is("proxy-repo"));
+    assertThat(result.get(0).isOnline(), is(true));
+  }
+
+  @Test
+  void testBuildStatusForRepositoryHandlesInvalidStateException() throws Exception {
+    List<Recipe> freshRecipeList = Collections.singletonList(recipe);
+    when(QualifierUtil.buildQualifierBeanMap(freshRecipeList)).thenReturn(recipes);
+    RepositoryUiService service = new RepositoryUiService(repositoryCacheInvalidationService, repositoryManager,
+        repositoryMetricsService, configurationStore, securityHelper, freshRecipeList, taskScheduler,
+        typeLookup, formats, repositoryPermissionChecker, failedRepositoryTracker,
+        httpAuthenticationSecretEncoder);
+    when(repository.getType()).thenReturn(new ProxyType());
+    when(configuration.isOnline()).thenReturn(true);
+    HttpClientFacet httpClientFacet = mock(HttpClientFacet.class);
+    doReturn(httpClientFacet).when(repository).facet(HttpClientFacet.class);
+    when(httpClientFacet.getStatus()).thenThrow(new InvalidStateException("STOPPED", new String[]{"STARTED"}));
+
+    RepositoryXO result = service.asRepository(repository);
+
+    assertThat(result.getName(), is("repository"));
+    assertThat(result.getStatus().getRepositoryName(), is("repository"));
+  }
+
+  @Test
+  void testUpdateFailedRepository_nullRecipe() throws Exception {
+    String repoName = "failed-repo";
+
+    // Setup: Configuration with a recipe name that doesn't exist in recipes map
+    Configuration config = mock(Configuration.class);
+    when(config.getRepositoryName()).thenReturn(repoName);
+    when(config.getRecipeName()).thenReturn("nonexistent-recipe");
+    when(config.copy()).thenReturn(config);
+    when(config.getAttributes()).thenReturn(attributes);
+
+    when(configurationStore.list()).thenReturn(Collections.singletonList(config));
+    when(failedRepositoryTracker.hasFailed(repoName.toLowerCase())).thenReturn(true);
+
+    // Note: recipes HashMap naturally returns null for "nonexistent-recipe" since mockRecipes() only adds "testRecipe"
+
+    // Create a minimal RepositoryXO
+    RepositoryXO xo = new RepositoryXO();
+    xo.setName(repoName);
+    xo.setOnline(true);
+    xo.setAttributes(new HashMap<>());
+
+    // Execute: Should throw BadRequestException for null recipe
+    try {
+      underTest.update(xo);
+      throw new AssertionError("Expected BadRequestException for null recipe");
+    }
+    catch (org.sonatype.nexus.repository.BadRequestException e) {
+      assertThat(e.getMessage(), is("Recipe not found for repository: failed-repo"));
+    }
   }
 }

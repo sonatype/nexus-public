@@ -16,8 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -32,7 +30,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class TaskLogCleanupTest
-    extends TestSupport
 {
   private static final Integer DAYS_AGO = 1;
 

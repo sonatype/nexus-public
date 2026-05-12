@@ -17,7 +17,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.IntSupplier;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -31,8 +30,10 @@ import org.sonatype.nexus.repository.move.RepositoryMoveService;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.util.OptionalInt.empty;
 import static org.hamcrest.Matchers.is;
@@ -49,8 +50,8 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
 /**
  * Test {@link InternalIds}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class InternalIdsTest
-    extends TestSupport
 {
   @Mock
   private ContentFacetSupport contentFacet;
@@ -59,7 +60,7 @@ public class InternalIdsTest
   private ContentFacetDependencies dependencies;
 
   @Before
-  public void setUp(){
+  public void setUp() {
     when(contentFacet.dependencies()).thenReturn(dependencies);
     when(dependencies.getMoveService()).thenReturn(Optional.of(mock(RepositoryMoveService.class)));
   }

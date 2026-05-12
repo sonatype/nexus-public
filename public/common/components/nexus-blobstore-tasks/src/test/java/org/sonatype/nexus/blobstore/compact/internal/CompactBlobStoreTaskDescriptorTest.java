@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.compact.internal;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
 import org.junit.jupiter.api.Test;
@@ -22,7 +21,7 @@ import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.MULTINODE_KEY;
 
 class CompactBlobStoreTaskDescriptorTest
-    extends Test5Support
+
 {
   private CompactBlobStoreTaskDescriptor underTest;
 

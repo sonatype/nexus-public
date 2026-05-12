@@ -17,12 +17,13 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An abstract UserManager that handles filtering UserSearchCriteria in memory, this can be used in addition to an
@@ -31,9 +32,10 @@ import com.google.common.collect.Sets;
  * @author Brian Demers
  */
 public abstract class AbstractUserManager
-    extends ComponentSupport
     implements UserManager
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   protected final EventManager eventManager;
 
   public AbstractUserManager(final EventManager eventManager) {

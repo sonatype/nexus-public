@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.plugins.defaultrole.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
 import org.sonatype.nexus.security.realm.RealmManager;
 
@@ -26,7 +25,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultRoleCapabilityTest
-    extends TestSupport
 {
   private DefaultRoleCapability underTest;
 

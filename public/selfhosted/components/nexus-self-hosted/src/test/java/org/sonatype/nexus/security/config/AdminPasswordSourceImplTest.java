@@ -14,7 +14,6 @@ package org.sonatype.nexus.security.config;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.internal.AdminPasswordFileManagerImpl;
 
 import org.junit.Before;
@@ -29,9 +28,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class AdminPasswordSourceImplTest
-    extends TestSupport
 {
   @Mock
   private AdminPasswordFileManagerImpl adminPasswordFileManager;

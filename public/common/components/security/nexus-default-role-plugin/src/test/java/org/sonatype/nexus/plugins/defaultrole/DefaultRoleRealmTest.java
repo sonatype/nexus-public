@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.plugins.defaultrole;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 
 import org.apache.shiro.authz.AuthorizationInfo;
@@ -28,7 +27,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DefaultRoleRealmTest
-    extends TestSupport
 {
   private DefaultRoleRealm underTest;
 

@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
@@ -39,9 +38,11 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.lang.String.format;
 import static org.junit.Assert.assertThrows;
@@ -51,8 +52,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ComponentNormalizationIntegrityCheckerTest
-    extends TestSupport
 {
   private static final String MAVEN2_FORMAT = "maven2";
 

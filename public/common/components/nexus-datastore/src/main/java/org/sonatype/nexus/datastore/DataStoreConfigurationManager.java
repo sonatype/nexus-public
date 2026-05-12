@@ -19,13 +19,14 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -40,8 +41,9 @@ import static java.lang.String.CASE_INSENSITIVE_ORDER;
 @Component
 @Singleton
 public class DataStoreConfigurationManager
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final List<DataStoreConfigurationSource> configurationSources;
 
   @Inject

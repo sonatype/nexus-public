@@ -1,0 +1,264 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.searchable-select {
+  position: relative;
+  width: 100%;
+
+  // Trigger button
+  &__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--color-surface, #fff);
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--color-text, #1f2937);
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    text-align: left;
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-border-hover, #9ca3af);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary, #16a34a);
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
+    }
+
+    &:disabled {
+      background: var(--color-surface-disabled, #f3f4f6);
+      color: var(--color-text-disabled, #9ca3af);
+      cursor: not-allowed;
+    }
+  }
+
+  &__value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &--placeholder {
+      color: var(--color-text-muted, #6b7280);
+    }
+  }
+
+  &__icons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+  }
+
+  &__clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 4px;
+    color: var(--color-text-muted, #6b7280);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background-color: var(--color-surface-hover, #f3f4f6);
+      color: var(--color-text, #1f2937);
+    }
+  }
+
+  &__chevron {
+    color: var(--color-text-muted, #6b7280);
+    transition: transform 0.2s ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  // Dropdown container
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--color-surface, #fff);
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+  }
+
+  // Search input
+  &__search {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    background: var(--color-surface, #fff);
+  }
+
+  &__search-icon {
+    color: var(--color-text-muted, #9ca3af);
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  &__search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--color-text, #1f2937);
+    outline: none;
+
+    &::placeholder {
+      color: var(--color-text-muted, #9ca3af);
+    }
+  }
+
+  // Options list
+  &__list {
+    max-height: 240px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--color-text, #1f2937);
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+
+    &:hover,
+    &--highlighted {
+      background-color: var(--color-surface-hover, #f3f4f6);
+    }
+
+    &--selected {
+      background-color: rgba(22, 163, 74, 0.08);
+      color: var(--color-primary, #16a34a);
+      font-weight: 500;
+
+      &:hover,
+      &.searchable-select__option--highlighted {
+        background-color: rgba(22, 163, 74, 0.12);
+      }
+    }
+  }
+
+  &__option-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__option-check {
+    color: var(--color-primary, #16a34a);
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  &__empty {
+    padding: 16px 10px;
+    text-align: center;
+    color: var(--color-text-muted, #6b7280);
+    font-size: 13px;
+  }
+
+  // Disabled state
+  &--disabled {
+    opacity: 0.6;
+  }
+
+  // Open state
+  &--open {
+    .searchable-select__trigger {
+      border-color: var(--color-primary, #16a34a);
+      box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
+    }
+  }
+}
+
+// Dark mode support - multiple selectors for different theme application methods
+[data-theme='dark'],
+.dark,
+:root[data-theme='dark'] {
+  .searchable-select {
+    &__trigger {
+      background: var(--color-surface, #1f2937);
+      border-color: var(--color-border, #374151);
+      color: var(--color-text, #f9fafb);
+
+      &:hover:not(:disabled) {
+        border-color: var(--color-border-hover, #4b5563);
+      }
+
+      &:disabled {
+        background: var(--color-surface-disabled, #111827);
+        color: var(--color-text-disabled, #6b7280);
+      }
+    }
+
+    &__value--placeholder {
+      color: var(--color-text-muted, #9ca3af);
+    }
+
+    &__dropdown {
+      background: var(--color-surface, #1f2937);
+      border-color: var(--color-border, #374151);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    &__search {
+      border-bottom-color: var(--color-border, #374151);
+      background: var(--color-surface, #1f2937);
+    }
+
+    &__search-input {
+      color: var(--color-text, #f9fafb);
+    }
+
+    &__option {
+      color: var(--color-text, #f9fafb);
+
+      &:hover,
+      &--highlighted {
+        background-color: var(--color-surface-hover, #374151);
+      }
+
+      &--selected {
+        background-color: rgba(22, 163, 74, 0.15);
+
+        &:hover,
+        &.searchable-select__option--highlighted {
+          background-color: rgba(22, 163, 74, 0.2);
+        }
+      }
+    }
+  }
+}
+

@@ -19,12 +19,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.internal.node.NodeIdInitializer;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.ssl.KeystoreException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -37,9 +38,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Component
 @Singleton
 public class NodeIdInitializerImpl
-    extends ComponentSupport
     implements NodeIdInitializer
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final String NODE_KEY_STORE_TYPE = "node";
 
   private final NodeIdStore nodeIdStore;

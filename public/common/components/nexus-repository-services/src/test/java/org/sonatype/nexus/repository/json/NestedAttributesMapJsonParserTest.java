@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.json;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -30,9 +29,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NestedAttributesMapJsonParserTest
-    extends TestSupport
 {
   @Mock
   private JsonParser jsonParser;

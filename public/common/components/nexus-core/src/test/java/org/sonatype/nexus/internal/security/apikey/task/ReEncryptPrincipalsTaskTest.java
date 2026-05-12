@@ -19,7 +19,6 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
@@ -46,9 +45,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ReEncryptPrincipalsTaskTest
-    extends TestSupport
 {
   private static final String SELECT = """
       SELECT principals, domain, username, access_key

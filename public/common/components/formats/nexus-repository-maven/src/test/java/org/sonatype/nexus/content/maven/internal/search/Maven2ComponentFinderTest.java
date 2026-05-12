@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -29,7 +28,9 @@ import org.sonatype.nexus.repository.types.HostedType;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -45,8 +46,9 @@ import static org.mockito.Mockito.when;
  * Specifically tests NEXUS-44583: Support for non-timestamped SNAPSHOT versions
  * in addition to timestamped SNAPSHOT versions.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class Maven2ComponentFinderTest
-    extends TestSupport
+
 {
   private static final String NAMESPACE = "org.example";
 

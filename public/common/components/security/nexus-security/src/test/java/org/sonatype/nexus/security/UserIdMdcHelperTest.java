@@ -12,14 +12,14 @@
  */
 package org.sonatype.nexus.security;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.MDC;
 
 import static org.hamcrest.Matchers.is;
@@ -33,8 +33,8 @@ import static org.sonatype.nexus.security.UserIdMdcHelper.KEY;
 /**
  * Tests for {@link UserIdMdcHelper}.
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UserIdMdcHelperTest
-    extends TestSupport
 {
   private void reset() {
     MDC.remove(KEY);

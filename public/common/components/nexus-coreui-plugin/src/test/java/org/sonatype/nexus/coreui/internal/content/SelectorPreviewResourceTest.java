@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui.internal.content;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.coreui.AssetXO;
 import org.sonatype.nexus.coreui.ComponentHelper;
 import org.sonatype.nexus.repository.Format;
@@ -30,6 +29,7 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -47,11 +47,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class SelectorPreviewResourceTest
-    extends Test5Support
 {
   @Mock
   private ComponentHelper componentHelper;

@@ -12,45 +12,59 @@
  */
 package org.sonatype.nexus.internal.httpclient;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URI;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
+import org.sonatype.nexus.outbound.context.OutboundRequestContext;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicHttpRequest;
+import org.slf4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
 
 /**
  * Unit tests for {@link HttpClientManagerImpl}.
  */
+@ExtendWith(MockitoExtension.class)
 class HttpClientManagerImplTest
-    extends Test5Support
 {
 
   @Mock
@@ -75,6 +89,7 @@ class HttpClientManagerImplTest
     underTest = new HttpClientManagerImpl(eventManager, configStore, TestHttpClientConfiguration::new,
         connectionManager,
         defaultsCustomizer);
+    OutboundRequestContext.remove();
   }
 
   @Test
@@ -203,5 +218,62 @@ class HttpClientManagerImplTest
     assertThat(result.toString(), containsString(":8443"));
     assertThat(result.getPort(), is(8443));
     assertThat(result.getRawPath(), containsString("%20"));
+  }
+
+  @Test
+  void testPrintOutboundLogTwoHundredStatusCode_UsesNamedPlaceholders() throws Exception {
+    HttpClientContext context = HttpClientContext.create();
+    context.setTargetHost(new HttpHost("example.com", 443, "https"));
+    context.setAttribute(HttpClientContext.HTTP_REQUEST, new BasicHttpRequest("GET", "/path/to/file.txt"));
+    context.setAttribute("request.stopwatch", com.google.common.base.Stopwatch.createStarted());
+    CredentialsProvider credentialsProvider = mock(CredentialsProvider.class);
+    when(credentialsProvider.getCredentials(AuthScope.ANY)).thenReturn(null);
+    context.setCredentialsProvider(credentialsProvider);
+
+    HttpResponse response =
+        new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), 200, "OK");
+
+    Method method = HttpClientManagerImpl.class.getDeclaredMethod(
+        "printOutboundLogTwoHundredStatusCode", HttpResponse.class, org.apache.http.protocol.HttpContext.class);
+    method.setAccessible(true);
+    method.invoke(underTest, response, context);
+
+    String formattedString = OutboundRequestContext.getFormattedString();
+    assertThat(formattedString, containsString(OutboundRequestContext.TIMESTAMP_PLACEHOLDER));
+    assertThat(formattedString, containsString(OutboundRequestContext.ELAPSED_TIME_PLACEHOLDER));
+  }
+
+  @Test
+  void testPrintOutboundLogNonTwoHundredStatusCode_usesRealTimestampAndNoPlaceholders() throws Exception {
+    Logger mockReqLog = mock(Logger.class);
+    Field reqLogField = HttpClientManagerImpl.class.getDeclaredField("outboundReqLog");
+    reqLogField.setAccessible(true);
+    reqLogField.set(underTest, mockReqLog);
+
+    HttpClientContext context = HttpClientContext.create();
+    context.setTargetHost(new HttpHost("example.com", 443, "https"));
+    context.setAttribute(HttpClientContext.HTTP_REQUEST, new BasicHttpRequest("GET", "/path/to/file.txt"));
+    context.setAttribute("request.stopwatch", com.google.common.base.Stopwatch.createStarted());
+    CredentialsProvider credentialsProvider = mock(CredentialsProvider.class);
+    when(credentialsProvider.getCredentials(AuthScope.ANY)).thenReturn(null);
+    context.setCredentialsProvider(credentialsProvider);
+
+    HttpResponse response =
+        new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), 404, "Not Found");
+
+    Method method = HttpClientManagerImpl.class.getDeclaredMethod(
+        "printOutboundLogNonTwoHundredStatusCode", HttpResponse.class,
+        org.apache.http.protocol.HttpContext.class);
+    method.setAccessible(true);
+    method.invoke(underTest, response, context);
+
+    // Non-200 path logs immediately and does not set the formatted string
+    assertNull(OutboundRequestContext.getFormattedString());
+
+    // Verify the logged message contains no placeholder tokens
+    ArgumentCaptor<String> loggedMessage = ArgumentCaptor.forClass(String.class);
+    verify(mockReqLog).info(eq(OUTBOUND_REQUESTS_LOG_ONLY), eq("{}"), loggedMessage.capture());
+    assertThat(loggedMessage.getValue(), not(containsString(OutboundRequestContext.TIMESTAMP_PLACEHOLDER)));
+    assertThat(loggedMessage.getValue(), not(containsString(OutboundRequestContext.ELAPSED_TIME_PLACEHOLDER)));
   }
 }

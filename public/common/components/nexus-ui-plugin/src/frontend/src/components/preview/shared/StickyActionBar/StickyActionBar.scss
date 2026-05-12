@@ -1,0 +1,117 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/**
+ * StickyActionBar Styles
+ *
+ * A sticky header bar for form pages following Salesforce/ServiceNow patterns.
+ * Remains visible at the top of the content area when scrolling.
+ */
+
+.sticky-action-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--color-surface, #ffffff);
+  border-bottom: 1px solid var(--color-border, #e5e5e5);
+  min-height: 56px;
+
+  // Dark mode support
+  [data-theme='dark'] & {
+    background-color: var(--color-surface, #1a1a1a);
+    border-bottom-color: var(--color-border, #3d3d43);
+  }
+
+  &__container {
+    padding: 12px 24px;
+    min-height: 56px;
+  }
+
+  &__left {
+    flex: 1;
+    min-width: 0; // Allow text truncation
+  }
+
+  &__back {
+    flex-shrink: 0;
+  }
+
+  &__title-container {
+    display: flex;
+    flex-direction: column;
+    min-width: 0; // Allow text truncation
+  }
+
+  &__title {
+    color: var(--color-text, #18181b);
+    line-height: var(--line-height-tight, 1.25);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    [data-theme='dark'] & {
+      color: var(--color-text, #fafafa);
+    }
+  }
+
+  &__subtitle {
+    color: var(--color-text-secondary, #71717a);
+    line-height: var(--line-height-normal, 1.5);
+
+    [data-theme='dark'] & {
+      color: var(--color-text-secondary, #a1a1aa);
+    }
+  }
+
+  &__right {
+    flex-shrink: 0;
+  }
+
+  &__dirty-badge {
+    flex-shrink: 0;
+  }
+
+  &__delete {
+    // Visual separation from other action buttons
+    margin-right: var(--space-2, 8px);
+    padding-right: var(--space-3, 12px);
+    border-right: 1px solid var(--color-border, #e5e5e5);
+
+    // Danger styling for delete button
+    color: var(--color-error, #dc2626) !important;
+
+    &:hover:not(:disabled) {
+      color: #b91c1c !important;
+      background-color: rgba(220, 38, 38, 0.1) !important;
+    }
+
+    [data-theme='dark'] & {
+      border-right-color: var(--color-border, #3d3d43);
+      color: var(--color-error, #ef4444) !important;
+
+      &:hover:not(:disabled) {
+        color: #f87171 !important;
+        background-color: rgba(239, 68, 68, 0.15) !important;
+      }
+    }
+  }
+
+  &__actions {
+    flex-shrink: 0;
+  }
+}
+
+// Ensure content scrolls beneath the sticky bar
+.sticky-action-bar + * {
+  // Add padding-top if needed to prevent content jumping
+}

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.security;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
@@ -139,8 +140,8 @@ public class AssetPermissionChecker
     }
 
     String repositoryName = repository.get().getName();
-    List<String> containingRepositoryNames = repositoryManager.findContainingGroups(repositoryName);
-    containingRepositoryNames.add(0, repositoryName);
+    List<String> containingRepositoryNames = new ArrayList<>(repositoryManager.findContainingGroups(repositoryName));
+    containingRepositoryNames.addFirst(repositoryName);
 
     return containingRepositoryNames;
   }

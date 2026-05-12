@@ -21,15 +21,16 @@ import javax.cache.expiry.EternalExpiryPolicy;
 import javax.cache.expiry.ExpiryPolicy;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 
 import org.apache.shiro.session.mgt.eis.CachingSessionDAO;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,8 +40,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests {@link ShiroJCacheManagerAdapter}
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ShiroJCacheManagerAdapterTest
-    extends TestSupport
 {
 
   @Mock

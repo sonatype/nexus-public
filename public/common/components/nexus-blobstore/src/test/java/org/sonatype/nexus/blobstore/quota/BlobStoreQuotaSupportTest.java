@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -24,9 +23,11 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class BlobStoreQuotaSupportTest
-    extends TestSupport
 {
 
   @Mock

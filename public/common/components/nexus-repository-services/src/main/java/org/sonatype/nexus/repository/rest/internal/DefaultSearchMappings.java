@@ -16,7 +16,6 @@ import java.util.List;
 
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
@@ -24,6 +23,8 @@ import org.sonatype.nexus.repository.rest.sql.SearchField;
 import com.google.common.collect.ImmutableList;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.repository.rest.sql.SearchField.FORMAT;
 import static org.sonatype.nexus.repository.rest.sql.SearchField.KEYWORDS;
@@ -44,9 +45,10 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSIT
 @Qualifier("default")
 @Singleton
 public class DefaultSearchMappings
-    extends ComponentSupport
     implements SearchMappings
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String NAME_RAW = "name.raw";
 
   public static final String NAME_RAW_ALIAS = "name";

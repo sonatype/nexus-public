@@ -47,6 +47,7 @@ public class PasswordSanitizingTest
       "bearerTokenId",
       "bearerToken",
       "yumSigning",
+      "terraformSigning",
       "accountKey",
       "destinationInstancePassword",
       "NEXUS_DATASTORE_NEXUS_PASSWORD",

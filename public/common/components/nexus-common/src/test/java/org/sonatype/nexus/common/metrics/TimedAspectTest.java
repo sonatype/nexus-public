@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.metrics;
 
 import java.lang.reflect.Method;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
@@ -26,7 +24,9 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.MockedStatic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,9 +35,10 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
 
+@ExtendWith(MockitoExtension.class)
 public class TimedAspectTest
-    extends Test5Support
 {
   MockedStatic<SharedMetricRegistries> sharedMetricRegistries = mockStatic(SharedMetricRegistries.class);
 
@@ -60,7 +61,7 @@ public class TimedAspectTest
 
   @BeforeEach
   public void setUp() {
-    sharedMetricRegistries.when(() -> SharedMetricRegistries.getOrCreate("nexus"))
+    sharedMetricRegistries.when(() -> SharedMetricRegistries.getOrCreate(NEXUS_METRICS_REGISTRY_NAME))
         .thenReturn(metricRegistry);
 
     timedAspect = new TimedAspect();

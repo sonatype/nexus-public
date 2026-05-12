@@ -15,8 +15,6 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -25,6 +23,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
@@ -35,8 +35,9 @@ import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SING
 @Component
 @Scope(SCOPE_SINGLETON)
 public class BucketValidationCacheService
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * ThreadLocal so that we can use the bucket's client during a cache miss. We do not include this in BucketReference
    * as we do not want to hold references to the S3Client which should be disposed.

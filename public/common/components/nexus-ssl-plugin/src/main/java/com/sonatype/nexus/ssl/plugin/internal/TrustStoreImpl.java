@@ -39,7 +39,6 @@ import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedKeyStoreManager;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificate;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateDataEvent;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateStore;
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -62,6 +61,8 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
@@ -77,9 +78,10 @@ import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertifica
 @Component
 @Singleton
 public class TrustStoreImpl
-    extends ComponentSupport
     implements EventAware, TrustStore
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String TRUSTED_CERTIFICATES_MIGRATION_COMPLETE = "trusted.certificates.migration.complete";
 
   public static final SecureRandom DEFAULT_RANDOM = null;

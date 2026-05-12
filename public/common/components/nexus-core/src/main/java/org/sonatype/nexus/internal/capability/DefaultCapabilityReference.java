@@ -16,20 +16,21 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityEvent;
 import org.sonatype.nexus.capability.CapabilityEvent.CallbackFailure;
 import org.sonatype.nexus.capability.CapabilityEvent.CallbackFailureCleared;
+import org.sonatype.nexus.capability.CapabilityEventQueue;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.newHashMap;
@@ -41,9 +42,9 @@ import static java.util.Collections.unmodifiableMap;
  * @since capabilities 2.0
  */
 public class DefaultCapabilityReference
-    extends ComponentSupport
     implements CapabilityReference, CapabilityContext
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private static final Map<String, String> EMPTY_MAP = Collections.emptyMap();
 
@@ -59,17 +60,13 @@ public class DefaultCapabilityReference
 
   private final CapabilityRegistry capabilityRegistry;
 
-  private final EventManager eventManager;
+  private final CapabilityEventQueue eventQueue;
 
   private final ActivationConditionHandler activationHandler;
 
   private final ValidityConditionHandler validityHandler;
 
   private final ReentrantReadWriteLock stateLock;
-
-  private final SecretsService secretsService;
-
-  private final SecretsStore secretsStore;
 
   private Map<String, String> encryptedProperties;
 
@@ -83,7 +80,7 @@ public class DefaultCapabilityReference
 
   DefaultCapabilityReference(
       final CapabilityRegistry capabilityRegistry,
-      final EventManager eventManager,
+      final CapabilityEventQueue eventQueue,
       final ActivationConditionHandlerFactory activationListenerFactory,
       final ValidityConditionHandlerFactory validityConditionHandlerFactory,
       final CapabilityIdentity id,
@@ -94,14 +91,12 @@ public class DefaultCapabilityReference
       final SecretsStore secretsStore)
   {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
-    this.eventManager = checkNotNull(eventManager);
+    this.eventQueue = checkNotNull(eventQueue);
 
     this.id = checkNotNull(id);
     this.type = checkNotNull(type);
     this.descriptor = checkNotNull(descriptor);
     this.capability = checkNotNull(capability);
-    this.secretsService = checkNotNull(secretsService);
-    this.secretsStore = checkNotNull(secretsStore);
     capabilityProperties = EMPTY_MAP;
 
     state = new NewState();
@@ -384,7 +379,7 @@ public class DefaultCapabilityReference
       if (failure != null) {
         failure = null;
         failingAction = null;
-        eventManager.post(new CallbackFailureCleared(capabilityRegistry, this));
+        eventQueue.post(new CallbackFailureCleared(this));
       }
     }
     finally {
@@ -398,7 +393,7 @@ public class DefaultCapabilityReference
       failure = checkNotNull(e);
       failingAction = checkNotNull(action);
       log.error("Could not {} capability {} ({})", action.toLowerCase(), capability, id, e);
-      eventManager.post(new CallbackFailure(capabilityRegistry, this, action, e));
+      eventQueue.post(new CallbackFailure(this, action, e));
     }
     finally {
       stateLock.writeLock().unlock();
@@ -478,7 +473,7 @@ public class DefaultCapabilityReference
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
         DefaultCapabilityReference.this.encryptedProperties =
             encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
-        eventManager.post(new CapabilityEvent.Created(capabilityRegistry, DefaultCapabilityReference.this));
+        eventQueue.post(new CapabilityEvent.Created(DefaultCapabilityReference.this));
         capability.onCreate();
         resetFailure();
         log.debug("Created capability {} ({})", capability, id);
@@ -499,7 +494,7 @@ public class DefaultCapabilityReference
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
         DefaultCapabilityReference.this.encryptedProperties =
             encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
-        eventManager.post(new CapabilityEvent.Created(capabilityRegistry, DefaultCapabilityReference.this));
+        eventQueue.post(new CapabilityEvent.Created(DefaultCapabilityReference.this));
         capability.onLoad();
         resetFailure();
         log.debug("Loaded capability {} ({})", capability, id);
@@ -554,9 +549,9 @@ public class DefaultCapabilityReference
     {
       try {
         log.debug("Updating capability {} ({})", capability, id);
-        eventManager.post(
+        eventQueue.post(
             new CapabilityEvent.BeforeUpdate(
-                capabilityRegistry, DefaultCapabilityReference.this, properties, previousProperties));
+                DefaultCapabilityReference.this, properties, previousProperties));
         capabilityProperties = properties == null ? EMPTY_MAP : unmodifiableMap(newHashMap(properties));
         DefaultCapabilityReference.this.encryptedProperties =
             encryptedProperties == null ? EMPTY_MAP : unmodifiableMap(encryptedProperties);
@@ -568,9 +563,9 @@ public class DefaultCapabilityReference
         setFailure("Update", e);
       }
       finally {
-        eventManager.post(
+        eventQueue.post(
             new CapabilityEvent.AfterUpdate(
-                capabilityRegistry, DefaultCapabilityReference.this, properties, previousProperties));
+                DefaultCapabilityReference.this, properties, previousProperties));
       }
     }
 
@@ -589,8 +584,8 @@ public class DefaultCapabilityReference
       }
       finally {
         state = new RemovedState();
-        eventManager.post(
-            new CapabilityEvent.AfterRemove(capabilityRegistry, DefaultCapabilityReference.this));
+        eventQueue.post(
+            new CapabilityEvent.AfterRemove(DefaultCapabilityReference.this));
       }
     }
 
@@ -637,8 +632,8 @@ public class DefaultCapabilityReference
           resetFailure();
           log.debug("Activated capability {} ({})", capability, id);
           state = new ActiveState();
-          eventManager.post(
-              new CapabilityEvent.AfterActivated(capabilityRegistry, DefaultCapabilityReference.this));
+          eventQueue.post(
+              new CapabilityEvent.AfterActivated(DefaultCapabilityReference.this));
         }
         catch (Exception e) {
           setFailure("Activate", e);
@@ -685,8 +680,8 @@ public class DefaultCapabilityReference
       log.debug("Passivating capability {} ({})", capability, id);
       try {
         state = new EnabledState();
-        eventManager.post(
-            new CapabilityEvent.BeforePassivated(capabilityRegistry, DefaultCapabilityReference.this));
+        eventQueue.post(
+            new CapabilityEvent.BeforePassivated(DefaultCapabilityReference.this));
         capability.onPassivate();
         log.debug("Passivated capability {} ({})", capability, id);
       }

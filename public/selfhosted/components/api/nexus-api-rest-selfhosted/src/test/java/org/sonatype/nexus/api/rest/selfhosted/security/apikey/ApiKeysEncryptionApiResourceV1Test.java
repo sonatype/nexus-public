@@ -15,7 +15,6 @@ package org.sonatype.nexus.api.rest.selfhosted.security.apikey;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.api.rest.selfhosted.security.apikey.model.ApiKeysReEncryptionRequestApiXO;
 import org.sonatype.nexus.crypto.apikey.ApiKeysReEncryptService;
 import org.sonatype.nexus.crypto.secrets.ReEncryptionNotSupportedException;
@@ -29,17 +28,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 
+@ExtendWith(MockitoExtension.class)
 @ExtendWith(ValidationExtension.class)
 @ExtendWith(AuthenticationExtension.class)
 @WithUser
 class ApiKeysEncryptionApiResourceV1Test
-    extends Test5Support
 {
   @Mock
   private ApiKeysReEncryptService apiKeysReEncryptService;

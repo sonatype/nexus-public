@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -50,6 +49,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -63,9 +64,10 @@ import org.springframework.stereotype.Component;
 @Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class SecretsServiceImpl
-    extends ComponentSupport
     implements SecretsFactory, SecretsService, EventAware
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private static final Base64Variant BASE_64 = Base64Variants.getDefaultVariant();
 
   private static final String UNDERSCORE = "_";
@@ -314,6 +316,64 @@ public class SecretsServiceImpl
     }
     catch (Exception e) {
       throw new CipherException("Failed to import encrypted secret", e);
+    }
+  }
+
+  @Override
+  public String exportEncryptedWithPassword(final String secretId, final String customPassword) throws CipherException {
+    checkNotNull(secretId, "secretId cannot be null");
+    checkNotNull(customPassword, "customPassword cannot be null");
+
+    if (customPassword.isEmpty()) {
+      throw new CipherException("Custom password cannot be empty");
+    }
+
+    // Handle legacy tokens - return as-is since they're already encrypted
+    if (isLegacyToken(secretId)) {
+      log.debug("Exporting legacy encrypted secret");
+      return secretId;
+    }
+
+    try {
+      // 1. Get the secret from storage
+      SecretData data = secretsStore.read(parseToken(secretId))
+          .orElseThrow(() -> new CipherException("Secret not found for token: " + secretId));
+
+      // 2. Decrypt using instance key
+      char[] plaintext = doDecrypt(data);
+
+      // 3. Re-encrypt with custom password
+      SecretEncryptionKey exportKey = new SecretEncryptionKey(null, customPassword);
+      PbeCipherFactory.PbeCipher cipher = cipherFactory.create(exportKey);
+      String encrypted = cipher.encrypt(toBytes(plaintext)).toPhcString();
+
+      log.debug("Exported secret {} with custom password", secretId);
+      return encrypted;
+    }
+    catch (Exception e) {
+      throw new CipherException("Failed to export secret with custom password: " + secretId, e);
+    }
+  }
+
+  @Override
+  public String encryptPlaintextWithPassword(
+      final String plaintext,
+      final String customPassword) throws CipherException
+  {
+    checkNotNull(plaintext, "plaintext cannot be null");
+    checkNotNull(customPassword, "customPassword cannot be null");
+
+    if (customPassword.isEmpty()) {
+      throw new CipherException("Custom password cannot be empty");
+    }
+
+    try {
+      SecretEncryptionKey exportKey = new SecretEncryptionKey(null, customPassword);
+      PbeCipherFactory.PbeCipher cipher = cipherFactory.create(exportKey);
+      return cipher.encrypt(plaintext.getBytes(StandardCharsets.UTF_8)).toPhcString();
+    }
+    catch (Exception e) {
+      throw new CipherException("Failed to encrypt plaintext with custom password", e);
     }
   }
 

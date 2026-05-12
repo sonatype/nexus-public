@@ -16,8 +16,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
@@ -41,7 +39,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mock;
 
 import static java.util.Collections.emptySet;
@@ -61,9 +60,8 @@ import static org.sonatype.nexus.security.config.CUser.STATUS_ACTIVE;
 /**
  * Tests for {@link SecurityConfigurationSourceImpl}.
  */
-@Category(SQLTestGroup.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SecurityConfigurationSourceImplTest
-    extends TestSupport
 {
   final String PASSWORD1 =
       "$shiro1$SHA-512$1024$NYQKemFvZqat9CepP2xO9A==$4m4dBi9f/EtJLpJSW6/7+IVxW3wHR4RNeGtbopiH+D5tlVDFqNKo667eMnqWUxFrRz4Y4IQvn5hv/BnWmEfN0Q==";

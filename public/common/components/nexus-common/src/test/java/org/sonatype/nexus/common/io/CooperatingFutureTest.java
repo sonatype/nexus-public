@@ -16,19 +16,21 @@ import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.locks.LockSupport;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.io.CooperationFactorySupport.Config;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CooperatingFutureTest
-    extends TestSupport
+
 {
   @Mock
   Config config;

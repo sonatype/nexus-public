@@ -19,11 +19,12 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.text.Strings2;
 
 import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -33,8 +34,9 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.1
  */
 public abstract class AuditorSupport
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * Context value to use for global/system audit data when there is nothing more specific to use.
    */

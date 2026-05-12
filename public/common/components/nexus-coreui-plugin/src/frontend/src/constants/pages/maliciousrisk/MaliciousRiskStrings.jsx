@@ -69,8 +69,8 @@ export default {
       }
     },
     RISK_ON_DISK: {
-      TITLE_PLURAL: 'Malware Components Found',
-      TITLE_SINGULAR: 'Malware Component Found',
+      TITLE_PLURAL: 'Malicious Packages Found',
+      TITLE_SINGULAR: 'Malicious Package Found',
       DESCRIPTION: {
         TITLE: <><strong>Open source malware is cached in the proxy repositories of this instance of Nexus Repository Manager</strong></>,
         CONTENT: 'Open source malware is cached in the proxy repositories on your Nexus Repository. Review the components flagged by Sonatype as containing malware and remove them.',
@@ -83,22 +83,23 @@ export default {
           PRO: 'https://links.sonatype.com/nexus-repository-firewall/malicious-risk/firewall/pro-admin-learn-more'
         }
       },
-      VIEW_MALWARE_RISK: 'View Malware Risk'
+      VIEW_MALWARE_RISK: 'Remediate Malicious Packages'
     },
     LOAD_ERROR: 'An error occurred while fetching the malicious risk data',
     HDS_CONNECTION_WARNING: <>
-      OSS Malware Risk data relies on backend services that are currently unreachable. To view malware risk, <NxTextLink
+      Malicious Packages data relies on backend services that are currently unreachable. To view malware risk, <NxTextLink
         href="https://links.sonatype.com/nexus-repository-firewall/malicious-risk/repository-health-check-overview"
         external>ensure the required URLs are accessible</NxTextLink>
     </>,
     MALWARE_REMEDIATION: {
       DESCRIPTION: 'Sonatype has identified malware components in your repository. Use the CSV below to identify which components are malicious and remediate.',
       REMEDIATION_STEPS: {
-        TITLE: 'Steps to Identify and Address Malware',
-        FIRST: <>Create and run Automatic Malware Management tasks on your proxy repositories. <NxTextLink
+        TITLE: 'Steps to Address Malware',
+        FIRST: <>Schedule Malware Removal Tasks to automatically clean detected malware from your proxy repositories.
+          Repository Health Check detects malware; these tasks remove it. <NxTextLink
           href="https://links.sonatype.com/products/nxrm3/docs/scheduled-task" className="scheduled-task-link" external>
           Learn about maintenance tasks</NxTextLink></>,
-        SECOND: 'Download the CSV file using the link below to review the components flagged by Sonatype as containing malware.',
+        SECOND: 'Download the CSV of components cleaned by Malware Removal Tasks. This report is populated after tasks have run and processed malware.',
         THIRD: <>Search your proxy repository to remove the components. <NxTextLink
           href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/guide-to-removing-malware"
           className="guide-to-removing-malware-link" external>
@@ -127,5 +128,116 @@ export default {
       TEXT: 'Powered by'
     },
     MALWARE_MANAGEMENT_TASKS_COUNT: "malwareManagementTasksCount",
+
+    // Redesign – Malicious vs Vulnerable, state-dependent UX
+    REDESIGN: {
+      MALICIOUS_VS_VULNERABLE: {
+        TITLE: 'Malicious vs Vulnerable Open Source',
+        MALICIOUS: {
+          TITLE: 'Malicious (this page)',
+          DEFINITION: 'Intentional harm',
+          EXAMPLES: 'Backdoors, credential theft, crypto miners',
+          LEARN_MORE: 'Learn more',
+          LEARN_URL: 'https://links.sonatype.com/nexus-repository-firewall/malware-risk/vulnerabilities-and-malware',
+        },
+        VULNERABLE: {
+          TITLE: 'Vulnerable (Health Check)',
+          DEFINITION: 'Unintentional security bugs',
+          EXAMPLES: 'CVEs, misconfigurations',
+          VIEW_HEALTH: 'View Health Check',
+        },
+      },
+      HERO: {
+        NO_MALWARE: 'No malware detected',
+        PROTECTED: "You're protected. No malware detected.",
+        COMPONENTS_FOUND: (n) => `${n.toLocaleString()} Malware Component${n !== 1 ? 's' : ''} Found`,
+        ALL_PROTECTED: 'All proxy repositories protected by Firewall.',
+      },
+      TASKS: {
+        CONFIGURED: (n) => `${n.toLocaleString()} task${n !== 1 ? 's' : ''} configured`,
+        NONE: '0 tasks configured',
+        CONFIGURE: 'Configure Malware Management Tasks',
+      },
+      STEPS: {
+        TITLE: 'Remediation Steps',
+        STEP1: { TITLE: 'Configure tasks', DESC: 'Set up Automatic Malware Management tasks on proxy repositories.', CTA: 'Configure Tasks' },
+        STEP2: { TITLE: 'Download CSV', DESC: 'Export components cleaned by Malware Removal Tasks.', CTA: 'Download CSV', DISABLED: 'No components to export' },
+        STEP3: { TITLE: 'Search & remove', DESC: 'Find and remove malicious components from your repositories.', CTA: 'Search repositories' },
+        STEP4: { TITLE: 'Protect', DESC: 'Enable Firewall to block future malware from entering.', CTA_ENABLE: 'Enable Firewall', CTA_LEARN: 'Learn how to protect', CTA_MANAGE: 'Manage Firewall', CTA_PROTECTED: "You're protected" },
+      },
+      UPSELL: {
+        NO_FIREWALL: 'Keep bad code out of your repository. Repository Firewall blocks malicious and vulnerable components at the moment they\'re requested\u2014before they ever enter your repo.',
+        LEARN_MORE: 'Learn more',
+        CONTACT_SALES: 'Contact sales',
+        WITH_MALWARE: 'Remove these components, then protect your repos. Without Firewall, malware can re-enter.',
+      },
+      ENABLEMENT: {
+        HAVE_FIREWALL: 'You have Repository Firewall. Enable it on proxy repos to keep malware out.',
+        ENABLE_CTA: 'Enable Firewall',
+        REMOVE_THEN_ENABLE: 'Remove these components, then enable Firewall on your proxy repos to prevent future infections.',
+      },
+      WIZARD: {
+        TITLE: 'Malware Remediation',
+        STEPS: [
+          { title: "What's infected", key: '1' },
+          { title: 'Clean up', key: '2' },
+          { title: 'Add protection to repo', key: '3' },
+          { title: 'Protect all repos', key: '4' },
+          { title: 'Investigation', key: '5' },
+        ],
+      },
+      COMPONENT_LIST: {
+        TITLE: 'Malware Components',
+        DESC: 'Remove these components with one click. Each removal deletes the asset from the repository.',
+        REPOSITORY: 'Repository',
+        PATH: 'Path',
+        FORMAT: 'Format',
+        RECORDED: 'Recorded',
+        REMOVE: 'Remove',
+        REMOVING: 'Removing…',
+        REMOVED: 'Removed',
+        REMOVE_FAILED: 'Failed to remove',
+      },
+      // Main Tab Status View (UX Spec MAIN-TAB-UX-DESIGN.md)
+      STATUS_VIEW: {
+        FOOTER: {
+          EDUCATION_LINK: 'What is Open Source Malware?',
+          TASKS_LINK: 'Configure automatic malware removal',
+        },
+      },
+      // Education Modal (UX Spec MAIN-TAB-UX-DESIGN.md Section 9)
+      EDUCATION_MODAL: {
+        TITLE: 'Understanding Open Source Security Threats',
+        MALICIOUS: {
+          TITLE: 'Malicious Packages',
+          DESCRIPTION: 'Purpose-built to attack developers and CI/CD pipelines.',
+          EXAMPLES_LABEL: 'Examples:',
+          EXAMPLES: [
+            'Typosquats (e.g., "coloUrs" mimicking "colors")',
+            'Backdoored packages with credential stealers',
+            'Dependency confusion attacks',
+          ],
+          DETECTION: 'Sonatype Repository Firewall identifies malicious packages using behavioral analysis and threat intelligence.',
+        },
+        VULNERABLE: {
+          TITLE: 'Vulnerable Packages',
+          DESCRIPTION: 'Legitimate packages with known security flaws (CVEs).',
+          EXAMPLES_LABEL: 'Examples:',
+          EXAMPLES: [
+            'Log4Shell (CVE-2021-44228)',
+            'Spring4Shell (CVE-2022-22965)',
+            'Packages with outdated dependencies',
+          ],
+          DETECTION: 'Repository Health Check scans for known vulnerabilities in your components.',
+        },
+        KEY_DIFFERENCE: {
+          TITLE: 'Key Difference',
+          MALICIOUS_LINE: 'Intentionally harmful - block immediately',
+          VULNERABLE_LINE: 'Unintentionally flawed - upgrade when possible',
+        },
+        LEARN_MORE: 'Learn More',
+        LEARN_MORE_URL: 'https://links.sonatype.com/nexus-repository-firewall/malware-risk/vulnerabilities-and-malware',
+      },
+    },
   }
 }

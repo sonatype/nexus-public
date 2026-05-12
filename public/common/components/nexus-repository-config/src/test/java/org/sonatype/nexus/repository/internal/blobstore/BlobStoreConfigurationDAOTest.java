@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -38,7 +37,6 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 public class BlobStoreConfigurationDAOTest
-    extends TestSupport
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(BlobStoreConfigurationDAO.class);

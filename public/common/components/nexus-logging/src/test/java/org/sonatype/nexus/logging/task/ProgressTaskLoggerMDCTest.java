@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.logging.task;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 
@@ -30,8 +30,9 @@ import static org.junit.Assert.assertTrue;
  * Special test to cover MDC thread specifics. See NEXUS-14432 and https://logback.qos.ch/manual/mdc.html#managedThreads
  * (tldr: logback with MDC and thread pools doesn't copy the MDC values so we have to do it manually)
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ProgressTaskLoggerMDCTest
-    extends TestSupport
+
 {
   @Mock
   private Logger mockLogger;

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -22,13 +21,15 @@ import org.sonatype.nexus.repository.storage.BlobMetadataStorage;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ContentFacetDependenciesTest
-    extends TestSupport
 {
   @Mock
   private BlobStoreManager blobStoreManager;

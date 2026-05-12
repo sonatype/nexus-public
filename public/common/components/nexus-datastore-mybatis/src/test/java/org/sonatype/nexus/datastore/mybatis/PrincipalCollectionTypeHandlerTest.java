@@ -16,7 +16,6 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.crypto.LegacyCipherFactory.PbeCipher;
 import org.sonatype.nexus.datastore.mybatis.handlers.PrincipalCollectionTypeHandler;
 
@@ -34,9 +33,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class PrincipalCollectionTypeHandlerTest
-    extends TestSupport
 {
   private static final byte[] PRINCIPAL_COLLECTION_BYTES = {8, 5, 11, 110};
 

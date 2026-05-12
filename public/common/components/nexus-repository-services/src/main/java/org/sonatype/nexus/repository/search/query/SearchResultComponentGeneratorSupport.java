@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
@@ -23,6 +23,8 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -30,9 +32,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.15
  */
 public abstract class SearchResultComponentGeneratorSupport
-    extends ComponentSupport
     implements SearchResultComponentGenerator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   final VariableResolverAdapterManager variableResolverAdapterManager;
 
   final RepositoryManager repositoryManager;
@@ -59,8 +62,8 @@ public abstract class SearchResultComponentGeneratorSupport
       VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(repositoryFormat);
 
       VariableSource variableSource = variableResolverAdapter.fromSearchResult(source, assets.get(0));
-      List<String> repositoryNames = repositoryManager.findContainingGroups(repositoryName);
-      repositoryNames.add(0, repositoryName);
+      List<String> repositoryNames = new ArrayList<>(repositoryManager.findContainingGroups(repositoryName));
+      repositoryNames.addFirst(repositoryName);
       for (String name : repositoryNames) {
         if (contentPermissionChecker.isPermitted(name, repositoryFormat, BreadActions.BROWSE, variableSource)) {
           return name;

@@ -12,7 +12,6 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 
@@ -25,7 +24,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 
 public class SslSecurityContributorTest
-    extends TestSupport
 {
   private SslSecurityContributor underTest;
 

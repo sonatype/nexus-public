@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 
 import com.google.common.collect.ImmutableMap;
@@ -34,7 +33,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 
 public class FileBlobAttributesTest
-    extends TestSupport
+
 {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();

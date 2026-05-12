@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
@@ -29,6 +28,8 @@ import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.index.SearchConstants;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.empty;
@@ -49,8 +50,9 @@ import org.springframework.stereotype.Component;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SqlSearchSortUtil
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static final String MAVEN_2 = "maven2";
 
   public static final String DOCKER_LAYER_ANCESTRY = "layerAncestry";

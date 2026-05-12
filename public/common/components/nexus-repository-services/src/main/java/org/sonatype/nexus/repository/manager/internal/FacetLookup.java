@@ -20,7 +20,6 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Facet;
 
 import com.google.common.collect.ImmutableList;
@@ -29,6 +28,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -39,9 +40,10 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.0
  */
 public class FacetLookup
-    extends ComponentSupport
     implements Iterable<Facet>
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   /**
    * All facet instances. Retain order.
    */

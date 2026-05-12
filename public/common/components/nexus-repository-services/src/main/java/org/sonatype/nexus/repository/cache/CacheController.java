@@ -14,10 +14,10 @@ package org.sonatype.nexus.repository.cache;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.ComponentSupport;
-
 import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A support class which implements basic cache-control logic.
@@ -25,8 +25,9 @@ import org.joda.time.DateTime;
  * @since 3.0
  */
 public class CacheController
-    extends ComponentSupport
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   public static String newCacheToken() {
     return Long.toString(System.nanoTime());
   }

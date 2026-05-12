@@ -20,13 +20,14 @@ import javax.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -42,9 +43,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Qualifier(Maven2Format.NAME)
 @Singleton
 public class MavenContentValidator
-    extends ComponentSupport
     implements ContentValidator
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final DefaultContentValidator defaultContentValidator;
 
   @Inject

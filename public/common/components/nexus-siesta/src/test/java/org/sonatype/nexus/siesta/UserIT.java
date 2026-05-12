@@ -21,6 +21,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
@@ -35,6 +37,8 @@ import static org.hamcrest.Matchers.notNullValue;
 class UserIT
     extends SiestaTestSupport
 {
+  private static final Logger log = LoggerFactory.getLogger(UserIT.class);
+
   private void put_happyPath(final MediaType mediaType) {
     UserXO sent = new UserXO().withName(UUID.randomUUID().toString());
 
@@ -42,7 +46,7 @@ class UserIT
     Response response = target.request()
         .accept(mediaType)
         .put(Entity.entity(sent, mediaType), Response.class);
-    log("Status: {}", response.getStatusInfo());
+    log.info("Status: {}", response.getStatusInfo());
 
     assertThat(response.getStatusInfo().getFamily(), equalTo(Family.SUCCESSFUL));
 

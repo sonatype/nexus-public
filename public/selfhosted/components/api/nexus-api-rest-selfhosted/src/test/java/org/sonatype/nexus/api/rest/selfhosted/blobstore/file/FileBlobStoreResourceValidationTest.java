@@ -17,7 +17,6 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.api.rest.common.blobstore.file.model.FileBlobStoreApiCreateRequest;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
@@ -36,7 +35,6 @@ import static org.hamcrest.Matchers.is;
  */
 @ExtendWith(ValidationExtension.class)
 class FileBlobStoreResourceValidationTest
-    extends Test5Support
 {
   @ValidationExecutor
   private final Validator validator =

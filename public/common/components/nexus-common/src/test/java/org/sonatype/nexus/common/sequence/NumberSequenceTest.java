@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.sequence;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,7 +19,7 @@ import org.junit.Test;
  * Tests for various {@link NumberSequence} implementations.
  */
 public class NumberSequenceTest
-    extends TestSupport
+
 {
   @Test
   public void testConstantSequence() {

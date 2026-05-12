@@ -18,8 +18,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 import org.sonatype.nexus.supportzip.ContentSourceSupport;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -42,12 +42,13 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.common.io.DirectoryHelper.mkdir;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT;
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.REPLICATIONLOG;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ReplicationLogCustomizerTest
-    extends TestSupport
 {
   private static final long ONE_MINUTE = MINUTES.toMinutes(1);
 
@@ -63,6 +64,8 @@ public class ReplicationLogCustomizerTest
   @Mock
   private ApplicationDirectories mockApplicationDirectories;
 
+  private final DirectoryHelper directoryHelper = new DirectoryHelper();
+
   private File replicationLogsHome;
 
   private ReplicationLogCustomizer underTest;
@@ -71,6 +74,14 @@ public class ReplicationLogCustomizerTest
   public void setup() throws IOException {
     setupTestDirectories();
     initializeSystemUnderTest();
+  }
+
+  private void setupTestDirectories() throws IOException {
+    when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory.getRoot());
+
+    File logDir = directoryHelper.mkdir(temporaryWorkDirectory.getRoot(), "log");
+    replicationLogsHome = directoryHelper.mkdir(logDir, "replication");
+    directoryHelper.mkdir(replicationLogsHome, "extrasubfolder");
   }
 
   @Test
@@ -110,14 +121,6 @@ public class ReplicationLogCustomizerTest
 
     List<ContentSource> list = supportBundle.getSources();
     assertThat(list.size(), equalTo(0)); // should be empty , not valid files found
-  }
-
-  private void setupTestDirectories() throws IOException {
-    when(mockApplicationDirectories.getWorkDirectory()).thenReturn(temporaryWorkDirectory.getRoot());
-
-    File logDir = mkdir(temporaryWorkDirectory.getRoot(), "log");
-    replicationLogsHome = mkdir(logDir, "replication");
-    mkdir(replicationLogsHome, "extrasubfolder");
   }
 
   private void initializeSystemUnderTest() {

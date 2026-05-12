@@ -1,0 +1,72 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.placeholder-page {
+  padding: var(--space-8, 2rem);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.placeholder-page__content {
+  padding: var(--space-6, 1.5rem);
+}
+
+.placeholder-page__feature-name {
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text, #1a1a1a);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.placeholder-page__status {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-6, 1.5rem);
+}
+
+.placeholder-page__label {
+  font-size: var(--font-size-md, 1rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary, #666);
+}
+
+.placeholder-page__todo {
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-warning, #f59e0b);
+}
+
+.placeholder-page__back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-3, 0.75rem) var(--space-5, 1.25rem);
+  background-color: var(--color-primary, #0066cc);
+  color: var(--gray-1, white);
+  border: none;
+  border-radius: var(--radius-md, 6px);
+  font-size: var(--font-size-md, 1rem);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: var(--color-primary-hover, #0052a3);
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+

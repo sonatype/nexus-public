@@ -1,3 +1,15 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
 var Ext=Ext||{};Ext.manifest=Ext.manifest||{"packages":{"charts":{"css":!0,"included":!0,"namespace":"Ext","required":!0,"requires":["ext","core","classic"],"version":"7.0.0"},"classic":{"css":!0,"included":!0,"language":{"js":{"input":{"version":"ES5"}}},"namespace":"Ext","required":!0,"requires":["ext","core"],"version":"7.0.0"},"cmd":{"version":"7.2.0.66"},"core":{"css":!0,"included":!0,"required":!0,"requires":["ext","classic"],"version":"7.0.0"},"ext":{"css":!0,"included":!0,"language":{"js":{"input":{"version":"ES5"}}},"license":"dev","namespace":"Ext","required":!0,"requires":[],"version":"7.0.0.156"},"font-awesome":{"css":!0,"included":!0,"namespace":"Ext","required":!0,"requires":["ext","core","classic","theme-base","theme-neutral","theme-neptune"],"theme":"theme-neptune","version":"5.6.3"},"rapture-theme":{"css":!0,"extend":"theme-neptune","included":!0,"namespace":"Ext","required":!0,"requires":["ext","core","classic","theme-base","theme-neutral","theme-neptune"],"version":"1.0.0"},"theme-base":{"css":!0,"included":!0,"namespace":"Ext","required":!0,"requires":["ext","core","classic"],"version":"7.0.0"},"theme-neptune":{"css":!0,"extend":"theme-neutral","included":!0,"namespace":"Ext","required":!0,"requires":["ext","core","classic","theme-base","theme-neutral"],"version":"7.0.0"},"theme-neutral":{"css":!0,"extend":"theme-base","included":!0,"namespace":"Ext","required":!0,"requires":["ext","core","classic","theme-base"],"version":"7.0.0"},"ux":{"css":!0,"included":!0,"namespace":"Ext","required":!0,"requires":["ext","core","classic"],"version":"7.0.0"}},"js":[{"path":"baseapp-debug.js"}],"css":[{"remote":!1,"exclude":["fashion"],"path":"resources/baseapp-debug_1.css"},{"remote":!1,"exclude":["fashion"],"path":"resources/baseapp-debug_2.css"},{"remote":!1,"exclude":["fashion"],"path":"resources/baseapp-debug_3.css"}],"cache":{"enable":!1,"deltas":!0},"fashion":{"inliner":{"enable":!1},"missingParameters":"error"},"name":"baseapp","namespace":"baseapp","version":"1.0.0.0","framework":"ext","toolkit":"classic","theme":"rapture-theme","loader":{"cache":!1,"cacheParam":"_dc"},"id":"72ff5611-734b-4ea3-8469-a2257ba6f296","profile":"","appCacheEnabled":!1,"hash":"76330c6ac52a1948fa604f47da6da39907cdcbff","resources":{"path":"resources"}};var $jscomp = $jscomp || {};
 $jscomp.scope = {};
 $jscomp.ASSUME_ES5 = false;

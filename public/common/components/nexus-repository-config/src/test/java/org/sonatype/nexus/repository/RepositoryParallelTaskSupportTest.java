@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -30,6 +29,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -37,8 +38,8 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID;
 
+@ExtendWith(MockitoExtension.class)
 class RepositoryParallelTaskSupportTest
-    extends Test5Support
 {
   @Mock
   RepositoryManager repositoryManager;
@@ -134,7 +135,7 @@ class RepositoryParallelTaskSupportTest
       extends RepositoryParallelTaskSupport
   {
     private TestTask() {
-      super(2, 2);
+      super(2);
     }
 
     @Override

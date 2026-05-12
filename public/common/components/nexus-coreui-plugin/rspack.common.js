@@ -17,8 +17,14 @@
 const { rspack } = require('@rspack/core');
 const path = require('path');
 const fs = require('fs');
+const { execSync } = require('child_process');
 
 const swcOptions = JSON.parse(fs.readFileSync(path.resolve(__dirname, '.swcrc')), 'utf-8');
+
+let gitCommit = 'unknown';
+try {
+  gitCommit = execSync('git rev-parse --short=7 HEAD', { encoding: 'utf-8' }).trim();
+} catch (_) { /* not in git */ }
 
 module.exports = {
   entry: {
@@ -27,7 +33,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.[jt]sx?$/,
         exclude: /node_modules/,
         use: [
           {
@@ -81,6 +87,13 @@ module.exports = {
       filename: '[name].css',
       chunkFilename: '[name].[contenthash:8].css'
     }),
+    new rspack.DefinePlugin({
+      __NX_BUILD_COMMIT__: JSON.stringify(gitCommit),
+      // Set SONATYPE_INTERNAL=true in your environment to include internal test pages.
+      // These are excluded from production customer builds when this is not set.
+      // Usage: SONATYPE_INTERNAL=true yarn build-all
+      __SONATYPE_INTERNAL__: JSON.stringify(process.env.SONATYPE_INTERNAL === 'true'),
+    }),
     new rspack.CopyRspackPlugin({
       patterns: [{
         from: path.resolve(__dirname, '../../../../node_modules/@sonatype/react-shared-components/assets/'),
@@ -89,7 +102,11 @@ module.exports = {
     })
   ],
   resolve: {
-    extensions: ['.js', '.jsx']
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    alias: {
+      '@': path.resolve(__dirname, './src/frontend/src'),
+      '@nosc': path.resolve(__dirname, './src/frontend/src/nosc')
+    }
   },
   externals: {
     axios: 'axios',
@@ -97,5 +114,8 @@ module.exports = {
     '@sonatype/react-shared-components': 'rsc',
     react: 'react',
     xstate: 'xstate'
+  },
+  optimization: {
+    splitChunks: false
   }
 };

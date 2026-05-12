@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.view.handlers;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Content;
@@ -36,7 +35,6 @@ import static org.mockito.Mockito.when;
  * UT for {@link HandlerContributor}.
  */
 public class HandlerContributorTest
-    extends TestSupport
 {
   @Test
   public void addContributedHandlers() throws Exception {

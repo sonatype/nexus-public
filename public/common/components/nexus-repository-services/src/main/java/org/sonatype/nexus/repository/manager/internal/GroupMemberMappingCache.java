@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
@@ -44,6 +43,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -55,9 +56,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @Component
 public class GroupMemberMappingCache
-    extends ComponentSupport
     implements EventAware, Asynchronous
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final ReentrantLock lock = new ReentrantLock();
 
   private volatile boolean built = false;
@@ -148,14 +150,14 @@ public class GroupMemberMappingCache
   }
 
   /**
-   * @param a repository name
+   * @param member the repository name
    * @return the names of group repositories which contain the specified member.
    */
-  public List<String> getGroups(final String member) {
+  public Set<String> getGroups(final String member) {
     maybeCompute();
     return Optional.ofNullable(repositoryToContainingGroups.get(member))
-        .map(ArrayList::new)
-        .orElseGet(ArrayList::new);
+        .map(HashSet::new)
+        .orElseGet(HashSet::new);
   }
 
   private void maybeAddToMembers(final String modifiedRepositoryName) {

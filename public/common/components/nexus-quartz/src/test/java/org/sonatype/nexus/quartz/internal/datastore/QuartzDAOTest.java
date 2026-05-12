@@ -18,8 +18,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.quartz.internal.store.ConfigStoreConnectionProvider;
 import org.sonatype.nexus.testdb.DataSessionRule;
@@ -27,7 +25,6 @@ import org.sonatype.nexus.testdb.DataSessionRule;
 import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.quartz.DateBuilder;
 import org.quartz.DateBuilder.IntervalUnit;
 import org.quartz.Job;
@@ -57,10 +54,10 @@ import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-@Category(SQLTestGroup.class)
 public class QuartzDAOTest
-    extends TestSupport
 {
+  private static final Logger logger = LoggerFactory.getLogger(QuartzDAOTest.class);
+
   static final String SCHEDULER_NAME = "nexus";
 
   @Rule

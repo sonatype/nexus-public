@@ -17,7 +17,6 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
@@ -38,7 +37,6 @@ import static org.hamcrest.Matchers.is;
  */
 @ExtendWith(ValidationExtension.class)
 class S3BlobStoreApiResourceValidationTest
-    extends Test5Support
 {
   @ValidationExecutor
   private final Validator validator =

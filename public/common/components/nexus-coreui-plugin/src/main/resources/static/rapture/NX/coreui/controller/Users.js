@@ -576,7 +576,9 @@ Ext.define('NX.coreui.controller.Users', {
   },
 
   onNavigate: function() {
-    if (NX.Bookmarks.getBookmark().getToken().includes('security/users')) {
+    var bookmark = NX.Bookmarks.getBookmark();
+    var token = bookmark && bookmark.getToken ? bookmark.getToken() : null;
+    if (token && token.includes('security/users')) {
       this.reselect();
     }
   },

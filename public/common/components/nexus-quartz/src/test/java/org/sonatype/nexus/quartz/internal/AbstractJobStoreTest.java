@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 
 import junit.framework.Assert;
@@ -78,7 +77,6 @@ import static org.junit.Assert.fail;
  *      "https://github.com/quartz-scheduler/quartz/blob/quartz-2.3.x/quartz-core/src/test/java/org/quartz/AbstractJobStoreTest.java">AbstractJobStoreTest.java</a>
  */
 public abstract class AbstractJobStoreTest
-    extends TestSupport
 {
   private JobStore fJobStore;
 

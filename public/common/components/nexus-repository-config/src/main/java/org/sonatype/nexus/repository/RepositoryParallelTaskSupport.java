@@ -48,19 +48,21 @@ public abstract class RepositoryParallelTaskSupport
   private Type groupType;
 
   /**
-   * @param concurrencyLimit the number of concurrent threads processing the queue allowed
-   * @param queueCapacity the number of queued jobs allowed
+   * @param concurrencyLimit the number of concurrent threads processing the queue allowed.
    */
-  protected RepositoryParallelTaskSupport(final int concurrencyLimit, final int queueCapacity) {
-    super(concurrencyLimit, queueCapacity);
+  protected RepositoryParallelTaskSupport(final int concurrencyLimit) {
+    super(concurrencyLimit);
   }
 
+  /**
+   * @param taskLoggingEnabled whether task logging should be enabled
+   * @param concurrencyLimit the number of concurrent threads processing the queue allowed.
+   */
   protected RepositoryParallelTaskSupport(
       final boolean taskLoggingEnabled,
-      final int concurrencyLimit,
-      final int queueCapacity)
+      final int concurrencyLimit)
   {
-    super(taskLoggingEnabled, concurrencyLimit, queueCapacity);
+    super(taskLoggingEnabled, concurrencyLimit);
   }
 
   @Autowired

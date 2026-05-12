@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
@@ -24,7 +23,9 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,8 +36,9 @@ import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTas
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.GROUPID_FIELD_ID;
 import static org.sonatype.nexus.repository.maven.tasks.RebuildMaven2MetadataTaskDescriptor.REBUILD_CHECKSUMS;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RebuildMaven2MetadataTaskTest
-    extends TestSupport
+
 {
   private static final Format MAVEN_FORMAT = new Maven2Format();
 

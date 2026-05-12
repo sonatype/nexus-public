@@ -212,11 +212,16 @@ Ext.define('NX.view.SettingsForm', {
         itemsToDisable,
         bottomBar;
 
-    if (me.isDestroying) {
+    if (me.destroying || me.isDestroying || me.isDestroyed || !me.items) {
       return;
     }
 
-    itemsToDisable = me.getChildItemsToDisable();
+    try {
+      itemsToDisable = me.getChildItemsToDisable();
+    } catch (e) {
+      // Component may be mid-destruction, items collection can be null
+      return;
+    }
     if (!itemsToDisable) {
       return;
     }

@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.sonatype.goodies.common.MultipleFailures;
+import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
@@ -78,7 +78,7 @@ public abstract class BlobStoreTaskSupport
     return null;
   }
 
-  private Iterable<BlobStore> findBlobStores() {
+  protected Iterable<BlobStore> findBlobStores() {
     final String blobStoreField = getBlobStoreField();
 
     String[] names = blobStoreField.split(",");

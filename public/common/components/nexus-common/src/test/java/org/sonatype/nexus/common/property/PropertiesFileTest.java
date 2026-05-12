@@ -19,11 +19,11 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Properties;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.joda.time.format.DateTimeFormat;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -35,16 +35,17 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link PropertiesFile}
  */
 public class PropertiesFileTest
-    extends TestSupport
 {
+  @Rule
+  public TemporaryFolder tmpDir = new TemporaryFolder();
+
   private File file;
 
   private PropertiesFile underTest;
 
   @Before
-  public void setUp() {
-    file = util.createTempFile();
-    log("File: $file");
+  public void setUp() throws IOException {
+    file = tmpDir.newFile("test.properties");
     underTest = new PropertiesFile(file);
   }
 

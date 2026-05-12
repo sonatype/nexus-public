@@ -19,7 +19,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.internal.support.SupportZipXO;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.supportzip.SupportZipGenerator;
@@ -35,6 +34,8 @@ import io.swagger.annotations.ApiOperation;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -55,9 +56,10 @@ import org.springframework.stereotype.Component;
 @Path(REST_SUPPORT_RESOURCE_URI)
 @Api("Support")
 public class SupportResource
-    extends ComponentSupport
     implements Resource
 {
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   private final SupportZipGenerator supportZipGenerator;
 
   @Autowired

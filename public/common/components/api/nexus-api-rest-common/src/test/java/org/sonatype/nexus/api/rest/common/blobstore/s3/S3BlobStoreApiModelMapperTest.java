@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.app.ApplicationVersion;
@@ -51,9 +50,11 @@ import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUC
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.FAILOVER_BUCKETS_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class S3BlobStoreApiModelMapperTest
-    extends TestSupport
 {
   private static final String BLOB_STORE_NAME = "anS3BlobStore";
 

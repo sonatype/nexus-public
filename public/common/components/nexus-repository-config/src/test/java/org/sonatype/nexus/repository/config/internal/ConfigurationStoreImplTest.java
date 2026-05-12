@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.config.internal;
 
 import java.util.Collection;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
@@ -28,7 +27,6 @@ import static java.util.Collections.emptySet;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class ConfigurationStoreImplTest
-    extends Test5Support
 {
   @DataSessionConfiguration(daos = ConfigurationDAO.class)
   private DataSessionSupplier sessionSupplier;

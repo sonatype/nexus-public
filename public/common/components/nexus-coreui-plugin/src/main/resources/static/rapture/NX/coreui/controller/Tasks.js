@@ -154,7 +154,9 @@ Ext.define('NX.coreui.controller.Tasks', {
   },
 
   onNavigate: function() {
-    if (NX.Bookmarks.getBookmark().getToken().includes('system/tasks')) {
+    var bookmark = NX.Bookmarks.getBookmark();
+    var token = bookmark && bookmark.getToken ? bookmark.getToken() : null;
+    if (token && token.includes('system/tasks')) {
       this.reselect();
     }
   },
