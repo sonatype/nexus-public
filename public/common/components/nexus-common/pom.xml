@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.92.1-05</version>
+    <version>3.92.2-01</version>
   </parent>
 
   <artifactId>nexus-common</artifactId>

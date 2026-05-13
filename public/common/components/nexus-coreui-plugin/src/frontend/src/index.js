@@ -28,13 +28,8 @@ import FileBlobStoreWarning from './components/pages/admin/BlobStores/File/FileB
 import CommunityEulaOnboarding from './components/pages/onboarding/CommunityEulaOnboarding';
 import CommunityDiscoverOnboarding from './components/pages/onboarding/CommunityDiscoverOnboarding';
 import './styles/extjs.scss';
-import { configureAxios, configureDebugLogging, exposeCreateRoot } from '@sonatype/nexus-ui-plugin';
 
 enforceHashRouting();
-
-configureAxios();
-configureDebugLogging();
-exposeCreateRoot();
 
 window.BlobStoreTypes = {
   ...window.BlobStoreTypes,
