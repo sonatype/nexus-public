@@ -84,3 +84,8 @@ which will contain the default administrator credentials, database, and file blo
 ## License
 
 This project is licensed under the Eclipse Public License - v 1.0, you can read the full text [here](LICENSE.txt)
+
+## Contribution
+Name: Chendo Precious
+Matric no.: ADUN/FS/SEN/22/014
+SEN 406 Assignment Submission 
