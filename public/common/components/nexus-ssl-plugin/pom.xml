@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.92.2-01</version>
+    <version>3.92.3-01</version>
   </parent>
 
   <artifactId>nexus-ssl-plugin</artifactId>

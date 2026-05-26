@@ -555,6 +555,68 @@ public abstract class SearchTableDAOTestSupport
     }
   }
 
+  /**
+   * NEXUS-52781: save() must not throw a NOT NULL violation when aliasComponentNames is empty.
+   * Reproduces the case where a NuGet V2 OData feed returns an empty &lt;d:Id&gt;: putV2Metadata()
+   * stores name="", addAliasComponentName("") is silently dropped by isNotBlank(), and
+   * toTsVector returns SQL NULL for the empty collection, violating the NOT NULL constraint on
+   * tsvector_search_component_name.
+   */
+  @DatabaseTest(postgresql = true)
+  public void saveWithEmptyComponentNameDoesNotViolateNotNullConstraint() {
+    SearchRecordData tableData = GENERATED_DATA.get(0);
+    SearchRecordData emptyName = new SearchRecordData(!isOnH2());
+    emptyName.setEntityVersion(tableData.getEntityVersion());
+    emptyName.setRepositoryId(tableData.getRepositoryId());
+    emptyName.setComponentId(tableData.getComponentId());
+    emptyName.setFormat(FORMAT);
+    emptyName.setNamespace("");
+    // intentionally omit addAliasComponentName — mirrors what happens when name="" is passed,
+    // since addAliasComponentName guards with isNotBlank and silently drops empty strings
+    emptyName.setComponentName("");
+    emptyName.setComponentKind("NUPKG");
+    emptyName.setVersion("2.11.0-dev-01391");
+    emptyName.addVersionNames("2.11.0-dev-01391");
+    emptyName.setNormalisedVersion(VersionNumberExpander.expand("2.11.0-dev-01391"));
+    emptyName.setRepositoryName(tableData.getRepositoryName());
+    emptyName.setLastModified(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
+
+    // must not throw — previously failed with:
+    // "null value in column tsvector_search_component_name violates not-null constraint"
+    searchDAO.save(emptyName);
+
+    SqlSearchRequest request = SqlSearchRequest.builder().limit(10).build();
+    assertThat(searchDAO.count(request), is(1L));
+  }
+
+  /**
+   * NEXUS-52781: saveBatch() must not throw a NOT NULL violation when any record in the batch
+   * has an empty component name (the saveBatch INSERT uses a separate XML fragment from save()).
+   */
+  @DatabaseTest(postgresql = true)
+  public void saveBatchWithEmptyComponentNameDoesNotViolateNotNullConstraint() {
+    SearchRecordData tableData = GENERATED_DATA.get(0);
+    SearchRecordData emptyName = new SearchRecordData(!isOnH2());
+    emptyName.setEntityVersion(tableData.getEntityVersion());
+    emptyName.setRepositoryId(tableData.getRepositoryId());
+    emptyName.setComponentId(tableData.getComponentId());
+    emptyName.setFormat(FORMAT);
+    emptyName.setNamespace("");
+    emptyName.setComponentName("");
+    emptyName.setComponentKind("NUPKG");
+    emptyName.setVersion("2.11.0-dev-01391");
+    emptyName.addVersionNames("2.11.0-dev-01391");
+    emptyName.setNormalisedVersion(VersionNumberExpander.expand("2.11.0-dev-01391"));
+    emptyName.setRepositoryName(tableData.getRepositoryName());
+    emptyName.setLastModified(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
+
+    // must not throw — saveBatch uses a separate XML fragment with the same COALESCE fix
+    searchDAO.saveBatch(List.of(emptyName));
+
+    SqlSearchRequest request = SqlSearchRequest.builder().limit(10).build();
+    assertThat(searchDAO.count(request), is(1L));
+  }
+
   protected abstract SearchConditionFactory createSearchConditionFactory();
 
   private void assertEntityVersionsAreSameAsSearchTableDataToSave() {

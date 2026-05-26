@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.selfhosted.assemblies</groupId>
     <artifactId>nexus-selfhosted-assemblies-parent</artifactId>
-    <version>3.92.2-01</version>
+    <version>3.92.3-01</version>
   </parent>
 
   <artifactId>nexus-repository-core</artifactId>
